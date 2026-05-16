@@ -2,6 +2,7 @@
 
 import type { SaaSEntitlementSnapshot } from '@/application/ports';
 import { useCallback, useEffect, useRef, useState, type ChangeEvent, type RefObject } from 'react';
+import { useRouter } from 'next/navigation';
 import type { User } from '@/domain/entities/User';
 import { env } from '@/infrastructure/config/env';
 import { useAuth } from '@/presentation/hooks/useAuth';
@@ -60,6 +61,7 @@ export function useBuildCoreDashboard(): {
   onProjectRowClick: (project: CrmProjectSummary) => void;
   onNewProjectClick: () => void;
 } {
+  const router = useRouter();
   const { user, isLoading: authLoading, signOut } = useAuth();
   const { shopName, logoUrl, hasLogo, isLoading: brandingLoading, refetch: refetchBranding } = useBranding();
   const { profile: saasProfile, entitlementSnapshot, session: saasSession } = useSaaSProfile();
@@ -86,12 +88,12 @@ export function useBuildCoreDashboard(): {
   const [stageFilter, setStageFilter] = useState<CrmStageFilter>('all');
   const [priorityFilter, setPriorityFilter] = useState<CrmPriorityFilter>('all');
 
-  const onProjectRowClick = useCallback((project: CrmProjectSummary) => {
-    if (process.env.NODE_ENV === 'development') {
-      // Phase 3: router.push(`/projects/${project.slug}`)
-      console.info('[buildcore] project row selected', project.slug);
-    }
-  }, []);
+  const onProjectRowClick = useCallback(
+    (project: CrmProjectSummary) => {
+      router.push(nav.routes.projectDetail(project.slug));
+    },
+    [router]
+  );
 
   const onNewProjectClick = useCallback(() => {
     if (process.env.NODE_ENV === 'development') {

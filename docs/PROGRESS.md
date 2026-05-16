@@ -136,11 +136,13 @@ Before merging CRM UI work, confirm:
 
 ## 8. Immediate next step
 
-**Phase 3 — single project detail page (frontend only):**
+**Phase 4 — TBD** (e.g. project edit/save, document uploads, or overview metrics).
 
-1. Route `/projects/[slug]` (or drawer) using `getMockCrmProjectDetailBySlug`.
-2. Contact card, stage progress, workflow tasks, documents, milestone/payment blocks.
-3. Wire row click from `CrmProjectsTable` to navigation (replaces dev-only `console.info`).
+### Phase 3 — done
+
+- Route `/projects/[slug]` with `getMockCrmProjectDetailBySlug` and not-found state.
+- Modular detail UI: header, contact, milestones, 12-stage progress bar, workflow tasks, documents, accountability, next-step.
+- Row click navigates from dashboard projects table to detail; back button returns to `/dashboard`.
 
 ---
 

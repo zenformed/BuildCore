@@ -1,0 +1,53 @@
+'use client';
+
+import type { ReactElement } from 'react';
+import type { CrmProjectDetail } from '@/domain/crm';
+import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
+import { formatRelativeUpdatedAt } from '@/presentation/features/crmProjects/crmProjectFormatters';
+import styles from './ProjectDetail.module.css';
+
+export type ProjectContactCardProps = {
+  project: CrmProjectDetail;
+};
+
+export function ProjectContactCard({ project }: ProjectContactCardProps): ReactElement {
+  const { summary, notes } = project;
+  return (
+    <section className={styles.card} aria-labelledby="project-contact-heading">
+      <h3 id="project-contact-heading" className={styles.cardTitle}>
+        {content.projectDetail.sections.contact}
+      </h3>
+      <dl className={styles.dl}>
+        <div className={styles.dlRow}>
+          <dt>{content.projectDetail.fields.contact}</dt>
+          <dd>{summary.contact.name}</dd>
+        </div>
+        <div className={styles.dlRow}>
+          <dt>{content.projectDetail.fields.email}</dt>
+          <dd>{summary.contact.email}</dd>
+        </div>
+        <div className={styles.dlRow}>
+          <dt>{content.projectDetail.fields.phone}</dt>
+          <dd>{summary.contact.phone}</dd>
+        </div>
+        <div className={styles.dlRow}>
+          <dt>{content.projectDetail.fields.customer}</dt>
+          <dd>{summary.client.name}</dd>
+        </div>
+        <div className={styles.dlRow}>
+          <dt>{content.projectDetail.fields.assigned}</dt>
+          <dd>{summary.assignedTo?.displayName ?? content.projectDetail.unassigned}</dd>
+        </div>
+        <div className={styles.dlRow}>
+          <dt>{content.projectDetail.fields.updated}</dt>
+          <dd>{formatRelativeUpdatedAt(summary.lastUpdatedAt)}</dd>
+        </div>
+      </dl>
+      {notes ? (
+        <p className={styles.subtitle} style={{ marginTop: '0.75rem' }}>
+          {notes}
+        </p>
+      ) : null}
+    </section>
+  );
+}
