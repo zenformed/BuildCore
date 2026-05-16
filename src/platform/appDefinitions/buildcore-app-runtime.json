@@ -1,0 +1,10 @@
+{
+  "appSlug": "buildcore",
+  "displayName": "BuildCore",
+  "descriptionShort": "Construction and trades CRM",
+  "description": "Construction/trades CRM for lead, project, workflow, document, and milestone tracking.",
+  "rootMetadataTitle": "BuildCore",
+  "themeStorageKey": "buildcore_theme",
+  "dashboardRoute": "/dashboard",
+  "capabilityCatalogNamespaceHint": "buildcore_placeholder"
+}

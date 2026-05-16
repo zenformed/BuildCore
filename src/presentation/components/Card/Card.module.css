@@ -1,0 +1,19 @@
+.card {
+  background-color: var(--color-surface, #fff);
+  border: 1px solid var(--color-border, #e2e8f0);
+  border-radius: 0.5rem;
+  overflow: hidden;
+}
+
+.title {
+  margin: 0;
+  padding: 1rem 1.25rem;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--color-text, #0f172a);
+  border-bottom: 1px solid var(--color-border, #e2e8f0);
+}
+
+.content {
+  padding: 1.25rem;
+}

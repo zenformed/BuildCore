@@ -1,0 +1,39 @@
+'use client';
+
+import React from 'react';
+import { env } from '@/infrastructure/config/env';
+import { BrandingProvider } from '@/presentation/providers/BrandingProvider';
+import { SaaSProfileProvider } from '@/presentation/providers/SaaSProfileProvider';
+import { TenantProvider } from '@/presentation/providers/TenantProvider';
+import { SaaSAuthGate } from '@/presentation/components/SaaSAuth/SaaSAuthGate';
+
+export interface BuildCoreRootGateProps {
+  children: React.ReactNode;
+}
+
+/**
+ * SaaS-only root: ZenformedCore-backed profile + entitlement gate (no file/mock first-run in this repo).
+ */
+export function BuildCoreRootGate({ children }: BuildCoreRootGateProps): React.ReactElement {
+  if (!env.isSaasMode) {
+    return (
+      <div style={{ minHeight: '100vh', padding: '2rem', fontFamily: 'system-ui, sans-serif' }}>
+        <h1 style={{ marginTop: 0 }}>BuildCore</h1>
+        <p>
+          Set <code>NEXT_PUBLIC_SAAS_MODE=true</code> with Supabase and ZenformedCore env vars (see{' '}
+          <code>.env.example</code>).
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <SaaSProfileProvider>
+      <SaaSAuthGate>
+        <BrandingProvider>
+          <TenantProvider>{children}</TenantProvider>
+        </BrandingProvider>
+      </SaaSAuthGate>
+    </SaaSProfileProvider>
+  );
+}

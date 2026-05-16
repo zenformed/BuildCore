@@ -1,0 +1,95 @@
+.toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  background: none;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  transition: color 0.2s ease, opacity 0.2s ease;
+}
+
+.toggle:hover {
+  color: var(--color-text);
+  opacity: 0.9;
+}
+
+.toggle:focus,
+.toggle:focus-visible {
+  outline: none;
+  box-shadow: none;
+}
+
+.icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 0;
+}
+
+.icon svg {
+  flex-shrink: 0;
+}
+
+/* Pill variant: track with sliding thumb, icon shows current theme */
+.pillRow {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.pillTrack {
+  width: 2.75rem;
+  height: 1.375rem;
+  padding: 0.125rem;
+  border-radius: 9999px;
+  background-color: var(--color-muted, #e2e8f0);
+  border: 1px solid var(--color-border, #cbd5e1);
+  cursor: pointer;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+  flex-shrink: 0;
+}
+
+.pillTrack:hover {
+  background-color: var(--color-border, #cbd5e1);
+}
+
+.pillTrack:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--color-primary);
+}
+
+.pillThumb {
+  display: block;
+  width: 1.125rem;
+  height: 1.125rem;
+  border-radius: 50%;
+  background-color: var(--color-surface, #fff);
+  border: 1px solid var(--color-border, #cbd5e1);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  transition: transform 0.2s ease;
+}
+
+.pillThumbLight {
+  transform: translateX(0);
+}
+
+.pillThumbDark {
+  transform: translateX(1.25rem);
+}
+
+.pillIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-text-muted, #64748b);
+  line-height: 0;
+}
+
+.pillIcon svg {
+  flex-shrink: 0;
+}

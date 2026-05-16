@@ -1,0 +1,24 @@
+.placeholderGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.placeholderCard {
+  padding: 1.25rem;
+  border-radius: 0.375rem;
+  border: 1px solid var(--theme-border-main, #e2e8f0);
+  background: var(--theme-surface-main, #fff);
+}
+
+.placeholderCard h3 {
+  margin: 0 0 0.5rem;
+  font-size: 1rem;
+}
+
+.placeholderCard p {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--color-text-muted, #64748b);
+}

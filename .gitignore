@@ -1,0 +1,50 @@
+node_modules
+
+# Env files (secrets). .env.example is committed as a template.
+.env
+.env.local
+.env.*.local
+.env.production
+
+# Keys and credentials
+*.pem
+*.key
+credentials.json
+service-account*.json
+secrets.json
+
+# Phase 1 file-backed auth (contains user emails, password hashes, recovery key hash)
+data/users.json
+data/users.json.*
+
+# Shop branding (shop name + logo)
+data/config.json
+data/branding/
+
+# User profile photos (uploaded/browse avatars)
+data/user-photos/
+
+# Kanban column order (local preference)
+data/settings.json
+
+# Next.js
+.next
+out
+.vercel
+
+# Electron build
+dist
+build
+
+# TypeScript incremental build cache (local only)
+*.tsbuildinfo
+
+# Debug / logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+.pnpm-debug.log*
+
+# Optional: IDE / OS
+# .DS_Store
+# .idea

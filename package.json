@@ -1,0 +1,50 @@
+{
+  "name": "buildcore",
+  "version": "0.1.0",
+  "description": "Construction/trades CRM consuming app (Zenformed platform shell)",
+  "author": "Zenformed LLC",
+  "private": true,
+  "main": "electron/main.js",
+  "scripts": {
+    "dev": "next dev -H 0.0.0.0 -p 3020",
+    "build": "next build",
+    "start": "next start -p 3020",
+    "lint": "next lint",
+    "typecheck": "tsc --noEmit",
+    "electron:dev": "concurrently -k \"npm run dev\" \"wait-on http://localhost:3020 && cross-env ELECTRON_DEV=1 PORT=3020 electron .\""
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.45.0",
+    "@zenformed/core": "file:../zenformed-core-package",
+    "jose": "^6.1.3",
+    "next": "14.2.15",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-easy-crop": "^5.5.6"
+  },
+  "devDependencies": {
+    "@types/node": "^22.9.0",
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "concurrently": "^9.1.0",
+    "cross-env": "^7.0.3",
+    "electron": "^33.2.0",
+    "eslint": "^8.57.0",
+    "eslint-config-next": "14.2.15",
+    "typescript": "~5.6.3",
+    "wait-on": "^8.0.1"
+  },
+  "build": {
+    "appId": "com.zenformed.buildcore",
+    "productName": "BuildCore",
+    "directories": { "output": "dist" },
+    "asar": false,
+    "extraResources": [
+      { "from": ".next/standalone", "to": "standalone" },
+      {
+        "from": "src/platform/appDefinitions/buildcore-app-runtime.json",
+        "to": "buildcore-app-runtime.json"
+      }
+    ]
+  }
+}
