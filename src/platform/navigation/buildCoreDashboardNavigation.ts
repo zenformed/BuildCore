@@ -21,11 +21,19 @@ export const buildCoreDashboardNavigation = {
   sidebar: {
     ariaLabel: 'Primary navigation',
     items: [
-      { id: 'home' as const, label: 'Home', title: 'Home' },
+      { id: 'projects' as const, label: 'Projects', title: 'All projects' },
       { id: 'overview' as const, label: 'Overview', title: 'Overview' },
     ],
   },
   header: {
+    search: {
+      placeholder: 'Search projects…',
+      ariaLabel: 'Search projects',
+    },
+    newProject: {
+      title: 'New project (coming soon)',
+      ariaLabel: 'New project',
+    },
     account: {
       menuTriggerAriaLabel: 'Account menu',
       planAriaLabelPrefix: 'Plan:',

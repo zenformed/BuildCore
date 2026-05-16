@@ -1,12 +1,14 @@
 # BuildCore
 
-Initial **Zenformed consuming app shell** for a construction/trades CRM. This pass registers the app with ZenformedCore and boots SaaS auth + dashboard chrome via `@zenformed/core` — no CRM features yet.
+Zenformed **consuming app shell** for a future construction/trades CRM. Boots SaaS auth and shared dashboard chrome via `@zenformed/core` — **no CRM features yet**.
+
+**Progress, phases, and roadmap:** [docs/PROGRESS.md](docs/PROGRESS.md)
 
 ## Prerequisites
 
 - Node 20+
-- Sibling checkout: `../zenformed-core-package` and (optional) `../ZenformedCore` HTTP server
-- Same Supabase project as ForgeCore when using SaaS mode
+- Sibling checkout: `../zenformed-core-package` (and ZenformedCore HTTP API for BFF relays)
+- Same Supabase project as other Zenformed apps when using SaaS mode
 
 ## Setup
 
@@ -18,7 +20,14 @@ cp .env.example .env.local
 npm run dev
 ```
 
-App listens on **http://localhost:3020**.
+App: **http://localhost:3020**
+
+From monorepo root (`../`):
+
+```bash
+npm install
+npm run typecheck:buildcore
+```
 
 ## Environment (`.env.local`)
 
@@ -27,7 +36,7 @@ App listens on **http://localhost:3020**.
 | `NEXT_PUBLIC_SUPABASE_URL` | SaaS | Supabase project URL |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | SaaS | Supabase anon key |
 | `NEXT_PUBLIC_SAAS_MODE` | yes | Must be `true` for this shell |
-| `ZENFORMED_CORE_API_URL` | recommended | e.g. `http://localhost:4000` — BFF relays profile/entitlement/branding |
+| `ZENFORMED_CORE_API_URL` | recommended | ZenformedCore on Railway or `http://localhost:4000` |
 
 Optional: `ZENFORMED_APP_SLUG=buildcore` (Electron only; manifest default is `buildcore`).
 
@@ -36,32 +45,31 @@ Optional: `ZENFORMED_APP_SLUG=buildcore` (Electron only; manifest default is `bu
 1. **HTTP registry** — `ZenformedCore/config/registered-apps.json` includes `buildcore`.
 2. **Supabase** — run `ZenformedCore/sql/seed-buildcore-platform.sql` on the shared DB.
 
-Verify Core lookup:
+Verify Core:
 
 ```bash
 curl http://localhost:4000/apps/buildcore
-```
-
-With a user JWT:
-
-```bash
 curl -H "Authorization: Bearer <token>" http://localhost:4000/apps/buildcore/entitlement
 ```
 
-BuildCore BFF (with dev server running):
+BuildCore BFF (dev server running):
 
 - `GET http://localhost:3020/api/internal/apps/buildcore/entitlement`
 - `GET http://localhost:3020/api/internal/users-me-profile`
 
 ## Verify auth + placeholder dashboard
 
-1. Open `http://localhost:3020` → redirects to `/login` or `/dashboard`.
-2. Sign in with a Supabase user that has an active profile/entitlement for `buildcore`.
-3. Dashboard shows authenticated shell placeholder (sidebar, header, settings) — not CRM data.
+1. Open http://localhost:3020 → `/login` or `/dashboard`.
+2. Sign in with a Supabase user entitled for `buildcore`.
+3. Dashboard shows shell placeholder (sidebar, header, settings) — not CRM data.
+4. Blur/refocus the browser tab — dashboard should stay visible (no full-page loading flash).
 
 ## Shared package reuse
 
-UI shell primitives come from `@zenformed/core/dashboard-shell` (`ZenformedDashboardAppShell`, settings drawer, license lockout, etc.). App-specific code lives under `src/platform/` and thin `BuildCore*` dashboard chrome.
+- `@zenformed/core` — browser Supabase singleton, `resolveSaasProfileAuthReaction`, entitlement helpers
+- `@zenformed/core/dashboard-shell` — `ZenformedDashboardAppShell`, settings drawer, page loading, sidebar branding
+
+App-specific code: `src/platform/`, `src/presentation/components/DashboardShell/`, thin feature hooks.
 
 ## Electron (optional)
 
@@ -69,5 +77,14 @@ UI shell primitives come from `@zenformed/core/dashboard-shell` (`ZenformedDashb
 npm run electron:dev
 ```
 
-Uses `PORT=3020` and `buildcore-app-runtime.json` from `src/platform/appDefinitions/`.
-# BuildCore
+Uses port **3020** and `src/platform/appDefinitions/buildcore-app-runtime.json`.
+
+## Scripts
+
+| Script | Description |
+|--------|-------------|
+| `npm run dev` | Dev server (port 3020) |
+| `npm run build` | Production build |
+| `npm run start` | Start production server |
+| `npm run typecheck` | TypeScript check |
+| `npm run lint` | Next ESLint |

@@ -3,6 +3,7 @@
 import type { ReactElement } from 'react';
 import { useBuildCoreDashboard } from '@/presentation/features/buildCoreDashboard/useBuildCoreDashboard';
 import { BuildCoreSidebar } from '@/presentation/components/DashboardShell/BuildCoreSidebar';
+import { CrmProjectsPipeline } from '@/presentation/components/CrmProjects/CrmProjectsPipeline';
 import {
   pickDashboardLayoutClassNames,
   pickDashboardPageLoadingClassNames,
@@ -42,6 +43,8 @@ export default function DashboardPage(): ReactElement {
     );
   }
 
+  const showProjects = dash.sidebarNav === 'projects';
+
   return (
     <ZenformedDashboardAppShell classNames={{ appLayout: layoutClassNames.appLayout }}>
       <ZenformedDashboardSidebarRow
@@ -71,6 +74,10 @@ export default function DashboardPage(): ReactElement {
         mainColumn={
           <>
             <BuildCoreDashboardHeader
+              searchQuery={dash.projectsSearchQuery}
+              onSearchQueryChange={dash.setProjectsSearchQuery}
+              showProjectActions={showProjects}
+              onNewProjectClick={dash.onNewProjectClick}
               user={dash.user ? { email: dash.user.email } : null}
               effectiveLicenseTier={dash.effectiveLicenseTier}
               isAdmin={dash.isAdmin}
@@ -82,16 +89,22 @@ export default function DashboardPage(): ReactElement {
               onRequestProfilePhotoModal={() => dash.setProfilePhotoModalOpen(true)}
             />
             <main className={shellStyles.mainContent}>
-              <h1 className={shellStyles.headerTitle}>{content.dashboard.title}</h1>
-              <div className={localStyles.placeholderGrid}>
-                <div className={localStyles.placeholderCard}>
-                  <h3>{content.dashboard.placeholderCardTitle}</h3>
-                  <p>{content.dashboard.placeholderCardBody}</p>
-                </div>
-                <div className={localStyles.placeholderCard}>
-                  <h3>{content.dashboard.placeholderCardTitle}</h3>
-                  <p>{content.dashboard.placeholderCardBody}</p>
-                </div>
+              <h1 className={shellStyles.headerTitle}>
+                {showProjects ? content.dashboard.title : content.dashboard.overviewTitle}
+              </h1>
+              <div className={shellStyles.listViewWrap}>
+                {showProjects ? (
+                  <CrmProjectsPipeline
+                    searchQuery={dash.projectsSearchQuery}
+                    stageFilter={dash.stageFilter}
+                    priorityFilter={dash.priorityFilter}
+                    onStageFilterChange={dash.setStageFilter}
+                    onPriorityFilterChange={dash.setPriorityFilter}
+                    onProjectRowClick={dash.onProjectRowClick}
+                  />
+                ) : (
+                  <p className={localStyles.overviewMessage}>{content.dashboard.overviewBody}</p>
+                )}
               </div>
             </main>
           </>

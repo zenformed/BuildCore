@@ -14,8 +14,11 @@ import { useUserAvatar } from '@/presentation/hooks/useUserAvatar';
 import { useTenant } from '@/presentation/providers';
 import { computeIsAdmin } from '@/presentation/features/buildCoreDashboard/buildCoreDashboardViewModel';
 import type { BuildCoreSettingsSectionId } from '@/platform/navigation/buildCoreDashboardNavigation';
+import type { CrmProjectSummary } from '@/domain/crm';
+import type { CrmPriorityFilter, CrmStageFilter } from '@/presentation/features/crmProjects/crmProjectsPipelineViewModel';
+import type { BuildCoreSidebarNavId } from '@/presentation/components/DashboardShell/BuildCoreSidebar';
 
-export type BuildCoreSidebarNavId = 'home' | 'overview';
+export type { BuildCoreSidebarNavId };
 
 export function useBuildCoreDashboard(): {
   user: User | null;
@@ -48,6 +51,14 @@ export function useBuildCoreDashboard(): {
   logoUploading: boolean;
   headerLogoFileInputRef: RefObject<HTMLInputElement>;
   handleLogoFileChange: (e: ChangeEvent<HTMLInputElement>) => Promise<void>;
+  projectsSearchQuery: string;
+  setProjectsSearchQuery: (query: string) => void;
+  stageFilter: CrmStageFilter;
+  setStageFilter: (value: CrmStageFilter) => void;
+  priorityFilter: CrmPriorityFilter;
+  setPriorityFilter: (value: CrmPriorityFilter) => void;
+  onProjectRowClick: (project: CrmProjectSummary) => void;
+  onNewProjectClick: () => void;
 } {
   const { user, isLoading: authLoading, signOut } = useAuth();
   const { shopName, logoUrl, hasLogo, isLoading: brandingLoading, refetch: refetchBranding } = useBranding();
@@ -70,7 +81,23 @@ export function useBuildCoreDashboard(): {
   const [settingsSection, setSettingsSection] = useState<BuildCoreSettingsSectionId>('about');
   const [signOutModalOpen, setSignOutModalOpen] = useState(false);
   const [profilePhotoModalOpen, setProfilePhotoModalOpen] = useState(false);
-  const [sidebarNav, setSidebarNav] = useState<BuildCoreSidebarNavId>('home');
+  const [sidebarNav, setSidebarNav] = useState<BuildCoreSidebarNavId>('projects');
+  const [projectsSearchQuery, setProjectsSearchQuery] = useState('');
+  const [stageFilter, setStageFilter] = useState<CrmStageFilter>('all');
+  const [priorityFilter, setPriorityFilter] = useState<CrmPriorityFilter>('all');
+
+  const onProjectRowClick = useCallback((project: CrmProjectSummary) => {
+    if (process.env.NODE_ENV === 'development') {
+      // Phase 3: router.push(`/projects/${project.slug}`)
+      console.info('[buildcore] project row selected', project.slug);
+    }
+  }, []);
+
+  const onNewProjectClick = useCallback(() => {
+    if (process.env.NODE_ENV === 'development') {
+      console.info('[buildcore] new project — not implemented');
+    }
+  }, []);
 
   useEffect(() => {
     if (user?.tenantId) {
@@ -119,5 +146,13 @@ export function useBuildCoreDashboard(): {
     logoUploading,
     headerLogoFileInputRef,
     handleLogoFileChange,
+    projectsSearchQuery,
+    setProjectsSearchQuery,
+    stageFilter,
+    setStageFilter,
+    priorityFilter,
+    setPriorityFilter,
+    onProjectRowClick,
+    onNewProjectClick,
   };
 }

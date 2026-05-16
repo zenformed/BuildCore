@@ -1,0 +1,151 @@
+# BuildCore — progress and roadmap
+
+Last updated: 2026-05-16
+
+## 1. Project overview
+
+**BuildCore** is a Zenformed **consuming app** (Next.js + optional Electron) aimed at becoming a CRM and workflow platform for construction and service-trade businesses: HVAC, restoration, roofing, inspections, make-ready, general contractors, and similar field-service operations.
+
+| Piece | Role |
+|-------|------|
+| **ZenformedCore** | Hosted platform API on Railway — app registry, entitlements, org branding, profile relay, capabilities |
+| **ForgeCore** | Reference consuming app (job board / operations) — patterns for auth, BFF relays, dashboard shell |
+| **BuildCore** | Thin CRM-oriented shell today; product UI and domain logic come later |
+| **`@zenformed/core`** | Shared package (`../zenformed-core-package`) — auth client singleton, entitlement helpers, `dashboard-shell` UI primitives |
+
+BuildCore does **not** own platform data or auth storage. It uses Supabase for identity/session and calls ZenformedCore through Next.js BFF routes under `app/api/internal/`.
+
+---
+
+## 2. Current architecture assumptions
+
+- **Shared auth** — Single browser Supabase client per app (`storageKey: buildcore-auth`), `SaaSProfileProvider`, `SaaSAuthGate`, soft refresh on tab focus via `@zenformed/core` (`resolveSaasProfileAuthReaction`).
+- **Shared shell** — Dashboard chrome from `@zenformed/core/dashboard-shell` (`ZenformedDashboardAppShell`, sidebar branding, settings drawer, header patterns).
+- **ZenformedCore on Railway** — `ZENFORMED_CORE_API_URL` points at the deployed Core HTTP API; local dev may use `http://localhost:4000`.
+- **Mock-first frontend** — Next phases add TypeScript domain models and in-memory/mock data before any CRM schema or APIs.
+- **No CRM backend yet** — No project/workflow tables, no dynamic workflow engine, no CRM-specific ZenformedCore endpoints beyond standard profile/entitlement/branding relays.
+- **BFF pattern** — Browser → BuildCore Next routes → ZenformedCore (Bearer from Supabase session).
+
+### Repo layout (high level)
+
+```
+BuildCore/
+  app/                    # Next.js App Router (login, dashboard, api BFF)
+  src/
+    application/          # ports, use cases (e.g. GetCurrentUser)
+    domain/               # entities, value objects
+    infrastructure/       # Supabase, Core API client, config, auth adapter
+    domain/crm/           # CRM types (project, contact, pipeline, workflow, documents)
+    platform/             # appDefinitions, navigation, content, mock/crm fixtures
+    presentation/         # providers, hooks, dashboard shell components, SaaS auth UI
+    shared/di/              # composition root
+  electron/               # optional desktop wrapper
+  docs/                   # this file
+```
+
+Root gate: `BuildCoreRootGate` → `SaaSProfileProvider` → `SaaSAuthGate` → `BrandingProvider` → `TenantProvider` → pages.
+
+---
+
+## 3. Completed work
+
+- [x] **App registration** — `appSlug`: `buildcore` in `src/platform/appDefinitions/buildcore-app-runtime.json`; ZenformedCore registry + SQL seed documented in README (`registered-apps.json`, `seed-buildcore-platform.sql`).
+- [x] **Local boot** — Dev server on port **3020** (`npm run dev`).
+- [x] **SaaS auth flow** — Login, profile relay (`/api/internal/users-me-profile`), entitlement relay, onboarding/password/license gates (shared pattern with ForgeCore).
+- [x] **Placeholder dashboard** — Sidebar, header, settings drawer, branding/avatar hooks; no CRM data yet.
+- [x] **CRM mock foundation (Phase 1)** — Types under `src/domain/crm/`; 20 mock projects under `src/platform/mock/crm/` (default 12-stage pipeline).
+- [x] **All-projects table (Phase 2)** — Mock pipeline table on `/dashboard` with header search, stage/priority filters, ForgeCore-aligned table chrome.
+- [x] **Shared runtime fixes** (workspace + BuildCore):
+  - Singleton Supabase browser client (`getOrCreateBrowserSupabaseAuthClient`) — no duplicate GoTrueClient.
+  - npm workspaces / hoisted deps at `ZenformedCore/` root (avoids cross-app `node_modules` type bleed).
+  - Soft profile refresh on token refresh / tab focus (no full-page loading shell when profile already mounted).
+  - BuildCore-specific gate/dashboard guards so `useAuth` remount does not flash loading after focus.
+
+---
+
+## 4. Development phases
+
+| Phase | Focus | Status |
+|-------|--------|--------|
+| **0** | Documentation and alignment (this doc, README, shared patterns with ForgeCore) | Done |
+| **1** | Frontend mock foundation — domain types, mock fixtures, folder conventions | Done |
+| **2** | All-projects pipeline table (search, sort, filter) | Done |
+| **3** | Single project detail page | **Next** |
+| **4** | UX and component refinement (shell + CRM widgets) | Planned |
+| **5** | Backend planning — schema, ZenformedCore APIs, workflow engine | Planned (no implementation yet) |
+
+---
+
+## 5. Planned CRM concepts (vision)
+
+Product direction (frontend-first until Phase 5):
+
+- **All-projects table** — Pipeline view of jobs/projects; searchable, sortable, filterable rows.
+- **Project detail page** — Single project hub: status, stage, assignees, key dates.
+- **Workflow stages** — Configurable stage columns or stepper (concept only until engine exists).
+- **Accountability** — Who owns each stage/task; handoff visibility.
+- **Documents** — Upload/download concepts per project/stage (UI + mock URLs first).
+- **Stage progress** — Visual progress across workflow (bar, checklist, or kanban-style).
+- **Milestones / payments** — Optional milestone markers and payment state (display-only in mock phase).
+
+No implementation of these surfaces until Phase 1–2 mock data exists.
+
+---
+
+## 6. Local development commands
+
+From **BuildCore** (`ZenformedCore/BuildCore`):
+
+| Command | Purpose |
+|---------|---------|
+| `npm install` | Install deps (workspace: run from monorepo root `ZenformedCore/` when linking siblings) |
+| `cp .env.example .env.local` | Create env file |
+| `npm run dev` | Next dev server → **http://localhost:3020** |
+| `npm run build` | Production build |
+| `npm run start` | Production server on 3020 |
+| `npm run typecheck` | `tsc --noEmit` |
+| `npm run lint` | ESLint (Next) |
+| `npm run electron:dev` | Electron + Next (optional) |
+
+From **monorepo root** (`ZenformedCore/`):
+
+| Command | Purpose |
+|---------|---------|
+| `npm install` | Install all workspaces |
+| `npm run typecheck` | Typecheck all packages/apps |
+| `npm run typecheck:buildcore` | BuildCore only |
+
+ZenformedCore HTTP (sibling `ZenformedCore/ZenformedCore` — separate package): run per that repo’s README for local `:4000` API.
+
+---
+
+## 7. Validation checklist
+
+Before merging CRM UI work, confirm:
+
+- [ ] App boots at http://localhost:3020
+- [ ] SaaS login succeeds for a user with `buildcore` entitlement
+- [ ] Dashboard shell renders (sidebar, header, placeholder content)
+- [ ] Tab/window blur → refocus does **not** show full-page “Loading…”
+- [ ] Network tab: no burst of `users-me-profile` / branding on focus
+- [ ] Hard refresh still bootstraps (loading shell on cold start is OK)
+- [ ] Logout / login still works
+- [ ] `npm run typecheck` passes (app or monorepo root)
+
+---
+
+## 8. Immediate next step
+
+**Phase 3 — single project detail page (frontend only):**
+
+1. Route `/projects/[slug]` (or drawer) using `getMockCrmProjectDetailBySlug`.
+2. Contact card, stage progress, workflow tasks, documents, milestone/payment blocks.
+3. Wire row click from `CrmProjectsTable` to navigation (replaces dev-only `console.info`).
+
+---
+
+## Reference
+
+- Quick setup: [../README.md](../README.md)
+- ForgeCore: `ForgeCore/ForgeCore` (reference consuming app)
+- Shared package: `zenformed-core-package` (`@zenformed/core`)

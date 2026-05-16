@@ -14,12 +14,41 @@ export const buildCoreDashboardContent = {
     logoSaveFailedFallback: 'Failed to save logo',
   },
   dashboard: {
-    title: 'Dashboard',
-    placeholderCardTitle: 'BuildCore shell',
-    placeholderCardBody:
-      'Authenticated placeholder — CRM features (leads, projects, workflows) are not implemented in this pass.',
+    title: 'Projects',
+    overviewTitle: 'Overview',
+    overviewBody: 'Pipeline metrics and reports will appear here in a later phase.',
     aboutSectionTitle: 'BuildCore',
     aboutSectionBody:
       'Construction/trades CRM shell: SaaS auth, ZenformedCore profile/entitlement relay, and shared dashboard chrome from @zenformed/core.',
+  },
+  crm: {
+    resultCount: (filtered: number, total: number): string =>
+      `Showing ${filtered} of ${total} projects`,
+    filters: {
+      toolbarAriaLabel: 'Project filters',
+      stageLabel: 'Stage',
+      stageAll: 'All stages',
+      priorityLabel: 'Priority',
+      priorityAll: 'All priorities',
+    },
+    table: {
+      regionAriaLabel: 'All projects',
+      empty: 'No projects match your search or filters.',
+      unassigned: 'Unassigned',
+      rowAriaLabel: (name: string): string => `Open project ${name}`,
+      columns: {
+        project: 'Project / customer',
+        contact: 'Contact',
+        phone: 'Phone',
+        priority: 'Priority',
+        stage: 'Stage',
+        waitingOn: 'Waiting on',
+        notes: 'Notes',
+        dealValue: 'Deal value',
+        balance: 'Balance',
+        assigned: 'Assigned',
+        updated: 'Updated',
+      },
+    },
   },
 } as const;
