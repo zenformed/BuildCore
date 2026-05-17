@@ -3,9 +3,7 @@
 import { useMemo } from 'react';
 import type { CrmProjectDetail } from '@/domain/crm';
 import { getCrmProjectDetailBySlug as getCrmProjectDetailBySlugUseCase } from '@/application/use-cases/crm';
-import { getCrmRepositories } from '@/infrastructure/crm/crmRepositories';
-
-const crmRepositories = getCrmRepositories();
+import { crmRepositories } from '@/shared/di/container';
 
 export type CrmProjectDetailState =
   | { status: 'loading' }

@@ -3,14 +3,12 @@
 import { useMemo } from 'react';
 import type { CrmProjectSummary } from '@/domain/crm';
 import { listCrmProjectSummaries } from '@/application/use-cases/crm';
-import { getCrmRepositories } from '@/infrastructure/crm/crmRepositories';
+import { crmRepositories } from '@/shared/di/container';
 import {
   filterCrmProjectSummaries,
   type CrmPriorityFilter,
   type CrmStageFilter,
 } from './crmProjectsPipelineViewModel';
-
-const crmRepositories = getCrmRepositories();
 
 export function useCrmProjectsPipeline(
   searchQuery: string,

@@ -13,6 +13,8 @@ Last updated: 2026-05-16
 | **BuildCore** | Thin CRM-oriented shell today; product UI and domain logic come later |
 | **`@zenformed/core`** | Shared package (`../zenformed-core-package`) — auth client singleton, entitlement helpers, `dashboard-shell` UI primitives |
 
+**Architecture standard (all consuming apps):** [ZENFORMED_CONSUMING_APP_ARCHITECTURE.md](./ZENFORMED_CONSUMING_APP_ARCHITECTURE.md)
+
 BuildCore does **not** own platform data or auth storage. It uses Supabase for identity/session and calls ZenformedCore through Next.js BFF routes under `app/api/internal/`.
 
 ---
@@ -74,7 +76,8 @@ Root gate: `BuildCoreRootGate` → `SaaSProfileProvider` → `SaaSAuthGate` → 
 | **4** | UX and component refinement (shell + CRM widgets) | Done |
 | **5** | Backend planning — schema, BFF, boundaries | Done (plan only) |
 | **6** | Repository/service abstraction (mock provider; API-ready) | Done |
-| **7** | Backend read-only implementation (migrations + BFF) | **Next** |
+| **6b** | Consuming-app architecture standard (documentation) | Done |
+| **7** | Backend read-only implementation (migrations + BFF) | **Paused** — see architecture doc before resuming |
 
 ---
 
@@ -144,13 +147,17 @@ Before merging CRM UI work, confirm:
 
 ## 8. Immediate next step
 
-**Phase 7 — backend read-only:** migrations (dev), API repository implementations, `GET /api/crm/projects` and `GET /api/crm/projects/:slug`. See [CRM_BACKEND_PLAN.md](./CRM_BACKEND_PLAN.md).
+**Phase 7 — backend read-only (paused):** migrations (dev), API repository implementations, `GET /api/crm/projects` and `GET /api/crm/projects/:slug`. See [CRM_BACKEND_PLAN.md](./CRM_BACKEND_PLAN.md). Align implementation with [ZENFORMED_CONSUMING_APP_ARCHITECTURE.md](./ZENFORMED_CONSUMING_APP_ARCHITECTURE.md) before starting.
 
 ### Phase 6 — done
 
 - CRM ports under `src/application/ports/crm/`; mock implementations under `src/infrastructure/crm/mock/`.
 - `getCrmRepositories()` factory + `NEXT_PUBLIC_CRM_DATA_SOURCE` (`mock` \| `api`).
 - Hooks use `listCrmProjectSummaries` / `getCrmProjectDetailBySlug` use cases (no direct `platform/mock/crm` imports in presentation).
+
+### Phase 6b — done
+
+- [ZENFORMED_CONSUMING_APP_ARCHITECTURE.md](./ZENFORMED_CONSUMING_APP_ARCHITECTURE.md) — layer rules, managers → ports/adapters, mock isolation, ForgeCore vs BuildCore patterns.
 
 ### Phase 5 — done (planning only)
 
@@ -175,6 +182,7 @@ Before merging CRM UI work, confirm:
 ## Reference
 
 - Quick setup: [../README.md](../README.md)
+- **Consuming-app architecture:** [ZENFORMED_CONSUMING_APP_ARCHITECTURE.md](./ZENFORMED_CONSUMING_APP_ARCHITECTURE.md)
 - **CRM backend plan:** [CRM_BACKEND_PLAN.md](./CRM_BACKEND_PLAN.md)
 - ForgeCore: `ForgeCore/ForgeCore` (reference consuming app)
 - Shared package: `zenformed-core-package` (`@zenformed/core`)

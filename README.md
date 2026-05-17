@@ -4,6 +4,8 @@ Zenformed **consuming app shell** for a future construction/trades CRM. Boots Sa
 
 **Progress, phases, and roadmap:** [docs/PROGRESS.md](docs/PROGRESS.md)
 
+**Consuming-app architecture (Zenformed standard):** [docs/ZENFORMED_CONSUMING_APP_ARCHITECTURE.md](docs/ZENFORMED_CONSUMING_APP_ARCHITECTURE.md)
+
 ## Prerequisites
 
 - Node 20+
