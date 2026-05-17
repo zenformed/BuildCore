@@ -38,7 +38,8 @@ export function WorkflowStageTaskGroup({
     <section className={groupClass} aria-label={group.stageLabel}>
       <header className={styles.stageGroupHeader}>
         <h4 className={styles.stageGroupTitle}>
-          {content.projectDetail.workflow.stageGroupPrefix} {group.stageLabel}
+          <span className={styles.stageGroupPrefix}>{content.projectDetail.workflow.stageGroupPrefix}</span>
+          <span className={styles.stageGroupName}>{group.stageLabel}</span>
         </h4>
         <span className={styles.stageGroupCount}>
           {group.tasks.length} {group.tasks.length === 1 ? wf.taskSingular : wf.taskPlural}
@@ -67,9 +68,7 @@ export function WorkflowStageTaskGroup({
                 </span>
               </span>
               <span className={styles.documentsCell} title={wf.documentsCountSuffix}>
-                <span className={styles.documentsIcon} aria-hidden>
-                  📎
-                </span>
+                <span className={styles.documentsIcon} aria-hidden />
                 {docCount === 0 ? (
                   <span className={styles.documentsCountMuted}>{wf.documentsNone}</span>
                 ) : (

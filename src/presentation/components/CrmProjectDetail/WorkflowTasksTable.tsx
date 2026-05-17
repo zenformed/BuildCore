@@ -30,7 +30,7 @@ export function WorkflowTasksTable({
         <h3 id="workflow-tasks-heading" className={styles.cardTitle}>
           {content.projectDetail.sections.workflow}
         </h3>
-        <button type="button" className={styles.editBtn} onClick={onAddTask}>
+        <button type="button" className={`${styles.editBtn} ${styles.primaryBtn}`} onClick={onAddTask}>
           {wf.addTask}
         </button>
       </div>

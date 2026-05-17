@@ -77,76 +77,87 @@
 
 .statusBadge {
   display: inline-block;
-  padding: 0.15rem 0.4rem;
-  border-radius: 0.25rem;
+  padding: 0.1875rem 0.4375rem;
+  border-radius: 999px;
   font-size: 0.6875rem;
-  font-weight: 500;
+  font-weight: 600;
   text-transform: capitalize;
-  line-height: 1.2;
+  line-height: 1.25;
+  border: 1px solid transparent;
 }
 
 .statusBadge_done {
   background: #dcfce7;
   color: #15803d;
+  border-color: #bbf7d0;
 }
 
 .statusBadge_in_progress {
   background: #dbeafe;
   color: #1d4ed8;
+  border-color: #bfdbfe;
 }
 
 .statusBadge_blocked {
   background: #fee2e2;
   color: #b91c1c;
+  border-color: #fecaca;
 }
 
 .statusBadge_pending,
 .statusBadge_skipped {
   background: var(--color-muted, #f1f5f9);
   color: var(--color-text-muted, #64748b);
+  border-color: #e2e8f0;
 }
 
 :global([data-theme='dark']) .statusBadge_done {
   background: #14532d;
   color: #86efac;
+  border-color: #166534;
 }
 
 :global([data-theme='dark']) .statusBadge_in_progress {
   background: #1e3a5f;
   color: #93c5fd;
+  border-color: #1e40af;
 }
 
 :global([data-theme='dark']) .statusBadge_blocked {
   background: #7f1d1d;
   color: #fecaca;
+  border-color: #991b1b;
 }
 
 :global([data-theme='dark']) .statusBadge_pending,
 :global([data-theme='dark']) .statusBadge_skipped {
   background: #1a1d26;
   color: #94a3b8;
+  border-color: #3d3e4a;
 }
 
 .docStatusReviewed {
   display: inline-block;
-  padding: 0.15rem 0.4rem;
-  border-radius: 0.25rem;
-  font-size: 0.6875rem;
-  font-weight: 500;
-  line-height: 1.2;
+  padding: 0.1875rem 0.4375rem;
+  border-radius: 999px;
+  font-size: 0.625rem;
+  font-weight: 600;
+  line-height: 1.25;
   background: #dcfce7;
   color: #15803d;
+  border: 1px solid #bbf7d0;
 }
 
 .docStatusPending {
   display: inline-block;
-  padding: 0.15rem 0.4rem;
-  border-radius: 0.25rem;
-  font-size: 0.6875rem;
-  font-weight: 500;
-  line-height: 1.2;
+  padding: 0.1875rem 0.4375rem;
+  border-radius: 999px;
+  font-size: 0.625rem;
+  font-weight: 600;
+  line-height: 1.25;
   background: #ffedd5;
   color: #c2410c;
+  border: 1px solid #fed7aa;
 }
 
 :global([data-theme='dark']) .docStatusReviewed {
