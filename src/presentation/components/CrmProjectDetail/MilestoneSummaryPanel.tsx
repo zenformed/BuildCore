@@ -4,7 +4,10 @@ import type { ReactElement } from 'react';
 import type { CrmMilestoneStatus, CrmProjectDetail } from '@/domain/crm';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
 import { formatCentsAsUsd } from '@/presentation/features/crmProjects/crmProjectFormatters';
-import { formatShortDate } from '@/presentation/features/crmProjectDetail/crmProjectDetailFormatters';
+import {
+  formatMilestoneStatus,
+  formatShortDate,
+} from '@/presentation/features/crmProjectDetail/crmProjectDetailFormatters';
 import styles from './ProjectDetail.module.css';
 
 function milestoneStatusClass(status: CrmMilestoneStatus): string {
@@ -51,7 +54,9 @@ export function MilestoneSummaryPanel({ project }: MilestoneSummaryPanelProps): 
                 {milestone.label} · {formatCentsAsUsd(milestone.amountCents)}
                 {milestone.dueAt ? ` · due ${formatShortDate(milestone.dueAt)}` : null}
               </span>
-              <span className={milestoneStatusClass(milestone.status)}>{milestone.status}</span>
+              <span className={milestoneStatusClass(milestone.status)}>
+                {formatMilestoneStatus(milestone.status)}
+              </span>
             </li>
           ))}
         </ul>

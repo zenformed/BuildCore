@@ -136,7 +136,13 @@ Before merging CRM UI work, confirm:
 
 ## 8. Immediate next step
 
-**Phase 4 — TBD** (e.g. project edit/save, document uploads, or overview metrics).
+**Phase 5 — TBD** (e.g. project edit/save, document uploads, or overview metrics).
+
+### Phase 4 — done
+
+- Workflow-first detail layout (pipeline → tasks primary column, side rail for contact/financials/docs).
+- Shared `crmShared.module.css` for pills, badges, avatars (list + detail).
+- Stage chip row, task sorting/highlighting, document status badges, summary strip.
 
 ### Phase 3 — done
 

@@ -5,10 +5,11 @@ import type { CrmPriority, CrmProjectSummary } from '@/domain/crm';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
 import { formatStageLabel, formatTradeLabel } from '@/presentation/features/crmProjects/crmProjectFormatters';
 import { BackIcon } from '@/platform/icons/buildCoreDashboardShellIcons';
+import shared from '@/presentation/components/crmShared/crmShared.module.css';
 import styles from './ProjectDetail.module.css';
 
 function priorityClass(priority: CrmPriority): string {
-  return styles[`priority_${priority}`] ?? styles.priority_normal;
+  return shared[`priority_${priority}`] ?? shared.priority_normal;
 }
 
 export type ProjectDetailHeaderProps = {
@@ -31,7 +32,7 @@ export function ProjectDetailHeader({ project, onBack }: ProjectDetailHeaderProp
       </div>
       <div className={styles.pillRow}>
         <span className={priorityClass(project.priority)}>{project.priority}</span>
-        <span className={styles.stagePill}>{formatStageLabel(project.currentStageSlug)}</span>
+        <span className={shared.stagePill}>{formatStageLabel(project.currentStageSlug)}</span>
       </div>
     </div>
   );

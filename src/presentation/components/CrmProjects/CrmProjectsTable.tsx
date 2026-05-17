@@ -9,12 +9,13 @@ import {
   formatStageLabel,
   formatTradeLabel,
 } from '@/presentation/features/crmProjects/crmProjectFormatters';
+import shared from '@/presentation/components/crmShared/crmShared.module.css';
 import styles from './CrmProjects.module.css';
 
 const COLUMNS = content.crm.table.columns;
 
 function priorityClassName(priority: CrmPriority): string {
-  return styles[`priority_${priority}`] ?? styles.priority_normal;
+  return shared[`priority_${priority}`] ?? shared.priority_normal;
 }
 
 export type CrmProjectsTableProps = {
@@ -94,7 +95,7 @@ function ProjectRow({
         <span className={priorityClassName(project.priority)}>{project.priority}</span>
       </span>
       <span className={styles.gridCell} role="cell">
-        <span className={styles.stagePill}>{formatStageLabel(project.currentStageSlug)}</span>
+        <span className={shared.stagePill}>{formatStageLabel(project.currentStageSlug)}</span>
       </span>
       <span className={styles.gridCell} role="cell" title={project.waitingOn ?? undefined}>
         {project.waitingOn ?? '—'}
@@ -110,11 +111,11 @@ function ProjectRow({
       </span>
       <span className={styles.gridCell} role="cell">
         {project.assignedTo ? (
-          <span className={styles.assignee} title={project.assignedTo.displayName}>
+          <span className={shared.avatar} title={project.assignedTo.displayName}>
             {project.assignedTo.initials}
           </span>
         ) : (
-          <span className={`${styles.assignee} ${styles.assigneeUnassigned}`} title={content.crm.table.unassigned}>
+          <span className={`${shared.avatar} ${shared.avatarUnassigned}`} title={content.crm.table.unassigned}>
             —
           </span>
         )}

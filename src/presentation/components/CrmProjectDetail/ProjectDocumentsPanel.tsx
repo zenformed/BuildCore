@@ -9,6 +9,7 @@ import {
   formatFileSize,
   formatShortDate,
 } from '@/presentation/features/crmProjectDetail/crmProjectDetailFormatters';
+import shared from '@/presentation/components/crmShared/crmShared.module.css';
 import { TeamMemberAvatar } from './TeamMemberAvatar';
 import styles from './ProjectDetail.module.css';
 
@@ -25,7 +26,7 @@ export function ProjectDocumentsPanel({ project }: ProjectDocumentsPanelProps): 
       <h3 id="project-documents-heading" className={styles.cardTitle}>
         {content.projectDetail.sections.documents}
       </h3>
-      <p className={styles.subtitle}>{content.projectDetail.documents.uploadHint}</p>
+      <p className={styles.cardHelper}>{content.projectDetail.documents.uploadHint}</p>
       {docs.length === 0 ? (
         <p className={styles.subtitle}>{content.projectDetail.documents.empty}</p>
       ) : (
@@ -39,7 +40,7 @@ export function ProjectDocumentsPanel({ project }: ProjectDocumentsPanelProps): 
           </div>
           {docs.map((doc) => (
             <div key={doc.id} className={`${styles.tableRow} ${styles.docGrid}`} role="row">
-              <span>
+              <span className={styles.docName} title={doc.name}>
                 {doc.name}
                 <span className={styles.accountabilityMeta}> · {formatFileSize(doc.sizeBytes)}</span>
               </span>
@@ -50,9 +51,11 @@ export function ProjectDocumentsPanel({ project }: ProjectDocumentsPanelProps): 
                 <TeamMemberAvatar member={doc.uploadedBy} />
               </span>
               <span>
-                {doc.reviewedAt
-                  ? content.projectDetail.documents.statusReviewed
-                  : content.projectDetail.documents.statusPending}
+                {doc.reviewedAt ? (
+                  <span className={shared.docStatusReviewed}>{content.projectDetail.documents.statusReviewed}</span>
+                ) : (
+                  <span className={shared.docStatusPending}>{content.projectDetail.documents.statusPending}</span>
+                )}
               </span>
             </div>
           ))}

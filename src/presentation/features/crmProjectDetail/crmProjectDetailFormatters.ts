@@ -21,3 +21,14 @@ export function formatDocumentKind(kind: string): string {
 export function formatWorkflowStatus(status: string): string {
   return status.replace(/_/g, ' ');
 }
+
+export function formatMilestoneStatus(status: string): string {
+  return status.charAt(0).toUpperCase() + status.slice(1);
+}
+
+/** Abbreviated stage label for compact pipeline chips. */
+export function shortStageLabel(label: string): string {
+  if (label.length <= 14) return label;
+  const first = label.split(' ')[0];
+  return first ?? label;
+}

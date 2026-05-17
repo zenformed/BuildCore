@@ -2,7 +2,7 @@
 
 import type { ReactElement } from 'react';
 import type { CrmTeamMemberRef } from '@/domain/crm';
-import styles from './ProjectDetail.module.css';
+import shared from '@/presentation/components/crmShared/crmShared.module.css';
 
 export type TeamMemberAvatarProps = {
   member: CrmTeamMemberRef;
@@ -15,7 +15,7 @@ export function TeamMemberAvatar({ member, title }: TeamMemberAvatarProps): Reac
       <img
         src={member.avatarUrl}
         alt=""
-        className={styles.avatar}
+        className={shared.avatar}
         title={title ?? member.displayName}
         width={24}
         height={24}
@@ -23,7 +23,7 @@ export function TeamMemberAvatar({ member, title }: TeamMemberAvatarProps): Reac
     );
   }
   return (
-    <span className={styles.avatar} title={title ?? member.displayName} aria-hidden>
+    <span className={shared.avatar} title={title ?? member.displayName} aria-hidden>
       {member.initials}
     </span>
   );

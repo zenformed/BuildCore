@@ -4,6 +4,7 @@ import type { ReactElement } from 'react';
 import { DEFAULT_PIPELINE_STAGES, type CrmStageProgress } from '@/domain/crm';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
 import { formatStageLabel } from '@/presentation/features/crmProjects/crmProjectFormatters';
+import { shortStageLabel } from '@/presentation/features/crmProjectDetail/crmProjectDetailFormatters';
 import styles from './ProjectDetail.module.css';
 
 export type StageProgressBarProps = {
@@ -11,7 +12,8 @@ export type StageProgressBarProps = {
 };
 
 export function StageProgressBar({ stageProgress }: StageProgressBarProps): ReactElement {
-  const currentOrder = DEFAULT_PIPELINE_STAGES.find((s) => s.slug === stageProgress.currentStageSlug)?.sortOrder ?? 0;
+  const current = DEFAULT_PIPELINE_STAGES.find((s) => s.slug === stageProgress.currentStageSlug);
+  const currentOrder = current?.sortOrder ?? 0;
   const completed = new Set(stageProgress.completedStageSlugs);
 
   return (
@@ -47,6 +49,22 @@ export function StageProgressBar({ stageProgress }: StageProgressBarProps): Reac
           {content.projectDetail.currentStage}: {formatStageLabel(stageProgress.currentStageSlug)} ({currentOrder}/
           {DEFAULT_PIPELINE_STAGES.length})
         </p>
+        <ul className={styles.stageChipList}>
+          {DEFAULT_PIPELINE_STAGES.map((stage) => {
+            let chipClass = styles.stageChip;
+            if (completed.has(stage.slug)) {
+              chipClass = `${styles.stageChip} ${styles.stageChip_done}`;
+            } else if (stage.slug === stageProgress.currentStageSlug) {
+              chipClass = `${styles.stageChip} ${styles.stageChip_current}`;
+            }
+            return (
+              <li key={stage.slug} className={chipClass} title={stage.label}>
+                <span className={styles.stageChipNum}>{stage.sortOrder}</span>
+                <span className={styles.stageChipLabel}>{shortStageLabel(stage.label)}</span>
+              </li>
+            );
+          })}
+        </ul>
       </div>
     </section>
   );

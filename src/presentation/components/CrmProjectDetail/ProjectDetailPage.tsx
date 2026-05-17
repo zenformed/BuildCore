@@ -32,12 +32,10 @@ export function ProjectDetailPage({ project, onBack }: ProjectDetailPageProps): 
         <MilestoneSummaryPanel project={project} />
       </div>
       <StageProgressBar stageProgress={project.stageProgress} />
+      <WorkflowTasksTable project={project} />
       <div className={styles.grid2}>
-        <WorkflowTasksTable project={project} />
-        <div className={styles.stackColumn}>
-          <ProjectDocumentsPanel project={project} />
-          <AccountabilityPanel project={project} />
-        </div>
+        <ProjectDocumentsPanel project={project} />
+        <AccountabilityPanel project={project} />
       </div>
     </div>
   );

@@ -12,11 +12,13 @@ export type ProjectContactCardProps = {
 
 export function ProjectContactCard({ project }: ProjectContactCardProps): ReactElement {
   const { summary, notes } = project;
+
   return (
     <section className={styles.card} aria-labelledby="project-contact-heading">
       <h3 id="project-contact-heading" className={styles.cardTitle}>
         {content.projectDetail.sections.contact}
       </h3>
+      <p className={styles.customerName}>{summary.client.name}</p>
       <dl className={styles.dl}>
         <div className={styles.dlRow}>
           <dt>{content.projectDetail.fields.contact}</dt>
@@ -31,10 +33,6 @@ export function ProjectContactCard({ project }: ProjectContactCardProps): ReactE
           <dd>{summary.contact.phone}</dd>
         </div>
         <div className={styles.dlRow}>
-          <dt>{content.projectDetail.fields.customer}</dt>
-          <dd>{summary.client.name}</dd>
-        </div>
-        <div className={styles.dlRow}>
           <dt>{content.projectDetail.fields.assigned}</dt>
           <dd>{summary.assignedTo?.displayName ?? content.projectDetail.unassigned}</dd>
         </div>
@@ -43,11 +41,7 @@ export function ProjectContactCard({ project }: ProjectContactCardProps): ReactE
           <dd>{formatRelativeUpdatedAt(summary.lastUpdatedAt)}</dd>
         </div>
       </dl>
-      {notes ? (
-        <p className={styles.subtitle} style={{ marginTop: '0.75rem' }}>
-          {notes}
-        </p>
-      ) : null}
+      {notes ? <p className={styles.notesBlock}>{notes}</p> : null}
     </section>
   );
 }

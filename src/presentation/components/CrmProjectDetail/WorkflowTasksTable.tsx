@@ -8,11 +8,13 @@ import {
   formatShortDate,
   formatWorkflowStatus,
 } from '@/presentation/features/crmProjectDetail/crmProjectDetailFormatters';
+import { sortWorkflowTasksForDisplay } from '@/presentation/features/crmProjectDetail/workflowTaskSort';
+import shared from '@/presentation/components/crmShared/crmShared.module.css';
 import { TeamMemberAvatar } from './TeamMemberAvatar';
 import styles from './ProjectDetail.module.css';
 
-function statusClass(status: WorkflowTaskStatus): string {
-  return styles[`status_${status}`] ?? styles.status_pending;
+function statusBadgeClass(status: WorkflowTaskStatus): string {
+  return shared[`statusBadge_${status}`] ?? shared.statusBadge_pending;
 }
 
 export type WorkflowTasksTableProps = {
@@ -21,7 +23,8 @@ export type WorkflowTasksTableProps = {
 
 export function WorkflowTasksTable({ project }: WorkflowTasksTableProps): ReactElement {
   const cols = content.projectDetail.workflow.columns;
-  const tasks = [...project.workflowTasks].sort((a, b) => a.sortOrder - b.sortOrder);
+  const currentStage = project.summary.currentStageSlug;
+  const tasks = sortWorkflowTasksForDisplay(project.workflowTasks, currentStage);
 
   return (
     <section className={styles.card} aria-labelledby="workflow-tasks-heading">
@@ -39,21 +42,31 @@ export function WorkflowTasksTable({ project }: WorkflowTasksTableProps): ReactE
             <span role="columnheader">{cols.assignee}</span>
             <span role="columnheader">{cols.due}</span>
           </div>
-          {tasks.map((task) => (
-            <div key={task.id} className={`${styles.tableRow} ${styles.workflowGrid}`} role="row">
-              <span>{task.title}</span>
-              <span>{formatStageLabel(task.stageSlug)}</span>
-              <span className={statusClass(task.status)}>{formatWorkflowStatus(task.status)}</span>
-              <span>
-                {task.assignedTo ? (
-                  <TeamMemberAvatar member={task.assignedTo} />
-                ) : (
-                  content.projectDetail.unassigned
-                )}
-              </span>
-              <span>{formatShortDate(task.dueAt)}</span>
-            </div>
-          ))}
+          {tasks.map((task) => {
+            const isCurrentStage = task.stageSlug === currentStage;
+            const rowClass = isCurrentStage
+              ? `${styles.tableRow} ${styles.workflowGrid} ${styles.tableRow_current}`
+              : `${styles.tableRow} ${styles.workflowGrid}`;
+            return (
+              <div key={task.id} className={rowClass} role="row">
+                <span>{task.title}</span>
+                <span>{formatStageLabel(task.stageSlug)}</span>
+                <span>
+                  <span className={`${shared.statusBadge} ${statusBadgeClass(task.status)}`}>
+                    {formatWorkflowStatus(task.status)}
+                  </span>
+                </span>
+                <span>
+                  {task.assignedTo ? (
+                    <TeamMemberAvatar member={task.assignedTo} />
+                  ) : (
+                    content.projectDetail.unassigned
+                  )}
+                </span>
+                <span>{formatShortDate(task.dueAt)}</span>
+              </div>
+            );
+          })}
         </div>
       )}
     </section>
