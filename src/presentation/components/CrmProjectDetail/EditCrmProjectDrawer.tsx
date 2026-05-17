@@ -2,7 +2,8 @@
 
 import type { FormEvent, ReactElement } from 'react';
 import { useCallback, useEffect, useState } from 'react';
-import { DEFAULT_PIPELINE_STAGES, type CrmPriority, type CrmProjectDetail } from '@/domain/crm';
+import { DEFAULT_PIPELINE_STAGES, type CrmPriority, type CrmProjectDetail, type CrmTradeType } from '@/domain/crm';
+import { CRM_TRADE_TYPE_OPTIONS } from '@/presentation/features/crmProjects/crmProjectFormatters';
 import { updateCrmProject } from '@/application/use-cases/crm';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
 import { MOCK_CRM_TEAM_MEMBERS } from '@/platform/mock/crm';
@@ -129,6 +130,24 @@ const validated = validateProjectDetailForm(form);
                 onChange={(e) => updateField('name', e.target.value)}
                 autoFocus
               />
+            </div>
+
+            <div className={styles.field}>
+              <label className={styles.label} htmlFor="crm-edit-trade">
+                {edit.fields.tradeType} *
+              </label>
+              <select
+                id="crm-edit-trade"
+                className={styles.select}
+                value={form.tradeType}
+                onChange={(e) => updateField('tradeType', e.target.value as CrmTradeType)}
+              >
+                {CRM_TRADE_TYPE_OPTIONS.map((opt) => (
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </option>
+                ))}
+              </select>
             </div>
 
             <div className={styles.field}>

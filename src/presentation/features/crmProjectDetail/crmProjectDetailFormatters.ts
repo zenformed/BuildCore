@@ -26,7 +26,7 @@ export function formatMilestoneStatus(status: string): string {
   return status.charAt(0).toUpperCase() + status.slice(1);
 }
 
-/** Abbreviated stage label for compact pipeline chips. */
+/** Abbreviated stage label for very tight UI (not used on the detail pipeline timeline). */
 export function shortStageLabel(label: string): string {
   if (label.length <= 14) return label;
   const first = label.split(' ')[0];

@@ -17,6 +17,15 @@ export type CrmTradeType =
   | 'make-ready'
   | 'general-contractor';
 
+export const CRM_TRADE_TYPES: readonly CrmTradeType[] = [
+  'hvac',
+  'roofing',
+  'restoration',
+  'inspections',
+  'make-ready',
+  'general-contractor',
+] as const;
+
 /** Row shape for the future all-projects pipeline table. */
 export type CrmProjectSummary = {
   readonly id: string;

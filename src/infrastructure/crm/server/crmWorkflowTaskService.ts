@@ -46,7 +46,7 @@ async function getTaskForOrg(
   const { data, error } = await supabase
     .from('crm_workflow_tasks')
     .select(
-      'id, project_id, title, stage_slug, status, notes, due_at, completed_at, assigned_member_id, completed_by_member_id, sort_order'
+      'id, project_id, title, stage_slug, status, documents_required, notes, due_at, completed_at, assigned_member_id, completed_by_member_id, sort_order'
     )
     .eq('id', taskId)
     .eq('organization_id', organizationId)
@@ -81,13 +81,14 @@ export async function createCrmWorkflowTaskForOrg(
       title: input.title,
       stage_slug: input.stageSlug,
       status: input.status,
+      documents_required: input.documentsRequired,
       notes: input.notes,
       due_at: input.dueAt,
       assigned_member_id: input.assignedMemberId,
       sort_order: sortOrder,
     })
     .select(
-      'id, project_id, title, stage_slug, status, notes, due_at, completed_at, assigned_member_id, completed_by_member_id, sort_order'
+      'id, project_id, title, stage_slug, status, documents_required, notes, due_at, completed_at, assigned_member_id, completed_by_member_id, sort_order'
     )
     .single();
 
@@ -130,6 +131,7 @@ export async function updateCrmWorkflowTaskForOrg(
   if (input.status !== undefined) patch.status = input.status;
   if (input.dueAt !== undefined) patch.due_at = input.dueAt;
   if (input.notes !== undefined) patch.notes = input.notes;
+  if (input.documentsRequired !== undefined) patch.documents_required = input.documentsRequired;
   if (input.assignedMemberId !== undefined) patch.assigned_member_id = input.assignedMemberId;
 
   if (nextStatus === 'done' && existing.status !== 'done') {
@@ -146,7 +148,7 @@ export async function updateCrmWorkflowTaskForOrg(
     .eq('id', input.taskId)
     .eq('organization_id', organizationId)
     .select(
-      'id, project_id, title, stage_slug, status, notes, due_at, completed_at, assigned_member_id, completed_by_member_id, sort_order'
+      'id, project_id, title, stage_slug, status, documents_required, notes, due_at, completed_at, assigned_member_id, completed_by_member_id, sort_order'
     )
     .single();
 

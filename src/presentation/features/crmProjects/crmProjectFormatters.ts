@@ -1,7 +1,7 @@
-import { getPipelineStage, type CrmTradeType, type PipelineStageSlug } from '@/domain/crm';
+import { CRM_TRADE_TYPES, getPipelineStage, type CrmTradeType, type PipelineStageSlug } from '@/domain/crm';
 
 /** Display labels for `CrmProjectSummary.tradeType` (not client industry/type). */
-const TRADE_LABELS: Record<CrmTradeType, string> = {
+export const TRADE_LABELS: Record<CrmTradeType, string> = {
   hvac: 'HVAC',
   roofing: 'Roofing',
   restoration: 'Restoration',
@@ -45,4 +45,13 @@ export function formatTradeLabel(trade: CrmTradeType | string): string {
 /** Trade subtitle under project title — only when trade_type is set on the project row. */
 export function getProjectTradeSubtitle(tradeType: CrmTradeType): string | null {
   return TRADE_LABELS[tradeType] ?? null;
+}
+
+export const CRM_TRADE_TYPE_OPTIONS = CRM_TRADE_TYPES.map((value) => ({
+  value,
+  label: TRADE_LABELS[value],
+}));
+
+export function isCrmTradeType(value: string): value is CrmTradeType {
+  return (CRM_TRADE_TYPES as readonly string[]).includes(value);
 }

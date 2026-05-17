@@ -43,6 +43,11 @@ function asIsoOrNull(value: unknown): string | null {
   return value;
 }
 
+function asBoolean(value: unknown): boolean | null {
+  if (typeof value === 'boolean') return value;
+  return null;
+}
+
 export function validateCreateWorkflowTaskBody(
   body: WorkflowTaskBody
 ): { ok: true; input: Omit<CreateCrmWorkflowTaskInput, 'projectId'> } | { ok: false; message: string } {
@@ -55,12 +60,18 @@ export function validateCreateWorkflowTaskBody(
   const status = asStatus(body.status);
   if (!status) return { ok: false, message: 'Status is invalid.' };
 
+  const documentsRequired = asBoolean(body.documentsRequired);
+  if (documentsRequired == null) {
+    return { ok: false, message: 'Documents required must be true or false.' };
+  }
+
   return {
     ok: true,
     input: {
       title,
       stageSlug,
       status,
+      documentsRequired,
       dueAt: asIsoOrNull(body.dueAt),
       notes: asOptionalString(body.notes),
       assignedMemberId: asOptionalUserId(body.assignedMemberId),
@@ -75,6 +86,7 @@ export function validateUpdateWorkflowTaskBody(
     title?: string;
     stageSlug?: PipelineStageSlug;
     status?: WorkflowTaskStatus;
+    documentsRequired?: boolean;
     dueAt?: string | null;
     notes?: string | null;
     assignedMemberId?: string | null;
@@ -98,6 +110,13 @@ export function validateUpdateWorkflowTaskBody(
   if ('dueAt' in body) patch.dueAt = asIsoOrNull(body.dueAt);
   if ('notes' in body) patch.notes = asOptionalString(body.notes);
   if ('assignedMemberId' in body) patch.assignedMemberId = asOptionalUserId(body.assignedMemberId);
+  if ('documentsRequired' in body) {
+    const documentsRequired = asBoolean(body.documentsRequired);
+    if (documentsRequired == null) {
+      return { ok: false, message: 'Documents required must be true or false.' };
+    }
+    patch.documentsRequired = documentsRequired;
+  }
 
   if (Object.keys(patch).length === 0) {
     return { ok: false, message: 'No fields to update.' };

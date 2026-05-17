@@ -9,6 +9,7 @@ export function projectDetailToFormState(project: CrmProjectDetail): CreateCrmPr
   const { summary, notes } = project;
   return {
     name: summary.name,
+    tradeType: summary.tradeType,
     contactName: summary.contact.name,
     email: summary.contact.email,
     phone: summary.contact.phone,

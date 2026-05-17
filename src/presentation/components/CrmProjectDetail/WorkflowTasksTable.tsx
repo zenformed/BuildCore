@@ -1,11 +1,18 @@
 'use client';
 
 import type { ReactElement } from 'react';
+import { useState } from 'react';
 import type { CrmProjectDetail, CrmWorkflowTask } from '@/domain/crm';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
 import { countDocumentsByTaskId } from '@/presentation/features/crmProjectDetail/workflowDocumentCounts';
-import { groupWorkflowTasksByStage } from '@/presentation/features/crmProjectDetail/workflowTaskGroups';
+import {
+  countWorkflowTasksInGroups,
+  groupWorkflowTasksByStage,
+  limitWorkflowTaskGroups,
+  WORKFLOW_TASKS_PREVIEW_LIMIT,
+} from '@/presentation/features/crmProjectDetail/workflowTaskGroups';
 import { WorkflowStageTaskGroup } from './WorkflowStageTaskGroup';
+import { WorkflowTasksListDrawer } from './WorkflowTasksListDrawer';
 import styles from './ProjectDetail.module.css';
 
 export type WorkflowTasksTableProps = {
@@ -20,8 +27,14 @@ export function WorkflowTasksTable({
   onEditTask,
 }: WorkflowTasksTableProps): ReactElement {
   const wf = content.projectDetail.workflow;
+  const [allTasksOpen, setAllTasksOpen] = useState(false);
   const currentStage = project.summary.currentStageSlug;
   const groups = groupWorkflowTasksByStage(project.workflowTasks, currentStage);
+  const totalTasks = countWorkflowTasksInGroups(groups);
+  const hasMoreTasks = totalTasks > WORKFLOW_TASKS_PREVIEW_LIMIT;
+  const previewGroups = hasMoreTasks
+    ? limitWorkflowTaskGroups(groups, WORKFLOW_TASKS_PREVIEW_LIMIT)
+    : groups;
   const docCounts = countDocumentsByTaskId(project.documents);
 
   return (
@@ -38,7 +51,7 @@ export function WorkflowTasksTable({
         <p className={styles.subtitle}>{wf.empty}</p>
       ) : (
         <div className={styles.stageGroupStack}>
-          {groups.map((group) => (
+          {previewGroups.map((group) => (
             <WorkflowStageTaskGroup
               key={group.stageSlug}
               group={group}
@@ -49,6 +62,21 @@ export function WorkflowTasksTable({
           ))}
         </div>
       )}
+      {hasMoreTasks ? (
+        <button
+          type="button"
+          className={styles.panelFooterLink}
+          onClick={() => setAllTasksOpen(true)}
+        >
+          {wf.viewAll}
+        </button>
+      ) : null}
+      <WorkflowTasksListDrawer
+        open={allTasksOpen}
+        project={project}
+        onClose={() => setAllTasksOpen(false)}
+        onEditTask={onEditTask}
+      />
     </section>
   );
 }

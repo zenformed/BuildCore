@@ -41,6 +41,7 @@ export async function updateCrmProjectBySlugForOrg(
     .from('crm_projects')
     .update({
       name: input.name,
+      trade_type: input.tradeType,
       priority: input.priority,
       current_stage_slug: input.currentStageSlug,
       waiting_on: input.waitingOn,

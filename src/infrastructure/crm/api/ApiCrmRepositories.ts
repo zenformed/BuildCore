@@ -202,6 +202,8 @@ export class ApiCrmWorkflowTasksRepository implements ICrmWorkflowTasksRepositor
 
         status: input.status,
 
+        documentsRequired: input.documentsRequired,
+
         dueAt: input.dueAt,
 
         notes: input.notes,
@@ -231,6 +233,8 @@ export class ApiCrmWorkflowTasksRepository implements ICrmWorkflowTasksRepositor
         stageSlug: input.stageSlug,
 
         status: input.status,
+
+        documentsRequired: input.documentsRequired,
 
         dueAt: input.dueAt,
 

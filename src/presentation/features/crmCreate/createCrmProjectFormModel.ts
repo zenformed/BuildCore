@@ -1,9 +1,8 @@
-import type { CreateCrmProjectInput } from '@/domain/crm';
-import type { CrmPriority } from '@/domain/crm';
-import type { PipelineStageSlug } from '@/domain/crm';
+import type { CreateCrmProjectInput, CrmPriority, CrmTradeType, PipelineStageSlug } from '@/domain/crm';
 
 export type CreateCrmProjectFormState = {
   name: string;
+  tradeType: CrmTradeType;
   contactName: string;
   email: string;
   phone: string;
@@ -18,6 +17,7 @@ export type CreateCrmProjectFormState = {
 
 export const defaultCreateCrmProjectFormState = (): CreateCrmProjectFormState => ({
   name: '',
+  tradeType: 'hvac',
   contactName: '',
   email: '',
   phone: '',
@@ -67,6 +67,7 @@ export function validateCreateCrmProjectForm(
     ok: true,
     input: {
       name,
+      tradeType: form.tradeType,
       contactName,
       email: form.email.trim(),
       phone: form.phone.trim(),

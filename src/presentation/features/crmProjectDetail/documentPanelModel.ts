@@ -19,7 +19,9 @@ export function filterDocumentPanelItems(
   }
 
   const missingItems: DocumentListItem[] = tasks
-    .filter((task) => (docByTaskId.get(task.id)?.length ?? 0) === 0)
+    .filter(
+      (task) => task.documentsRequired && (docByTaskId.get(task.id)?.length ?? 0) === 0
+    )
     .map((task) => ({ kind: 'missing' as const, task }));
 
   if (filter === 'missing') {

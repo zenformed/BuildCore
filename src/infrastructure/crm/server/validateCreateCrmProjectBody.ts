@@ -1,6 +1,6 @@
 import type { CreateCrmProjectInput } from '@/domain/crm/createProject';
-import type { CrmPriority } from '@/domain/crm';
-import { DEFAULT_PIPELINE_STAGES, type PipelineStageSlug } from '@/domain/crm';
+import type { CrmPriority, CrmTradeType } from '@/domain/crm';
+import { CRM_TRADE_TYPES, DEFAULT_PIPELINE_STAGES, type PipelineStageSlug } from '@/domain/crm';
 
 const PRIORITIES: readonly CrmPriority[] = ['low', 'normal', 'high', 'urgent'];
 const STAGE_SLUGS = new Set(DEFAULT_PIPELINE_STAGES.map((s) => s.slug));
@@ -11,6 +11,7 @@ export type CreateCrmProjectBody = {
   email?: unknown;
   phone?: unknown;
   priority?: unknown;
+  tradeType?: unknown;
   currentStageSlug?: unknown;
   waitingOn?: unknown;
   notes?: unknown;
@@ -48,6 +49,11 @@ function asPriority(value: unknown): CrmPriority | null {
   return (PRIORITIES as readonly string[]).includes(value) ? (value as CrmPriority) : null;
 }
 
+function asTradeType(value: unknown): CrmTradeType | null {
+  if (typeof value !== 'string') return null;
+  return (CRM_TRADE_TYPES as readonly string[]).includes(value) ? (value as CrmTradeType) : null;
+}
+
 function asStageSlug(value: unknown): PipelineStageSlug | null {
   if (typeof value !== 'string') return null;
   return STAGE_SLUGS.has(value as PipelineStageSlug) ? (value as PipelineStageSlug) : null;
@@ -76,6 +82,11 @@ export function validateCreateCrmProjectBody(body: CreateCrmProjectBody): Valida
     return { ok: false, message: 'Priority is invalid.' };
   }
 
+  const tradeType = asTradeType(body.tradeType);
+  if (!tradeType) {
+    return { ok: false, message: 'Trade type is invalid.' };
+  }
+
   const currentStageSlug = asStageSlug(body.currentStageSlug);
   if (!currentStageSlug) {
     return { ok: false, message: 'Current stage is invalid.' };
@@ -95,6 +106,7 @@ export function validateCreateCrmProjectBody(body: CreateCrmProjectBody): Valida
     ok: true,
     input: {
       name,
+      tradeType,
       contactName,
       email: typeof body.email === 'string' ? body.email.trim() : '',
       phone: typeof body.phone === 'string' ? body.phone.trim() : '',

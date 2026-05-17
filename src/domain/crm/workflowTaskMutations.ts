@@ -6,6 +6,7 @@ export type CreateCrmWorkflowTaskInput = {
   readonly title: string;
   readonly stageSlug: PipelineStageSlug;
   readonly status: WorkflowTaskStatus;
+  readonly documentsRequired: boolean;
   readonly dueAt: string | null;
   readonly notes: string | null;
   readonly assignedMemberId: string | null;
@@ -16,6 +17,7 @@ export type UpdateCrmWorkflowTaskInput = {
   readonly title?: string;
   readonly stageSlug?: PipelineStageSlug;
   readonly status?: WorkflowTaskStatus;
+  readonly documentsRequired?: boolean;
   readonly dueAt?: string | null;
   readonly notes?: string | null;
   readonly assignedMemberId?: string | null;

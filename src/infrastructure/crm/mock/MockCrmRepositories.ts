@@ -86,6 +86,8 @@ function applyProjectUpdate(detail: CrmProjectDetail, input: UpdateCrmProjectInp
 
     name: input.name,
 
+    tradeType: input.tradeType,
+
     contact: {
 
       ...detail.summary.contact,
@@ -248,6 +250,8 @@ export class MockCrmWorkflowTasksRepository implements ICrmWorkflowTasksReposito
 
       status: input.status,
 
+      documentsRequired: input.documentsRequired,
+
       notes: input.notes,
 
       assignedTo: assignee,
@@ -310,6 +314,8 @@ export class MockCrmWorkflowTasksRepository implements ICrmWorkflowTasksReposito
       stageSlug: input.stageSlug ?? found.task.stageSlug,
 
       status: input.status ?? found.task.status,
+
+      documentsRequired: input.documentsRequired ?? found.task.documentsRequired,
 
       notes: input.notes !== undefined ? input.notes : found.task.notes,
 

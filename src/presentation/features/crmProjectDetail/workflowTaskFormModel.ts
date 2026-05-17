@@ -1,10 +1,13 @@
 import type { CrmWorkflowTask, PipelineStageSlug, WorkflowTaskStatus } from '@/domain/crm';
 import type { CreateCrmWorkflowTaskInput, UpdateCrmWorkflowTaskInput } from '@/domain/crm';
 
+export type DocumentsRequiredChoice = 'yes' | 'no';
+
 export type WorkflowTaskFormState = {
   title: string;
   stageSlug: PipelineStageSlug;
   status: WorkflowTaskStatus;
+  documentsRequired: DocumentsRequiredChoice;
   dueAt: string;
   notes: string;
   assignedMemberId: string;
@@ -17,6 +20,7 @@ export function defaultWorkflowTaskFormState(
     title: '',
     stageSlug,
     status: 'pending',
+    documentsRequired: 'yes',
     dueAt: '',
     notes: '',
     assignedMemberId: '',
@@ -28,6 +32,7 @@ export function workflowTaskToFormState(task: CrmWorkflowTask): WorkflowTaskForm
     title: task.title,
     stageSlug: task.stageSlug,
     status: task.status,
+    documentsRequired: task.documentsRequired ? 'yes' : 'no',
     dueAt: task.dueAt ? task.dueAt.slice(0, 10) : '',
     notes: task.notes ?? '',
     assignedMemberId: task.assignedTo?.id ?? '',
@@ -45,6 +50,7 @@ export function validateWorkflowTaskForm(
       title,
       stageSlug: form.stageSlug,
       status: form.status,
+      documentsRequired: form.documentsRequired === 'yes',
       dueAt: form.dueAt.trim() ? `${form.dueAt.trim()}T12:00:00.000Z` : null,
       notes: form.notes.trim() || null,
       assignedMemberId: form.assignedMemberId.trim() || null,

@@ -3,7 +3,6 @@
 import type { CSSProperties, ReactElement } from 'react';
 import { DEFAULT_PIPELINE_STAGES, type CrmStageProgress, type PipelineStageSlug } from '@/domain/crm';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
-import { shortStageLabel } from '@/presentation/features/crmProjectDetail/crmProjectDetailFormatters';
 import styles from './ProjectDetail.module.css';
 
 type StageNodeState = 'done' | 'current' | 'upcoming';
@@ -54,7 +53,7 @@ export function StageProgressBar({ stageProgress }: StageProgressBarProps): Reac
           return (
             <li key={stage.slug} className={styles.pipelineStep} title={stage.label}>
               <span className={nodeClass} aria-hidden />
-              <span className={labelClass}>{shortStageLabel(stage.label)}</span>
+              <span className={labelClass}>{stage.label}</span>
             </li>
           );
         })}

@@ -8,6 +8,7 @@ export type CrmWorkflowTask = {
   readonly stageSlug: PipelineStageSlug;
   readonly title: string;
   readonly status: WorkflowTaskStatus;
+  readonly documentsRequired: boolean;
   readonly notes: string | null;
   readonly assignedTo: CrmTeamMemberRef | null;
   readonly dueAt: string | null;

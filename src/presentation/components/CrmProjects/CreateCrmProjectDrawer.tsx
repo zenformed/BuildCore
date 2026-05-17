@@ -3,7 +3,8 @@
 import type { FormEvent, ReactElement } from 'react';
 import { useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { DEFAULT_PIPELINE_STAGES, type CrmPriority } from '@/domain/crm';
+import { DEFAULT_PIPELINE_STAGES, type CrmPriority, type CrmTradeType } from '@/domain/crm';
+import { CRM_TRADE_TYPE_OPTIONS } from '@/presentation/features/crmProjects/crmProjectFormatters';
 import { createCrmProject } from '@/application/use-cases/crm';
 import { getCrmDataSource } from '@/infrastructure/config/crmDataSource';
 import { CrmCreateNotAvailableError } from '@/infrastructure/crm/errors';
@@ -131,6 +132,24 @@ export function CreateCrmProjectDrawer({ open, onClose }: CreateCrmProjectDrawer
                 onChange={(e) => updateField('name', e.target.value)}
                 autoFocus
               />
+            </div>
+
+            <div className={styles.field}>
+              <label className={styles.label} htmlFor="crm-create-trade">
+                {create.fields.tradeType} *
+              </label>
+              <select
+                id="crm-create-trade"
+                className={styles.select}
+                value={form.tradeType}
+                onChange={(e) => updateField('tradeType', e.target.value as CrmTradeType)}
+              >
+                {CRM_TRADE_TYPE_OPTIONS.map((opt) => (
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </option>
+                ))}
+              </select>
             </div>
 
             <div className={styles.field}>

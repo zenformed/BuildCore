@@ -181,14 +181,29 @@ export function WorkflowTaskDrawer({
                 </select>
               </div>
             </div>
-            <div className={formStyles.field}>
-              <label className={formStyles.label}>{wf.fields.due}</label>
-              <input
-                type="date"
-                className={formStyles.input}
-                value={form.dueAt}
-                onChange={(e) => updateField('dueAt', e.target.value)}
-              />
+            <div className={formStyles.rowTwoCol}>
+              <div className={formStyles.field}>
+                <label className={formStyles.label}>{wf.fields.documentsRequired}</label>
+                <select
+                  className={formStyles.select}
+                  value={form.documentsRequired}
+                  onChange={(e) =>
+                    updateField('documentsRequired', e.target.value as WorkflowTaskFormState['documentsRequired'])
+                  }
+                >
+                  <option value="yes">{wf.fields.documentsRequiredYes}</option>
+                  <option value="no">{wf.fields.documentsRequiredNo}</option>
+                </select>
+              </div>
+              <div className={formStyles.field}>
+                <label className={formStyles.label}>{wf.fields.due}</label>
+                <input
+                  type="date"
+                  className={formStyles.input}
+                  value={form.dueAt}
+                  onChange={(e) => updateField('dueAt', e.target.value)}
+                />
+              </div>
             </div>
             <div className={formStyles.field}>
               <label className={formStyles.label}>{wf.fields.notes}</label>

@@ -101,12 +101,14 @@ function defaultWorkflowTasks(
     title: string,
     status: WorkflowTaskStatus,
     sortOrder: number,
-    stage: PipelineStageSlug = stageSlug
+    stage: PipelineStageSlug = stageSlug,
+    documentsRequired = true
   ): CrmWorkflowTask => ({
     id,
     stageSlug: stage,
     title,
     status,
+    documentsRequired,
     notes: null,
     assignedTo: assignee,
     dueAt: '2026-05-20T17:00:00.000Z',

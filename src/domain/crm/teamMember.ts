@@ -4,4 +4,6 @@ export type CrmTeamMemberRef = {
   readonly displayName: string;
   readonly initials: string;
   readonly avatarUrl: string | null;
+  /** Profile email when loaded from Supabase; used for assignee tooltips. */
+  readonly email: string | null;
 };

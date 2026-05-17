@@ -18,6 +18,7 @@ export {
   type CrmProjectDetail,
   type CrmProjectSummary,
   type CrmStageProgress,
+  CRM_TRADE_TYPES,
   type CrmTradeType,
 } from './project';
 export type { CreateCrmProjectInput, CreateCrmProjectResult } from './createProject';

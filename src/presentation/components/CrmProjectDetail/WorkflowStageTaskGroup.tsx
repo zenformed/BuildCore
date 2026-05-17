@@ -9,6 +9,7 @@ import {
 } from '@/presentation/features/crmProjectDetail/crmProjectDetailFormatters';
 import type { WorkflowTaskStageGroup } from '@/presentation/features/crmProjectDetail/workflowTaskGroups';
 import shared from '@/presentation/components/crmShared/crmShared.module.css';
+import { TeamMemberAvatar } from './TeamMemberAvatar';
 import styles from './ProjectDetail.module.css';
 
 function statusBadgeClass(status: WorkflowTaskStatus): string {
@@ -50,6 +51,7 @@ export function WorkflowStageTaskGroup({
           <span role="columnheader">{cols.task}</span>
           <span role="columnheader">{cols.status}</span>
           <span role="columnheader">{cols.documents}</span>
+          <span role="columnheader">{cols.assigned}</span>
           <span role="columnheader">{cols.due}</span>
           <span role="columnheader">{cols.actions}</span>
         </div>
@@ -67,13 +69,32 @@ export function WorkflowStageTaskGroup({
                   {formatWorkflowStatus(task.status)}
                 </span>
               </span>
-              <span className={styles.documentsCell} title={wf.documentsCountSuffix}>
-                <span className={styles.documentsIcon} aria-hidden />
-                {docCount === 0 ? (
-                  <span className={styles.documentsCountMuted}>{wf.documentsNone}</span>
+              <span className={styles.documentsCell}>
+                {!task.documentsRequired ? (
+                  <span className={styles.documentsNotRequired}>{wf.documentsNotRequired}</span>
                 ) : (
-                  <span>
-                    {docCount} {wf.documentsCountSuffix}
+                  <>
+                    <span className={styles.documentsIcon} aria-hidden />
+                    {docCount === 0 ? (
+                      <span className={styles.documentsCountMuted}>{wf.documentsNone}</span>
+                    ) : (
+                      <span>
+                        {docCount} {wf.documentsCountSuffix}
+                      </span>
+                    )}
+                  </>
+                )}
+              </span>
+              <span className={styles.assignedCell}>
+                {task.assignedTo ? (
+                  <TeamMemberAvatar member={task.assignedTo} />
+                ) : (
+                  <span
+                    className={`${shared.avatar} ${shared.avatarUnassigned}`}
+                    title={wf.unassigned}
+                    aria-label={wf.unassigned}
+                  >
+                    —
                   </span>
                 )}
               </span>

@@ -62,6 +62,7 @@ export type DbCrmWorkflowTaskRow = {
   assigned_member_id: string | null;
   completed_by_member_id: string | null;
   sort_order: number;
+  documents_required: boolean;
 };
 
 export type DbCrmDocumentRow = {
@@ -201,6 +202,7 @@ export function mapProfileToTeamMemberRef(
     displayName,
     initials: initialsFromDisplayName(displayName),
     avatarUrl: null,
+    email: profile?.email ?? null,
   };
 }
 
@@ -279,6 +281,7 @@ export function mapDbWorkflowTask(
     stageSlug: asPipelineStageSlug(row.stage_slug),
     title: row.title,
     status: asWorkflowStatus(row.status),
+    documentsRequired: row.documents_required ?? true,
     notes: row.notes,
     assignedTo:
       row.assigned_member_id != null
