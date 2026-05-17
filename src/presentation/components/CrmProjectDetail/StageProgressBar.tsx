@@ -1,71 +1,64 @@
 'use client';
 
-import type { ReactElement } from 'react';
-import { DEFAULT_PIPELINE_STAGES, type CrmStageProgress } from '@/domain/crm';
+import type { CSSProperties, ReactElement } from 'react';
+import { DEFAULT_PIPELINE_STAGES, type CrmStageProgress, type PipelineStageSlug } from '@/domain/crm';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
-import { formatStageLabel } from '@/presentation/features/crmProjects/crmProjectFormatters';
 import { shortStageLabel } from '@/presentation/features/crmProjectDetail/crmProjectDetailFormatters';
 import styles from './ProjectDetail.module.css';
+
+type StageNodeState = 'done' | 'current' | 'upcoming';
+
+function resolveStageState(
+  slug: PipelineStageSlug,
+  currentSlug: PipelineStageSlug,
+  completed: ReadonlySet<PipelineStageSlug>
+): StageNodeState {
+  if (slug === currentSlug) return 'current';
+  if (completed.has(slug)) return 'done';
+  return 'upcoming';
+}
 
 export type StageProgressBarProps = {
   stageProgress: CrmStageProgress;
 };
 
 export function StageProgressBar({ stageProgress }: StageProgressBarProps): ReactElement {
-  const current = DEFAULT_PIPELINE_STAGES.find((s) => s.slug === stageProgress.currentStageSlug);
-  const currentOrder = current?.sortOrder ?? 0;
   const completed = new Set(stageProgress.completedStageSlugs);
+  const currentIndex = DEFAULT_PIPELINE_STAGES.findIndex((s) => s.slug === stageProgress.currentStageSlug);
+  const progressPct =
+    DEFAULT_PIPELINE_STAGES.length <= 1
+      ? 0
+      : (Math.max(0, currentIndex) / (DEFAULT_PIPELINE_STAGES.length - 1)) * 100;
 
   return (
-    <section className={styles.card} aria-labelledby="stage-progress-heading">
-      <h3 id="stage-progress-heading" className={styles.cardTitle}>
-        {content.projectDetail.sections.pipeline}
-      </h3>
-      <div className={styles.progressWrap}>
-        <div className={styles.progressTrack} role="list" aria-label={content.projectDetail.pipelineAriaLabel}>
-          {DEFAULT_PIPELINE_STAGES.map((stage) => {
-            let segmentClass = styles.progressSegment;
-            if (completed.has(stage.slug)) {
-              segmentClass = `${styles.progressSegment} ${styles.progressSegment_done}`;
-            } else if (stage.slug === stageProgress.currentStageSlug) {
-              segmentClass = `${styles.progressSegment} ${styles.progressSegment_current}`;
-            }
-            return (
-              <span
-                key={stage.slug}
-                className={segmentClass}
-                role="listitem"
-                title={stage.label}
-                aria-label={stage.label}
-              />
-            );
-          })}
-        </div>
-        <div className={styles.progressLabels}>
-          <span>{DEFAULT_PIPELINE_STAGES[0]?.label}</span>
-          <span>{DEFAULT_PIPELINE_STAGES[DEFAULT_PIPELINE_STAGES.length - 1]?.label}</span>
-        </div>
-        <p className={styles.progressCurrentLabel}>
-          {content.projectDetail.currentStage}: {formatStageLabel(stageProgress.currentStageSlug)} ({currentOrder}/
-          {DEFAULT_PIPELINE_STAGES.length})
-        </p>
-        <ul className={styles.stageChipList}>
-          {DEFAULT_PIPELINE_STAGES.map((stage) => {
-            let chipClass = styles.stageChip;
-            if (completed.has(stage.slug)) {
-              chipClass = `${styles.stageChip} ${styles.stageChip_done}`;
-            } else if (stage.slug === stageProgress.currentStageSlug) {
-              chipClass = `${styles.stageChip} ${styles.stageChip_current}`;
-            }
-            return (
-              <li key={stage.slug} className={chipClass} title={stage.label}>
-                <span className={styles.stageChipNum}>{stage.sortOrder}</span>
-                <span className={styles.stageChipLabel}>{shortStageLabel(stage.label)}</span>
-              </li>
-            );
-          })}
-        </ul>
-      </div>
+    <section className={styles.pipelinePanel} aria-label={content.projectDetail.pipelineAriaLabel}>
+      <ol
+        className={styles.pipelineTimeline}
+        style={{ '--pipeline-progress': `${progressPct}%` } as CSSProperties}
+      >
+        {DEFAULT_PIPELINE_STAGES.map((stage) => {
+          const state = resolveStageState(stage.slug, stageProgress.currentStageSlug, completed);
+          const nodeClass =
+            state === 'done'
+              ? `${styles.pipelineNode} ${styles.pipelineNode_done}`
+              : state === 'current'
+                ? `${styles.pipelineNode} ${styles.pipelineNode_current}`
+                : styles.pipelineNode;
+          const labelClass =
+            state === 'current'
+              ? `${styles.pipelineLabel} ${styles.pipelineLabel_current}`
+              : state === 'done'
+                ? `${styles.pipelineLabel} ${styles.pipelineLabel_done}`
+                : styles.pipelineLabel;
+
+          return (
+            <li key={stage.slug} className={styles.pipelineStep} title={stage.label}>
+              <span className={nodeClass} aria-hidden />
+              <span className={labelClass}>{shortStageLabel(stage.label)}</span>
+            </li>
+          );
+        })}
+      </ol>
     </section>
   );
 }

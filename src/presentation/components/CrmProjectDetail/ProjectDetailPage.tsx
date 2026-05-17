@@ -6,13 +6,13 @@ import type { CrmProjectDetail, CrmWorkflowTask } from '@/domain/crm';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
 import { AccountabilityPanel } from './AccountabilityPanel';
 import { EditCrmProjectDrawer } from './EditCrmProjectDrawer';
-import { MilestoneSummaryPanel } from './MilestoneSummaryPanel';
-import { ProjectContactCard } from './ProjectContactCard';
 import { ProjectDetailHeader } from './ProjectDetailHeader';
 import { ProjectDocumentsPanel } from './ProjectDocumentsPanel';
+import { ProjectSummaryStrip } from './ProjectSummaryStrip';
 import { StageProgressBar } from './StageProgressBar';
 import { WorkflowTaskDrawer } from './WorkflowTaskDrawer';
 import { WorkflowTasksTable } from './WorkflowTasksTable';
+import { DetailToast } from './DetailToast';
 import styles from './ProjectDetail.module.css';
 
 export type ProjectDetailPageProps = {
@@ -29,7 +29,7 @@ export function ProjectDetailPage({
   onRefresh,
 }: ProjectDetailPageProps): ReactElement {
   const [project, setProject] = useState(initialProject);
-  const [banner, setBanner] = useState<{ kind: 'success' | 'error'; message: string } | null>(null);
+  const [toast, setToast] = useState<{ kind: 'success' | 'error'; message: string } | null>(null);
   const [editOpen, setEditOpen] = useState(false);
   const [taskDrawer, setTaskDrawer] = useState<{
     open: boolean;
@@ -43,43 +43,37 @@ export function ProjectDetailPage({
 
   const handleProjectSaved = useCallback((next: CrmProjectDetail) => {
     setProject(next);
-    setBanner({ kind: 'success', message: content.projectDetail.saveSuccess });
+    setToast({ kind: 'success', message: content.projectDetail.saveSuccess });
   }, []);
 
   const handleTaskSaved = useCallback(async () => {
     try {
       await onRefresh();
-      setBanner({ kind: 'success', message: content.projectDetail.saveSuccess });
+      setToast({ kind: 'success', message: content.projectDetail.saveSuccess });
     } catch {
-      setBanner({ kind: 'error', message: content.projectDetail.saveError });
+      setToast({ kind: 'error', message: content.projectDetail.saveError });
     }
   }, [onRefresh]);
 
-  const nextStep = project.summary.waitingOn?.trim() || content.projectDetail.noNextStep;
+  const waitingOn = project.summary.waitingOn?.trim();
+  const showNextStep = Boolean(waitingOn && waitingOn !== content.projectDetail.noNextStep);
 
   return (
     <div className={styles.page}>
-      {banner ? (
-        <p className={banner.kind === 'error' ? styles.bannerError : styles.bannerSuccess}>{banner.message}</p>
-      ) : null}
+      {toast ? <DetailToast kind={toast.kind} message={toast.message} onDismiss={() => setToast(null)} /> : null}
 
-      <ProjectDetailHeader project={project.summary} onBack={onBack} />
-      <div className={styles.nextStep}>
-        <span className={styles.nextStepLabel}>{content.projectDetail.nextStepLabel}</span>
-        {nextStep}
+      <div className={styles.detailTop}>
+        <ProjectDetailHeader project={project.summary} onBack={onBack} onEdit={() => setEditOpen(true)} />
+        <ProjectSummaryStrip project={project} />
+        {showNextStep ? (
+          <p className={styles.nextStepCompact}>
+            <span className={styles.nextStepLabel}>{content.projectDetail.nextStepLabel}</span>
+            {waitingOn}
+          </p>
+        ) : null}
+        <StageProgressBar stageProgress={project.stageProgress} />
       </div>
 
-      <div className={styles.toolbar}>
-        <button type="button" className={styles.editBtn} onClick={() => setEditOpen(true)}>
-          {content.projectDetail.editProjectButton}
-        </button>
-      </div>
-
-      <div className={styles.grid2}>
-        <ProjectContactCard project={project} />
-        <MilestoneSummaryPanel project={project} />
-      </div>
-      <StageProgressBar stageProgress={project.stageProgress} />
       <div className={styles.workflowSplit}>
         <WorkflowTasksTable
           project={project}

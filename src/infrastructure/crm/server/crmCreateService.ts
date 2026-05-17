@@ -50,6 +50,7 @@ export async function createCrmProjectForOrg(
       name: input.name,
       client_id: clientRow.id,
       primary_contact_id: contactRow.id,
+      // Create form has no trade picker yet; DB default is also general-contractor (00001 migration).
       trade_type: 'general-contractor',
       priority: input.priority,
       current_stage_slug: input.currentStageSlug,

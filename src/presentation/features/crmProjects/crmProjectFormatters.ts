@@ -1,4 +1,14 @@
-import { getPipelineStage, type PipelineStageSlug } from '@/domain/crm';
+import { getPipelineStage, type CrmTradeType, type PipelineStageSlug } from '@/domain/crm';
+
+/** Display labels for `CrmProjectSummary.tradeType` (not client industry/type). */
+const TRADE_LABELS: Record<CrmTradeType, string> = {
+  hvac: 'HVAC',
+  roofing: 'Roofing',
+  restoration: 'Restoration',
+  inspections: 'Inspections',
+  'make-ready': 'Make Ready',
+  'general-contractor': 'General Contractor',
+};
 
 export function formatCentsAsUsd(cents: number): string {
   return new Intl.NumberFormat('en-US', {
@@ -22,9 +32,17 @@ export function formatRelativeUpdatedAt(iso: string): string {
   }).format(date);
 }
 
-export function formatTradeLabel(trade: string): string {
+export function formatTradeLabel(trade: CrmTradeType | string): string {
+  if (trade in TRADE_LABELS) {
+    return TRADE_LABELS[trade as CrmTradeType];
+  }
   return trade
     .split('-')
     .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
     .join(' ');
+}
+
+/** Trade subtitle under project title — only when trade_type is set on the project row. */
+export function getProjectTradeSubtitle(tradeType: CrmTradeType): string | null {
+  return TRADE_LABELS[tradeType] ?? null;
 }

@@ -1,39 +1,50 @@
 'use client';
 
 import type { ReactElement } from 'react';
-import type { CrmPriority, CrmProjectSummary } from '@/domain/crm';
+import type { CrmProjectSummary } from '@/domain/crm';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
-import { formatStageLabel, formatTradeLabel } from '@/presentation/features/crmProjects/crmProjectFormatters';
-import { BackIcon } from '@/platform/icons/buildCoreDashboardShellIcons';
-import shared from '@/presentation/components/crmShared/crmShared.module.css';
+import { getProjectTradeSubtitle } from '@/presentation/features/crmProjects/crmProjectFormatters';
 import styles from './ProjectDetail.module.css';
-
-function priorityClass(priority: CrmPriority): string {
-  return shared[`priority_${priority}`] ?? shared.priority_normal;
-}
 
 export type ProjectDetailHeaderProps = {
   project: CrmProjectSummary;
   onBack: () => void;
+  onEdit: () => void;
 };
 
-export function ProjectDetailHeader({ project, onBack }: ProjectDetailHeaderProps): ReactElement {
+export function ProjectDetailHeader({ project, onBack, onEdit }: ProjectDetailHeaderProps): ReactElement {
+  const detail = content.projectDetail;
+  const tradeSubtitle = getProjectTradeSubtitle(project.tradeType);
+
   return (
-    <div className={styles.topBar}>
-      <button type="button" className={styles.backBtn} onClick={onBack}>
-        <BackIcon />
-        {content.projectDetail.backToProjects}
-      </button>
-      <div className={styles.titleBlock}>
-        <h2 className={styles.title}>{project.name}</h2>
-        <p className={styles.subtitle}>
-          {project.client.name} · {formatTradeLabel(project.tradeType)}
-        </p>
+    <header className={styles.detailHeader}>
+      <div className={styles.detailHeaderMain}>
+        <div className={styles.titleBlock}>
+          <nav className={styles.breadcrumb} aria-label="Breadcrumb">
+            <span className={styles.breadcrumbMuted}>{detail.breadcrumbCrm}</span>
+            <span className={styles.breadcrumbSep} aria-hidden>
+              /
+            </span>
+            <button type="button" className={styles.breadcrumbLink} onClick={onBack}>
+              {detail.breadcrumbProjects}
+            </button>
+            <span className={styles.breadcrumbSep} aria-hidden>
+              /
+            </span>
+            <span className={styles.breadcrumbCurrent}>{project.name}</span>
+          </nav>
+          <h1 className={styles.title}>{project.name}</h1>
+          {tradeSubtitle ? <p className={styles.subtitle}>{tradeSubtitle}</p> : null}
+        </div>
       </div>
-      <div className={styles.pillRow}>
-        <span className={priorityClass(project.priority)}>{project.priority}</span>
-        <span className={shared.stagePill}>{formatStageLabel(project.currentStageSlug)}</span>
+      <div className={styles.detailHeaderActions}>
+        <button type="button" className={styles.editBtn} onClick={onEdit}>
+          {detail.editProjectButton}
+        </button>
+        <button type="button" className={`${styles.editBtn} ${styles.actionsBtn}`} disabled aria-disabled="true">
+          {detail.actionsButton}
+        </button>
       </div>
-    </div>
+    </header>
   );
 }
