@@ -141,6 +141,9 @@ export const buildCoreDashboardContent = {
     saveError: 'Could not save changes.',
     workflow: {
       empty: 'No workflow tasks for this project.',
+      stageGroupPrefix: 'Stage:',
+      taskSingular: 'task',
+      taskPlural: 'tasks',
       addTask: 'Add task',
       editTask: 'Edit',
       archiveTask: 'Archive',
@@ -171,6 +174,18 @@ export const buildCoreDashboardContent = {
     documents: {
       empty: 'No documents yet.',
       uploadHint: 'Uploads coming in a later phase.',
+      filterAriaLabel: 'Filter documents',
+      filters: {
+        all: 'All',
+        pendingReview: 'Pending',
+        uploaded: 'Uploaded',
+        missing: 'Missing',
+      },
+      noStage: 'No stage',
+      missingForTask: 'Required for task',
+      placeholderMeta: 'Required · not uploaded',
+      placeholders: ['Signed estimate', 'Site photos', 'Permit packet'],
+      viewAll: 'View all documents',
       columns: {
         name: 'Document',
         kind: 'Type',
@@ -183,6 +198,14 @@ export const buildCoreDashboardContent = {
     },
     accountability: {
       empty: 'No activity logged yet.',
+      viewAll: 'View all activity',
+      columns: {
+        dateTime: 'Date / Time',
+        user: 'User',
+        event: 'Event',
+        entity: 'Entity',
+        details: 'Details',
+      },
     },
   },
 } as const;

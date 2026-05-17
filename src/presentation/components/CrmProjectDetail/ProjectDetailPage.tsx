@@ -80,15 +80,15 @@ export function ProjectDetailPage({
         <MilestoneSummaryPanel project={project} />
       </div>
       <StageProgressBar stageProgress={project.stageProgress} />
-      <WorkflowTasksTable
-        project={project}
-        onAddTask={() => setTaskDrawer({ open: true, mode: 'create', task: null })}
-        onEditTask={(task) => setTaskDrawer({ open: true, mode: 'edit', task })}
-      />
-      <div className={styles.grid2}>
+      <div className={styles.workflowSplit}>
+        <WorkflowTasksTable
+          project={project}
+          onAddTask={() => setTaskDrawer({ open: true, mode: 'create', task: null })}
+          onEditTask={(task) => setTaskDrawer({ open: true, mode: 'edit', task })}
+        />
         <ProjectDocumentsPanel project={project} />
-        <AccountabilityPanel project={project} />
       </div>
+      <AccountabilityPanel project={project} />
 
       <EditCrmProjectDrawer
         open={editOpen}
