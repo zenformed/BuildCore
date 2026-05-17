@@ -23,7 +23,7 @@ BuildCore does **not** own platform data or auth storage. It uses Supabase for i
 - **Shared shell** — Dashboard chrome from `@zenformed/core/dashboard-shell` (`ZenformedDashboardAppShell`, sidebar branding, settings drawer, header patterns).
 - **ZenformedCore on Railway** — `ZENFORMED_CORE_API_URL` points at the deployed Core HTTP API; local dev may use `http://localhost:4000`.
 - **Mock-first frontend** — Next phases add TypeScript domain models and in-memory/mock data before any CRM schema or APIs.
-- **No CRM backend yet** — No project/workflow tables, no dynamic workflow engine, no CRM-specific ZenformedCore endpoints beyond standard profile/entitlement/branding relays.
+- **No CRM backend yet** — Planning complete in [CRM_BACKEND_PLAN.md](./CRM_BACKEND_PLAN.md); no migrations, CRM tables, or `/api/crm` routes implemented.
 - **BFF pattern** — Browser → BuildCore Next routes → ZenformedCore (Bearer from Supabase session).
 
 ### Repo layout (high level)
@@ -70,25 +70,33 @@ Root gate: `BuildCoreRootGate` → `SaaSProfileProvider` → `SaaSAuthGate` → 
 | **0** | Documentation and alignment (this doc, README, shared patterns with ForgeCore) | Done |
 | **1** | Frontend mock foundation — domain types, mock fixtures, folder conventions | Done |
 | **2** | All-projects pipeline table (search, sort, filter) | Done |
-| **3** | Single project detail page | **Next** |
-| **4** | UX and component refinement (shell + CRM widgets) | Planned |
-| **5** | Backend planning — schema, ZenformedCore APIs, workflow engine | Planned (no implementation yet) |
+| **3** | Single project detail page | Done |
+| **4** | UX and component refinement (shell + CRM widgets) | Done |
+| **5** | Backend planning — schema, BFF, boundaries | Done (plan only) |
+| **6** | Repository/service abstraction (mock provider; API-ready) | Done |
+| **7** | Backend read-only implementation (migrations + BFF) | **Next** |
 
 ---
 
 ## 5. Planned CRM concepts (vision)
 
-Product direction (frontend-first until Phase 5):
+Product direction — see [CRM_BACKEND_PLAN.md](./CRM_BACKEND_PLAN.md) §1.1–1.2 for navigation, CRUD, and documents.
 
-- **All-projects table** — Pipeline view of jobs/projects; searchable, sortable, filterable rows.
-- **Project detail page** — Single project hub: status, stage, assignees, key dates.
-- **Workflow stages** — Configurable stage columns or stepper (concept only until engine exists).
-- **Accountability** — Who owns each stage/task; handoff visibility.
-- **Documents** — Upload/download concepts per project/stage (UI + mock URLs first).
-- **Stage progress** — Visual progress across workflow (bar, checklist, or kanban-style).
-- **Milestones / payments** — Optional milestone markers and payment state (display-only in mock phase).
+### Dashboard (table)
 
-No implementation of these surfaces until Phase 1–2 mock data exists.
+- **List / search / filter** — Pipeline index of projects (read-only rows).
+- **Row click** — Navigate to `/projects/{slug}` (unchanged; not inline edit).
+- **`+` button** — Future: ForgeCore-style create drawer → `POST` project → redirect to new detail page.
+
+### Detail page (primary edit surface)
+
+- **Overview cards** — Contact, deal/payments, next step, pipeline progress.
+- **Workflow tasks** — Status, assignee, due; **documents attach to tasks** (Documents column on task table).
+- **Documents panel (bottom)** — Aggregate index of all task documents across the project.
+- **Accountability** — Audit visibility (server-appended on mutations).
+- **Milestones / payments** — Editable on detail later; not in table.
+
+**Not planned:** inline editing in the main projects table.
 
 ---
 
@@ -136,13 +144,25 @@ Before merging CRM UI work, confirm:
 
 ## 8. Immediate next step
 
-**Phase 5 — TBD** (e.g. project edit/save, document uploads, or overview metrics).
+**Phase 7 — backend read-only:** migrations (dev), API repository implementations, `GET /api/crm/projects` and `GET /api/crm/projects/:slug`. See [CRM_BACKEND_PLAN.md](./CRM_BACKEND_PLAN.md).
+
+### Phase 6 — done
+
+- CRM ports under `src/application/ports/crm/`; mock implementations under `src/infrastructure/crm/mock/`.
+- `getCrmRepositories()` factory + `NEXT_PUBLIC_CRM_DATA_SOURCE` (`mock` \| `api`).
+- Hooks use `listCrmProjectSummaries` / `getCrmProjectDetailBySlug` use cases (no direct `platform/mock/crm` imports in presentation).
+
+### Phase 5 — done (planning only)
+
+- [CRM_BACKEND_PLAN.md](./CRM_BACKEND_PLAN.md) — tables, BFF, boundaries, migration path, security, risks.
+- Navigation/CRUD: row click → detail (unchanged); `+` → create drawer → new detail; edits on detail only.
+- Documents: task-attached primary; bottom panel = project aggregate index.
 
 ### Phase 4 — done
 
-- Workflow-first detail layout (pipeline → tasks primary column, side rail for contact/financials/docs).
+- Overview-first detail layout (contact + financials top row; pipeline → workflow → docs/accountability).
 - Shared `crmShared.module.css` for pills, badges, avatars (list + detail).
-- Stage chip row, task sorting/highlighting, document status badges, summary strip.
+- Stage chip row, task sorting/highlighting, document status badges.
 
 ### Phase 3 — done
 
@@ -155,5 +175,6 @@ Before merging CRM UI work, confirm:
 ## Reference
 
 - Quick setup: [../README.md](../README.md)
+- **CRM backend plan:** [CRM_BACKEND_PLAN.md](./CRM_BACKEND_PLAN.md)
 - ForgeCore: `ForgeCore/ForgeCore` (reference consuming app)
 - Shared package: `zenformed-core-package` (`@zenformed/core`)

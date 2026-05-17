@@ -3,6 +3,7 @@
  * All env access is centralized here; no process.env in UI or domain.
  * @expandable Add feature flags, API base URLs, or tenant-specific config.
  */
+import { getCrmDataSource, type CrmDataSource } from '@/infrastructure/config/crmDataSource';
 import { getSaasEntitlementSourceMode, type SaasEntitlementSourceMode } from '@/infrastructure/config/entitlementSource';
 import { resolveZenformedCoreApiBaseUrl } from '@/infrastructure/config/zenformedCoreUrlPolicy';
 
@@ -64,5 +65,12 @@ export const env = {
    */
   get zenformedCoreApiBaseUrl(): string | null {
     return resolveZenformedCoreApiBaseUrl(process.env.ZENFORMED_CORE_API_URL);
+  },
+  /**
+   * CRM repository source: `mock` (default) or `api` (future BFF).
+   * See {@link getCrmRepositories}.
+   */
+  get crmDataSource(): CrmDataSource {
+    return getCrmDataSource();
   },
 } as const;

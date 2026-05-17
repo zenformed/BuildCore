@@ -2,7 +2,10 @@
 
 import { useMemo } from 'react';
 import type { CrmProjectDetail } from '@/domain/crm';
-import { getMockCrmProjectDetailBySlug } from '@/platform/mock/crm';
+import { getCrmProjectDetailBySlug as getCrmProjectDetailBySlugUseCase } from '@/application/use-cases/crm';
+import { getCrmRepositories } from '@/infrastructure/crm/crmRepositories';
+
+const crmRepositories = getCrmRepositories();
 
 export type CrmProjectDetailState =
   | { status: 'loading' }
@@ -15,7 +18,7 @@ export function useCrmProjectDetail(slug: string): CrmProjectDetailState {
     if (!trimmed) {
       return { status: 'not_found', slug };
     }
-    const project = getMockCrmProjectDetailBySlug(trimmed);
+    const project = getCrmProjectDetailBySlugUseCase(crmRepositories, trimmed);
     if (project == null) {
       return { status: 'not_found', slug: trimmed };
     }

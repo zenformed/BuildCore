@@ -2,12 +2,15 @@
 
 import { useMemo } from 'react';
 import type { CrmProjectSummary } from '@/domain/crm';
-import { MOCK_CRM_PROJECT_SUMMARIES } from '@/platform/mock/crm';
+import { listCrmProjectSummaries } from '@/application/use-cases/crm';
+import { getCrmRepositories } from '@/infrastructure/crm/crmRepositories';
 import {
   filterCrmProjectSummaries,
   type CrmPriorityFilter,
   type CrmStageFilter,
 } from './crmProjectsPipelineViewModel';
+
+const crmRepositories = getCrmRepositories();
 
 export function useCrmProjectsPipeline(
   searchQuery: string,
@@ -18,14 +21,16 @@ export function useCrmProjectsPipeline(
   totalCount: number;
   filteredCount: number;
 } {
+  const allSummaries = useMemo(() => listCrmProjectSummaries(crmRepositories), []);
+
   const rows = useMemo(
-    () => filterCrmProjectSummaries(MOCK_CRM_PROJECT_SUMMARIES, searchQuery, stageFilter, priorityFilter),
-    [searchQuery, stageFilter, priorityFilter]
+    () => filterCrmProjectSummaries(allSummaries, searchQuery, stageFilter, priorityFilter),
+    [allSummaries, searchQuery, stageFilter, priorityFilter]
   );
 
   return {
     rows,
-    totalCount: MOCK_CRM_PROJECT_SUMMARIES.length,
+    totalCount: allSummaries.length,
     filteredCount: rows.length,
   };
 }
