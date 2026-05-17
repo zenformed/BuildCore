@@ -12,6 +12,7 @@ export type CrmDocumentKind =
 
 export type CrmDocumentMetadata = {
   readonly id: string;
+  readonly workflowTaskId: string;
   readonly name: string;
   readonly kind: CrmDocumentKind;
   readonly stageSlug: PipelineStageSlug | null;

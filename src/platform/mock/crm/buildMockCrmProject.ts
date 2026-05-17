@@ -107,6 +107,7 @@ function defaultWorkflowTasks(
     stageSlug: stage,
     title,
     status,
+    notes: null,
     assignedTo: assignee,
     dueAt: '2026-05-20T17:00:00.000Z',
     completedAt: status === 'done' ? '2026-05-12T16:30:00.000Z' : null,
@@ -130,6 +131,7 @@ function defaultDocuments(
   return [
     {
       id: 'doc-photos',
+      workflowTaskId: 'wf-site',
       name: 'Site photos.zip',
       kind: 'photo',
       stageSlug: 'inspection-complete',
@@ -142,6 +144,7 @@ function defaultDocuments(
     },
     {
       id: 'doc-estimate',
+      workflowTaskId: 'wf-estimate',
       name: 'Estimate_v2.pdf',
       kind: 'estimate',
       stageSlug: 'estimate-sent',

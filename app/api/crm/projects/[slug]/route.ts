@@ -1,10 +1,16 @@
 /**
  * GET /api/crm/projects/[slug] — full project hub aggregate for the detail page.
+ * PATCH /api/crm/projects/[slug] — update project, client, and contact fields.
  */
 
 import { NextRequest, NextResponse } from 'next/server';
 import { requireCrmApiAuth } from '@/infrastructure/crm/server/crmApiRouteAuth';
 import { getCrmProjectDetailBySlugForOrg } from '@/infrastructure/crm/server/crmReadService';
+import { updateCrmProjectBySlugForOrg } from '@/infrastructure/crm/server/crmUpdateProjectService';
+import {
+  validateCreateCrmProjectBody,
+  type CreateCrmProjectBody,
+} from '@/infrastructure/crm/server/validateCreateCrmProjectBody';
 
 export const dynamic = 'force-dynamic';
 
@@ -34,6 +40,48 @@ export async function GET(
     return NextResponse.json(project);
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Failed to load CRM project';
+    return NextResponse.json({ error: 'internal_error', message }, { status: 500 });
+  }
+}
+
+export async function PATCH(
+  request: NextRequest,
+  context: RouteContext
+): Promise<NextResponse> {
+  const auth = await requireCrmApiAuth(request.headers.get('Authorization'));
+  if (!auth.ok) return auth.response;
+
+  const slug = context.params.slug?.trim();
+  if (!slug) {
+    return NextResponse.json({ error: 'not_found', message: 'Project not found' }, { status: 404 });
+  }
+
+  let body: CreateCrmProjectBody;
+  try {
+    body = (await request.json()) as CreateCrmProjectBody;
+  } catch {
+    return NextResponse.json({ error: 'invalid_body', message: 'JSON body required' }, { status: 400 });
+  }
+
+  const validated = validateCreateCrmProjectBody(body);
+  if (!validated.ok) {
+    return NextResponse.json({ error: 'validation_error', message: validated.message }, { status: 400 });
+  }
+
+  try {
+    const project = await updateCrmProjectBySlugForOrg(
+      auth.context.supabase,
+      auth.context.organizationId,
+      auth.context.user.id,
+      slug,
+      validated.input
+    );
+    if (project == null) {
+      return NextResponse.json({ error: 'not_found', message: 'Project not found' }, { status: 404 });
+    }
+    return NextResponse.json(project);
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Failed to update CRM project';
     return NextResponse.json({ error: 'internal_error', message }, { status: 500 });
   }
 }

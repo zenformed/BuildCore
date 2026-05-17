@@ -1,0 +1,22 @@
+import type { PipelineStageSlug } from './pipelineStage';
+import type { WorkflowTaskStatus } from './workflowTask';
+
+export type CreateCrmWorkflowTaskInput = {
+  readonly projectId: string;
+  readonly title: string;
+  readonly stageSlug: PipelineStageSlug;
+  readonly status: WorkflowTaskStatus;
+  readonly dueAt: string | null;
+  readonly notes: string | null;
+  readonly assignedMemberId: string | null;
+};
+
+export type UpdateCrmWorkflowTaskInput = {
+  readonly taskId: string;
+  readonly title?: string;
+  readonly stageSlug?: PipelineStageSlug;
+  readonly status?: WorkflowTaskStatus;
+  readonly dueAt?: string | null;
+  readonly notes?: string | null;
+  readonly assignedMemberId?: string | null;
+};

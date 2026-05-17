@@ -16,7 +16,7 @@ export default function ProjectDetailRoutePage(): ReactElement {
   const router = useRouter();
   const dash = useBuildCoreDashboard();
   const slug = typeof params.slug === 'string' ? params.slug : '';
-  const detailState = useCrmProjectDetail(slug);
+  const { state: detailState, refetch, isApiSource } = useCrmProjectDetail(slug);
 
   const goToProjects = useCallback(() => {
     router.push(nav.routes.dashboard);
@@ -43,7 +43,12 @@ export default function ProjectDetailRoutePage(): ReactElement {
       onSidebarSelect={handleSidebarSelect}
     >
       {detailState.status === 'ready' ? (
-        <ProjectDetailPage project={detailState.project} onBack={goToProjects} />
+        <ProjectDetailPage
+          project={detailState.project}
+          isApiSource={isApiSource}
+          onBack={goToProjects}
+          onRefresh={refetch}
+        />
       ) : detailState.status === 'loading' ? null : (
         <ProjectDetailNotFound onBack={goToProjects} />
       )}

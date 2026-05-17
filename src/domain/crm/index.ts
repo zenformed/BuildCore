@@ -21,3 +21,8 @@ export {
   type CrmTradeType,
 } from './project';
 export type { CreateCrmProjectInput, CreateCrmProjectResult } from './createProject';
+export type { UpdateCrmProjectInput } from './updateProject';
+export type {
+  CreateCrmWorkflowTaskInput,
+  UpdateCrmWorkflowTaskInput,
+} from './workflowTaskMutations';

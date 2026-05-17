@@ -1,96 +1,321 @@
 import type {
+
   ICrmAccountabilityRepository,
+
   ICrmDocumentsRepository,
+
   ICrmMilestonePaymentsRepository,
+
   ICrmProjectDetailRepository,
+
   ICrmProjectsRepository,
+
   ICrmWorkflowTasksRepository,
+
 } from '@/application/ports/crm';
+
 import type {
+
   CreateCrmProjectInput,
+
   CreateCrmProjectResult,
+
+  CreateCrmWorkflowTaskInput,
+
   CrmAccountabilityAction,
+
   CrmDocumentMetadata,
+
   CrmMilestonePaymentSummary,
+
   CrmProjectDetail,
+
   CrmProjectSummary,
+
   CrmWorkflowTask,
+
+  UpdateCrmProjectInput,
+
+  UpdateCrmWorkflowTaskInput,
+
 } from '@/domain/crm';
-import { crmApiGetJson, crmApiPostJson, CrmApiError } from './crmApiClient';
+
 import {
+
+  crmApiDeleteJson,
+
+  crmApiGetJson,
+
+  crmApiPatchJson,
+
+  crmApiPostJson,
+
+  CrmApiError,
+
+} from './crmApiClient';
+
+import {
+  clearApiCrmDetailCache,
   getApiCrmDetailCacheByProjectId,
-  getApiCrmDetailCacheBySlug,
   setApiCrmDetailCache,
 } from './apiCrmDetailCache';
 
+
+
 type ProjectsListResponse = {
+
   projects: CrmProjectSummary[];
+
   total: number;
+
 };
 
+
+
 export class ApiCrmProjectsRepository implements ICrmProjectsRepository {
+
   listSummaries(): Promise<readonly CrmProjectSummary[]> {
+
     return crmApiGetJson<ProjectsListResponse>('/api/crm/projects').then((body) => body.projects);
+
   }
+
+
 
   create(input: CreateCrmProjectInput): Promise<CreateCrmProjectResult> {
+
     return crmApiPostJson<CreateCrmProjectResult>('/api/crm/projects', input);
+
   }
+
 }
+
+
 
 export class ApiCrmProjectDetailRepository implements ICrmProjectDetailRepository {
+
   async getBySlug(slug: string): Promise<CrmProjectDetail | null> {
+
     const trimmed = slug.trim();
+
     if (!trimmed) return null;
 
-    const cached = getApiCrmDetailCacheBySlug(trimmed);
-    if (cached) return cached;
+
 
     try {
+
       const detail = await crmApiGetJson<CrmProjectDetail>(
+
         `/api/crm/projects/${encodeURIComponent(trimmed)}`
+
       );
+
       setApiCrmDetailCache(trimmed, detail);
+
       return detail;
+
     } catch (err) {
+
       if (err instanceof CrmApiError && err.status === 404) {
+
         setApiCrmDetailCache(trimmed, null);
+
         return null;
+
       }
+
       throw err;
+
     }
+
   }
+
+
 
   async getById(id: string): Promise<CrmProjectDetail | null> {
-    const cached = getApiCrmDetailCacheByProjectId(id);
-    return cached ?? null;
+
+    void id;
+
+    return null;
+
   }
+
+
+
+  async updateBySlug(slug: string, input: UpdateCrmProjectInput): Promise<CrmProjectDetail | null> {
+
+    clearApiCrmDetailCache();
+
+    try {
+
+      const detail = await crmApiPatchJson<CrmProjectDetail>(
+
+        `/api/crm/projects/${encodeURIComponent(slug.trim())}`,
+
+        input
+
+      );
+
+      setApiCrmDetailCache(slug.trim(), detail);
+
+      return detail;
+
+    } catch (err) {
+
+      if (err instanceof CrmApiError && err.status === 404) return null;
+
+      throw err;
+
+    }
+
+  }
+
 }
 
-function detailForProject(projectId: string): CrmProjectDetail | null {
-  return getApiCrmDetailCacheByProjectId(projectId);
-}
+
 
 export class ApiCrmWorkflowTasksRepository implements ICrmWorkflowTasksRepository {
-  listByProjectId(projectId: string): Promise<readonly CrmWorkflowTask[]> {
-    return Promise.resolve(detailForProject(projectId)?.workflowTasks ?? []);
+
+  create(input: CreateCrmWorkflowTaskInput): Promise<CrmWorkflowTask> {
+
+    const cached = getApiCrmDetailCacheByProjectId(input.projectId);
+
+    const slug = cached?.summary.slug;
+
+    if (!slug) {
+
+      return Promise.reject(new CrmApiError('not_found', 404, 'Project not loaded'));
+
+    }
+
+    clearApiCrmDetailCache();
+
+    return crmApiPostJson<CrmWorkflowTask>(
+
+      `/api/crm/projects/${encodeURIComponent(slug)}/tasks`,
+
+      {
+
+        title: input.title,
+
+        stageSlug: input.stageSlug,
+
+        status: input.status,
+
+        dueAt: input.dueAt,
+
+        notes: input.notes,
+
+        assignedMemberId: input.assignedMemberId,
+
+      }
+
+    );
+
   }
+
+
+
+  update(input: UpdateCrmWorkflowTaskInput): Promise<CrmWorkflowTask | null> {
+
+    clearApiCrmDetailCache();
+
+    return crmApiPatchJson<CrmWorkflowTask>(
+
+      `/api/crm/tasks/${encodeURIComponent(input.taskId)}`,
+
+      {
+
+        title: input.title,
+
+        stageSlug: input.stageSlug,
+
+        status: input.status,
+
+        dueAt: input.dueAt,
+
+        notes: input.notes,
+
+        assignedMemberId: input.assignedMemberId,
+
+      }
+
+    ).catch((err) => {
+
+      if (err instanceof CrmApiError && err.status === 404) return null;
+
+      throw err;
+
+    });
+
+  }
+
+
+
+  archive(taskId: string): Promise<boolean> {
+
+    clearApiCrmDetailCache();
+
+    return crmApiDeleteJson<{ ok: boolean }>(`/api/crm/tasks/${encodeURIComponent(taskId)}`).then(
+
+      () => true
+
+    );
+
+  }
+
+
+
+  listByProjectId(projectId: string): Promise<readonly CrmWorkflowTask[]> {
+
+    void projectId;
+
+    return Promise.resolve([]);
+
+  }
+
 }
+
+
 
 export class ApiCrmDocumentsRepository implements ICrmDocumentsRepository {
+
   listByProjectId(projectId: string): Promise<readonly CrmDocumentMetadata[]> {
-    return Promise.resolve(detailForProject(projectId)?.documents ?? []);
+
+    void projectId;
+
+    return Promise.resolve([]);
+
   }
+
 }
+
+
 
 export class ApiCrmMilestonePaymentsRepository implements ICrmMilestonePaymentsRepository {
+
   getByProjectId(projectId: string): Promise<CrmMilestonePaymentSummary | null> {
-    return Promise.resolve(detailForProject(projectId)?.milestonePayment ?? null);
+
+    void projectId;
+
+    return Promise.resolve(null);
+
   }
+
 }
 
+
+
 export class ApiCrmAccountabilityRepository implements ICrmAccountabilityRepository {
+
   listByProjectId(projectId: string): Promise<readonly CrmAccountabilityAction[]> {
-    return Promise.resolve(detailForProject(projectId)?.accountabilityLog ?? []);
+
+    void projectId;
+
+    return Promise.resolve([]);
+
   }
+
 }
+
+

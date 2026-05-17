@@ -56,6 +56,7 @@ export type DbCrmWorkflowTaskRow = {
   title: string;
   stage_slug: string;
   status: string;
+  notes: string | null;
   due_at: string | null;
   completed_at: string | null;
   assigned_member_id: string | null;
@@ -278,6 +279,7 @@ export function mapDbWorkflowTask(
     stageSlug: asPipelineStageSlug(row.stage_slug),
     title: row.title,
     status: asWorkflowStatus(row.status),
+    notes: row.notes,
     assignedTo:
       row.assigned_member_id != null
         ? (memberById.get(row.assigned_member_id) ??
@@ -301,6 +303,7 @@ export function mapDbDocument(
 ): CrmDocumentMetadata {
   return {
     id: row.id,
+    workflowTaskId: row.workflow_task_id,
     name: row.file_name,
     kind: asDocumentKind(row.document_type),
     stageSlug: stageSlugByTaskId.get(row.workflow_task_id) ?? null,

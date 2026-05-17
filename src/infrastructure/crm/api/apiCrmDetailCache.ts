@@ -17,3 +17,8 @@ export function getApiCrmDetailCacheByProjectId(projectId: string): CrmProjectDe
   if (cachedDetail?.summary.id === projectId) return cachedDetail;
   return null;
 }
+
+export function clearApiCrmDetailCache(): void {
+  cachedSlug = null;
+  cachedDetail = null;
+}

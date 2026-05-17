@@ -81,6 +81,7 @@ Root gate: `BuildCoreRootGate` → `SaaSProfileProvider` → `SaaSAuthGate` → 
 | **7A** | CRM database schema + migrations | Done |
 | **7B** | API read repositories + BFF (`NEXT_PUBLIC_CRM_DATA_SOURCE=api`) | Done |
 | **8** | Create project drawer + `POST /api/crm/projects` | Done |
+| **9** | Project detail editing + workflow task CRUD | Done |
 
 ---
 
@@ -150,7 +151,14 @@ Before merging CRM UI work, confirm:
 
 ## 8. Immediate next step
 
-**Phase 9+ — update/delete, uploads, team-member picker:** TBD. See [CRM_BACKEND_PLAN.md](./CRM_BACKEND_PLAN.md).
+**Phase 10+ — document uploads, realtime, payments integration:** TBD. See [CRM_BACKEND_PLAN.md](./CRM_BACKEND_PLAN.md).
+
+### Phase 9 — done
+
+- `PATCH /api/crm/projects/[slug]` — project/client/contact fields + accountability.
+- `POST /api/crm/projects/[slug]/tasks`, `PATCH|DELETE /api/crm/tasks/[taskId]`.
+- Detail page: Edit project drawer, workflow task drawer (create/edit/archive), documents column placeholder.
+- Mock mode: in-memory mutation store for local edit/task testing.
 
 ### Phase 8 — done
 
