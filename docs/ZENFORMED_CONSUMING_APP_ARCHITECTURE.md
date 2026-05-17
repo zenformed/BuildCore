@@ -198,9 +198,9 @@ BuildCore Phase 6 introduced the CRM repository layer. Compared to this standard
 | `presentation/hooks/` vs `presentation/features/*/hooks` | BuildCore CRM hooks live under `features/` ✅; global auth hooks in `presentation/hooks/` ✅ (matches ForgeCore) |
 | Detail page still reads full `CrmProjectDetail` aggregate | **OK** until lazy-loaded panels need sub-repos from hooks |
 
-### Do not do before Phase 7
+### Do not do before Phase 7B
 
-- CRM Supabase migrations or `/api/crm` routes (per pause).
+- `/api/crm` routes or swapping UI off mock repositories (Phase 7A schema only).
 - Moving CRM UI into `@zenformed/core`.
 - Inline table editing or create drawer (UI phases).
 

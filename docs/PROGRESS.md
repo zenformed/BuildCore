@@ -25,7 +25,7 @@ BuildCore does **not** own platform data or auth storage. It uses Supabase for i
 - **Shared shell** — Dashboard chrome from `@zenformed/core/dashboard-shell` (`ZenformedDashboardAppShell`, sidebar branding, settings drawer, header patterns).
 - **ZenformedCore on Railway** — `ZENFORMED_CORE_API_URL` points at the deployed Core HTTP API; local dev may use `http://localhost:4000`.
 - **Mock-first frontend** — Next phases add TypeScript domain models and in-memory/mock data before any CRM schema or APIs.
-- **No CRM backend yet** — Planning complete in [CRM_BACKEND_PLAN.md](./CRM_BACKEND_PLAN.md); no migrations, CRM tables, or `/api/crm` routes implemented.
+- **CRM schema (Phase 7A)** — SQL migrations in [../supabase/](../supabase/); UI still uses mock repositories. No `/api/crm` routes yet.
 - **BFF pattern** — Browser → BuildCore Next routes → ZenformedCore (Bearer from Supabase session).
 
 ### Repo layout (high level)
@@ -39,6 +39,7 @@ BuildCore/
     infrastructure/       # Supabase, Core API client, config, auth adapter
     domain/crm/           # CRM types (project, contact, pipeline, workflow, documents)
     platform/             # appDefinitions, navigation, content, mock/crm fixtures
+  supabase/migrations/  # CRM schema (Phase 7A)
     presentation/         # providers, hooks, dashboard shell components, SaaS auth UI
     shared/di/              # composition root
   electron/               # optional desktop wrapper
@@ -77,7 +78,8 @@ Root gate: `BuildCoreRootGate` → `SaaSProfileProvider` → `SaaSAuthGate` → 
 | **5** | Backend planning — schema, BFF, boundaries | Done (plan only) |
 | **6** | Repository/service abstraction (mock provider; API-ready) | Done |
 | **6b** | Consuming-app architecture standard (documentation) | Done |
-| **7** | Backend read-only implementation (migrations + BFF) | **Paused** — see architecture doc before resuming |
+| **7A** | CRM database schema + migrations | Done |
+| **7B** | API read repositories + BFF (mock UI until swap) | **Next** |
 
 ---
 
@@ -147,7 +149,11 @@ Before merging CRM UI work, confirm:
 
 ## 8. Immediate next step
 
-**Phase 7 — backend read-only (paused):** migrations (dev), API repository implementations, `GET /api/crm/projects` and `GET /api/crm/projects/:slug`. See [CRM_BACKEND_PLAN.md](./CRM_BACKEND_PLAN.md). Align implementation with [ZENFORMED_CONSUMING_APP_ARCHITECTURE.md](./ZENFORMED_CONSUMING_APP_ARCHITECTURE.md) before starting.
+**Phase 7B — API read layer:** `SupabaseCrm*Repository` implementations, `GET /api/crm/projects` and `GET /api/crm/projects/:slug`, optional `CRM_DATA_SOURCE=api` (UI still mock until explicit swap). See [CRM_BACKEND_PLAN.md](./CRM_BACKEND_PLAN.md).
+
+### Phase 7A — done
+
+- [supabase/migrations/](../supabase/migrations/) — `crm_*` tables, pipeline seed, org-scoped RLS. Apply guide: [supabase/README.md](../supabase/README.md).
 
 ### Phase 6 — done
 

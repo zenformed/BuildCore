@@ -1,6 +1,6 @@
 # BuildCore CRM — Backend Plan (Phase 5)
 
-**Status:** Planning only — no migrations, API routes, Supabase schema changes, or UI changes in this phase.
+**Status:** Phase 7A schema migrations live under `BuildCore/supabase/migrations/`. API routes and UI data-source swap are not implemented yet.
 
 **Source of truth today:** `src/domain/crm/*` types and `src/platform/mock/crm/*` fixtures. This document maps those shapes to a future persistence and BFF layer.
 
