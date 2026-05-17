@@ -80,6 +80,7 @@ Root gate: `BuildCoreRootGate` → `SaaSProfileProvider` → `SaaSAuthGate` → 
 | **6b** | Consuming-app architecture standard (documentation) | Done |
 | **7A** | CRM database schema + migrations | Done |
 | **7B** | API read repositories + BFF (`NEXT_PUBLIC_CRM_DATA_SOURCE=api`) | Done |
+| **8** | Create project drawer + `POST /api/crm/projects` | Done |
 
 ---
 
@@ -149,7 +150,14 @@ Before merging CRM UI work, confirm:
 
 ## 8. Immediate next step
 
-**Phase 7C+ — mutations / uploads / UI default swap:** TBD. See [CRM_BACKEND_PLAN.md](./CRM_BACKEND_PLAN.md).
+**Phase 9+ — update/delete, uploads, team-member picker:** TBD. See [CRM_BACKEND_PLAN.md](./CRM_BACKEND_PLAN.md).
+
+### Phase 8 — done
+
+- `CreateCrmProjectDrawer` (ForgeCore-style side drawer using settings shell chrome).
+- `POST /api/crm/projects` creates `crm_clients`, `crm_contacts`, `crm_projects`, initial accountability event.
+- `createCrmProject` use case + `ICrmProjectsRepository.create`.
+- Mock mode: drawer opens; submit disabled with clear API-mode message.
 
 ### Phase 7B — done
 

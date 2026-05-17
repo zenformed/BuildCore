@@ -7,6 +7,8 @@ import type {
   ICrmWorkflowTasksRepository,
 } from '@/application/ports/crm';
 import type {
+  CreateCrmProjectInput,
+  CreateCrmProjectResult,
   CrmAccountabilityAction,
   CrmDocumentMetadata,
   CrmMilestonePaymentSummary,
@@ -14,7 +16,7 @@ import type {
   CrmProjectSummary,
   CrmWorkflowTask,
 } from '@/domain/crm';
-import { crmApiGetJson, CrmApiError } from './crmApiClient';
+import { crmApiGetJson, crmApiPostJson, CrmApiError } from './crmApiClient';
 import {
   getApiCrmDetailCacheByProjectId,
   getApiCrmDetailCacheBySlug,
@@ -29,6 +31,10 @@ type ProjectsListResponse = {
 export class ApiCrmProjectsRepository implements ICrmProjectsRepository {
   listSummaries(): Promise<readonly CrmProjectSummary[]> {
     return crmApiGetJson<ProjectsListResponse>('/api/crm/projects').then((body) => body.projects);
+  }
+
+  create(input: CreateCrmProjectInput): Promise<CreateCrmProjectResult> {
+    return crmApiPostJson<CreateCrmProjectResult>('/api/crm/projects', input);
   }
 }
 

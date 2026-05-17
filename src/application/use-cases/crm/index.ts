@@ -1,3 +1,4 @@
+export { createCrmProject } from './createCrmProject';
 export {
   getCrmProjectDetailBySlug,
   getCrmProjectDetailBySlugSync,

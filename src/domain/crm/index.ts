@@ -20,3 +20,4 @@ export {
   type CrmStageProgress,
   type CrmTradeType,
 } from './project';
+export type { CreateCrmProjectInput, CreateCrmProjectResult } from './createProject';

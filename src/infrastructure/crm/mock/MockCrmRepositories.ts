@@ -7,6 +7,8 @@ import type {
   ICrmWorkflowTasksRepository,
 } from '@/application/ports/crm';
 import type {
+  CreateCrmProjectInput,
+  CreateCrmProjectResult,
   CrmAccountabilityAction,
   CrmDocumentMetadata,
   CrmMilestonePaymentSummary,
@@ -14,6 +16,7 @@ import type {
   CrmProjectSummary,
   CrmWorkflowTask,
 } from '@/domain/crm';
+import { CrmCreateNotAvailableError } from '@/infrastructure/crm/errors';
 import {
   getMockCrmProjectDetailById,
   getMockCrmProjectDetailBySlug,
@@ -23,6 +26,10 @@ import {
 export class MockCrmProjectsRepository implements ICrmProjectsRepository {
   listSummaries(): readonly CrmProjectSummary[] {
     return MOCK_CRM_PROJECT_SUMMARIES;
+  }
+
+  create(_input: CreateCrmProjectInput): Promise<CreateCrmProjectResult> {
+    return Promise.reject(new CrmCreateNotAvailableError());
   }
 }
 

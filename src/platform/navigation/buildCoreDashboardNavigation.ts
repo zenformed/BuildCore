@@ -32,7 +32,7 @@ export const buildCoreDashboardNavigation = {
       ariaLabel: 'Search projects',
     },
     newProject: {
-      title: 'New project (coming soon)',
+      title: 'New project',
       ariaLabel: 'New project',
     },
     account: {

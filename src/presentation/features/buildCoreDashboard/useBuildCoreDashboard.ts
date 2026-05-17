@@ -60,6 +60,8 @@ export function useBuildCoreDashboard(): {
   setPriorityFilter: (value: CrmPriorityFilter) => void;
   onProjectRowClick: (project: CrmProjectSummary) => void;
   onNewProjectClick: () => void;
+  createProjectDrawerOpen: boolean;
+  setCreateProjectDrawerOpen: (open: boolean) => void;
 } {
   const router = useRouter();
   const { user, isLoading: authLoading, signOut } = useAuth();
@@ -87,6 +89,7 @@ export function useBuildCoreDashboard(): {
   const [projectsSearchQuery, setProjectsSearchQuery] = useState('');
   const [stageFilter, setStageFilter] = useState<CrmStageFilter>('all');
   const [priorityFilter, setPriorityFilter] = useState<CrmPriorityFilter>('all');
+  const [createProjectDrawerOpen, setCreateProjectDrawerOpen] = useState(false);
 
   const onProjectRowClick = useCallback(
     (project: CrmProjectSummary) => {
@@ -96,9 +99,7 @@ export function useBuildCoreDashboard(): {
   );
 
   const onNewProjectClick = useCallback(() => {
-    if (process.env.NODE_ENV === 'development') {
-      console.info('[buildcore] new project — not implemented');
-    }
+    setCreateProjectDrawerOpen(true);
   }, []);
 
   useEffect(() => {
@@ -156,5 +157,7 @@ export function useBuildCoreDashboard(): {
     setPriorityFilter,
     onProjectRowClick,
     onNewProjectClick,
+    createProjectDrawerOpen,
+    setCreateProjectDrawerOpen,
   };
 }

@@ -15,6 +15,7 @@ import { buildCoreDashboardNavigation as nav } from '@/platform/navigation/build
 import type { useBuildCoreDashboard } from '@/presentation/features/buildCoreDashboard/useBuildCoreDashboard';
 import { BuildCoreDashboardHeader } from './BuildCoreDashboardHeader';
 import { BuildCoreDashboardModals } from './BuildCoreDashboardModals';
+import { CreateCrmProjectDrawer } from '@/presentation/components/CrmProjects/CreateCrmProjectDrawer';
 import { BuildCoreSettingsDrawer } from './BuildCoreSettingsDrawer';
 import { BuildCoreSidebar, type BuildCoreSidebarNavId } from './BuildCoreSidebar';
 import shellStyles from '../../../../app/(dashboard)/dashboard/dashboard.module.css';
@@ -108,6 +109,11 @@ export function BuildCoreDashboardShell({
             </main>
           </>
         }
+      />
+
+      <CreateCrmProjectDrawer
+        open={dash.createProjectDrawerOpen}
+        onClose={() => dash.setCreateProjectDrawerOpen(false)}
       />
 
       <BuildCoreSettingsDrawer
