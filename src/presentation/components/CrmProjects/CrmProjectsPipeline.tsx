@@ -25,7 +25,7 @@ export function CrmProjectsPipeline({
   onPriorityFilterChange,
   onProjectRowClick,
 }: CrmProjectsPipelineProps): ReactElement {
-  const { rows, totalCount, filteredCount } = useCrmProjectsPipeline(
+  const { rows, totalCount, filteredCount, isLoading } = useCrmProjectsPipeline(
     searchQuery,
     stageFilter,
     priorityFilter
@@ -41,7 +41,7 @@ export function CrmProjectsPipeline({
         onStageFilterChange={onStageFilterChange}
         onPriorityFilterChange={onPriorityFilterChange}
       />
-      <CrmProjectsTable rows={rows} onRowClick={onProjectRowClick} />
+      <CrmProjectsTable rows={rows} isLoading={isLoading} onRowClick={onProjectRowClick} />
     </div>
   );
 }

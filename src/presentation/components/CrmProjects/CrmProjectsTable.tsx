@@ -20,10 +20,15 @@ function priorityClassName(priority: CrmPriority): string {
 
 export type CrmProjectsTableProps = {
   rows: readonly CrmProjectSummary[];
+  isLoading?: boolean;
   onRowClick: (project: CrmProjectSummary) => void;
 };
 
-export function CrmProjectsTable({ rows, onRowClick }: CrmProjectsTableProps): ReactElement {
+export function CrmProjectsTable({
+  rows,
+  isLoading = false,
+  onRowClick,
+}: CrmProjectsTableProps): ReactElement {
   return (
     <div className={styles.tableWrap}>
       <div className={styles.scrollContainer} role="region" aria-label={content.crm.table.regionAriaLabel}>
@@ -42,7 +47,7 @@ export function CrmProjectsTable({ rows, onRowClick }: CrmProjectsTableProps): R
             <span role="columnheader">{COLUMNS.updated}</span>
           </div>
           <div className={styles.gridBody} role="rowgroup">
-            {rows.length === 0 ? (
+            {!isLoading && rows.length === 0 ? (
               <p className={styles.emptyState}>{content.crm.table.empty}</p>
             ) : (
               rows.map((project) => (

@@ -44,7 +44,7 @@ export default function ProjectDetailRoutePage(): ReactElement {
     >
       {detailState.status === 'ready' ? (
         <ProjectDetailPage project={detailState.project} onBack={goToProjects} />
-      ) : (
+      ) : detailState.status === 'loading' ? null : (
         <ProjectDetailNotFound onBack={goToProjects} />
       )}
     </BuildCoreDashboardShell>

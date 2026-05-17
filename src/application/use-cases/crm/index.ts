@@ -1,2 +1,8 @@
-export { getCrmProjectDetailBySlug } from './getCrmProjectDetailBySlug';
-export { listCrmProjectSummaries } from './listCrmProjectSummaries';
+export {
+  getCrmProjectDetailBySlug,
+  getCrmProjectDetailBySlugSync,
+} from './getCrmProjectDetailBySlug';
+export {
+  listCrmProjectSummaries,
+  listCrmProjectSummariesSync,
+} from './listCrmProjectSummaries';

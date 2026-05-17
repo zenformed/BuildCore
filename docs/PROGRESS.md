@@ -79,7 +79,7 @@ Root gate: `BuildCoreRootGate` → `SaaSProfileProvider` → `SaaSAuthGate` → 
 | **6** | Repository/service abstraction (mock provider; API-ready) | Done |
 | **6b** | Consuming-app architecture standard (documentation) | Done |
 | **7A** | CRM database schema + migrations | Done |
-| **7B** | API read repositories + BFF (mock UI until swap) | **Next** |
+| **7B** | API read repositories + BFF (`NEXT_PUBLIC_CRM_DATA_SOURCE=api`) | Done |
 
 ---
 
@@ -149,7 +149,14 @@ Before merging CRM UI work, confirm:
 
 ## 8. Immediate next step
 
-**Phase 7B — API read layer:** `SupabaseCrm*Repository` implementations, `GET /api/crm/projects` and `GET /api/crm/projects/:slug`, optional `CRM_DATA_SOURCE=api` (UI still mock until explicit swap). See [CRM_BACKEND_PLAN.md](./CRM_BACKEND_PLAN.md).
+**Phase 7C+ — mutations / uploads / UI default swap:** TBD. See [CRM_BACKEND_PLAN.md](./CRM_BACKEND_PLAN.md).
+
+### Phase 7B — done
+
+- `GET /api/crm/projects` and `GET /api/crm/projects/[slug]` — JWT auth, org-scoped, archived excluded.
+- `src/infrastructure/crm/server/*` — Supabase read service + DB→domain mappers.
+- `src/infrastructure/crm/api/*` — BFF fetch repositories; factory uses `NEXT_PUBLIC_CRM_DATA_SOURCE=mock|api` (mock default).
+- Hooks: mock stays synchronous; API mode loads async with safe empty/404 handling.
 
 ### Phase 7A — done
 

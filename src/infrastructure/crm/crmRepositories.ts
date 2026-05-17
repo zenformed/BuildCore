@@ -1,6 +1,14 @@
 import type { CrmRepositories } from '@/application/ports/crm';
 import { getCrmDataSource } from '@/infrastructure/config/crmDataSource';
 import {
+  ApiCrmAccountabilityRepository,
+  ApiCrmDocumentsRepository,
+  ApiCrmMilestonePaymentsRepository,
+  ApiCrmProjectDetailRepository,
+  ApiCrmProjectsRepository,
+  ApiCrmWorkflowTasksRepository,
+} from '@/infrastructure/crm/api/ApiCrmRepositories';
+import {
   MockCrmAccountabilityRepository,
   MockCrmDocumentsRepository,
   MockCrmMilestonePaymentsRepository,
@@ -22,12 +30,21 @@ function createMockCrmRepositories(): CrmRepositories {
   };
 }
 
+function createApiCrmRepositories(): CrmRepositories {
+  return {
+    projects: new ApiCrmProjectsRepository(),
+    projectDetail: new ApiCrmProjectDetailRepository(),
+    workflowTasks: new ApiCrmWorkflowTasksRepository(),
+    documents: new ApiCrmDocumentsRepository(),
+    milestonePayments: new ApiCrmMilestonePaymentsRepository(),
+    accountability: new ApiCrmAccountabilityRepository(),
+  };
+}
+
 function createCrmRepositories(): CrmRepositories {
   const source = getCrmDataSource();
   if (source === 'api') {
-    throw new Error(
-      'CRM API data source is not implemented yet. Use NEXT_PUBLIC_CRM_DATA_SOURCE=mock (default).'
-    );
+    return createApiCrmRepositories();
   }
   return createMockCrmRepositories();
 }
