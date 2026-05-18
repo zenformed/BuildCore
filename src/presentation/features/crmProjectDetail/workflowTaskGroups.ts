@@ -1,4 +1,8 @@
 import { DEFAULT_PIPELINE_STAGES, type CrmWorkflowTask, type PipelineStageSlug } from '@/domain/crm';
+
+export function areAllStageTasksDone(tasks: readonly CrmWorkflowTask[]): boolean {
+  return tasks.length > 0 && tasks.every((task) => task.status === 'done');
+}
 import { sortWorkflowTasksForDisplay } from './workflowTaskSort';
 
 export type WorkflowTaskStageGroup = {

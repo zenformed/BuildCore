@@ -37,6 +37,8 @@ export type WorkflowInlineMenuProps = {
   anchorRef: RefObject<HTMLElement | null>;
   children: ReactNode;
   align?: 'start' | 'end';
+  /** Portal panel class; defaults to inline table menu styling. */
+  portalClassName?: string;
 };
 
 export function WorkflowInlineMenu({
@@ -45,6 +47,7 @@ export function WorkflowInlineMenu({
   anchorRef,
   children,
   align = 'start',
+  portalClassName,
 }: WorkflowInlineMenuProps): ReactElement | null {
   const menuRef = useRef<HTMLDivElement>(null);
   const [position, setPosition] = useState<MenuPosition | null>(null);
@@ -91,7 +94,12 @@ export function WorkflowInlineMenu({
   };
 
   return createPortal(
-    <div ref={menuRef} className={styles.inlineMenu_portal} style={menuStyle} role="menu">
+    <div
+      ref={menuRef}
+      className={portalClassName ?? styles.inlineMenu_portal}
+      style={menuStyle}
+      role="menu"
+    >
       {children}
     </div>,
     document.body

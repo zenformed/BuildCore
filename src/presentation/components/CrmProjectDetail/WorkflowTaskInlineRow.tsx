@@ -149,10 +149,7 @@ export function WorkflowTaskInlineRow({
     [patchTask, reportError, task.dueAt, task.id]
   );
 
-  const rowClass =
-    task.status === 'in_progress'
-      ? `${styles.tableRow} ${styles.workflowGrid} ${styles.tableRow_active} ${styles.workflowInlineRow}`
-      : `${styles.tableRow} ${styles.workflowGrid} ${styles.workflowInlineRow}`;
+  const rowClass = `${styles.tableRow} ${styles.workflowGrid} ${styles.workflowInlineRow}`;
 
   const documentsLabel = !task.documentsRequired
     ? wf.documentsNotRequired
@@ -343,6 +340,16 @@ export function WorkflowTaskInlineRow({
           aria-hidden
           onChange={(e) => void saveDue(e.target.value)}
         />
+      </span>
+
+      <span className={styles.taskCompletionCell}>
+        {task.status === 'done' ? (
+          <span className={styles.taskDoneIcon} title={wf.taskDoneIndicator} aria-label={wf.taskDoneIndicator}>
+            ✓
+          </span>
+        ) : (
+          <span className={styles.taskOpenIcon} title={wf.taskOpenIndicator} aria-label={wf.taskOpenIndicator} />
+        )}
       </span>
     </div>
   );

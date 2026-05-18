@@ -2,7 +2,10 @@
 
 import type { ReactElement } from 'react';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
-import type { WorkflowTaskStageGroup } from '@/presentation/features/crmProjectDetail/workflowTaskGroups';
+import {
+  areAllStageTasksDone,
+  type WorkflowTaskStageGroup,
+} from '@/presentation/features/crmProjectDetail/workflowTaskGroups';
 import { useWorkflowStageExpanded } from '@/presentation/features/crmProjectDetail/useWorkflowStageExpanded';
 import { WorkflowTaskInlineRow } from './WorkflowTaskInlineRow';
 import styles from './ProjectDetail.module.css';
@@ -43,6 +46,23 @@ export function WorkflowStageTaskGroup({
     .filter(Boolean)
     .join(' ');
   const panelId = `workflow-stage-${projectSlug}-${group.stageSlug}`;
+  const allTasksDone = areAllStageTasksDone(group.tasks);
+
+  const stageTitle = (
+    <span className={styles.stageGroupTitle}>
+      {allTasksDone ? (
+        <span className={styles.stageGroupDoneBadge} title={wf.stageAllDone} aria-label={wf.stageAllDone}>
+          <span className={styles.taskDoneIcon}>✓</span>
+        </span>
+      ) : null}
+      <span className={styles.stageGroupName}>{group.stageLabel}</span>
+      {collapsible ? (
+        <span className={styles.stageGroupChevronWrap} aria-hidden>
+          <span className={expanded ? styles.stageGroupChevron_expanded : styles.stageGroupChevron} />
+        </span>
+      ) : null}
+    </span>
+  );
 
   const taskCount = (
     <span className={styles.stageGroupCount}>
@@ -58,6 +78,7 @@ export function WorkflowStageTaskGroup({
         <span role="columnheader">{cols.documents}</span>
         <span role="columnheader">{cols.assigned}</span>
         <span role="columnheader">{cols.due}</span>
+        <span className={styles.taskCompletionHeader} role="columnheader" aria-hidden />
       </div>
       {group.tasks.map((task) => (
         <WorkflowTaskInlineRow
@@ -84,19 +105,12 @@ export function WorkflowStageTaskGroup({
           aria-controls={panelId}
           aria-label={`${expanded ? wf.collapseStageTasks : wf.expandStageTasks}: ${group.stageLabel}`}
         >
-          <span className={styles.stageGroupTitle}>
-            <span className={styles.stageGroupName}>{group.stageLabel}</span>
-            <span className={styles.stageGroupChevronWrap} aria-hidden>
-              <span className={expanded ? styles.stageGroupChevron_expanded : styles.stageGroupChevron} />
-            </span>
-          </span>
+          {stageTitle}
           {taskCount}
         </button>
       ) : (
         <div className={styles.stageGroupHeaderStatic}>
-          <span className={styles.stageGroupTitle}>
-            <span className={styles.stageGroupName}>{group.stageLabel}</span>
-          </span>
+          {stageTitle}
           {taskCount}
         </div>
       )}

@@ -2,7 +2,7 @@
 
 import type { FormEvent, ReactElement } from 'react';
 import { useCallback, useEffect, useState } from 'react';
-import { DEFAULT_PIPELINE_STAGES, type CrmProjectDetail, type CrmWorkflowTask, type WorkflowTaskStatus } from '@/domain/crm';
+import { DEFAULT_PIPELINE_STAGES, type CrmProjectDetail, type CrmWorkflowTask } from '@/domain/crm';
 import {
   archiveCrmWorkflowTask,
   createCrmWorkflowTask,
@@ -21,6 +21,7 @@ import {
 import { crmRepositories } from '@/shared/di/container';
 import shellStyles from '../../../../app/(dashboard)/dashboard/dashboard.module.css';
 import formStyles from '../CrmProjects/CreateCrmProjectDrawer.module.css';
+import { WorkflowStatusPillPicker } from './WorkflowStatusPillPicker';
 
 export type WorkflowTaskDrawerProps = {
   open: boolean;
@@ -168,17 +169,11 @@ export function WorkflowTaskDrawer({
               </div>
               <div className={formStyles.field}>
                 <label className={formStyles.label}>{wf.fields.status}</label>
-                <select
-                  className={formStyles.select}
+                <WorkflowStatusPillPicker
                   value={form.status}
-                  onChange={(e) => updateField('status', e.target.value as WorkflowTaskStatus)}
-                >
-                  {(['pending', 'in_progress', 'blocked', 'done', 'skipped'] as const).map((s) => (
-                    <option key={s} value={s}>
-                      {s}
-                    </option>
-                  ))}
-                </select>
+                  onChange={(status) => updateField('status', status)}
+                  disabled={saving}
+                />
               </div>
             </div>
             <div className={formStyles.rowTwoCol}>
