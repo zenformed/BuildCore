@@ -12,7 +12,7 @@ import {
   WORKFLOW_TASKS_PREVIEW_LIMIT,
 } from '@/presentation/features/crmProjectDetail/workflowTaskGroups';
 import { WorkflowStageTaskGroup } from './WorkflowStageTaskGroup';
-import { WorkflowTasksListDrawer } from './WorkflowTasksListDrawer';
+import { WorkflowTasksListModal } from './WorkflowTasksListModal';
 import styles from './ProjectDetail.module.css';
 
 export type WorkflowTasksTableProps = {
@@ -48,12 +48,15 @@ export function WorkflowTasksTable({
         </button>
       </div>
       {groups.length === 0 ? (
-        <p className={styles.subtitle}>{wf.empty}</p>
+        <div className={styles.workflowPanelGrow}>
+          <p className={styles.subtitle}>{wf.empty}</p>
+        </div>
       ) : (
-        <div className={styles.stageGroupStack}>
+        <div className={`${styles.stageGroupStack} ${styles.workflowPanelGrow}`}>
           {previewGroups.map((group) => (
             <WorkflowStageTaskGroup
               key={group.stageSlug}
+              projectSlug={project.summary.slug}
               group={group}
               isCurrentStage={group.stageSlug === currentStage}
               docCounts={docCounts}
@@ -65,13 +68,13 @@ export function WorkflowTasksTable({
       {hasMoreTasks ? (
         <button
           type="button"
-          className={styles.panelFooterLink}
+          className={`${styles.panelFooterLink} ${styles.workflowPanelFooter}`}
           onClick={() => setAllTasksOpen(true)}
         >
           {wf.viewAll}
         </button>
       ) : null}
-      <WorkflowTasksListDrawer
+      <WorkflowTasksListModal
         open={allTasksOpen}
         project={project}
         onClose={() => setAllTasksOpen(false)}

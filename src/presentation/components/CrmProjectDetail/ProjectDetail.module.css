@@ -830,9 +830,22 @@
 .workflowPanel {
   padding: 0.75rem 0.875rem;
   min-width: 0;
+  min-height: 0;
+  height: 100%;
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
+}
+
+.workflowPanelGrow {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.workflowPanelFooter {
+  flex-shrink: 0;
+  margin-top: auto;
 }
 
 .stageGroupStack {
@@ -841,22 +854,7 @@
   gap: 0.5rem;
 }
 
-.stageGroupStack_scroll {
-  flex: 1;
-  min-height: 0;
-  max-height: 100%;
-  overflow: auto;
-  padding-right: 0.125rem;
-}
-
-.workflowAllDrawerBody {
-  display: flex;
-  flex-direction: column;
-  min-height: 0;
-  overflow: hidden;
-}
-
-.accountabilityModalOverlay {
+.detailListModalOverlay {
   position: fixed;
   inset: 0;
   z-index: 110;
@@ -867,7 +865,7 @@
   background: var(--color-overlay, rgba(15, 23, 42, 0.45));
 }
 
-.accountabilityModal {
+.detailListModal {
   display: flex;
   flex-direction: column;
   width: min(56rem, 100%);
@@ -878,13 +876,13 @@
   box-shadow: 0 16px 48px rgba(15, 23, 42, 0.18);
 }
 
-:global([data-theme='dark']) .accountabilityModal {
+:global([data-theme='dark']) .detailListModal {
   background: #1d2029;
   border-color: #3d3e4a;
   box-shadow: 0 16px 48px rgba(0, 0, 0, 0.45);
 }
 
-.accountabilityModalHeader {
+.detailListModalHeader {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -893,17 +891,17 @@
   border-bottom: 1px solid var(--theme-border-main, var(--color-border, #e2e8f0));
 }
 
-:global([data-theme='dark']) .accountabilityModalHeader {
+:global([data-theme='dark']) .detailListModalHeader {
   border-bottom-color: #3d3e4a;
 }
 
-.accountabilityModalTitle {
+.detailListModalTitle {
   margin: 0;
   font-size: 1rem;
   font-weight: 600;
 }
 
-.accountabilityModalClose {
+.detailListModalClose {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -919,12 +917,12 @@
   cursor: pointer;
 }
 
-.accountabilityModalClose:hover {
+.detailListModalClose:hover {
   color: var(--color-text, #0f172a);
   background: var(--color-muted, #f1f5f9);
 }
 
-.accountabilityModalBody {
+.detailListModalBody {
   flex: 1;
   min-height: 0;
   overflow: auto;
@@ -964,44 +962,76 @@
     inset 3px 0 0 #3b82f6;
 }
 
-.stageGroupHeader {
+.stageGroupHeaderBtn {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 0.5rem;
+  width: 100%;
   padding: 0.4375rem 0.625rem;
+  text-align: left;
   background: linear-gradient(180deg, var(--color-muted, #f8fafc) 0%, var(--color-muted, #f1f5f9) 100%);
+  border: none;
   border-bottom: 1px solid var(--theme-border-main, var(--color-border, #e2e8f0));
+  cursor: pointer;
 }
 
-:global([data-theme='dark']) .stageGroupHeader {
+.stageGroup_collapsed .stageGroupHeaderBtn {
+  border-bottom: none;
+}
+
+:global([data-theme='dark']) .stageGroupHeaderBtn {
   background: linear-gradient(180deg, #232736 0%, #1a1d26 100%);
   border-bottom-color: #34384a;
 }
 
-:global([data-theme='dark']) .stageGroup_current .stageGroupHeader {
+:global([data-theme='dark']) .stageGroup_current .stageGroupHeaderBtn {
   background: linear-gradient(180deg, #1e2a42 0%, #1a1d26 100%);
 }
 
+.stageGroupHeaderBtn:hover {
+  filter: brightness(0.97);
+}
+
+:global([data-theme='dark']) .stageGroupHeaderBtn:hover {
+  filter: brightness(1.08);
+}
+
 .stageGroupTitle {
-  margin: 0;
   display: flex;
-  align-items: baseline;
+  align-items: center;
   gap: 0.35rem;
   min-width: 0;
 }
 
-.stageGroupPrefix {
-  font-size: 0.6875rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--color-text-muted, #64748b);
+.stageGroupChevronWrap {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   flex-shrink: 0;
+  width: 1rem;
+  height: 1rem;
+  margin-left: 0.125rem;
 }
 
-:global([data-theme='dark']) .stageGroupPrefix {
-  color: #94a3b8;
+.stageGroupChevron,
+.stageGroupChevron_expanded {
+  display: block;
+  width: 0.4375rem;
+  height: 0.4375rem;
+  border-right: 2px solid var(--color-text-muted, #64748b);
+  border-bottom: 2px solid var(--color-text-muted, #64748b);
+  transform: rotate(45deg) translateY(-1px);
+  transition: transform 0.15s ease;
+}
+
+.stageGroupChevron_expanded {
+  transform: rotate(-135deg) translateY(1px);
+}
+
+:global([data-theme='dark']) .stageGroupChevron,
+:global([data-theme='dark']) .stageGroupChevron_expanded {
+  border-color: #94a3b8;
 }
 
 .stageGroupName {

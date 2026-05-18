@@ -83,8 +83,7 @@ export const buildCoreDashboardContent = {
     pipelineAriaLabel: 'Pipeline stage progress',
     currentStage: 'Current stage',
     unassigned: 'Unassigned',
-    nextStepLabel: 'Next step',
-    noNextStep: 'No blockers noted',
+    projectNotesLabel: 'Notes',
     notFound: {
       title: 'Project not found',
       message: 'This project does not exist or the link is invalid.',
@@ -147,7 +146,8 @@ export const buildCoreDashboardContent = {
     saveError: 'Could not save changes.',
     workflow: {
       empty: 'No workflow tasks for this project.',
-      stageGroupPrefix: 'Stage:',
+      collapseStageTasks: 'Collapse stage tasks',
+      expandStageTasks: 'Expand stage tasks',
       taskSingular: 'task',
       taskPlural: 'tasks',
       addTask: 'Add task',

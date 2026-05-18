@@ -55,8 +55,8 @@ export function ProjectDetailPage({
     }
   }, [onRefresh]);
 
-  const waitingOn = project.summary.waitingOn?.trim();
-  const showNextStep = Boolean(waitingOn && waitingOn !== content.projectDetail.noNextStep);
+  const projectNotes = project.notes?.trim();
+  const showProjectNotes = Boolean(projectNotes);
 
   return (
     <div className={styles.page}>
@@ -65,10 +65,10 @@ export function ProjectDetailPage({
       <div className={styles.detailTop}>
         <ProjectDetailHeader project={project.summary} onBack={onBack} onEdit={() => setEditOpen(true)} />
         <ProjectSummaryStrip project={project} />
-        {showNextStep ? (
+        {showProjectNotes ? (
           <p className={styles.nextStepCompact}>
-            <span className={styles.nextStepLabel}>{content.projectDetail.nextStepLabel}</span>
-            {waitingOn}
+            <span className={styles.nextStepLabel}>{content.projectDetail.projectNotesLabel}</span>
+            {projectNotes}
           </p>
         ) : null}
         <StageProgressBar stageProgress={project.stageProgress} />

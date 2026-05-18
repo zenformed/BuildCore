@@ -37,23 +37,23 @@ export function AccountabilityListModal({
   const entries = sortAccountabilityEntries(project.accountabilityLog);
 
   return (
-    <div className={styles.accountabilityModalOverlay} onClick={onClose} role="presentation">
+    <div className={styles.detailListModalOverlay} onClick={onClose} role="presentation">
       <div
-        className={styles.accountabilityModal}
+        className={styles.detailListModal}
         onClick={(e) => e.stopPropagation()}
         role="dialog"
         aria-modal="true"
         aria-labelledby="accountability-all-title"
       >
-        <div className={styles.accountabilityModalHeader}>
-          <h2 id="accountability-all-title" className={styles.accountabilityModalTitle}>
+        <div className={styles.detailListModalHeader}>
+          <h2 id="accountability-all-title" className={styles.detailListModalTitle}>
             {acc.allEntriesTitle}
           </h2>
-          <button type="button" className={styles.accountabilityModalClose} onClick={onClose} aria-label="Close">
+          <button type="button" className={styles.detailListModalClose} onClick={onClose} aria-label="Close">
             ×
           </button>
         </div>
-        <div className={styles.accountabilityModalBody}>
+        <div className={styles.detailListModalBody}>
           {entries.length === 0 ? (
             <p className={styles.subtitle}>{acc.empty}</p>
           ) : (
