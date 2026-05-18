@@ -9,6 +9,7 @@ import {
   formatStageLabel,
   formatTradeLabel,
 } from '@/presentation/features/crmProjects/crmProjectFormatters';
+import { TeamMemberAvatar } from '@/presentation/components/CrmProjectDetail/TeamMemberAvatar';
 import shared from '@/presentation/components/crmShared/crmShared.module.css';
 import styles from './CrmProjects.module.css';
 
@@ -116,9 +117,7 @@ function ProjectRow({
       </span>
       <span className={styles.gridCell} role="cell">
         {project.assignedTo ? (
-          <span className={shared.avatar} title={project.assignedTo.displayName}>
-            {project.assignedTo.initials}
-          </span>
+          <TeamMemberAvatar member={project.assignedTo} />
         ) : (
           <span className={`${shared.avatar} ${shared.avatarUnassigned}`} title={content.crm.table.unassigned}>
             —

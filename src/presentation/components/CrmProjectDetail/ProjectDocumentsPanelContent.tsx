@@ -26,11 +26,13 @@ const FILTERS: readonly { id: DocumentPanelFilter; label: string }[] = [
   { id: 'missing', label: content.projectDetail.documents.filters.missing },
 ] as const;
 
-export type ProjectDocumentsPanelProps = {
+export type ProjectDocumentsPanelContentProps = {
   project: CrmProjectDetail;
 };
 
-export function ProjectDocumentsPanel({ project }: ProjectDocumentsPanelProps): ReactElement {
+export function ProjectDocumentsPanelContent({
+  project,
+}: ProjectDocumentsPanelContentProps): ReactElement {
   const docsContent = content.projectDetail.documents;
   const [filter, setFilter] = useState<DocumentPanelFilter>('all');
 
@@ -51,12 +53,7 @@ export function ProjectDocumentsPanel({ project }: ProjectDocumentsPanelProps): 
   };
 
   return (
-    <section className={styles.documentsPanel} aria-labelledby="project-documents-heading">
-      <div className={styles.cardTitleRow}>
-        <h3 id="project-documents-heading" className={styles.cardTitle}>
-          {content.projectDetail.sections.documents}
-        </h3>
-      </div>
+    <>
       <p className={styles.cardHelper}>{docsContent.uploadHint}</p>
       <div className={styles.docFilterRow} role="tablist" aria-label={docsContent.filterAriaLabel}>
         {FILTERS.map((tab) => (
@@ -143,7 +140,6 @@ export function ProjectDocumentsPanel({ project }: ProjectDocumentsPanelProps): 
           })}
         </ul>
       )}
-      <p className={styles.panelFooterLink}>{docsContent.viewAll}</p>
-    </section>
+    </>
   );
 }

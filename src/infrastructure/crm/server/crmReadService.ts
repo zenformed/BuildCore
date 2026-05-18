@@ -3,14 +3,13 @@ import type { CrmProjectDetail, CrmProjectSummary } from '@/domain/crm';
 import {
   mapDbProjectDetail,
   mapDbProjectSummary,
-  mapProfileToTeamMemberRef,
   type DbCrmAccountabilityRow,
   type DbCrmDocumentRow,
   type DbCrmMilestoneRow,
   type DbCrmProjectRow,
   type DbCrmWorkflowTaskRow,
-  type DbProfileRow,
 } from '@/infrastructure/crm/mappers/mapCrmFromDb';
+import { loadCrmMemberMap } from './crmMemberMap';
 
 const PROJECT_LIST_SELECT = `
   id,
@@ -74,27 +73,6 @@ function collectMemberIds(rows: {
   return [...ids];
 }
 
-async function loadMemberMap(
-  supabase: SupabaseClient,
-  memberIds: readonly string[]
-): Promise<Map<string, ReturnType<typeof mapProfileToTeamMemberRef>>> {
-  const map = new Map<string, ReturnType<typeof mapProfileToTeamMemberRef>>();
-  if (memberIds.length === 0) return map;
-
-  const { data } = await supabase
-    .from('profiles')
-    .select('id, email')
-    .in('id', [...memberIds]);
-
-  const profiles = (data ?? []) as DbProfileRow[];
-  const profileById = new Map(profiles.map((p) => [p.id, p]));
-
-  for (const id of memberIds) {
-    map.set(id, mapProfileToTeamMemberRef(profileById.get(id), id));
-  }
-  return map;
-}
-
 export async function listCrmProjectSummariesForOrg(
   supabase: SupabaseClient,
   organizationId: string
@@ -111,7 +89,7 @@ export async function listCrmProjectSummariesForOrg(
   }
 
   const projects = (data ?? []) as DbCrmProjectRow[];
-  const memberById = await loadMemberMap(supabase, collectMemberIds({ projects }));
+  const memberById = await loadCrmMemberMap(supabase, collectMemberIds({ projects }));
   return projects.map((row) => mapDbProjectSummary(row, memberById));
 }
 
@@ -173,7 +151,7 @@ export async function getCrmProjectDetailBySlugForOrg(
   const milestones = (milestonesResult.data ?? []) as DbCrmMilestoneRow[];
   const accountability = (accountabilityResult.data ?? []) as DbCrmAccountabilityRow[];
 
-  const memberById = await loadMemberMap(
+  const memberById = await loadCrmMemberMap(
     supabase,
     collectMemberIds({ projects: [project], workflowTasks, documents, accountability })
   );

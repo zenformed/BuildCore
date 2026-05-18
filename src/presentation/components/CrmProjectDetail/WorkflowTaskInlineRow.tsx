@@ -14,6 +14,7 @@ import { formatCentsAsUsd } from '@/presentation/features/crmProjects/crmProject
 import { centsToUsdInput } from '@/presentation/features/crmProjectDetail/workflowTaskFormModel';
 import { getWorkflowTaskAssigneeOptions } from '@/presentation/features/crmProjectDetail/workflowTaskAssigneeOptions';
 import { useWorkflowTaskPatch } from '@/presentation/features/crmProjectDetail/useWorkflowTaskPatch';
+import { validateWorkflowTaskStatusChange } from '@/presentation/features/crmProjectDetail/workflowTaskDocumentsValidation';
 import {
   dueInputValueToIso,
   workflowTaskDueToInputValue,
@@ -66,7 +67,7 @@ export function WorkflowTaskInlineRow({
   const assigneeRef = useRef<HTMLDivElement>(null);
   const dueInputRef = useRef<HTMLInputElement>(null);
 
-  const assigneeOptions = getWorkflowTaskAssigneeOptions(isApiSource, user?.id);
+  const assigneeOptions = getWorkflowTaskAssigneeOptions(isApiSource, user?.id, user?.email);
   const dueInputValue = workflowTaskDueToInputValue(task.dueAt);
 
   useEffect(() => {
@@ -109,13 +110,24 @@ export function WorkflowTaskInlineRow({
     async (status: WorkflowTaskStatus) => {
       setStatusMenuOpen(false);
       if (status === task.status) return;
+      const validation = validateWorkflowTaskStatusChange(task, status, docCount);
+      if (!validation.ok) {
+        onTaskError?.(validation.message);
+        return;
+      }
       try {
         await patchTask({ taskId: task.id, status });
       } catch (err) {
         reportError(err);
       }
     },
-    [patchTask, reportError, task.id, task.status]
+    [docCount, onTaskError, patchTask, reportError, task]
+  );
+
+  const isStatusDisabled = useCallback(
+    (status: WorkflowTaskStatus) =>
+      !validateWorkflowTaskStatusChange(task, status, docCount).ok,
+    [docCount, task]
   );
 
   const saveDocumentsRequired = useCallback(
@@ -221,7 +233,7 @@ export function WorkflowTaskInlineRow({
               key={status}
               type="button"
               className={styles.inlineMenuPillOption}
-              disabled={saving || status === task.status}
+              disabled={saving || status === task.status || isStatusDisabled(status)}
               onClick={() => void saveStatus(status)}
             >
               <span className={`${styles.statusPill} ${statusBadgeClass(status)}`}>
@@ -261,13 +273,14 @@ export function WorkflowTaskInlineRow({
             type="button"
             className={styles.inlineCellBtn}
             disabled={saving}
+            title={task.title}
             onClick={() => {
               closeMenus();
               setTitleDraft(task.title);
               setEditingTitle(true);
             }}
           >
-            {task.title}
+            <span className={styles.taskTitleBtnText}>{task.title}</span>
           </button>
         )}
       </span>

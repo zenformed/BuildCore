@@ -139,7 +139,6 @@ export const buildCoreDashboardContent = {
         assigned: 'Assigned to',
       },
     },
-    editProjectButton: 'Edit Project',
     actionsButton: 'Actions',
     breadcrumbCrm: 'CRM',
     breadcrumbProjects: 'Projects',
@@ -188,6 +187,7 @@ export const buildCoreDashboardContent = {
         actions: 'Actions',
       },
       viewAll: 'View all Workflow Tasks',
+      openDocuments: 'Documents',
       allTasksTitle: 'All Workflow Tasks',
       fields: {
         title: 'Task title',
@@ -202,6 +202,15 @@ export const buildCoreDashboardContent = {
         taskKind: 'Task type',
         amountUsd: 'Amount (USD)',
       },
+    },
+    payments: {
+      title: 'Payments',
+      addMilestone: 'Add payment milestone',
+      empty: 'No payment milestones yet.',
+      milestoneDrawerCreate: 'New payment milestone',
+      milestoneDrawerEdit: 'Edit payment milestone',
+      saveMilestone: 'Save payment milestone',
+      cancelMilestone: 'Cancel',
     },
     documents: {
       empty: 'No documents yet.',

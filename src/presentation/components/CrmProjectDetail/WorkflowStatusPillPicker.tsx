@@ -17,12 +17,14 @@ export type WorkflowStatusPillPickerProps = {
   value: WorkflowTaskStatus;
   onChange: (status: WorkflowTaskStatus) => void;
   disabled?: boolean;
+  isStatusDisabled?: (status: WorkflowTaskStatus) => boolean;
 };
 
 export function WorkflowStatusPillPicker({
   value,
   onChange,
   disabled = false,
+  isStatusDisabled,
 }: WorkflowStatusPillPickerProps): ReactElement {
   const [open, setOpen] = useState(false);
   const anchorRef = useRef<HTMLDivElement>(null);
@@ -49,14 +51,16 @@ export function WorkflowStatusPillPicker({
         portalClassName={styles.formStatusPickerMenuPortal}
       >
         <div className={styles.formStatusPickerMenu} role="listbox">
-          {WORKFLOW_TASK_STATUSES.map((status) => (
+          {WORKFLOW_TASK_STATUSES.map((status) => {
+            const statusDisabled = disabled || (isStatusDisabled?.(status) ?? false);
+            return (
             <button
               key={status}
               type="button"
               role="option"
               aria-selected={status === value}
               className={styles.inlineMenuPillOption}
-              disabled={disabled}
+              disabled={statusDisabled}
               onClick={() => {
                 onChange(status);
                 setOpen(false);
@@ -66,7 +70,8 @@ export function WorkflowStatusPillPicker({
                 {formatWorkflowStatus(status)}
               </span>
             </button>
-          ))}
+          );
+          })}
         </div>
       </WorkflowInlineMenu>
     </div>

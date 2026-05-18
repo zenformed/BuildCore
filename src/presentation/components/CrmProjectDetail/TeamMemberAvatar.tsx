@@ -1,7 +1,11 @@
 'use client';
 
 import type { ReactElement } from 'react';
+import { useState } from 'react';
 import type { CrmTeamMemberRef } from '@/domain/crm';
+import { resolveTeamMemberAvatarUrl } from '@/presentation/features/crm/resolveTeamMemberAvatarUrl';
+import { useAuthenticatedAvatarBlob } from '@/presentation/hooks/useAuthenticatedAvatarBlob';
+import { useCurrentUserAvatar } from '@/presentation/providers/CurrentUserAvatarContext';
 import shared from '@/presentation/components/crmShared/crmShared.module.css';
 
 export type TeamMemberAvatarProps = {
@@ -16,20 +20,32 @@ function memberTooltip(member: CrmTeamMemberRef, title?: string): string {
 }
 
 export function TeamMemberAvatar({ member, title }: TeamMemberAvatarProps): ReactElement {
+  const currentUser = useCurrentUserAvatar();
+  const resolvedUrl = resolveTeamMemberAvatarUrl(member, currentUser);
+  const isApiAvatarPath =
+    resolvedUrl != null &&
+    !resolvedUrl.startsWith('blob:') &&
+    (resolvedUrl.startsWith('/api/auth/user-avatar') || resolvedUrl.startsWith('/api/auth/avatar'));
+  const authenticatedBlobUrl = useAuthenticatedAvatarBlob(isApiAvatarPath ? resolvedUrl : null);
+  const displayUrl =
+    resolvedUrl?.startsWith('blob:') === true ? resolvedUrl : authenticatedBlobUrl;
+  const [imageFailed, setImageFailed] = useState(false);
   const tooltip = memberTooltip(member, title);
 
-  if (member.avatarUrl) {
+  if (displayUrl && !imageFailed) {
     return (
       <img
-        src={member.avatarUrl}
+        src={displayUrl}
         alt=""
         className={shared.avatar}
         title={tooltip}
         width={24}
         height={24}
+        onError={() => setImageFailed(true)}
       />
     );
   }
+
   return (
     <span className={shared.avatar} title={tooltip} aria-label={member.displayName}>
       {member.initials}

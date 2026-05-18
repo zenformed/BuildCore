@@ -14,7 +14,6 @@ import styles from './ProjectDetail.module.css';
 export type WorkflowStageTaskGroupProps = {
   projectSlug: string;
   group: WorkflowTaskStageGroup;
-  isCurrentStage: boolean;
   docCounts: ReadonlyMap<string, number>;
   isApiSource: boolean;
   onTaskUpdated: () => Promise<void>;
@@ -28,7 +27,6 @@ export type WorkflowStageTaskGroupProps = {
 export function WorkflowStageTaskGroup({
   projectSlug,
   group,
-  isCurrentStage,
   docCounts,
   isApiSource,
   onTaskUpdated,
@@ -43,7 +41,6 @@ export function WorkflowStageTaskGroup({
   const expanded = collapsible ? persisted.expanded : true;
   const groupClass = [
     styles.stageGroup,
-    isCurrentStage ? styles.stageGroup_current : '',
     collapsible && !expanded ? styles.stageGroup_collapsed : '',
   ]
     .filter(Boolean)

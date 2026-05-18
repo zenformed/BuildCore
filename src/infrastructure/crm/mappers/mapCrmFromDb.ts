@@ -196,14 +196,15 @@ function initialsFromDisplayName(displayName: string): string {
 
 export function mapProfileToTeamMemberRef(
   profile: DbProfileRow | null | undefined,
-  userId: string
+  userId: string,
+  avatarUrl: string | null = null
 ): CrmTeamMemberRef {
   const displayName = displayNameFromEmail(profile?.email, userId);
   return {
     id: userId,
     displayName,
     initials: initialsFromDisplayName(displayName),
-    avatarUrl: null,
+    avatarUrl,
     email: profile?.email ?? null,
   };
 }

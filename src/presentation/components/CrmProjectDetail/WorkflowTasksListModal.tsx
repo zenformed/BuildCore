@@ -5,7 +5,7 @@ import { useEffect } from 'react';
 import type { CrmProjectDetail, CrmWorkflowTask } from '@/domain/crm';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
 import { countDocumentsByTaskId } from '@/presentation/features/crmProjectDetail/workflowDocumentCounts';
-import { groupWorkflowTasksByStage } from '@/presentation/features/crmProjectDetail/workflowTaskGroups';
+import { groupOpsWorkflowTasksByStage } from '@/presentation/features/crmProjectDetail/workflowTaskGroups';
 import { WorkflowStageTaskGroup } from './WorkflowStageTaskGroup';
 import styles from './ProjectDetail.module.css';
 
@@ -44,7 +44,7 @@ export function WorkflowTasksListModal({
   if (!open) return null;
 
   const currentStage = project.summary.currentStageSlug;
-  const groups = groupWorkflowTasksByStage(project.workflowTasks, currentStage);
+  const groups = groupOpsWorkflowTasksByStage(project.workflowTasks, currentStage);
   const docCounts = countDocumentsByTaskId(project.documents);
 
   return (
@@ -74,7 +74,6 @@ export function WorkflowTasksListModal({
                   key={group.collapseKey}
                   projectSlug={project.summary.slug}
                   group={group}
-                  isCurrentStage={!group.isPaymentsGroup && group.stageSlug === currentStage}
                   docCounts={docCounts}
                   isApiSource={isApiSource}
                   collapsible={false}

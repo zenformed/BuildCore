@@ -7,6 +7,8 @@ import {
   PAYMENT_WORKFLOW_STAGE_SLUG,
   type CrmProjectDetail,
   type CrmWorkflowTask,
+  type PipelineStageSlug,
+  type WorkflowTaskStatus,
 } from '@/domain/crm';
 import {
   archiveCrmWorkflowTask,
@@ -23,16 +25,20 @@ import {
   validateWorkflowTaskForm,
   workflowTaskToFormState,
   type WorkflowTaskFormState,
-  type WorkflowTaskKind,
 } from '@/presentation/features/crmProjectDetail/workflowTaskFormModel';
+import { canMarkWorkflowTaskDone } from '@/presentation/features/crmProjectDetail/workflowTaskDocumentsValidation';
+import { countDocumentsByTaskId } from '@/presentation/features/crmProjectDetail/workflowDocumentCounts';
 import { crmRepositories } from '@/shared/di/container';
 import shellStyles from '../../../../app/(dashboard)/dashboard/dashboard.module.css';
 import formStyles from '../CrmProjects/CreateCrmProjectDrawer.module.css';
 import { WorkflowStatusPillPicker } from './WorkflowStatusPillPicker';
 
+export type WorkflowTaskDrawerContext = 'workflow' | 'payment';
+
 export type WorkflowTaskDrawerProps = {
   open: boolean;
   mode: 'create' | 'edit';
+  drawerContext: WorkflowTaskDrawerContext;
   project: CrmProjectDetail;
   task: CrmWorkflowTask | null;
   isApiSource: boolean;
@@ -40,9 +46,24 @@ export type WorkflowTaskDrawerProps = {
   onSaved: () => void;
 };
 
+function defaultFormForContext(
+  drawerContext: WorkflowTaskDrawerContext,
+  stageSlug: PipelineStageSlug,
+  task: CrmWorkflowTask | null,
+  mode: 'create' | 'edit'
+): WorkflowTaskFormState {
+  if (mode === 'edit' && task) return workflowTaskToFormState(task);
+  const base = defaultWorkflowTaskFormState(stageSlug);
+  if (drawerContext === 'payment') {
+    return { ...base, taskKind: 'payment', stageSlug: PAYMENT_WORKFLOW_STAGE_SLUG };
+  }
+  return { ...base, taskKind: 'standard' };
+}
+
 export function WorkflowTaskDrawer({
   open,
   mode,
+  drawerContext,
   project,
   task,
   isApiSource,
@@ -52,23 +73,17 @@ export function WorkflowTaskDrawer({
   const { user } = useAuth();
   const wf = content.projectDetail.workflow;
   const [form, setForm] = useState<WorkflowTaskFormState>(() =>
-    mode === 'edit' && task
-      ? workflowTaskToFormState(task)
-      : defaultWorkflowTaskFormState(project.summary.currentStageSlug)
+    defaultFormForContext(drawerContext, project.summary.currentStageSlug, task, mode)
   );
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     if (!open) return;
-    setForm(
-      mode === 'edit' && task
-        ? workflowTaskToFormState(task)
-        : defaultWorkflowTaskFormState(project.summary.currentStageSlug)
-    );
+    setForm(defaultFormForContext(drawerContext, project.summary.currentStageSlug, task, mode));
     setError(null);
     setSaving(false);
-  }, [open, mode, task, project.summary.currentStageSlug]);
+  }, [open, mode, task, drawerContext, project.summary.currentStageSlug]);
 
   const updateField = useCallback(
     <K extends keyof WorkflowTaskFormState>(key: K, value: WorkflowTaskFormState[K]) => {
@@ -77,31 +92,14 @@ export function WorkflowTaskDrawer({
     []
   );
 
-  const handleTaskKindChange = useCallback(
-    (kind: WorkflowTaskKind) => {
-      if (kind === 'payment') {
-        setForm((prev) => ({
-          ...prev,
-          taskKind: kind,
-          stageSlug: PAYMENT_WORKFLOW_STAGE_SLUG,
-        }));
-        return;
-      }
-      setForm((prev) => ({
-        ...prev,
-        taskKind: kind,
-        amountUsd: '',
-        stageSlug: project.summary.currentStageSlug,
-      }));
-    },
-    [project.summary.currentStageSlug]
-  );
+  const docCounts = countDocumentsByTaskId(project.documents);
+  const editDocCount = task ? (docCounts.get(task.id) ?? 0) : 0;
 
   const handleSubmit = useCallback(
     async (e: FormEvent) => {
       e.preventDefault();
       setError(null);
-      const validated = validateWorkflowTaskForm(form);
+      const validated = validateWorkflowTaskForm(form, { docCount: editDocCount });
       if (!validated.ok) {
         setError(validated.message);
         return;
@@ -115,7 +113,10 @@ export function WorkflowTaskDrawer({
             ...validated.body,
           });
         } else if (task) {
-          await updateCrmWorkflowTask(crmRepositories, formToUpdateInput(task.id, form));
+          await updateCrmWorkflowTask(
+            crmRepositories,
+            formToUpdateInput(task.id, form, { docCount: editDocCount })
+          );
         }
         onSaved();
         onClose();
@@ -125,7 +126,7 @@ export function WorkflowTaskDrawer({
         setSaving(false);
       }
     },
-    [form, mode, onClose, onSaved, project.summary.id, project.summary.slug, task, wf.taskSubmitFailed]
+    [editDocCount, form, mode, onClose, onSaved, project.summary.id, project.summary.slug, task, wf.taskSubmitFailed]
   );
 
   const handleArchive = useCallback(async () => {
@@ -151,8 +152,21 @@ export function WorkflowTaskDrawer({
       : []
     : MOCK_CRM_TEAM_MEMBERS.map((m) => ({ id: m.id, label: m.displayName }));
 
-  const title = mode === 'create' ? wf.taskDrawerCreate : wf.taskDrawerEdit;
-  const isPaymentTask = form.taskKind === 'payment';
+  const payments = content.projectDetail.payments;
+  const isPaymentDrawer = drawerContext === 'payment';
+  const title =
+    mode === 'create'
+      ? isPaymentDrawer
+        ? payments.milestoneDrawerCreate
+        : wf.taskDrawerCreate
+      : isPaymentDrawer
+        ? payments.milestoneDrawerEdit
+        : wf.taskDrawerEdit;
+  const isPaymentTask = isPaymentDrawer || form.taskKind === 'payment';
+  const documentsRequired = form.documentsRequired === 'yes';
+  const canSelectDone = canMarkWorkflowTaskDone({ documentsRequired }, editDocCount);
+  const isStatusDisabled = (status: WorkflowTaskStatus) =>
+    status === 'done' && documentsRequired && !canSelectDone;
 
   return (
     <div className={shellStyles.settingsOverlay} onClick={onClose} role="presentation">
@@ -179,21 +193,6 @@ export function WorkflowTaskDrawer({
                 autoFocus
               />
             </div>
-            <div className={formStyles.field}>
-              <label className={formStyles.label} htmlFor="workflow-task-kind">
-                {wf.fields.taskKind}
-              </label>
-              <select
-                id="workflow-task-kind"
-                className={formStyles.select}
-                value={form.taskKind}
-                disabled={mode === 'edit'}
-                onChange={(e) => handleTaskKindChange(e.target.value as WorkflowTaskKind)}
-              >
-                <option value="standard">{wf.taskKindStandard}</option>
-                <option value="payment">{wf.taskKindPayment}</option>
-              </select>
-            </div>
             {isPaymentTask ? (
               <div className={formStyles.rowTwoCol}>
                 <div className={formStyles.field}>
@@ -215,6 +214,7 @@ export function WorkflowTaskDrawer({
                     value={form.status}
                     onChange={(status) => updateField('status', status)}
                     disabled={saving}
+                    isStatusDisabled={isStatusDisabled}
                   />
                 </div>
               </div>
@@ -242,6 +242,7 @@ export function WorkflowTaskDrawer({
                     value={form.status}
                     onChange={(status) => updateField('status', status)}
                     disabled={saving}
+                    isStatusDisabled={isStatusDisabled}
                   />
                 </div>
               </div>

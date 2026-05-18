@@ -7,6 +7,10 @@ import {
 } from '@/domain/crm';
 import type { CreateCrmWorkflowTaskInput, UpdateCrmWorkflowTaskInput } from '@/domain/crm';
 import { parseUsdInputToCents } from '@/presentation/features/crmCreate/createCrmProjectFormModel';
+import {
+  validateWorkflowTaskStatusChange,
+  WORKFLOW_TASK_DONE_REQUIRES_DOCUMENTS_MESSAGE,
+} from '@/presentation/features/crmProjectDetail/workflowTaskDocumentsValidation';
 
 export type DocumentsRequiredChoice = 'yes' | 'no';
 export type WorkflowTaskKind = 'standard' | 'payment';
@@ -44,6 +48,14 @@ export function defaultWorkflowTaskFormState(
   };
 }
 
+export function defaultPaymentMilestoneFormState(): WorkflowTaskFormState {
+  return {
+    ...defaultWorkflowTaskFormState(PAYMENT_WORKFLOW_STAGE_SLUG),
+    taskKind: 'payment',
+    stageSlug: PAYMENT_WORKFLOW_STAGE_SLUG,
+  };
+}
+
 export function workflowTaskToFormState(task: CrmWorkflowTask): WorkflowTaskFormState {
   const isPayment = isPaymentWorkflowTask(task);
   return {
@@ -59,11 +71,27 @@ export function workflowTaskToFormState(task: CrmWorkflowTask): WorkflowTaskForm
   };
 }
 
+export type ValidateWorkflowTaskFormOptions = {
+  /** Uploaded document count for the task (edit mode). */
+  docCount?: number;
+};
+
 export function validateWorkflowTaskForm(
-  form: WorkflowTaskFormState
+  form: WorkflowTaskFormState,
+  options: ValidateWorkflowTaskFormOptions = {}
 ): { ok: true; body: Omit<CreateCrmWorkflowTaskInput, 'projectId' | 'projectSlug'> } | { ok: false; message: string } {
   const title = form.title.trim();
   if (!title) return { ok: false, message: 'Task title is required.' };
+
+  const documentsRequired = form.documentsRequired === 'yes';
+  const docCount = options.docCount ?? 0;
+  if (
+    form.status === 'done' &&
+    documentsRequired &&
+    !validateWorkflowTaskStatusChange({ documentsRequired: true }, 'done', docCount).ok
+  ) {
+    return { ok: false, message: WORKFLOW_TASK_DONE_REQUIRES_DOCUMENTS_MESSAGE };
+  }
 
   if (form.taskKind === 'payment') {
     if (!form.amountUsd.trim()) {
@@ -105,9 +133,10 @@ export function validateWorkflowTaskForm(
 
 export function formToUpdateInput(
   taskId: string,
-  form: WorkflowTaskFormState
+  form: WorkflowTaskFormState,
+  options: ValidateWorkflowTaskFormOptions = {}
 ): UpdateCrmWorkflowTaskInput {
-  const validated = validateWorkflowTaskForm(form);
+  const validated = validateWorkflowTaskForm(form, options);
   if (!validated.ok) throw new Error(validated.message);
   return { taskId, ...validated.body };
 }

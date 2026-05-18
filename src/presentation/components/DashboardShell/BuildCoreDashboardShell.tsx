@@ -18,6 +18,7 @@ import { BuildCoreDashboardModals } from './BuildCoreDashboardModals';
 import { CreateCrmProjectDrawer } from '@/presentation/components/CrmProjects/CreateCrmProjectDrawer';
 import { BuildCoreSettingsDrawer } from './BuildCoreSettingsDrawer';
 import { BuildCoreSidebar, type BuildCoreSidebarNavId } from './BuildCoreSidebar';
+import { CurrentUserAvatarProvider } from '@/presentation/providers/CurrentUserAvatarContext';
 import shellStyles from '../../../../app/(dashboard)/dashboard/dashboard.module.css';
 
 const sidebarBrandingClassNames = pickSidebarBrandingClassNames(shellStyles);
@@ -105,7 +106,12 @@ export function BuildCoreDashboardShell({
             />
             <main className={shellStyles.mainContent}>
               {title != null ? <h1 className={shellStyles.headerTitle}>{title}</h1> : null}
-              <div className={shellStyles.listViewWrap}>{children}</div>
+              <CurrentUserAvatarProvider
+                currentUserId={dash.user?.id ?? null}
+                currentUserAvatarUrl={dash.avatarUrl}
+              >
+                <div className={shellStyles.listViewWrap}>{children}</div>
+              </CurrentUserAvatarProvider>
             </main>
           </>
         }

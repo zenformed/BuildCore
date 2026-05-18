@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import Cropper from 'react-easy-crop';
 import type { Area } from 'react-easy-crop';
 import { createCroppedImage } from './createCroppedImage';
@@ -22,32 +22,12 @@ function TrashIcon(): React.ReactElement {
   );
 }
 
-function CameraIcon(): React.ReactElement {
-  return (
-    <svg className={styles.optionIcon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-      <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
-      <circle cx="12" cy="13" r="4" />
-    </svg>
-  );
-}
-
 function UploadIcon(): React.ReactElement {
   return (
     <svg className={styles.optionIcon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
       <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
       <polyline points="17 8 12 3 7 8" />
       <line x1="12" y1="3" x2="12" y2="15" />
-    </svg>
-  );
-}
-
-function EmojiIcon(): React.ReactElement {
-  return (
-    <svg className={styles.optionIcon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-      <circle cx="12" cy="12" r="10" />
-      <path d="M8 14s1.5 2 4 2 4-2 4-2" />
-      <line x1="9" y1="9" x2="9.01" y2="9" />
-      <line x1="15" y1="9" x2="15.01" y2="9" />
     </svg>
   );
 }
@@ -93,7 +73,7 @@ export interface ProfilePhotoModalProps {
   getAccessToken?: () => string | null;
 }
 
-type ViewMode = 'main' | 'crop' | 'camera' | 'browse';
+type ViewMode = 'main' | 'crop' | 'browse';
 
 export function ProfilePhotoModal({
   isOpen,
@@ -112,17 +92,11 @@ export function ProfilePhotoModal({
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const streamRef = useRef<MediaStream | null>(null);
 
   const resetView = useCallback(() => {
     setView('main');
     setImageToCrop(null);
     setError(null);
-    if (streamRef.current) {
-      streamRef.current.getTracks().forEach((t) => t.stop());
-      streamRef.current = null;
-    }
   }, []);
 
   const handleClose = useCallback(() => {
@@ -192,48 +166,6 @@ export function ProfilePhotoModal({
     []
   );
 
-  const startCamera = useCallback(async () => {
-    setError(null);
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } });
-      streamRef.current = stream;
-      setView('camera');
-    } catch {
-      setError('Camera access denied');
-    }
-  }, []);
-
-  useEffect(() => {
-    if (view !== 'camera' || !streamRef.current || !videoRef.current) return;
-    const video = videoRef.current;
-    const stream = streamRef.current;
-    video.srcObject = stream;
-    video.play().catch(() => setError('Could not start video'));
-    return () => {
-      video.srcObject = null;
-    };
-  }, [view]);
-
-  const capturePhoto = useCallback(() => {
-    const video = videoRef.current;
-    if (!video || !video.videoWidth) return;
-    const canvas = document.createElement('canvas');
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-    ctx.drawImage(video, 0, 0);
-    const url = canvas.toDataURL('image/png');
-    if (streamRef.current) {
-      streamRef.current.getTracks().forEach((t) => t.stop());
-      streamRef.current = null;
-    }
-    setImageToCrop(url);
-    setView('crop');
-    setCrop({ x: 0, y: 0 });
-    setZoom(1);
-  }, []);
-
   const handleAvatarSelect = useCallback(
     async (seed: string) => {
       setSaving(true);
@@ -294,7 +226,7 @@ export function ProfilePhotoModal({
         <div className={styles.header}>
           <button type="button" className={styles.closeBtn} onClick={handleClose} aria-label="Close">×</button>
           <h2 className={styles.title}>
-            {view === 'crop' ? 'Crop photo' : view === 'camera' ? 'Take photo' : view === 'browse' ? 'Browse avatars' : 'Change profile picture'}
+            {view === 'crop' ? 'Crop photo' : view === 'browse' ? 'Browse avatars' : 'Change profile picture'}
           </h2>
         </div>
         <div className={styles.content}>
@@ -354,12 +286,6 @@ export function ProfilePhotoModal({
                   </span>
                   <span className={styles.optionCircleLabel}>Upload from Device</span>
                 </button>
-                <button type="button" className={styles.optionCircleBtn} onClick={startCamera} disabled={saving}>
-                  <span className={styles.optionCircleIcon}>
-                    <CameraIcon />
-                  </span>
-                  <span className={styles.optionCircleLabel}>Take a<br />picture</span>
-                </button>
               </div>
                 </div>
               </div>
@@ -388,10 +314,10 @@ export function ProfilePhotoModal({
                     if (imageToCrop?.startsWith('blob:')) URL.revokeObjectURL(imageToCrop);
                     setImageToCrop(null);
                     setCroppedAreaPixels(null);
-                    startCamera();
+                    setView('main');
                   }}
                 >
-                  Retake
+                  Cancel
                 </button>
                 <button type="button" onClick={handleSaveCrop} disabled={saving}>
                   {saving ? 'Saving…' : 'Accept'}
@@ -400,20 +326,6 @@ export function ProfilePhotoModal({
             </div>
           )}
 
-          {view === 'camera' && (
-            <div className={styles.altContent}>
-              <div className={styles.cameraView}>
-                <video ref={videoRef} autoPlay muted playsInline />
-                <button type="button" className={styles.cameraCapture} onClick={capturePhoto} aria-label="Capture photo" />
-              </div>
-              <div className={styles.cameraActions}>
-                <button type="button" className={styles.cameraBackBtn} onClick={() => { setView('main'); if (streamRef.current) { streamRef.current.getTracks().forEach((t) => t.stop()); streamRef.current = null; } }}>
-                  <BackIcon />
-                  Back
-                </button>
-              </div>
-            </div>
-          )}
 
           {view === 'browse' && (
             <div className={styles.browseContent}>

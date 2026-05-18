@@ -7,7 +7,7 @@ import { buildCoreDashboardContent as content } from '@/platform/content/buildCo
 import { countDocumentsByTaskId } from '@/presentation/features/crmProjectDetail/workflowDocumentCounts';
 import {
   countWorkflowTasksInGroups,
-  groupWorkflowTasksByStage,
+  groupOpsWorkflowTasksByStage,
   limitWorkflowTaskGroups,
   WORKFLOW_TASKS_PREVIEW_LIMIT,
 } from '@/presentation/features/crmProjectDetail/workflowTaskGroups';
@@ -23,6 +23,7 @@ export type WorkflowTasksTableProps = {
   onUploadComingSoon: () => void;
   onTaskError?: (message: string) => void;
   onRequestArchiveTask?: (task: CrmWorkflowTask) => void;
+  onOpenDocuments?: () => void;
 };
 
 export function WorkflowTasksTable({
@@ -33,11 +34,12 @@ export function WorkflowTasksTable({
   onUploadComingSoon,
   onTaskError,
   onRequestArchiveTask,
+  onOpenDocuments,
 }: WorkflowTasksTableProps): ReactElement {
   const wf = content.projectDetail.workflow;
   const [allTasksOpen, setAllTasksOpen] = useState(false);
   const currentStage = project.summary.currentStageSlug;
-  const groups = groupWorkflowTasksByStage(project.workflowTasks, currentStage);
+  const groups = groupOpsWorkflowTasksByStage(project.workflowTasks, currentStage);
   const totalTasks = countWorkflowTasksInGroups(groups);
   const hasMoreTasks = totalTasks > WORKFLOW_TASKS_PREVIEW_LIMIT;
   const previewGroups = hasMoreTasks
@@ -72,9 +74,6 @@ export function WorkflowTasksTable({
               key={group.collapseKey}
               projectSlug={project.summary.slug}
               group={group}
-              isCurrentStage={
-                !hasMoreTasks && !group.isPaymentsGroup && group.stageSlug === currentStage
-              }
               docCounts={docCounts}
               isApiSource={isApiSource}
               onTaskUpdated={onTaskUpdated}
@@ -85,15 +84,16 @@ export function WorkflowTasksTable({
           ))}
         </div>
       )}
-      {hasMoreTasks ? (
-        <button
-          type="button"
-          className={`${styles.panelFooterLink} ${styles.workflowPanelFooter}`}
-          onClick={() => setAllTasksOpen(true)}
-        >
+      <div className={styles.workflowPanelFooters}>
+        <button type="button" className={styles.panelFooterLink} onClick={() => setAllTasksOpen(true)}>
           {wf.viewAll}
         </button>
-      ) : null}
+        {onOpenDocuments ? (
+          <button type="button" className={styles.panelFooterLink} onClick={onOpenDocuments}>
+            <span aria-hidden>📁</span> {wf.openDocuments}
+          </button>
+        ) : null}
+      </div>
       <WorkflowTasksListModal
         open={allTasksOpen}
         project={project}

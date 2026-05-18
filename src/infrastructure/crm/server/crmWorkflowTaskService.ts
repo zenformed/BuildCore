@@ -5,32 +5,13 @@ import type {
   UpdateCrmWorkflowTaskInput,
 } from '@/domain/crm/workflowTaskMutations';
 import { PAYMENT_WORKFLOW_STAGE_SLUG } from '@/domain/crm/paymentWorkflow';
-import {
-  mapDbWorkflowTask,
-  mapProfileToTeamMemberRef,
-  type DbCrmWorkflowTaskRow,
-  type DbProfileRow,
-} from '@/infrastructure/crm/mappers/mapCrmFromDb';
+import { mapDbWorkflowTask, type DbCrmWorkflowTaskRow } from '@/infrastructure/crm/mappers/mapCrmFromDb';
+import { loadCrmMemberMap } from './crmMemberMap';
 import { appendCrmAccountabilityEvent } from './crmAccountability';
 import { isPaymentTaskRow, syncProjectBalanceFromPaymentTasks } from './crmPaymentBalance';
 
 const TASK_SELECT =
   'id, project_id, title, stage_slug, status, documents_required, notes, due_at, completed_at, assigned_member_id, completed_by_member_id, sort_order, amount_cents';
-
-async function loadMemberMap(
-  supabase: SupabaseClient,
-  memberIds: readonly string[]
-): Promise<Map<string, ReturnType<typeof mapProfileToTeamMemberRef>>> {
-  const map = new Map<string, ReturnType<typeof mapProfileToTeamMemberRef>>();
-  if (memberIds.length === 0) return map;
-  const { data } = await supabase.from('profiles').select('id, email').in('id', [...memberIds]);
-  const profiles = (data ?? []) as DbProfileRow[];
-  const profileById = new Map(profiles.map((p) => [p.id, p]));
-  for (const id of memberIds) {
-    map.set(id, mapProfileToTeamMemberRef(profileById.get(id), id));
-  }
-  return map;
-}
 
 async function mapTaskRow(
   supabase: SupabaseClient,
@@ -39,7 +20,7 @@ async function mapTaskRow(
   const ids = [row.assigned_member_id, row.completed_by_member_id].filter(
     (id): id is string => id != null
   );
-  const memberById = await loadMemberMap(supabase, ids);
+  const memberById = await loadCrmMemberMap(supabase, ids);
   return mapDbWorkflowTask(row, memberById);
 }
 
