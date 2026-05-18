@@ -2,7 +2,7 @@
 
 import type { ReactElement } from 'react';
 import { useState } from 'react';
-import type { CrmProjectDetail, CrmWorkflowTask } from '@/domain/crm';
+import type { CrmProjectDetail } from '@/domain/crm';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
 import { countDocumentsByTaskId } from '@/presentation/features/crmProjectDetail/workflowDocumentCounts';
 import {
@@ -17,14 +17,20 @@ import styles from './ProjectDetail.module.css';
 
 export type WorkflowTasksTableProps = {
   project: CrmProjectDetail;
+  isApiSource: boolean;
   onAddTask: () => void;
-  onEditTask: (task: CrmWorkflowTask) => void;
+  onTaskUpdated: () => Promise<void>;
+  onUploadComingSoon: () => void;
+  onTaskError?: (message: string) => void;
 };
 
 export function WorkflowTasksTable({
   project,
+  isApiSource,
   onAddTask,
-  onEditTask,
+  onTaskUpdated,
+  onUploadComingSoon,
+  onTaskError,
 }: WorkflowTasksTableProps): ReactElement {
   const wf = content.projectDetail.workflow;
   const [allTasksOpen, setAllTasksOpen] = useState(false);
@@ -43,8 +49,14 @@ export function WorkflowTasksTable({
         <h3 id="workflow-tasks-heading" className={styles.cardTitle}>
           {content.projectDetail.sections.workflow}
         </h3>
-        <button type="button" className={`${styles.editBtn} ${styles.primaryBtn}`} onClick={onAddTask}>
-          {wf.addTask}
+        <button
+          type="button"
+          className={styles.addTaskBtn}
+          onClick={onAddTask}
+          title={wf.addTask}
+          aria-label={wf.addTask}
+        >
+          <span aria-hidden>+</span>
         </button>
       </div>
       {groups.length === 0 ? (
@@ -60,7 +72,10 @@ export function WorkflowTasksTable({
               group={group}
               isCurrentStage={group.stageSlug === currentStage}
               docCounts={docCounts}
-              onEditTask={onEditTask}
+              isApiSource={isApiSource}
+              onTaskUpdated={onTaskUpdated}
+              onUploadComingSoon={onUploadComingSoon}
+              onTaskError={onTaskError}
             />
           ))}
         </div>
@@ -77,8 +92,11 @@ export function WorkflowTasksTable({
       <WorkflowTasksListModal
         open={allTasksOpen}
         project={project}
+        isApiSource={isApiSource}
         onClose={() => setAllTasksOpen(false)}
-        onEditTask={onEditTask}
+        onTaskUpdated={onTaskUpdated}
+        onUploadComingSoon={onUploadComingSoon}
+        onTaskError={onTaskError}
       />
     </section>
   );

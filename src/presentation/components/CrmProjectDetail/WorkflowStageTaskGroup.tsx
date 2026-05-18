@@ -1,28 +1,23 @@
 'use client';
 
 import type { ReactElement } from 'react';
-import type { CrmWorkflowTask, WorkflowTaskStatus } from '@/domain/crm';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
-import {
-  formatShortDate,
-  formatWorkflowStatus,
-} from '@/presentation/features/crmProjectDetail/crmProjectDetailFormatters';
 import type { WorkflowTaskStageGroup } from '@/presentation/features/crmProjectDetail/workflowTaskGroups';
 import { useWorkflowStageExpanded } from '@/presentation/features/crmProjectDetail/useWorkflowStageExpanded';
-import shared from '@/presentation/components/crmShared/crmShared.module.css';
-import { TeamMemberAvatar } from './TeamMemberAvatar';
+import { WorkflowTaskInlineRow } from './WorkflowTaskInlineRow';
 import styles from './ProjectDetail.module.css';
-
-function statusBadgeClass(status: WorkflowTaskStatus): string {
-  return shared[`statusBadge_${status}`] ?? shared.statusBadge_pending;
-}
 
 export type WorkflowStageTaskGroupProps = {
   projectSlug: string;
   group: WorkflowTaskStageGroup;
   isCurrentStage: boolean;
   docCounts: ReadonlyMap<string, number>;
-  onEditTask: (task: CrmWorkflowTask) => void;
+  isApiSource: boolean;
+  onTaskUpdated: () => Promise<void>;
+  onUploadComingSoon: () => void;
+  onTaskError?: (message: string) => void;
+  /** When false, stage is always expanded with a static header (e.g. "View all" modal). */
+  collapsible?: boolean;
 };
 
 export function WorkflowStageTaskGroup({
@@ -30,104 +25,82 @@ export function WorkflowStageTaskGroup({
   group,
   isCurrentStage,
   docCounts,
-  onEditTask,
+  isApiSource,
+  onTaskUpdated,
+  onUploadComingSoon,
+  onTaskError,
+  collapsible = true,
 }: WorkflowStageTaskGroupProps): ReactElement {
   const cols = content.projectDetail.workflow.columns;
   const wf = content.projectDetail.workflow;
-  const { expanded, toggle } = useWorkflowStageExpanded(projectSlug, group.stageSlug);
+  const persisted = useWorkflowStageExpanded(projectSlug, group.stageSlug);
+  const expanded = collapsible ? persisted.expanded : true;
   const groupClass = [
     styles.stageGroup,
     isCurrentStage ? styles.stageGroup_current : '',
-    expanded ? '' : styles.stageGroup_collapsed,
+    collapsible && !expanded ? styles.stageGroup_collapsed : '',
   ]
     .filter(Boolean)
     .join(' ');
   const panelId = `workflow-stage-${projectSlug}-${group.stageSlug}`;
 
+  const taskCount = (
+    <span className={styles.stageGroupCount}>
+      {group.tasks.length} {group.tasks.length === 1 ? wf.taskSingular : wf.taskPlural}
+    </span>
+  );
+
+  const table = (
+    <div id={panelId} className={styles.stageGroupTable}>
+      <div className={`${styles.tableHeader} ${styles.workflowGrid}`} role="row">
+        <span role="columnheader">{cols.task}</span>
+        <span role="columnheader">{cols.status}</span>
+        <span role="columnheader">{cols.documents}</span>
+        <span role="columnheader">{cols.assigned}</span>
+        <span role="columnheader">{cols.due}</span>
+      </div>
+      {group.tasks.map((task) => (
+        <WorkflowTaskInlineRow
+          key={task.id}
+          task={task}
+          docCount={docCounts.get(task.id) ?? 0}
+          isApiSource={isApiSource}
+          onUpdated={onTaskUpdated}
+          onUploadComingSoon={onUploadComingSoon}
+          onTaskError={onTaskError}
+        />
+      ))}
+    </div>
+  );
+
   return (
     <section className={groupClass} aria-label={group.stageLabel}>
-      <button
-        type="button"
-        className={styles.stageGroupHeaderBtn}
-        onClick={toggle}
-        aria-expanded={expanded}
-        aria-controls={panelId}
-        aria-label={`${expanded ? wf.collapseStageTasks : wf.expandStageTasks}: ${group.stageLabel}`}
-      >
-        <span className={styles.stageGroupTitle}>
-          <span className={styles.stageGroupName}>{group.stageLabel}</span>
-          <span className={styles.stageGroupChevronWrap} aria-hidden>
-            <span className={expanded ? styles.stageGroupChevron_expanded : styles.stageGroupChevron} />
+      {collapsible ? (
+        <button
+          type="button"
+          className={styles.stageGroupHeaderBtn}
+          onClick={persisted.toggle}
+          aria-expanded={expanded}
+          aria-controls={panelId}
+          aria-label={`${expanded ? wf.collapseStageTasks : wf.expandStageTasks}: ${group.stageLabel}`}
+        >
+          <span className={styles.stageGroupTitle}>
+            <span className={styles.stageGroupName}>{group.stageLabel}</span>
+            <span className={styles.stageGroupChevronWrap} aria-hidden>
+              <span className={expanded ? styles.stageGroupChevron_expanded : styles.stageGroupChevron} />
+            </span>
           </span>
-        </span>
-        <span className={styles.stageGroupCount}>
-          {group.tasks.length} {group.tasks.length === 1 ? wf.taskSingular : wf.taskPlural}
-        </span>
-      </button>
-      {expanded ? (
-        <div id={panelId} className={styles.stageGroupTable}>
-          <div className={`${styles.tableHeader} ${styles.workflowGrid}`} role="row">
-            <span role="columnheader">{cols.task}</span>
-            <span role="columnheader">{cols.status}</span>
-            <span role="columnheader">{cols.documents}</span>
-            <span role="columnheader">{cols.assigned}</span>
-            <span role="columnheader">{cols.due}</span>
-            <span role="columnheader">{cols.actions}</span>
-          </div>
-          {group.tasks.map((task) => {
-            const docCount = docCounts.get(task.id) ?? 0;
-            const rowClass =
-              task.status === 'in_progress'
-                ? `${styles.tableRow} ${styles.workflowGrid} ${styles.tableRow_active}`
-                : `${styles.tableRow} ${styles.workflowGrid}`;
-            return (
-              <div key={task.id} className={rowClass} role="row">
-                <span className={styles.taskTitleCell}>{task.title}</span>
-                <span>
-                  <span className={`${styles.statusPill} ${statusBadgeClass(task.status)}`}>
-                    {formatWorkflowStatus(task.status)}
-                  </span>
-                </span>
-                <span className={styles.documentsCell}>
-                  {!task.documentsRequired ? (
-                    <span className={styles.documentsNotRequired}>{wf.documentsNotRequired}</span>
-                  ) : (
-                    <>
-                      <span className={styles.documentsIcon} aria-hidden />
-                      {docCount === 0 ? (
-                        <span className={styles.documentsCountMuted}>{wf.documentsNone}</span>
-                      ) : (
-                        <span>
-                          {docCount} {wf.documentsCountSuffix}
-                        </span>
-                      )}
-                    </>
-                  )}
-                </span>
-                <span className={styles.assignedCell}>
-                  {task.assignedTo ? (
-                    <TeamMemberAvatar member={task.assignedTo} />
-                  ) : (
-                    <span
-                      className={`${shared.avatar} ${shared.avatarUnassigned}`}
-                      title={wf.unassigned}
-                      aria-label={wf.unassigned}
-                    >
-                      —
-                    </span>
-                  )}
-                </span>
-                <span>{formatShortDate(task.dueAt)}</span>
-                <span>
-                  <button type="button" className={styles.rowActionBtn} onClick={() => onEditTask(task)}>
-                    {wf.editTask}
-                  </button>
-                </span>
-              </div>
-            );
-          })}
+          {taskCount}
+        </button>
+      ) : (
+        <div className={styles.stageGroupHeaderStatic}>
+          <span className={styles.stageGroupTitle}>
+            <span className={styles.stageGroupName}>{group.stageLabel}</span>
+          </span>
+          {taskCount}
         </div>
-      ) : null}
+      )}
+      {expanded ? table : null}
     </section>
   );
 }

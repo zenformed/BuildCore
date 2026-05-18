@@ -155,6 +155,8 @@ export const buildCoreDashboardContent = {
       archiveTask: 'Archive',
       documentsNone: '—',
       documentsNotRequired: 'N/A',
+      documentsUpload: 'Upload',
+      documentsUploadComingSoon: 'Uploads coming in a later phase.',
       documentsCountSuffix: 'files',
       unassigned: 'Unassigned',
       taskDrawerCreate: 'New workflow task',

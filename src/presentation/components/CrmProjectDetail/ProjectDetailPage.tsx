@@ -77,8 +77,16 @@ export function ProjectDetailPage({
       <div className={styles.workflowSplit}>
         <WorkflowTasksTable
           project={project}
+          isApiSource={isApiSource}
           onAddTask={() => setTaskDrawer({ open: true, mode: 'create', task: null })}
-          onEditTask={(task) => setTaskDrawer({ open: true, mode: 'edit', task })}
+          onTaskUpdated={handleTaskSaved}
+          onUploadComingSoon={() =>
+            setToast({
+              kind: 'success',
+              message: content.projectDetail.workflow.documentsUploadComingSoon,
+            })
+          }
+          onTaskError={(message) => setToast({ kind: 'error', message })}
         />
         <ProjectDocumentsPanel project={project} />
       </div>

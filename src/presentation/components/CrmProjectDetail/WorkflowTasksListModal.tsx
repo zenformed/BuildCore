@@ -2,7 +2,7 @@
 
 import type { ReactElement } from 'react';
 import { useEffect } from 'react';
-import type { CrmProjectDetail, CrmWorkflowTask } from '@/domain/crm';
+import type { CrmProjectDetail } from '@/domain/crm';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
 import { countDocumentsByTaskId } from '@/presentation/features/crmProjectDetail/workflowDocumentCounts';
 import { groupWorkflowTasksByStage } from '@/presentation/features/crmProjectDetail/workflowTaskGroups';
@@ -12,15 +12,21 @@ import styles from './ProjectDetail.module.css';
 export type WorkflowTasksListModalProps = {
   open: boolean;
   project: CrmProjectDetail;
+  isApiSource: boolean;
   onClose: () => void;
-  onEditTask: (task: CrmWorkflowTask) => void;
+  onTaskUpdated: () => Promise<void>;
+  onUploadComingSoon: () => void;
+  onTaskError?: (message: string) => void;
 };
 
 export function WorkflowTasksListModal({
   open,
   project,
+  isApiSource,
   onClose,
-  onEditTask,
+  onTaskUpdated,
+  onUploadComingSoon,
+  onTaskError,
 }: WorkflowTasksListModalProps): ReactElement | null {
   const wf = content.projectDetail.workflow;
 
@@ -68,10 +74,11 @@ export function WorkflowTasksListModal({
                   group={group}
                   isCurrentStage={group.stageSlug === currentStage}
                   docCounts={docCounts}
-                  onEditTask={(task) => {
-                    onClose();
-                    onEditTask(task);
-                  }}
+                  isApiSource={isApiSource}
+                  collapsible={false}
+                  onTaskUpdated={onTaskUpdated}
+                  onUploadComingSoon={onUploadComingSoon}
+                  onTaskError={onTaskError}
                 />
               ))}
             </div>
