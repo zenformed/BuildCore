@@ -1,6 +1,7 @@
 'use client';
 
 import type { ReactElement } from 'react';
+import type { CrmWorkflowTask } from '@/domain/crm';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
 import {
   areAllStageTasksDone,
@@ -19,6 +20,7 @@ export type WorkflowStageTaskGroupProps = {
   onTaskUpdated: () => Promise<void>;
   onUploadComingSoon: () => void;
   onTaskError?: (message: string) => void;
+  onRequestArchiveTask?: (task: CrmWorkflowTask) => void;
   /** When false, stage is always expanded with a static header (e.g. "View all" modal). */
   collapsible?: boolean;
 };
@@ -32,11 +34,12 @@ export function WorkflowStageTaskGroup({
   onTaskUpdated,
   onUploadComingSoon,
   onTaskError,
+  onRequestArchiveTask,
   collapsible = true,
 }: WorkflowStageTaskGroupProps): ReactElement {
   const cols = content.projectDetail.workflow.columns;
   const wf = content.projectDetail.workflow;
-  const persisted = useWorkflowStageExpanded(projectSlug, group.stageSlug);
+  const persisted = useWorkflowStageExpanded(projectSlug, group.collapseKey);
   const expanded = collapsible ? persisted.expanded : true;
   const groupClass = [
     styles.stageGroup,
@@ -45,7 +48,10 @@ export function WorkflowStageTaskGroup({
   ]
     .filter(Boolean)
     .join(' ');
-  const panelId = `workflow-stage-${projectSlug}-${group.stageSlug}`;
+  const panelId = `workflow-stage-${projectSlug}-${group.collapseKey}`;
+  const gridClass = group.isPaymentsGroup
+    ? `${styles.workflowGrid} ${styles.workflowGridPayments}`
+    : styles.workflowGrid;
   const allTasksDone = areAllStageTasksDone(group.tasks);
 
   const stageTitle = (
@@ -72,23 +78,26 @@ export function WorkflowStageTaskGroup({
 
   const table = (
     <div id={panelId} className={styles.stageGroupTable}>
-      <div className={`${styles.tableHeader} ${styles.workflowGrid}`} role="row">
-        <span role="columnheader">{cols.task}</span>
+      <div className={`${styles.tableHeader} ${gridClass}`} role="row">
         <span role="columnheader">{cols.status}</span>
+        <span role="columnheader">{cols.task}</span>
+        {group.isPaymentsGroup ? <span role="columnheader">{cols.amount}</span> : null}
         <span role="columnheader">{cols.documents}</span>
         <span role="columnheader">{cols.assigned}</span>
         <span role="columnheader">{cols.due}</span>
-        <span className={styles.taskCompletionHeader} role="columnheader" aria-hidden />
+        <span role="columnheader" className={styles.taskDeleteHeader} aria-hidden />
       </div>
       {group.tasks.map((task) => (
         <WorkflowTaskInlineRow
           key={task.id}
           task={task}
           docCount={docCounts.get(task.id) ?? 0}
+          showAmountColumn={group.isPaymentsGroup}
           isApiSource={isApiSource}
           onUpdated={onTaskUpdated}
           onUploadComingSoon={onUploadComingSoon}
           onTaskError={onTaskError}
+          onRequestArchiveTask={onRequestArchiveTask}
         />
       ))}
     </div>

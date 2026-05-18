@@ -2,7 +2,7 @@
 
 import type { ReactElement } from 'react';
 import { useState } from 'react';
-import type { CrmProjectDetail } from '@/domain/crm';
+import type { CrmProjectDetail, CrmWorkflowTask } from '@/domain/crm';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
 import { countDocumentsByTaskId } from '@/presentation/features/crmProjectDetail/workflowDocumentCounts';
 import {
@@ -22,6 +22,7 @@ export type WorkflowTasksTableProps = {
   onTaskUpdated: () => Promise<void>;
   onUploadComingSoon: () => void;
   onTaskError?: (message: string) => void;
+  onRequestArchiveTask?: (task: CrmWorkflowTask) => void;
 };
 
 export function WorkflowTasksTable({
@@ -31,6 +32,7 @@ export function WorkflowTasksTable({
   onTaskUpdated,
   onUploadComingSoon,
   onTaskError,
+  onRequestArchiveTask,
 }: WorkflowTasksTableProps): ReactElement {
   const wf = content.projectDetail.workflow;
   const [allTasksOpen, setAllTasksOpen] = useState(false);
@@ -67,15 +69,18 @@ export function WorkflowTasksTable({
         <div className={`${styles.stageGroupStack} ${styles.workflowPanelGrow}`}>
           {previewGroups.map((group) => (
             <WorkflowStageTaskGroup
-              key={group.stageSlug}
+              key={group.collapseKey}
               projectSlug={project.summary.slug}
               group={group}
-              isCurrentStage={group.stageSlug === currentStage}
+              isCurrentStage={
+                !hasMoreTasks && !group.isPaymentsGroup && group.stageSlug === currentStage
+              }
               docCounts={docCounts}
               isApiSource={isApiSource}
               onTaskUpdated={onTaskUpdated}
               onUploadComingSoon={onUploadComingSoon}
               onTaskError={onTaskError}
+              onRequestArchiveTask={onRequestArchiveTask}
             />
           ))}
         </div>
@@ -97,6 +102,7 @@ export function WorkflowTasksTable({
         onTaskUpdated={onTaskUpdated}
         onUploadComingSoon={onUploadComingSoon}
         onTaskError={onTaskError}
+        onRequestArchiveTask={onRequestArchiveTask}
       />
     </section>
   );

@@ -4,6 +4,7 @@ import type {
   CreateCrmWorkflowTaskInput,
   UpdateCrmWorkflowTaskInput,
 } from '@/domain/crm/workflowTaskMutations';
+import { PAYMENT_WORKFLOW_STAGE_SLUG } from '@/domain/crm/paymentWorkflow';
 import {
   mapDbWorkflowTask,
   mapProfileToTeamMemberRef,
@@ -11,6 +12,10 @@ import {
   type DbProfileRow,
 } from '@/infrastructure/crm/mappers/mapCrmFromDb';
 import { appendCrmAccountabilityEvent } from './crmAccountability';
+import { isPaymentTaskRow, syncProjectBalanceFromPaymentTasks } from './crmPaymentBalance';
+
+const TASK_SELECT =
+  'id, project_id, title, stage_slug, status, documents_required, notes, due_at, completed_at, assigned_member_id, completed_by_member_id, sort_order, amount_cents';
 
 async function loadMemberMap(
   supabase: SupabaseClient,
@@ -45,15 +50,17 @@ async function getTaskForOrg(
 ): Promise<DbCrmWorkflowTaskRow | null> {
   const { data, error } = await supabase
     .from('crm_workflow_tasks')
-    .select(
-      'id, project_id, title, stage_slug, status, documents_required, notes, due_at, completed_at, assigned_member_id, completed_by_member_id, sort_order'
-    )
+    .select(TASK_SELECT)
     .eq('id', taskId)
     .eq('organization_id', organizationId)
     .is('archived_at', null)
     .maybeSingle();
   if (error) throw new Error(error.message);
   return (data as DbCrmWorkflowTaskRow | null) ?? null;
+}
+
+function resolvePaymentStageSlug(amountCents: number | null | undefined): string | undefined {
+  return amountCents != null ? PAYMENT_WORKFLOW_STAGE_SLUG : undefined;
 }
 
 export async function createCrmWorkflowTaskForOrg(
@@ -72,6 +79,8 @@ export async function createCrmWorkflowTaskForOrg(
     .maybeSingle();
 
   const sortOrder = (maxRow?.sort_order ?? 0) + 1;
+  const stageSlug = resolvePaymentStageSlug(input.amountCents) ?? input.stageSlug;
+  const isPayment = input.amountCents != null;
 
   const { data, error } = await supabase
     .from('crm_workflow_tasks')
@@ -79,17 +88,16 @@ export async function createCrmWorkflowTaskForOrg(
       organization_id: organizationId,
       project_id: input.projectId,
       title: input.title,
-      stage_slug: input.stageSlug,
+      stage_slug: stageSlug,
       status: input.status,
       documents_required: input.documentsRequired,
       notes: input.notes,
       due_at: input.dueAt,
       assigned_member_id: input.assignedMemberId,
       sort_order: sortOrder,
+      amount_cents: input.amountCents ?? null,
     })
-    .select(
-      'id, project_id, title, stage_slug, status, documents_required, notes, due_at, completed_at, assigned_member_id, completed_by_member_id, sort_order'
-    )
+    .select(TASK_SELECT)
     .single();
 
   if (error || !data) throw new Error(error?.message ?? 'Failed to create workflow task');
@@ -98,16 +106,31 @@ export async function createCrmWorkflowTaskForOrg(
     organizationId,
     projectId: input.projectId,
     actorMemberId: actorUserId,
-    eventType: 'workflow_task_created',
-    summary: `Created workflow task: ${input.title}`,
+    eventType: isPayment ? 'payment_task_created' : 'workflow_task_created',
+    summary: isPayment
+      ? `Created payment milestone: ${input.title}`
+      : `Created workflow task: ${input.title}`,
     workflowTaskId: data.id,
-    metadata: { stage_slug: input.stageSlug, status: input.status },
+    metadata: {
+      stage_slug: stageSlug,
+      status: input.status,
+      ...(isPayment ? { amount_cents: input.amountCents } : {}),
+    },
   });
 
   await supabase
     .from('crm_projects')
     .update({ last_activity_at: new Date().toISOString() })
     .eq('id', input.projectId);
+
+  if (isPayment) {
+    await syncProjectBalanceFromPaymentTasks(
+      supabase,
+      organizationId,
+      input.projectId,
+      actorUserId
+    );
+  }
 
   return mapTaskRow(supabase, data as DbCrmWorkflowTaskRow);
 }
@@ -124,6 +147,12 @@ export async function updateCrmWorkflowTaskForOrg(
   const nextStatus = input.status ?? existing.status;
   const statusChanged = nextStatus !== existing.status;
   const now = new Date().toISOString();
+  const wasPayment = isPaymentTaskRow(existing);
+  const nextAmount =
+    input.amountCents !== undefined ? input.amountCents : existing.amount_cents;
+  const willBePayment = nextAmount != null;
+  const amountChanged =
+    input.amountCents !== undefined && input.amountCents !== existing.amount_cents;
 
   const patch: Record<string, unknown> = {};
   if (input.title !== undefined) patch.title = input.title;
@@ -133,6 +162,12 @@ export async function updateCrmWorkflowTaskForOrg(
   if (input.notes !== undefined) patch.notes = input.notes;
   if (input.documentsRequired !== undefined) patch.documents_required = input.documentsRequired;
   if (input.assignedMemberId !== undefined) patch.assigned_member_id = input.assignedMemberId;
+  if (input.amountCents !== undefined) {
+    patch.amount_cents = input.amountCents;
+    if (input.amountCents != null) {
+      patch.stage_slug = PAYMENT_WORKFLOW_STAGE_SLUG;
+    }
+  }
 
   if (nextStatus === 'done' && existing.status !== 'done') {
     patch.completed_at = now;
@@ -147,14 +182,47 @@ export async function updateCrmWorkflowTaskForOrg(
     .update(patch)
     .eq('id', input.taskId)
     .eq('organization_id', organizationId)
-    .select(
-      'id, project_id, title, stage_slug, status, documents_required, notes, due_at, completed_at, assigned_member_id, completed_by_member_id, sort_order'
-    )
+    .select(TASK_SELECT)
     .single();
 
   if (error || !data) throw new Error(error?.message ?? 'Failed to update workflow task');
 
-  if (statusChanged) {
+  if (wasPayment || willBePayment) {
+    if (amountChanged) {
+      await appendCrmAccountabilityEvent(supabase, {
+        organizationId,
+        projectId: existing.project_id,
+        actorMemberId: actorUserId,
+        eventType: 'payment_task_amount_changed',
+        summary: `Payment milestone "${data.title}" amount updated`,
+        workflowTaskId: data.id,
+        metadata: {
+          previous_amount_cents: existing.amount_cents,
+          amount_cents: data.amount_cents,
+        },
+      });
+    }
+    if (statusChanged) {
+      await appendCrmAccountabilityEvent(supabase, {
+        organizationId,
+        projectId: existing.project_id,
+        actorMemberId: actorUserId,
+        eventType: 'payment_task_status_changed',
+        summary: `Payment milestone "${data.title}" marked ${nextStatus.replace(/_/g, ' ')}`,
+        workflowTaskId: data.id,
+        metadata: { previous_status: existing.status, status: nextStatus },
+      });
+    } else if (!amountChanged) {
+      await appendCrmAccountabilityEvent(supabase, {
+        organizationId,
+        projectId: existing.project_id,
+        actorMemberId: actorUserId,
+        eventType: 'workflow_task_updated',
+        summary: `Updated payment milestone: ${data.title}`,
+        workflowTaskId: data.id,
+      });
+    }
+  } else if (statusChanged) {
     await appendCrmAccountabilityEvent(supabase, {
       organizationId,
       projectId: existing.project_id,
@@ -180,6 +248,15 @@ export async function updateCrmWorkflowTaskForOrg(
     .update({ last_activity_at: now })
     .eq('id', existing.project_id);
 
+  if (wasPayment || willBePayment) {
+    await syncProjectBalanceFromPaymentTasks(
+      supabase,
+      organizationId,
+      existing.project_id,
+      actorUserId
+    );
+  }
+
   return mapTaskRow(supabase, data as DbCrmWorkflowTaskRow);
 }
 
@@ -192,6 +269,7 @@ export async function archiveCrmWorkflowTaskForOrg(
   const existing = await getTaskForOrg(supabase, organizationId, taskId);
   if (existing == null) return false;
 
+  const wasPayment = isPaymentTaskRow(existing);
   const now = new Date().toISOString();
   const { error } = await supabase
     .from('crm_workflow_tasks')
@@ -205,8 +283,10 @@ export async function archiveCrmWorkflowTaskForOrg(
     organizationId,
     projectId: existing.project_id,
     actorMemberId: actorUserId,
-    eventType: 'workflow_task_archived',
-    summary: `Archived workflow task: ${existing.title}`,
+    eventType: wasPayment ? 'payment_task_archived' : 'workflow_task_archived',
+    summary: wasPayment
+      ? `Archived payment milestone: ${existing.title}`
+      : `Archived workflow task: ${existing.title}`,
     workflowTaskId: taskId,
   });
 
@@ -214,6 +294,15 @@ export async function archiveCrmWorkflowTaskForOrg(
     .from('crm_projects')
     .update({ last_activity_at: now })
     .eq('id', existing.project_id);
+
+  if (wasPayment) {
+    await syncProjectBalanceFromPaymentTasks(
+      supabase,
+      organizationId,
+      existing.project_id,
+      actorUserId
+    );
+  }
 
   return true;
 }

@@ -1,4 +1,4 @@
-import { completedStagesBefore, type CrmProjectDetail } from '@/domain/crm';
+import { applyPaymentBalanceToProjectDetail, completedStagesThrough, type CrmProjectDetail } from '@/domain/crm';
 import { getMockCrmProjectDetailById, getMockCrmProjectDetailBySlug } from '@/platform/mock/crm';
 
 const projectOverrides = new Map<string, CrmProjectDetail>();
@@ -19,11 +19,12 @@ export function saveMockProjectDetail(slug: string, detail: CrmProjectDetail): v
 }
 
 function withStageProgress(detail: CrmProjectDetail): CrmProjectDetail {
+  const balanced = applyPaymentBalanceToProjectDetail(detail);
   return {
-    ...detail,
+    ...balanced,
     stageProgress: {
-      currentStageSlug: detail.summary.currentStageSlug,
-      completedStageSlugs: completedStagesBefore(detail.summary.currentStageSlug),
+      currentStageSlug: balanced.summary.currentStageSlug,
+      completedStageSlugs: completedStagesThrough(balanced.summary.currentStageSlug),
     },
   };
 }

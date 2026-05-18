@@ -2,9 +2,9 @@
 
 import type { ReactElement } from 'react';
 import { useMemo, useState } from 'react';
-import type { CrmProjectDetail } from '@/domain/crm';
+import type { CrmProjectDetail, PipelineStageSlug } from '@/domain/crm';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
-import { formatStageLabel } from '@/presentation/features/crmProjects/crmProjectFormatters';
+import { formatWorkflowTaskStageLabel } from '@/presentation/features/crmProjectDetail/crmProjectDetailFormatters';
 import {
   documentCompletionLabel,
   filterDocumentPanelItems,
@@ -34,10 +34,21 @@ export function ProjectDocumentsPanel({ project }: ProjectDocumentsPanelProps): 
   const docsContent = content.projectDetail.documents;
   const [filter, setFilter] = useState<DocumentPanelFilter>('all');
 
+  const taskById = useMemo(
+    () => new Map(project.workflowTasks.map((task) => [task.id, task] as const)),
+    [project.workflowTasks]
+  );
+
   const items = useMemo(
     () => filterDocumentPanelItems(project.documents, project.workflowTasks, filter),
     [filter, project.documents, project.workflowTasks]
   );
+
+  const formatDocStageLabel = (workflowTaskId: string, stageSlug: PipelineStageSlug | null) => {
+    const task = taskById.get(workflowTaskId);
+    if (task) return formatWorkflowTaskStageLabel(task);
+    return stageSlug ? formatWorkflowTaskStageLabel({ stageSlug, amountCents: null }) : docsContent.noStage;
+  };
 
   return (
     <section className={styles.documentsPanel} aria-labelledby="project-documents-heading">
@@ -87,7 +98,7 @@ export function ProjectDocumentsPanel({ project }: ProjectDocumentsPanelProps): 
                   <div className={styles.docItemBody}>
                     <span className={styles.docItemName}>{item.task.title}</span>
                     <span className={styles.docItemMeta}>
-                      {docsContent.missingForTask} · {formatStageLabel(item.task.stageSlug)}
+                      {docsContent.missingForTask} · {formatWorkflowTaskStageLabel(item.task)}
                     </span>
                   </div>
                   <span className={styles.docCompletionMissing}>0/1</span>
@@ -108,7 +119,11 @@ export function ProjectDocumentsPanel({ project }: ProjectDocumentsPanelProps): 
                   </span>
                   <span className={styles.docItemMeta}>
                     {formatDocumentKind(doc.kind)} ·{' '}
-                    {doc.stageSlug ? formatStageLabel(doc.stageSlug) : docsContent.noStage}
+                    {doc.workflowTaskId
+                      ? formatDocStageLabel(doc.workflowTaskId, doc.stageSlug)
+                      : doc.stageSlug
+                        ? formatWorkflowTaskStageLabel({ stageSlug: doc.stageSlug, amountCents: null })
+                        : docsContent.noStage}
                     {doc.uploadedAt ? ` · ${formatShortDate(doc.uploadedAt)}` : null}
                     {` · ${formatFileSize(doc.sizeBytes)}`}
                   </span>

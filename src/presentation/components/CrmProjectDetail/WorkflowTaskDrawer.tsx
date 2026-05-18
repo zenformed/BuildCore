@@ -2,7 +2,12 @@
 
 import type { FormEvent, ReactElement } from 'react';
 import { useCallback, useEffect, useState } from 'react';
-import { DEFAULT_PIPELINE_STAGES, type CrmProjectDetail, type CrmWorkflowTask } from '@/domain/crm';
+import {
+  DEFAULT_PIPELINE_STAGES,
+  PAYMENT_WORKFLOW_STAGE_SLUG,
+  type CrmProjectDetail,
+  type CrmWorkflowTask,
+} from '@/domain/crm';
 import {
   archiveCrmWorkflowTask,
   createCrmWorkflowTask,
@@ -11,12 +16,14 @@ import {
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
 import { MOCK_CRM_TEAM_MEMBERS } from '@/platform/mock/crm';
 import { useAuth } from '@/presentation/hooks/useAuth';
+import { formatWorkflowStageLabel } from '@/presentation/features/crmProjectDetail/crmProjectDetailFormatters';
 import {
   defaultWorkflowTaskFormState,
   formToUpdateInput,
   validateWorkflowTaskForm,
   workflowTaskToFormState,
   type WorkflowTaskFormState,
+  type WorkflowTaskKind,
 } from '@/presentation/features/crmProjectDetail/workflowTaskFormModel';
 import { crmRepositories } from '@/shared/di/container';
 import shellStyles from '../../../../app/(dashboard)/dashboard/dashboard.module.css';
@@ -70,6 +77,26 @@ export function WorkflowTaskDrawer({
     []
   );
 
+  const handleTaskKindChange = useCallback(
+    (kind: WorkflowTaskKind) => {
+      if (kind === 'payment') {
+        setForm((prev) => ({
+          ...prev,
+          taskKind: kind,
+          stageSlug: PAYMENT_WORKFLOW_STAGE_SLUG,
+        }));
+        return;
+      }
+      setForm((prev) => ({
+        ...prev,
+        taskKind: kind,
+        amountUsd: '',
+        stageSlug: project.summary.currentStageSlug,
+      }));
+    },
+    [project.summary.currentStageSlug]
+  );
+
   const handleSubmit = useCallback(
     async (e: FormEvent) => {
       e.preventDefault();
@@ -84,6 +111,7 @@ export function WorkflowTaskDrawer({
         if (mode === 'create') {
           await createCrmWorkflowTask(crmRepositories, {
             projectId: project.summary.id,
+            projectSlug: project.summary.slug,
             ...validated.body,
           });
         } else if (task) {
@@ -97,7 +125,7 @@ export function WorkflowTaskDrawer({
         setSaving(false);
       }
     },
-    [form, mode, onClose, onSaved, project.summary.id, task, wf.taskSubmitFailed]
+    [form, mode, onClose, onSaved, project.summary.id, project.summary.slug, task, wf.taskSubmitFailed]
   );
 
   const handleArchive = useCallback(async () => {
@@ -124,6 +152,7 @@ export function WorkflowTaskDrawer({
     : MOCK_CRM_TEAM_MEMBERS.map((m) => ({ id: m.id, label: m.displayName }));
 
   const title = mode === 'create' ? wf.taskDrawerCreate : wf.taskDrawerEdit;
+  const isPaymentTask = form.taskKind === 'payment';
 
   return (
     <div className={shellStyles.settingsOverlay} onClick={onClose} role="presentation">
@@ -150,32 +179,73 @@ export function WorkflowTaskDrawer({
                 autoFocus
               />
             </div>
-            <div className={formStyles.rowTwoCol}>
-              <div className={formStyles.field}>
-                <label className={formStyles.label}>{wf.fields.stage}</label>
-                <select
-                  className={formStyles.select}
-                  value={form.stageSlug}
-                  onChange={(e) =>
-                    updateField('stageSlug', e.target.value as WorkflowTaskFormState['stageSlug'])
-                  }
-                >
-                  {DEFAULT_PIPELINE_STAGES.map((s) => (
-                    <option key={s.slug} value={s.slug}>
-                      {s.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div className={formStyles.field}>
-                <label className={formStyles.label}>{wf.fields.status}</label>
-                <WorkflowStatusPillPicker
-                  value={form.status}
-                  onChange={(status) => updateField('status', status)}
-                  disabled={saving}
-                />
-              </div>
+            <div className={formStyles.field}>
+              <label className={formStyles.label} htmlFor="workflow-task-kind">
+                {wf.fields.taskKind}
+              </label>
+              <select
+                id="workflow-task-kind"
+                className={formStyles.select}
+                value={form.taskKind}
+                disabled={mode === 'edit'}
+                onChange={(e) => handleTaskKindChange(e.target.value as WorkflowTaskKind)}
+              >
+                <option value="standard">{wf.taskKindStandard}</option>
+                <option value="payment">{wf.taskKindPayment}</option>
+              </select>
             </div>
+            {isPaymentTask ? (
+              <div className={formStyles.rowTwoCol}>
+                <div className={formStyles.field}>
+                  <label className={formStyles.label} htmlFor="workflow-task-amount">
+                    {wf.fields.amountUsd} *
+                  </label>
+                  <input
+                    id="workflow-task-amount"
+                    className={formStyles.input}
+                    inputMode="decimal"
+                    value={form.amountUsd}
+                    onChange={(e) => updateField('amountUsd', e.target.value)}
+                    placeholder="0.00"
+                  />
+                </div>
+                <div className={formStyles.field}>
+                  <label className={formStyles.label}>{wf.fields.status}</label>
+                  <WorkflowStatusPillPicker
+                    value={form.status}
+                    onChange={(status) => updateField('status', status)}
+                    disabled={saving}
+                  />
+                </div>
+              </div>
+            ) : (
+              <div className={formStyles.rowTwoCol}>
+                <div className={formStyles.field}>
+                  <label className={formStyles.label}>{wf.fields.stage}</label>
+                  <select
+                    className={formStyles.select}
+                    value={form.stageSlug}
+                    onChange={(e) =>
+                      updateField('stageSlug', e.target.value as WorkflowTaskFormState['stageSlug'])
+                    }
+                  >
+                    {DEFAULT_PIPELINE_STAGES.map((s) => (
+                      <option key={s.slug} value={s.slug}>
+                        {formatWorkflowStageLabel(s.slug)}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className={formStyles.field}>
+                  <label className={formStyles.label}>{wf.fields.status}</label>
+                  <WorkflowStatusPillPicker
+                    value={form.status}
+                    onChange={(status) => updateField('status', status)}
+                    disabled={saving}
+                  />
+                </div>
+              </div>
+            )}
             <div className={formStyles.rowTwoCol}>
               <div className={formStyles.field}>
                 <label className={formStyles.label}>{wf.fields.documentsRequired}</label>

@@ -12,9 +12,9 @@ function resolveStageState(
   currentSlug: PipelineStageSlug,
   completed: ReadonlySet<PipelineStageSlug>
 ): StageNodeState {
+  if (!completed.has(slug)) return 'upcoming';
   if (slug === currentSlug) return 'current';
-  if (completed.has(slug)) return 'done';
-  return 'upcoming';
+  return 'done';
 }
 
 export type StageProgressBarProps = {
@@ -37,15 +37,13 @@ export function StageProgressBar({ stageProgress }: StageProgressBarProps): Reac
       >
         {DEFAULT_PIPELINE_STAGES.map((stage) => {
           const state = resolveStageState(stage.slug, stageProgress.currentStageSlug, completed);
-          const nodeClass =
-            state === 'done'
-              ? `${styles.pipelineNode} ${styles.pipelineNode_done}`
-              : state === 'current'
-                ? `${styles.pipelineNode} ${styles.pipelineNode_current}`
-                : styles.pipelineNode;
+          const isReached = state !== 'upcoming';
+          const nodeClass = isReached
+            ? `${styles.pipelineNode} ${styles.pipelineNode_done}${state === 'current' ? ` ${styles.pipelineNode_current}` : ''}`
+            : styles.pipelineNode;
           const labelClass =
             state === 'current'
-              ? `${styles.pipelineLabel} ${styles.pipelineLabel_current}`
+              ? `${styles.pipelineLabel} ${styles.pipelineLabel_done} ${styles.pipelineLabel_current}`
               : state === 'done'
                 ? `${styles.pipelineLabel} ${styles.pipelineLabel_done}`
                 : styles.pipelineLabel;

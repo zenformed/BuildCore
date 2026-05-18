@@ -1,4 +1,4 @@
-import type { CrmProjectDetail, UpdateCrmProjectInput } from '@/domain/crm';
+import { projectHasPaymentMilestones, type CrmProjectDetail, type UpdateCrmProjectInput } from '@/domain/crm';
 import type { CreateCrmProjectFormState } from '@/presentation/features/crmCreate/createCrmProjectFormModel';
 import {
   parseUsdInputToCents,
@@ -24,10 +24,22 @@ export function projectDetailToFormState(project: CrmProjectDetail): CreateCrmPr
 }
 
 export function validateProjectDetailForm(
-  form: CreateCrmProjectFormState
+  form: CreateCrmProjectFormState,
+  project: CrmProjectDetail
 ): { ok: true; input: UpdateCrmProjectInput } | { ok: false; message: string } {
   const validated = validateCreateCrmProjectForm(form);
   if (!validated.ok) return validated;
+
+  if (projectHasPaymentMilestones(project)) {
+    return {
+      ok: true,
+      input: {
+        ...validated.input,
+        balanceRemainingCents: project.summary.balanceRemainingCents,
+      },
+    };
+  }
+
   return { ok: true, input: validated.input };
 }
 

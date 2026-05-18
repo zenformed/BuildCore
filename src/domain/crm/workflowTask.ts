@@ -15,4 +15,6 @@ export type CrmWorkflowTask = {
   readonly completedAt: string | null;
   readonly completedBy: CrmTeamMemberRef | null;
   readonly sortOrder: number;
+  /** Non-null when this row is a payment milestone (see paymentWorkflow.ts). */
+  readonly amountCents: number | null;
 };

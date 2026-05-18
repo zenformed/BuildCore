@@ -2,13 +2,16 @@
 
 import type { ReactElement } from 'react';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import type { CrmWorkflowTask, WorkflowTaskStatus } from '@/domain/crm';
+import { isPaymentWorkflowTask, type CrmWorkflowTask, type WorkflowTaskStatus } from '@/domain/crm';
 import { WORKFLOW_TASK_STATUSES } from '@/domain/crm/workflowTaskStatuses';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
 import {
   formatShortDate,
   formatWorkflowStatus,
 } from '@/presentation/features/crmProjectDetail/crmProjectDetailFormatters';
+import { parseUsdInputToCents } from '@/presentation/features/crmCreate/createCrmProjectFormModel';
+import { formatCentsAsUsd } from '@/presentation/features/crmProjects/crmProjectFormatters';
+import { centsToUsdInput } from '@/presentation/features/crmProjectDetail/workflowTaskFormModel';
 import { getWorkflowTaskAssigneeOptions } from '@/presentation/features/crmProjectDetail/workflowTaskAssigneeOptions';
 import { useWorkflowTaskPatch } from '@/presentation/features/crmProjectDetail/useWorkflowTaskPatch';
 import {
@@ -28,19 +31,23 @@ function statusBadgeClass(status: WorkflowTaskStatus): string {
 export type WorkflowTaskInlineRowProps = {
   task: CrmWorkflowTask;
   docCount: number;
+  showAmountColumn?: boolean;
   isApiSource: boolean;
   onUpdated: () => Promise<void>;
   onUploadComingSoon?: () => void;
   onTaskError?: (message: string) => void;
+  onRequestArchiveTask?: (task: CrmWorkflowTask) => void;
 };
 
 export function WorkflowTaskInlineRow({
   task,
   docCount,
+  showAmountColumn = false,
   isApiSource,
   onUpdated,
   onUploadComingSoon,
   onTaskError,
+  onRequestArchiveTask,
 }: WorkflowTaskInlineRowProps): ReactElement {
   const wf = content.projectDetail.workflow;
   const { user } = useAuth();
@@ -48,6 +55,8 @@ export function WorkflowTaskInlineRow({
 
   const [editingTitle, setEditingTitle] = useState(false);
   const [titleDraft, setTitleDraft] = useState(task.title);
+  const [editingAmount, setEditingAmount] = useState(false);
+  const [amountDraft, setAmountDraft] = useState(centsToUsdInput(task.amountCents));
   const [statusMenuOpen, setStatusMenuOpen] = useState(false);
   const [documentsMenuOpen, setDocumentsMenuOpen] = useState(false);
   const [assigneeMenuOpen, setAssigneeMenuOpen] = useState(false);
@@ -63,6 +72,10 @@ export function WorkflowTaskInlineRow({
   useEffect(() => {
     if (!editingTitle) setTitleDraft(task.title);
   }, [editingTitle, task.title]);
+
+  useEffect(() => {
+    if (!editingAmount) setAmountDraft(centsToUsdInput(task.amountCents));
+  }, [editingAmount, task.amountCents]);
 
   const closeMenus = useCallback(() => {
     setStatusMenuOpen(false);
@@ -135,6 +148,26 @@ export function WorkflowTaskInlineRow({
     [patchTask, reportError, task.assignedTo?.id, task.id]
   );
 
+  const saveAmount = useCallback(async () => {
+    const amountCents = parseUsdInputToCents(amountDraft);
+    if (amountCents == null) {
+      onTaskError?.('Amount must be a valid USD value.');
+      setAmountDraft(centsToUsdInput(task.amountCents));
+      setEditingAmount(false);
+      return;
+    }
+    if (amountCents === task.amountCents) {
+      setEditingAmount(false);
+      return;
+    }
+    try {
+      await patchTask({ taskId: task.id, amountCents });
+      setEditingAmount(false);
+    } catch (err) {
+      reportError(err);
+    }
+  }, [amountDraft, onTaskError, patchTask, reportError, task.amountCents, task.id]);
+
   const saveDue = useCallback(
     async (value: string) => {
       const nextIso = dueInputValueToIso(value);
@@ -149,7 +182,10 @@ export function WorkflowTaskInlineRow({
     [patchTask, reportError, task.dueAt, task.id]
   );
 
-  const rowClass = `${styles.tableRow} ${styles.workflowGrid} ${styles.workflowInlineRow}`;
+  const showAmount = showAmountColumn || isPaymentWorkflowTask(task);
+  const rowClass = `${styles.tableRow} ${
+    showAmount ? `${styles.workflowGrid} ${styles.workflowGridPayments}` : styles.workflowGrid
+  } ${styles.workflowInlineRow}`;
 
   const documentsLabel = !task.documentsRequired
     ? wf.documentsNotRequired
@@ -159,40 +195,7 @@ export function WorkflowTaskInlineRow({
 
   return (
     <div className={rowClass} role="row" aria-busy={saving}>
-      <span className={styles.taskTitleCell}>
-        {editingTitle ? (
-          <input
-            className={styles.inlineFieldInput}
-            value={titleDraft}
-            disabled={saving}
-            onChange={(e) => setTitleDraft(e.target.value)}
-            onBlur={() => void saveTitle()}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') void saveTitle();
-              if (e.key === 'Escape') {
-                setTitleDraft(task.title);
-                setEditingTitle(false);
-              }
-            }}
-            autoFocus
-          />
-        ) : (
-          <button
-            type="button"
-            className={styles.inlineCellBtn}
-            disabled={saving}
-            onClick={() => {
-              closeMenus();
-              setTitleDraft(task.title);
-              setEditingTitle(true);
-            }}
-          >
-            {task.title}
-          </button>
-        )}
-      </span>
-
-      <span className={styles.inlineCellWrap} ref={statusRef}>
+      <span className={`${styles.inlineCellWrap} ${styles.workflowStatusCell}`} ref={statusRef}>
         <button
           type="button"
           className={styles.inlinePillBtn}
@@ -229,7 +232,83 @@ export function WorkflowTaskInlineRow({
         </WorkflowInlineMenu>
       </span>
 
-      <span className={styles.inlineCellWrap} ref={documentsRef}>
+      <span className={styles.taskTitleCell}>
+        {task.status === 'done' ? (
+          <span className={styles.taskDoneIcon} title={wf.taskDoneIndicator} aria-label={wf.taskDoneIndicator}>
+            ✓
+          </span>
+        ) : (
+          <span className={styles.taskOpenIcon} title={wf.taskOpenIndicator} aria-label={wf.taskOpenIndicator} />
+        )}
+        {editingTitle ? (
+          <input
+            className={styles.inlineFieldInput}
+            value={titleDraft}
+            disabled={saving}
+            onChange={(e) => setTitleDraft(e.target.value)}
+            onBlur={() => void saveTitle()}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') void saveTitle();
+              if (e.key === 'Escape') {
+                setTitleDraft(task.title);
+                setEditingTitle(false);
+              }
+            }}
+            autoFocus
+          />
+        ) : (
+          <button
+            type="button"
+            className={styles.inlineCellBtn}
+            disabled={saving}
+            onClick={() => {
+              closeMenus();
+              setTitleDraft(task.title);
+              setEditingTitle(true);
+            }}
+          >
+            {task.title}
+          </button>
+        )}
+      </span>
+
+      {showAmount ? (
+        <span className={`${styles.inlineAmountCell} ${styles.workflowMetaCell}`}>
+          {editingAmount ? (
+            <input
+              className={styles.inlineFieldInput}
+              value={amountDraft}
+              disabled={saving}
+              inputMode="decimal"
+              onChange={(e) => setAmountDraft(e.target.value)}
+              onBlur={() => void saveAmount()}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') void saveAmount();
+                if (e.key === 'Escape') {
+                  setAmountDraft(centsToUsdInput(task.amountCents));
+                  setEditingAmount(false);
+                }
+              }}
+              autoFocus
+            />
+          ) : (
+            <button
+              type="button"
+              className={styles.inlineCellBtn}
+              disabled={saving}
+              onClick={() => {
+                closeMenus();
+                setAmountDraft(centsToUsdInput(task.amountCents));
+                setEditingAmount(true);
+              }}
+            >
+              {formatCentsAsUsd(task.amountCents ?? 0)}
+            </button>
+          )}
+        </span>
+      ) : null}
+
+      <span className={`${styles.inlineCellWrap} ${styles.workflowMetaCell}`} ref={documentsRef}>
         <button
           type="button"
           className={`${styles.inlineCellBtn} ${styles.documentsCell}`}
@@ -273,7 +352,7 @@ export function WorkflowTaskInlineRow({
         </WorkflowInlineMenu>
       </span>
 
-      <span className={styles.inlineCellWrap} ref={assigneeRef}>
+      <span className={`${styles.inlineCellWrap} ${styles.workflowMetaCell}`} ref={assigneeRef}>
         <button
           type="button"
           className={`${styles.inlineCellBtn} ${styles.assignedCell}`}
@@ -317,7 +396,7 @@ export function WorkflowTaskInlineRow({
         </WorkflowInlineMenu>
       </span>
 
-      <span className={styles.inlineDueCell}>
+      <span className={`${styles.inlineDueCell} ${styles.workflowMetaCell}`}>
         <button
           type="button"
           className={styles.inlineCellBtn}
@@ -342,14 +421,20 @@ export function WorkflowTaskInlineRow({
         />
       </span>
 
-      <span className={styles.taskCompletionCell}>
-        {task.status === 'done' ? (
-          <span className={styles.taskDoneIcon} title={wf.taskDoneIndicator} aria-label={wf.taskDoneIndicator}>
-            ✓
-          </span>
-        ) : (
-          <span className={styles.taskOpenIcon} title={wf.taskOpenIndicator} aria-label={wf.taskOpenIndicator} />
-        )}
+      <span className={styles.taskDeleteCell}>
+        <button
+          type="button"
+          className={styles.taskDeleteBtn}
+          disabled={saving || !onRequestArchiveTask}
+          title={wf.deleteTask}
+          aria-label={wf.deleteTask}
+          onClick={() => {
+            closeMenus();
+            onRequestArchiveTask?.(task);
+          }}
+        >
+          <span aria-hidden>🗑️</span>
+        </button>
       </span>
     </div>
   );

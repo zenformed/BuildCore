@@ -1,5 +1,6 @@
 import {
-  completedStagesBefore,
+  completedStagesThrough,
+  computeProjectBalanceCents,
   type CrmAccountabilityAction,
   type CrmClient,
   type CrmContact,
@@ -63,6 +64,7 @@ export type DbCrmWorkflowTaskRow = {
   completed_by_member_id: string | null;
   sort_order: number;
   documents_required: boolean;
+  amount_cents: number | null;
 };
 
 export type DbCrmDocumentRow = {
@@ -296,6 +298,7 @@ export function mapDbWorkflowTask(
           mapProfileToTeamMemberRef(null, row.completed_by_member_id))
         : null,
     sortOrder: row.sort_order,
+    amountCents: row.amount_cents != null ? Number(row.amount_cents) : null,
   };
 }
 
@@ -384,25 +387,39 @@ export function mapDbProjectDetail(input: {
   accountability: readonly DbCrmAccountabilityRow[];
   memberById: ReadonlyMap<string, CrmTeamMemberRef>;
 }): CrmProjectDetail {
-  const summary = mapDbProjectSummary(input.project, input.memberById);
+  const baseSummary = mapDbProjectSummary(input.project, input.memberById);
+  const workflowTasks = input.workflowTasks.map((row) => mapDbWorkflowTask(row, input.memberById));
+  const balanceRemainingCents = computeProjectBalanceCents(
+    workflowTasks,
+    baseSummary.balanceRemainingCents
+  );
+  const summary =
+    balanceRemainingCents === baseSummary.balanceRemainingCents
+      ? baseSummary
+      : { ...baseSummary, balanceRemainingCents };
   const stageSlugByTaskId = new Map(
     input.workflowTasks.map((t) => [t.id, asPipelineStageSlug(t.stage_slug)] as const)
   );
+  const milestonePayment = buildMilestonePaymentSummary(input.project, input.milestones);
+  const milestonePaymentWithBalance =
+    balanceRemainingCents === milestonePayment.balanceCents
+      ? milestonePayment
+      : { ...milestonePayment, balanceCents: balanceRemainingCents };
 
   return {
     summary,
     notes: input.project.notes,
     stageProgress: {
       currentStageSlug: summary.currentStageSlug,
-      completedStageSlugs: completedStagesBefore(summary.currentStageSlug),
+      completedStageSlugs: completedStagesThrough(summary.currentStageSlug),
     },
-    workflowTasks: input.workflowTasks.map((row) => mapDbWorkflowTask(row, input.memberById)),
+    workflowTasks,
     documents: input.documents.map((row) =>
       mapDbDocument(row, stageSlugByTaskId, input.memberById)
     ),
     accountabilityLog: input.accountability.map((row) =>
       mapDbAccountability(row, stageSlugByTaskId, input.memberById)
     ),
-    milestonePayment: buildMilestonePaymentSummary(input.project, input.milestones),
+    milestonePayment: milestonePaymentWithBalance,
   };
 }

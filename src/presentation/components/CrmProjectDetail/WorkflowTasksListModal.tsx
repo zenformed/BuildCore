@@ -2,7 +2,7 @@
 
 import type { ReactElement } from 'react';
 import { useEffect } from 'react';
-import type { CrmProjectDetail } from '@/domain/crm';
+import type { CrmProjectDetail, CrmWorkflowTask } from '@/domain/crm';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
 import { countDocumentsByTaskId } from '@/presentation/features/crmProjectDetail/workflowDocumentCounts';
 import { groupWorkflowTasksByStage } from '@/presentation/features/crmProjectDetail/workflowTaskGroups';
@@ -17,6 +17,7 @@ export type WorkflowTasksListModalProps = {
   onTaskUpdated: () => Promise<void>;
   onUploadComingSoon: () => void;
   onTaskError?: (message: string) => void;
+  onRequestArchiveTask?: (task: CrmWorkflowTask) => void;
 };
 
 export function WorkflowTasksListModal({
@@ -27,6 +28,7 @@ export function WorkflowTasksListModal({
   onTaskUpdated,
   onUploadComingSoon,
   onTaskError,
+  onRequestArchiveTask,
 }: WorkflowTasksListModalProps): ReactElement | null {
   const wf = content.projectDetail.workflow;
 
@@ -69,16 +71,17 @@ export function WorkflowTasksListModal({
             <div className={styles.stageGroupStack}>
               {groups.map((group) => (
                 <WorkflowStageTaskGroup
-                  key={group.stageSlug}
+                  key={group.collapseKey}
                   projectSlug={project.summary.slug}
                   group={group}
-                  isCurrentStage={group.stageSlug === currentStage}
+                  isCurrentStage={!group.isPaymentsGroup && group.stageSlug === currentStage}
                   docCounts={docCounts}
                   isApiSource={isApiSource}
                   collapsible={false}
                   onTaskUpdated={onTaskUpdated}
                   onUploadComingSoon={onUploadComingSoon}
                   onTaskError={onTaskError}
+                  onRequestArchiveTask={onRequestArchiveTask}
                 />
               ))}
             </div>

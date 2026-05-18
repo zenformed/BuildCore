@@ -3,7 +3,10 @@
 import type { ReactElement } from 'react';
 import { useCallback, useEffect, useState } from 'react';
 import type { CrmProjectDetail, CrmWorkflowTask } from '@/domain/crm';
+import { archiveCrmWorkflowTask } from '@/application/use-cases/crm';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
+import { ConfirmModal } from '@/presentation/components/ConfirmModal';
+import { crmRepositories } from '@/shared/di/container';
 import { AccountabilityPanel } from './AccountabilityPanel';
 import { EditCrmProjectDrawer } from './EditCrmProjectDrawer';
 import { ProjectDetailHeader } from './ProjectDetailHeader';
@@ -36,6 +39,7 @@ export function ProjectDetailPage({
     mode: 'create' | 'edit';
     task: CrmWorkflowTask | null;
   }>({ open: false, mode: 'create', task: null });
+  const [archiveConfirmTask, setArchiveConfirmTask] = useState<CrmWorkflowTask | null>(null);
 
   useEffect(() => {
     setProject(initialProject);
@@ -55,7 +59,20 @@ export function ProjectDetailPage({
     }
   }, [onRefresh]);
 
+  const handleConfirmArchiveTask = useCallback(async () => {
+    if (!archiveConfirmTask) return;
+    const wf = content.projectDetail.workflow;
+    try {
+      await archiveCrmWorkflowTask(crmRepositories, archiveConfirmTask.id);
+      await onRefresh();
+      setToast({ kind: 'success', message: wf.archiveTaskSuccess });
+    } catch {
+      setToast({ kind: 'error', message: wf.archiveTaskFailed });
+    }
+  }, [archiveConfirmTask, onRefresh]);
+
   const projectNotes = project.notes?.trim();
+  const wf = content.projectDetail.workflow;
   const showProjectNotes = Boolean(projectNotes);
 
   return (
@@ -87,6 +104,7 @@ export function ProjectDetailPage({
             })
           }
           onTaskError={(message) => setToast({ kind: 'error', message })}
+          onRequestArchiveTask={setArchiveConfirmTask}
         />
         <ProjectDocumentsPanel project={project} />
       </div>
@@ -107,6 +125,22 @@ export function ProjectDetailPage({
         isApiSource={isApiSource}
         onClose={() => setTaskDrawer({ open: false, mode: 'create', task: null })}
         onSaved={handleTaskSaved}
+      />
+      <ConfirmModal
+        isOpen={archiveConfirmTask != null}
+        onClose={() => setArchiveConfirmTask(null)}
+        onConfirm={() => {
+          void handleConfirmArchiveTask();
+        }}
+        title={wf.archiveTaskConfirmTitle}
+        message={
+          archiveConfirmTask
+            ? `“${archiveConfirmTask.title}” will be removed from this project.`
+            : undefined
+        }
+        confirmLabel={wf.archiveTaskConfirmLabel}
+        cancelLabel={wf.archiveTaskCancelLabel}
+        variant="danger"
       />
     </div>
   );

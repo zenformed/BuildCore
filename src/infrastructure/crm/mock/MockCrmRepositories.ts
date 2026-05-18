@@ -264,6 +264,8 @@ export class MockCrmWorkflowTasksRepository implements ICrmWorkflowTasksReposito
 
       sortOrder: detail.workflowTasks.length + 1,
 
+      amountCents: input.amountCents ?? null,
+
     };
 
     saveAndReturn(detail.summary.slug, {
@@ -348,6 +350,10 @@ export class MockCrmWorkflowTasksRepository implements ICrmWorkflowTasksReposito
           ? found.task.completedBy ?? found.task.assignedTo
 
           : null,
+
+      amountCents:
+
+        input.amountCents !== undefined ? input.amountCents : found.task.amountCents,
 
     };
 

@@ -239,8 +239,12 @@
 .pipelineTimeline::after {
   width: var(--pipeline-progress);
   max-width: calc(100% - 2.5rem);
-  background: linear-gradient(90deg, #16a34a 0%, #3b82f6 100%);
+  background: #16a34a;
   z-index: 1;
+}
+
+:global([data-theme='dark']) .pipelineTimeline::after {
+  background: #22c55e;
 }
 
 .pipelineStep {
@@ -287,9 +291,11 @@
 .pipelineNode_current {
   width: 0.75rem;
   height: 0.75rem;
-  border-color: #3b82f6;
-  background: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.28);
+  box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.28);
+}
+
+:global([data-theme='dark']) .pipelineNode_current {
+  box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.32);
 }
 
 .pipelineLabel {
@@ -308,8 +314,7 @@
 }
 
 .pipelineLabel_current {
-  color: #1d4ed8;
-  font-weight: 600;
+  font-weight: 700;
 }
 
 :global([data-theme='dark']) .pipelineLabel_done {
@@ -317,7 +322,7 @@
 }
 
 :global([data-theme='dark']) .pipelineLabel_current {
-  color: #93c5fd;
+  color: #86efac;
 }
 
 @media (max-width: 720px) {
@@ -434,6 +439,10 @@
 .nextStepLabel {
   font-weight: 600;
   margin-right: 0.35rem;
+}
+
+.nextStepLabel::after {
+  content: ':';
 }
 
 .stackColumn {
@@ -776,17 +785,104 @@
 }
 
 .workflowGrid {
-  grid-template-columns: 1.35fr 0.85fr 0.7fr 0.55fr 0.6fr 1.75rem;
+  grid-template-columns: 6.25rem minmax(0, 1fr) 5.5rem 4.5rem 4.75rem 1.75rem;
 }
 
-.taskCompletionHeader {
-  padding: 0;
+.workflowGridPayments {
+  grid-template-columns: 6.25rem minmax(0, 1fr) 4.5rem 5.5rem 4.5rem 4.75rem 1.75rem;
 }
 
-.taskCompletionCell {
+.workflowStatusCell {
   display: flex;
   align-items: center;
   justify-content: center;
+  min-width: 0;
+}
+
+.stageGroupTable .workflowGrid.tableHeader > *:first-child,
+.stageGroupTable .workflowGridPayments.tableHeader > *:first-child {
+  text-align: center;
+}
+
+.workflowMetaCell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.workflowMetaCell .inlineCellBtn,
+.workflowMetaCell .documentsCell {
+  justify-content: center;
+}
+
+.workflowMetaCell .assignedCell {
+  justify-content: center;
+}
+
+.stageGroupTable .workflowGrid.tableHeader > *:nth-child(n + 3):not(.taskDeleteHeader),
+.stageGroupTable .workflowGridPayments.tableHeader > *:nth-child(n + 3):not(.taskDeleteHeader) {
+  text-align: center;
+}
+
+.workflowStatusCell .inlinePillBtn {
+  max-width: 100%;
+}
+
+.workflowStatusCell .statusPill {
+  display: inline-block;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.inlineAmountCell {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+
+.taskDeleteHeader {
+  padding: 0;
+}
+
+.taskDeleteCell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.taskDeleteBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  padding: 0;
+  font-size: 0.9375rem;
+  line-height: 1;
+  background: transparent;
+  border: none;
+  border-radius: 0.25rem;
+  cursor: pointer;
+  opacity: 0.55;
+  transition: opacity 0.15s, background 0.15s;
+}
+
+.taskDeleteBtn:hover:not(:disabled) {
+  opacity: 1;
+  background: rgba(220, 38, 38, 0.08);
+}
+
+.taskDeleteBtn:disabled {
+  cursor: not-allowed;
+  opacity: 0.35;
+}
+
+:global([data-theme='dark']) .taskDeleteBtn:hover:not(:disabled) {
+  background: rgba(248, 113, 113, 0.12);
 }
 
 .taskDoneIcon,
@@ -1403,8 +1499,21 @@
 }
 
 .taskTitleCell {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
   font-weight: 500;
   min-width: 0;
+  overflow: hidden;
+}
+
+.taskTitleCell .inlineCellBtn,
+.taskTitleCell .inlineFieldInput {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .statusPill {

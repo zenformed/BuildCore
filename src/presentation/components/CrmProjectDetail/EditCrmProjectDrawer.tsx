@@ -2,8 +2,17 @@
 
 import type { FormEvent, ReactElement } from 'react';
 import { useCallback, useEffect, useState } from 'react';
-import { DEFAULT_PIPELINE_STAGES, type CrmPriority, type CrmProjectDetail, type CrmTradeType } from '@/domain/crm';
-import { CRM_TRADE_TYPE_OPTIONS } from '@/presentation/features/crmProjects/crmProjectFormatters';
+import {
+  DEFAULT_PIPELINE_STAGES,
+  projectHasPaymentMilestones,
+  type CrmPriority,
+  type CrmProjectDetail,
+  type CrmTradeType,
+} from '@/domain/crm';
+import {
+  CRM_TRADE_TYPE_OPTIONS,
+  formatCentsAsUsd,
+} from '@/presentation/features/crmProjects/crmProjectFormatters';
 import { updateCrmProject } from '@/application/use-cases/crm';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
 import { MOCK_CRM_TEAM_MEMBERS } from '@/platform/mock/crm';
@@ -58,7 +67,7 @@ export function EditCrmProjectDrawer({
       e.preventDefault();
       setError(null);
 
-const validated = validateProjectDetailForm(form);
+      const validated = validateProjectDetailForm(form, project);
       if (!validated.ok) {
         setError(validated.message);
         return;
@@ -87,6 +96,8 @@ const validated = validateProjectDetailForm(form);
   );
 
   if (!open) return null;
+
+  const hasPaymentMilestones = projectHasPaymentMilestones(project);
 
   const assigneeOptions = isApiSource
     ? user
@@ -270,14 +281,23 @@ const validated = validateProjectDetailForm(form);
                 <label className={styles.label} htmlFor="crm-create-balance">
                   {edit.fields.balance}
                 </label>
-                <input
-                  id="crm-create-balance"
-                  className={styles.input}
-                  inputMode="decimal"
-                  placeholder="0.00"
-                  value={form.balanceUsd}
-                  onChange={(e) => updateField('balanceUsd', e.target.value)}
-                />
+                {hasPaymentMilestones ? (
+                  <>
+                    <p id="crm-create-balance" className={styles.derivedFieldValue}>
+                      {formatCentsAsUsd(project.summary.balanceRemainingCents)}
+                    </p>
+                    <p className={styles.fieldHint}>{edit.fields.balanceDerivedHint}</p>
+                  </>
+                ) : (
+                  <input
+                    id="crm-create-balance"
+                    className={styles.input}
+                    inputMode="decimal"
+                    placeholder="0.00"
+                    value={form.balanceUsd}
+                    onChange={(e) => updateField('balanceUsd', e.target.value)}
+                  />
+                )}
               </div>
             </div>
 

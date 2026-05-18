@@ -82,6 +82,7 @@ Root gate: `BuildCoreRootGate` → `SaaSProfileProvider` → `SaaSAuthGate` → 
 | **7B** | API read repositories + BFF (`NEXT_PUBLIC_CRM_DATA_SOURCE=api`) | Done |
 | **8** | Create project drawer + `POST /api/crm/projects` | Done |
 | **9** | Project detail editing + workflow task CRUD | Done |
+| **9b** | Payment milestones as workflow tasks + balance from unpaid payment tasks | Done |
 
 ---
 
@@ -158,6 +159,7 @@ Before merging CRM UI work, confirm:
 - `PATCH /api/crm/projects/[slug]` — project/client/contact fields + accountability.
 - `POST /api/crm/projects/[slug]/tasks`, `PATCH|DELETE /api/crm/tasks/[taskId]`.
 - Detail page: Edit project drawer, workflow task drawer (create/edit/archive), documents column placeholder.
+- Payment milestones: workflow **Payments** group with **Amount** column; balance derived from unpaid payment tasks when present (see `src/domain/crm/paymentWorkflow.ts`).
 - Mock mode: in-memory mutation store for local edit/task testing.
 
 ### Phase 8 — done

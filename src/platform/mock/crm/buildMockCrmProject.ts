@@ -1,5 +1,7 @@
 import {
-  completedStagesBefore,
+  completedStagesThrough,
+  computeProjectBalanceCents,
+  PAYMENT_WORKFLOW_STAGE_SLUG,
   type CrmAccountabilityAction,
   type CrmDocumentMetadata,
   type CrmMilestonePaymentSummary,
@@ -115,6 +117,7 @@ function defaultWorkflowTasks(
     completedAt: status === 'done' ? '2026-05-12T16:30:00.000Z' : null,
     completedBy: status === 'done' ? assignee : null,
     sortOrder,
+    amountCents: null,
   });
 
   return [
@@ -122,6 +125,52 @@ function defaultWorkflowTasks(
     mk('wf-site', 'Site walk / inspection', stageSlug === 'new-lead' ? 'pending' : 'in_progress', 2, 'inspection-scheduled'),
     mk('wf-estimate', 'Prepare estimate package', 'pending', 3, 'estimate-sent'),
     mk('wf-schedule', 'Confirm crew schedule', 'pending', 4, 'scheduled'),
+  ];
+}
+
+function defaultPaymentMilestoneTasks(
+  assignee: CrmTeamMemberRef,
+  dealValueCents: number,
+  paidCents: number
+): CrmWorkflowTask[] {
+  const deposit = Math.round(dealValueCents * 0.3);
+  const final = dealValueCents - deposit;
+  const mkPayment = (
+    id: string,
+    title: string,
+    amountCents: number,
+    status: WorkflowTaskStatus,
+    sortOrder: number
+  ): CrmWorkflowTask => ({
+    id,
+    stageSlug: PAYMENT_WORKFLOW_STAGE_SLUG,
+    title,
+    status,
+    documentsRequired: true,
+    notes: null,
+    assignedTo: assignee,
+    dueAt: '2026-06-01T17:00:00.000Z',
+    completedAt: status === 'done' ? '2026-05-12T16:30:00.000Z' : null,
+    completedBy: status === 'done' ? assignee : null,
+    sortOrder,
+    amountCents,
+  });
+
+  return [
+    mkPayment(
+      'pay-deposit',
+      'Milestone 1',
+      deposit,
+      paidCents >= deposit ? 'done' : 'in_progress',
+      101
+    ),
+    mkPayment(
+      'pay-final',
+      'Milestone 2',
+      final,
+      paidCents >= dealValueCents ? 'done' : 'pending',
+      102
+    ),
   ];
 }
 
@@ -196,6 +245,18 @@ export function buildMockCrmProjectDetail(input: BuildMockCrmProjectInput): CrmP
   const paidCents = input.paidCents ?? 0;
   const invoicedCents = input.invoicedCents ?? (paidCents > 0 ? input.dealValueCents : 0);
 
+  const opsTasks =
+    input.workflowTasks ??
+    defaultWorkflowTasks(input.currentStageSlug, assignedTo, input.name);
+  const includePaymentMilestones =
+    input.currentStageSlug === 'invoiced' || input.currentStageSlug === 'paid';
+  const paymentTasks = includePaymentMilestones
+    ? defaultPaymentMilestoneTasks(assignedTo, input.dealValueCents, paidCents)
+    : [];
+  const workflowTasks = [...opsTasks, ...paymentTasks];
+  const fallbackBalance = Math.max(0, input.dealValueCents - paidCents);
+  const balanceRemainingCents = computeProjectBalanceCents(workflowTasks, fallbackBalance);
+
   const summary: CrmProjectSummary = {
     id: input.id,
     slug: input.slug,
@@ -208,25 +269,27 @@ export function buildMockCrmProjectDetail(input: BuildMockCrmProjectInput): CrmP
     waitingOn: input.waitingOn,
     notesPreview: notesPreview(input.notes),
     dealValueCents: input.dealValueCents,
-    balanceRemainingCents: Math.max(0, input.dealValueCents - paidCents),
+    balanceRemainingCents,
     assignedTo,
     lastUpdatedAt: input.lastUpdatedAt,
   };
+
+  const milestonePayment =
+    input.milestonePayment ??
+    defaultMilestones(input.dealValueCents, paidCents, invoicedCents, input.currentStageSlug);
 
   return {
     summary,
     notes: input.notes,
     stageProgress: {
       currentStageSlug: input.currentStageSlug,
-      completedStageSlugs: completedStagesBefore(input.currentStageSlug),
+      completedStageSlugs: completedStagesThrough(input.currentStageSlug),
     },
-    workflowTasks: [...(input.workflowTasks ?? defaultWorkflowTasks(input.currentStageSlug, assignedTo, input.name))],
+    workflowTasks,
     documents: [...(input.documents ?? defaultDocuments(input.currentStageSlug, assignedTo, reviewer))],
     accountabilityLog: [
       ...(input.accountabilityLog ?? defaultAccountability(assignedTo, input.currentStageSlug, input.name)),
     ],
-    milestonePayment:
-      input.milestonePayment ??
-      defaultMilestones(input.dealValueCents, paidCents, invoicedCents, input.currentStageSlug),
+    milestonePayment: { ...milestonePayment, balanceCents: balanceRemainingCents },
   };
 }

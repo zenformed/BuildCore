@@ -247,7 +247,17 @@ Alternative: junction table `crm_project_completed_stages (project_id, stage_slu
 | `completed_at` | `timestamptz` NULL | |
 | `completed_by_user_id` | `uuid` NULL | |
 | `sort_order` | `int` NOT NULL | |
+| `amount_cents` | `bigint` NULL | When set, row is a **payment milestone** (migration `00005`) |
 | `created_at` / `updated_at` | `timestamptz` | |
+
+**Payment milestones (workflow tasks, not `crm_milestones` rows):**
+
+- Identified by non-null `amount_cents` on `crm_workflow_tasks`.
+- Stored with `stage_slug = 'paid'` (canonical bucket). The pipeline stage label **Paid** on `crm_projects.current_stage_slug` is unchanged.
+- Project detail UI groups these tasks under workflow header **Payments** (not **Paid**).
+- Top-of-page **Balance** = sum of `amount_cents` for payment tasks where `status <> 'done'`, when any payment tasks exist; otherwise `crm_projects.balance_cents` is used.
+- Server recalculates and persists `crm_projects.balance_cents` on payment task create/update/archive.
+- Receipts/documents will attach to payment tasks in a later phase (metadata/upload not in current slice).
 
 ### 2.4 Documents (metadata only in v1; task-attached)
 

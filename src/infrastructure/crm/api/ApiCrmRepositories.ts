@@ -178,14 +178,13 @@ export class ApiCrmWorkflowTasksRepository implements ICrmWorkflowTasksRepositor
 
   create(input: CreateCrmWorkflowTaskInput): Promise<CrmWorkflowTask> {
 
-    const cached = getApiCrmDetailCacheByProjectId(input.projectId);
-
-    const slug = cached?.summary.slug;
+    const slug =
+      input.projectSlug?.trim() ||
+      getApiCrmDetailCacheByProjectId(input.projectId)?.summary.slug ||
+      '';
 
     if (!slug) {
-
       return Promise.reject(new CrmApiError('not_found', 404, 'Project not loaded'));
-
     }
 
     clearApiCrmDetailCache();
@@ -209,6 +208,8 @@ export class ApiCrmWorkflowTasksRepository implements ICrmWorkflowTasksRepositor
         notes: input.notes,
 
         assignedMemberId: input.assignedMemberId,
+
+        ...(input.amountCents != null ? { amountCents: input.amountCents } : {}),
 
       }
 
@@ -241,6 +242,8 @@ export class ApiCrmWorkflowTasksRepository implements ICrmWorkflowTasksRepositor
         notes: input.notes,
 
         assignedMemberId: input.assignedMemberId,
+
+        ...(input.amountCents !== undefined ? { amountCents: input.amountCents } : {}),
 
       }
 

@@ -45,7 +45,14 @@ export function getPipelineStage(slug: PipelineStageSlug): PipelineStage {
   return stage;
 }
 
+/** Stages strictly before `slug` (excludes the current stage). */
 export function completedStagesBefore(slug: PipelineStageSlug): PipelineStageSlug[] {
   const current = getPipelineStage(slug).sortOrder;
   return DEFAULT_PIPELINE_STAGES.filter((s) => s.sortOrder < current).map((s) => s.slug);
+}
+
+/** Stages reached when the project is on `slug` (includes the current stage). */
+export function completedStagesThrough(slug: PipelineStageSlug): PipelineStageSlug[] {
+  const current = getPipelineStage(slug).sortOrder;
+  return DEFAULT_PIPELINE_STAGES.filter((s) => s.sortOrder <= current).map((s) => s.slug);
 }

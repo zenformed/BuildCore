@@ -1,10 +1,20 @@
 export {
   DEFAULT_PIPELINE_STAGES,
   completedStagesBefore,
+  completedStagesThrough,
   getPipelineStage,
   type PipelineStage,
   type PipelineStageSlug,
 } from './pipelineStage';
+export {
+  PAYMENT_WORKFLOW_STAGE_SLUG,
+  PAYMENTS_WORKFLOW_COLLAPSE_KEY,
+  applyPaymentBalanceToProjectDetail,
+  computeProjectBalanceCents,
+  isPaymentWorkflowTask,
+  projectHasPaymentMilestones,
+  type WorkflowStageCollapseKey,
+} from './paymentWorkflow';
 export type { CrmTeamMemberRef } from './teamMember';
 export type { CrmContact } from './contact';
 export type { CrmClient } from './client';

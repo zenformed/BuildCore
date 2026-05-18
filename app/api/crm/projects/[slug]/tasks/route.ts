@@ -53,7 +53,7 @@ export async function POST(
       auth.context.supabase,
       auth.context.organizationId,
       auth.context.user.id,
-      { projectId, ...validated.input }
+      { projectId, projectSlug: slug, ...validated.input }
     );
     return NextResponse.json(task, { status: 201 });
   } catch (err) {
