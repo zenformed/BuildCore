@@ -160,6 +160,7 @@ export const buildCoreDashboardContent = {
       archiveTaskSuccess: 'Task deleted.',
       archiveTaskFailed: 'Could not delete task.',
       documentsNone: '—',
+      documentsMarkRequired: 'Required',
       documentsNotRequired: 'N/A',
       documentsUpload: 'Upload',
       documentsUploadComingSoon: 'Uploads coming in a later phase.',

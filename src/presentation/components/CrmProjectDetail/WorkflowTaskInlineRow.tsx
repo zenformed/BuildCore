@@ -417,7 +417,17 @@ export function WorkflowTaskInlineRow({
               </button>
             </div>
           ))}
-          {taskDocuments.length === 0 ? (
+          {!task.documentsRequired ? (
+            <button
+              type="button"
+              className={styles.inlineMenuAction}
+              disabled={saving}
+              onClick={() => void saveDocumentsRequired(true)}
+            >
+              {wf.documentsMarkRequired}
+            </button>
+          ) : null}
+          {task.documentsRequired && taskDocuments.length === 0 ? (
             <button
               type="button"
               className={styles.inlineMenuAction}
