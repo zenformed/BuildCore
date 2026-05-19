@@ -17,9 +17,15 @@ import styles from './ProjectDetail.module.css';
 
 export type ProjectCostSummaryProps = {
   budget: CrmProjectBudgetSummary;
+  onGeneratePl?: () => void;
+  generatingPl?: boolean;
 };
 
-export function ProjectCostSummary({ budget }: ProjectCostSummaryProps): ReactElement {
+export function ProjectCostSummary({
+  budget,
+  onGeneratePl,
+  generatingPl = false,
+}: ProjectCostSummaryProps): ReactElement {
   const p = content.projectDetail.budget.pl;
   const { slices } = useMemo(
     () => buildBudgetCategoryPieSlices(budget.categoryCosts),
@@ -30,7 +36,12 @@ export function ProjectCostSummary({ budget }: ProjectCostSummaryProps): ReactEl
   return (
     <aside className={`${styles.paymentsPanel} ${styles.budgetSummaryPanel}`} aria-labelledby="project-cost-heading">
       <DetailPanelHeader title={p.title} titleId="project-cost-heading">
-        <DetailPanelHeaderButton variant="download" title={p.generatePl} onClick={() => undefined} />
+        <DetailPanelHeaderButton
+          variant="download"
+          title={p.generatePl}
+          disabled={generatingPl || !onGeneratePl}
+          onClick={onGeneratePl}
+        />
       </DetailPanelHeader>
 
       {budget.categoryCosts.length > 0 ? (

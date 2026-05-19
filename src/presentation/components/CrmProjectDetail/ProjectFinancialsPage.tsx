@@ -5,6 +5,7 @@ import { buildCoreDashboardContent as content } from '@/platform/content/buildCo
 import { useProjectDetailWorkspace } from '@/presentation/features/crmProjectDetail/useProjectDetailWorkspace';
 import { BudgetTable } from './BudgetTable';
 import { DetailToast } from './DetailToast';
+import { useProjectProfitAndLossPdfExport } from '@/presentation/features/crmProjectDetail/useProjectProfitAndLossPdfExport';
 import { ProjectCostSummary } from './ProjectCostSummary';
 import { ProjectDetailActionsMenu } from './ProjectDetailActionsMenu';
 import { ProjectDetailContextBlock } from './ProjectDetailContextBlock';
@@ -27,6 +28,10 @@ export function ProjectFinancialsPage({
 }: ProjectFinancialsPageProps): ReactElement {
   const workspace = useProjectDetailWorkspace(initialProject, onRefresh);
   const { project, toast, setToast, savingField, patchField } = workspace;
+  const { exporting: exportingPl, exportPdf: exportProfitAndLossPdf } = useProjectProfitAndLossPdfExport(
+    project,
+    (message) => setToast({ kind: 'error', message })
+  );
 
   const handleRefresh = async () => {
     try {
@@ -57,7 +62,11 @@ export function ProjectFinancialsPage({
           onRefresh={handleRefresh}
           onError={(message) => setToast({ kind: 'error', message })}
         />
-        <ProjectCostSummary budget={project.budget} />
+        <ProjectCostSummary
+          budget={project.budget}
+          generatingPl={exportingPl}
+          onGeneratePl={() => void exportProfitAndLossPdf()}
+        />
       </div>
     </div>
   );
