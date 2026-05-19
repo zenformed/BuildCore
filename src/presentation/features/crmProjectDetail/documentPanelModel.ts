@@ -1,6 +1,6 @@
 import type { CrmDocumentMetadata, CrmWorkflowTask } from '@/domain/crm';
 
-export type DocumentPanelFilter = 'all' | 'pendingReview' | 'uploaded' | 'missing';
+export type DocumentPanelFilter = 'all' | 'uploaded' | 'missing';
 
 export type DocumentListItem =
   | { kind: 'document'; document: CrmDocumentMetadata }
@@ -26,12 +26,6 @@ export function filterDocumentPanelItems(
 
   if (filter === 'missing') {
     return missingItems;
-  }
-
-  if (filter === 'pendingReview') {
-    return documents
-      .filter((doc) => doc.reviewedAt == null)
-      .map((document) => ({ kind: 'document' as const, document }));
   }
 
   if (filter === 'uploaded') {

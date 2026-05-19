@@ -8,6 +8,8 @@ import { PAYMENT_WORKFLOW_STAGE_SLUG } from '@/domain/crm/paymentWorkflow';
 import { mapDbWorkflowTask, type DbCrmWorkflowTaskRow } from '@/infrastructure/crm/mappers/mapCrmFromDb';
 import { loadCrmMemberMap } from './crmMemberMap';
 import { appendCrmAccountabilityEvent } from './crmAccountability';
+import { assertWorkflowTaskCanBeMarkedDone } from './crmDocumentService';
+import { CrmDocumentServiceError } from '@/infrastructure/crm/errors';
 import { isPaymentTaskRow, syncProjectBalanceFromPaymentTasks } from './crmPaymentBalance';
 
 const TASK_SELECT =
@@ -151,6 +153,7 @@ export async function updateCrmWorkflowTaskForOrg(
   }
 
   if (nextStatus === 'done' && existing.status !== 'done') {
+    await assertWorkflowTaskCanBeMarkedDone(supabase, organizationId, existing);
     patch.completed_at = now;
     patch.completed_by_member_id = actorUserId;
   } else if (nextStatus !== 'done' && existing.status === 'done') {

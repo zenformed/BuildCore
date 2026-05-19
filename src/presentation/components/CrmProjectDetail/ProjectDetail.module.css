@@ -1368,7 +1368,8 @@
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
-  min-width: 8.5rem;
+  min-width: 14rem;
+  max-width: min(20rem, calc(100vw - 1rem));
   padding: 0.375rem;
   background: var(--color-surface, #fff);
   border: 1px solid var(--theme-border-main, #e2e8f0);
@@ -1398,6 +1399,191 @@
 
 .inlineMenuAction:hover:not(:disabled) {
   background: var(--color-muted, #f1f5f9);
+}
+
+.hiddenFileInput {
+  position: absolute;
+  width: 0;
+  height: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.inlineMenuUploadAction {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+}
+
+.inlineMenuUploadIcon {
+  display: inline-block;
+  width: 0.875rem;
+  height: 0.875rem;
+  flex-shrink: 0;
+  background: currentColor;
+  opacity: 0.85;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2'%3E%3Cpath d='M12 16V4M8 8l4-4 4 4M4 20h16'/%3E%3C/svg%3E")
+    center / contain no-repeat;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2'%3E%3Cpath d='M12 16V4M8 8l4-4 4 4M4 20h16'/%3E%3C/svg%3E")
+    center / contain no-repeat;
+}
+
+.docFileIconWrap {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  line-height: 0;
+}
+
+.docFileIconWrap_compact {
+  width: 1.125rem;
+  height: 1.125rem;
+}
+
+.docFileIconWrap_modal {
+  width: 1.5rem;
+  height: 1.5rem;
+}
+
+.docFileIconSvg {
+  display: block;
+  width: 1.125rem;
+  height: 1.125rem;
+}
+
+.docFileIconWrap_compact .docFileIconSvg {
+  width: 1rem;
+  height: 1rem;
+}
+
+.docFileIconWrap_modal .docFileIconSvg {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+.docFileIconWrap_pdf {
+  color: #dc2626;
+}
+
+.docFileIconWrap_word {
+  color: #2563eb;
+}
+
+.docFileIconWrap_sheet {
+  color: #ca8a04;
+}
+
+.docFileIconWrap_text {
+  color: #64748b;
+}
+
+.docFileIconWrap_presentation {
+  color: #db2777;
+}
+
+.docFileIconWrap_generic {
+  color: #64748b;
+}
+
+:global([data-theme='dark']) .docFileIconWrap_pdf {
+  color: #f87171;
+}
+
+:global([data-theme='dark']) .docFileIconWrap_word {
+  color: #60a5fa;
+}
+
+:global([data-theme='dark']) .docFileIconWrap_sheet {
+  color: #fbbf24;
+}
+
+:global([data-theme='dark']) .docFileIconWrap_text,
+:global([data-theme='dark']) .docFileIconWrap_generic {
+  color: #94a3b8;
+}
+
+:global([data-theme='dark']) .docFileIconWrap_presentation {
+  color: #f472b6;
+}
+
+.inlineMenuDocRow {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.25rem 0;
+  border-top: 1px solid var(--theme-border-main, var(--color-border, #e2e8f0));
+  min-width: 0;
+}
+
+.inlineMenuDocName {
+  flex: 1;
+  min-width: 0;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--color-text, #0f172a);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.inlineMenuIconBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 1.625rem;
+  height: 1.625rem;
+  padding: 0;
+  color: var(--color-text-muted, #64748b);
+  background: none;
+  border: none;
+  border-radius: 0.25rem;
+  cursor: pointer;
+}
+
+.inlineMenuIconBtn:hover:not(:disabled) {
+  color: var(--color-text, #0f172a);
+  background: var(--color-muted, #f1f5f9);
+}
+
+.inlineMenuDownloadIcon,
+.inlineMenuDeleteIcon {
+  display: inline-block;
+  width: 0.875rem;
+  height: 0.875rem;
+  background: currentColor;
+}
+
+.inlineMenuDownloadIcon {
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2'%3E%3Cpath d='M12 3v12M7 10l5 5 5-5M5 21h14'/%3E%3C/svg%3E")
+    center / contain no-repeat;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2'%3E%3Cpath d='M12 3v12M7 10l5 5 5-5M5 21h14'/%3E%3C/svg%3E")
+    center / contain no-repeat;
+}
+
+.inlineMenuDeleteIcon {
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2'%3E%3Cpath d='M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6'/%3E%3C/svg%3E")
+    center / contain no-repeat;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2'%3E%3Cpath d='M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6'/%3E%3C/svg%3E")
+    center / contain no-repeat;
+}
+
+:global([data-theme='dark']) .inlineMenuDocRow {
+  border-top-color: #3d3e4a;
+}
+
+:global([data-theme='dark']) .inlineMenuDocName {
+  color: #e2e8f0;
+}
+
+:global([data-theme='dark']) .inlineMenuIconBtn {
+  color: #94a3b8;
+}
+
+:global([data-theme='dark']) .inlineMenuIconBtn:hover:not(:disabled) {
+  color: #f1f5f9;
+  background: #2a2f3d;
 }
 
 :global([data-theme='dark']) .inlineMenuAction {
@@ -1752,6 +1938,37 @@
   padding: 0.75rem 1rem 1rem;
 }
 
+/* Documents modal — fixed tall shell; list scrolls inside */
+.detailListModal_documents {
+  height: min(75vh, 44rem);
+  max-height: calc(100vh - 3rem);
+  min-height: min(75vh, 44rem);
+}
+
+.detailListModalBody_documents {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  padding: 0.75rem 1rem 1rem;
+}
+
+.documentsPanelContent {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  gap: 0.625rem;
+}
+
+.documentsPanelScroll {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  padding-right: 0.125rem;
+}
+
 .accountabilityGrid_modal {
   grid-template-columns: 7.25rem 8rem minmax(6rem, 0.85fr) 6.5rem minmax(10rem, 1.4fr);
   min-width: 40rem;
@@ -2054,16 +2271,10 @@
   display: flex;
   flex-direction: column;
   gap: 0.375rem;
-  flex: 1;
-  min-height: 0;
-  max-height: 32rem;
-  overflow: auto;
-  padding-right: 0.125rem;
 }
 
 .docListItem {
   display: grid;
-  grid-template-columns: auto 1fr auto auto;
   gap: 0.4375rem 0.5rem;
   align-items: center;
   padding: 0.4375rem 0.5rem;
@@ -2071,6 +2282,34 @@
   border-radius: 0.375rem;
   font-size: 0.8125rem;
   transition: border-color 0.12s ease, background-color 0.12s ease;
+}
+
+.docListItem_missing {
+  grid-template-columns: auto 1fr auto;
+}
+
+.docListItem_hasFile {
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: start;
+}
+
+.docItemTitleRow {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  min-width: 0;
+}
+
+.docItemTitleRow .docItemName {
+  flex: 1;
+  min-width: 0;
+}
+
+.docListItemActions {
+  display: flex;
+  align-items: center;
+  gap: 0.125rem;
+  flex-shrink: 0;
 }
 
 .docListItem:hover {
@@ -2210,7 +2449,10 @@
 .docEmptyState {
   display: flex;
   flex-direction: column;
+  justify-content: center;
   gap: 0.5rem;
+  min-height: 100%;
+  padding: 1rem 0;
 }
 
 .docPlaceholderList {

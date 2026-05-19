@@ -15,7 +15,6 @@ export type WorkflowTasksListModalProps = {
   isApiSource: boolean;
   onClose: () => void;
   onTaskUpdated: () => Promise<void>;
-  onUploadComingSoon: () => void;
   onTaskError?: (message: string) => void;
   onRequestArchiveTask?: (task: CrmWorkflowTask) => void;
 };
@@ -26,7 +25,6 @@ export function WorkflowTasksListModal({
   isApiSource,
   onClose,
   onTaskUpdated,
-  onUploadComingSoon,
   onTaskError,
   onRequestArchiveTask,
 }: WorkflowTasksListModalProps): ReactElement | null {
@@ -73,12 +71,12 @@ export function WorkflowTasksListModal({
                 <WorkflowStageTaskGroup
                   key={group.collapseKey}
                   projectSlug={project.summary.slug}
+                  projectDocuments={project.documents}
                   group={group}
                   docCounts={docCounts}
                   isApiSource={isApiSource}
                   collapsible={false}
                   onTaskUpdated={onTaskUpdated}
-                  onUploadComingSoon={onUploadComingSoon}
                   onTaskError={onTaskError}
                   onRequestArchiveTask={onRequestArchiveTask}
                 />

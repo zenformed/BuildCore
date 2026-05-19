@@ -20,7 +20,6 @@ export type WorkflowTasksTableProps = {
   isApiSource: boolean;
   onAddTask: () => void;
   onTaskUpdated: () => Promise<void>;
-  onUploadComingSoon: () => void;
   onTaskError?: (message: string) => void;
   onRequestArchiveTask?: (task: CrmWorkflowTask) => void;
   onOpenDocuments?: () => void;
@@ -31,7 +30,6 @@ export function WorkflowTasksTable({
   isApiSource,
   onAddTask,
   onTaskUpdated,
-  onUploadComingSoon,
   onTaskError,
   onRequestArchiveTask,
   onOpenDocuments,
@@ -73,11 +71,11 @@ export function WorkflowTasksTable({
             <WorkflowStageTaskGroup
               key={group.collapseKey}
               projectSlug={project.summary.slug}
+              projectDocuments={project.documents}
               group={group}
               docCounts={docCounts}
               isApiSource={isApiSource}
               onTaskUpdated={onTaskUpdated}
-              onUploadComingSoon={onUploadComingSoon}
               onTaskError={onTaskError}
               onRequestArchiveTask={onRequestArchiveTask}
             />
@@ -100,7 +98,6 @@ export function WorkflowTasksTable({
         isApiSource={isApiSource}
         onClose={() => setAllTasksOpen(false)}
         onTaskUpdated={onTaskUpdated}
-        onUploadComingSoon={onUploadComingSoon}
         onTaskError={onTaskError}
         onRequestArchiveTask={onRequestArchiveTask}
       />

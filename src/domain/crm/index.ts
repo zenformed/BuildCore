@@ -20,6 +20,18 @@ export type { CrmContact } from './contact';
 export type { CrmClient } from './client';
 export type { CrmWorkflowTask, WorkflowTaskStatus } from './workflowTask';
 export type { CrmDocumentKind, CrmDocumentMetadata } from './document';
+export {
+  BUILDCORE_MAX_DOCUMENT_UPLOAD_BYTES,
+  BUILDCORE_DOCUMENT_ALLOWED_EXTENSIONS,
+  STORAGE_LIMIT_EXCEEDED_CODE,
+  validateWorkflowTaskDocumentUpload,
+} from './documentUpload';
+export type {
+  DeleteWorkflowTaskDocumentInput,
+  ListWorkflowTaskDocumentsInput,
+  UploadWorkflowTaskDocumentInput,
+  WorkflowTaskDocumentDownload,
+} from './documentMutations';
 export type { CrmAccountabilityAction } from './accountability';
 export type { CrmMilestone, CrmMilestonePaymentSummary, CrmMilestoneStatus } from './milestonePayment';
 export {

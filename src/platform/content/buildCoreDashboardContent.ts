@@ -163,6 +163,10 @@ export const buildCoreDashboardContent = {
       documentsNotRequired: 'N/A',
       documentsUpload: 'Upload',
       documentsUploadComingSoon: 'Uploads coming in a later phase.',
+      documentUploadFailed: 'Could not upload document.',
+      documentDownload: 'Download',
+      documentDelete: 'Delete',
+      storageLimitExceeded: 'You have run out of document storage. Upgrade for more storage.',
       documentsCountSuffix: 'files',
       unassigned: 'Unassigned',
       taskDoneIndicator: 'Task complete',
@@ -218,7 +222,6 @@ export const buildCoreDashboardContent = {
       filterAriaLabel: 'Filter documents',
       filters: {
         all: 'All',
-        pendingReview: 'Pending',
         uploaded: 'Uploaded',
         missing: 'Missing',
       },

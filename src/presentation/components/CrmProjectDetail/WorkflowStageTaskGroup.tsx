@@ -13,11 +13,11 @@ import styles from './ProjectDetail.module.css';
 
 export type WorkflowStageTaskGroupProps = {
   projectSlug: string;
+  projectDocuments: readonly import('@/domain/crm').CrmDocumentMetadata[];
   group: WorkflowTaskStageGroup;
   docCounts: ReadonlyMap<string, number>;
   isApiSource: boolean;
   onTaskUpdated: () => Promise<void>;
-  onUploadComingSoon: () => void;
   onTaskError?: (message: string) => void;
   onRequestArchiveTask?: (task: CrmWorkflowTask) => void;
   /** When false, stage is always expanded with a static header (e.g. "View all" modal). */
@@ -26,11 +26,11 @@ export type WorkflowStageTaskGroupProps = {
 
 export function WorkflowStageTaskGroup({
   projectSlug,
+  projectDocuments,
   group,
   docCounts,
   isApiSource,
   onTaskUpdated,
-  onUploadComingSoon,
   onTaskError,
   onRequestArchiveTask,
   collapsible = true,
@@ -87,12 +87,13 @@ export function WorkflowStageTaskGroup({
       {group.tasks.map((task) => (
         <WorkflowTaskInlineRow
           key={task.id}
+          projectSlug={projectSlug}
           task={task}
           docCount={docCounts.get(task.id) ?? 0}
+          taskDocuments={projectDocuments.filter((doc) => doc.workflowTaskId === task.id)}
           showAmountColumn={group.isPaymentsGroup}
           isApiSource={isApiSource}
           onUpdated={onTaskUpdated}
-          onUploadComingSoon={onUploadComingSoon}
           onTaskError={onTaskError}
           onRequestArchiveTask={onRequestArchiveTask}
         />

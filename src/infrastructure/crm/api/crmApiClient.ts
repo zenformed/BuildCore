@@ -77,6 +77,17 @@ export async function crmApiDeleteJson<T>(path: string): Promise<T> {
   return parseCrmApiResponse<T>(response);
 }
 
+export async function crmApiPostFormData<T>(path: string, formData: FormData): Promise<T> {
+  const token = await getAccessToken();
+  const response = await fetch(path, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}` },
+    body: formData,
+    cache: 'no-store',
+  });
+  return parseCrmApiResponse<T>(response);
+}
+
 export async function crmApiGetJson<T>(path: string): Promise<T> {
   const token = await getAccessToken();
   const response = await fetch(path, {

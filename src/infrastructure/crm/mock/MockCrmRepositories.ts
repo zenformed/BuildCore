@@ -45,6 +45,14 @@ import { getMockCrmTeamMember } from '@/platform/mock/crm';
 import { MOCK_CRM_PROJECT_SUMMARIES } from '@/platform/mock/crm';
 
 import { CrmWriteNotAvailableError } from '@/infrastructure/crm/errors';
+import { getDocumentStorageProvider } from '@/infrastructure/storage/getDocumentStorageProvider';
+import {
+  mockAssertWorkflowTaskCanBeMarkedDone,
+  mockCreateWorkflowTaskDocumentDownload,
+  mockDeleteWorkflowTaskDocument,
+  mockListWorkflowTaskDocuments,
+  mockUploadWorkflowTaskDocument,
+} from './mockCrmDocumentMutations';
 
 import {
 
@@ -305,7 +313,15 @@ export class MockCrmWorkflowTasksRepository implements ICrmWorkflowTasksReposito
 
     if (found == null) return null;
 
-
+    const nextStatus = input.status ?? found.task.status;
+    const nextDocumentsRequired =
+      input.documentsRequired ?? found.task.documentsRequired;
+    if (nextStatus === 'done' && found.task.status !== 'done') {
+      mockAssertWorkflowTaskCanBeMarkedDone(found.detail, {
+        ...found.task,
+        documentsRequired: nextDocumentsRequired,
+      });
+    }
 
     const next: CrmWorkflowTask = {
 
@@ -395,12 +411,52 @@ export class MockCrmWorkflowTasksRepository implements ICrmWorkflowTasksReposito
 
 
 
+const MOCK_ORG_ID = 'mock-org';
+
 export class MockCrmDocumentsRepository implements ICrmDocumentsRepository {
 
   listByProjectId(projectId: string): readonly CrmDocumentMetadata[] {
 
     return requireProjectDetail(projectId)?.documents ?? [];
 
+  }
+
+  listByWorkflowTaskId(input: {
+    projectSlug: string;
+    workflowTaskId: string;
+  }): readonly CrmDocumentMetadata[] {
+    return mockListWorkflowTaskDocuments(input);
+  }
+
+  upload(input: import('@/domain/crm/documentMutations').UploadWorkflowTaskDocumentInput): Promise<{
+    document: CrmDocumentMetadata;
+  }> {
+    return mockUploadWorkflowTaskDocument(
+      getDocumentStorageProvider(),
+      MOCK_ORG_ID,
+      'mock-user',
+      input
+    ).then((document) => ({ document }));
+  }
+
+  delete(
+    input: import('@/domain/crm/documentMutations').DeleteWorkflowTaskDocumentInput
+  ): Promise<void> {
+    return mockDeleteWorkflowTaskDocument(
+      getDocumentStorageProvider(),
+      MOCK_ORG_ID,
+      input
+    );
+  }
+
+  createDownload(
+    input: import('@/domain/crm/documentMutations').CreateWorkflowTaskDocumentDownloadInput
+  ): Promise<import('@/domain/crm/documentMutations').WorkflowTaskDocumentDownload> {
+    return mockCreateWorkflowTaskDocumentDownload(
+      getDocumentStorageProvider(),
+      MOCK_ORG_ID,
+      input
+    );
   }
 
 }

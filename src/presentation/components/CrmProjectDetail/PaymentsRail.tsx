@@ -14,7 +14,6 @@ export type PaymentsRailProps = {
   project: CrmProjectDetail;
   isApiSource: boolean;
   onTaskUpdated: () => Promise<void>;
-  onUploadComingSoon: () => void;
   onTaskError?: (message: string) => void;
   onRequestArchiveTask?: (task: CrmWorkflowTask) => void;
 };
@@ -23,7 +22,6 @@ export function PaymentsRail({
   project,
   isApiSource,
   onTaskUpdated,
-  onUploadComingSoon,
   onTaskError,
   onRequestArchiveTask,
 }: PaymentsRailProps): ReactElement {
@@ -69,12 +67,13 @@ export function PaymentsRail({
           {milestones.map((task) => (
             <WorkflowTaskInlineRow
               key={task.id}
+              projectSlug={project.summary.slug}
               task={task}
               docCount={docCounts.get(task.id) ?? 0}
+              taskDocuments={project.documents.filter((doc) => doc.workflowTaskId === task.id)}
               showAmountColumn
               isApiSource={isApiSource}
               onUpdated={onTaskUpdated}
-              onUploadComingSoon={onUploadComingSoon}
               onTaskError={onTaskError}
               onRequestArchiveTask={onRequestArchiveTask}
             />

@@ -11,14 +11,17 @@ export type ProjectDocumentsModalProps = {
   open: boolean;
   project: CrmProjectDetail;
   onClose: () => void;
+  onRefresh: () => Promise<void>;
+  onError?: (message: string) => void;
 };
 
 export function ProjectDocumentsModal({
   open,
   project,
   onClose,
+  onRefresh,
+  onError,
 }: ProjectDocumentsModalProps): ReactElement | null {
-  const docsContent = content.projectDetail.documents;
 
   useEffect(() => {
     if (!open) return;
@@ -34,7 +37,7 @@ export function ProjectDocumentsModal({
   return (
     <div className={styles.detailListModalOverlay} onClick={onClose} role="presentation">
       <div
-        className={styles.detailListModal}
+        className={`${styles.detailListModal} ${styles.detailListModal_documents}`}
         onClick={(e) => e.stopPropagation()}
         role="dialog"
         aria-modal="true"
@@ -48,8 +51,12 @@ export function ProjectDocumentsModal({
             ×
           </button>
         </div>
-        <div className={styles.detailListModalBody}>
-          <ProjectDocumentsPanelContent project={project} />
+        <div className={`${styles.detailListModalBody} ${styles.detailListModalBody_documents}`}>
+          <ProjectDocumentsPanelContent
+            project={project}
+            onRefresh={onRefresh}
+            onError={onError}
+          />
         </div>
       </div>
     </div>

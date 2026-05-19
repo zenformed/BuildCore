@@ -6,7 +6,6 @@ import type { CrmProjectDetail, PipelineStageSlug } from '@/domain/crm';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
 import { formatWorkflowTaskStageLabel } from '@/presentation/features/crmProjectDetail/crmProjectDetailFormatters';
 import {
-  documentCompletionLabel,
   filterDocumentPanelItems,
   type DocumentPanelFilter,
 } from '@/presentation/features/crmProjectDetail/documentPanelModel';
@@ -15,26 +14,37 @@ import {
   formatFileSize,
   formatShortDate,
 } from '@/presentation/features/crmProjectDetail/crmProjectDetailFormatters';
-import shared from '@/presentation/components/crmShared/crmShared.module.css';
-import { DocumentTypeIcon } from './DocumentTypeIcon';
+import { useProjectDocumentModalActions } from '@/presentation/features/crmProjectDetail/useProjectDocumentModalActions';
+import { WorkflowDocumentFileIcon } from './WorkflowDocumentFileIcon';
 import styles from './ProjectDetail.module.css';
 
 const FILTERS: readonly { id: DocumentPanelFilter; label: string }[] = [
   { id: 'all', label: content.projectDetail.documents.filters.all },
-  { id: 'pendingReview', label: content.projectDetail.documents.filters.pendingReview },
   { id: 'uploaded', label: content.projectDetail.documents.filters.uploaded },
   { id: 'missing', label: content.projectDetail.documents.filters.missing },
 ] as const;
 
 export type ProjectDocumentsPanelContentProps = {
   project: CrmProjectDetail;
+  onRefresh: () => Promise<void>;
+  onError?: (message: string) => void;
 };
 
 export function ProjectDocumentsPanelContent({
   project,
+  onRefresh,
+  onError,
 }: ProjectDocumentsPanelContentProps): ReactElement {
   const docsContent = content.projectDetail.documents;
+  const wf = content.projectDetail.workflow;
   const [filter, setFilter] = useState<DocumentPanelFilter>('all');
+  const [busyDocId, setBusyDocId] = useState<string | null>(null);
+
+  const { downloadDocument, deleteDocument } = useProjectDocumentModalActions({
+    projectSlug: project.summary.slug,
+    onChanged: onRefresh,
+    onError: (message) => onError?.(message),
+  });
 
   const taskById = useMemo(
     () => new Map(project.workflowTasks.map((task) => [task.id, task] as const)),
@@ -52,9 +62,17 @@ export function ProjectDocumentsPanelContent({
     return stageSlug ? formatWorkflowTaskStageLabel({ stageSlug, amountCents: null }) : docsContent.noStage;
   };
 
+  const runDocAction = async (docId: string, action: () => Promise<void>) => {
+    setBusyDocId(docId);
+    try {
+      await action();
+    } finally {
+      setBusyDocId(null);
+    }
+  };
+
   return (
-    <>
-      <p className={styles.cardHelper}>{docsContent.uploadHint}</p>
+    <div className={styles.documentsPanelContent}>
       <div className={styles.docFilterRow} role="tablist" aria-label={docsContent.filterAriaLabel}>
         {FILTERS.map((tab) => (
           <button
@@ -69,29 +87,18 @@ export function ProjectDocumentsPanelContent({
           </button>
         ))}
       </div>
+      <div className={styles.documentsPanelScroll}>
       {items.length === 0 ? (
         <div className={styles.docEmptyState}>
           <p className={styles.subtitle}>{docsContent.empty}</p>
-          <ul className={styles.docPlaceholderList}>
-            {docsContent.placeholders.map((label) => (
-              <li key={label} className={styles.docPlaceholderItem}>
-                <span className={styles.docTypeIcon}>PDF</span>
-                <span>
-                  <span className={styles.docItemName}>{label}</span>
-                  <span className={styles.docItemMeta}>{docsContent.placeholderMeta}</span>
-                </span>
-                <span className={styles.docCompletionMissing}>0/1</span>
-              </li>
-            ))}
-          </ul>
         </div>
       ) : (
         <ul className={styles.docList}>
           {items.map((item) => {
             if (item.kind === 'missing') {
               return (
-                <li key={`missing-${item.task.id}`} className={styles.docListItem}>
-                  <span className={styles.docTypeIcon}>—</span>
+                <li key={`missing-${item.task.id}`} className={`${styles.docListItem} ${styles.docListItem_missing}`}>
+                  <WorkflowDocumentFileIcon fileName="file" mimeType="" modal />
                   <div className={styles.docItemBody}>
                     <span className={styles.docItemName}>{item.task.title}</span>
                     <span className={styles.docItemMeta}>
@@ -104,16 +111,39 @@ export function ProjectDocumentsPanelContent({
             }
 
             const doc = item.document;
-            const completion = documentCompletionLabel(doc);
-            const isComplete = doc.reviewedAt != null;
+            const isBusy = busyDocId === doc.id;
 
             return (
-              <li key={doc.id} className={styles.docListItem}>
-                <DocumentTypeIcon kind={doc.kind} />
+              <li key={doc.id} className={`${styles.docListItem} ${styles.docListItem_hasFile}`}>
+                <WorkflowDocumentFileIcon fileName={doc.name} mimeType={doc.mimeType} modal />
                 <div className={styles.docItemBody}>
-                  <span className={styles.docItemName} title={doc.name}>
-                    {doc.name}
-                  </span>
+                  <div className={styles.docItemTitleRow}>
+                    <span className={styles.docItemName} title={doc.name}>
+                      {doc.name}
+                    </span>
+                    <div className={styles.docListItemActions}>
+                      <button
+                        type="button"
+                        className={styles.inlineMenuIconBtn}
+                        disabled={isBusy}
+                        title={wf.documentDownload}
+                        aria-label={`${wf.documentDownload} ${doc.name}`}
+                        onClick={() => void runDocAction(doc.id, () => downloadDocument(doc))}
+                      >
+                        <span className={styles.inlineMenuDownloadIcon} aria-hidden />
+                      </button>
+                      <button
+                        type="button"
+                        className={styles.inlineMenuIconBtn}
+                        disabled={isBusy}
+                        title={wf.documentDelete}
+                        aria-label={`${wf.documentDelete} ${doc.name}`}
+                        onClick={() => void runDocAction(doc.id, () => deleteDocument(doc))}
+                      >
+                        <span className={styles.inlineMenuDeleteIcon} aria-hidden />
+                      </button>
+                    </div>
+                  </div>
                   <span className={styles.docItemMeta}>
                     {formatDocumentKind(doc.kind)} ·{' '}
                     {doc.workflowTaskId
@@ -125,21 +155,12 @@ export function ProjectDocumentsPanelContent({
                     {` · ${formatFileSize(doc.sizeBytes)}`}
                   </span>
                 </div>
-                <span className={isComplete ? styles.docCompletionDone : styles.docCompletionMissing}>
-                  {completion}
-                </span>
-                <span className={styles.docItemStatus}>
-                  {doc.reviewedAt ? (
-                    <span className={shared.docStatusReviewed}>{docsContent.statusReviewed}</span>
-                  ) : (
-                    <span className={shared.docStatusPending}>{docsContent.statusPending}</span>
-                  )}
-                </span>
               </li>
             );
           })}
         </ul>
       )}
-    </>
+      </div>
+    </div>
   );
 }

@@ -2,7 +2,10 @@
 
 import type { ReactElement } from 'react';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { isPaymentWorkflowTask, type CrmWorkflowTask, type WorkflowTaskStatus } from '@/domain/crm';
+import {
+  BUILDCORE_DOCUMENT_ALLOWED_EXTENSIONS,
+} from '@/domain/crm/documentUpload';
+import { isPaymentWorkflowTask, type CrmDocumentMetadata, type CrmWorkflowTask, type WorkflowTaskStatus } from '@/domain/crm';
 import { WORKFLOW_TASK_STATUSES } from '@/domain/crm/workflowTaskStatuses';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
 import {
@@ -19,9 +22,11 @@ import {
   dueInputValueToIso,
   workflowTaskDueToInputValue,
 } from '@/presentation/features/crmProjectDetail/workflowTaskInlineUtils';
+import { useWorkflowTaskDocumentActions } from '@/presentation/features/crmProjectDetail/useWorkflowTaskDocumentActions';
 import { useAuth } from '@/presentation/hooks/useAuth';
 import shared from '@/presentation/components/crmShared/crmShared.module.css';
 import { TeamMemberAvatar } from './TeamMemberAvatar';
+import { WorkflowDocumentFileIcon } from './WorkflowDocumentFileIcon';
 import { WorkflowInlineMenu } from './WorkflowInlineMenu';
 import styles from './ProjectDetail.module.css';
 
@@ -30,29 +35,38 @@ function statusBadgeClass(status: WorkflowTaskStatus): string {
 }
 
 export type WorkflowTaskInlineRowProps = {
+  projectSlug: string;
   task: CrmWorkflowTask;
   docCount: number;
+  taskDocuments: readonly CrmDocumentMetadata[];
   showAmountColumn?: boolean;
   isApiSource: boolean;
   onUpdated: () => Promise<void>;
-  onUploadComingSoon?: () => void;
   onTaskError?: (message: string) => void;
   onRequestArchiveTask?: (task: CrmWorkflowTask) => void;
 };
 
 export function WorkflowTaskInlineRow({
+  projectSlug,
   task,
   docCount,
+  taskDocuments,
   showAmountColumn = false,
   isApiSource,
   onUpdated,
-  onUploadComingSoon,
   onTaskError,
   onRequestArchiveTask,
 }: WorkflowTaskInlineRowProps): ReactElement {
   const wf = content.projectDetail.workflow;
   const { user } = useAuth();
   const { saving, patchTask } = useWorkflowTaskPatch(onUpdated);
+  const documentActions = useWorkflowTaskDocumentActions({
+    projectSlug,
+    workflowTaskId: task.id,
+    onChanged: onUpdated,
+    onError: (message) => onTaskError?.(message),
+  });
+  const documentAccept = BUILDCORE_DOCUMENT_ALLOWED_EXTENSIONS.join(',');
 
   const [editingTitle, setEditingTitle] = useState(false);
   const [titleDraft, setTitleDraft] = useState(task.title);
@@ -199,14 +213,17 @@ export function WorkflowTaskInlineRow({
     showAmount ? `${styles.workflowGrid} ${styles.workflowGridPayments}` : styles.workflowGrid
   } ${styles.workflowInlineRow}`;
 
-  const documentsLabel = !task.documentsRequired
-    ? wf.documentsNotRequired
-    : docCount === 0
-      ? wf.documentsNone
-      : `${docCount} ${wf.documentsCountSuffix}`;
+  const effectiveDocCount = Math.max(docCount, taskDocuments.length);
+  const hasDocuments = effectiveDocCount > 0;
+  const documentsLabel = hasDocuments
+    ? `${effectiveDocCount} ${wf.documentsCountSuffix}`
+    : !task.documentsRequired
+      ? wf.documentsNotRequired
+      : wf.documentsNone;
+  const showDocumentsIcon = hasDocuments || task.documentsRequired;
 
   return (
-    <div className={rowClass} role="row" aria-busy={saving}>
+    <div className={rowClass} role="row" aria-busy={saving || documentActions.uploading}>
       <span className={`${styles.inlineCellWrap} ${styles.workflowStatusCell}`} ref={statusRef}>
         <button
           type="button"
@@ -333,11 +350,22 @@ export function WorkflowTaskInlineRow({
             setDocumentsMenuOpen((open) => !open);
           }}
         >
-          {!task.documentsRequired ? null : <span className={styles.documentsIcon} aria-hidden />}
-          <span className={!task.documentsRequired ? styles.documentsNotRequired : undefined}>
+          {showDocumentsIcon ? <span className={styles.documentsIcon} aria-hidden /> : null}
+          <span
+            className={
+              !task.documentsRequired && !hasDocuments ? styles.documentsNotRequired : undefined
+            }
+          >
             {documentsLabel}
           </span>
         </button>
+        <input
+          ref={documentActions.fileInputRef}
+          type="file"
+          accept={documentAccept}
+          className={styles.hiddenFileInput}
+          onChange={(e) => void documentActions.handleFileSelected(e)}
+        />
         <WorkflowInlineMenu
           open={documentsMenuOpen}
           onClose={() => setDocumentsMenuOpen(false)}
@@ -345,23 +373,60 @@ export function WorkflowTaskInlineRow({
         >
           <button
             type="button"
-            className={styles.inlineMenuAction}
-            disabled={saving}
+            className={`${styles.inlineMenuAction} ${styles.inlineMenuUploadAction}`}
+            disabled={saving || documentActions.uploading}
             onClick={() => {
               setDocumentsMenuOpen(false);
-              onUploadComingSoon?.();
+              documentActions.openFilePicker();
             }}
           >
+            <span className={styles.inlineMenuUploadIcon} aria-hidden />
             {wf.documentsUpload}
           </button>
-          <button
-            type="button"
-            className={styles.inlineMenuAction}
-            disabled={saving}
-            onClick={() => void saveDocumentsRequired(false)}
-          >
-            {wf.documentsNotRequired}
-          </button>
+          {taskDocuments.map((doc) => (
+            <div key={doc.id} className={styles.inlineMenuDocRow}>
+              <WorkflowDocumentFileIcon fileName={doc.name} mimeType={doc.mimeType} compact />
+              <span className={styles.inlineMenuDocName} title={doc.name}>
+                {doc.name}
+              </span>
+              <button
+                type="button"
+                className={styles.inlineMenuIconBtn}
+                disabled={saving || documentActions.uploading}
+                title={wf.documentDownload}
+                aria-label={`${wf.documentDownload} ${doc.name}`}
+                onClick={() => {
+                  setDocumentsMenuOpen(false);
+                  void documentActions.downloadDocument(doc.id);
+                }}
+              >
+                <span className={styles.inlineMenuDownloadIcon} aria-hidden />
+              </button>
+              <button
+                type="button"
+                className={styles.inlineMenuIconBtn}
+                disabled={saving || documentActions.uploading}
+                title={wf.documentDelete}
+                aria-label={`${wf.documentDelete} ${doc.name}`}
+                onClick={() => {
+                  setDocumentsMenuOpen(false);
+                  void documentActions.deleteDocument(doc.id);
+                }}
+              >
+                <span className={styles.inlineMenuDeleteIcon} aria-hidden />
+              </button>
+            </div>
+          ))}
+          {taskDocuments.length === 0 ? (
+            <button
+              type="button"
+              className={styles.inlineMenuAction}
+              disabled={saving}
+              onClick={() => void saveDocumentsRequired(false)}
+            >
+              {wf.documentsNotRequired}
+            </button>
+          ) : null}
         </WorkflowInlineMenu>
       </span>
 

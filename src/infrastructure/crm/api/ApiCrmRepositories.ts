@@ -48,6 +48,8 @@ import {
 
   crmApiPatchJson,
 
+  crmApiPostFormData,
+
   crmApiPostJson,
 
   CrmApiError,
@@ -293,6 +295,57 @@ export class ApiCrmDocumentsRepository implements ICrmDocumentsRepository {
 
     return Promise.resolve([]);
 
+  }
+
+  listByWorkflowTaskId(input: {
+    projectSlug: string;
+    workflowTaskId: string;
+  }): Promise<readonly CrmDocumentMetadata[]> {
+    return crmApiGetJson<{ documents: CrmDocumentMetadata[] }>(
+      `/api/crm/projects/${encodeURIComponent(input.projectSlug)}/tasks/${encodeURIComponent(input.workflowTaskId)}/documents`
+    ).then((body) => body.documents);
+  }
+
+  upload(input: {
+    projectSlug: string;
+    workflowTaskId: string;
+    fileName: string;
+    mimeType: string;
+    sizeBytes: number;
+    body: ArrayBuffer;
+  }): Promise<{ document: CrmDocumentMetadata }> {
+    clearApiCrmDetailCache();
+    const formData = new FormData();
+    formData.set(
+      'file',
+      new Blob([input.body], { type: input.mimeType }),
+      input.fileName
+    );
+    return crmApiPostFormData<{ document: CrmDocumentMetadata }>(
+      `/api/crm/projects/${encodeURIComponent(input.projectSlug)}/tasks/${encodeURIComponent(input.workflowTaskId)}/documents`,
+      formData
+    );
+  }
+
+  delete(input: {
+    projectSlug: string;
+    workflowTaskId: string;
+    documentId: string;
+  }): Promise<void> {
+    clearApiCrmDetailCache();
+    return crmApiDeleteJson(
+      `/api/crm/projects/${encodeURIComponent(input.projectSlug)}/tasks/${encodeURIComponent(input.workflowTaskId)}/documents/${encodeURIComponent(input.documentId)}`
+    ).then(() => undefined);
+  }
+
+  createDownload(input: {
+    projectSlug: string;
+    workflowTaskId: string;
+    documentId: string;
+  }): Promise<{ url: string; fileName: string; mimeType: string }> {
+    return crmApiGetJson(
+      `/api/crm/projects/${encodeURIComponent(input.projectSlug)}/tasks/${encodeURIComponent(input.workflowTaskId)}/documents/${encodeURIComponent(input.documentId)}/download`
+    );
   }
 
 }

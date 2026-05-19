@@ -20,7 +20,8 @@
     "next": "14.2.15",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "react-easy-crop": "^5.5.6"
+    "react-easy-crop": "^5.5.6",
+    "react-icons": "^5.6.0"
   },
   "devDependencies": {
     "@types/node": "^22.9.0",
@@ -37,10 +38,15 @@
   "build": {
     "appId": "com.zenformed.buildcore",
     "productName": "BuildCore",
-    "directories": { "output": "dist" },
+    "directories": {
+      "output": "dist"
+    },
     "asar": false,
     "extraResources": [
-      { "from": ".next/standalone", "to": "standalone" },
+      {
+        "from": ".next/standalone",
+        "to": "standalone"
+      },
       {
         "from": "src/platform/appDefinitions/buildcore-app-runtime.json",
         "to": "buildcore-app-runtime.json"

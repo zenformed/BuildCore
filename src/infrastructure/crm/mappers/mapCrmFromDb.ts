@@ -73,13 +73,19 @@ export type DbCrmDocumentRow = {
   workflow_task_id: string;
   document_type: string;
   file_name: string;
+  safe_file_name?: string | null;
   mime_type: string;
   file_size_bytes: number;
   upload_status: string;
+  storage_path?: string | null;
+  storage_provider?: string | null;
+  storage_bucket?: string | null;
+  storage_key?: string | null;
   uploaded_by_member_id: string;
   reviewed_by_member_id: string | null;
   reviewed_at: string | null;
   created_at: string;
+  deleted_at?: string | null;
 };
 
 export type DbCrmMilestoneRow = {

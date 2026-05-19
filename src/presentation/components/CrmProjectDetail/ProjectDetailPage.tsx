@@ -128,12 +128,6 @@ export function ProjectDetailPage({
           isApiSource={isApiSource}
           onAddTask={() => openCreateTask('workflow')}
           onTaskUpdated={handleTaskSaved}
-          onUploadComingSoon={() =>
-            setToast({
-              kind: 'success',
-              message: content.projectDetail.workflow.documentsUploadComingSoon,
-            })
-          }
           onTaskError={(message) => setToast({ kind: 'error', message })}
           onRequestArchiveTask={setArchiveConfirmTask}
           onOpenDocuments={() => setDocumentsOpen(true)}
@@ -142,12 +136,6 @@ export function ProjectDetailPage({
           project={project}
           isApiSource={isApiSource}
           onTaskUpdated={handleTaskSaved}
-          onUploadComingSoon={() =>
-            setToast({
-              kind: 'success',
-              message: content.projectDetail.workflow.documentsUploadComingSoon,
-            })
-          }
           onTaskError={(message) => setToast({ kind: 'error', message })}
           onRequestArchiveTask={setArchiveConfirmTask}
         />
@@ -169,6 +157,8 @@ export function ProjectDetailPage({
         open={documentsOpen}
         project={project}
         onClose={() => setDocumentsOpen(false)}
+        onRefresh={handleTaskSaved}
+        onError={(message) => setToast({ kind: 'error', message })}
       />
       <ConfirmModal
         isOpen={archiveConfirmTask != null}

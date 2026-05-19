@@ -5,6 +5,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { requireCrmApiAuth } from '@/infrastructure/crm/server/crmApiRouteAuth';
+import { crmDocumentErrorResponse } from '@/infrastructure/crm/server/crmDocumentRouteErrors';
 import {
   archiveCrmWorkflowTaskForOrg,
   updateCrmWorkflowTaskForOrg,
@@ -54,8 +55,7 @@ export async function PATCH(
     }
     return NextResponse.json(task);
   } catch (err) {
-    const message = err instanceof Error ? err.message : 'Failed to update workflow task';
-    return NextResponse.json({ error: 'internal_error', message }, { status: 500 });
+    return crmDocumentErrorResponse(err);
   }
 }
 
