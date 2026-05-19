@@ -1,5 +1,50 @@
 /* Shared CRM pills, badges, and avatars (list + detail views). */
 
+/* 2K / 4K — scale shared CRM chrome (menus/portals render outside project page zoom) */
+@media (min-width: 2560px) and (max-width: 3839px) {
+  .priority_low,
+  .priority_normal,
+  .priority_high,
+  .priority_urgent,
+  .stagePill,
+  .statusBadge,
+  .statusBadge_done,
+  .statusBadge_in_progress,
+  .statusBadge_blocked,
+  .statusBadge_pending,
+  .statusBadge_skipped {
+    font-size: 0.8125rem;
+  }
+
+  .avatar {
+    width: 1.75rem;
+    height: 1.75rem;
+    font-size: 0.75rem;
+  }
+}
+
+@media (min-width: 3840px) {
+  .priority_low,
+  .priority_normal,
+  .priority_high,
+  .priority_urgent,
+  .stagePill,
+  .statusBadge,
+  .statusBadge_done,
+  .statusBadge_in_progress,
+  .statusBadge_blocked,
+  .statusBadge_pending,
+  .statusBadge_skipped {
+    font-size: 0.9375rem;
+  }
+
+  .avatar {
+    width: 2rem;
+    height: 2rem;
+    font-size: 0.8125rem;
+  }
+}
+
 .priority_low,
 .priority_normal {
   display: inline-block;

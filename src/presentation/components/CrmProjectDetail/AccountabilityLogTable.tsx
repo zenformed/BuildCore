@@ -7,8 +7,6 @@ import { formatStageLabel } from '@/presentation/features/crmProjects/crmProject
 import { TeamMemberAvatar } from './TeamMemberAvatar';
 import styles from './ProjectDetail.module.css';
 
-export const ACCOUNTABILITY_PREVIEW_LIMIT = 6;
-
 export function sortAccountabilityEntries(
   log: readonly CrmAccountabilityAction[]
 ): CrmAccountabilityAction[] {
