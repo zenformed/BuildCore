@@ -78,6 +78,15 @@ export function ProjectDetailActionsMenu({ projectSlug }: ProjectDetailActionsMe
           type="button"
           role="menuitem"
           className={`${styles.inlineMenuAction} ${styles.actionsMenuItem}`}
+          onClick={() => closeAndNavigate(nav.routes.projectFinancials(projectSlug))}
+        >
+          <span className={`${styles.actionsMenuIcon} ${styles.actionsMenuFinancialsIcon}`} aria-hidden />
+          {detail.actions.financials}
+        </button>
+        <button
+          type="button"
+          role="menuitem"
+          className={`${styles.inlineMenuAction} ${styles.actionsMenuItem}`}
           onClick={() => closeAndNavigate(nav.routes.projectDocuments(projectSlug))}
         >
           <span className={`${styles.actionsMenuIcon} ${styles.actionsMenuFolderIcon}`} aria-hidden />

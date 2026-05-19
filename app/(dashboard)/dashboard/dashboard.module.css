@@ -160,7 +160,8 @@
 /* Project sub-pages scroll with main content */
 .listViewWrap:has([data-project-tasks-page]),
 .listViewWrap:has([data-project-documents-page]),
-.listViewWrap:has([data-project-accountability-page]) {
+.listViewWrap:has([data-project-accountability-page]),
+.listViewWrap:has([data-project-financials-page]) {
   flex: 1;
   min-height: 0;
   overflow: auto;
@@ -168,7 +169,8 @@
 
 .mainContent:has([data-project-tasks-page]),
 .mainContent:has([data-project-documents-page]),
-.mainContent:has([data-project-accountability-page]) {
+.mainContent:has([data-project-accountability-page]),
+.mainContent:has([data-project-financials-page]) {
   overflow: auto;
 }
 

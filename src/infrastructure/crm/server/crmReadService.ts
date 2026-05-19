@@ -4,6 +4,7 @@ import {
   mapDbProjectDetail,
   mapDbProjectSummary,
   type DbCrmAccountabilityRow,
+  type DbCrmBudgetEntryRow,
   type DbCrmDocumentRow,
   type DbCrmMilestoneRow,
   type DbCrmProjectRow,
@@ -54,6 +55,7 @@ function collectMemberIds(rows: {
   workflowTasks?: readonly DbCrmWorkflowTaskRow[];
   documents?: readonly DbCrmDocumentRow[];
   accountability?: readonly DbCrmAccountabilityRow[];
+  budgetEntries?: readonly (DbCrmBudgetEntryRow & { created_by?: string | null })[];
 }): string[] {
   const ids = new Set<string>();
   for (const p of rows.projects ?? []) {
@@ -69,6 +71,10 @@ function collectMemberIds(rows: {
   }
   for (const a of rows.accountability ?? []) {
     ids.add(a.actor_member_id);
+  }
+  for (const b of rows.budgetEntries ?? []) {
+    if (b.assigned_to) ids.add(b.assigned_to);
+    if (b.created_by) ids.add(b.created_by);
   }
   return [...ids];
 }
@@ -113,7 +119,8 @@ export async function getCrmProjectDetailBySlugForOrg(
 
   const project = projectData as DbCrmProjectRow;
 
-  const [tasksResult, documentsResult, milestonesResult, accountabilityResult] = await Promise.all([
+  const [tasksResult, documentsResult, milestonesResult, accountabilityResult, budgetResult] =
+    await Promise.all([
     supabase
       .from('crm_workflow_tasks')
       .select(
@@ -141,21 +148,31 @@ export async function getCrmProjectDetailBySlugForOrg(
       .select('id, event_type, summary, created_at, actor_member_id, workflow_task_id')
       .eq('project_id', project.id)
       .order('created_at', { ascending: false }),
+    supabase
+      .from('crm_project_budget_entries')
+      .select(
+        'id, project_id, item_name, category, cost_cents, budget_cents, notes, assigned_to, occurred_on, created_at, updated_at, created_by'
+      )
+      .eq('project_id', project.id)
+      .is('deleted_at', null)
+      .order('created_at', { ascending: true }),
   ]);
 
   if (tasksResult.error) throw new Error(tasksResult.error.message);
   if (documentsResult.error) throw new Error(documentsResult.error.message);
   if (milestonesResult.error) throw new Error(milestonesResult.error.message);
   if (accountabilityResult.error) throw new Error(accountabilityResult.error.message);
+  if (budgetResult.error) throw new Error(budgetResult.error.message);
 
   const workflowTasks = (tasksResult.data ?? []) as DbCrmWorkflowTaskRow[];
   const documents = (documentsResult.data ?? []) as DbCrmDocumentRow[];
   const milestones = (milestonesResult.data ?? []) as DbCrmMilestoneRow[];
   const accountability = (accountabilityResult.data ?? []) as DbCrmAccountabilityRow[];
+  const budgetEntries = (budgetResult.data ?? []) as DbCrmBudgetEntryRow[];
 
   const memberById = await loadCrmMemberMap(
     supabase,
-    collectMemberIds({ projects: [project], workflowTasks, documents, accountability })
+    collectMemberIds({ projects: [project], workflowTasks, documents, accountability, budgetEntries })
   );
 
   return mapDbProjectDetail({
@@ -164,6 +181,7 @@ export async function getCrmProjectDetailBySlugForOrg(
     documents,
     milestones,
     accountability,
+    budgetEntries,
     memberById,
   });
 }

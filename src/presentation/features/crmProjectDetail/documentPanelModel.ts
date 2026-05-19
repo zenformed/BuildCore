@@ -13,6 +13,7 @@ export function filterDocumentPanelItems(
 ): DocumentListItem[] {
   const docByTaskId = new Map<string, CrmDocumentMetadata[]>();
   for (const doc of documents) {
+    if (doc.workflowTaskId == null) continue;
     const list = docByTaskId.get(doc.workflowTaskId) ?? [];
     list.push(doc);
     docByTaskId.set(doc.workflowTaskId, list);

@@ -33,7 +33,9 @@ export function ProjectDetailHeader({
         ? content.projectDetail.sections.documents
         : pageContext === 'accountability'
           ? content.projectDetail.sections.accountability
-          : null;
+          : pageContext === 'financials'
+            ? content.projectDetail.actions.financials
+            : null;
   const showSubPageBreadcrumb = subPageLabel != null && onOpenProject != null;
 
   return (

@@ -33,6 +33,21 @@ export type {
   WorkflowTaskDocumentDownload,
 } from './documentMutations';
 export type { CrmAccountabilityAction } from './accountability';
+export {
+  buildProjectBudgetSummary,
+  CRM_BUDGET_CATEGORIES,
+  CRM_BUDGET_FILTER_CATEGORIES,
+  isCrmBudgetCategory,
+  type CrmBudgetCategory,
+  type CrmBudgetCategoryCost,
+  type CrmBudgetEntry,
+  type CrmProjectBudgetSummary,
+} from './budget';
+export type {
+  CreateCrmBudgetEntryInput,
+  DeleteCrmBudgetEntryInput,
+  UpdateCrmBudgetEntryInput,
+} from './budgetMutations';
 export type { CrmMilestone, CrmMilestonePaymentSummary, CrmMilestoneStatus } from './milestonePayment';
 export {
   toProjectSummary,

@@ -5,6 +5,7 @@ export function countDocumentsByTaskId(
 ): ReadonlyMap<string, number> {
   const counts = new Map<string, number>();
   for (const doc of documents) {
+    if (doc.workflowTaskId == null) continue;
     counts.set(doc.workflowTaskId, (counts.get(doc.workflowTaskId) ?? 0) + 1);
   }
   return counts;

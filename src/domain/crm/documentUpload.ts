@@ -133,6 +133,24 @@ export function buildWorkflowTaskDocumentStorageKey(input: {
   ].join('/');
 }
 
+export function buildBudgetEntryDocumentStorageKey(input: {
+  organizationId: string;
+  projectId: string;
+  budgetEntryId: string;
+  documentId: string;
+  safeFileName: string;
+}): string {
+  return [
+    'buildcore',
+    input.organizationId,
+    'projects',
+    input.projectId,
+    'budget',
+    input.budgetEntryId,
+    `${input.documentId}-${input.safeFileName}`,
+  ].join('/');
+}
+
 export const STORAGE_LIMIT_EXCEEDED_CODE = 'STORAGE_LIMIT_EXCEEDED';
 
 export const STORAGE_LIMIT_EXCEEDED_MESSAGE =

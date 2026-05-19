@@ -105,6 +105,7 @@ export async function mockUploadWorkflowTaskDocument(
   const document: CrmDocumentMetadata = {
     id: documentId,
     workflowTaskId: input.workflowTaskId,
+    budgetEntryId: null,
     name: input.fileName.trim(),
     kind: 'other',
     stageSlug: task.stageSlug,

@@ -12,7 +12,12 @@ import { ProjectSummaryStrip } from './ProjectSummaryStrip';
 import { StageProgressBar } from './StageProgressBar';
 import styles from './ProjectDetail.module.css';
 
-export type ProjectDetailPageContext = 'detail' | 'workflowTasks' | 'documents' | 'accountability';
+export type ProjectDetailPageContext =
+  | 'detail'
+  | 'workflowTasks'
+  | 'documents'
+  | 'accountability'
+  | 'financials';
 
 export type ProjectDetailContextBlockProps = {
   project: CrmProjectDetail;

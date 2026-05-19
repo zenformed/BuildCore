@@ -7,6 +7,8 @@ import { buildCoreDashboardContent as content } from '@/platform/content/buildCo
 import { countDocumentsByTaskId } from '@/presentation/features/crmProjectDetail/workflowDocumentCounts';
 import { listPaymentMilestones } from '@/presentation/features/crmProjectDetail/workflowTaskGroups';
 import { PaymentMilestoneDraftRow } from './PaymentMilestoneDraftRow';
+import { DetailPanelHeader } from './DetailPanelHeader';
+import { DetailPanelHeaderButton } from './DetailPanelHeaderButton';
 import { WorkflowTaskInlineRow } from './WorkflowTaskInlineRow';
 import styles from './ProjectDetail.module.css';
 
@@ -40,16 +42,12 @@ export function PaymentsRail({
         <h3 id="payments-rail-heading" className={styles.cardTitle}>
           {payments.title}
         </h3>
-        <button
-          type="button"
-          className={styles.addTaskBtn}
+        <DetailPanelHeaderButton
+          variant="add"
           disabled={draftOpen}
-          onClick={() => setDraftOpen(true)}
           title={payments.addMilestone}
-          aria-label={payments.addMilestone}
-        >
-          <span aria-hidden>+</span>
-        </button>
+          onClick={() => setDraftOpen(true)}
+        />
       </div>
       {!showTable ? (
         <p className={styles.subtitle}>{payments.empty}</p>

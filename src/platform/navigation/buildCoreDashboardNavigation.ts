@@ -21,6 +21,7 @@ export const buildCoreDashboardNavigation = {
     projectWorkflowTasks: (slug: string): string => `/projects/${slug}/tasks`,
     projectDocuments: (slug: string): string => `/projects/${slug}/documents`,
     projectAccountability: (slug: string): string => `/projects/${slug}/accountability`,
+    projectFinancials: (slug: string): string => `/projects/${slug}/financials`,
   },
   sidebar: {
     ariaLabel: 'Primary navigation',

@@ -1,7 +1,10 @@
 import {
+  buildProjectBudgetSummary,
   completedStagesThrough,
   computeProjectBalanceCents,
+  isCrmBudgetCategory,
   type CrmAccountabilityAction,
+  type CrmBudgetEntry,
   type CrmClient,
   type CrmContact,
   type CrmDocumentKind,
@@ -70,7 +73,8 @@ export type DbCrmWorkflowTaskRow = {
 export type DbCrmDocumentRow = {
   id: string;
   project_id: string;
-  workflow_task_id: string;
+  workflow_task_id: string | null;
+  budget_entry_id?: string | null;
   document_type: string;
   file_name: string;
   safe_file_name?: string | null;
@@ -104,6 +108,22 @@ export type DbCrmAccountabilityRow = {
   created_at: string;
   actor_member_id: string;
   workflow_task_id: string | null;
+};
+
+export type DbCrmBudgetEntryRow = {
+  id: string;
+  project_id: string;
+  item_name: string;
+  category: string;
+  cost_cents: number;
+  budget_cents: number;
+  notes: string | null;
+  assigned_to: string | null;
+  created_by?: string | null;
+  occurred_on: string | null;
+  documents_required?: boolean | null;
+  created_at: string;
+  updated_at: string;
 };
 
 export type DbProfileRow = {
@@ -317,9 +337,13 @@ export function mapDbDocument(
   return {
     id: row.id,
     workflowTaskId: row.workflow_task_id,
+    budgetEntryId: row.budget_entry_id ?? null,
     name: row.file_name,
     kind: asDocumentKind(row.document_type),
-    stageSlug: stageSlugByTaskId.get(row.workflow_task_id) ?? null,
+    stageSlug:
+      row.workflow_task_id != null
+        ? (stageSlugByTaskId.get(row.workflow_task_id) ?? null)
+        : null,
     uploadedAt: row.created_at,
     uploadedBy:
       memberById.get(row.uploaded_by_member_id) ??
@@ -367,6 +391,33 @@ export function buildMilestonePaymentSummary(
   };
 }
 
+export function mapDbBudgetEntry(
+  row: DbCrmBudgetEntryRow,
+  memberById: ReadonlyMap<string, CrmTeamMemberRef>,
+  documentCount = 0
+): CrmBudgetEntry {
+  if (!isCrmBudgetCategory(row.category)) {
+    throw new Error(`Invalid budget category: ${row.category}`);
+  }
+  return {
+    id: row.id,
+    itemName: row.item_name,
+    category: row.category,
+    costCents: Number(row.cost_cents),
+    budgetCents: Number(row.budget_cents),
+    notes: row.notes,
+    assignedTo:
+      row.assigned_to != null
+        ? (memberById.get(row.assigned_to) ?? mapProfileToTeamMemberRef(null, row.assigned_to))
+        : null,
+    occurredOn: row.occurred_on,
+    documentCount,
+    documentsRequired: row.documents_required ?? true,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
+}
+
 export function mapDbAccountability(
   row: DbCrmAccountabilityRow,
   stageSlugByTaskId: ReadonlyMap<string, PipelineStageSlug>,
@@ -392,6 +443,7 @@ export function mapDbProjectDetail(input: {
   documents: readonly DbCrmDocumentRow[];
   milestones: readonly DbCrmMilestoneRow[];
   accountability: readonly DbCrmAccountabilityRow[];
+  budgetEntries: readonly DbCrmBudgetEntryRow[];
   memberById: ReadonlyMap<string, CrmTeamMemberRef>;
 }): CrmProjectDetail {
   const baseSummary = mapDbProjectSummary(input.project, input.memberById);
@@ -413,6 +465,16 @@ export function mapDbProjectDetail(input: {
       ? milestonePayment
       : { ...milestonePayment, balanceCents: balanceRemainingCents };
 
+  const docCountByBudgetEntry = new Map<string, number>();
+  for (const doc of input.documents) {
+    if (doc.budget_entry_id) {
+      docCountByBudgetEntry.set(
+        doc.budget_entry_id,
+        (docCountByBudgetEntry.get(doc.budget_entry_id) ?? 0) + 1
+      );
+    }
+  }
+
   return {
     summary,
     notes: input.project.notes,
@@ -428,5 +490,10 @@ export function mapDbProjectDetail(input: {
       mapDbAccountability(row, stageSlugByTaskId, input.memberById)
     ),
     milestonePayment: milestonePaymentWithBalance,
+    budget: buildProjectBudgetSummary(
+      input.budgetEntries.map((row) =>
+        mapDbBudgetEntry(row, input.memberById, docCountByBudgetEntry.get(row.id) ?? 0)
+      )
+    ),
   };
 }

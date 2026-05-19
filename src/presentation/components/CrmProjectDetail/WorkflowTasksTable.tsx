@@ -12,6 +12,8 @@ import {
   limitWorkflowTaskGroups,
   WORKFLOW_TASKS_PREVIEW_LIMIT,
 } from '@/presentation/features/crmProjectDetail/workflowTaskGroups';
+import { DetailPanelHeader } from './DetailPanelHeader';
+import { DetailPanelHeaderButton } from './DetailPanelHeaderButton';
 import { WorkflowStageTaskGroup } from './WorkflowStageTaskGroup';
 import styles from './ProjectDetail.module.css';
 
@@ -66,15 +68,7 @@ export function WorkflowTasksTable({
         <h3 id="workflow-tasks-heading" className={styles.cardTitle}>
           {content.projectDetail.sections.workflow}
         </h3>
-        <button
-          type="button"
-          className={styles.addTaskBtn}
-          onClick={onAddTask}
-          title={wf.addTask}
-          aria-label={wf.addTask}
-        >
-          <span aria-hidden>+</span>
-        </button>
+        <DetailPanelHeaderButton variant="add" title={wf.addTask} onClick={onAddTask} />
       </div>
       {groups.length === 0 ? (
         <div className={isFullLayout ? undefined : styles.workflowPanelGrow}>

@@ -2,6 +2,8 @@ import type {
 
   ICrmAccountabilityRepository,
 
+  ICrmBudgetRepository,
+
   ICrmDocumentsRepository,
 
   ICrmMilestonePaymentsRepository,
@@ -24,6 +26,8 @@ import type {
 
   CrmAccountabilityAction,
 
+  CrmBudgetEntry,
+
   CrmDocumentMetadata,
 
   CrmMilestonePaymentSummary,
@@ -39,6 +43,16 @@ import type {
   UpdateCrmWorkflowTaskInput,
 
 } from '@/domain/crm';
+
+import type {
+
+  CreateCrmBudgetEntryInput,
+
+  DeleteCrmBudgetEntryInput,
+
+  UpdateCrmBudgetEntryInput,
+
+} from '@/domain/crm/budgetMutations';
 
 import {
 
@@ -348,6 +362,57 @@ export class ApiCrmDocumentsRepository implements ICrmDocumentsRepository {
     );
   }
 
+  listByBudgetEntryId(input: {
+    projectSlug: string;
+    budgetEntryId: string;
+  }): Promise<readonly CrmDocumentMetadata[]> {
+    return crmApiGetJson<{ documents: CrmDocumentMetadata[] }>(
+      `/api/crm/projects/${encodeURIComponent(input.projectSlug)}/budget-entries/${encodeURIComponent(input.budgetEntryId)}/documents`
+    ).then((body) => body.documents);
+  }
+
+  uploadBudgetEntry(input: {
+    projectSlug: string;
+    budgetEntryId: string;
+    fileName: string;
+    mimeType: string;
+    sizeBytes: number;
+    body: ArrayBuffer;
+  }): Promise<{ document: CrmDocumentMetadata }> {
+    clearApiCrmDetailCache();
+    const formData = new FormData();
+    formData.set(
+      'file',
+      new Blob([input.body], { type: input.mimeType }),
+      input.fileName
+    );
+    return crmApiPostFormData<{ document: CrmDocumentMetadata }>(
+      `/api/crm/projects/${encodeURIComponent(input.projectSlug)}/budget-entries/${encodeURIComponent(input.budgetEntryId)}/documents`,
+      formData
+    );
+  }
+
+  deleteBudgetEntry(input: {
+    projectSlug: string;
+    budgetEntryId: string;
+    documentId: string;
+  }): Promise<void> {
+    clearApiCrmDetailCache();
+    return crmApiDeleteJson(
+      `/api/crm/projects/${encodeURIComponent(input.projectSlug)}/budget-entries/${encodeURIComponent(input.budgetEntryId)}/documents/${encodeURIComponent(input.documentId)}`
+    ).then(() => undefined);
+  }
+
+  createBudgetEntryDownload(input: {
+    projectSlug: string;
+    budgetEntryId: string;
+    documentId: string;
+  }): Promise<{ url: string; fileName: string; mimeType: string }> {
+    return crmApiGetJson(
+      `/api/crm/projects/${encodeURIComponent(input.projectSlug)}/budget-entries/${encodeURIComponent(input.budgetEntryId)}/documents/${encodeURIComponent(input.documentId)}/download`
+    );
+  }
+
 }
 
 
@@ -373,6 +438,122 @@ export class ApiCrmAccountabilityRepository implements ICrmAccountabilityReposit
     void projectId;
 
     return Promise.resolve([]);
+
+  }
+
+}
+
+
+
+export class ApiCrmBudgetRepository implements ICrmBudgetRepository {
+
+  listByProjectId(projectId: string): Promise<readonly CrmBudgetEntry[]> {
+
+    void projectId;
+
+    return Promise.resolve([]);
+
+  }
+
+
+
+  create(input: CreateCrmBudgetEntryInput): Promise<CrmBudgetEntry> {
+
+    const slug = input.projectSlug.trim();
+
+    clearApiCrmDetailCache();
+
+    return crmApiPostJson<CrmBudgetEntry>(
+
+      `/api/crm/projects/${encodeURIComponent(slug)}/budget-entries`,
+
+      {
+
+        itemName: input.itemName,
+
+        category: input.category,
+
+        costCents: input.costCents,
+
+        budgetCents: input.budgetCents,
+
+        notes: input.notes,
+
+        assignedMemberId: input.assignedMemberId,
+
+        occurredOn: input.occurredOn,
+
+        documentsRequired: input.documentsRequired,
+
+      }
+
+    );
+
+  }
+
+
+
+  update(input: UpdateCrmBudgetEntryInput): Promise<CrmBudgetEntry | null> {
+
+    clearApiCrmDetailCache();
+
+    const params = new URLSearchParams({ projectSlug: input.projectSlug });
+
+    return crmApiPatchJson<CrmBudgetEntry>(
+
+      `/api/crm/budget-entries/${encodeURIComponent(input.entryId)}?${params.toString()}`,
+
+      {
+
+        itemName: input.itemName,
+
+        category: input.category,
+
+        costCents: input.costCents,
+
+        budgetCents: input.budgetCents,
+
+        notes: input.notes,
+
+        assignedMemberId: input.assignedMemberId,
+
+        occurredOn: input.occurredOn,
+
+        documentsRequired: input.documentsRequired,
+
+      }
+
+    ).catch((err) => {
+
+      if (err instanceof CrmApiError && err.status === 404) return null;
+
+      throw err;
+
+    });
+
+  }
+
+
+
+  delete(input: DeleteCrmBudgetEntryInput): Promise<boolean> {
+
+    clearApiCrmDetailCache();
+
+    return crmApiDeleteJson(
+
+      `/api/crm/budget-entries/${encodeURIComponent(input.entryId)}`
+
+    )
+
+      .then(() => true)
+
+      .catch((err) => {
+
+        if (err instanceof CrmApiError && err.status === 404) return false;
+
+        throw err;
+
+      });
 
   }
 

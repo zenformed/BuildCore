@@ -2,6 +2,7 @@ export type { SaaSEntitlementResolutionSource, SaaSEntitlementSnapshot } from '@
 export type {
   CrmRepositories,
   ICrmAccountabilityRepository,
+  ICrmBudgetRepository,
   ICrmDocumentsRepository,
   ICrmMilestonePaymentsRepository,
   ICrmProjectDetailRepository,

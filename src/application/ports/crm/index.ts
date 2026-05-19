@@ -1,5 +1,6 @@
 export type { CrmRepositories } from './CrmRepositories';
 export type { ICrmAccountabilityRepository } from './ICrmAccountabilityRepository';
+export type { ICrmBudgetRepository } from './ICrmBudgetRepository';
 export type { ICrmDocumentsRepository } from './ICrmDocumentsRepository';
 export type { ICrmMilestonePaymentsRepository } from './ICrmMilestonePaymentsRepository';
 export type { ICrmProjectDetailRepository } from './ICrmProjectDetailRepository';

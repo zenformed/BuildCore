@@ -1,4 +1,5 @@
 import type { CrmAccountabilityAction } from './accountability';
+import type { CrmProjectBudgetSummary } from './budget';
 import type { CrmClient } from './client';
 import type { CrmContact } from './contact';
 import type { CrmDocumentMetadata } from './document';
@@ -58,6 +59,7 @@ export type CrmProjectDetail = {
   readonly documents: readonly CrmDocumentMetadata[];
   readonly accountabilityLog: readonly CrmAccountabilityAction[];
   readonly milestonePayment: CrmMilestonePaymentSummary;
+  readonly budget: CrmProjectBudgetSummary;
 };
 
 export function toProjectSummary(detail: CrmProjectDetail): CrmProjectSummary {

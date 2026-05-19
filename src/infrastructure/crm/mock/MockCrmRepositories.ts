@@ -2,6 +2,8 @@ import type {
 
   ICrmAccountabilityRepository,
 
+  ICrmBudgetRepository,
+
   ICrmDocumentsRepository,
 
   ICrmMilestonePaymentsRepository,
@@ -24,6 +26,8 @@ import type {
 
   CrmAccountabilityAction,
 
+  CrmBudgetEntry,
+
   CrmDocumentMetadata,
 
   CrmMilestonePaymentSummary,
@@ -40,6 +44,18 @@ import type {
 
 } from '@/domain/crm';
 
+import { buildProjectBudgetSummary } from '@/domain/crm';
+
+import type {
+
+  CreateCrmBudgetEntryInput,
+
+  DeleteCrmBudgetEntryInput,
+
+  UpdateCrmBudgetEntryInput,
+
+} from '@/domain/crm/budgetMutations';
+
 import { getMockCrmTeamMember } from '@/platform/mock/crm';
 
 import { MOCK_CRM_PROJECT_SUMMARIES } from '@/platform/mock/crm';
@@ -53,6 +69,12 @@ import {
   mockListWorkflowTaskDocuments,
   mockUploadWorkflowTaskDocument,
 } from './mockCrmDocumentMutations';
+import {
+  mockCreateBudgetEntryDocumentDownload,
+  mockDeleteBudgetEntryDocument,
+  mockListBudgetEntryDocuments,
+  mockUploadBudgetEntryDocument,
+} from './mockCrmBudgetEntryDocumentMutations';
 
 import {
 
@@ -459,6 +481,40 @@ export class MockCrmDocumentsRepository implements ICrmDocumentsRepository {
     );
   }
 
+  listByBudgetEntryId(input: {
+    projectSlug: string;
+    budgetEntryId: string;
+  }): readonly CrmDocumentMetadata[] {
+    return mockListBudgetEntryDocuments(input);
+  }
+
+  uploadBudgetEntry(
+    input: import('@/domain/crm/documentMutations').UploadBudgetEntryDocumentInput
+  ): Promise<{ document: CrmDocumentMetadata }> {
+    return mockUploadBudgetEntryDocument(
+      getDocumentStorageProvider(),
+      MOCK_ORG_ID,
+      'mock-user',
+      input
+    ).then((document) => ({ document }));
+  }
+
+  deleteBudgetEntry(
+    input: import('@/domain/crm/documentMutations').DeleteBudgetEntryDocumentInput
+  ): Promise<void> {
+    return mockDeleteBudgetEntryDocument(getDocumentStorageProvider(), MOCK_ORG_ID, input);
+  }
+
+  createBudgetEntryDownload(
+    input: import('@/domain/crm/documentMutations').CreateBudgetEntryDocumentDownloadInput
+  ): Promise<import('@/domain/crm/documentMutations').BudgetEntryDocumentDownload> {
+    return mockCreateBudgetEntryDocumentDownload(
+      getDocumentStorageProvider(),
+      MOCK_ORG_ID,
+      input
+    );
+  }
+
 }
 
 
@@ -480,6 +536,173 @@ export class MockCrmAccountabilityRepository implements ICrmAccountabilityReposi
   listByProjectId(projectId: string): readonly CrmAccountabilityAction[] {
 
     return requireProjectDetail(projectId)?.accountabilityLog ?? [];
+
+  }
+
+}
+
+
+
+function saveBudgetEntries(slug: string, entries: readonly CrmBudgetEntry[]): CrmProjectDetail {
+
+  const detail = getEffectiveMockProjectDetailBySlug(slug);
+
+  if (detail == null) throw new Error('Project not found');
+
+  return saveAndReturn(slug, { ...detail, budget: buildProjectBudgetSummary(entries) });
+
+}
+
+
+
+function findBudgetEntryProject(entryId: string): { slug: string; detail: CrmProjectDetail } | null {
+
+  for (const summary of MOCK_CRM_PROJECT_SUMMARIES) {
+
+    const detail = getEffectiveMockProjectDetailBySlug(summary.slug);
+
+    if (!detail) continue;
+
+    if (detail.budget.entries.some((e) => e.id === entryId)) {
+
+      return { slug: summary.slug, detail };
+
+    }
+
+  }
+
+  return null;
+
+}
+
+
+
+export class MockCrmBudgetRepository implements ICrmBudgetRepository {
+
+  listByProjectId(projectId: string): readonly CrmBudgetEntry[] {
+
+    return requireProjectDetail(projectId)?.budget.entries ?? [];
+
+  }
+
+
+
+  create(input: CreateCrmBudgetEntryInput): CrmBudgetEntry {
+
+    const detail = requireProjectDetail(input.projectId);
+
+    if (detail == null) throw new Error('Project not found');
+
+    const assignee =
+
+      input.assignedMemberId != null ? getMockCrmTeamMember(input.assignedMemberId) : null;
+
+    const now = new Date().toISOString();
+
+    const entry: CrmBudgetEntry = {
+
+      id: `budget-mock-${Date.now()}`,
+
+      itemName: input.itemName,
+
+      category: input.category,
+
+      costCents: input.costCents,
+
+      budgetCents: input.budgetCents,
+
+      notes: input.notes ?? null,
+
+      assignedTo: assignee,
+
+      occurredOn: input.occurredOn ?? null,
+
+      documentCount: 0,
+
+      documentsRequired: input.documentsRequired ?? true,
+
+      createdAt: now,
+
+      updatedAt: now,
+
+    };
+
+    saveBudgetEntries(detail.summary.slug, [...detail.budget.entries, entry]);
+
+    return entry;
+
+  }
+
+
+
+  update(input: UpdateCrmBudgetEntryInput): CrmBudgetEntry | null {
+
+    const found = findBudgetEntryProject(input.entryId);
+
+    if (found == null) return null;
+
+    const entries = found.detail.budget.entries.map((entry) => {
+
+      if (entry.id !== input.entryId) return entry;
+
+      const assignee =
+
+        input.assignedMemberId !== undefined
+
+          ? input.assignedMemberId
+
+            ? getMockCrmTeamMember(input.assignedMemberId)
+
+            : null
+
+          : entry.assignedTo;
+
+      return {
+
+        ...entry,
+
+        itemName: input.itemName ?? entry.itemName,
+
+        category: input.category ?? entry.category,
+
+        costCents: input.costCents ?? entry.costCents,
+
+        budgetCents: input.budgetCents ?? entry.budgetCents,
+
+        notes: input.notes !== undefined ? input.notes : entry.notes,
+
+        assignedTo: assignee,
+
+        occurredOn: input.occurredOn !== undefined ? input.occurredOn : entry.occurredOn,
+
+        documentsRequired:
+          input.documentsRequired !== undefined ? input.documentsRequired : entry.documentsRequired,
+
+        updatedAt: new Date().toISOString(),
+
+      };
+
+    });
+
+    saveBudgetEntries(found.slug, entries);
+
+    return entries.find((e) => e.id === input.entryId) ?? null;
+
+  }
+
+
+
+  delete(input: DeleteCrmBudgetEntryInput): boolean {
+
+    const found = findBudgetEntryProject(input.entryId);
+
+    if (found == null) return false;
+
+    const next = found.detail.budget.entries.filter((e) => e.id !== input.entryId);
+
+    saveBudgetEntries(found.slug, next);
+
+    return true;
 
   }
 

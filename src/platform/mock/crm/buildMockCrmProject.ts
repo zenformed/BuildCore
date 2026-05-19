@@ -1,8 +1,10 @@
 import {
+  buildProjectBudgetSummary,
   completedStagesThrough,
   computeProjectBalanceCents,
   PAYMENT_WORKFLOW_STAGE_SLUG,
   type CrmAccountabilityAction,
+  type CrmBudgetEntry,
   type CrmDocumentMetadata,
   type CrmMilestonePaymentSummary,
   type CrmPriority,
@@ -38,6 +40,7 @@ export type BuildMockCrmProjectInput = {
   readonly documents?: readonly CrmDocumentMetadata[];
   readonly accountabilityLog?: readonly CrmAccountabilityAction[];
   readonly milestonePayment?: CrmMilestonePaymentSummary;
+  readonly budgetEntries?: readonly CrmBudgetEntry[];
 };
 
 function notesPreview(notes: string, max = 120): string {
@@ -183,6 +186,7 @@ function defaultDocuments(
     {
       id: 'doc-photos',
       workflowTaskId: 'wf-site',
+      budgetEntryId: null,
       name: 'Site photos.zip',
       kind: 'photo',
       stageSlug: 'inspection-complete',
@@ -196,6 +200,7 @@ function defaultDocuments(
     {
       id: 'doc-estimate',
       workflowTaskId: 'wf-estimate',
+      budgetEntryId: null,
       name: 'Estimate_v2.pdf',
       kind: 'estimate',
       stageSlug: 'estimate-sent',
@@ -205,6 +210,54 @@ function defaultDocuments(
       reviewedBy: stageSlug === 'waiting-on-approval' ? null : reviewer,
       mimeType: 'application/pdf',
       sizeBytes: 320_000,
+    },
+  ];
+}
+
+function defaultBudgetEntries(assignee: CrmTeamMemberRef): CrmBudgetEntry[] {
+  const now = '2026-05-10T14:00:00.000Z';
+  return [
+    {
+      id: 'budget-mock-1',
+      itemName: 'Crew labor — week 1',
+      category: 'labor',
+      costCents: 12_500_00,
+      budgetCents: 14_000_00,
+      notes: null,
+      assignedTo: assignee,
+      occurredOn: '2026-05-01',
+      documentCount: 0,
+      documentsRequired: true,
+      createdAt: now,
+      updatedAt: now,
+    },
+    {
+      id: 'budget-mock-2',
+      itemName: 'Roofing materials',
+      category: 'materials',
+      costCents: 8_200_00,
+      budgetCents: 9_000_00,
+      notes: null,
+      assignedTo: null,
+      occurredOn: '2026-05-03',
+      documentCount: 0,
+      documentsRequired: false,
+      createdAt: now,
+      updatedAt: now,
+    },
+    {
+      id: 'budget-mock-3',
+      itemName: 'Equipment rental',
+      category: 'equipment',
+      costCents: 1_800_00,
+      budgetCents: 2_000_00,
+      notes: null,
+      assignedTo: null,
+      occurredOn: null,
+      documentCount: 0,
+      documentsRequired: true,
+      createdAt: now,
+      updatedAt: now,
     },
   ];
 }
@@ -291,5 +344,8 @@ export function buildMockCrmProjectDetail(input: BuildMockCrmProjectInput): CrmP
       ...(input.accountabilityLog ?? defaultAccountability(assignedTo, input.currentStageSlug, input.name)),
     ],
     milestonePayment: { ...milestonePayment, balanceCents: balanceRemainingCents },
+    budget: buildProjectBudgetSummary(
+      [...(input.budgetEntries ?? defaultBudgetEntries(assignedTo))]
+    ),
   };
 }

@@ -2,6 +2,7 @@ import type { CrmRepositories } from '@/application/ports/crm';
 import { getCrmDataSource } from '@/infrastructure/config/crmDataSource';
 import {
   ApiCrmAccountabilityRepository,
+  ApiCrmBudgetRepository,
   ApiCrmDocumentsRepository,
   ApiCrmMilestonePaymentsRepository,
   ApiCrmProjectDetailRepository,
@@ -10,6 +11,7 @@ import {
 } from '@/infrastructure/crm/api/ApiCrmRepositories';
 import {
   MockCrmAccountabilityRepository,
+  MockCrmBudgetRepository,
   MockCrmDocumentsRepository,
   MockCrmMilestonePaymentsRepository,
   MockCrmProjectDetailRepository,
@@ -27,6 +29,7 @@ function createMockCrmRepositories(): CrmRepositories {
     documents: new MockCrmDocumentsRepository(),
     milestonePayments: new MockCrmMilestonePaymentsRepository(),
     accountability: new MockCrmAccountabilityRepository(),
+    budget: new MockCrmBudgetRepository(),
   };
 }
 
@@ -38,6 +41,7 @@ function createApiCrmRepositories(): CrmRepositories {
     documents: new ApiCrmDocumentsRepository(),
     milestonePayments: new ApiCrmMilestonePaymentsRepository(),
     accountability: new ApiCrmAccountabilityRepository(),
+    budget: new ApiCrmBudgetRepository(),
   };
 }
 

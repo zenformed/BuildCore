@@ -3,7 +3,9 @@
 import { useCallback } from 'react';
 import type { CrmDocumentMetadata } from '@/domain/crm';
 import { STORAGE_LIMIT_EXCEEDED_CODE } from '@/domain/crm/documentUpload';
+import { createBudgetEntryDocumentDownload } from '@/application/use-cases/crm/createBudgetEntryDocumentDownload';
 import { createWorkflowTaskDocumentDownload } from '@/application/use-cases/crm/createWorkflowTaskDocumentDownload';
+import { deleteBudgetEntryDocument } from '@/application/use-cases/crm/deleteBudgetEntryDocument';
 import { deleteWorkflowTaskDocument } from '@/application/use-cases/crm/deleteWorkflowTaskDocument';
 import { CrmApiError } from '@/infrastructure/crm/api/crmApiClient';
 import { CrmDocumentServiceError } from '@/infrastructure/crm/errors';
@@ -35,16 +37,22 @@ export function useProjectDocumentModalActions(input: {
 
   const downloadDocument = useCallback(
     async (doc: CrmDocumentMetadata) => {
-      if (!doc.workflowTaskId) {
-        input.onError('Document is not linked to a workflow task.');
+      if (!doc.workflowTaskId && !doc.budgetEntryId) {
+        input.onError('Document is not linked to a task or budget item.');
         return;
       }
       try {
-        const download = await createWorkflowTaskDocumentDownload(crmRepositories, {
-          projectSlug: input.projectSlug,
-          workflowTaskId: doc.workflowTaskId,
-          documentId: doc.id,
-        });
+        const download = doc.budgetEntryId
+          ? await createBudgetEntryDocumentDownload(crmRepositories, {
+              projectSlug: input.projectSlug,
+              budgetEntryId: doc.budgetEntryId,
+              documentId: doc.id,
+            })
+          : await createWorkflowTaskDocumentDownload(crmRepositories, {
+              projectSlug: input.projectSlug,
+              workflowTaskId: doc.workflowTaskId!,
+              documentId: doc.id,
+            });
         const anchor = document.createElement('a');
         anchor.href = download.url;
         anchor.download = download.fileName;
@@ -62,16 +70,24 @@ export function useProjectDocumentModalActions(input: {
 
   const deleteDocument = useCallback(
     async (doc: CrmDocumentMetadata) => {
-      if (!doc.workflowTaskId) {
-        input.onError('Document is not linked to a workflow task.');
+      if (!doc.workflowTaskId && !doc.budgetEntryId) {
+        input.onError('Document is not linked to a task or budget item.');
         return;
       }
       try {
-        await deleteWorkflowTaskDocument(crmRepositories, {
-          projectSlug: input.projectSlug,
-          workflowTaskId: doc.workflowTaskId,
-          documentId: doc.id,
-        });
+        if (doc.budgetEntryId) {
+          await deleteBudgetEntryDocument(crmRepositories, {
+            projectSlug: input.projectSlug,
+            budgetEntryId: doc.budgetEntryId,
+            documentId: doc.id,
+          });
+        } else {
+          await deleteWorkflowTaskDocument(crmRepositories, {
+            projectSlug: input.projectSlug,
+            workflowTaskId: doc.workflowTaskId!,
+            documentId: doc.id,
+          });
+        }
         await input.onChanged();
       } catch (err) {
         input.onError(mapError(err));
