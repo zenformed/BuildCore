@@ -39,6 +39,8 @@ export type WorkflowInlineMenuProps = {
   align?: 'start' | 'end';
   /** Portal panel class; defaults to inline table menu styling. */
   portalClassName?: string;
+  /** Size dropdown to fit labels instead of anchoring to trigger width. */
+  sizeToContent?: boolean;
 };
 
 export function WorkflowInlineMenu({
@@ -48,6 +50,7 @@ export function WorkflowInlineMenu({
   children,
   align = 'start',
   portalClassName,
+  sizeToContent = false,
 }: WorkflowInlineMenuProps): ReactElement | null {
   const menuRef = useRef<HTMLDivElement>(null);
   const [position, setPosition] = useState<MenuPosition | null>(null);
@@ -89,7 +92,7 @@ export function WorkflowInlineMenu({
   const menuStyle: CSSProperties = {
     top: position.top,
     left: position.left,
-    minWidth: position.minWidth,
+    ...(sizeToContent ? {} : { minWidth: position.minWidth }),
     transform: align === 'end' ? 'translateX(-100%)' : undefined,
   };
 

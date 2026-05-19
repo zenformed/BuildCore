@@ -8,6 +8,97 @@
   padding-bottom: 0.5rem;
 }
 
+/* Full-width workflow tasks route — natural page scroll, no nested panel trap */
+.pageTasks {
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+  width: 100%;
+  min-width: 0;
+  padding-bottom: 2rem;
+}
+
+.tasksWorkArea {
+  width: 100%;
+  min-width: 0;
+}
+
+.workflowPanelFull {
+  width: 100%;
+  min-height: unset;
+  flex: none;
+}
+
+.stageGroupStackFull {
+  gap: 1rem;
+}
+
+.workflowPanelFull .workflowGrid {
+  grid-template-columns: 8.25rem minmax(0, 2fr) 6rem 5.5rem 5rem 2rem;
+}
+
+.workflowPanelFull .workflowGridPayments {
+  grid-template-columns: 8.25rem minmax(0, 2fr) 5rem 6rem 5rem 5.5rem 2rem;
+}
+
+.documentsPagePanel {
+  width: 100%;
+  min-height: unset;
+  flex: none;
+}
+
+.accountabilityPagePanel {
+  width: 100%;
+  min-height: unset;
+  flex: none;
+}
+
+.inlineMenu_portal.actionsMenu_portal {
+  width: max-content;
+  min-width: unset;
+  padding: 0.375rem 0.25rem;
+  align-items: stretch;
+}
+
+.inlineMenuAction.actionsMenuItem {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 0.4rem;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.actionsMenuIcon {
+  display: inline-block;
+  width: 0.875rem;
+  height: 0.875rem;
+  flex-shrink: 0;
+  opacity: 0.85;
+  background: currentColor;
+  mask-position: center;
+  mask-repeat: no-repeat;
+  mask-size: contain;
+  -webkit-mask-position: center;
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-size: contain;
+}
+
+.actionsMenuWorkflowIcon {
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3.5 17.5 5.5 19.5 9.5 15.5'/%3E%3Cpath d='M3.5 7.5 5.5 9.5 9.5 5.5'/%3E%3Cpath d='M13 6h8M13 12h8M13 18h8'/%3E%3C/svg%3E");
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3.5 17.5 5.5 19.5 9.5 15.5'/%3E%3Cpath d='M3.5 7.5 5.5 9.5 9.5 5.5'/%3E%3Cpath d='M13 6h8M13 12h8M13 18h8'/%3E%3C/svg%3E");
+}
+
+.actionsMenuAccountabilityIcon {
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z'/%3E%3C/svg%3E");
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z'/%3E%3C/svg%3E");
+}
+
+.actionsMenuFolderIcon {
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2'%3E%3Cpath d='M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z'/%3E%3C/svg%3E");
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2'%3E%3Cpath d='M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z'/%3E%3C/svg%3E");
+}
+
 .detailTop {
   display: flex;
   flex-direction: column;

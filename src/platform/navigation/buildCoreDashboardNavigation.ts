@@ -18,6 +18,9 @@ export const buildCoreDashboardNavigation = {
     dashboard: buildcoreAppDefinition.dashboardRoute ?? '/dashboard',
     home: '/',
     projectDetail: (slug: string): string => `/projects/${slug}`,
+    projectWorkflowTasks: (slug: string): string => `/projects/${slug}/tasks`,
+    projectDocuments: (slug: string): string => `/projects/${slug}/documents`,
+    projectAccountability: (slug: string): string => `/projects/${slug}/accountability`,
   },
   sidebar: {
     ariaLabel: 'Primary navigation',

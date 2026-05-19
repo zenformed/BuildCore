@@ -140,6 +140,10 @@ export const buildCoreDashboardContent = {
       },
     },
     actionsButton: 'Actions',
+    actions: {
+      workflowTasks: 'Workflow Tasks',
+      accountability: 'Accountability',
+    },
     breadcrumbCrm: 'CRM',
     breadcrumbProjects: 'Projects',
     saveSuccess: 'Changes saved.',

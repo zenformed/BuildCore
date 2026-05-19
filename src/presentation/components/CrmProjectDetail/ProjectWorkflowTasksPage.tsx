@@ -1,33 +1,31 @@
 'use client';
 
 import type { ReactElement } from 'react';
-import type { CrmProjectDetail } from '@/domain/crm';
-import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
 import { ConfirmModal } from '@/presentation/components/ConfirmModal';
 import { useProjectDetailWorkspace } from '@/presentation/features/crmProjectDetail/useProjectDetailWorkspace';
 import { WorkflowTaskFileDragProvider } from '@/presentation/features/crmProjectDetail/workflowTaskFileDragContext';
-import { AccountabilityPanel } from './AccountabilityPanel';
 import { DetailToast } from './DetailToast';
-import { PaymentsRail } from './PaymentsRail';
 import { ProjectDetailActionsMenu } from './ProjectDetailActionsMenu';
 import { ProjectDetailContextBlock } from './ProjectDetailContextBlock';
 import { WorkflowTaskDrawer } from './WorkflowTaskDrawer';
 import { WorkflowTasksTable } from './WorkflowTasksTable';
+import type { ProjectDetailPageProps } from './ProjectDetailPage';
 import styles from './ProjectDetail.module.css';
 
-export type ProjectDetailPageProps = {
-  project: CrmProjectDetail;
-  isApiSource: boolean;
-  onBack: () => void;
-  onRefresh: () => Promise<void>;
+export type ProjectWorkflowTasksPageProps = Pick<
+  ProjectDetailPageProps,
+  'project' | 'isApiSource' | 'onBack' | 'onRefresh'
+> & {
+  onOpenProject: () => void;
 };
 
-export function ProjectDetailPage({
+export function ProjectWorkflowTasksPage({
   project: initialProject,
   isApiSource,
   onBack,
+  onOpenProject,
   onRefresh,
-}: ProjectDetailPageProps): ReactElement {
+}: ProjectWorkflowTasksPageProps): ReactElement {
   const workspace = useProjectDetailWorkspace(initialProject, onRefresh);
   const {
     project,
@@ -50,38 +48,31 @@ export function ProjectDetailPage({
   } = workspace;
 
   return (
-    <div className={styles.page} data-project-detail-page>
+    <div className={styles.pageTasks} data-project-tasks-page>
       {toast ? <DetailToast kind={toast.kind} message={toast.message} onDismiss={() => setToast(null)} /> : null}
 
       <ProjectDetailContextBlock
         project={project}
         isApiSource={isApiSource}
+        pageContext="workflowTasks"
         onBack={onBack}
+        onOpenProject={onOpenProject}
         actions={<ProjectDetailActionsMenu projectSlug={project.summary.slug} />}
         savingField={savingField}
         patchField={patchField}
       />
 
       <WorkflowTaskFileDragProvider onTaskDocumentDrop={handleTaskDocumentDrop}>
-        <div className={styles.detailPanelsScroll}>
-          <div className={styles.detailMiddle}>
-            <WorkflowTasksTable
-              project={project}
-              isApiSource={isApiSource}
-              onAddTask={() => openCreateTask('workflow')}
-              onTaskUpdated={handleTaskSaved}
-              onTaskError={(message) => setToast({ kind: 'error', message })}
-              onRequestArchiveTask={setArchiveConfirmTask}
-            />
-            <PaymentsRail
-              project={project}
-              isApiSource={isApiSource}
-              onTaskUpdated={handleTaskSaved}
-              onTaskError={(message) => setToast({ kind: 'error', message })}
-              onRequestArchiveTask={setArchiveConfirmTask}
-            />
-          </div>
-          <AccountabilityPanel project={project} />
+        <div className={styles.tasksWorkArea}>
+          <WorkflowTasksTable
+            layout="full"
+            project={project}
+            isApiSource={isApiSource}
+            onAddTask={() => openCreateTask('workflow')}
+            onTaskUpdated={handleTaskSaved}
+            onTaskError={(message) => setToast({ kind: 'error', message })}
+            onRequestArchiveTask={setArchiveConfirmTask}
+          />
         </div>
       </WorkflowTaskFileDragProvider>
 

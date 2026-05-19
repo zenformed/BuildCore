@@ -1,12 +1,12 @@
 'use client';
 
 import type { ReactElement } from 'react';
-import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import type { CrmProjectDetail } from '@/domain/crm';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
+import { buildCoreDashboardNavigation as nav } from '@/platform/navigation/buildCoreDashboardNavigation';
 import { useAccountabilityPreviewLimit } from '@/presentation/features/crmProjectDetail/useAccountabilityPreviewLimit';
 import { AccountabilityLogTable, sortAccountabilityEntries } from './AccountabilityLogTable';
-import { AccountabilityListModal } from './AccountabilityListModal';
 import styles from './ProjectDetail.module.css';
 
 export type AccountabilityPanelProps = {
@@ -14,12 +14,13 @@ export type AccountabilityPanelProps = {
 };
 
 export function AccountabilityPanel({ project }: AccountabilityPanelProps): ReactElement {
+  const router = useRouter();
   const acc = content.projectDetail.accountability;
-  const [allOpen, setAllOpen] = useState(false);
   const previewLimit = useAccountabilityPreviewLimit();
   const entries = sortAccountabilityEntries(project.accountabilityLog);
   const hasMore = entries.length > previewLimit;
   const previewEntries = hasMore ? entries.slice(0, previewLimit) : entries;
+  const showViewAllLink = entries.length > 0;
 
   return (
     <section className={styles.accountabilityPanel} aria-labelledby="accountability-heading">
@@ -33,18 +34,17 @@ export function AccountabilityPanel({ project }: AccountabilityPanelProps): Reac
       ) : (
         <AccountabilityLogTable entries={previewEntries} />
       )}
-      {hasMore ? (
+      {showViewAllLink ? (
         <div className={styles.accountabilityPanelFooter}>
           <button
             type="button"
             className={styles.panelFooterLink}
-            onClick={() => setAllOpen(true)}
+            onClick={() => router.push(nav.routes.projectAccountability(project.summary.slug))}
           >
             {acc.viewAll}
           </button>
         </div>
       ) : null}
-      <AccountabilityListModal open={allOpen} project={project} onClose={() => setAllOpen(false)} />
     </section>
   );
 }

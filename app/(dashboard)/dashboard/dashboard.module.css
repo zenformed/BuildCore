@@ -157,6 +157,21 @@
   overflow: hidden;
 }
 
+/* Project sub-pages scroll with main content */
+.listViewWrap:has([data-project-tasks-page]),
+.listViewWrap:has([data-project-documents-page]),
+.listViewWrap:has([data-project-accountability-page]) {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+}
+
+.mainContent:has([data-project-tasks-page]),
+.mainContent:has([data-project-documents-page]),
+.mainContent:has([data-project-accountability-page]) {
+  overflow: auto;
+}
+
 /* ~1920×1080 project detail — slightly less shell padding (see projectDetailViewport.ts) */
 @media (min-width: 1870px) and (max-width: 1920px) and (min-height: 900px) and (max-height: 1100px) {
   .mainContent:has([data-project-detail-page]) {

@@ -1,10 +1,10 @@
 'use client';
 
 import type { ReactElement } from 'react';
-import { useState } from 'react';
-import { useProjectDetailStackedLayout } from '@/presentation/features/crmProjectDetail/useProjectDetailStackedLayout';
+import { useRouter } from 'next/navigation';
 import type { CrmProjectDetail, CrmWorkflowTask } from '@/domain/crm';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
+import { buildCoreDashboardNavigation as nav } from '@/platform/navigation/buildCoreDashboardNavigation';
 import { countDocumentsByTaskId } from '@/presentation/features/crmProjectDetail/workflowDocumentCounts';
 import {
   countWorkflowTasksInGroups,
@@ -13,43 +13,55 @@ import {
   WORKFLOW_TASKS_PREVIEW_LIMIT,
 } from '@/presentation/features/crmProjectDetail/workflowTaskGroups';
 import { WorkflowStageTaskGroup } from './WorkflowStageTaskGroup';
-import { WorkflowTasksListModal } from './WorkflowTasksListModal';
 import styles from './ProjectDetail.module.css';
 
+export type WorkflowTasksTableLayout = 'preview' | 'full';
+
 export type WorkflowTasksTableProps = {
+  layout?: WorkflowTasksTableLayout;
   project: CrmProjectDetail;
   isApiSource: boolean;
   onAddTask: () => void;
   onTaskUpdated: () => Promise<void>;
   onTaskError?: (message: string) => void;
   onRequestArchiveTask?: (task: CrmWorkflowTask) => void;
-  onOpenDocuments?: () => void;
 };
 
 export function WorkflowTasksTable({
+  layout = 'preview',
   project,
   isApiSource,
   onAddTask,
   onTaskUpdated,
   onTaskError,
   onRequestArchiveTask,
-  onOpenDocuments,
 }: WorkflowTasksTableProps): ReactElement {
+  const router = useRouter();
   const wf = content.projectDetail.workflow;
-  const [allTasksOpen, setAllTasksOpen] = useState(false);
-  const isStackedLayout = useProjectDetailStackedLayout();
+  const isFullLayout = layout === 'full';
   const currentStage = project.summary.currentStageSlug;
   const groups = groupOpsWorkflowTasksByStage(project.workflowTasks, currentStage);
   const totalTasks = countWorkflowTasksInGroups(groups);
-  const hasMoreTasks =
-    !isStackedLayout && totalTasks > WORKFLOW_TASKS_PREVIEW_LIMIT;
-  const previewGroups = hasMoreTasks
+  const shouldLimitPreview = !isFullLayout && totalTasks > WORKFLOW_TASKS_PREVIEW_LIMIT;
+  const showViewAllLink = !isFullLayout && groups.length > 0;
+  const displayGroups = shouldLimitPreview
     ? limitWorkflowTaskGroups(groups, WORKFLOW_TASKS_PREVIEW_LIMIT)
     : groups;
   const docCounts = countDocumentsByTaskId(project.documents);
 
+  const panelClass = [styles.workflowPanel, isFullLayout ? styles.workflowPanelFull : '']
+    .filter(Boolean)
+    .join(' ');
+
+  const stackClass = [
+    styles.stageGroupStack,
+    isFullLayout ? styles.stageGroupStackFull : styles.workflowPanelGrow,
+  ]
+    .filter(Boolean)
+    .join(' ');
+
   return (
-    <section className={styles.workflowPanel} aria-labelledby="workflow-tasks-heading">
+    <section className={panelClass} aria-labelledby="workflow-tasks-heading">
       <div className={styles.cardTitleRow}>
         <h3 id="workflow-tasks-heading" className={styles.cardTitle}>
           {content.projectDetail.sections.workflow}
@@ -65,12 +77,12 @@ export function WorkflowTasksTable({
         </button>
       </div>
       {groups.length === 0 ? (
-        <div className={styles.workflowPanelGrow}>
+        <div className={isFullLayout ? undefined : styles.workflowPanelGrow}>
           <p className={styles.subtitle}>{wf.empty}</p>
         </div>
       ) : (
-        <div className={`${styles.stageGroupStack} ${styles.workflowPanelGrow}`}>
-          {previewGroups.map((group) => (
+        <div className={stackClass}>
+          {displayGroups.map((group) => (
             <WorkflowStageTaskGroup
               key={group.collapseKey}
               projectSlug={project.summary.slug}
@@ -85,25 +97,17 @@ export function WorkflowTasksTable({
           ))}
         </div>
       )}
-      <div className={styles.workflowPanelFooters}>
-        <button type="button" className={styles.panelFooterLink} onClick={() => setAllTasksOpen(true)}>
-          {wf.viewAll}
-        </button>
-        {onOpenDocuments ? (
-          <button type="button" className={styles.panelFooterLink} onClick={onOpenDocuments}>
-            <span aria-hidden>📁</span> {wf.openDocuments}
+      {showViewAllLink ? (
+        <div className={styles.workflowPanelFooters}>
+          <button
+            type="button"
+            className={styles.panelFooterLink}
+            onClick={() => router.push(nav.routes.projectWorkflowTasks(project.summary.slug))}
+          >
+            {wf.viewAll}
           </button>
-        ) : null}
-      </div>
-      <WorkflowTasksListModal
-        open={allTasksOpen}
-        project={project}
-        isApiSource={isApiSource}
-        onClose={() => setAllTasksOpen(false)}
-        onTaskUpdated={onTaskUpdated}
-        onTaskError={onTaskError}
-        onRequestArchiveTask={onRequestArchiveTask}
-      />
+        </div>
+      ) : null}
     </section>
   );
 }
