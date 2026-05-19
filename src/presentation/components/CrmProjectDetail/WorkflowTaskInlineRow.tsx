@@ -23,6 +23,7 @@ import {
   workflowTaskDueToInputValue,
 } from '@/presentation/features/crmProjectDetail/workflowTaskInlineUtils';
 import { useWorkflowTaskDocumentActions } from '@/presentation/features/crmProjectDetail/useWorkflowTaskDocumentActions';
+import { useWorkflowTaskRowFileDrop } from '@/presentation/features/crmProjectDetail/useWorkflowTaskRowFileDrop';
 import { useAuth } from '@/presentation/hooks/useAuth';
 import shared from '@/presentation/components/crmShared/crmShared.module.css';
 import { TeamMemberAvatar } from './TeamMemberAvatar';
@@ -67,6 +68,7 @@ export function WorkflowTaskInlineRow({
     onError: (message) => onTaskError?.(message),
   });
   const documentAccept = BUILDCORE_DOCUMENT_ALLOWED_EXTENSIONS.join(',');
+  const { rowDragOver, rowDropHandlers } = useWorkflowTaskRowFileDrop(task);
 
   const [editingTitle, setEditingTitle] = useState(false);
   const [titleDraft, setTitleDraft] = useState(task.title);
@@ -209,9 +211,14 @@ export function WorkflowTaskInlineRow({
   );
 
   const showAmount = showAmountColumn || isPaymentWorkflowTask(task);
-  const rowClass = `${styles.tableRow} ${
-    showAmount ? `${styles.workflowGrid} ${styles.workflowGridPayments}` : styles.workflowGrid
-  } ${styles.workflowInlineRow}`;
+  const rowClass = [
+    styles.tableRow,
+    showAmount ? `${styles.workflowGrid} ${styles.workflowGridPayments}` : styles.workflowGrid,
+    styles.workflowInlineRow,
+    rowDragOver ? styles.workflowInlineRow_fileDragOver : '',
+  ]
+    .filter(Boolean)
+    .join(' ');
 
   const effectiveDocCount = Math.max(docCount, taskDocuments.length);
   const hasDocuments = effectiveDocCount > 0;
@@ -223,7 +230,12 @@ export function WorkflowTaskInlineRow({
   const showDocumentsIcon = hasDocuments || task.documentsRequired;
 
   return (
-    <div className={rowClass} role="row" aria-busy={saving || documentActions.uploading}>
+    <div
+      className={rowClass}
+      role="row"
+      aria-busy={saving || documentActions.uploading}
+      {...rowDropHandlers}
+    >
       <span className={`${styles.inlineCellWrap} ${styles.workflowStatusCell}`} ref={statusRef}>
         <button
           type="button"

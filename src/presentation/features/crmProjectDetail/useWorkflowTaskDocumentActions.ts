@@ -24,6 +24,7 @@ export function useWorkflowTaskDocumentActions(input: {
   uploading: boolean;
   fileInputRef: React.RefObject<HTMLInputElement>;
   openFilePicker: () => void;
+  uploadFile: (file: File) => Promise<void>;
   handleFileSelected: (e: React.ChangeEvent<HTMLInputElement>) => Promise<void>;
   downloadDocument: (documentId: string) => Promise<void>;
   deleteDocument: (documentId: string) => Promise<void>;
@@ -55,12 +56,8 @@ export function useWorkflowTaskDocumentActions(input: {
     fileInputRef.current?.click();
   }, []);
 
-  const handleFileSelected = useCallback(
-    async (e: React.ChangeEvent<HTMLInputElement>) => {
-      const file = e.target.files?.[0];
-      e.target.value = '';
-      if (!file) return;
-
+  const uploadFile = useCallback(
+    async (file: File) => {
       const validation = validateWorkflowTaskDocumentUpload({
         fileName: file.name,
         mimeType: file.type || 'application/octet-stream',
@@ -90,6 +87,16 @@ export function useWorkflowTaskDocumentActions(input: {
       }
     },
     [input, mapError]
+  );
+
+  const handleFileSelected = useCallback(
+    async (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      e.target.value = '';
+      if (!file) return;
+      await uploadFile(file);
+    },
+    [uploadFile]
   );
 
   const downloadDocument = useCallback(
@@ -135,6 +142,7 @@ export function useWorkflowTaskDocumentActions(input: {
     uploading,
     fileInputRef,
     openFilePicker,
+    uploadFile,
     handleFileSelected,
     downloadDocument,
     deleteDocument,

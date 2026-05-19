@@ -1,9 +1,32 @@
 'use client';
 
 import type { CSSProperties, ReactElement } from 'react';
+import { useSyncExternalStore } from 'react';
 import { DEFAULT_PIPELINE_STAGES, type CrmStageProgress, type PipelineStageSlug } from '@/domain/crm';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
+import { shortStageLabel } from '@/presentation/features/crmProjectDetail/crmProjectDetailFormatters';
+import { PROJECT_DETAIL_STACK_BREAKPOINT_PX } from '@/presentation/features/crmProjectDetail/useProjectDetailStackedLayout';
 import styles from './ProjectDetail.module.css';
+
+const COMPACT_PIPELINE_MEDIA = `(max-width: ${PROJECT_DETAIL_STACK_BREAKPOINT_PX}px)`;
+
+function subscribeCompactPipeline(onStoreChange: () => void): () => void {
+  const mediaQuery = window.matchMedia(COMPACT_PIPELINE_MEDIA);
+  mediaQuery.addEventListener('change', onStoreChange);
+  return () => mediaQuery.removeEventListener('change', onStoreChange);
+}
+
+function getCompactPipelineSnapshot(): boolean {
+  return window.matchMedia(COMPACT_PIPELINE_MEDIA).matches;
+}
+
+function useCompactPipelineLabels(): boolean {
+  return useSyncExternalStore(
+    subscribeCompactPipeline,
+    getCompactPipelineSnapshot,
+    () => false
+  );
+}
 
 type StageNodeState = 'done' | 'current' | 'upcoming';
 
@@ -22,6 +45,7 @@ export type StageProgressBarProps = {
 };
 
 export function StageProgressBar({ stageProgress }: StageProgressBarProps): ReactElement {
+  const useShortLabels = useCompactPipelineLabels();
   const completed = new Set(stageProgress.completedStageSlugs);
   const currentIndex = DEFAULT_PIPELINE_STAGES.findIndex((s) => s.slug === stageProgress.currentStageSlug);
   const progressPct =
@@ -48,10 +72,12 @@ export function StageProgressBar({ stageProgress }: StageProgressBarProps): Reac
                 ? `${styles.pipelineLabel} ${styles.pipelineLabel_done}`
                 : styles.pipelineLabel;
 
+          const label = useShortLabels ? shortStageLabel(stage.label) : stage.label;
+
           return (
             <li key={stage.slug} className={styles.pipelineStep} title={stage.label}>
               <span className={nodeClass} aria-hidden />
-              <span className={labelClass}>{stage.label}</span>
+              <span className={labelClass}>{label}</span>
             </li>
           );
         })}

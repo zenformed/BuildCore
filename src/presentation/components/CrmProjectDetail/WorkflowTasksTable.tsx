@@ -2,6 +2,7 @@
 
 import type { ReactElement } from 'react';
 import { useState } from 'react';
+import { useProjectDetailStackedLayout } from '@/presentation/features/crmProjectDetail/useProjectDetailStackedLayout';
 import type { CrmProjectDetail, CrmWorkflowTask } from '@/domain/crm';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
 import { countDocumentsByTaskId } from '@/presentation/features/crmProjectDetail/workflowDocumentCounts';
@@ -36,10 +37,12 @@ export function WorkflowTasksTable({
 }: WorkflowTasksTableProps): ReactElement {
   const wf = content.projectDetail.workflow;
   const [allTasksOpen, setAllTasksOpen] = useState(false);
+  const isStackedLayout = useProjectDetailStackedLayout();
   const currentStage = project.summary.currentStageSlug;
   const groups = groupOpsWorkflowTasksByStage(project.workflowTasks, currentStage);
   const totalTasks = countWorkflowTasksInGroups(groups);
-  const hasMoreTasks = totalTasks > WORKFLOW_TASKS_PREVIEW_LIMIT;
+  const hasMoreTasks =
+    !isStackedLayout && totalTasks > WORKFLOW_TASKS_PREVIEW_LIMIT;
   const previewGroups = hasMoreTasks
     ? limitWorkflowTaskGroups(groups, WORKFLOW_TASKS_PREVIEW_LIMIT)
     : groups;
