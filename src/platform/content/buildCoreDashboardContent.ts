@@ -201,7 +201,6 @@ export const buildCoreDashboardContent = {
       },
       viewAll: 'View all Workflow Tasks',
       openDocuments: 'Documents',
-      allTasksTitle: 'All Workflow Tasks',
       fields: {
         title: 'Task title',
         stage: 'Stage',
@@ -252,7 +251,6 @@ export const buildCoreDashboardContent = {
     accountability: {
       empty: 'No activity logged yet.',
       viewAll: 'View all Accountability',
-      allEntriesTitle: 'All Accountability',
       columns: {
         dateTime: 'Date / Time',
         user: 'User',
