@@ -35,13 +35,14 @@
   .statusBadge_blocked,
   .statusBadge_pending,
   .statusBadge_skipped {
-    font-size: 0.9375rem;
+    font-size: 0.875rem;
+    padding: 0.25rem 0.55rem;
   }
 
   .avatar {
-    width: 2rem;
-    height: 2rem;
-    font-size: 0.8125rem;
+    width: 2.25rem;
+    height: 2.25rem;
+    font-size: 0.875rem;
   }
 }
 

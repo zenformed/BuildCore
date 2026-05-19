@@ -1805,7 +1805,7 @@
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(17rem, 36%);
   gap: 0.625rem;
-  align-items: start;
+  align-items: stretch;
   flex-shrink: 0;
   min-width: 0;
 }
@@ -1813,6 +1813,7 @@
 @media (max-width: 1100px) {
   .detailMiddle {
     grid-template-columns: 1fr;
+    align-items: start;
   }
 }
 
@@ -1825,13 +1826,16 @@
 .workflowPanel {
   padding: 0.75rem 0.875rem;
   min-width: 0;
+  min-height: 100%;
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
 }
 
 .workflowPanelGrow {
+  flex: 1 1 auto;
   min-width: 0;
+  min-height: 0;
 }
 
 .workflowPanelFooters {
@@ -1848,20 +1852,20 @@
 .paymentsPanel {
   padding: 0.75rem 0.875rem;
   min-width: 0;
+  min-height: 100%;
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
 }
 
-.paymentsList {
-  display: flex;
-  flex-direction: column;
-  gap: 0;
+.paymentsPanel > .paymentsList,
+.paymentsPanel > .subtitle {
+  flex: 1 1 auto;
   min-width: 0;
+  min-height: 0;
 }
 
 .paymentsTableHeader {
-  position: sticky;
   top: 0;
   z-index: 1;
 }
@@ -1940,7 +1944,7 @@
 .stageGroupStack {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 1rem;
 }
 
 .detailListModalOverlay {
@@ -1966,8 +1970,8 @@
 }
 
 :global([data-theme='dark']) .detailListModal {
-  background: #1d2029;
-  border-color: #3d3e4a;
+  background: var(--theme-surface-main, #252836);
+  border-color: var(--theme-border-main, #3d3e4a);
   box-shadow: 0 16px 48px rgba(0, 0, 0, 0.45);
 }
 
@@ -1977,11 +1981,12 @@
   justify-content: space-between;
   gap: 0.75rem;
   padding: 0.875rem 1rem;
+  background: inherit;
   border-bottom: 1px solid var(--theme-border-main, var(--color-border, #e2e8f0));
 }
 
 :global([data-theme='dark']) .detailListModalHeader {
-  border-bottom-color: #3d3e4a;
+  border-bottom-color: var(--theme-border-main, #3d3e4a);
 }
 
 .detailListModalTitle {
@@ -2016,6 +2021,7 @@
   min-height: 0;
   overflow: auto;
   padding: 0.75rem 1rem 1rem;
+  background: inherit;
 }
 
 /* Documents modal — fixed tall shell; list scrolls inside */
@@ -2064,10 +2070,10 @@
 }
 
 .stageGroup {
-  border: 1px solid var(--theme-border-main, var(--color-border, #e2e8f0));
-  border-radius: 0.375rem;
+  border: none;
+  border-radius: 0;
   overflow: visible;
-  background: var(--color-surface, #fff);
+  background: transparent;
 }
 
 .stageGroup_collapsed {
@@ -2075,8 +2081,7 @@
 }
 
 :global([data-theme='dark']) .stageGroup {
-  background: #1e2130;
-  border-color: #34384a;
+  background: transparent;
 }
 
 .stageGroupHeaderBtn,
@@ -2086,9 +2091,9 @@
   justify-content: space-between;
   gap: 0.5rem;
   width: 100%;
-  padding: 0.4375rem 0.625rem;
-  background: linear-gradient(180deg, var(--color-muted, #f8fafc) 0%, var(--color-muted, #f1f5f9) 100%);
-  border-bottom: 1px solid var(--theme-border-main, var(--color-border, #e2e8f0));
+  padding: 0.5rem 0.625rem 0.25rem;
+  background: transparent;
+  border-bottom: none;
 }
 
 .stageGroupHeaderBtn {
@@ -2114,22 +2119,17 @@
   border-bottom: none;
 }
 
-:global([data-theme='dark']) .stageGroupHeaderBtn,
-:global([data-theme='dark']) .stageGroupHeaderStatic {
-  background: linear-gradient(180deg, #232736 0%, #1a1d26 100%);
-  border-bottom-color: #34384a;
-}
-
 :global([data-theme='dark']) .stageGroupHeaderBtn:focus-visible {
   outline-color: #60a5fa;
 }
 
 .stageGroupHeaderBtn:hover {
-  filter: brightness(0.97);
+  background: rgba(15, 23, 42, 0.04);
+  border-radius: 0.25rem;
 }
 
 :global([data-theme='dark']) .stageGroupHeaderBtn:hover {
-  filter: brightness(1.08);
+  background: rgba(255, 255, 255, 0.04);
 }
 
 .stageGroupTitle {
@@ -2206,19 +2206,31 @@
   border-color: #3d3e4a;
 }
 
+.stageGroupTable {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  min-width: 0;
+}
+
 .stageGroupTable .tableHeader {
   position: static;
-  border-bottom-width: 1px;
-  padding: 0.375rem 0.625rem;
-  font-size: 0.625rem;
+  padding-top: 0.25rem;
 }
 
-.stageGroupTable .tableRow {
-  padding: 0.4375rem 0.625rem;
-  font-size: 0.8125rem;
+.paymentsList {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  min-width: 0;
+  background: transparent;
 }
 
-.stageGroupTable .tableRow:last-child {
+.paymentsList .tableHeader {
+  position: static;
+}
+
+.paymentsList > .tableRow:last-of-type {
   border-bottom: none;
 }
 
@@ -2557,6 +2569,9 @@
 
 .accountabilityPanel {
   padding: 0.75rem 0.875rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
 }
 
 .accountabilityPanelFooter {
@@ -2565,31 +2580,24 @@
 }
 
 .accountabilityTableWrap {
-  overflow: auto;
-  border: 1px solid var(--theme-border-main, var(--color-border, #e2e8f0));
-  border-radius: 0.375rem;
-  background: var(--color-surface, #fff);
-}
-
-:global([data-theme='dark']) .accountabilityTableWrap {
-  border-color: #34384a;
-  background: #1e2130;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  min-width: 0;
+  background: transparent;
 }
 
 .accountabilityTableWrap .tableHeader {
+  position: static;
   border-bottom-width: 1px;
-}
-
-.accountabilityTableWrap .tableRow:nth-child(even) {
-  background: rgba(15, 23, 42, 0.02);
-}
-
-:global([data-theme='dark']) .accountabilityTableWrap .tableRow:nth-child(even) {
-  background: rgba(255, 255, 255, 0.02);
 }
 
 .accountabilityTableWrap .tableRow:last-child {
   border-bottom: none;
+}
+
+.detailListModalBody .accountabilityTableWrap {
+  overflow: auto;
 }
 
 .accountabilityGrid {
@@ -2983,6 +2991,18 @@
     zoom: 1.25;
   }
 
+  .workflowGrid {
+    grid-template-columns: 7.25rem minmax(0, 1fr) 5.5rem 4.5rem 4.75rem 1.75rem;
+  }
+
+  .workflowGridPayments {
+    grid-template-columns: 7.25rem minmax(0, 1fr) 4.5rem 5.5rem 4.5rem 4.75rem 1.75rem;
+  }
+
+  .statusPill {
+    font-size: 0.75rem;
+  }
+
   .inlineMenu_portal {
     font-size: 1rem;
   }
@@ -3003,28 +3023,98 @@
   }
 }
 
-/* 4K — larger type for readability (see projectDetailViewport.ts VIEWPORT_4K_MEDIA) */
+/* 4K — match 2K perceived size (higher DPR) + room for status pills (VIEWPORT_4K_MEDIA) */
 @media (min-width: 3840px) {
   .page[data-project-detail-page] {
-    zoom: 1.42;
+    zoom: 1.75;
+  }
+
+  .breadcrumb {
+    font-size: 0.8125rem;
+  }
+
+  .title {
+    font-size: 1.5rem;
+  }
+
+  .subtitle,
+  .headerTradeBtn,
+  .headerTradeSelect {
+    font-size: 0.9375rem;
+  }
+
+  .summaryValue,
+  .summaryInlineGhost,
+  .summaryInlineDisplayOverlay,
+  .summaryInlineInputOverlay,
+  .summaryInlineSelectOverlay {
+    font-size: 1rem;
+  }
+
+  .summaryLabel {
+    font-size: 0.8125rem;
+  }
+
+  .projectNotesCard {
+    font-size: 0.8125rem;
+  }
+
+  .cardTitle {
+    font-size: 0.8125rem;
+  }
+
+  .tableHeader,
+  .tableRow {
+    font-size: 0.9375rem;
+  }
+
+  .tableHeader {
+    font-size: 0.8125rem;
+  }
+
+  .pipelineLabel {
+    font-size: 0.75rem;
+  }
+
+  .workflowGrid {
+    grid-template-columns: 8.25rem minmax(0, 1fr) 6rem 5rem 5.5rem 2rem;
+  }
+
+  .workflowGridPayments {
+    grid-template-columns: 8.25rem minmax(0, 1fr) 5rem 6rem 5rem 5.5rem 2rem;
+  }
+
+  .statusPill {
+    font-size: 0.8125rem;
+    padding: 0.25rem 0.625rem;
+  }
+
+  .workflowStatusCell .statusPill {
+    max-width: none;
+    overflow: visible;
+    text-overflow: clip;
+  }
+
+  .documentsCell {
+    font-size: 0.875rem;
   }
 
   .inlineMenu_portal {
-    font-size: 1.125rem;
+    font-size: 1.25rem;
   }
 
   .inlineMenuAction,
   .inlineMenuDocName,
   .inlineMenuPillOption {
-    font-size: 1.0625rem;
+    font-size: 1.125rem;
   }
 
   .detailListModalTitle {
-    font-size: 1.4375rem;
+    font-size: 1.625rem;
   }
 
   .detailListModalBody,
   .accountabilityDetails_modal {
-    font-size: 1.0625rem;
+    font-size: 1.125rem;
   }
 }
