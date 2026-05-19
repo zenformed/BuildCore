@@ -64,12 +64,9 @@ export function WorkflowTasksTable({
 
   return (
     <section className={panelClass} aria-labelledby="workflow-tasks-heading">
-      <div className={styles.cardTitleRow}>
-        <h3 id="workflow-tasks-heading" className={styles.cardTitle}>
-          {content.projectDetail.sections.workflow}
-        </h3>
+      <DetailPanelHeader title={content.projectDetail.sections.workflow} titleId="workflow-tasks-heading">
         <DetailPanelHeaderButton variant="add" title={wf.addTask} onClick={onAddTask} />
-      </div>
+      </DetailPanelHeader>
       {groups.length === 0 ? (
         <div className={isFullLayout ? undefined : styles.workflowPanelGrow}>
           <p className={styles.subtitle}>{wf.empty}</p>

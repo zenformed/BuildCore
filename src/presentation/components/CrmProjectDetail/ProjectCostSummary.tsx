@@ -29,12 +29,9 @@ export function ProjectCostSummary({ budget }: ProjectCostSummaryProps): ReactEl
 
   return (
     <aside className={`${styles.paymentsPanel} ${styles.budgetSummaryPanel}`} aria-labelledby="project-cost-heading">
-      <div className={styles.cardTitleRow}>
-        <h3 id="project-cost-heading" className={styles.cardTitle}>
-          {p.title}
-        </h3>
+      <DetailPanelHeader title={p.title} titleId="project-cost-heading">
         <DetailPanelHeaderButton variant="download" title={p.generatePl} onClick={() => undefined} />
-      </div>
+      </DetailPanelHeader>
 
       {budget.categoryCosts.length > 0 ? (
         <div className={styles.budgetPlSplit}>

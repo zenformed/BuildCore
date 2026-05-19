@@ -38,17 +38,14 @@ export function PaymentsRail({
 
   return (
     <section className={styles.paymentsPanel} aria-labelledby="payments-rail-heading">
-      <div className={styles.cardTitleRow}>
-        <h3 id="payments-rail-heading" className={styles.cardTitle}>
-          {payments.title}
-        </h3>
+      <DetailPanelHeader title={payments.title} titleId="payments-rail-heading">
         <DetailPanelHeaderButton
           variant="add"
           disabled={draftOpen}
           title={payments.addMilestone}
           onClick={() => setDraftOpen(true)}
         />
-      </div>
+      </DetailPanelHeader>
       {!showTable ? (
         <p className={styles.subtitle}>{payments.empty}</p>
       ) : (
