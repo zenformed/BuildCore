@@ -18,6 +18,7 @@ import { BuildCoreDashboardModals } from './BuildCoreDashboardModals';
 import { CreateCrmProjectDrawer } from '@/presentation/components/CrmProjects/CreateCrmProjectDrawer';
 import { BuildCoreSettingsDrawer } from './BuildCoreSettingsDrawer';
 import { BuildCoreSidebar, type BuildCoreSidebarNavId } from './BuildCoreSidebar';
+import { CorePlatformDegradedBanner } from '@/presentation/components/CorePlatform/CorePlatformDegradedBanner';
 import { CurrentUserAvatarProvider } from '@/presentation/providers/CurrentUserAvatarContext';
 import shellStyles from '../../../../app/(dashboard)/dashboard/dashboard.module.css';
 
@@ -89,6 +90,7 @@ export function BuildCoreDashboardShell({
         }
         mainColumn={
           <>
+            <CorePlatformDegradedBanner variant="overlay" />
             <BuildCoreDashboardHeader
               searchQuery={dash.projectsSearchQuery}
               onSearchQueryChange={dash.setProjectsSearchQuery}
