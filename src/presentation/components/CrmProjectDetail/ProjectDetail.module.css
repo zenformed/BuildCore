@@ -3392,11 +3392,19 @@
   }
 
   .workflowGrid {
-    grid-template-columns: 8.25rem minmax(0, 1fr) 6rem 5rem 6rem 2rem;
+    grid-template-columns: 8.25rem minmax(0, 1fr) 6rem 5rem 6.75rem 2rem;
   }
 
   .workflowGridPayments {
-    grid-template-columns: 8.25rem minmax(0, 1fr) 5rem 6rem 5rem 6.125rem 2rem;
+    grid-template-columns: 8.25rem minmax(0, 1fr) 5rem 6rem 5rem 7rem 2rem;
+  }
+
+  .workflowPanelFull .workflowGrid {
+    grid-template-columns: 8.25rem minmax(0, 1.65fr) 6rem 5.5rem 6.75rem 2rem;
+  }
+
+  .workflowPanelFull .workflowGridPayments {
+    grid-template-columns: 8.25rem minmax(0, 1.65fr) 5rem 6rem 5rem 7.125rem 2rem;
   }
 
   .statusPill {
