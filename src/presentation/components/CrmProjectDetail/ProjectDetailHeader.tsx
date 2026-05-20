@@ -5,7 +5,7 @@ import type { CrmProjectSummary } from '@/domain/crm';
 import { isCrmProjectComplete } from '@/domain/crm';
 import { CrmProjectCompleteIcon } from '@/presentation/components/crmShared/CrmProjectCompleteIcon';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
-import type { ProjectDetailPageContext } from './ProjectDetailContextBlock';
+import type { ProjectDetailPageContext } from '@/presentation/features/crmProjectDetail/projectDetailPageContext';
 import styles from './ProjectDetail.module.css';
 
 export type ProjectDetailHeaderProps = {

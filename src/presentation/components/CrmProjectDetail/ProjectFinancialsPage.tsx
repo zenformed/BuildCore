@@ -2,13 +2,11 @@
 
 import type { ReactElement } from 'react';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
-import { useProjectDetailWorkspace } from '@/presentation/features/crmProjectDetail/useProjectDetailWorkspace';
-import { BudgetTable } from './BudgetTable';
-import { DetailToast } from './DetailToast';
+import { useProjectDetailShell } from '@/presentation/features/crmProjectDetail/ProjectDetailShellContext';
 import { useProjectProfitAndLossPdfExport } from '@/presentation/features/crmProjectDetail/useProjectProfitAndLossPdfExport';
+import { BudgetTable } from './BudgetTable';
 import { ProjectCostSummary } from './ProjectCostSummary';
-import { ProjectDetailActionsMenu } from './ProjectDetailActionsMenu';
-import { ProjectDetailContextBlock } from './ProjectDetailContextBlock';
+import { ProjectDetailShell } from './ProjectDetailShell';
 import type { ProjectDetailPageProps } from './ProjectDetailPage';
 import styles from './ProjectDetail.module.css';
 
@@ -19,21 +17,14 @@ export type ProjectFinancialsPageProps = Pick<
   onOpenProject: () => void;
 };
 
-export function ProjectFinancialsPage({
-  project: initialProject,
-  isApiSource,
-  onBack,
-  onOpenProject,
-  onRefresh,
-}: ProjectFinancialsPageProps): ReactElement {
-  const workspace = useProjectDetailWorkspace(initialProject, onRefresh);
-  const { project, toast, setToast, savingField, patchField } = workspace;
+function ProjectFinancialsContent(): ReactElement {
+  const { project, onRefresh, setToast } = useProjectDetailShell();
   const { exporting: exportingPl, exportPdf: exportProfitAndLossPdf } = useProjectProfitAndLossPdfExport(
     project,
     (message) => setToast({ kind: 'error', message })
   );
 
-  const handleRefresh = async () => {
+  const handleRefresh = async (): Promise<void> => {
     try {
       await onRefresh();
     } catch {
@@ -42,32 +33,39 @@ export function ProjectFinancialsPage({
   };
 
   return (
-    <div className={styles.pageTasks} data-project-financials-page>
-      {toast ? <DetailToast kind={toast.kind} message={toast.message} onDismiss={() => setToast(null)} /> : null}
-
-      <ProjectDetailContextBlock
+    <div className={styles.detailMiddle}>
+      <BudgetTable
         project={project}
-        isApiSource={isApiSource}
-        pageContext="financials"
-        onBack={onBack}
-        onOpenProject={onOpenProject}
-        actions={<ProjectDetailActionsMenu projectSlug={project.summary.slug} />}
-        savingField={savingField}
-        patchField={patchField}
+        onRefresh={handleRefresh}
+        onError={(message) => setToast({ kind: 'error', message })}
       />
-
-      <div className={styles.detailMiddle}>
-        <BudgetTable
-          project={project}
-          onRefresh={handleRefresh}
-          onError={(message) => setToast({ kind: 'error', message })}
-        />
-        <ProjectCostSummary
-          budget={project.budget}
-          generatingPl={exportingPl}
-          onGeneratePl={() => void exportProfitAndLossPdf()}
-        />
-      </div>
+      <ProjectCostSummary
+        budget={project.budget}
+        generatingPl={exportingPl}
+        onGeneratePl={() => void exportProfitAndLossPdf()}
+      />
     </div>
+  );
+}
+
+export function ProjectFinancialsPage({
+  project,
+  isApiSource,
+  onBack,
+  onOpenProject,
+  onRefresh,
+}: ProjectFinancialsPageProps): ReactElement {
+  return (
+    <ProjectDetailShell
+      pageContext="financials"
+      project={project}
+      isApiSource={isApiSource}
+      onBack={onBack}
+      onOpenProject={onOpenProject}
+      onRefresh={onRefresh}
+      includeWorkflowModals={false}
+    >
+      <ProjectFinancialsContent />
+    </ProjectDetailShell>
   );
 }
