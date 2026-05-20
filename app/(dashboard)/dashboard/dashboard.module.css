@@ -160,7 +160,6 @@
 /* Project sub-pages scroll with main content */
 .listViewWrap:has([data-project-tasks-page]),
 .listViewWrap:has([data-project-documents-page]),
-.listViewWrap:has([data-project-accountability-page]),
 .listViewWrap:has([data-project-financials-page]) {
   flex: 1;
   min-height: 0;
@@ -169,9 +168,19 @@
 
 .mainContent:has([data-project-tasks-page]),
 .mainContent:has([data-project-documents-page]),
-.mainContent:has([data-project-accountability-page]),
 .mainContent:has([data-project-financials-page]) {
   overflow: auto;
+}
+
+/* Accountability: table scrolls inside the page; shell stays fixed */
+.listViewWrap:has([data-project-accountability-page]) {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.mainContent:has([data-project-accountability-page]) {
+  overflow: hidden;
 }
 
 /* ~1920×1080 project detail — slightly less shell padding (see projectDetailViewport.ts) */

@@ -3,7 +3,10 @@
 import type { ReactElement } from 'react';
 import type { CrmProjectDetail } from '@/domain/crm';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
-import { formatRelativeUpdatedAt } from '@/presentation/features/crmProjects/crmProjectFormatters';
+import {
+  formatPhoneDisplay,
+  formatRelativeUpdatedAt,
+} from '@/presentation/features/crmProjects/crmProjectFormatters';
 import styles from './ProjectDetail.module.css';
 
 export type ProjectContactCardProps = {
@@ -30,7 +33,7 @@ export function ProjectContactCard({ project }: ProjectContactCardProps): ReactE
         </div>
         <div className={styles.dlRow}>
           <dt>{content.projectDetail.fields.phone}</dt>
-          <dd>{summary.contact.phone}</dd>
+          <dd>{formatPhoneDisplay(summary.contact.phone) || '—'}</dd>
         </div>
         <div className={styles.dlRow}>
           <dt>{content.projectDetail.fields.assigned}</dt>

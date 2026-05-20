@@ -24,7 +24,9 @@ export function ProjectAccountabilityContent(): ReactElement {
       {entries.length === 0 ? (
         <p className={styles.subtitle}>{acc.empty}</p>
       ) : (
-        <AccountabilityLogTable entries={entries} layout="modal" />
+        <div className={styles.accountabilityPageTableScroll}>
+          <AccountabilityLogTable entries={entries} layout="modal" />
+        </div>
       )}
     </section>
   );

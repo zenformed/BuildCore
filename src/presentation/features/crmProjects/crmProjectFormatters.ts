@@ -22,6 +22,20 @@ export function formatStageLabel(slug: PipelineStageSlug): string {
   return getPipelineStage(slug).label;
 }
 
+/** US-style display: 9186713407 → 918-671-3407; leaves non-10-digit values unchanged. */
+export function formatPhoneDisplay(phone: string): string {
+  const trimmed = phone.trim();
+  if (!trimmed) return '';
+  const digits = trimmed.replace(/\D/g, '');
+  if (digits.length === 10) {
+    return `${digits.slice(0, 3)}-${digits.slice(3, 6)}-${digits.slice(6)}`;
+  }
+  if (digits.length === 11 && digits.startsWith('1')) {
+    return `${digits.slice(1, 4)}-${digits.slice(4, 7)}-${digits.slice(7)}`;
+  }
+  return trimmed;
+}
+
 export function formatRelativeUpdatedAt(iso: string): string {
   const date = new Date(iso);
   if (Number.isNaN(date.getTime())) return '—';

@@ -7,6 +7,7 @@ import { CrmProjectCompleteIcon } from '@/presentation/components/crmShared/CrmP
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
 import {
   formatCentsAsUsd,
+  formatPhoneDisplay,
   formatStageLabel,
   getProjectTradeSubtitle,
 } from '@/presentation/features/crmProjects/crmProjectFormatters';
@@ -123,7 +124,7 @@ function ProjectRow({
         {project.contact.email || '—'}
       </span>
       <span className={styles.gridCell} role="cell">
-        {project.contact.phone || '—'}
+        {formatPhoneDisplay(project.contact.phone) || '—'}
       </span>
       <span className={styles.gridCell} role="cell">
         <span className={priorityClassName(project.priority)}>{project.priority}</span>

@@ -85,10 +85,42 @@
   align-self: flex-start;
 }
 
+.pageBodySubpage[data-project-accountability-page] {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  padding-bottom: 0.5rem;
+}
+
+.accountabilityPagePanel.workflowPanel {
+  min-height: 0;
+}
+
 .accountabilityPagePanel {
   width: 100%;
-  min-height: unset;
-  flex: none;
+  min-height: 0;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.accountabilityPagePanel .cardTitleRow {
+  flex-shrink: 0;
+}
+
+.accountabilityPageTableScroll {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  min-width: 0;
+  -webkit-overflow-scrolling: touch;
+}
+
+.accountabilityPageTableScroll .tableHeader {
+  position: sticky;
+  top: 0;
+  z-index: 2;
 }
 
 .budgetTablePanel {

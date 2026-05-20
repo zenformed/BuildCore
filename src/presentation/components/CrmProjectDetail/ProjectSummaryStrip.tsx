@@ -12,6 +12,7 @@ import {
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
 import {
   formatCentsAsUsd,
+  formatPhoneDisplay,
   formatStageLabel,
 } from '@/presentation/features/crmProjects/crmProjectFormatters';
 import { centsToUsdInput } from '@/presentation/features/crmProjectDetail/workflowTaskFormModel';
@@ -293,6 +294,7 @@ export function ProjectSummaryStrip({
         fieldKey="phone"
         label={fields.phone}
         value={summary.contact.phone}
+        displayValue={formatPhoneDisplay(summary.contact.phone)}
         savingField={savingField}
         inputType="tel"
         displayClassName={styles.summaryLink}
