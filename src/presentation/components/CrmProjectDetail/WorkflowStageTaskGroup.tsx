@@ -17,7 +17,7 @@ export type WorkflowStageTaskGroupProps = {
   group: WorkflowTaskStageGroup;
   docCounts: ReadonlyMap<string, number>;
   isApiSource: boolean;
-  onTaskUpdated: () => Promise<void>;
+  onTaskUpdated: (task: CrmWorkflowTask) => Promise<void>;
   onTaskError?: (message: string) => void;
   onRequestArchiveTask?: (task: CrmWorkflowTask) => void;
   /** When false, stage is always expanded with a static header (e.g. "View all" modal). */

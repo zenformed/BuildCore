@@ -16,6 +16,7 @@ import { parseUsdInputToCents } from '@/presentation/features/crmCreate/createCr
 import { formatCentsAsUsd } from '@/presentation/features/crmProjects/crmProjectFormatters';
 import { centsToUsdInput } from '@/presentation/features/crmProjectDetail/workflowTaskFormModel';
 import { getWorkflowTaskAssigneeOptions } from '@/presentation/features/crmProjectDetail/workflowTaskAssigneeOptions';
+import { useProjectDetailShell } from '@/presentation/features/crmProjectDetail/ProjectDetailShellContext';
 import { useWorkflowTaskPatch } from '@/presentation/features/crmProjectDetail/useWorkflowTaskPatch';
 import { validateWorkflowTaskStatusChange } from '@/presentation/features/crmProjectDetail/workflowTaskDocumentsValidation';
 import {
@@ -42,7 +43,7 @@ export type WorkflowTaskInlineRowProps = {
   taskDocuments: readonly CrmDocumentMetadata[];
   showAmountColumn?: boolean;
   isApiSource: boolean;
-  onUpdated: () => Promise<void>;
+  onUpdated: (task: CrmWorkflowTask) => Promise<void>;
   onTaskError?: (message: string) => void;
   onRequestArchiveTask?: (task: CrmWorkflowTask) => void;
 };
@@ -60,11 +61,16 @@ export function WorkflowTaskInlineRow({
 }: WorkflowTaskInlineRowProps): ReactElement {
   const wf = content.projectDetail.workflow;
   const { user } = useAuth();
+  const {
+    onWorkflowTaskDocumentUploaded,
+    onWorkflowTaskDocumentDeleted,
+  } = useProjectDetailShell();
   const { saving, patchTask } = useWorkflowTaskPatch(onUpdated);
   const documentActions = useWorkflowTaskDocumentActions({
     projectSlug,
     workflowTaskId: task.id,
-    onChanged: onUpdated,
+    onDocumentUploaded: onWorkflowTaskDocumentUploaded,
+    onDocumentDeleted: onWorkflowTaskDocumentDeleted,
     onError: (message) => onTaskError?.(message),
   });
   const documentAccept = BUILDCORE_DOCUMENT_ALLOWED_EXTENSIONS.join(',');

@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import type { CrmProjectDetail, CrmWorkflowTask } from '@/domain/crm';
+import type { CrmBudgetEntry, CrmProjectDetail, CrmWorkflowTask } from '@/domain/crm';
 import { archiveCrmWorkflowTask } from '@/application/use-cases/crm';
 import { uploadWorkflowTaskDocument } from '@/application/use-cases/crm/uploadWorkflowTaskDocument';
 import {
@@ -12,15 +12,14 @@ import { CrmApiError } from '@/infrastructure/crm/api/crmApiClient';
 import { CrmDocumentServiceError } from '@/infrastructure/crm/errors';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
 import { useProjectSummaryPatch } from '@/presentation/features/crmProjectDetail/useProjectSummaryPatch';
+import { useBudgetSection } from '@/presentation/features/crmProjectDetail/useBudgetSection';
+import { useWorkflowTasksSection } from '@/presentation/features/crmProjectDetail/useWorkflowTasksSection';
 import type { WorkflowTaskDrawerContext } from '@/presentation/components/CrmProjectDetail/WorkflowTaskDrawer';
 import { crmRepositories } from '@/shared/di/container';
 
 export type ProjectDetailToast = { kind: 'success' | 'error'; message: string };
 
-export function useProjectDetailWorkspace(
-  initialProject: CrmProjectDetail,
-  onRefresh: () => Promise<void>
-) {
+export function useProjectDetailWorkspace(initialProject: CrmProjectDetail) {
   const [project, setProject] = useState(initialProject);
   const [toast, setToast] = useState<ProjectDetailToast | null>(null);
   const [documentsOpen, setDocumentsOpen] = useState(false);
@@ -40,19 +39,49 @@ export function useProjectDetailWorkspace(
     setProject(initialProject);
   }, [initialProject]);
 
+  const workflowSection = useWorkflowTasksSection(project, setProject);
+  const budgetSection = useBudgetSection(project, setProject);
+
   const handleProjectSaved = useCallback((next: CrmProjectDetail) => {
     setProject(next);
     setToast({ kind: 'success', message: content.projectDetail.saveSuccess });
   }, []);
 
-  const handleTaskSaved = useCallback(async () => {
-    try {
-      await onRefresh();
-      setToast({ kind: 'success', message: content.projectDetail.saveSuccess });
-    } catch {
-      setToast({ kind: 'error', message: content.projectDetail.saveError });
-    }
-  }, [onRefresh]);
+  const handleWorkflowTaskPatched = useCallback(
+    async (task: CrmWorkflowTask) => {
+      workflowSection.onWorkflowTaskPatched(task);
+    },
+    [workflowSection]
+  );
+
+  const handleWorkflowTaskCreated = useCallback(
+    async (task: CrmWorkflowTask) => {
+      workflowSection.onWorkflowTaskCreated(task);
+      setToast({ kind: 'success', message: content.projectDetail.workflow.taskAddedSuccess });
+    },
+    [workflowSection]
+  );
+
+  const handleBudgetEntryPatched = useCallback(
+    async (entry: CrmBudgetEntry) => {
+      budgetSection.onBudgetEntryPatched(entry);
+    },
+    [budgetSection]
+  );
+
+  const handleBudgetEntryCreated = useCallback(
+    async (entry: CrmBudgetEntry) => {
+      budgetSection.onBudgetEntryCreated(entry);
+    },
+    [budgetSection]
+  );
+
+  const handleBudgetEntryDeleted = useCallback(
+    async (entryId: string) => {
+      budgetSection.onBudgetEntryDeleted(entryId);
+    },
+    [budgetSection]
+  );
 
   const wf = content.projectDetail.workflow;
 
@@ -89,7 +118,7 @@ export function useProjectDetailWorkspace(
     const { task, file } = documentUploadConfirm;
     try {
       const buffer = await file.arrayBuffer();
-      await uploadWorkflowTaskDocument(crmRepositories, {
+      const result = await uploadWorkflowTaskDocument(crmRepositories, {
         projectSlug: project.summary.slug,
         workflowTaskId: task.id,
         fileName: file.name,
@@ -97,7 +126,7 @@ export function useProjectDetailWorkspace(
         sizeBytes: file.size,
         body: buffer,
       });
-      await onRefresh();
+      workflowSection.onWorkflowTaskDocumentUploaded(result.document);
       setToast({ kind: 'success', message: wf.documentUploadSuccess });
     } catch (err) {
       setToast({ kind: 'error', message: mapDocumentUploadError(err) });
@@ -105,21 +134,21 @@ export function useProjectDetailWorkspace(
   }, [
     documentUploadConfirm,
     mapDocumentUploadError,
-    onRefresh,
     project.summary.slug,
     wf.documentUploadSuccess,
+    workflowSection,
   ]);
 
   const handleConfirmArchiveTask = useCallback(async () => {
     if (!archiveConfirmTask) return;
     try {
       await archiveCrmWorkflowTask(crmRepositories, archiveConfirmTask.id);
-      await onRefresh();
+      workflowSection.onWorkflowTaskArchived(archiveConfirmTask.id);
       setToast({ kind: 'success', message: wf.archiveTaskSuccess });
     } catch {
       setToast({ kind: 'error', message: wf.archiveTaskFailed });
     }
-  }, [archiveConfirmTask, onRefresh, wf.archiveTaskFailed, wf.archiveTaskSuccess]);
+  }, [archiveConfirmTask, wf.archiveTaskFailed, wf.archiveTaskSuccess, workflowSection]);
 
   const openCreateTask = useCallback((context: WorkflowTaskDrawerContext) => {
     setTaskDrawer({ open: true, mode: 'create', context, task: null });
@@ -148,7 +177,18 @@ export function useProjectDetailWorkspace(
     setDocumentUploadConfirm,
     savingField,
     patchField,
-    handleTaskSaved,
+    handleWorkflowTaskPatched,
+    handleWorkflowTaskCreated,
+    refreshWorkflowTasks: workflowSection.refreshWorkflowTasks,
+    onWorkflowTaskDocumentUploaded: workflowSection.onWorkflowTaskDocumentUploaded,
+    onWorkflowTaskDocumentDeleted: workflowSection.onWorkflowTaskDocumentDeleted,
+    syncWorkflowTaskDocuments: workflowSection.syncWorkflowTaskDocuments,
+    handleBudgetEntryPatched,
+    handleBudgetEntryCreated,
+    handleBudgetEntryDeleted,
+    refreshBudgetSection: budgetSection.refreshBudgetSection,
+    onBudgetEntryDocumentUploaded: budgetSection.onBudgetEntryDocumentUploaded,
+    onBudgetEntryDocumentDeleted: budgetSection.onBudgetEntryDocumentDeleted,
     handleTaskDocumentDrop,
     handleConfirmDocumentUpload,
     handleConfirmArchiveTask,

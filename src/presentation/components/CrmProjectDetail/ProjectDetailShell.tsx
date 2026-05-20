@@ -41,7 +41,7 @@ export function ProjectDetailShell({
   const showCompletionActions = pageContext === 'detail';
   const completion = useProjectCompletionToggle(initialProject, onRefresh);
   const projectForWorkspace = showCompletionActions ? completion.project : initialProject;
-  const workspace = useProjectDetailWorkspace(projectForWorkspace, onRefresh);
+  const workspace = useProjectDetailWorkspace(projectForWorkspace);
   const detail = content.projectDetail;
 
   const headerActions = showCompletionActions ? (

@@ -2,7 +2,7 @@
 
 import type { ReactElement } from 'react';
 import { useCallback, useRef, useState } from 'react';
-import type { CrmProjectDetail, PipelineStageSlug } from '@/domain/crm';
+import type { CrmProjectDetail, CrmWorkflowTask, PipelineStageSlug } from '@/domain/crm';
 import { WORKFLOW_TASK_STATUSES } from '@/domain/crm/workflowTaskStatuses';
 import type { WorkflowTaskStatus } from '@/domain/crm';
 import { createCrmWorkflowTask } from '@/application/use-cases/crm';
@@ -29,7 +29,7 @@ export type WorkflowOpsTaskDraftRowProps = {
   project: CrmProjectDetail;
   stageSlug: PipelineStageSlug;
   isApiSource: boolean;
-  onSaved: () => Promise<void>;
+  onSaved: (task: CrmWorkflowTask) => Promise<void>;
   onCancel: () => void;
 };
 
@@ -73,12 +73,12 @@ export function WorkflowOpsTaskDraftRow({
     setSaving(true);
     setError(null);
     try {
-      await createCrmWorkflowTask(crmRepositories, {
+      const created = await createCrmWorkflowTask(crmRepositories, {
         projectId: project.summary.id,
         projectSlug: project.summary.slug,
         ...validated.body,
       });
-      await onSaved();
+      await onSaved(created);
       onCancel();
     } catch (err) {
       setError(err instanceof Error ? err.message : wf.taskSubmitFailed);

@@ -11,6 +11,7 @@ import { appendCrmAccountabilityEvent } from './crmAccountability';
 import { assertWorkflowTaskCanBeMarkedDone } from './crmDocumentService';
 import { CrmDocumentServiceError } from '@/infrastructure/crm/errors';
 import { isPaymentTaskRow, syncProjectBalanceFromPaymentTasks } from './crmPaymentBalance';
+import { resolveCrmProjectIdBySlug } from './resolveCrmProjectIdBySlug';
 
 const TASK_SELECT =
   'id, project_id, title, stage_slug, status, documents_required, notes, due_at, completed_at, assigned_member_id, completed_by_member_id, sort_order, amount_cents';
@@ -44,6 +45,32 @@ async function getTaskForOrg(
 
 function resolvePaymentStageSlug(amountCents: number | null | undefined): string | undefined {
   return amountCents != null ? PAYMENT_WORKFLOW_STAGE_SLUG : undefined;
+}
+
+export async function listCrmWorkflowTasksForOrg(
+  supabase: SupabaseClient,
+  organizationId: string,
+  projectSlug: string
+): Promise<readonly CrmWorkflowTask[]> {
+  const projectId = await resolveCrmProjectIdBySlug(supabase, organizationId, projectSlug);
+  if (!projectId) return [];
+
+  const { data, error } = await supabase
+    .from('crm_workflow_tasks')
+    .select(TASK_SELECT)
+    .eq('project_id', projectId)
+    .eq('organization_id', organizationId)
+    .is('archived_at', null)
+    .order('sort_order', { ascending: true });
+
+  if (error) throw new Error(error.message);
+
+  const rows = (data ?? []) as DbCrmWorkflowTaskRow[];
+  const memberIds = rows.flatMap((row) =>
+    [row.assigned_member_id, row.completed_by_member_id].filter((id): id is string => id != null)
+  );
+  const memberById = await loadCrmMemberMap(supabase, memberIds);
+  return rows.map((row) => mapDbWorkflowTask(row, memberById));
 }
 
 export async function createCrmWorkflowTaskForOrg(

@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useRef, useState } from 'react';
+import type { CrmDocumentMetadata } from '@/domain/crm';
 import { validateWorkflowTaskDocumentUpload } from '@/domain/crm/documentUpload';
 import { uploadBudgetEntryDocument } from '@/application/use-cases/crm/uploadBudgetEntryDocument';
 import { deleteBudgetEntryDocument } from '@/application/use-cases/crm/deleteBudgetEntryDocument';
@@ -10,12 +11,18 @@ import { buildCoreDashboardContent as content } from '@/platform/content/buildCo
 import { mapCrmDocumentActionError } from '@/presentation/features/crmProjectDetail/crmDocumentActionErrors';
 import { useCorePlatformDegraded } from '@/presentation/hooks/useCorePlatformDegraded';
 
-export function useBudgetEntryDocumentActions(input: {
-  projectSlug: string;
-  budgetEntryId: string;
-  onChanged: () => Promise<void>;
-  onError: (message: string) => void;
-}): {
+export type BudgetEntryDocumentChangeHandlers = {
+  onDocumentUploaded: (document: CrmDocumentMetadata) => void | Promise<void>;
+  onDocumentDeleted: (documentId: string) => void | Promise<void>;
+};
+
+export function useBudgetEntryDocumentActions(
+  input: {
+    projectSlug: string;
+    budgetEntryId: string;
+    onError: (message: string) => void;
+  } & BudgetEntryDocumentChangeHandlers
+): {
   uploading: boolean;
   fileInputRef: React.RefObject<HTMLInputElement>;
   openFilePicker: () => void;
@@ -57,7 +64,7 @@ export function useBudgetEntryDocumentActions(input: {
       setUploading(true);
       try {
         const buffer = await file.arrayBuffer();
-        await uploadBudgetEntryDocument(crmRepositories, {
+        const result = await uploadBudgetEntryDocument(crmRepositories, {
           projectSlug: input.projectSlug,
           budgetEntryId: input.budgetEntryId,
           fileName: file.name,
@@ -65,7 +72,7 @@ export function useBudgetEntryDocumentActions(input: {
           sizeBytes: file.size,
           body: buffer,
         });
-        await input.onChanged();
+        await input.onDocumentUploaded(result.document);
       } catch (err) {
         input.onError(mapError(err));
       } finally {
@@ -124,7 +131,7 @@ export function useBudgetEntryDocumentActions(input: {
           budgetEntryId: input.budgetEntryId,
           documentId,
         });
-        await input.onChanged();
+        await input.onDocumentDeleted(documentId);
       } catch (err) {
         input.onError(mapError(err));
       }

@@ -1,11 +1,15 @@
 /**
+ * GET /api/crm/projects/[slug]/tasks — list workflow tasks for a project.
  * POST /api/crm/projects/[slug]/tasks — create a workflow task for a project.
  */
 
 import { NextRequest, NextResponse } from 'next/server';
 import { requireCrmApiAuth } from '@/infrastructure/crm/server/crmApiRouteAuth';
 import { resolveCrmProjectIdBySlug } from '@/infrastructure/crm/server/resolveCrmProjectIdBySlug';
-import { createCrmWorkflowTaskForOrg } from '@/infrastructure/crm/server/crmWorkflowTaskService';
+import {
+  createCrmWorkflowTaskForOrg,
+  listCrmWorkflowTasksForOrg,
+} from '@/infrastructure/crm/server/crmWorkflowTaskService';
 import {
   validateCreateWorkflowTaskBody,
   type WorkflowTaskBody,
@@ -14,6 +18,31 @@ import {
 export const dynamic = 'force-dynamic';
 
 type RouteContext = { params: { slug: string } };
+
+export async function GET(
+  request: NextRequest,
+  context: RouteContext
+): Promise<NextResponse> {
+  const auth = await requireCrmApiAuth(request.headers.get('Authorization'));
+  if (!auth.ok) return auth.response;
+
+  const slug = context.params.slug?.trim();
+  if (!slug) {
+    return NextResponse.json({ error: 'not_found', message: 'Project not found' }, { status: 404 });
+  }
+
+  try {
+    const tasks = await listCrmWorkflowTasksForOrg(
+      auth.context.supabase,
+      auth.context.organizationId,
+      slug
+    );
+    return NextResponse.json({ tasks });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Failed to list workflow tasks';
+    return NextResponse.json({ error: 'internal_error', message }, { status: 500 });
+  }
+}
 
 export async function POST(
   request: NextRequest,

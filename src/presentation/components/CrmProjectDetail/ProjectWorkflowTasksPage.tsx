@@ -10,12 +10,11 @@ export function ProjectTasksContent(): ReactElement {
   const {
     project,
     isApiSource,
-    onRefresh,
-    setToast,
-    handleTaskSaved,
+    handleWorkflowTaskPatched,
+    handleWorkflowTaskCreated,
     handleTaskDocumentDrop,
     setArchiveConfirmTask,
-    wf,
+    setToast,
   } = useProjectDetailShell();
 
   return (
@@ -25,11 +24,8 @@ export function ProjectTasksContent(): ReactElement {
           layout="full"
           project={project}
           isApiSource={isApiSource}
-          onTaskUpdated={handleTaskSaved}
-          onTaskAdded={async () => {
-            await onRefresh();
-            setToast({ kind: 'success', message: wf.taskAddedSuccess });
-          }}
+          onTaskUpdated={handleWorkflowTaskPatched}
+          onTaskAdded={handleWorkflowTaskCreated}
           onTaskError={(message) => setToast({ kind: 'error', message })}
           onRequestArchiveTask={setArchiveConfirmTask}
         />

@@ -5,8 +5,15 @@ import type {
 } from '@/domain/crm';
 import type { CrmRepositoryResult } from '@/infrastructure/crm/types';
 
+export type ListCrmWorkflowTasksByProjectRepoInput = {
+  readonly projectId: string;
+  readonly projectSlug: string;
+};
+
 export interface ICrmWorkflowTasksRepository {
-  listByProjectId(projectId: string): CrmRepositoryResult<readonly CrmWorkflowTask[]>;
+  listByProject(
+    input: ListCrmWorkflowTasksByProjectRepoInput
+  ): CrmRepositoryResult<readonly CrmWorkflowTask[]>;
   create(input: CreateCrmWorkflowTaskInput): CrmRepositoryResult<CrmWorkflowTask>;
   update(input: UpdateCrmWorkflowTaskInput): CrmRepositoryResult<CrmWorkflowTask | null>;
   archive(taskId: string): CrmRepositoryResult<boolean>;

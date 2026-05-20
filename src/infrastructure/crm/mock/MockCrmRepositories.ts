@@ -300,9 +300,9 @@ function requireProjectDetail(projectId: string): CrmProjectDetail | null {
 
 export class MockCrmWorkflowTasksRepository implements ICrmWorkflowTasksRepository {
 
-  listByProjectId(projectId: string): readonly CrmWorkflowTask[] {
+  listByProject(input: { projectId: string }): readonly CrmWorkflowTask[] {
 
-    return requireProjectDetail(projectId)?.workflowTasks ?? [];
+    return requireProjectDetail(input.projectId)?.workflowTasks ?? [];
 
   }
 
@@ -627,9 +627,9 @@ function findBudgetEntryProject(entryId: string): { slug: string; detail: CrmPro
 
 export class MockCrmBudgetRepository implements ICrmBudgetRepository {
 
-  listByProjectId(projectId: string): readonly CrmBudgetEntry[] {
+  listByProject(input: { projectId: string }): readonly CrmBudgetEntry[] {
 
-    return requireProjectDetail(projectId)?.budget.entries ?? [];
+    return requireProjectDetail(input.projectId)?.budget.entries ?? [];
 
   }
 

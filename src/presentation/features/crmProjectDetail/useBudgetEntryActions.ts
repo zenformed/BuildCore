@@ -4,7 +4,7 @@ import { useCallback } from 'react';
 import { createCrmBudgetEntry } from '@/application/use-cases/crm/createCrmBudgetEntry';
 import { deleteCrmBudgetEntry } from '@/application/use-cases/crm/deleteCrmBudgetEntry';
 import { updateCrmBudgetEntry } from '@/application/use-cases/crm/updateCrmBudgetEntry';
-import type { CrmBudgetCategory } from '@/domain/crm';
+import type { CrmBudgetCategory, CrmBudgetEntry } from '@/domain/crm';
 import { crmRepositories } from '@/shared/di/container';
 
 export type BudgetEntryDraft = {
@@ -21,7 +21,9 @@ export type BudgetEntryDraft = {
 export function useBudgetEntryActions(input: {
   projectId: string;
   projectSlug: string;
-  onChanged: () => Promise<void>;
+  onEntryPatched: (entry: CrmBudgetEntry) => void;
+  onEntryCreated: (entry: CrmBudgetEntry) => void;
+  onEntryDeleted: (entryId: string) => void;
   onError: (message: string) => void;
 }): {
   createEntry: (draft: BudgetEntryDraft) => Promise<void>;
@@ -34,12 +36,12 @@ export function useBudgetEntryActions(input: {
   const createEntry = useCallback(
     async (draft: BudgetEntryDraft) => {
       try {
-        await createCrmBudgetEntry(crmRepositories, {
+        const created = await createCrmBudgetEntry(crmRepositories, {
           projectId: input.projectId,
           projectSlug: input.projectSlug,
           ...draft,
         });
-        await input.onChanged();
+        input.onEntryCreated(created);
       } catch (err) {
         input.onError(err instanceof Error ? err.message : 'Failed to add budget item');
       }
@@ -59,7 +61,7 @@ export function useBudgetEntryActions(input: {
           input.onError('Budget item not found');
           return;
         }
-        await input.onChanged();
+        input.onEntryPatched(updated);
       } catch (err) {
         input.onError(err instanceof Error ? err.message : 'Failed to update budget item');
       }
@@ -78,7 +80,7 @@ export function useBudgetEntryActions(input: {
           input.onError('Budget item not found');
           return;
         }
-        await input.onChanged();
+        input.onEntryDeleted(entryId);
       } catch (err) {
         input.onError(err instanceof Error ? err.message : 'Failed to delete budget item');
       }

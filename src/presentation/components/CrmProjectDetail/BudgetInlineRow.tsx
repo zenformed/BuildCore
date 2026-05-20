@@ -12,6 +12,7 @@ import { parseUsdInputToCents } from '@/presentation/features/crmCreate/createCr
 import { formatCentsAsUsd } from '@/presentation/features/crmProjects/crmProjectFormatters';
 import { centsToUsdInput } from '@/presentation/features/crmProjectDetail/workflowTaskFormModel';
 import type { BudgetEntryDraft } from '@/presentation/features/crmProjectDetail/useBudgetEntryActions';
+import { useProjectDetailShell } from '@/presentation/features/crmProjectDetail/ProjectDetailShellContext';
 import { useBudgetEntryDocumentActions } from '@/presentation/features/crmProjectDetail/useBudgetEntryDocumentActions';
 import { WorkflowDocumentFileIcon } from './WorkflowDocumentFileIcon';
 import { WorkflowInlineMenu } from './WorkflowInlineMenu';
@@ -22,7 +23,6 @@ export type BudgetInlineRowProps = {
   entry: CrmBudgetEntry;
   entryDocuments: readonly CrmDocumentMetadata[];
   onSave: (entryId: string, patch: Partial<BudgetEntryDraft>) => Promise<void>;
-  onRefresh: () => Promise<void>;
   onError?: (message: string) => void;
   onRequestDelete?: () => void;
 };
@@ -32,7 +32,6 @@ export function BudgetInlineRow({
   entry,
   entryDocuments,
   onSave,
-  onRefresh,
   onError,
   onRequestDelete,
 }: BudgetInlineRowProps): ReactElement {
@@ -51,10 +50,15 @@ export function BudgetInlineRow({
   const categoryRef = useRef<HTMLDivElement>(null);
   const documentsRef = useRef<HTMLDivElement>(null);
 
+  const {
+    onBudgetEntryDocumentUploaded,
+    onBudgetEntryDocumentDeleted,
+  } = useProjectDetailShell();
   const documentActions = useBudgetEntryDocumentActions({
     projectSlug,
     budgetEntryId: entry.id,
-    onChanged: onRefresh,
+    onDocumentUploaded: onBudgetEntryDocumentUploaded,
+    onDocumentDeleted: onBudgetEntryDocumentDeleted,
     onError: (message) => onError?.(message),
   });
   const documentAccept = BUILDCORE_DOCUMENT_ALLOWED_EXTENSIONS.join(',');

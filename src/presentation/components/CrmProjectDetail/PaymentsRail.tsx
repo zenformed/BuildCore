@@ -15,7 +15,8 @@ import styles from './ProjectDetail.module.css';
 export type PaymentsRailProps = {
   project: CrmProjectDetail;
   isApiSource: boolean;
-  onTaskUpdated: () => Promise<void>;
+  onTaskUpdated: (task: CrmWorkflowTask) => Promise<void>;
+  onTaskCreated?: (task: CrmWorkflowTask) => Promise<void>;
   onTaskError?: (message: string) => void;
   onRequestArchiveTask?: (task: CrmWorkflowTask) => void;
 };
@@ -24,6 +25,7 @@ export function PaymentsRail({
   project,
   isApiSource,
   onTaskUpdated,
+  onTaskCreated,
   onTaskError,
   onRequestArchiveTask,
 }: PaymentsRailProps): ReactElement {
@@ -77,7 +79,7 @@ export function PaymentsRail({
             <PaymentMilestoneDraftRow
               project={project}
               isApiSource={isApiSource}
-              onSaved={onTaskUpdated}
+              onSaved={onTaskCreated ?? onTaskUpdated}
               onCancel={() => setDraftOpen(false)}
             />
           ) : null}

@@ -14,12 +14,16 @@ import { buildCoreDashboardContent as content } from '@/platform/content/buildCo
 import { mapCrmDocumentActionError } from '@/presentation/features/crmProjectDetail/crmDocumentActionErrors';
 import { useCorePlatformDegraded } from '@/presentation/hooks/useCorePlatformDegraded';
 
+export type WorkflowTaskDocumentChangeHandlers = {
+  onDocumentUploaded: (document: CrmDocumentMetadata) => void | Promise<void>;
+  onDocumentDeleted: (documentId: string) => void | Promise<void>;
+};
+
 export function useWorkflowTaskDocumentActions(input: {
   projectSlug: string;
   workflowTaskId: string;
-  onChanged: () => Promise<void>;
   onError: (message: string) => void;
-}): {
+} & WorkflowTaskDocumentChangeHandlers): {
   uploading: boolean;
   fileInputRef: React.RefObject<HTMLInputElement>;
   openFilePicker: () => void;
@@ -61,7 +65,7 @@ export function useWorkflowTaskDocumentActions(input: {
       setUploading(true);
       try {
         const buffer = await file.arrayBuffer();
-        await uploadWorkflowTaskDocument(crmRepositories, {
+        const result = await uploadWorkflowTaskDocument(crmRepositories, {
           projectSlug: input.projectSlug,
           workflowTaskId: input.workflowTaskId,
           fileName: file.name,
@@ -69,7 +73,7 @@ export function useWorkflowTaskDocumentActions(input: {
           sizeBytes: file.size,
           body: buffer,
         });
-        await input.onChanged();
+        await input.onDocumentUploaded(result.document);
       } catch (err) {
         input.onError(mapError(err));
       } finally {
@@ -128,7 +132,7 @@ export function useWorkflowTaskDocumentActions(input: {
           workflowTaskId: input.workflowTaskId,
           documentId,
         });
-        await input.onChanged();
+        await input.onDocumentDeleted(documentId);
       } catch (err) {
         input.onError(mapError(err));
       }

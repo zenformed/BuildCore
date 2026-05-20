@@ -319,12 +319,18 @@ export class ApiCrmWorkflowTasksRepository implements ICrmWorkflowTasksRepositor
 
 
 
-  listByProjectId(projectId: string): Promise<readonly CrmWorkflowTask[]> {
-
-    void projectId;
-
-    return Promise.resolve([]);
-
+  listByProject(input: {
+    projectId: string;
+    projectSlug: string;
+  }): Promise<readonly CrmWorkflowTask[]> {
+    void input.projectId;
+    const slug = input.projectSlug.trim();
+    if (!slug) {
+      return Promise.reject(new CrmApiError('not_found', 404, 'Project not loaded'));
+    }
+    return crmApiGetJson<{ tasks: CrmWorkflowTask[] }>(
+      `/api/crm/projects/${encodeURIComponent(slug)}/tasks`
+    ).then((body) => body.tasks);
   }
 
 }
@@ -477,12 +483,18 @@ export class ApiCrmAccountabilityRepository implements ICrmAccountabilityReposit
 
 export class ApiCrmBudgetRepository implements ICrmBudgetRepository {
 
-  listByProjectId(projectId: string): Promise<readonly CrmBudgetEntry[]> {
-
-    void projectId;
-
-    return Promise.resolve([]);
-
+  listByProject(input: {
+    projectId: string;
+    projectSlug: string;
+  }): Promise<readonly CrmBudgetEntry[]> {
+    void input.projectId;
+    const slug = input.projectSlug.trim();
+    if (!slug) {
+      return Promise.reject(new CrmApiError('not_found', 404, 'Project not loaded'));
+    }
+    return crmApiGetJson<{ entries: CrmBudgetEntry[] }>(
+      `/api/crm/projects/${encodeURIComponent(slug)}/budget-entries`
+    ).then((body) => body.entries);
   }
 
 

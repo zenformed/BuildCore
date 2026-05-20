@@ -10,6 +10,7 @@ import {
 } from '@/infrastructure/crm/mappers/mapCrmFromDb';
 import { appendCrmAccountabilityEvent } from './crmAccountability';
 import { loadCrmMemberMap } from './crmMemberMap';
+import { resolveCrmProjectIdBySlug } from './resolveCrmProjectIdBySlug';
 
 const BUDGET_SELECT =
   'id, project_id, item_name, category, cost_cents, budget_cents, notes, assigned_to, occurred_on, documents_required, created_at, updated_at, created_by';
@@ -37,6 +38,51 @@ async function getBudgetEntryForOrg(
     .maybeSingle();
   if (error) throw new Error(error.message);
   return (data as DbCrmBudgetEntryRow | null) ?? null;
+}
+
+export async function listCrmBudgetEntriesForOrg(
+  supabase: SupabaseClient,
+  organizationId: string,
+  projectSlug: string
+): Promise<readonly CrmBudgetEntry[]> {
+  const projectId = await resolveCrmProjectIdBySlug(supabase, organizationId, projectSlug);
+  if (!projectId) return [];
+
+  const [entriesResult, documentsResult] = await Promise.all([
+    supabase
+      .from('crm_project_budget_entries')
+      .select(BUDGET_SELECT)
+      .eq('project_id', projectId)
+      .eq('organization_id', organizationId)
+      .is('deleted_at', null)
+      .order('created_at', { ascending: true }),
+    supabase
+      .from('crm_documents')
+      .select('budget_entry_id')
+      .eq('project_id', projectId)
+      .is('deleted_at', null)
+      .eq('upload_status', 'ready')
+      .not('budget_entry_id', 'is', null),
+  ]);
+
+  if (entriesResult.error) throw new Error(entriesResult.error.message);
+  if (documentsResult.error) throw new Error(documentsResult.error.message);
+
+  const rows = (entriesResult.data ?? []) as DbCrmBudgetEntryRow[];
+  const docCountByEntry = new Map<string, number>();
+  for (const doc of documentsResult.data ?? []) {
+    const entryId = doc.budget_entry_id as string | null;
+    if (entryId == null) continue;
+    docCountByEntry.set(entryId, (docCountByEntry.get(entryId) ?? 0) + 1);
+  }
+
+  const memberIds = rows.flatMap((row) =>
+    [row.assigned_to, row.created_by].filter((id): id is string => id != null)
+  );
+  const memberById = await loadCrmMemberMap(supabase, memberIds);
+  return rows.map((row) =>
+    mapDbBudgetEntry(row, memberById, docCountByEntry.get(row.id) ?? 0)
+  );
 }
 
 export async function createCrmBudgetEntryForOrg(

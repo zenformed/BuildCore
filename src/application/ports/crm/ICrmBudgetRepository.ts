@@ -6,8 +6,15 @@ import type {
 } from '@/domain/crm/budgetMutations';
 import type { CrmRepositoryResult } from '@/infrastructure/crm/types';
 
+export type ListCrmBudgetEntriesByProjectRepoInput = {
+  readonly projectId: string;
+  readonly projectSlug: string;
+};
+
 export interface ICrmBudgetRepository {
-  listByProjectId(projectId: string): CrmRepositoryResult<readonly CrmBudgetEntry[]>;
+  listByProject(
+    input: ListCrmBudgetEntriesByProjectRepoInput
+  ): CrmRepositoryResult<readonly CrmBudgetEntry[]>;
   create(input: CreateCrmBudgetEntryInput): CrmRepositoryResult<CrmBudgetEntry>;
   update(input: UpdateCrmBudgetEntryInput): CrmRepositoryResult<CrmBudgetEntry | null>;
   delete(input: DeleteCrmBudgetEntryInput): CrmRepositoryResult<boolean>;

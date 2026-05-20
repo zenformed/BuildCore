@@ -29,9 +29,9 @@ export type WorkflowTasksTableProps = {
   layout?: WorkflowTasksTableLayout;
   project: CrmProjectDetail;
   isApiSource: boolean;
-  onTaskUpdated: () => Promise<void>;
-  /** Refresh + success toast after a new inline workflow task is saved. */
-  onTaskAdded?: () => void | Promise<void>;
+  onTaskUpdated: (task: CrmWorkflowTask) => Promise<void>;
+  /** Apply created task + success toast after inline save. */
+  onTaskAdded?: (task: CrmWorkflowTask) => void | Promise<void>;
   onTaskError?: (message: string) => void;
   onRequestArchiveTask?: (task: CrmWorkflowTask) => void;
 };
@@ -87,13 +87,16 @@ export function WorkflowTasksTable({
     setDraftStageSlug(null);
   }, []);
 
-  const handleDraftSaved = useCallback(async () => {
-    try {
-      await onTaskAdded?.();
-    } catch {
-      onTaskError?.(content.projectDetail.saveError);
-    }
-  }, [onTaskAdded, onTaskError]);
+  const handleDraftSaved = useCallback(
+    async (task: CrmWorkflowTask) => {
+      try {
+        await onTaskAdded?.(task);
+      } catch {
+        onTaskError?.(content.projectDetail.saveError);
+      }
+    },
+    [onTaskAdded, onTaskError]
+  );
 
   const panelClass = [styles.workflowPanel, isFullLayout ? styles.workflowPanelFull : '']
     .filter(Boolean)

@@ -2,7 +2,7 @@
 
 import type { ReactElement } from 'react';
 import { useMemo, useState } from 'react';
-import type { CrmBudgetEntry, CrmProjectDetail } from '@/domain/crm';
+import type { CrmBudgetEntry } from '@/domain/crm';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
 import { ConfirmModal } from '@/presentation/components/ConfirmModal';
 import {
@@ -11,6 +11,7 @@ import {
   type BudgetTableFilter,
 } from '@/presentation/features/crmProjectDetail/budgetFilterModel';
 import { useBudgetEntryActions } from '@/presentation/features/crmProjectDetail/useBudgetEntryActions';
+import { useProjectDetailShell } from '@/presentation/features/crmProjectDetail/ProjectDetailShellContext';
 import { formatCentsAsUsd } from '@/presentation/features/crmProjects/crmProjectFormatters';
 import { BudgetDraftRow } from './BudgetDraftRow';
 import { BudgetInlineRow } from './BudgetInlineRow';
@@ -19,12 +20,16 @@ import { DetailPanelHeaderButton } from './DetailPanelHeaderButton';
 import styles from './ProjectDetail.module.css';
 
 export type BudgetTableProps = {
-  project: CrmProjectDetail;
-  onRefresh: () => Promise<void>;
   onError: (message: string) => void;
 };
 
-export function BudgetTable({ project, onRefresh, onError }: BudgetTableProps): ReactElement {
+export function BudgetTable({ onError }: BudgetTableProps): ReactElement {
+  const {
+    project,
+    handleBudgetEntryPatched,
+    handleBudgetEntryCreated,
+    handleBudgetEntryDeleted,
+  } = useProjectDetailShell();
   const b = content.projectDetail.budget;
   const [filter, setFilter] = useState<BudgetTableFilter>('all');
   const [draftOpen, setDraftOpen] = useState(false);
@@ -33,7 +38,9 @@ export function BudgetTable({ project, onRefresh, onError }: BudgetTableProps): 
   const { createEntry, updateEntry, deleteEntry } = useBudgetEntryActions({
     projectId: project.summary.id,
     projectSlug: project.summary.slug,
-    onChanged: onRefresh,
+    onEntryPatched: handleBudgetEntryPatched,
+    onEntryCreated: handleBudgetEntryCreated,
+    onEntryDeleted: handleBudgetEntryDeleted,
     onError,
   });
 
@@ -113,7 +120,6 @@ export function BudgetTable({ project, onRefresh, onError }: BudgetTableProps): 
               entry={entry}
               entryDocuments={project.documents.filter((doc) => doc.budgetEntryId === entry.id)}
               onSave={updateEntry}
-              onRefresh={onRefresh}
               onError={onError}
               onRequestDelete={() => setDeleteConfirmEntry(entry)}
             />
