@@ -24,17 +24,32 @@ export interface SaaSAuthGateProps {
 
 /**
  * Flow: 1) Login screen (/login) first. 2) If force_password_reset → Update password.
- * 3) If no company_name → "Let's learn more about your company". 4) If not active → License required. 5) App.
- * Session with no profile = invalid/stale; sign out and send to login so cold start shows login screen.
- * On protected path with no session we refetch once so we pick up session right after sign-in (avoids redirect then flash back).
+ * 3) If no company_name → onboarding. 4) If not active → License required. 5) App.
+ * Core outage uses degraded mode (banner); entry requires Supabase session + resolved profile only.
  */
 export function SaaSAuthGate({ children }: SaaSAuthGateProps): React.ReactElement {
   const [mounted, setMounted] = useState(false);
   const pathname = usePathname();
   const router = useRouter();
-  const { session, user, profile, entitlementSnapshot, loading, error, refetch } = useSaaSProfile();
+  const {
+    session,
+    user,
+    profile,
+    entitlementSnapshot,
+    corePlatformStatus,
+    loading,
+    error,
+    refetch,
+  } = useSaaSProfile();
   const refetchedForProtectedRef = useRef(false);
-  const decision = getSaaSAuthGateDecision(session, user, profile, entitlementSnapshot);
+  const decision = getSaaSAuthGateDecision(
+    session,
+    user,
+    profile,
+    entitlementSnapshot,
+    corePlatformStatus,
+    loading
+  );
 
   useShadowCapabilitySnapshot({
     session,
@@ -49,7 +64,6 @@ export function SaaSAuthGate({ children }: SaaSAuthGateProps): React.ReactElemen
     setMounted(true);
   }, []);
 
-  // After sign-in we push /dashboard but gate state is still stale (no session). Refetch once so we get the new session instead of redirecting to login.
   useEffect(() => {
     if (!mounted || isPublicPath || session || profile) {
       if (session) refetchedForProtectedRef.current = false;
@@ -71,14 +85,13 @@ export function SaaSAuthGate({ children }: SaaSAuthGateProps): React.ReactElemen
     }
   }, [mounted, loading, error, session, user, isPublicPath, pathname, router]);
 
-  // Session but no profile (e.g. stale session or missing profiles row) → treat as not really logged in, send to login
   useEffect(() => {
     if (!mounted || loading || error || !session || !user || profile) return;
-    // Keep gate focused on routing decisions; stale-session side effects live in auth helper.
+    if (corePlatformStatus === 'unavailable') return;
     remediateStaleSaasSession().finally(() => {
       router.replace('/login');
     });
-  }, [mounted, loading, error, session, user, profile, router]);
+  }, [mounted, loading, error, session, user, profile, corePlatformStatus, router]);
 
   if (!mounted) {
     return <LoadingShell />;
@@ -88,9 +101,17 @@ export function SaaSAuthGate({ children }: SaaSAuthGateProps): React.ReactElemen
     return <LoadingShell />;
   }
 
-  if (error) {
+  if (error && !profile) {
     return (
-      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
+      <div
+        style={{
+          minHeight: '100vh',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '1rem',
+        }}
+      >
         <p style={{ color: 'var(--color-danger, #dc2626)' }}>{error}</p>
       </div>
     );

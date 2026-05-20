@@ -9,6 +9,21 @@ export const buildCoreDashboardContent = {
     message:
       'Your license key is invalid or missing. Please contact your administrator to continue.',
   },
+  corePlatform: {
+    unavailableTitle: 'Core services temporarily unavailable',
+    unavailableMessage:
+      'Your session is valid, but Zenformed platform services could not be reached right now. Profile, licensing, and document storage should return when Core is back online.',
+    retry: 'Try again',
+    continueLimited: 'Continue with limited access',
+    signOut: 'Sign out',
+    degradedBannerTitle: 'Zenformed platform services are temporarily unavailable',
+    degradedBannerLead:
+      'You can keep working in BuildCore. Branding, profile photo, and document storage need Core and are temporarily paused until it is back\u00A0online.',
+    degradedBannerAffected:
+      'Temporarily unavailable: company logo & name · profile photo changes · document upload, download, and delete',
+    degradedBannerDismissAriaLabel: 'Dismiss temporarily unavailable notice',
+    retryCooldownHint: 'Please wait a moment before trying again.',
+  },
   branding: {
     defaultShopNameFallback: buildcoreAppDefinition.displayName,
     logoSaveFailedFallback: 'Failed to save logo',
@@ -170,6 +185,7 @@ export const buildCoreDashboardContent = {
       documentsUpload: 'Upload',
       documentsUploadComingSoon: 'Uploads coming in a later phase.',
       documentUploadFailed: 'Could not upload document.',
+      coreServicesUnavailable: 'Document storage is temporarily unavailable.',
       documentUploadSuccess: 'Document uploaded.',
       documentUploadConfirmTitle: 'Upload document?',
       documentUploadConfirmMessage: 'Upload “{fileName}” to “{taskTitle}”?',

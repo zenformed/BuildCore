@@ -1,0 +1,87 @@
+.banner {
+  margin: 0;
+  padding: 0.5rem 3rem;
+  box-sizing: border-box;
+}
+
+.bannerNavbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 10001;
+  width: 100%;
+  background: rgb(190 75 75 / 0.88);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  color: #fff;
+  box-shadow: 0 1px 6px rgb(0 0 0 / 0.12);
+}
+
+.copy {
+  width: 100%;
+  max-width: min(96vw, 88rem);
+  margin: 0 auto;
+  padding: 0 0.5rem;
+  text-align: center;
+  box-sizing: border-box;
+}
+
+.title {
+  margin: 0;
+  font-size: 0.875rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+.lead {
+  margin: 0.2rem auto 0;
+  max-width: 88rem;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  line-height: 1.35;
+  opacity: 0.96;
+  text-wrap: pretty;
+}
+
+.affected {
+  margin: 0.25rem 0 0;
+  font-size: 0.75rem;
+  opacity: 0.9;
+}
+
+.dismiss {
+  position: absolute;
+  top: 50%;
+  right: 0.65rem;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  padding: 0;
+  border: none;
+  border-radius: 0.25rem;
+  background: rgb(255 255 255 / 0.15);
+  color: inherit;
+  font-size: 1.25rem;
+  line-height: 1;
+  cursor: pointer;
+  opacity: 0.9;
+}
+
+.dismiss:hover {
+  background: rgb(255 255 255 / 0.28);
+  opacity: 1;
+}
+
+.dismiss:focus-visible {
+  outline: 2px solid rgb(255 255 255 / 0.8);
+  outline-offset: 2px;
+}
+
+:global([data-theme='dark']) .bannerNavbar {
+  background: rgb(153 62 62 / 0.9);
+  color: #fef2f2;
+}

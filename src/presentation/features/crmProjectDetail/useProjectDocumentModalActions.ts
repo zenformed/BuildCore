@@ -2,14 +2,13 @@
 
 import { useCallback } from 'react';
 import type { CrmDocumentMetadata } from '@/domain/crm';
-import { STORAGE_LIMIT_EXCEEDED_CODE } from '@/domain/crm/documentUpload';
 import { createBudgetEntryDocumentDownload } from '@/application/use-cases/crm/createBudgetEntryDocumentDownload';
 import { createWorkflowTaskDocumentDownload } from '@/application/use-cases/crm/createWorkflowTaskDocumentDownload';
 import { deleteBudgetEntryDocument } from '@/application/use-cases/crm/deleteBudgetEntryDocument';
 import { deleteWorkflowTaskDocument } from '@/application/use-cases/crm/deleteWorkflowTaskDocument';
-import { CrmApiError } from '@/infrastructure/crm/api/crmApiClient';
-import { CrmDocumentServiceError } from '@/infrastructure/crm/errors';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
+import { mapCrmDocumentActionError } from '@/presentation/features/crmProjectDetail/crmDocumentActionErrors';
+import { useCorePlatformDegraded } from '@/presentation/hooks/useCorePlatformDegraded';
 import { crmRepositories } from '@/shared/di/container';
 
 export function useProjectDocumentModalActions(input: {
@@ -21,22 +20,19 @@ export function useProjectDocumentModalActions(input: {
   deleteDocument: (doc: CrmDocumentMetadata) => Promise<void>;
 } {
   const wf = content.projectDetail.workflow;
+  const coreDegraded = useCorePlatformDegraded();
 
   const mapError = useCallback(
-    (err: unknown): string => {
-      if (err instanceof CrmDocumentServiceError || err instanceof CrmApiError) {
-        if ('code' in err && err.code === STORAGE_LIMIT_EXCEEDED_CODE) {
-          return wf.storageLimitExceeded;
-        }
-        return err.message;
-      }
-      return err instanceof Error ? err.message : wf.documentUploadFailed;
-    },
-    [wf.documentUploadFailed, wf.storageLimitExceeded]
+    (err: unknown): string => mapCrmDocumentActionError(err, wf),
+    [wf]
   );
 
   const downloadDocument = useCallback(
     async (doc: CrmDocumentMetadata) => {
+      if (coreDegraded) {
+        input.onError(wf.coreServicesUnavailable);
+        return;
+      }
       if (!doc.workflowTaskId && !doc.budgetEntryId) {
         input.onError('Document is not linked to a task or budget item.');
         return;
@@ -65,11 +61,15 @@ export function useProjectDocumentModalActions(input: {
         input.onError(mapError(err));
       }
     },
-    [input, mapError]
+    [coreDegraded, input, mapError, wf.coreServicesUnavailable]
   );
 
   const deleteDocument = useCallback(
     async (doc: CrmDocumentMetadata) => {
+      if (coreDegraded) {
+        input.onError(wf.coreServicesUnavailable);
+        return;
+      }
       if (!doc.workflowTaskId && !doc.budgetEntryId) {
         input.onError('Document is not linked to a task or budget item.');
         return;
@@ -93,7 +93,7 @@ export function useProjectDocumentModalActions(input: {
         input.onError(mapError(err));
       }
     },
-    [input, mapError]
+    [coreDegraded, input, mapError, wf.coreServicesUnavailable]
   );
 
   return { downloadDocument, deleteDocument };

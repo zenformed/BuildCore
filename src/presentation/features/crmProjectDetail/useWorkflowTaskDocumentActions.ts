@@ -6,14 +6,13 @@ import {
   BUILDCORE_MAX_DOCUMENT_UPLOAD_BYTES,
   validateWorkflowTaskDocumentUpload,
 } from '@/domain/crm/documentUpload';
-import { STORAGE_LIMIT_EXCEEDED_CODE } from '@/domain/crm/documentUpload';
 import { uploadWorkflowTaskDocument } from '@/application/use-cases/crm/uploadWorkflowTaskDocument';
 import { deleteWorkflowTaskDocument } from '@/application/use-cases/crm/deleteWorkflowTaskDocument';
 import { createWorkflowTaskDocumentDownload } from '@/application/use-cases/crm/createWorkflowTaskDocumentDownload';
 import { crmRepositories } from '@/shared/di/container';
-import { CrmApiError } from '@/infrastructure/crm/api/crmApiClient';
-import { CrmDocumentServiceError } from '@/infrastructure/crm/errors';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
+import { mapCrmDocumentActionError } from '@/presentation/features/crmProjectDetail/crmDocumentActionErrors';
+import { useCorePlatformDegraded } from '@/presentation/hooks/useCorePlatformDegraded';
 
 export function useWorkflowTaskDocumentActions(input: {
   projectSlug: string;
@@ -32,24 +31,11 @@ export function useWorkflowTaskDocumentActions(input: {
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const wf = content.projectDetail.workflow;
+  const coreDegraded = useCorePlatformDegraded();
 
   const mapError = useCallback(
-    (err: unknown): string => {
-      if (err instanceof CrmDocumentServiceError) {
-        if (err.code === STORAGE_LIMIT_EXCEEDED_CODE) {
-          return wf.storageLimitExceeded;
-        }
-        return err.message;
-      }
-      if (err instanceof CrmApiError) {
-        if (err.code === STORAGE_LIMIT_EXCEEDED_CODE) {
-          return wf.storageLimitExceeded;
-        }
-        return err.message;
-      }
-      return err instanceof Error ? err.message : wf.documentUploadFailed;
-    },
-    [wf.documentUploadFailed, wf.storageLimitExceeded]
+    (err: unknown): string => mapCrmDocumentActionError(err, wf),
+    [wf]
   );
 
   const openFilePicker = useCallback(() => {
@@ -58,6 +44,10 @@ export function useWorkflowTaskDocumentActions(input: {
 
   const uploadFile = useCallback(
     async (file: File) => {
+      if (coreDegraded) {
+        input.onError(wf.coreServicesUnavailable);
+        return;
+      }
       const validation = validateWorkflowTaskDocumentUpload({
         fileName: file.name,
         mimeType: file.type || 'application/octet-stream',
@@ -86,7 +76,7 @@ export function useWorkflowTaskDocumentActions(input: {
         setUploading(false);
       }
     },
-    [input, mapError]
+    [coreDegraded, input, mapError, wf.coreServicesUnavailable]
   );
 
   const handleFileSelected = useCallback(
@@ -101,6 +91,10 @@ export function useWorkflowTaskDocumentActions(input: {
 
   const downloadDocument = useCallback(
     async (documentId: string) => {
+      if (coreDegraded) {
+        input.onError(wf.coreServicesUnavailable);
+        return;
+      }
       try {
         const download = await createWorkflowTaskDocumentDownload(crmRepositories, {
           projectSlug: input.projectSlug,
@@ -119,11 +113,15 @@ export function useWorkflowTaskDocumentActions(input: {
         input.onError(mapError(err));
       }
     },
-    [input, mapError]
+    [coreDegraded, input, mapError, wf.coreServicesUnavailable]
   );
 
   const deleteDocument = useCallback(
     async (documentId: string) => {
+      if (coreDegraded) {
+        input.onError(wf.coreServicesUnavailable);
+        return;
+      }
       try {
         await deleteWorkflowTaskDocument(crmRepositories, {
           projectSlug: input.projectSlug,
@@ -135,7 +133,7 @@ export function useWorkflowTaskDocumentActions(input: {
         input.onError(mapError(err));
       }
     },
-    [input, mapError]
+    [coreDegraded, input, mapError, wf.coreServicesUnavailable]
   );
 
   return {

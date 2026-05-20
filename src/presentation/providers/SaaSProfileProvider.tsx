@@ -13,7 +13,27 @@ import {
   shouldShowSaasProfileFullPageLoading,
 } from '@zenformed/core';
 import { BUILD_CORE_APP_SLUG } from '@/infrastructure/entitlements/buildCoreZenformedAppContext';
+import {
+  CORE_PLATFORM_HEALTH_POLL_MS,
+  CORE_PLATFORM_REFETCH_COOLDOWN_MS,
+} from '@/infrastructure/coreApi/corePlatformHealth';
+import { createCooldownGate } from '@/infrastructure/coreApi/fetchWithCooldown';
+import {
+  isCoreRelaySuccess,
+  isCoreRelayUnreachable,
+  isCoreRelayUnconfigured,
+  parseCoreRelayBody,
+} from '@/infrastructure/coreApi/coreRelayStatus';
+import { isZenformedCorePlatformRequired } from '@/infrastructure/coreApi/corePlatformRequirement';
+import {
+  clearCachedSaaSProfile,
+  mapSupabaseProfilesRowToSaaSProfile,
+  resolveProfileWhenCoreDegraded,
+  saveCachedSaaSProfile,
+} from '@/infrastructure/profile/saasProfileFallback';
 import { getSupabaseClient, type Session } from '@/infrastructure/supabase/supabaseClient';
+
+export type CorePlatformStatus = 'not_required' | 'loading' | 'available' | 'unavailable';
 
 export type LicenseTier = 'STANDARD' | 'PRO';
 
@@ -33,6 +53,7 @@ type CoreEntitlementResolutionState =
   | { status: 'pending' }
   | { status: 'from_core'; snapshot: SaaSEntitlementSnapshot }
   | { status: 'from_profile_fallback' }
+  | { status: 'core_unreachable' }
   | { status: 'blocked_null' };
 
 async function fetchEntitlementSnapshotFromInternalRelay(
@@ -49,7 +70,7 @@ async function fetchEntitlementSnapshotFromInternalRelay(
       },
     });
   } catch {
-    return { status: 'from_profile_fallback' };
+    return { status: 'core_unreachable' };
   }
 
   let body: Record<string, unknown>;
@@ -59,17 +80,23 @@ async function fetchEntitlementSnapshotFromInternalRelay(
     return { status: 'from_profile_fallback' };
   }
 
+  const relay = parseCoreRelayBody(body);
+
   if (res.status === 401 || res.status === 403) {
     return { status: 'blocked_null' };
   }
 
-  if (res.ok && body.relay === 'zenformed_core') {
+  if (isCoreRelayUnreachable(res, relay)) {
+    return { status: 'core_unreachable' };
+  }
+
+  if (res.ok && isCoreRelaySuccess(relay)) {
     const snap = parseEntitlementSnapshotJson(body.entitlement);
     if (snap != null) return { status: 'from_core', snapshot: snap };
     return { status: 'from_profile_fallback' };
   }
 
-  if (res.ok && body.relay === 'client_supabase_deprecated') {
+  if (res.ok && isCoreRelayUnconfigured(relay)) {
     return { status: 'from_profile_fallback' };
   }
 
@@ -89,6 +116,7 @@ type SaaSProfileContextValue = {
   user: User | null;
   profile: SaaSProfile | null;
   entitlementSnapshot: SaaSEntitlementSnapshot | null;
+  corePlatformStatus: CorePlatformStatus;
   loading: boolean;
   error: string | null;
   refetch: () => Promise<void>;
@@ -118,8 +146,12 @@ export function SaaSProfileProvider({ children }: { children: React.ReactNode })
   const [error, setError] = useState<string | null>(null);
   const [coreEntitlementResolution, setCoreEntitlementResolution] =
     useState<CoreEntitlementResolutionState>({ status: 'unused' });
+  const [corePlatformStatus, setCorePlatformStatus] = useState<CorePlatformStatus>('not_required');
 
   const inFlightRef = useRef<Promise<void> | null>(null);
+  const coreRefetchCooldownRef = useRef(createCooldownGate(CORE_PLATFORM_REFETCH_COOLDOWN_MS));
+  const coreUnavailableRef = useRef(false);
+  const cachedCoreEntitlementRef = useRef<SaaSEntitlementSnapshot | null>(null);
   const bootstrappedUserIdRef = useRef<string | null>(null);
   const profileRef = useRef<SaaSProfile | null>(null);
   profileRef.current = profile;
@@ -141,12 +173,15 @@ export function SaaSProfileProvider({ children }: { children: React.ReactNode })
       }
       setError(null);
 
-      const coreRuntimeEnabled =
-        getRuntimeEntitlementSourceMode() === 'core' &&
-        runtimeModes.isSaasMode() &&
-        !runtimeModes.useMockAuth();
+      const coreRuntimeEnabled = isZenformedCorePlatformRequired();
+      let activeSession: Session | null = null;
 
       try {
+        if (!coreRuntimeEnabled) {
+          setCorePlatformStatus('not_required');
+        } else if (!soft) {
+          setCorePlatformStatus('loading');
+        }
         const supabase = getSupabaseClient();
         const {
           data: { session: s },
@@ -160,10 +195,25 @@ export function SaaSProfileProvider({ children }: { children: React.ReactNode })
           setProfile(null);
           bootstrappedUserIdRef.current = null;
           setCoreEntitlementResolution({ status: 'unused' });
+          setCorePlatformStatus('not_required');
           return;
         }
+        activeSession = s;
         setSession(s);
         setUser(s.user ?? null);
+        const bootSession = activeSession;
+
+        if (
+          coreRuntimeEnabled &&
+          coreUnavailableRef.current &&
+          profileRef.current != null &&
+          !force &&
+          !coreRefetchCooldownRef.current.canRun
+        ) {
+          setCorePlatformStatus('unavailable');
+          setLoading(false);
+          return;
+        }
 
         if (coreRuntimeEnabled && !(soft && profileRef.current != null)) {
           setCoreEntitlementResolution({ status: 'pending' });
@@ -171,21 +221,32 @@ export function SaaSProfileProvider({ children }: { children: React.ReactNode })
           setCoreEntitlementResolution({ status: 'unused' });
         }
 
-        let activeSession: Session = s;
         const tryZenformedCoreRelay =
           runtimeModes.isSaasMode() &&
           !runtimeModes.useMockAuth() &&
           hasUsableAccessToken(activeSession);
 
         const finalizeCoreEntitlement = async (token: string): Promise<void> => {
-          if (!coreRuntimeEnabled || !token) {
+          if (!coreRuntimeEnabled || !token) return;
+          if (coreUnavailableRef.current) {
+            setCoreEntitlementResolution({ status: 'from_profile_fallback' });
             return;
           }
           const r = await fetchEntitlementSnapshotFromInternalRelay(token);
+          if (r.status === 'core_unreachable') {
+            coreUnavailableRef.current = true;
+            setCorePlatformStatus('unavailable');
+            setCoreEntitlementResolution({ status: 'from_profile_fallback' });
+            return;
+          }
+          if (r.status === 'from_core') {
+            cachedCoreEntitlementRef.current = r.snapshot;
+          }
           setCoreEntitlementResolution(r);
         };
 
         if (tryZenformedCoreRelay) {
+          let coreRelayFailed = false;
           try {
             let relayRes = await fetchProfileFromCoreRelay(activeSession.access_token);
 
@@ -203,36 +264,49 @@ export function SaaSProfileProvider({ children }: { children: React.ReactNode })
                 setUser(null);
                 setProfile(null);
                 setCoreEntitlementResolution({ status: 'unused' });
+                setCorePlatformStatus('not_required');
                 return;
               }
             }
 
-            if (relayRes.status === 404) {
-              if (!soft) {
-                setProfile(null);
-                bootstrappedUserIdRef.current = null;
-                setCoreEntitlementResolution({ status: 'unused' });
-                setError(null);
-              }
+            let relayBody: Record<string, unknown> = {};
+            try {
+              relayBody = (await relayRes.json()) as Record<string, unknown>;
+            } catch {
+              relayBody = {};
+            }
+            const parsedRelay = parseCoreRelayBody(relayBody);
+
+            if (coreRuntimeEnabled && isCoreRelayUnreachable(relayRes, parsedRelay)) {
+              coreRelayFailed = true;
+              coreUnavailableRef.current = true;
+              setCorePlatformStatus('unavailable');
+            } else if (
+              relayRes.ok &&
+              isCoreRelaySuccess(parsedRelay) &&
+              relayBody.profile != null &&
+              typeof relayBody.profile === 'object'
+            ) {
+              coreUnavailableRef.current = false;
+              setCorePlatformStatus('available');
+              const coreProfile = relayBody.profile as SaaSProfile;
+              saveCachedSaaSProfile(coreProfile);
+              setProfile(coreProfile);
+              bootstrappedUserIdRef.current = activeSession.user.id;
+              setError(null);
+              await finalizeCoreEntitlement(activeSession.access_token);
               return;
-            }
-
-            if (relayRes.ok) {
-              const body = (await relayRes.json()) as {
-                relay?: string;
-                profile?: SaaSProfile | null;
-              };
-              if (body.relay === 'zenformed_core' && body.profile != null) {
-                setProfile(body.profile);
-                bootstrappedUserIdRef.current = activeSession.user.id;
-                setError(null);
-                await finalizeCoreEntitlement(activeSession.access_token);
-                return;
-              }
+            } else if (isCoreRelayUnconfigured(parsedRelay)) {
+              setCorePlatformStatus('not_required');
             }
           } catch {
-            /* fall through */
+            if (coreRuntimeEnabled) {
+              coreRelayFailed = true;
+              coreUnavailableRef.current = true;
+              setCorePlatformStatus('unavailable');
+            }
           }
+
         }
 
         const { data: p, error: e } = await supabase
@@ -240,33 +314,72 @@ export function SaaSProfileProvider({ children }: { children: React.ReactNode })
           .select(
             'id, email, subscription_status, license_tier, company_name, industry, force_password_reset, updated_at'
           )
-          .eq('id', activeSession.user.id)
+          .eq('id', bootSession.user.id)
           .maybeSingle();
-        if (e) {
-          if (!soft) {
-            setError(e.message);
-            setProfile(null);
-            setCoreEntitlementResolution({ status: 'unused' });
-          }
-        } else {
-          const tier = p?.license_tier === 'PRO' ? 'PRO' : 'STANDARD';
-          setProfile(p ? ({ ...p, license_tier: tier } as SaaSProfile) : null);
-          if (p) {
-            bootstrappedUserIdRef.current = activeSession.user.id;
+
+        const applyResolvedProfile = async (resolved: SaaSProfile | null): Promise<void> => {
+          setProfile(resolved);
+          if (resolved) {
+            bootstrappedUserIdRef.current = bootSession.user.id;
           } else {
             bootstrappedUserIdRef.current = null;
           }
-          if (p && hasUsableAccessToken(activeSession)) {
-            await finalizeCoreEntitlement(activeSession.access_token);
+          if (resolved && hasUsableAccessToken(bootSession)) {
+            if (!coreUnavailableRef.current) {
+              await finalizeCoreEntitlement(bootSession.access_token);
+            } else {
+              setCoreEntitlementResolution({ status: 'from_profile_fallback' });
+            }
           } else {
             setCoreEntitlementResolution({ status: 'unused' });
           }
+          if (!coreRuntimeEnabled) {
+            setCorePlatformStatus('not_required');
+          }
+        };
+
+        if (e) {
+          if (!soft) {
+            if (coreUnavailableRef.current && bootSession.user) {
+              const resolved = resolveProfileWhenCoreDegraded(bootSession.user, null);
+              await applyResolvedProfile(resolved);
+              setError(null);
+            } else {
+              setError(e.message);
+              setProfile(null);
+              setCoreEntitlementResolution({ status: 'unused' });
+            }
+          }
+        } else if (p) {
+          const resolved = mapSupabaseProfilesRowToSaaSProfile(
+            p as Record<string, unknown>,
+            bootSession.user.id
+          );
+          saveCachedSaaSProfile(resolved);
+          await applyResolvedProfile(resolved);
+        } else if (coreUnavailableRef.current && bootSession.user) {
+          const resolved = resolveProfileWhenCoreDegraded(bootSession.user, null);
+          await applyResolvedProfile(resolved);
+        } else {
+          await applyResolvedProfile(null);
         }
       } catch (err) {
         if (!soft) {
-          setError(err instanceof Error ? err.message : 'Failed to load profile');
-          setProfile(null);
-          setCoreEntitlementResolution({ status: 'unused' });
+          if (isZenformedCorePlatformRequired()) {
+            setCorePlatformStatus('unavailable');
+            coreUnavailableRef.current = true;
+          }
+          if (profileRef.current == null && activeSession?.user) {
+            const resolved = resolveProfileWhenCoreDegraded(activeSession.user, null);
+            setProfile(resolved);
+            bootstrappedUserIdRef.current = activeSession.user.id;
+            setCoreEntitlementResolution({ status: 'from_profile_fallback' });
+            setError(null);
+          } else if (profileRef.current == null) {
+            setError(err instanceof Error ? err.message : 'Failed to load profile');
+            setProfile(null);
+            setCoreEntitlementResolution({ status: 'unused' });
+          }
         }
       } finally {
         setLoading(false);
@@ -313,15 +426,21 @@ export function SaaSProfileProvider({ children }: { children: React.ReactNode })
         case 'silent_session':
           applySession();
           return;
-        case 'sign_out':
+        case 'sign_out': {
+          const signedOutUserId = profileRef.current?.id ?? bootstrappedUserIdRef.current;
+          if (signedOutUserId) clearCachedSaaSProfile(signedOutUserId);
           bootstrappedUserIdRef.current = null;
           setSession(null);
           setUser(null);
           setProfile(null);
           setCoreEntitlementResolution({ status: 'unused' });
+          cachedCoreEntitlementRef.current = null;
+          coreUnavailableRef.current = false;
+          setCorePlatformStatus('not_required');
           setLoading(false);
           setError(null);
           return;
+        }
         case 'load_full':
           void loadProfile({
             soft: profileRef.current != null,
@@ -355,12 +474,32 @@ export function SaaSProfileProvider({ children }: { children: React.ReactNode })
       case 'blocked_null':
         return null;
       case 'pending':
+        return cachedCoreEntitlementRef.current ?? legacy;
       case 'from_profile_fallback':
+      case 'core_unreachable':
       case 'unused':
       default:
-        return legacy;
+        return cachedCoreEntitlementRef.current ?? legacy;
     }
   }, [profile, coreEntitlementResolution]);
+
+  const refetchWithCooldown = useCallback(async () => {
+    if (coreUnavailableRef.current && !coreRefetchCooldownRef.current.canRun) {
+      return;
+    }
+    if (coreUnavailableRef.current) {
+      coreRefetchCooldownRef.current.markRan();
+    }
+    await loadProfile({ soft: true, force: true });
+  }, [loadProfile]);
+
+  useEffect(() => {
+    if (corePlatformStatus !== 'unavailable') return;
+    const intervalId = globalThis.setInterval(() => {
+      void refetchWithCooldown();
+    }, CORE_PLATFORM_HEALTH_POLL_MS);
+    return () => globalThis.clearInterval(intervalId);
+  }, [corePlatformStatus, refetchWithCooldown]);
 
   const value = useMemo<SaaSProfileContextValue>(
     () => ({
@@ -368,11 +507,12 @@ export function SaaSProfileProvider({ children }: { children: React.ReactNode })
       user,
       profile,
       entitlementSnapshot,
+      corePlatformStatus,
       loading,
       error,
-      refetch: () => loadProfile({ soft: true, force: true }),
+      refetch: refetchWithCooldown,
     }),
-    [session, user, profile, entitlementSnapshot, loading, error, loadProfile]
+    [session, user, profile, entitlementSnapshot, corePlatformStatus, loading, error, refetchWithCooldown]
   );
 
   return <SaaSProfileContext.Provider value={value}>{children}</SaaSProfileContext.Provider>;
