@@ -29,6 +29,7 @@ export type BuildCoreDashboardHeaderProps = {
   onSearchQueryChange: (query: string) => void;
   showProjectActions: boolean;
   onNewProjectClick: () => void;
+  newProjectDisabled?: boolean;
   user: { email: string } | null;
   effectiveLicenseTier: string | null | undefined;
   isAdmin: boolean;
@@ -45,6 +46,7 @@ export function BuildCoreDashboardHeader({
   onSearchQueryChange,
   showProjectActions,
   onNewProjectClick,
+  newProjectDisabled = false,
   user,
   effectiveLicenseTier,
   isAdmin,
@@ -85,6 +87,7 @@ export function BuildCoreDashboardHeader({
             <button
               type="button"
               className={styles.headerNewOrderBtn}
+              disabled={newProjectDisabled}
               onClick={onNewProjectClick}
               title={nav.header.newProject.title}
               aria-label={nav.header.newProject.ariaLabel}

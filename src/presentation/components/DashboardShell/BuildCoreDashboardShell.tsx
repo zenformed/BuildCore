@@ -15,7 +15,6 @@ import { buildCoreDashboardNavigation as nav } from '@/platform/navigation/build
 import type { useBuildCoreDashboard } from '@/presentation/features/buildCoreDashboard/useBuildCoreDashboard';
 import { BuildCoreDashboardHeader } from './BuildCoreDashboardHeader';
 import { BuildCoreDashboardModals } from './BuildCoreDashboardModals';
-import { CreateCrmProjectDrawer } from '@/presentation/components/CrmProjects/CreateCrmProjectDrawer';
 import { BuildCoreSettingsDrawer } from './BuildCoreSettingsDrawer';
 import { BuildCoreSidebar, type BuildCoreSidebarNavId } from './BuildCoreSidebar';
 import { CorePlatformDegradedBanner } from '@/presentation/components/CorePlatform/CorePlatformDegradedBanner';
@@ -96,6 +95,7 @@ export function BuildCoreDashboardShell({
               onSearchQueryChange={dash.setProjectsSearchQuery}
               showProjectActions={showProjectActions}
               onNewProjectClick={dash.onNewProjectClick}
+              newProjectDisabled={dash.createProjectDraftOpen}
               user={dash.user ? { email: dash.user.email } : null}
               effectiveLicenseTier={dash.effectiveLicenseTier}
               isAdmin={dash.isAdmin}
@@ -117,11 +117,6 @@ export function BuildCoreDashboardShell({
             </main>
           </>
         }
-      />
-
-      <CreateCrmProjectDrawer
-        open={dash.createProjectDrawerOpen}
-        onClose={() => dash.setCreateProjectDrawerOpen(false)}
       />
 
       <BuildCoreSettingsDrawer

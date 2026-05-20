@@ -60,8 +60,8 @@ export function useBuildCoreDashboard(): {
   setPriorityFilter: (value: CrmPriorityFilter) => void;
   onProjectRowClick: (project: CrmProjectSummary) => void;
   onNewProjectClick: () => void;
-  createProjectDrawerOpen: boolean;
-  setCreateProjectDrawerOpen: (open: boolean) => void;
+  createProjectDraftOpen: boolean;
+  setCreateProjectDraftOpen: (open: boolean) => void;
 } {
   const router = useRouter();
   const { user, isLoading: authLoading, signOut } = useAuth();
@@ -89,7 +89,7 @@ export function useBuildCoreDashboard(): {
   const [projectsSearchQuery, setProjectsSearchQuery] = useState('');
   const [stageFilter, setStageFilter] = useState<CrmStageFilter>('all');
   const [priorityFilter, setPriorityFilter] = useState<CrmPriorityFilter>('all');
-  const [createProjectDrawerOpen, setCreateProjectDrawerOpen] = useState(false);
+  const [createProjectDraftOpen, setCreateProjectDraftOpen] = useState(false);
 
   const onProjectRowClick = useCallback(
     (project: CrmProjectSummary) => {
@@ -99,7 +99,7 @@ export function useBuildCoreDashboard(): {
   );
 
   const onNewProjectClick = useCallback(() => {
-    setCreateProjectDrawerOpen(true);
+    setCreateProjectDraftOpen(true);
   }, []);
 
   useEffect(() => {
@@ -157,7 +157,7 @@ export function useBuildCoreDashboard(): {
     setPriorityFilter,
     onProjectRowClick,
     onNewProjectClick,
-    createProjectDrawerOpen,
-    setCreateProjectDrawerOpen,
+    createProjectDraftOpen,
+    setCreateProjectDraftOpen,
   };
 }

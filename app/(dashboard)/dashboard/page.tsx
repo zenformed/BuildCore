@@ -22,6 +22,8 @@ export default function DashboardPage(): ReactElement {
           searchQuery={dash.projectsSearchQuery}
           stageFilter={dash.stageFilter}
           priorityFilter={dash.priorityFilter}
+          createDraftOpen={dash.createProjectDraftOpen}
+          onCreateDraftOpenChange={dash.setCreateProjectDraftOpen}
           onStageFilterChange={dash.setStageFilter}
           onPriorityFilterChange={dash.setPriorityFilter}
           onProjectRowClick={dash.onProjectRowClick}

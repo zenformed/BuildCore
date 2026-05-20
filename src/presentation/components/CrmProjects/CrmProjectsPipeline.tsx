@@ -12,24 +12,36 @@ export type CrmProjectsPipelineProps = {
   searchQuery: string;
   stageFilter: CrmStageFilter;
   priorityFilter: CrmPriorityFilter;
+  createDraftOpen: boolean;
+  onCreateDraftOpenChange: (open: boolean) => void;
   onStageFilterChange: (value: CrmStageFilter) => void;
   onPriorityFilterChange: (value: CrmPriorityFilter) => void;
   onProjectRowClick: (project: CrmProjectSummary) => void;
+  onProjectCreated?: () => void | Promise<void>;
 };
 
 export function CrmProjectsPipeline({
   searchQuery,
   stageFilter,
   priorityFilter,
+  createDraftOpen,
+  onCreateDraftOpenChange,
   onStageFilterChange,
   onPriorityFilterChange,
   onProjectRowClick,
+  onProjectCreated,
 }: CrmProjectsPipelineProps): ReactElement {
-  const { rows, totalCount, filteredCount, isLoading } = useCrmProjectsPipeline(
+  const { rows, totalCount, filteredCount, isLoading, refetch } = useCrmProjectsPipeline(
     searchQuery,
     stageFilter,
     priorityFilter
   );
+
+  const handleProjectCreated = async (): Promise<void> => {
+    refetch();
+    onCreateDraftOpenChange(false);
+    await onProjectCreated?.();
+  };
 
   return (
     <div className={styles.pipeline}>
@@ -41,7 +53,14 @@ export function CrmProjectsPipeline({
         onStageFilterChange={onStageFilterChange}
         onPriorityFilterChange={onPriorityFilterChange}
       />
-      <CrmProjectsTable rows={rows} isLoading={isLoading} onRowClick={onProjectRowClick} />
+      <CrmProjectsTable
+        rows={rows}
+        isLoading={isLoading}
+        draftOpen={createDraftOpen}
+        onDraftOpenChange={onCreateDraftOpenChange}
+        onProjectCreated={handleProjectCreated}
+        onRowClick={onProjectRowClick}
+      />
     </div>
   );
 }

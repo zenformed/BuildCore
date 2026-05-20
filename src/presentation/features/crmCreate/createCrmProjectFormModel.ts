@@ -58,7 +58,8 @@ export function validateCreateCrmProjectForm(
     return { ok: false, message: 'Enter a valid deal value.' };
   }
 
-  const balanceRemainingCents = parseUsdInputToCents(form.balanceUsd);
+  const balanceUsd = form.balanceUsd.trim();
+  const balanceRemainingCents = balanceUsd ? parseUsdInputToCents(balanceUsd) : 0;
   if (balanceRemainingCents == null) {
     return { ok: false, message: 'Enter a valid balance.' };
   }
