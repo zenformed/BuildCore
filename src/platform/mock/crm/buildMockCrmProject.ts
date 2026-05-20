@@ -36,6 +36,8 @@ export type BuildMockCrmProjectInput = {
   readonly invoicedCents?: number;
   readonly assignedToId: string;
   readonly lastUpdatedAt: string;
+  readonly completedAt?: string | null;
+  readonly completedById?: string | null;
   readonly workflowTasks?: readonly CrmWorkflowTask[];
   readonly documents?: readonly CrmDocumentMetadata[];
   readonly accountabilityLog?: readonly CrmAccountabilityAction[];
@@ -325,6 +327,11 @@ export function buildMockCrmProjectDetail(input: BuildMockCrmProjectInput): CrmP
     balanceRemainingCents,
     assignedTo,
     lastUpdatedAt: input.lastUpdatedAt,
+    completedAt: input.completedAt ?? null,
+    completedBy:
+      input.completedAt != null && input.completedById != null
+        ? getMockCrmTeamMember(input.completedById)
+        : null,
   };
 
   const milestonePayment =

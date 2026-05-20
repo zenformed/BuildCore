@@ -186,6 +186,36 @@ export class ApiCrmProjectDetailRepository implements ICrmProjectDetailRepositor
 
   }
 
+
+
+  async setCompletion(slug: string, complete: boolean): Promise<CrmProjectDetail | null> {
+
+    clearApiCrmDetailCache();
+
+    try {
+
+      const detail = await crmApiPostJson<CrmProjectDetail>(
+
+        `/api/crm/projects/${encodeURIComponent(slug.trim())}/completion`,
+
+        { complete }
+
+      );
+
+      setApiCrmDetailCache(slug.trim(), detail);
+
+      return detail;
+
+    } catch (err) {
+
+      if (err instanceof CrmApiError && err.status === 404) return null;
+
+      throw err;
+
+    }
+
+  }
+
 }
 
 

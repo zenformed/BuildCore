@@ -25,6 +25,8 @@ const PROJECT_LIST_SELECT = `
   balance_cents,
   assigned_member_id,
   last_activity_at,
+  completed_at,
+  completed_by,
   client_id,
   primary_contact_id,
   crm_clients ( id, company_name ),
@@ -44,6 +46,8 @@ const PROJECT_DETAIL_SELECT = `
   balance_cents,
   assigned_member_id,
   last_activity_at,
+  completed_at,
+  completed_by,
   client_id,
   primary_contact_id,
   crm_clients ( id, company_name ),
@@ -60,6 +64,7 @@ function collectMemberIds(rows: {
   const ids = new Set<string>();
   for (const p of rows.projects ?? []) {
     if (p.assigned_member_id) ids.add(p.assigned_member_id);
+    if (p.completed_by) ids.add(p.completed_by);
   }
   for (const t of rows.workflowTasks ?? []) {
     if (t.assigned_member_id) ids.add(t.assigned_member_id);

@@ -22,6 +22,9 @@ export type WorkflowStageTaskGroupProps = {
   onRequestArchiveTask?: (task: CrmWorkflowTask) => void;
   /** When false, stage is always expanded with a static header (e.g. "View all" modal). */
   collapsible?: boolean;
+  /** Keep the stage expanded while composing an inline draft row. */
+  forceExpanded?: boolean;
+  draftRow?: ReactElement | null;
 };
 
 export function WorkflowStageTaskGroup({
@@ -34,11 +37,13 @@ export function WorkflowStageTaskGroup({
   onTaskError,
   onRequestArchiveTask,
   collapsible = true,
+  forceExpanded = false,
+  draftRow = null,
 }: WorkflowStageTaskGroupProps): ReactElement {
   const cols = content.projectDetail.workflow.columns;
   const wf = content.projectDetail.workflow;
   const persisted = useWorkflowStageExpanded(projectSlug, group.collapseKey);
-  const expanded = collapsible ? persisted.expanded : true;
+  const expanded = forceExpanded || (collapsible ? persisted.expanded : true);
   const groupClass = [
     styles.stageGroup,
     collapsible && !expanded ? styles.stageGroup_collapsed : '',
@@ -50,6 +55,7 @@ export function WorkflowStageTaskGroup({
     ? `${styles.workflowGrid} ${styles.workflowGridPayments}`
     : styles.workflowGrid;
   const allTasksDone = areAllStageTasksDone(group.tasks);
+  const taskCountLabel = group.tasks.length + (draftRow ? 1 : 0);
 
   const stageTitle = (
     <span className={styles.stageGroupTitle}>
@@ -69,7 +75,7 @@ export function WorkflowStageTaskGroup({
 
   const taskCount = (
     <span className={styles.stageGroupCount}>
-      {group.tasks.length} {group.tasks.length === 1 ? wf.taskSingular : wf.taskPlural}
+      {taskCountLabel} {taskCountLabel === 1 ? wf.taskSingular : wf.taskPlural}
     </span>
   );
 
@@ -98,6 +104,7 @@ export function WorkflowStageTaskGroup({
           onRequestArchiveTask={onRequestArchiveTask}
         />
       ))}
+      {draftRow}
     </div>
   );
 

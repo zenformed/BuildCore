@@ -43,6 +43,9 @@ export type CrmProjectSummary = {
   readonly balanceRemainingCents: number;
   readonly assignedTo: CrmTeamMemberRef | null;
   readonly lastUpdatedAt: string;
+  /** Set when marked complete; null = incomplete (default). */
+  readonly completedAt: string | null;
+  readonly completedBy: CrmTeamMemberRef | null;
 };
 
 export type CrmStageProgress = {

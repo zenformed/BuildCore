@@ -215,3 +215,28 @@
   background: #431407;
   color: #fdba74;
 }
+
+.projectCompleteIcon {
+  flex-shrink: 0;
+  width: 1rem;
+  height: 1rem;
+  border-radius: 50%;
+  background: #16a34a;
+  position: relative;
+}
+
+.projectCompleteIcon::after {
+  content: '';
+  position: absolute;
+  left: 0.32rem;
+  top: 0.2rem;
+  width: 0.28rem;
+  height: 0.48rem;
+  border: solid #fff;
+  border-width: 0 0.14rem 0.14rem 0;
+  transform: rotate(45deg);
+}
+
+:global([data-theme='dark']) .projectCompleteIcon {
+  background: #22c55e;
+}

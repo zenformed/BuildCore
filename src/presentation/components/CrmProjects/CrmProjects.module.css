@@ -170,8 +170,16 @@
   overflow: hidden;
 }
 
+.projectNameRow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  min-width: 0;
+}
+
 .projectName {
   font-weight: 600;
+  min-width: 0;
 }
 
 .projectMeta {

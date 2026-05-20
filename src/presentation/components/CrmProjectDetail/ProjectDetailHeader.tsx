@@ -2,6 +2,8 @@
 
 import type { ReactElement, ReactNode } from 'react';
 import type { CrmProjectSummary } from '@/domain/crm';
+import { isCrmProjectComplete } from '@/domain/crm';
+import { CrmProjectCompleteIcon } from '@/presentation/components/crmShared/CrmProjectCompleteIcon';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
 import type { ProjectDetailPageContext } from './ProjectDetailContextBlock';
 import styles from './ProjectDetail.module.css';
@@ -37,6 +39,7 @@ export function ProjectDetailHeader({
             ? content.projectDetail.actions.financials
             : null;
   const showSubPageBreadcrumb = subPageLabel != null && onOpenProject != null;
+  const isComplete = isCrmProjectComplete(project);
 
   return (
     <header className={styles.detailHeader}>
@@ -68,7 +71,10 @@ export function ProjectDetailHeader({
             )}
           </nav>
           <div className={styles.titleRow}>
-            <h1 className={styles.title}>{project.name}</h1>
+            {isComplete ? (
+              <CrmProjectCompleteIcon ariaLabel={content.crm.table.completionCheckAriaLabel} />
+            ) : null}
+            <h1 className={styles.title}>{project.client.name}</h1>
             {assigneeControl}
           </div>
           {tradeTypeControl}

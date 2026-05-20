@@ -9,9 +9,9 @@ import { WorkflowTaskFileDragProvider } from '@/presentation/features/crmProject
 import { AccountabilityPanel } from './AccountabilityPanel';
 import { DetailToast } from './DetailToast';
 import { PaymentsRail } from './PaymentsRail';
-import { ProjectDetailActionsMenu } from './ProjectDetailActionsMenu';
 import { ProjectDetailContextBlock } from './ProjectDetailContextBlock';
-import { WorkflowTaskDrawer } from './WorkflowTaskDrawer';
+import { ProjectDetailHeaderActions } from './ProjectDetailHeaderActions';
+import { useProjectCompletionToggle } from '@/presentation/features/crmProjectDetail/useProjectCompletionToggle';
 import { WorkflowTasksTable } from './WorkflowTasksTable';
 import styles from './ProjectDetail.module.css';
 
@@ -28,12 +28,12 @@ export function ProjectDetailPage({
   onBack,
   onRefresh,
 }: ProjectDetailPageProps): ReactElement {
-  const workspace = useProjectDetailWorkspace(initialProject, onRefresh);
+  const completion = useProjectCompletionToggle(initialProject, onRefresh);
+  const workspace = useProjectDetailWorkspace(completion.project, onRefresh);
   const {
     project,
     toast,
     setToast,
-    taskDrawer,
     archiveConfirmTask,
     setArchiveConfirmTask,
     documentUploadConfirm,
@@ -44,10 +44,9 @@ export function ProjectDetailPage({
     handleTaskDocumentDrop,
     handleConfirmDocumentUpload,
     handleConfirmArchiveTask,
-    openCreateTask,
-    closeTaskDrawer,
     wf,
   } = workspace;
+  const detail = content.projectDetail;
 
   return (
     <div className={styles.page} data-project-detail-page>
@@ -57,7 +56,17 @@ export function ProjectDetailPage({
         project={project}
         isApiSource={isApiSource}
         onBack={onBack}
-        actions={<ProjectDetailActionsMenu projectSlug={project.summary.slug} />}
+        actions={
+          <ProjectDetailHeaderActions
+            projectSlug={project.summary.slug}
+            isComplete={completion.isComplete}
+            completionBusy={completion.completionBusy}
+            onMarkComplete={completion.requestMarkComplete}
+            onMarkIncomplete={completion.requestMarkIncomplete}
+            markCompleteLabel={detail.markComplete}
+            markIncompleteLabel={detail.markIncomplete}
+          />
+        }
         savingField={savingField}
         patchField={patchField}
       />
@@ -68,8 +77,11 @@ export function ProjectDetailPage({
             <WorkflowTasksTable
               project={project}
               isApiSource={isApiSource}
-              onAddTask={() => openCreateTask('workflow')}
               onTaskUpdated={handleTaskSaved}
+              onTaskAdded={async () => {
+                await onRefresh();
+                setToast({ kind: 'success', message: wf.taskAddedSuccess });
+              }}
               onTaskError={(message) => setToast({ kind: 'error', message })}
               onRequestArchiveTask={setArchiveConfirmTask}
             />
@@ -85,16 +97,6 @@ export function ProjectDetailPage({
         </div>
       </WorkflowTaskFileDragProvider>
 
-      <WorkflowTaskDrawer
-        open={taskDrawer.open}
-        mode={taskDrawer.mode}
-        drawerContext={taskDrawer.context}
-        project={project}
-        task={taskDrawer.task}
-        isApiSource={isApiSource}
-        onClose={closeTaskDrawer}
-        onSaved={handleTaskSaved}
-      />
       <ConfirmModal
         isOpen={documentUploadConfirm != null}
         onClose={() => setDocumentUploadConfirm(null)}
@@ -110,6 +112,34 @@ export function ProjectDetailPage({
             : undefined
         }
         confirmLabel={wf.documentUploadConfirmLabel}
+        cancelLabel={wf.archiveTaskCancelLabel}
+        variant="primary"
+      />
+      <ConfirmModal
+        isOpen={completion.completionConfirm === 'complete'}
+        onClose={() => completion.setCompletionConfirm(null)}
+        onConfirm={() => {
+          void completion
+            .confirmCompletionChange()
+            .then(() => setToast({ kind: 'success', message: detail.markCompleteSuccess }))
+            .catch(() => setToast({ kind: 'error', message: detail.markCompleteFailed }));
+        }}
+        title={detail.markCompleteConfirmTitle}
+        confirmLabel={detail.markComplete}
+        cancelLabel={wf.archiveTaskCancelLabel}
+        variant="primary"
+      />
+      <ConfirmModal
+        isOpen={completion.completionConfirm === 'incomplete'}
+        onClose={() => completion.setCompletionConfirm(null)}
+        onConfirm={() => {
+          void completion
+            .confirmCompletionChange()
+            .then(() => setToast({ kind: 'success', message: detail.markIncompleteSuccess }))
+            .catch(() => setToast({ kind: 'error', message: detail.markCompleteFailed }));
+        }}
+        title={detail.markIncompleteConfirmTitle}
+        confirmLabel={detail.markIncomplete}
         cancelLabel={wf.archiveTaskCancelLabel}
         variant="primary"
       />

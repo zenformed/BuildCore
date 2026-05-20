@@ -2,6 +2,8 @@
 
 import type { KeyboardEvent, ReactElement } from 'react';
 import type { CrmPriority, CrmProjectSummary } from '@/domain/crm';
+import { isCrmProjectComplete } from '@/domain/crm';
+import { CrmProjectCompleteIcon } from '@/presentation/components/crmShared/CrmProjectCompleteIcon';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
 import {
   formatCentsAsUsd,
@@ -86,7 +88,12 @@ function ProjectRow({
       aria-label={content.crm.table.rowAriaLabel(project.name)}
     >
       <span className={styles.gridCell} role="cell">
-        <span className={styles.projectName}>{project.name}</span>
+        <span className={styles.projectNameRow}>
+          {isCrmProjectComplete(project) ? (
+            <CrmProjectCompleteIcon ariaLabel={content.crm.table.completionCheckAriaLabel} />
+          ) : null}
+          <span className={styles.projectName}>{project.name}</span>
+        </span>
         <span className={styles.projectMeta}>
           {project.client.name} · {formatTradeLabel(project.tradeType)}
         </span>

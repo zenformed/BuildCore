@@ -58,7 +58,7 @@ import type {
 
 import { getMockCrmTeamMember } from '@/platform/mock/crm';
 
-import { MOCK_CRM_PROJECT_SUMMARIES } from '@/platform/mock/crm';
+import { MOCK_CRM_PROJECT_DETAILS, MOCK_CRM_PROJECT_SUMMARIES } from '@/platform/mock/crm';
 
 import { CrmWriteNotAvailableError } from '@/infrastructure/crm/errors';
 import { getDocumentStorageProvider } from '@/infrastructure/storage/getDocumentStorageProvider';
@@ -147,6 +147,8 @@ function applyProjectUpdate(detail: CrmProjectDetail, input: UpdateCrmProjectInp
     assignedTo,
 
     lastUpdatedAt: now,
+    completedAt: detail.summary.completedAt,
+    completedBy: detail.summary.completedBy,
 
   };
 
@@ -190,11 +192,45 @@ function saveAndReturn(slug: string, detail: CrmProjectDetail): CrmProjectDetail
 
 
 
+function applyProjectCompletion(
+  detail: CrmProjectDetail,
+  complete: boolean,
+  actorId: string
+): CrmProjectDetail {
+  const now = new Date().toISOString();
+  const actor = getMockCrmTeamMember(actorId);
+  const summary: CrmProjectSummary = {
+    ...detail.summary,
+    completedAt: complete ? now : null,
+    completedBy: complete ? actor : null,
+    lastUpdatedAt: now,
+  };
+  const accountability: CrmAccountabilityAction = {
+    id: `acct-mock-${Date.now()}`,
+    at: now,
+    actor,
+    action: complete
+      ? `Marked project ${detail.summary.name} as complete`
+      : `Marked project ${detail.summary.name} as incomplete`,
+    stageSlug: detail.summary.currentStageSlug,
+  };
+  return saveAndReturn(detail.summary.slug, {
+    ...detail,
+    summary,
+    accountabilityLog: [accountability, ...detail.accountabilityLog],
+  });
+}
+
+
+
 export class MockCrmProjectsRepository implements ICrmProjectsRepository {
 
   listSummaries(): readonly CrmProjectSummary[] {
 
-    return MOCK_CRM_PROJECT_SUMMARIES;
+    return MOCK_CRM_PROJECT_DETAILS.map((seed) => {
+      const effective = getEffectiveMockProjectDetailBySlug(seed.summary.slug);
+      return effective?.summary ?? seed.summary;
+    });
 
   }
 
@@ -235,6 +271,18 @@ export class MockCrmProjectDetailRepository implements ICrmProjectDetailReposito
     if (detail == null) return null;
 
     return applyProjectUpdate(detail, input);
+
+  }
+
+
+
+  setCompletion(slug: string, complete: boolean): CrmProjectDetail | null {
+
+    const detail = getEffectiveMockProjectDetailBySlug(slug);
+
+    if (detail == null) return null;
+
+    return applyProjectCompletion(detail, complete, 'tm-alex');
 
   }
 

@@ -48,6 +48,8 @@ export type DbCrmProjectRow = {
   balance_cents: number;
   assigned_member_id: string | null;
   last_activity_at: string;
+  completed_at: string | null;
+  completed_by: string | null;
   client_id: string;
   primary_contact_id: string | null;
   crm_clients: DbCrmClientRow | DbCrmClientRow[] | null;
@@ -282,6 +284,10 @@ export function mapDbProjectSummary(
       ? (memberById.get(row.assigned_member_id) ??
         mapProfileToTeamMemberRef(null, row.assigned_member_id))
       : null;
+  const completedBy =
+    row.completed_by != null
+      ? (memberById.get(row.completed_by) ?? mapProfileToTeamMemberRef(null, row.completed_by))
+      : null;
 
   return {
     id: row.id,
@@ -298,6 +304,8 @@ export function mapDbProjectSummary(
     balanceRemainingCents: Number(row.balance_cents),
     assignedTo,
     lastUpdatedAt: row.last_activity_at,
+    completedAt: row.completed_at,
+    completedBy,
   };
 }
 

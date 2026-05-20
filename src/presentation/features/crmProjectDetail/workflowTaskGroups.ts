@@ -1,6 +1,7 @@
 import {
   DEFAULT_PIPELINE_STAGES,
   isPaymentWorkflowTask,
+  PAYMENT_WORKFLOW_STAGE_SLUG,
   PAYMENTS_WORKFLOW_COLLAPSE_KEY,
   type CrmWorkflowTask,
   type PipelineStageSlug,
@@ -21,7 +22,62 @@ export type WorkflowTaskStageGroup = {
   readonly tasks: readonly CrmWorkflowTask[];
 };
 
-export const WORKFLOW_TASKS_PREVIEW_LIMIT = 5;
+/** Operational pipeline stages available for workflow task creation (excludes payment milestone stage). */
+export const OPS_PIPELINE_STAGES = DEFAULT_PIPELINE_STAGES.filter(
+  (stage) => stage.slug !== PAYMENT_WORKFLOW_STAGE_SLUG
+);
+
+/** Max workflow task rows on the project detail preview (full page has no cap). */
+export const WORKFLOW_TASKS_PREVIEW_LIMIT = 4;
+
+/** Max pipeline stage sections on the project detail preview (e.g. New lead, Inspection scheduled). */
+export const WORKFLOW_STAGES_PREVIEW_LIMIT = 3;
+
+export function limitWorkflowTaskStageGroups(
+  groups: readonly WorkflowTaskStageGroup[],
+  maxStages: number
+): readonly WorkflowTaskStageGroup[] {
+  if (maxStages <= 0) return [];
+  return groups.slice(0, maxStages);
+}
+
+export function createEmptyWorkflowTaskStageGroup(
+  stageSlug: PipelineStageSlug
+): WorkflowTaskStageGroup {
+  return {
+    collapseKey: stageSlug,
+    stageSlug,
+    stageLabel: formatWorkflowStageLabel(stageSlug),
+    isPaymentsGroup: false,
+    tasks: [],
+  };
+}
+
+/** Include an empty stage section when adding a task to a stage with no rows yet. */
+export function ensureWorkflowStageGroup(
+  groups: readonly WorkflowTaskStageGroup[],
+  stageSlug: PipelineStageSlug
+): WorkflowTaskStageGroup[] {
+  if (groups.some((group) => group.stageSlug === stageSlug)) {
+    return [...groups];
+  }
+  const empty = createEmptyWorkflowTaskStageGroup(stageSlug);
+  const order = OPS_PIPELINE_STAGES.map((stage) => stage.slug);
+  return [...groups, empty].sort(
+    (a, b) => order.indexOf(a.stageSlug) - order.indexOf(b.stageSlug)
+  );
+}
+
+/** Move a stage to the top of the list (e.g. while composing an inline draft on the detail preview). */
+export function promoteWorkflowStageGroup(
+  groups: readonly WorkflowTaskStageGroup[],
+  stageSlug: PipelineStageSlug
+): WorkflowTaskStageGroup[] {
+  const ensured = ensureWorkflowStageGroup(groups, stageSlug);
+  const promoted = ensured.find((group) => group.stageSlug === stageSlug);
+  if (promoted == null) return [...ensured];
+  return [promoted, ...ensured.filter((group) => group.stageSlug !== stageSlug)];
+}
 
 /** First `maxTasks` tasks across stage groups (pipeline order), preserving group structure. */
 export function limitWorkflowTaskGroups(

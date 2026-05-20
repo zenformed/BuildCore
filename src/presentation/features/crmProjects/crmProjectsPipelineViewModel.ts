@@ -1,4 +1,5 @@
 import type { CrmPriority, CrmProjectSummary, PipelineStageSlug } from '@/domain/crm';
+import { isCrmProjectComplete } from '@/domain/crm';
 
 export type CrmStageFilter = PipelineStageSlug | 'all';
 export type CrmPriorityFilter = CrmPriority | 'all';
@@ -38,5 +39,10 @@ export function filterCrmProjectSummaries(
       if (!q) return true;
       return projectSearchHaystack(project).includes(q);
     })
-    .sort((a, b) => Date.parse(b.lastUpdatedAt) - Date.parse(a.lastUpdatedAt));
+    .sort((a, b) => {
+      const aComplete = isCrmProjectComplete(a) ? 1 : 0;
+      const bComplete = isCrmProjectComplete(b) ? 1 : 0;
+      if (aComplete !== bComplete) return aComplete - bComplete;
+      return Date.parse(b.lastUpdatedAt) - Date.parse(a.lastUpdatedAt);
+    });
 }

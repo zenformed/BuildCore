@@ -58,6 +58,7 @@ export {
   CRM_TRADE_TYPES,
   type CrmTradeType,
 } from './project';
+export { isCrmProjectComplete, type SetCrmProjectCompletionInput } from './projectCompletion';
 export type { CreateCrmProjectInput, CreateCrmProjectResult } from './createProject';
 export type { UpdateCrmProjectInput } from './updateProject';
 export type {

@@ -7,7 +7,6 @@ import { WorkflowTaskFileDragProvider } from '@/presentation/features/crmProject
 import { DetailToast } from './DetailToast';
 import { ProjectDetailActionsMenu } from './ProjectDetailActionsMenu';
 import { ProjectDetailContextBlock } from './ProjectDetailContextBlock';
-import { WorkflowTaskDrawer } from './WorkflowTaskDrawer';
 import { WorkflowTasksTable } from './WorkflowTasksTable';
 import type { ProjectDetailPageProps } from './ProjectDetailPage';
 import styles from './ProjectDetail.module.css';
@@ -31,7 +30,6 @@ export function ProjectWorkflowTasksPage({
     project,
     toast,
     setToast,
-    taskDrawer,
     archiveConfirmTask,
     setArchiveConfirmTask,
     documentUploadConfirm,
@@ -42,8 +40,6 @@ export function ProjectWorkflowTasksPage({
     handleTaskDocumentDrop,
     handleConfirmDocumentUpload,
     handleConfirmArchiveTask,
-    openCreateTask,
-    closeTaskDrawer,
     wf,
   } = workspace;
 
@@ -68,24 +64,17 @@ export function ProjectWorkflowTasksPage({
             layout="full"
             project={project}
             isApiSource={isApiSource}
-            onAddTask={() => openCreateTask('workflow')}
             onTaskUpdated={handleTaskSaved}
+            onTaskAdded={async () => {
+              await onRefresh();
+              setToast({ kind: 'success', message: wf.taskAddedSuccess });
+            }}
             onTaskError={(message) => setToast({ kind: 'error', message })}
             onRequestArchiveTask={setArchiveConfirmTask}
           />
         </div>
       </WorkflowTaskFileDragProvider>
 
-      <WorkflowTaskDrawer
-        open={taskDrawer.open}
-        mode={taskDrawer.mode}
-        drawerContext={taskDrawer.context}
-        project={project}
-        task={taskDrawer.task}
-        isApiSource={isApiSource}
-        onClose={closeTaskDrawer}
-        onSaved={handleTaskSaved}
-      />
       <ConfirmModal
         isOpen={documentUploadConfirm != null}
         onClose={() => setDocumentUploadConfirm(null)}
