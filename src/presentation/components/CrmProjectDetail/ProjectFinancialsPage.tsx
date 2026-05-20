@@ -6,18 +6,9 @@ import { useProjectDetailShell } from '@/presentation/features/crmProjectDetail/
 import { useProjectProfitAndLossPdfExport } from '@/presentation/features/crmProjectDetail/useProjectProfitAndLossPdfExport';
 import { BudgetTable } from './BudgetTable';
 import { ProjectCostSummary } from './ProjectCostSummary';
-import { ProjectDetailShell } from './ProjectDetailShell';
-import type { ProjectDetailPageProps } from './ProjectDetailPage';
 import styles from './ProjectDetail.module.css';
 
-export type ProjectFinancialsPageProps = Pick<
-  ProjectDetailPageProps,
-  'project' | 'isApiSource' | 'onBack' | 'onRefresh'
-> & {
-  onOpenProject: () => void;
-};
-
-function ProjectFinancialsContent(): ReactElement {
+export function ProjectFinancialsContent(): ReactElement {
   const { project, onRefresh, setToast } = useProjectDetailShell();
   const { exporting: exportingPl, exportPdf: exportProfitAndLossPdf } = useProjectProfitAndLossPdfExport(
     project,
@@ -45,27 +36,5 @@ function ProjectFinancialsContent(): ReactElement {
         onGeneratePl={() => void exportProfitAndLossPdf()}
       />
     </div>
-  );
-}
-
-export function ProjectFinancialsPage({
-  project,
-  isApiSource,
-  onBack,
-  onOpenProject,
-  onRefresh,
-}: ProjectFinancialsPageProps): ReactElement {
-  return (
-    <ProjectDetailShell
-      pageContext="financials"
-      project={project}
-      isApiSource={isApiSource}
-      onBack={onBack}
-      onOpenProject={onOpenProject}
-      onRefresh={onRefresh}
-      includeWorkflowModals={false}
-    >
-      <ProjectFinancialsContent />
-    </ProjectDetailShell>
   );
 }

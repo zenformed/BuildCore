@@ -1,23 +1,14 @@
 'use client';
 
 import type { ReactElement } from 'react';
-import type { CrmProjectDetail } from '@/domain/crm';
 import { useProjectDetailShell } from '@/presentation/features/crmProjectDetail/ProjectDetailShellContext';
 import { WorkflowTaskFileDragProvider } from '@/presentation/features/crmProjectDetail/workflowTaskFileDragContext';
 import { AccountabilityPanel } from './AccountabilityPanel';
 import { PaymentsRail } from './PaymentsRail';
-import { ProjectDetailShell } from './ProjectDetailShell';
 import { WorkflowTasksTable } from './WorkflowTasksTable';
 import styles from './ProjectDetail.module.css';
 
-export type ProjectDetailPageProps = {
-  project: CrmProjectDetail;
-  isApiSource: boolean;
-  onBack: () => void;
-  onRefresh: () => Promise<void>;
-};
-
-function ProjectOverviewContent(): ReactElement {
+export function ProjectOverviewContent(): ReactElement {
   const {
     project,
     isApiSource,
@@ -55,24 +46,5 @@ function ProjectOverviewContent(): ReactElement {
         <AccountabilityPanel project={project} />
       </div>
     </WorkflowTaskFileDragProvider>
-  );
-}
-
-export function ProjectDetailPage({
-  project,
-  isApiSource,
-  onBack,
-  onRefresh,
-}: ProjectDetailPageProps): ReactElement {
-  return (
-    <ProjectDetailShell
-      pageContext="detail"
-      project={project}
-      isApiSource={isApiSource}
-      onBack={onBack}
-      onRefresh={onRefresh}
-    >
-      <ProjectOverviewContent />
-    </ProjectDetailShell>
   );
 }

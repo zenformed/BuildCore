@@ -26,32 +26,8 @@ export type ProjectDetailShellProps = {
   onBack: () => void;
   onOpenProject?: () => void;
   onRefresh: () => Promise<void>;
-  includeWorkflowModals?: boolean;
   children: ReactNode;
 };
-
-function shellPageClass(pageContext: ProjectDetailPageContext): string {
-  return pageContext === 'detail' ? styles.page : styles.pageTasks;
-}
-
-function shellPageDataAttributes(
-  pageContext: ProjectDetailPageContext
-): Record<string, string | undefined> {
-  switch (pageContext) {
-    case 'detail':
-      return { 'data-project-detail-page': '' };
-    case 'workflowTasks':
-      return { 'data-project-tasks-page': '' };
-    case 'financials':
-      return { 'data-project-financials-page': '' };
-    case 'documents':
-      return { 'data-project-documents-page': '' };
-    case 'accountability':
-      return { 'data-project-accountability-page': '' };
-    default:
-      return {};
-  }
-}
 
 export function ProjectDetailShell({
   pageContext,
@@ -60,7 +36,6 @@ export function ProjectDetailShell({
   onBack,
   onOpenProject,
   onRefresh,
-  includeWorkflowModals = pageContext === 'detail' || pageContext === 'workflowTasks',
   children,
 }: ProjectDetailShellProps): ReactElement {
   const showCompletionActions = pageContext === 'detail';
@@ -94,7 +69,7 @@ export function ProjectDetailShell({
 
   return (
     <ProjectDetailShellProvider value={shellValue}>
-      <div className={shellPageClass(pageContext)} {...shellPageDataAttributes(pageContext)}>
+      <div className={styles.pageShell}>
         {workspace.toast ? (
           <DetailToast
             kind={workspace.toast.kind}
@@ -116,13 +91,11 @@ export function ProjectDetailShell({
 
         {children}
 
-        {includeWorkflowModals ? (
-          <ProjectDetailShellModals
-            showCompletion={showCompletionActions}
-            completion={showCompletionActions ? completion : null}
-            workspace={workspace}
-          />
-        ) : null}
+        <ProjectDetailShellModals
+          showCompletion={showCompletionActions}
+          completion={showCompletionActions ? completion : null}
+          workspace={workspace}
+        />
       </div>
     </ProjectDetailShellProvider>
   );
