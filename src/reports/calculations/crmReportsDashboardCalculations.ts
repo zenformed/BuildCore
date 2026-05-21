@@ -16,6 +16,7 @@ import {
   resolveChartActivityStart,
   type ChartTimeBucket,
 } from './reportChartBuckets';
+import { buildReportsFinancialActivity } from './reportsFinancialActivity';
 import {
   computePeriodComparison,
   isTimestampInRange,
@@ -224,21 +225,8 @@ export function computeCrmReportsDashboard(
     bucketValueForTab(chartTab, payments, projects, b)
   );
 
-  let completed = 0;
-  let active = 0;
-  let waitingApproval = 0;
-  for (const p of projects) {
-    if (p.summary.completedAt != null) {
-      completed += 1;
-    } else {
-      active += 1;
-      if (p.summary.currentStageSlug === 'waiting-on-approval') {
-        waitingApproval += 1;
-      }
-    }
-  }
-
   const avgDaysToPay = computeAvgDaysToPay(payments);
+  const now = Date.now();
 
   const projectRows = projects.map((project) => {
     const projectPayments = project.workflowTasks.filter(isPaymentWorkflowTask);
@@ -246,12 +234,20 @@ export function computeCrmReportsDashboard(
     const { totalCents: rowCosts } = sumCostsInRange([project], range.start, range.end);
     const rowProfit = rowCollected - rowCosts;
     const rowMargin = formatMarginPercent(rowProfit, rowCollected);
-    const statusLabel =
-      project.summary.completedAt != null
-        ? 'Completed'
-        : project.summary.currentStageSlug === 'waiting-on-approval'
-          ? 'Waiting Approval'
-          : 'Active';
+    const isCompleted = project.summary.completedAt != null;
+    const isWaitingApproval =
+      !isCompleted && project.summary.currentStageSlug === 'waiting-on-approval';
+    const isActive = !isCompleted;
+    const hasOverduePayments = projectPayments.some((task) => {
+      if (task.invoicedAt == null || task.paidAt != null || task.dueAt == null) return false;
+      const dueMs = new Date(task.dueAt).getTime();
+      return !Number.isNaN(dueMs) && dueMs < now;
+    });
+    const statusLabel = isCompleted
+      ? 'Completed'
+      : isWaitingApproval
+        ? 'Waiting Approval'
+        : 'Active';
     return {
       projectId: project.summary.id,
       slug: project.summary.slug,
@@ -261,6 +257,10 @@ export function computeCrmReportsDashboard(
       profitCents: rowProfit,
       marginPercent: rowMargin,
       statusLabel,
+      isCompleted,
+      isActive,
+      isWaitingApproval,
+      hasOverduePayments,
     };
   });
 
@@ -313,32 +313,19 @@ export function computeCrmReportsDashboard(
         prevProfitCents,
         period,
         marginPercent != null ? `Margin ${formatPercent(marginPercent)}` : 'Margin —',
-        `Costs ${formatUsdFromCents(costsCents)}`
+        avgDaysToPay != null ? `${avgDaysToPay.toFixed(1)} days` : '—'
       ),
       marginPercent,
-      totalCostsCents: costsCents,
+      avgDaysToPay,
     },
     chart: {
       labels: chartBuckets.map((b) => b.label),
       tooltipLabels: chartBuckets.map((b) => b.tooltipLabel),
       valuesCents: chartValues,
     },
-    sideMetrics: [
-      { label: 'Projects Completed', value: String(completed) },
-      { label: 'Active Projects', value: String(active) },
-      { label: 'Waiting Approval', value: String(waitingApproval) },
-      {
-        label: 'Avg Payment',
-        value: avgPaymentCents > 0 ? formatUsdFromCents(avgPaymentCents) : '—',
-      },
-      { label: 'Overdue Payments', value: String(receivablesNow.overdueCount) },
-      {
-        label: 'Avg Days To Pay',
-        value: avgDaysToPay != null ? avgDaysToPay.toFixed(1) : '—',
-      },
-    ],
     projectRows: [...projectRows].sort((a, b) => b.collectedCents - a.collectedCents),
     costBreakdown,
     costsIncludeUndatedEntries: usedLegacyCreatedAtFallback,
+    recentActivity: buildReportsFinancialActivity(projects, range.start, range.end),
   };
 }

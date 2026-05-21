@@ -84,21 +84,23 @@
 }
 
 .gridHeader {
-  padding: 0.75rem 1rem;
-  font-size: 0.8125rem;
+  padding: 0.5rem var(--theme-table-cell-padding-inline);
+  font-size: 0.6875rem;
   font-weight: 600;
-  color: var(--color-text-muted, #64748b);
-  background-color: var(--color-muted, #f1f5f9);
-  border-bottom: 2px solid var(--theme-border-main, var(--color-border, #e2e8f0));
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--theme-table-header-text);
+  background-color: var(--theme-table-header-bg);
+  border-bottom: 1px solid var(--theme-table-header-bg);
   position: sticky;
   top: 0;
   z-index: 1;
 }
 
 :global([data-theme='dark']) .gridHeader {
-  background-color: #1a1d26;
-  border-bottom-color: var(--theme-border-main, #3d3e4a);
-  color: #94a3b8;
+  background-color: var(--theme-table-header-bg);
+  border-bottom-color: var(--theme-border-main);
+  color: var(--theme-table-header-text);
 }
 
 .gridBody {
@@ -106,7 +108,7 @@
 }
 
 .gridRow {
-  padding: 0.75rem 1rem;
+  padding: var(--theme-table-cell-padding-block) var(--theme-table-cell-padding-inline);
   font-size: 0.8125rem;
   color: var(--color-text, #0f172a);
   cursor: pointer;

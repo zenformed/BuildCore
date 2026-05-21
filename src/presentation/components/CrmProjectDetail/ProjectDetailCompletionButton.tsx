@@ -25,8 +25,8 @@ export function ProjectDetailCompletionButton({
       type="button"
       className={
         isComplete
-          ? `${styles.editBtn} ${styles.completionBtn} ${styles.completionBtnComplete}`
-          : `${styles.editBtn} ${styles.completionBtn}`
+          ? `${styles.stageChip} ${styles.headerChipBtn} ${styles.completionBtn} ${styles.completionBtnComplete}`
+          : `${styles.stageChip} ${styles.headerChipBtn} ${styles.completionBtn}`
       }
       disabled={busy}
       onClick={isComplete ? onMarkIncomplete : onMarkComplete}

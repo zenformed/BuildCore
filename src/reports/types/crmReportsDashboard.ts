@@ -24,10 +24,12 @@ export type ReportsKpiCard = {
   readonly footRight: string;
 };
 
-export type ReportsSideMetric = {
-  readonly label: string;
-  readonly value: string;
-};
+export type ReportsProjectFilterId =
+  | 'all'
+  | 'active'
+  | 'completed'
+  | 'waiting_approval'
+  | 'overdue_payments';
 
 export type ReportsProjectRow = {
   readonly projectId: string;
@@ -38,6 +40,10 @@ export type ReportsProjectRow = {
   readonly profitCents: number;
   readonly marginPercent: number | null;
   readonly statusLabel: string;
+  readonly isCompleted: boolean;
+  readonly isActive: boolean;
+  readonly isWaitingApproval: boolean;
+  readonly hasOverduePayments: boolean;
 };
 
 export type ReportsCostBreakdownRow = {
@@ -54,6 +60,16 @@ export type ReportsTimeSeries = {
   readonly valuesCents: readonly number[];
 };
 
+export type ReportsFinancialActivityItem = {
+  readonly id: string;
+  readonly occurredAt: string;
+  readonly displayAt: string;
+  readonly projectSlug: string;
+  readonly projectName: string;
+  /** One-line feed text, e.g. "$5,000 payment received — Daniel House". */
+  readonly summary: string;
+};
+
 export type CrmReportsDashboardData = {
   readonly period: ReportPeriodId;
   readonly collected: ReportsKpiCard & {
@@ -66,11 +82,11 @@ export type CrmReportsDashboardData = {
   };
   readonly netProfit: ReportsKpiCard & {
     readonly marginPercent: number | null;
-    readonly totalCostsCents: number;
+    readonly avgDaysToPay: number | null;
   };
   readonly chart: ReportsTimeSeries;
-  readonly sideMetrics: readonly ReportsSideMetric[];
   readonly projectRows: readonly ReportsProjectRow[];
   readonly costBreakdown: readonly ReportsCostBreakdownRow[];
   readonly costsIncludeUndatedEntries: boolean;
+  readonly recentActivity: readonly ReportsFinancialActivityItem[];
 };

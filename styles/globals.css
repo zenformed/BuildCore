@@ -1,55 +1,10 @@
 /**
- * Global design tokens and base styles.
+ * Global base styles. Semantic tokens live in theme-tokens.css and theme-surfaces.css.
  * Theme: light (default) and dark via [data-theme="dark"].
  */
 
-:root {
-  --color-primary: #2563eb;
-  --color-primary-hover: #1d4ed8;
-  --color-secondary: #64748b;
-  --color-secondary-hover: #475569;
-  --color-text: #0f172a;
-  --color-text-muted: #64748b;
-  --color-border: #e2e8f0;
-  --color-surface: #ffffff;
-  --color-muted: #f1f5f9;
-  --color-bg: #f1f1f1;
-  --color-error: #b91c1c;
-  --color-error-bg: #fef2f2;
-  --color-warning: #92400e;
-  --color-warning-bg: #fef3c7;
-  --color-success: #16a34a;
-  --color-info: #1e40af;
-  --color-info-bg: #dbeafe;
-  --color-overlay: rgba(0, 0, 0, 0.4);
-  /* Main content surface and border (table, banners, cards). Use these for "the main border" look. */
-  --theme-surface-main: #ffffff;
-  --theme-border-main: #e2e8f0;
-}
-
-[data-theme="dark"] {
-  --color-primary: #3b82f6;
-  --color-primary-hover: #60a5fa;
-  --color-secondary: #94a3b8;
-  --color-secondary-hover: #cbd5e1;
-  --color-text: #f1f5f9;
-  --color-text-muted: #94a3b8;
-  --color-border: #334155;
-  --color-surface: #1e293b;
-  --color-muted: #0f172a;
-  --color-bg: #0f172a;
-  --color-error: #f87171;
-  --color-error-bg: #450a0a;
-  --color-warning: #fbbf24;
-  --color-warning-bg: #422006;
-  --color-success: #4ade80;
-  --color-info: #60a5fa;
-  --color-info-bg: #1e3a8a;
-  --color-overlay: rgba(0, 0, 0, 0.6);
-  /* Main content surface and border (table look). Reference these for "main dark border" / "main surface". */
-  --theme-surface-main: #161922;
-  --theme-border-main: #3d3e4a;
-}
+@import './theme-tokens.css';
+@import './theme-surfaces.css';
 
 *,
 *::before,
@@ -62,7 +17,7 @@ html {
     system-ui,
     -apple-system,
     BlinkMacSystemFont,
-    "Segoe UI",
+    'Segoe UI',
     Roboto,
     sans-serif;
   line-height: 1.5;
@@ -81,11 +36,19 @@ body {
   transition: background-color 0.2s ease;
 }
 
-/* Inputs stay black-on-white in both light and dark mode for readability */
-input:not([type="checkbox"]):not([type="radio"]),
+/* Inputs stay high-contrast for readability in both themes */
+input:not([type='checkbox']):not([type='radio']),
 textarea,
 select {
+  background-color: var(--theme-surface-elevated) !important;
+  color: var(--color-text) !important;
+  border-color: var(--theme-border-strong) !important;
+}
+
+[data-theme='dark'] input:not([type='checkbox']):not([type='radio']),
+[data-theme='dark'] textarea,
+[data-theme='dark'] select {
   background-color: #ffffff !important;
   color: #0f172a !important;
-  border-color: #e2e8f0;
+  border-color: var(--theme-border-main, #3d3e4a) !important;
 }

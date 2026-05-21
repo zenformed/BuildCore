@@ -38,7 +38,7 @@ export function ProjectDetailActionsMenu({ projectSlug }: ProjectDetailActionsMe
       <button
         ref={anchorRef}
         type="button"
-        className={`${styles.editBtn} ${styles.actionsBtn}`}
+        className={`${styles.stageChip} ${styles.headerChipBtn}`}
         aria-expanded={open}
         aria-haspopup="menu"
         onClick={() => setOpen((value) => !value)}

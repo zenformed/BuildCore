@@ -1,7 +1,8 @@
 .card {
-  background-color: var(--color-surface, #fff);
-  border: 1px solid var(--color-border, #e2e8f0);
-  border-radius: 0.5rem;
+  background-color: var(--theme-surface-card);
+  border: 1px solid var(--theme-border-card);
+  border-radius: var(--theme-radius-md, 0.5rem);
+  box-shadow: var(--theme-shadow-card);
   overflow: hidden;
 }
 
@@ -11,7 +12,7 @@
   font-size: 1rem;
   font-weight: 600;
   color: var(--color-text, #0f172a);
-  border-bottom: 1px solid var(--color-border, #e2e8f0);
+  border-bottom: 1px solid var(--theme-border-main);
 }
 
 .content {

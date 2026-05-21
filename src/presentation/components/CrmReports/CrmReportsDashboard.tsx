@@ -1,23 +1,22 @@
 'use client';
 
 import type { ReactElement } from 'react';
-import { useRouter } from 'next/navigation';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
-import { buildCoreDashboardNavigation as nav } from '@/platform/navigation/buildCoreDashboardNavigation';
 import { formatCentsAsUsd } from '@/presentation/features/crmProjects/crmProjectFormatters';
 import { useCrmReportsDashboard } from '@/presentation/features/crmReports/useCrmReportsDashboard';
-import { reportBudgetCategoryLabel } from '@/reports/labels/reportLabels';
 import type { ReportChartTabId, ReportPeriodId } from '@/reports/types/crmReportsDashboard';
 import projectStyles from '../CrmProjectDetail/ProjectDetail.module.css';
+import { ReportsCostBreakdownPanel } from './ReportsCostBreakdownPanel';
 import { ReportsKpiCard } from './ReportsKpiCard';
 import { ReportsLineChart } from './ReportsLineChart';
+import { ReportsProjectPerformanceSection } from './ReportsProjectPerformanceSection';
+import { ReportsRecentActivityPanel } from './ReportsRecentActivityPanel';
 import styles from './CrmReports.module.css';
 
 const PERIOD_IDS: readonly ReportPeriodId[] = ['mtd', 'qtd', 'ytd', 'all'];
 const CHART_TAB_IDS: readonly ReportChartTabId[] = ['revenue', 'profit', 'costs', 'receivables'];
 
 export function CrmReportsDashboard(): ReactElement {
-  const router = useRouter();
   const { dashboard, isLoading, error, period, setPeriod, chartTab, setChartTab } =
     useCrmReportsDashboard();
 
@@ -29,7 +28,6 @@ export function CrmReportsDashboard(): ReactElement {
     return <p className={styles.error}>{error ?? content.reports.loadError}</p>;
   }
 
-  const maxCost = Math.max(...dashboard.costBreakdown.map((r) => r.costCents), 1);
   const detail = content.projectDetail;
 
   return (
@@ -102,8 +100,12 @@ export function CrmReportsDashboard(): ReactElement {
                 : '—'
             }
             footLeftLabel={content.reports.kpi.foot.margin}
-            footRightValue={formatCentsAsUsd(dashboard.netProfit.totalCostsCents)}
-            footRightLabel={content.reports.kpi.foot.costs}
+            footRightValue={
+              dashboard.netProfit.avgDaysToPay != null
+                ? dashboard.netProfit.avgDaysToPay.toFixed(1)
+                : '—'
+            }
+            footRightLabel={content.reports.kpi.foot.avgDaysToPay}
           />
         </section>
 
@@ -134,93 +136,15 @@ export function CrmReportsDashboard(): ReactElement {
             </div>
             <ReportsLineChart series={dashboard.chart} formatValue={formatCentsAsUsd} />
           </div>
-          <aside
-            className={`${projectStyles.card} ${styles.metricsPanel}`}
-            aria-label="Summary metrics"
-          >
-            <div className={styles.metricsGrid}>
-              {dashboard.sideMetrics.map((metric) => (
-                <div key={metric.label} className={styles.metricCell}>
-                  <span className={styles.metricCellValue}>{metric.value}</span>
-                  <span className={styles.metricCellLabel}>{metric.label}</span>
-                </div>
-              ))}
-            </div>
-          </aside>
+          <ReportsCostBreakdownPanel
+            rows={dashboard.costBreakdown}
+            costsIncludeUndatedEntries={dashboard.costsIncludeUndatedEntries}
+          />
         </section>
 
         <section className={styles.lowerRow}>
-          <div className={`${projectStyles.card} ${styles.lowerPanel}`}>
-            <h2 className={projectStyles.cardTitle}>{content.reports.sections.projectPerformance}</h2>
-            <div className={styles.tableWrap}>
-              <table className={styles.table}>
-                <thead>
-                  <tr>
-                    <th>{content.reports.table.project}</th>
-                    <th>{content.reports.table.collected}</th>
-                    <th>{content.reports.table.costs}</th>
-                    <th>{content.reports.table.profit}</th>
-                    <th>{content.reports.table.margin}</th>
-                    <th>{content.reports.table.status}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {dashboard.projectRows.length === 0 ? (
-                    <tr>
-                      <td colSpan={6}>{content.reports.table.empty}</td>
-                    </tr>
-                  ) : (
-                    dashboard.projectRows.map((row) => (
-                      <tr key={row.projectId}>
-                        <td>
-                          <button
-                            type="button"
-                            className={styles.projectLink}
-                            onClick={() => router.push(nav.routes.projectDetail(row.slug))}
-                          >
-                            {row.label}
-                          </button>
-                        </td>
-                        <td>{formatCentsAsUsd(row.collectedCents)}</td>
-                        <td>{formatCentsAsUsd(row.costsCents)}</td>
-                        <td>{formatCentsAsUsd(row.profitCents)}</td>
-                        <td>
-                          {row.marginPercent != null ? `${row.marginPercent.toFixed(1)}%` : '—'}
-                        </td>
-                        <td>{row.statusLabel}</td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
-          <div className={`${projectStyles.card} ${styles.lowerPanel}`}>
-            <h2 className={projectStyles.cardTitle}>{content.reports.sections.costBreakdown}</h2>
-            {dashboard.costBreakdown.length === 0 ? (
-              <p className={styles.chartEmpty}>{content.reports.costEmpty}</p>
-            ) : (
-              <ul className={styles.costList}>
-                {dashboard.costBreakdown.map((row) => (
-                  <li key={row.category}>
-                    <div className={styles.costRow}>
-                      <span>{reportBudgetCategoryLabel(row.category)}</span>
-                      <span>{formatCentsAsUsd(row.costCents)}</span>
-                    </div>
-                    <div className={styles.costBarTrack}>
-                      <div
-                        className={styles.costBarFill}
-                        style={{ width: `${(row.costCents / maxCost) * 100}%` }}
-                      />
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            )}
-            {dashboard.costsIncludeUndatedEntries ? (
-              <p className={styles.note}>{content.reports.costsUndatedNote}</p>
-            ) : null}
-          </div>
+          <ReportsProjectPerformanceSection rows={dashboard.projectRows} />
+          <ReportsRecentActivityPanel items={dashboard.recentActivity} />
         </section>
       </div>
     </div>

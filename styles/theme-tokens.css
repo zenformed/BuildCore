@@ -1,0 +1,361 @@
+/**
+
+ * Zenformed / BuildCore semantic theme tokens.
+
+ * Adjust values here to propagate across dashboard shell, CRM, reports, charts, and shared UI.
+
+ *
+
+ * Consumption: var(--token-name) in CSS; chartTheme.ts reads --chart-* at runtime.
+
+ */
+
+
+
+:root {
+
+  /* ── App canvas ── */
+
+  --theme-bg-app: #f2f4f7;
+
+  --theme-bg-shell: #f2f4f7;
+
+
+
+  /* ── Card & button surfaces (primary UI chrome) ── */
+
+  --theme-surface-card: #ffffff;
+
+  --theme-surface-button: #ffffff;
+
+
+
+  /* ── Supporting surfaces (footers, headers, hover, inset) ── */
+
+  --theme-surface-muted: #f0f2f5;
+
+  --theme-surface-inset: #f0f2f5;
+
+  --theme-surface-hover: #f0f2f5;
+
+
+
+  /* Aliases — panels/charts/tables use the same card surface in light mode */
+
+  --theme-surface-main: var(--theme-surface-card);
+
+  --theme-surface-elevated: var(--theme-surface-card);
+
+  --theme-surface-panel: var(--theme-surface-card);
+
+  --theme-surface-kpi: var(--theme-surface-card);
+
+  --theme-surface-chart: var(--theme-surface-card);
+
+  --theme-surface-table: var(--theme-surface-card);
+
+  --theme-surface-activity: var(--theme-surface-card);
+
+  --theme-surface-breakdown: var(--theme-surface-card);
+
+
+
+  --color-bg: var(--theme-bg-app);
+
+  --color-surface: var(--theme-surface-card);
+
+  --color-muted: var(--theme-surface-muted);
+
+
+
+  /* ── Borders ── */
+
+  --theme-border-card: #e0e2e5;
+
+  --theme-border-button: #e0e2e5;
+
+  --theme-border-main: var(--theme-border-card);
+
+  --theme-border-subtle: #e8eaed;
+
+  --theme-border-strong: #d8dadf;
+
+  --color-border: var(--theme-border-main);
+
+
+
+  /* ── Elevation ── */
+
+  --theme-radius-sm: 0.25rem;
+
+  --theme-radius-md: 0.5rem;
+
+  --theme-shadow-card: 0 1px 2px rgba(0, 0, 0, 0.14), 0 2px 6px rgba(0, 0, 0, 0.1);
+
+  --theme-shadow-button: 0 1px 2px rgba(0, 0, 0, 0.12), 0 1px 4px rgba(0, 0, 0, 0.08);
+
+  --theme-shadow-sm: var(--theme-shadow-button);
+
+  --theme-shadow-elevated: var(--theme-shadow-card);
+
+  --theme-shadow-inset: inset 0 1px 2px rgba(0, 0, 0, 0.04);
+
+
+
+  /* ── Typography ── */
+
+  --color-text: #1e293b;
+
+  --color-text-muted: #64748b;
+
+
+
+  /* ── Accents ── */
+
+  --color-primary: #5a7a9e;
+
+  --color-primary-hover: #4d6d8f;
+
+  --color-on-primary: #ffffff;
+
+  --theme-accent-surface: #e4ecf4;
+
+  --theme-accent-text: #4a657f;
+
+  --theme-accent-border: rgba(90, 122, 158, 0.32);
+
+
+
+  --color-secondary: #64748b;
+
+  --color-secondary-hover: #475569;
+
+  --color-link: var(--color-primary);
+
+  --color-link-hover: var(--color-primary-hover);
+
+
+
+  --color-error: #b91c1c;
+
+  --color-error-bg: #fef2f2;
+
+  --color-warning: #92400e;
+
+  --color-warning-bg: #fef3c7;
+
+  --color-success: #16a34a;
+
+  --color-info: var(--color-primary);
+
+  --color-info-bg: var(--theme-accent-surface);
+
+  --color-overlay: rgba(15, 23, 42, 0.38);
+
+
+
+  /* ── Table & workflow stage headers (light) ── */
+
+  --theme-table-header-bg: #5a7a9e;
+
+  --theme-table-header-text: #ffffff;
+
+  --theme-stage-header-bg: var(--theme-table-header-bg);
+
+  --theme-stage-header-text: var(--theme-table-header-text);
+
+  --theme-stage-count-bg: #ffffff;
+
+  --theme-stage-count-text: #5a7a9e;
+
+  --theme-stage-count-border: #e0e2e5;
+
+  --theme-table-cell-padding-inline: 0.625rem;
+
+  --theme-table-cell-padding-block: 0.4rem;
+
+
+
+  /* ── Chart.js (read by chartTheme.ts) ── */
+
+  --chart-text-muted: #64748b;
+
+  --chart-border: #e0e2e5;
+
+  --chart-grid: #e8eaed;
+
+  --chart-line: #5a7a9e;
+
+  --chart-point-border: var(--theme-surface-card);
+
+  --chart-tooltip-bg: var(--theme-surface-card);
+
+  --chart-tooltip-text: var(--color-text);
+
+  --chart-point-hover: #4d6d8f;
+
+}
+
+
+
+[data-theme='dark'] {
+
+  --theme-bg-app: #0f172a;
+
+  --theme-bg-shell: #1d2029;
+
+
+
+  --theme-surface-card: #161922;
+
+  --theme-surface-button: #161922;
+
+
+
+  --theme-surface-muted: #1a1d26;
+
+  --theme-surface-inset: #1a1d26;
+
+  --theme-surface-hover: #1e2230;
+
+
+
+  --theme-surface-main: var(--theme-surface-card);
+
+  --theme-surface-elevated: var(--theme-surface-card);
+
+  --theme-surface-panel: var(--theme-surface-card);
+
+  --theme-surface-kpi: var(--theme-surface-card);
+
+  --theme-surface-chart: var(--theme-surface-card);
+
+  --theme-surface-table: var(--theme-surface-card);
+
+  --theme-surface-activity: var(--theme-surface-card);
+
+  --theme-surface-breakdown: var(--theme-surface-card);
+
+
+
+  --color-bg: var(--theme-bg-app);
+
+  --color-surface: var(--theme-surface-card);
+
+  --color-muted: var(--theme-surface-muted);
+
+
+
+  --theme-border-card: #3d3e4a;
+
+  --theme-border-button: #3d3e4a;
+
+  --theme-border-main: var(--theme-border-card);
+
+  --theme-border-subtle: rgba(255, 255, 255, 0.06);
+
+  --theme-border-strong: #4a4d5c;
+
+  --color-border: var(--theme-border-main);
+
+
+
+  --theme-shadow-card: 0 1px 0 rgba(0, 0, 0, 0.2);
+
+  --theme-shadow-button: 0 1px 2px rgba(0, 0, 0, 0.2);
+
+  --theme-shadow-sm: var(--theme-shadow-button);
+
+  --theme-shadow-elevated: var(--theme-shadow-card);
+
+  --theme-shadow-inset: inset 0 1px 2px rgba(0, 0, 0, 0.25);
+
+
+
+  --color-text: #f1f5f9;
+
+  --color-text-muted: #94a3b8;
+
+
+
+  --color-primary: #3b82f6;
+
+  --color-primary-hover: #60a5fa;
+
+  --color-on-primary: #f8fafc;
+
+  --theme-accent-surface: #1e3a5f;
+
+  --theme-accent-text: #93c5fd;
+
+  --theme-accent-border: rgba(59, 130, 246, 0.35);
+
+
+
+  --color-secondary: #94a3b8;
+
+  --color-secondary-hover: #cbd5e1;
+
+  --color-link: var(--color-primary);
+
+  --color-link-hover: var(--color-primary-hover);
+
+
+
+  --color-error: #f87171;
+
+  --color-error-bg: #450a0a;
+
+  --color-warning: #fbbf24;
+
+  --color-warning-bg: #422006;
+
+  --color-success: #4ade80;
+
+  --color-info: #60a5fa;
+
+  --color-info-bg: #1e3a8a;
+
+  --color-overlay: rgba(0, 0, 0, 0.6);
+
+
+
+  --theme-table-header-bg: #1a1d26;
+
+  --theme-table-header-text: #94a3b8;
+
+  --theme-stage-header-bg: #1a1d26;
+
+  --theme-stage-header-text: #94a3b8;
+
+  --theme-stage-count-bg: rgba(255, 255, 255, 0.06);
+
+  --theme-stage-count-text: #cbd5e1;
+
+  --theme-stage-count-border: #3d3e4a;
+
+  --theme-table-cell-padding-inline: 0.625rem;
+
+  --theme-table-cell-padding-block: 0.4rem;
+
+
+
+  --chart-text-muted: #94a3b8;
+
+  --chart-border: #64748b;
+
+  --chart-grid: #2e3340;
+
+  --chart-line: #60a5fa;
+
+  --chart-point-border: #161922;
+
+  --chart-tooltip-bg: #1a1d26;
+
+  --chart-tooltip-text: #f1f5f9;
+
+  --chart-point-hover: #93c5fd;
+
+}
+
+

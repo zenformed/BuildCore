@@ -40,6 +40,7 @@
   min-height: 0;
   overflow: hidden;
   width: 100%;
+  background: var(--theme-bg-shell, var(--color-bg));
 }
 
 .mainColumn {
@@ -48,14 +49,7 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
-}
-
-:global([data-theme="dark"]) .dashboardWithSidebar {
-  background: #1d2029;
-}
-
-:global([data-theme="dark"]) .mainColumn {
-  background: #1d2029;
+  background: var(--theme-bg-shell, var(--color-bg));
 }
 
 /* Sidebar logo (in JobBoardSidebar slot) */

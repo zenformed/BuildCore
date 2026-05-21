@@ -57,12 +57,20 @@ export const buildCoreDashboardContent = {
         unpaid: 'Unpaid',
         overdue: 'Overdue',
         margin: 'Margin',
-        costs: 'Costs',
+        avgDaysToPay: 'Avg Days To Pay',
       },
     },
     sections: {
       projectPerformance: 'Project Performance',
       costBreakdown: 'Cost Breakdown',
+      recentActivity: 'Recent Financial Activity',
+    },
+    projectFilters: {
+      all: 'All',
+      active: 'Active',
+      completed: 'Completed',
+      waiting_approval: 'Waiting Approval',
+      overdue_payments: 'Overdue Payments',
     },
     table: {
       project: 'Project / Customer',
@@ -72,6 +80,10 @@ export const buildCoreDashboardContent = {
       margin: 'Margin',
       status: 'Status',
       empty: 'No projects in this period.',
+      emptyFiltered: 'No projects match this filter.',
+    },
+    activity: {
+      empty: 'No financial activity in this period.',
     },
     costEmpty: 'No costs in this period.',
   },

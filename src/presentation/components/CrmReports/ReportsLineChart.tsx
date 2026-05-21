@@ -29,6 +29,8 @@ export function ReportsLineChart({ series, formatValue }: ReportsLineChartProps)
           backgroundColor: theme.line,
           pointBackgroundColor: theme.line,
           pointBorderColor: theme.pointBorder,
+          pointHoverBackgroundColor: theme.pointHover,
+          pointHoverBorderColor: theme.pointBorder,
           pointBorderWidth: 1.5,
           pointRadius: 4,
           pointHoverRadius: 5,
