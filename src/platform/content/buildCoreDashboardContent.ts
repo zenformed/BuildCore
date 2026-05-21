@@ -91,6 +91,22 @@ export const buildCoreDashboardContent = {
       cost: 'Cost',
       costPercent: 'Cost %',
     },
+    downloadPdf: 'Download PDF',
+    downloadPdfGenerating: 'Generating…',
+    downloadPdfError: 'Could not generate the report PDF. Please try again.',
+    summaryPdf: {
+      revenue: 'Revenue',
+      collectedRevenue: 'Collected Revenue',
+      totalRevenue: 'Total Revenue',
+      costOfGoodsSold: 'Cost of Goods Sold',
+      totalCostOfGoodsSold: 'Total Cost of Goods Sold',
+      grossMargin: 'Gross Margin',
+      operatingExpenses: 'Operating Expenses',
+      totalOperatingExpenses: 'Total Operating Expenses',
+      netProfit: 'Net Profit (Loss)',
+      footerNote:
+        'Revenue, gross margin, operating expenses, and net profit percentages are based on total revenue. Cost detail percentages are based on total cost of goods sold.',
+    },
   },
   dashboard: {
     title: 'Projects',

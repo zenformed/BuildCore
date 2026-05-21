@@ -4,6 +4,7 @@ import type { ReactElement } from 'react';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
 import { formatCentsAsUsd } from '@/presentation/features/crmProjects/crmProjectFormatters';
 import { useCrmReportsDashboard } from '@/presentation/features/crmReports/useCrmReportsDashboard';
+import { useCrmReportsSummaryPdfExport } from '@/presentation/features/crmReports/useCrmReportsSummaryPdfExport';
 import type { ReportChartTabId, ReportPeriodId } from '@/reports/types/crmReportsDashboard';
 import projectStyles from '../CrmProjectDetail/ProjectDetail.module.css';
 import { ReportsCostBreakdownPanel } from './ReportsCostBreakdownPanel';
@@ -17,8 +18,9 @@ const PERIOD_IDS: readonly ReportPeriodId[] = ['mtd', 'qtd', 'ytd', 'all'];
 const CHART_TAB_IDS: readonly ReportChartTabId[] = ['revenue', 'profit', 'costs', 'receivables'];
 
 export function CrmReportsDashboard(): ReactElement {
-  const { dashboard, isLoading, error, period, setPeriod, chartTab, setChartTab } =
+  const { dashboard, projects, isLoading, error, period, setPeriod, chartTab, setChartTab } =
     useCrmReportsDashboard();
+  const { exporting: exportingPdf, exportPdf } = useCrmReportsSummaryPdfExport(projects, period);
 
   if (isLoading) {
     return <p className={styles.loading}>{content.reports.loading}</p>;
@@ -63,6 +65,20 @@ export function CrmReportsDashboard(): ReactElement {
                 {content.reports.periods[id]}
               </button>
             ))}
+            <button
+              type="button"
+              className={`${projectStyles.stageChip} ${styles.reportsDownloadBtn}`}
+              disabled={exportingPdf || projects == null}
+              onClick={() => void exportPdf()}
+            >
+              <span
+                className={projectStyles.detailPanelHeaderBtnIcon_download}
+                aria-hidden
+              />
+              {exportingPdf
+                ? content.reports.downloadPdfGenerating
+                : content.reports.downloadPdf}
+            </button>
           </div>
         </div>
       </header>

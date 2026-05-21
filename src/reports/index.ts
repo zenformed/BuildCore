@@ -21,3 +21,10 @@ export { buildProjectProfitAndLossReportData } from './builders/buildProjectProf
 export { buildProjectProfitAndLossReportTitle } from './builders/buildProjectProfitAndLossReportTitle';
 export { exportProjectProfitAndLossPdf } from './export/exportProjectProfitAndLossPdf';
 export { projectProfitAndLossPdfFilename } from './export/projectProfitAndLossPdfFilename';
+export { buildCrmReportsSummaryPdfData } from './builders/buildCrmReportsSummaryPdfData';
+export { exportCrmReportsSummaryPdf } from './export/exportCrmReportsSummaryPdf';
+export { crmReportsSummaryPdfFilename } from './export/crmReportsSummaryPdfFilename';
+export type {
+  CrmReportsSummaryPdfContext,
+  CrmReportsSummaryPdfData,
+} from './types/crmReportsSummaryPdf';

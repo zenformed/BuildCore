@@ -3,7 +3,6 @@ import {
   isPaymentWorkflowTask,
   type CrmBudgetCategory,
   type CrmProjectDetail,
-  type CrmWorkflowTask,
 } from '@/domain/crm';
 import type {
   CrmReportsDashboardData,
@@ -17,6 +16,12 @@ import {
   type ChartTimeBucket,
 } from './reportChartBuckets';
 import { buildReportsFinancialActivity } from './reportsFinancialActivity';
+import {
+  collectPaymentTasks,
+  resolveCostIncurredAtForReporting,
+  sumCollectedInRange,
+  sumCostsInRange,
+} from './reportsFinancialMetrics';
 import { computeCategoryPercentOfTotal } from './profitAndLossCalculations';
 import {
   computePeriodComparison,
@@ -24,32 +29,11 @@ import {
   resolveReportPeriodRange,
 } from './reportPeriodRange';
 
-type PaymentRow = Pick<CrmWorkflowTask, 'amountCents' | 'invoicedAt' | 'paidAt' | 'dueAt'>;
-
-function collectPaymentTasks(projects: readonly CrmProjectDetail[]): PaymentRow[] {
-  const rows: PaymentRow[] = [];
-  for (const project of projects) {
-    for (const task of project.workflowTasks) {
-      if (isPaymentWorkflowTask(task)) {
-        rows.push(task);
-      }
-    }
-  }
-  return rows;
-}
-
-function sumCollectedInRange(payments: readonly PaymentRow[], start: Date, end: Date): number {
-  let total = 0;
-  let count = 0;
-  for (const p of payments) {
-    if (!isTimestampInRange(p.paidAt, start, end)) continue;
-    total += p.amountCents ?? 0;
-    count += 1;
-  }
-  return total;
-}
-
-function countCollectedInRange(payments: readonly PaymentRow[], start: Date, end: Date): number {
+function countCollectedInRange(
+  payments: ReturnType<typeof collectPaymentTasks>,
+  start: Date,
+  end: Date
+): number {
   let count = 0;
   for (const p of payments) {
     if (isTimestampInRange(p.paidAt, start, end)) count += 1;
@@ -57,7 +41,11 @@ function countCollectedInRange(payments: readonly PaymentRow[], start: Date, end
   return count;
 }
 
-function sumInvoicedInRange(payments: readonly PaymentRow[], start: Date, end: Date): number {
+function sumInvoicedInRange(
+  payments: ReturnType<typeof collectPaymentTasks>,
+  start: Date,
+  end: Date
+): number {
   let total = 0;
   for (const p of payments) {
     if (!isTimestampInRange(p.invoicedAt, start, end)) continue;
@@ -67,7 +55,7 @@ function sumInvoicedInRange(payments: readonly PaymentRow[], start: Date, end: D
 }
 
 /** Open receivables: invoiced but not paid (point-in-time, not period-filtered). */
-function sumOpenReceivables(payments: readonly PaymentRow[]): {
+function sumOpenReceivables(payments: ReturnType<typeof collectPaymentTasks>): {
   totalCents: number;
   unpaidCount: number;
   overdueCount: number;
@@ -86,36 +74,6 @@ function sumOpenReceivables(payments: readonly PaymentRow[]): {
     }
   }
   return { totalCents, unpaidCount, overdueCount };
-}
-
-function resolveCostIncurredAtForReporting(entry: {
-  costIncurredAt: string;
-  createdAt: string;
-}): { iso: string; usedCreatedAtFallback: boolean } {
-  if (entry.costIncurredAt) {
-    return { iso: entry.costIncurredAt, usedCreatedAtFallback: false };
-  }
-  return { iso: entry.createdAt, usedCreatedAtFallback: true };
-}
-
-/** Costs in range by `costIncurredAt` (required on budget entries after migration). */
-function sumCostsInRange(
-  projects: readonly CrmProjectDetail[],
-  start: Date,
-  end: Date
-): { totalCents: number; usedLegacyCreatedAtFallback: boolean } {
-  let totalCents = 0;
-  let usedLegacyCreatedAtFallback = false;
-  for (const project of projects) {
-    for (const entry of project.budget.entries) {
-      const { iso, usedCreatedAtFallback } = resolveCostIncurredAtForReporting(entry);
-      if (usedCreatedAtFallback) usedLegacyCreatedAtFallback = true;
-      if (isTimestampInRange(iso, start, end)) {
-        totalCents += entry.costCents;
-      }
-    }
-  }
-  return { totalCents, usedLegacyCreatedAtFallback };
 }
 
 function buildKpiCard(
@@ -150,9 +108,9 @@ function formatMarginPercent(profitCents: number, collectedCents: number): numbe
 
 function bucketValueForTab(
   tab: ReportChartTabId,
-  payments: readonly PaymentRow[],
+  payments: ReturnType<typeof collectPaymentTasks>,
   projects: readonly CrmProjectDetail[],
-  bucket: ChartTimeBucket,
+  bucket: ChartTimeBucket
 ): number {
   const { start, end } = bucket;
   switch (tab) {
@@ -166,14 +124,13 @@ function bucketValueForTab(
       return collected - costs;
     }
     case 'receivables':
-      // v1: invoiced revenue per bucket (open-balance movement needs snapshot history).
       return sumInvoicedInRange(payments, start, end);
     default:
       return 0;
   }
 }
 
-function computeAvgDaysToPay(payments: readonly PaymentRow[]): number | null {
+function computeAvgDaysToPay(payments: ReturnType<typeof collectPaymentTasks>): number | null {
   const deltas: number[] = [];
   for (const p of payments) {
     if (p.invoicedAt == null || p.paidAt == null) continue;

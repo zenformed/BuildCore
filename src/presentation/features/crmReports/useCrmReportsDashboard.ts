@@ -13,6 +13,7 @@ import { crmRepositories } from '@/shared/di/container';
 
 export function useCrmReportsDashboard(): {
   dashboard: CrmReportsDashboardData | null;
+  projects: readonly CrmProjectDetail[] | null;
   isLoading: boolean;
   error: string | null;
   period: ReportPeriodId;
@@ -66,6 +67,7 @@ export function useCrmReportsDashboard(): {
 
   return {
     dashboard,
+    projects,
     isLoading: projects == null,
     error,
     period,

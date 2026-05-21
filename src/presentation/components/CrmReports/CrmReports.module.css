@@ -264,6 +264,17 @@
   color: var(--color-text-muted, #64748b);
 }
 
+.reportsDownloadBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.reportsDownloadBtn:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
 .costBreakdownPanel {
   display: flex;
   flex-direction: column;
