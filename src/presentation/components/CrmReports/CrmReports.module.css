@@ -164,12 +164,8 @@
   align-items: flex-start;
   gap: 1rem;
   padding: 0.65rem 0.85rem 0.75rem;
-  background: var(--theme-surface-muted);
-  border-top: 1px solid var(--theme-border-main);
-}
-
-:global([data-theme='dark']) .kpiFoot {
-  border-top-color: var(--theme-border-main, #3d3e4a);
+  background: var(--theme-table-header-bg);
+  border-top: 1px solid var(--theme-table-header-bg);
 }
 
 .kpiFootStat {
@@ -185,11 +181,7 @@
   font-weight: 600;
   line-height: 1.2;
   font-variant-numeric: tabular-nums;
-  color: var(--color-text);
-}
-
-:global([data-theme='dark']) .kpiFootValue {
-  color: #f1f5f9;
+  color: var(--theme-table-header-text);
 }
 
 .kpiFootLabel {
@@ -198,11 +190,8 @@
   text-transform: uppercase;
   letter-spacing: 0.05em;
   line-height: 1.25;
-  color: var(--color-text-muted, #64748b);
-}
-
-:global([data-theme='dark']) .kpiFootLabel {
-  color: #94a3b8;
+  color: var(--theme-table-header-text);
+  opacity: 0.92;
 }
 
 .middleRow {

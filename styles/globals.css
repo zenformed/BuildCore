@@ -5,6 +5,7 @@
 
 @import './theme-tokens.css';
 @import './theme-surfaces.css';
+@import './theme-scrollbars.css';
 
 *,
 *::before,

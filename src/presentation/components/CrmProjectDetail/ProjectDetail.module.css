@@ -2466,18 +2466,16 @@
 }
 
 .stageGroup {
-  border: none;
-  border-radius: 0;
+  border-width: var(--theme-stage-group-border-width);
+  border-style: solid;
+  border-color: var(--theme-stage-group-border-color);
+  border-radius: var(--theme-stage-group-radius);
   overflow: visible;
   background: transparent;
 }
 
 .stageGroup_collapsed {
   overflow: hidden;
-}
-
-:global([data-theme='dark']) .stageGroup {
-  background: transparent;
 }
 
 .stageGroupHeaderBtn,
@@ -2826,13 +2824,13 @@
 }
 
 :global([data-theme='dark']) .docListItem {
-  border-color: #34384a;
-  background: #1e2130;
+  border-color: var(--theme-border-main);
+  background: var(--theme-surface-list-item);
 }
 
 :global([data-theme='dark']) .docListItem:hover {
-  border-color: #4b5563;
-  background: #232736;
+  border-color: var(--theme-border-strong);
+  background: var(--theme-surface-list-item-hover);
 }
 
 .docTypeIcon {
