@@ -29,7 +29,6 @@ export const buildCoreDashboardNavigation = {
     items: [
       { id: 'projects' as const, label: 'Projects', title: 'All projects' },
       { id: 'reports' as const, label: 'Reports', title: 'CRM reports' },
-      { id: 'overview' as const, label: 'Overview', title: 'Overview' },
     ],
   },
   header: {

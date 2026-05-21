@@ -13,12 +13,12 @@ export default function ReportsPage(): ReactElement {
   const router = useRouter();
 
   const onSidebarSelect = (id: BuildCoreSidebarNavId): void => {
-    dash.setSidebarNav(id === 'overview' ? 'overview' : 'projects');
     if (id === 'reports') {
       router.push(nav.routes.reports);
-    } else {
-      router.push(nav.routes.dashboard);
+      return;
     }
+    dash.setSidebarNav('projects');
+    router.push(nav.routes.dashboard);
   };
 
   return (

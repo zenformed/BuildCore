@@ -41,14 +41,14 @@ export function ProjectDetailRouteLayout({ children }: ProjectDetailRouteLayoutP
 
   const handleSidebarSelect = useCallback(
     (id: BuildCoreSidebarNavId) => {
-      if (id === 'projects') {
-        goToProjects();
+      if (id === 'reports') {
+        dash.setSidebarNav('projects');
+        router.push(nav.routes.reports);
         return;
       }
-      dash.setSidebarNav(id);
       goToProjects();
     },
-    [dash, goToProjects]
+    [dash, router, goToProjects]
   );
 
   let body: ReactElement;

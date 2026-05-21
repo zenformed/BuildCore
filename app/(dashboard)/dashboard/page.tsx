@@ -8,42 +8,36 @@ import { useBuildCoreDashboard } from '@/presentation/features/buildCoreDashboar
 import { BuildCoreDashboardShell } from '@/presentation/components/DashboardShell/BuildCoreDashboardShell';
 import { CrmProjectsPipeline } from '@/presentation/components/CrmProjects/CrmProjectsPipeline';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
-import localStyles from './buildCoreDashboard.module.css';
 
 export default function DashboardPage(): ReactElement {
   const dash = useBuildCoreDashboard();
   const router = useRouter();
-  const showProjects = dash.sidebarNav === 'projects';
 
   const onSidebarSelect = (id: BuildCoreSidebarNavId): void => {
     if (id === 'reports') {
       router.push(nav.routes.reports);
       return;
     }
-    dash.setSidebarNav(id);
+    dash.setSidebarNav('projects');
   };
 
   return (
     <BuildCoreDashboardShell
       dash={dash}
-      title={showProjects ? content.dashboard.title : content.dashboard.overviewTitle}
-      showProjectActions={showProjects}
+      title={content.dashboard.title}
+      showProjectActions
       onSidebarSelect={onSidebarSelect}
     >
-      {showProjects ? (
-        <CrmProjectsPipeline
-          searchQuery={dash.projectsSearchQuery}
-          stageFilter={dash.stageFilter}
-          priorityFilter={dash.priorityFilter}
-          createDraftOpen={dash.createProjectDraftOpen}
-          onCreateDraftOpenChange={dash.setCreateProjectDraftOpen}
-          onStageFilterChange={dash.setStageFilter}
-          onPriorityFilterChange={dash.setPriorityFilter}
-          onProjectRowClick={dash.onProjectRowClick}
-        />
-      ) : (
-        <p className={localStyles.overviewMessage}>{content.dashboard.overviewBody}</p>
-      )}
+      <CrmProjectsPipeline
+        searchQuery={dash.projectsSearchQuery}
+        stageFilter={dash.stageFilter}
+        priorityFilter={dash.priorityFilter}
+        createDraftOpen={dash.createProjectDraftOpen}
+        onCreateDraftOpenChange={dash.setCreateProjectDraftOpen}
+        onStageFilterChange={dash.setStageFilter}
+        onPriorityFilterChange={dash.setPriorityFilter}
+        onProjectRowClick={dash.onProjectRowClick}
+      />
     </BuildCoreDashboardShell>
   );
 }
