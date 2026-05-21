@@ -1,3 +1,8 @@
+export {
+  BuildCoreDashboardProvider,
+  useBuildCoreDashboardContext,
+  type BuildCoreDashboardContextValue,
+} from './BuildCoreDashboardProvider';
 export { SaaSProfileProvider, useSaaSProfile, type SaaSProfile, type LicenseTier } from './SaaSProfileProvider';
 export { BrandingProvider, useBrandingContext, type BrandingState } from './BrandingProvider';
 export { ThemeProvider, useTheme, type Theme } from './ThemeProvider';

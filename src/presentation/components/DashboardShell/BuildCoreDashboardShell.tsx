@@ -12,7 +12,7 @@ import {
 } from '@zenformed/core/dashboard-shell';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
 import { buildCoreDashboardNavigation as nav } from '@/platform/navigation/buildCoreDashboardNavigation';
-import type { useBuildCoreDashboard } from '@/presentation/features/buildCoreDashboard/useBuildCoreDashboard';
+import { useBuildCoreDashboardContext } from '@/presentation/providers/BuildCoreDashboardProvider';
 import { BuildCoreDashboardHeader } from './BuildCoreDashboardHeader';
 import { BuildCoreDashboardModals } from './BuildCoreDashboardModals';
 import { BuildCoreSettingsDrawer } from './BuildCoreSettingsDrawer';
@@ -26,23 +26,22 @@ const layoutClassNames = pickDashboardLayoutClassNames(shellStyles);
 const pageLoadingClassNames = pickDashboardPageLoadingClassNames(shellStyles);
 
 export type BuildCoreDashboardShellProps = {
-  dash: ReturnType<typeof useBuildCoreDashboard>;
   /** When null, the shell omits the page h1 (detail pages use their own header). */
   title: string | null;
   showProjectActions: boolean;
-  sidebarActiveId?: BuildCoreSidebarNavId;
-  onSidebarSelect?: (id: BuildCoreSidebarNavId) => void;
+  sidebarActiveId: BuildCoreSidebarNavId;
+  onSidebarSelect: (id: BuildCoreSidebarNavId) => void;
   children: ReactNode;
 };
 
 export function BuildCoreDashboardShell({
-  dash,
   title,
   showProjectActions,
   sidebarActiveId,
   onSidebarSelect,
   children,
 }: BuildCoreDashboardShellProps): ReactElement {
+  const dash = useBuildCoreDashboardContext();
   if (dash.authLoading && dash.saasProfile == null) {
     return (
       <ZenformedDashboardPageLoading classNames={pageLoadingClassNames} message={content.loading.page} />
@@ -58,9 +57,6 @@ export function BuildCoreDashboardShell({
     );
   }
 
-  const activeSidebarId = sidebarActiveId ?? dash.sidebarNav;
-  const handleSidebarSelect = onSidebarSelect ?? dash.setSidebarNav;
-
   return (
     <ZenformedDashboardAppShell classNames={{ appLayout: layoutClassNames.appLayout }}>
       <ZenformedDashboardSidebarRow
@@ -69,7 +65,7 @@ export function BuildCoreDashboardShell({
           mainColumn: layoutClassNames.mainColumn,
         }}
         sidebar={
-          <BuildCoreSidebar activeId={activeSidebarId} onSelect={handleSidebarSelect}>
+          <BuildCoreSidebar activeId={sidebarActiveId} onSelect={onSidebarSelect}>
             <ZenformedSidebarBranding
               classNames={sidebarBrandingClassNames}
               shopName={dash.shopName}
