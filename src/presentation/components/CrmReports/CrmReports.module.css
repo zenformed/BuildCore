@@ -470,11 +470,18 @@
 }
 
 .costTableWrap {
+  --cost-breakdown-visible-rows: 5;
+  --cost-breakdown-row-block: 2.8rem;
   display: flex;
   flex-direction: column;
   flex: 1 1 auto;
   min-height: 0;
   min-width: 0;
+  overflow: hidden;
+}
+
+.costTableWrap > .tableHeader {
+  flex-shrink: 0;
 }
 
 .costBreakdownGrid {
@@ -493,9 +500,14 @@
   display: flex;
   flex-direction: column;
   gap: 0;
-  flex: 1 1 auto;
+  flex: 0 1 auto;
   min-height: 0;
-  overflow: auto;
+  max-height: calc(
+    var(--cost-breakdown-visible-rows) * var(--cost-breakdown-row-block)
+  );
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-gutter: stable;
 }
 
 .costList > li:last-child > div {
