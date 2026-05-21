@@ -5,4 +5,5 @@ export type { ICrmDocumentsRepository } from './ICrmDocumentsRepository';
 export type { ICrmMilestonePaymentsRepository } from './ICrmMilestonePaymentsRepository';
 export type { ICrmProjectDetailRepository } from './ICrmProjectDetailRepository';
 export type { ICrmProjectsRepository } from './ICrmProjectsRepository';
+export type { ICrmReportsRepository } from './ICrmReportsRepository';
 export type { ICrmWorkflowTasksRepository } from './ICrmWorkflowTasksRepository';

@@ -525,7 +525,7 @@ export class ApiCrmBudgetRepository implements ICrmBudgetRepository {
 
         assignedMemberId: input.assignedMemberId,
 
-        occurredOn: input.occurredOn,
+        costIncurredAt: input.costIncurredAt,
 
         documentsRequired: input.documentsRequired,
 
@@ -561,7 +561,7 @@ export class ApiCrmBudgetRepository implements ICrmBudgetRepository {
 
         assignedMemberId: input.assignedMemberId,
 
-        occurredOn: input.occurredOn,
+        costIncurredAt: input.costIncurredAt,
 
         documentsRequired: input.documentsRequired,
 

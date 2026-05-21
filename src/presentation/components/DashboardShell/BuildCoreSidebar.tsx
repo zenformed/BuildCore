@@ -2,10 +2,10 @@
 
 import type { ReactElement } from 'react';
 import { buildCoreDashboardNavigation as nav } from '@/platform/navigation/buildCoreDashboardNavigation';
-import { GridIcon, ListIcon } from '@/platform/icons/buildCoreDashboardShellIcons';
+import { GridIcon, ListIcon, ReportsIcon } from '@/platform/icons/buildCoreDashboardShellIcons';
 import styles from './BuildCoreSidebar.module.css';
 
-export type BuildCoreSidebarNavId = 'projects' | 'overview';
+export type BuildCoreSidebarNavId = 'projects' | 'reports' | 'overview';
 
 export type BuildCoreSidebarProps = {
   activeId: BuildCoreSidebarNavId;
@@ -28,7 +28,13 @@ export function BuildCoreSidebar({ activeId, onSelect, children }: BuildCoreSide
           aria-label={item.label}
           title={item.title}
         >
-          {item.id === 'projects' ? <ListIcon /> : <GridIcon />}
+          {item.id === 'projects' ? (
+            <ListIcon />
+          ) : item.id === 'reports' ? (
+            <ReportsIcon />
+          ) : (
+            <GridIcon />
+          )}
         </button>
       ))}
     </nav>

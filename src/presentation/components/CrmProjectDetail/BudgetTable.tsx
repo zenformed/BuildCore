@@ -110,6 +110,7 @@ export function BudgetTable({ onError }: BudgetTableProps): ReactElement {
             <span role="columnheader">{b.columns.cost}</span>
             <span role="columnheader">{b.columns.budget}</span>
             <span role="columnheader">{b.columns.remaining}</span>
+            <span role="columnheader">{b.columns.costDate}</span>
             <span role="columnheader">{b.columns.documents}</span>
             <span role="columnheader" className={styles.taskDeleteHeader} aria-hidden />
           </div>
@@ -148,6 +149,7 @@ export function BudgetTable({ onError }: BudgetTableProps): ReactElement {
             >
               {formatCentsAsUsd(totals.diff)}
             </span>
+            <span aria-hidden />
             <span aria-hidden />
             <span className={styles.taskDeleteCell} aria-hidden />
           </div>

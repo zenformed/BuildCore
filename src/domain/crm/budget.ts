@@ -55,7 +55,8 @@ export type CrmBudgetEntry = {
   readonly budgetCents: number;
   readonly notes: string | null;
   readonly assignedTo: CrmTeamMemberRef | null;
-  readonly occurredOn: string | null;
+  /** When the cost was incurred (ISO timestamp). */
+  readonly costIncurredAt: string;
   readonly documentCount: number;
   readonly documentsRequired: boolean;
   readonly createdAt: string;

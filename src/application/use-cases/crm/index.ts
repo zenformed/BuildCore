@@ -14,3 +14,7 @@ export {
   listCrmProjectSummaries,
   listCrmProjectSummariesSync,
 } from './listCrmProjectSummaries';
+export {
+  listCrmProjectsForReporting,
+  listCrmProjectsForReportingSync,
+} from './listCrmProjectsForReporting';

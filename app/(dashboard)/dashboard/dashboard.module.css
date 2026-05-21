@@ -166,6 +166,17 @@
   overflow: auto;
 }
 
+/* CRM reports: fit dashboard on one screen; internal panels scroll if needed */
+.listViewWrap:has([data-crm-reports-page]) {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.mainContent:has([data-crm-reports-page]) {
+  overflow: hidden;
+}
+
 .mainContent:has([data-project-tasks-page]),
 .mainContent:has([data-project-documents-page]),
 .mainContent:has([data-project-financials-page]) {

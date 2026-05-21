@@ -13,7 +13,7 @@ import { loadCrmMemberMap } from './crmMemberMap';
 import { resolveCrmProjectIdBySlug } from './resolveCrmProjectIdBySlug';
 
 const BUDGET_SELECT =
-  'id, project_id, item_name, category, cost_cents, budget_cents, notes, assigned_to, occurred_on, documents_required, created_at, updated_at, created_by';
+  'id, project_id, item_name, category, cost_cents, budget_cents, notes, assigned_to, cost_incurred_at, documents_required, created_at, updated_at, created_by';
 
 async function mapBudgetRow(
   supabase: SupabaseClient,
@@ -102,7 +102,7 @@ export async function createCrmBudgetEntryForOrg(
       budget_cents: input.budgetCents,
       notes: input.notes ?? null,
       assigned_to: input.assignedMemberId ?? null,
-      occurred_on: input.occurredOn ?? null,
+      cost_incurred_at: input.costIncurredAt,
       documents_required: input.documentsRequired ?? true,
       created_by: actorUserId,
     })
@@ -139,7 +139,7 @@ export async function updateCrmBudgetEntryForOrg(
   if (input.budgetCents !== undefined) patch.budget_cents = input.budgetCents;
   if (input.notes !== undefined) patch.notes = input.notes;
   if (input.assignedMemberId !== undefined) patch.assigned_to = input.assignedMemberId;
-  if (input.occurredOn !== undefined) patch.occurred_on = input.occurredOn;
+  if (input.costIncurredAt !== undefined) patch.cost_incurred_at = input.costIncurredAt;
   if (input.documentsRequired !== undefined) patch.documents_required = input.documentsRequired;
 
   const { data, error } = await supabase

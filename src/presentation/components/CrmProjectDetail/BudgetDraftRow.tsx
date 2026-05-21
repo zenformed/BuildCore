@@ -5,6 +5,10 @@ import { useCallback, useState } from 'react';
 import { CRM_BUDGET_CATEGORIES, type CrmBudgetCategory } from '@/domain/crm';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
 import { formatBudgetCategory } from '@/presentation/features/crmProjectDetail/budgetCategoryLabels';
+import {
+  costIncurredAtFromDateInput,
+  defaultCostDateInput,
+} from '@/presentation/features/crmProjectDetail/budgetCostDate';
 import { parseUsdInputToCents } from '@/presentation/features/crmCreate/createCrmProjectFormModel';
 import type { BudgetEntryDraft } from '@/presentation/features/crmProjectDetail/useBudgetEntryActions';
 import styles from './ProjectDetail.module.css';
@@ -23,6 +27,7 @@ export function BudgetDraftRow({ onSave, onCancel }: BudgetDraftRowProps): React
   const [category, setCategory] = useState<CrmBudgetCategory>('labor');
   const [costUsd, setCostUsd] = useState('');
   const [budgetUsd, setBudgetUsd] = useState('');
+  const [costDate, setCostDate] = useState(defaultCostDateInput);
   const [documentsRequired, setDocumentsRequired] = useState<DocumentsRequiredChoice>('yes');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -35,14 +40,20 @@ export function BudgetDraftRow({ onSave, onCancel }: BudgetDraftRowProps): React
       setError(b.itemNameRequired);
       return;
     }
+    if (!costDate.trim()) {
+      setError(b.costDateRequired);
+      return;
+    }
     setSaving(true);
     setError(null);
     try {
+      const costIncurredAt = costIncurredAtFromDateInput(costDate);
       await onSave({
         itemName: name,
         category,
         costCents: parseUsdInputToCents(costUsd) ?? 0,
         budgetCents: parseUsdInputToCents(budgetUsd) ?? 0,
+        costIncurredAt,
         documentsRequired: documentsRequiredOn,
       });
     } catch (err) {
@@ -51,9 +62,11 @@ export function BudgetDraftRow({ onSave, onCancel }: BudgetDraftRowProps): React
       setSaving(false);
     }
   }, [
+    b.costDateRequired,
     b.itemNameRequired,
     budgetUsd,
     category,
+    costDate,
     costUsd,
     documentsRequiredOn,
     itemName,
@@ -134,6 +147,25 @@ export function BudgetDraftRow({ onSave, onCancel }: BudgetDraftRowProps): React
 
         <span className={`${styles.workflowMetaCell} ${styles.budgetRemainingCell}`}>
           <span className={styles.budgetMutedCell}>—</span>
+        </span>
+
+        <span className={`${styles.workflowMetaCell} ${styles.budgetCostDateCell}`}>
+          <input
+            type="date"
+            className={styles.inlineFieldInput}
+            value={costDate}
+            disabled={saving}
+            required
+            aria-label={b.columns.costDate}
+            onChange={(e) => {
+              setCostDate(e.target.value);
+              setError(null);
+            }}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') void handleSave();
+              if (e.key === 'Escape') onCancel();
+            }}
+          />
         </span>
 
         <span className={`${styles.inlineCellWrap} ${styles.workflowMetaCell}`}>

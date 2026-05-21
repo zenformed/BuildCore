@@ -124,7 +124,7 @@ export type DbCrmBudgetEntryRow = {
   notes: string | null;
   assigned_to: string | null;
   created_by?: string | null;
-  occurred_on: string | null;
+  cost_incurred_at: string;
   documents_required?: boolean | null;
   created_at: string;
   updated_at: string;
@@ -422,7 +422,7 @@ export function mapDbBudgetEntry(
       row.assigned_to != null
         ? (memberById.get(row.assigned_to) ?? mapProfileToTeamMemberRef(null, row.assigned_to))
         : null,
-    occurredOn: row.occurred_on,
+    costIncurredAt: row.cost_incurred_at,
     documentCount,
     documentsRequired: row.documents_required ?? true,
     createdAt: row.created_at,

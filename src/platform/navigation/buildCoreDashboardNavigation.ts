@@ -16,6 +16,7 @@ export const buildCoreDashboardNavigation = {
   },
   routes: {
     dashboard: buildcoreAppDefinition.dashboardRoute ?? '/dashboard',
+    reports: '/reports',
     home: '/',
     projectDetail: (slug: string): string => `/projects/${slug}`,
     projectWorkflowTasks: (slug: string): string => `/projects/${slug}/tasks`,
@@ -27,6 +28,7 @@ export const buildCoreDashboardNavigation = {
     ariaLabel: 'Primary navigation',
     items: [
       { id: 'projects' as const, label: 'Projects', title: 'All projects' },
+      { id: 'reports' as const, label: 'Reports', title: 'CRM reports' },
       { id: 'overview' as const, label: 'Overview', title: 'Overview' },
     ],
   },

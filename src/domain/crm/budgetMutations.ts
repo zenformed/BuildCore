@@ -9,7 +9,7 @@ export type CreateCrmBudgetEntryInput = {
   readonly budgetCents: number;
   readonly notes?: string | null;
   readonly assignedMemberId?: string | null;
-  readonly occurredOn?: string | null;
+  readonly costIncurredAt: string;
   readonly documentsRequired?: boolean;
 };
 
@@ -22,7 +22,7 @@ export type UpdateCrmBudgetEntryInput = {
   readonly budgetCents?: number;
   readonly notes?: string | null;
   readonly assignedMemberId?: string | null;
-  readonly occurredOn?: string | null;
+  readonly costIncurredAt?: string;
   readonly documentsRequired?: boolean;
 };
 

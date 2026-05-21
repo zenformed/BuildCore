@@ -9,6 +9,7 @@ import {
   ApiCrmProjectsRepository,
   ApiCrmWorkflowTasksRepository,
 } from '@/infrastructure/crm/api/ApiCrmRepositories';
+import { ApiCrmReportsRepository } from '@/infrastructure/crm/api/ApiCrmReportsRepository';
 import {
   MockCrmAccountabilityRepository,
   MockCrmBudgetRepository,
@@ -18,6 +19,7 @@ import {
   MockCrmProjectsRepository,
   MockCrmWorkflowTasksRepository,
 } from '@/infrastructure/crm/mock/MockCrmRepositories';
+import { MockCrmReportsRepository } from '@/infrastructure/crm/mock/MockCrmReportsRepository';
 
 let cached: CrmRepositories | null = null;
 
@@ -30,6 +32,7 @@ function createMockCrmRepositories(): CrmRepositories {
     milestonePayments: new MockCrmMilestonePaymentsRepository(),
     accountability: new MockCrmAccountabilityRepository(),
     budget: new MockCrmBudgetRepository(),
+    reports: new MockCrmReportsRepository(),
   };
 }
 
@@ -42,6 +45,7 @@ function createApiCrmRepositories(): CrmRepositories {
     milestonePayments: new ApiCrmMilestonePaymentsRepository(),
     accountability: new ApiCrmAccountabilityRepository(),
     budget: new ApiCrmBudgetRepository(),
+    reports: new ApiCrmReportsRepository(),
   };
 }
 

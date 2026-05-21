@@ -135,7 +135,8 @@
 }
 
 .budgetGrid {
-  grid-template-columns: minmax(0, 1fr) 6.25rem 4.5rem 4.5rem 4.5rem 5.5rem 1.75rem;
+  grid-template-columns:
+    minmax(10rem, 1.35fr) 10.5rem 4.5rem 4.5rem 4.5rem 7.25rem 5.5rem 1.75rem;
 }
 
 .budgetTableHeader > *:nth-child(1),
@@ -145,11 +146,12 @@
 
 .budgetTableHeader > *:nth-child(3),
 .budgetTableHeader > *:nth-child(4),
-.budgetTableHeader > *:nth-child(5) {
+.budgetTableHeader > *:nth-child(5),
+.budgetTableHeader > *:nth-child(6) {
   text-align: right;
 }
 
-.budgetTableHeader > *:nth-child(6):not(.taskDeleteHeader) {
+.budgetTableHeader > *:nth-child(7):not(.taskDeleteHeader) {
   text-align: center;
 }
 
@@ -157,6 +159,7 @@
   font-size: 0.75rem;
   color: var(--color-text-muted, #64748b);
 }
+
 
 .budgetRemainingUnder {
   font-size: 0.75rem;
@@ -1620,8 +1623,10 @@
 .budgetGrid.tableRow > :nth-child(3),
 .budgetGrid.tableRow > :nth-child(4),
 .budgetGrid.tableRow > :nth-child(5),
+.budgetGrid.tableRow > :nth-child(6),
 .budgetGrid .budgetAmountCell,
-.budgetGrid .budgetRemainingCell {
+.budgetGrid .budgetRemainingCell,
+.budgetGrid .budgetCostDateCell {
   justify-content: flex-end;
 }
 
@@ -1650,6 +1655,21 @@
 .budgetGrid .budgetRemainingCell .budgetMutedCell {
   width: 100%;
   text-align: right;
+}
+
+.budgetGrid .budgetCostDateCell .inlineCellBtn,
+.budgetGrid .budgetCostDateCell .inlineFieldInput {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  font-size: 0.75rem;
+  text-align: right;
+  justify-content: flex-end;
+}
+
+.budgetGrid .budgetCategoryCell .inlineCellBtn,
+.budgetGrid .budgetCategoryCell .paymentDraftSelect {
+  white-space: nowrap;
 }
 
 .workflowGrid.tableHeader > *:nth-child(n + 3):not(.taskDeleteHeader),
@@ -2296,6 +2316,7 @@
 
 .paymentsPanel {
   padding: 0.75rem 0.875rem;
+  width: 100%;
   min-width: 0;
   min-height: 100%;
   display: flex;
@@ -2569,8 +2590,19 @@
   display: flex;
   flex-direction: column;
   gap: 0;
+  width: 100%;
   min-width: 0;
   background: transparent;
+}
+
+.paymentsList .tableHeader,
+.paymentsList .tableRow {
+  width: 100%;
+}
+
+.paymentsList .workflowGridPaymentsWithDates {
+  grid-template-columns:
+    5.5rem minmax(11rem, 1fr) 4.5rem 5.5rem 5rem 5.5rem 3.75rem 3.75rem 3.75rem 1.75rem;
 }
 
 .paymentsList .tableHeader {

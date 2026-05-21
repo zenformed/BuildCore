@@ -156,7 +156,7 @@ export async function getCrmProjectDetailBySlugForOrg(
     supabase
       .from('crm_project_budget_entries')
       .select(
-        'id, project_id, item_name, category, cost_cents, budget_cents, notes, assigned_to, occurred_on, created_at, updated_at, created_by'
+        'id, project_id, item_name, category, cost_cents, budget_cents, notes, assigned_to, cost_incurred_at, created_at, updated_at, created_by'
       )
       .eq('project_id', project.id)
       .is('deleted_at', null)
@@ -189,4 +189,18 @@ export async function getCrmProjectDetailBySlugForOrg(
     budgetEntries,
     memberById,
   });
+}
+
+/** Full project details for org-wide CRM reporting (N project fetches). */
+export async function listCrmProjectsForReportingForOrg(
+  supabase: SupabaseClient,
+  organizationId: string
+): Promise<readonly CrmProjectDetail[]> {
+  const summaries = await listCrmProjectSummariesForOrg(supabase, organizationId);
+  const details = await Promise.all(
+    summaries.map((summary) =>
+      getCrmProjectDetailBySlugForOrg(supabase, organizationId, summary.slug)
+    )
+  );
+  return details.filter((detail): detail is CrmProjectDetail => detail != null);
 }

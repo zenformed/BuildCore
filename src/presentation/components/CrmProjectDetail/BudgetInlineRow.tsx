@@ -12,6 +12,11 @@ import { parseUsdInputToCents } from '@/presentation/features/crmCreate/createCr
 import { formatCentsAsUsd } from '@/presentation/features/crmProjects/crmProjectFormatters';
 import { centsToUsdInput } from '@/presentation/features/crmProjectDetail/workflowTaskFormModel';
 import type { BudgetEntryDraft } from '@/presentation/features/crmProjectDetail/useBudgetEntryActions';
+import {
+  costIncurredAtFromDateInput,
+  dateInputFromCostIncurredAt,
+  formatCostDateDisplay,
+} from '@/presentation/features/crmProjectDetail/budgetCostDate';
 import { useProjectDetailShell } from '@/presentation/features/crmProjectDetail/ProjectDetailShellContext';
 import { useBudgetEntryDocumentActions } from '@/presentation/features/crmProjectDetail/useBudgetEntryDocumentActions';
 import { WorkflowDocumentFileIcon } from './WorkflowDocumentFileIcon';
@@ -43,6 +48,8 @@ export function BudgetInlineRow({
   const [costDraft, setCostDraft] = useState(centsToUsdInput(entry.costCents));
   const [editingBudget, setEditingBudget] = useState(false);
   const [budgetDraft, setBudgetDraft] = useState(centsToUsdInput(entry.budgetCents));
+  const [editingCostDate, setEditingCostDate] = useState(false);
+  const [costDateDraft, setCostDateDraft] = useState(dateInputFromCostIncurredAt(entry.costIncurredAt));
   const [categoryMenuOpen, setCategoryMenuOpen] = useState(false);
   const [documentsMenuOpen, setDocumentsMenuOpen] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -74,6 +81,10 @@ export function BudgetInlineRow({
   useEffect(() => {
     if (!editingBudget) setBudgetDraft(centsToUsdInput(entry.budgetCents));
   }, [editingBudget, entry.budgetCents]);
+
+  useEffect(() => {
+    if (!editingCostDate) setCostDateDraft(dateInputFromCostIncurredAt(entry.costIncurredAt));
+  }, [editingCostDate, entry.costIncurredAt]);
 
   const reportError = useCallback(
     (err: unknown) => {
@@ -121,6 +132,18 @@ export function BudgetInlineRow({
     await commit({ costCents });
     setEditingCost(false);
   }, [commit, costDraft, entry.costCents, onError]);
+
+  const saveCostDate = useCallback(async () => {
+    setEditingCostDate(false);
+    try {
+      const iso = costIncurredAtFromDateInput(costDateDraft);
+      if (iso === entry.costIncurredAt) return;
+      await commit({ costIncurredAt: iso });
+    } catch (err) {
+      reportError(err);
+      setCostDateDraft(dateInputFromCostIncurredAt(entry.costIncurredAt));
+    }
+  }, [commit, costDateDraft, entry.costIncurredAt, reportError]);
 
   const saveBudget = useCallback(async () => {
     const budgetCents = parseUsdInputToCents(budgetDraft);
@@ -316,6 +339,42 @@ export function BudgetInlineRow({
         >
           {formatCentsAsUsd(remainingCents)}
         </span>
+      </span>
+
+      <span className={`${styles.workflowMetaCell} ${styles.budgetCostDateCell}`}>
+        {editingCostDate ? (
+          <input
+            type="date"
+            className={styles.inlineFieldInput}
+            value={costDateDraft}
+            disabled={saving}
+            aria-label={b.columns.costDate}
+            onChange={(e) => setCostDateDraft(e.target.value)}
+            onBlur={() => void saveCostDate()}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') void saveCostDate();
+              if (e.key === 'Escape') {
+                setCostDateDraft(dateInputFromCostIncurredAt(entry.costIncurredAt));
+                setEditingCostDate(false);
+              }
+            }}
+            autoFocus
+          />
+        ) : (
+          <button
+            type="button"
+            className={styles.inlineCellBtn}
+            disabled={saving}
+            onClick={() => {
+              setCategoryMenuOpen(false);
+              setDocumentsMenuOpen(false);
+              setCostDateDraft(dateInputFromCostIncurredAt(entry.costIncurredAt));
+              setEditingCostDate(true);
+            }}
+          >
+            {formatCostDateDisplay(entry.costIncurredAt)}
+          </button>
+        )}
       </span>
 
       <span className={`${styles.inlineCellWrap} ${styles.workflowMetaCell}`} ref={documentsRef}>

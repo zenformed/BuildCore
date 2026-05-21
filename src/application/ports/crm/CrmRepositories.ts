@@ -4,6 +4,7 @@ import type { ICrmDocumentsRepository } from './ICrmDocumentsRepository';
 import type { ICrmMilestonePaymentsRepository } from './ICrmMilestonePaymentsRepository';
 import type { ICrmProjectDetailRepository } from './ICrmProjectDetailRepository';
 import type { ICrmProjectsRepository } from './ICrmProjectsRepository';
+import type { ICrmReportsRepository } from './ICrmReportsRepository';
 import type { ICrmWorkflowTasksRepository } from './ICrmWorkflowTasksRepository';
 
 export type CrmRepositories = {
@@ -14,4 +15,5 @@ export type CrmRepositories = {
   readonly milestonePayments: ICrmMilestonePaymentsRepository;
   readonly accountability: ICrmAccountabilityRepository;
   readonly budget: ICrmBudgetRepository;
+  readonly reports: ICrmReportsRepository;
 };

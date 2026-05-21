@@ -687,7 +687,7 @@ export class MockCrmBudgetRepository implements ICrmBudgetRepository {
 
       assignedTo: assignee,
 
-      occurredOn: input.occurredOn ?? null,
+      costIncurredAt: input.costIncurredAt,
 
       documentCount: 0,
 
@@ -745,7 +745,8 @@ export class MockCrmBudgetRepository implements ICrmBudgetRepository {
 
         assignedTo: assignee,
 
-        occurredOn: input.occurredOn !== undefined ? input.occurredOn : entry.occurredOn,
+        costIncurredAt:
+          input.costIncurredAt !== undefined ? input.costIncurredAt : entry.costIncurredAt,
 
         documentsRequired:
           input.documentsRequired !== undefined ? input.documentsRequired : entry.documentsRequired,

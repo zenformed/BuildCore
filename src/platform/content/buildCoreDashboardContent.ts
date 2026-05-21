@@ -28,6 +28,45 @@ export const buildCoreDashboardContent = {
     defaultShopNameFallback: buildcoreAppDefinition.displayName,
     logoSaveFailedFallback: 'Failed to save logo',
   },
+  reports: {
+    breadcrumb: 'CRM / Reports',
+    title: 'Reports',
+    loading: 'Loading reports…',
+    loadError: 'Could not load reports data. Try again.',
+    costsUndatedNote:
+      'Some legacy costs used created date as Cost Date until backfilled.',
+    periods: {
+      mtd: 'Month To Date',
+      qtd: 'Quarter To Date',
+      ytd: 'Year To Date',
+      all: 'All Time',
+    },
+    chartTabs: {
+      revenue: 'Revenue',
+      profit: 'Profit',
+      costs: 'Costs',
+      receivables: 'Receivables',
+    },
+    kpi: {
+      collected: 'Collected Revenue',
+      receivables: 'Receivables',
+      netProfit: 'Net Profit',
+    },
+    sections: {
+      projectPerformance: 'Project Performance',
+      costBreakdown: 'Cost Breakdown',
+    },
+    table: {
+      project: 'Project / Customer',
+      collected: 'Collected',
+      costs: 'Costs',
+      profit: 'Profit',
+      margin: 'Margin',
+      status: 'Status',
+      empty: 'No projects in this period.',
+    },
+    costEmpty: 'No costs in this period.',
+  },
   dashboard: {
     title: 'Projects',
     overviewTitle: 'Overview',
@@ -317,9 +356,11 @@ export const buildCoreDashboardContent = {
         category: 'Category',
         cost: 'Cost',
         budget: 'Budget',
+        costDate: 'Cost Date',
         documents: 'Documents',
         remaining: 'Remaining',
       },
+      costDateRequired: 'Cost Date is required.',
       categoryLabels: {
         labor: 'Labor',
         materials: 'Materials',

@@ -15,7 +15,7 @@ export type BudgetEntryDraft = {
   documentsRequired?: boolean;
   notes?: string | null;
   assignedMemberId?: string | null;
-  occurredOn?: string | null;
+  costIncurredAt?: string;
 };
 
 export function useBudgetEntryActions(input: {
@@ -35,11 +35,22 @@ export function useBudgetEntryActions(input: {
 } {
   const createEntry = useCallback(
     async (draft: BudgetEntryDraft) => {
+      if (!draft.costIncurredAt) {
+        input.onError('Cost Date is required');
+        return;
+      }
       try {
         const created = await createCrmBudgetEntry(crmRepositories, {
           projectId: input.projectId,
           projectSlug: input.projectSlug,
-          ...draft,
+          itemName: draft.itemName,
+          category: draft.category,
+          costCents: draft.costCents,
+          budgetCents: draft.budgetCents,
+          costIncurredAt: draft.costIncurredAt,
+          notes: draft.notes,
+          assignedMemberId: draft.assignedMemberId,
+          documentsRequired: draft.documentsRequired,
         });
         input.onEntryCreated(created);
       } catch (err) {

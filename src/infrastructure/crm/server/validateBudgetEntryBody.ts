@@ -7,6 +7,8 @@ export type BudgetEntryBody = {
   budgetCents?: number;
   notes?: string | null;
   assignedMemberId?: string | null;
+  costIncurredAt?: string | null;
+  /** @deprecated Use costIncurredAt */
   occurredOn?: string | null;
   documentsRequired?: boolean;
 };
@@ -18,7 +20,7 @@ type ValidatedCreate = {
   budgetCents: number;
   notes: string | null;
   assignedMemberId: string | null;
-  occurredOn: string | null;
+  costIncurredAt: string;
   documentsRequired: boolean;
 };
 
@@ -29,7 +31,7 @@ type ValidatedUpdate = {
   budgetCents?: number;
   notes?: string | null;
   assignedMemberId?: string | null;
-  occurredOn?: string | null;
+  costIncurredAt?: string;
   documentsRequired?: boolean;
 };
 
@@ -45,14 +47,31 @@ function parseCents(value: unknown, field: string): number | { error: string } {
   return Math.round(value);
 }
 
-function parseOptionalDate(value: unknown): string | null | { error: string } {
-  if (value == null || value === '') return null;
-  if (typeof value !== 'string') return { error: 'occurredOn must be an ISO date string' };
-  const date = value.slice(0, 10);
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
-    return { error: 'occurredOn must be YYYY-MM-DD' };
+function parseCostIncurredAt(value: unknown, required: boolean): string | { error: string } {
+  const raw =
+    value === undefined || value === null || value === ''
+      ? undefined
+      : typeof value === 'string'
+        ? value.trim()
+        : null;
+
+  if (raw === null) {
+    return { error: 'costIncurredAt must be an ISO date or YYYY-MM-DD string' };
   }
-  return date;
+
+  if (raw === undefined) {
+    return required ? { error: 'costIncurredAt is required' } : '';
+  }
+
+  if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) {
+    return `${raw}T12:00:00.000Z`;
+  }
+
+  const parsed = new Date(raw);
+  if (Number.isNaN(parsed.getTime())) {
+    return { error: 'costIncurredAt must be a valid date' };
+  }
+  return parsed.toISOString();
 }
 
 export function validateCreateBudgetEntryBody(
@@ -71,9 +90,10 @@ export function validateCreateBudgetEntryBody(
   const budgetParsed = parseCents(body.budgetCents ?? 0, 'budgetCents');
   if (typeof budgetParsed === 'object') return { ok: false, message: budgetParsed.error };
 
-  const occurred = parseOptionalDate(body.occurredOn);
-  if (occurred != null && typeof occurred === 'object' && 'error' in occurred) {
-    return { ok: false, message: occurred.error };
+  const costIncurredRaw = body.costIncurredAt ?? body.occurredOn;
+  const costIncurred = parseCostIncurredAt(costIncurredRaw, true);
+  if (typeof costIncurred === 'object' && 'error' in costIncurred) {
+    return { ok: false, message: costIncurred.error };
   }
 
   const documentsRequired =
@@ -96,7 +116,7 @@ export function validateCreateBudgetEntryBody(
         body.assignedMemberId === undefined || body.assignedMemberId === ''
           ? null
           : String(body.assignedMemberId),
-      occurredOn: occurred as string | null,
+      costIncurredAt: costIncurred as string,
       documentsRequired,
     },
   };
@@ -144,12 +164,15 @@ export function validateUpdateBudgetEntryBody(
         : String(body.assignedMemberId);
   }
 
-  if (body.occurredOn !== undefined) {
-    const occurred = parseOptionalDate(body.occurredOn);
-    if (occurred != null && typeof occurred === 'object' && 'error' in occurred) {
-      return { ok: false, message: occurred.error };
+  if (body.costIncurredAt !== undefined || body.occurredOn !== undefined) {
+    const costIncurred = parseCostIncurredAt(body.costIncurredAt ?? body.occurredOn, false);
+    if (typeof costIncurred === 'object' && 'error' in costIncurred) {
+      return { ok: false, message: costIncurred.error };
     }
-    input.occurredOn = occurred as string | null;
+    if (costIncurred === '') {
+      return { ok: false, message: 'costIncurredAt cannot be empty' };
+    }
+    input.costIncurredAt = costIncurred as string;
   }
 
   if (body.documentsRequired !== undefined) {
