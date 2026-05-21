@@ -255,7 +255,13 @@ export class ApiCrmWorkflowTasksRepository implements ICrmWorkflowTasksRepositor
 
         assignedMemberId: input.assignedMemberId,
 
-        ...(input.amountCents != null ? { amountCents: input.amountCents } : {}),
+        ...(input.amountCents != null
+          ? {
+              amountCents: input.amountCents,
+              invoicedAt: input.invoicedAt ?? null,
+              paidAt: input.paidAt ?? null,
+            }
+          : {}),
 
       }
 

@@ -228,9 +228,17 @@ export function PaymentMilestoneDraftRow({
           />
         </span>
 
-        <span className={`${styles.workflowMetaCell} ${styles.paymentDatePlaceholder}`} aria-hidden>
-          —
+        <span className={`${styles.inlineDueCell} ${styles.workflowMetaCell}`}>
+          <input
+            type="date"
+            className={styles.paymentDraftDateInput}
+            value={form.invoicedAt}
+            disabled={saving}
+            aria-label={payments.columns.invoiced}
+            onChange={(e) => updateField('invoicedAt', e.target.value)}
+          />
         </span>
+
         <span className={`${styles.workflowMetaCell} ${styles.paymentDatePlaceholder}`} aria-hidden>
           —
         </span>

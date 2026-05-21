@@ -9,22 +9,12 @@ import { useCrmReportsDashboard } from '@/presentation/features/crmReports/useCr
 import { reportBudgetCategoryLabel } from '@/reports/labels/reportLabels';
 import type { ReportChartTabId, ReportPeriodId } from '@/reports/types/crmReportsDashboard';
 import projectStyles from '../CrmProjectDetail/ProjectDetail.module.css';
+import { ReportsKpiCard } from './ReportsKpiCard';
 import { ReportsLineChart } from './ReportsLineChart';
 import styles from './CrmReports.module.css';
 
 const PERIOD_IDS: readonly ReportPeriodId[] = ['mtd', 'qtd', 'ytd', 'all'];
 const CHART_TAB_IDS: readonly ReportChartTabId[] = ['revenue', 'profit', 'costs', 'receivables'];
-
-function formatComparisonPercent(percent: number | null): string {
-  if (percent == null || Number.isNaN(percent)) return '—';
-  const sign = percent > 0 ? '+' : '';
-  return `${sign}${percent.toFixed(1)}%`;
-}
-
-function comparisonClass(percent: number | null): string {
-  if (percent == null || Number.isNaN(percent) || percent === 0) return styles.kpiChange;
-  return percent > 0 ? `${styles.kpiChange} ${styles.kpiChangeUp}` : `${styles.kpiChange} ${styles.kpiChangeDown}`;
-}
 
 export function CrmReportsDashboard(): ReactElement {
   const router = useRouter();
@@ -81,42 +71,40 @@ export function CrmReportsDashboard(): ReactElement {
 
       <div className={styles.dashboardBody}>
         <section className={styles.kpiRow} aria-label="Key metrics">
-          <article className={`${projectStyles.card} ${styles.kpiCard}`}>
-            <p className={styles.kpiLabel}>{content.reports.kpi.collected}</p>
-            <p className={styles.kpiMain}>{formatCentsAsUsd(dashboard.collected.mainCents)}</p>
-            <p className={comparisonClass(dashboard.collected.comparison.percent)}>
-              {formatComparisonPercent(dashboard.collected.comparison.percent)}{' '}
-              {dashboard.collected.comparison.label}
-            </p>
-            <div className={styles.kpiFoot}>
-              <span>{dashboard.collected.footLeft}</span>
-              <span>{dashboard.collected.footRight}</span>
-            </div>
-          </article>
-          <article className={`${projectStyles.card} ${styles.kpiCard}`}>
-            <p className={styles.kpiLabel}>{content.reports.kpi.receivables}</p>
-            <p className={styles.kpiMain}>{formatCentsAsUsd(dashboard.receivables.mainCents)}</p>
-            <p className={comparisonClass(dashboard.receivables.comparison.percent)}>
-              {formatComparisonPercent(dashboard.receivables.comparison.percent)}{' '}
-              {dashboard.receivables.comparison.label}
-            </p>
-            <div className={styles.kpiFoot}>
-              <span>{dashboard.receivables.footLeft}</span>
-              <span>{dashboard.receivables.footRight}</span>
-            </div>
-          </article>
-          <article className={`${projectStyles.card} ${styles.kpiCard}`}>
-            <p className={styles.kpiLabel}>{content.reports.kpi.netProfit}</p>
-            <p className={styles.kpiMain}>{formatCentsAsUsd(dashboard.netProfit.mainCents)}</p>
-            <p className={comparisonClass(dashboard.netProfit.comparison.percent)}>
-              {formatComparisonPercent(dashboard.netProfit.comparison.percent)}{' '}
-              {dashboard.netProfit.comparison.label}
-            </p>
-            <div className={styles.kpiFoot}>
-              <span>{dashboard.netProfit.footLeft}</span>
-              <span>{dashboard.netProfit.footRight}</span>
-            </div>
-          </article>
+          <ReportsKpiCard
+            icon="collected"
+            mainDisplay={formatCentsAsUsd(dashboard.collected.mainCents)}
+            metricLabel={content.reports.kpi.collected}
+            comparison={dashboard.collected.comparison}
+            footLeftValue={String(dashboard.collected.paymentCount)}
+            footLeftLabel={content.reports.kpi.foot.payments}
+            footRightValue={formatCentsAsUsd(dashboard.collected.avgPaymentCents)}
+            footRightLabel={content.reports.kpi.foot.avgPayment}
+          />
+          <ReportsKpiCard
+            icon="receivables"
+            mainDisplay={formatCentsAsUsd(dashboard.receivables.mainCents)}
+            metricLabel={content.reports.kpi.receivables}
+            comparison={dashboard.receivables.comparison}
+            footLeftValue={String(dashboard.receivables.unpaidCount)}
+            footLeftLabel={content.reports.kpi.foot.unpaid}
+            footRightValue={String(dashboard.receivables.overdueCount)}
+            footRightLabel={content.reports.kpi.foot.overdue}
+          />
+          <ReportsKpiCard
+            icon="netProfit"
+            mainDisplay={formatCentsAsUsd(dashboard.netProfit.mainCents)}
+            metricLabel={content.reports.kpi.netProfit}
+            comparison={dashboard.netProfit.comparison}
+            footLeftValue={
+              dashboard.netProfit.marginPercent != null
+                ? `${dashboard.netProfit.marginPercent.toFixed(1)}%`
+                : '—'
+            }
+            footLeftLabel={content.reports.kpi.foot.margin}
+            footRightValue={formatCentsAsUsd(dashboard.netProfit.totalCostsCents)}
+            footRightLabel={content.reports.kpi.foot.costs}
+          />
         </section>
 
         <section className={styles.middleRow}>
@@ -153,8 +141,8 @@ export function CrmReportsDashboard(): ReactElement {
             <div className={styles.metricsGrid}>
               {dashboard.sideMetrics.map((metric) => (
                 <div key={metric.label} className={styles.metricCell}>
-                  <span className={styles.metricCellLabel}>{metric.label}</span>
                   <span className={styles.metricCellValue}>{metric.value}</span>
+                  <span className={styles.metricCellLabel}>{metric.label}</span>
                 </div>
               ))}
             </div>

@@ -22,6 +22,8 @@ export type WorkflowTaskFormState = {
   status: WorkflowTaskStatus;
   documentsRequired: DocumentsRequiredChoice;
   dueAt: string;
+  /** Payment milestone: YYYY-MM-DD for invoiced date (optional). */
+  invoicedAt: string;
   notes: string;
   assignedMemberId: string;
   amountUsd: string;
@@ -42,6 +44,7 @@ export function defaultWorkflowTaskFormState(
     status: 'pending',
     documentsRequired: 'yes',
     dueAt: '',
+    invoicedAt: '',
     notes: '',
     assignedMemberId: '',
     amountUsd: '',
@@ -65,6 +68,7 @@ export function workflowTaskToFormState(task: CrmWorkflowTask): WorkflowTaskForm
     status: task.status,
     documentsRequired: task.documentsRequired ? 'yes' : 'no',
     dueAt: task.dueAt ? task.dueAt.slice(0, 10) : '',
+    invoicedAt: task.invoicedAt ? task.invoicedAt.slice(0, 10) : '',
     notes: task.notes ?? '',
     assignedMemberId: task.assignedTo?.id ?? '',
     amountUsd: centsToUsdInput(task.amountCents),
@@ -109,6 +113,7 @@ export function validateWorkflowTaskForm(
         status: form.status,
         documentsRequired: form.documentsRequired === 'yes',
         dueAt: form.dueAt.trim() ? `${form.dueAt.trim()}T12:00:00.000Z` : null,
+        invoicedAt: form.invoicedAt.trim() ? `${form.invoicedAt.trim()}T12:00:00.000Z` : null,
         notes: form.notes.trim() || null,
         assignedMemberId: form.assignedMemberId.trim() || null,
         amountCents,

@@ -26,9 +26,9 @@ export type BudgetCategoryPieSlice = {
 
 export function buildBudgetCategoryPieSlices(
   categoryCosts: readonly CrmBudgetCategoryCost[]
-): { total: number; slices: BudgetCategoryPieSlice[]; gradient: string } {
+): { total: number; slices: BudgetCategoryPieSlice[] } {
   const total = categoryCosts.reduce((sum, row) => sum + row.costCents, 0);
-  if (total <= 0) return { total: 0, slices: [], gradient: '' };
+  if (total <= 0) return { total: 0, slices: [] };
 
   let cursor = 0;
   const slices: BudgetCategoryPieSlice[] = categoryCosts.map((row, index) => {
@@ -43,14 +43,7 @@ export function buildBudgetCategoryPieSlices(
     };
   });
 
-  const gradient = slices
-    .map(({ start, fraction, color }) => {
-      const end = start + fraction;
-      return `${color} ${(start * 100).toFixed(2)}% ${(end * 100).toFixed(2)}%`;
-    })
-    .join(', ');
-
-  return { total, slices, gradient };
+  return { total, slices };
 }
 
 export function budgetCategoryColorByCategory(

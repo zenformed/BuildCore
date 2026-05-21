@@ -265,12 +265,17 @@
   min-width: 0;
 }
 
-.budgetPieChartSplit {
-  width: min(100%, 19rem);
-  aspect-ratio: 1;
-  height: auto;
-  border-radius: 50%;
-  border: 1px solid var(--theme-border-main, #3d3e4a);
+.budgetPieChartCanvas {
+  position: relative;
+  width: min(100%, 12rem);
+  height: 12rem;
+  max-width: 19rem;
+}
+
+.budgetPieChartCanvas .chartCanvas {
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
 }
 
 .budgetPieLegendBelow {
@@ -1570,7 +1575,7 @@
 
 .workflowGridPaymentsWithDates {
   grid-template-columns:
-    5.5rem minmax(0, 1fr) 4.25rem 4.75rem 4.25rem 5rem 3.5rem 3.5rem 3.5rem 1.75rem;
+    5.5rem minmax(0, 1fr) 4.25rem 4.75rem 4.25rem 5rem 3.5rem 3.5rem 1.75rem;
 }
 
 .paymentDatePlaceholder {
@@ -2268,7 +2273,7 @@
 
 .detailMiddle {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(17rem, 36%);
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   gap: 0.625rem;
   align-items: stretch;
   flex-shrink: 0;
@@ -2578,7 +2583,14 @@
   display: flex;
   flex-direction: column;
   gap: 0;
+  width: 100%;
   min-width: 0;
+}
+
+.stageGroupTable .tableHeader,
+.stageGroupTable .tableRow {
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .stageGroupTable .tableHeader {
@@ -2596,13 +2608,23 @@
 }
 
 .paymentsList .tableHeader,
-.paymentsList .tableRow {
+.paymentsList .tableRow,
+.paymentsList .paymentDraftBlock {
   width: 100%;
+  box-sizing: border-box;
 }
 
 .paymentsList .workflowGridPaymentsWithDates {
   grid-template-columns:
-    5.5rem minmax(11rem, 1fr) 4.5rem 5.5rem 5rem 5.5rem 3.75rem 3.75rem 3.75rem 1.75rem;
+    5.5rem
+    minmax(10rem, 2fr)
+    minmax(4rem, 0.7fr)
+    minmax(4.75rem, 0.85fr)
+    minmax(4rem, 0.7fr)
+    minmax(4.75rem, 0.85fr)
+    minmax(3.25rem, 0.6fr)
+    minmax(3.25rem, 0.6fr)
+    1.75rem;
 }
 
 .paymentsList .tableHeader {

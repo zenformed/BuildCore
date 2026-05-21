@@ -51,6 +51,14 @@ export const buildCoreDashboardContent = {
       collected: 'Collected Revenue',
       receivables: 'Receivables',
       netProfit: 'Net Profit',
+      foot: {
+        payments: 'Payments',
+        avgPayment: 'Avg Payment',
+        unpaid: 'Unpaid',
+        overdue: 'Overdue',
+        margin: 'Margin',
+        costs: 'Costs',
+      },
     },
     sections: {
       projectPerformance: 'Project Performance',
