@@ -458,16 +458,37 @@
   text-decoration: underline;
 }
 
+.costTableWrap {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  min-width: 0;
+}
+
+.costBreakdownGrid {
+  grid-template-columns: minmax(0, 1fr) 4.5rem 3.25rem;
+}
+
+.costBreakdownGrid > *:nth-child(2),
+.costBreakdownGrid > *:nth-child(3) {
+  text-align: right;
+}
+
 .costList {
   list-style: none;
   margin: 0;
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 0.45rem;
+  gap: 0;
   flex: 1 1 auto;
   min-height: 0;
   overflow: auto;
+}
+
+.costList > li:last-child > div {
+  border-bottom: none;
 }
 
 .costBreakdownPanel > .chartEmpty {
@@ -479,13 +500,6 @@
 
 .costBreakdownPanel > .note {
   flex-shrink: 0;
-}
-
-.costRow {
-  display: flex;
-  justify-content: space-between;
-  font-size: 0.75rem;
-  gap: 0.5rem;
 }
 
 .costBarTrack {

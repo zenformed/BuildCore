@@ -49,6 +49,8 @@ export type ReportsProjectRow = {
 export type ReportsCostBreakdownRow = {
   readonly category: CrmBudgetCategory;
   readonly costCents: number;
+  /** Share of total period costs (0–100). */
+  readonly costPercent: number;
 };
 
 export type ReportsTimeSeries = {

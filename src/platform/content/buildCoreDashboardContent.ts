@@ -86,6 +86,11 @@ export const buildCoreDashboardContent = {
       empty: 'No financial activity in this period.',
     },
     costEmpty: 'No costs in this period.',
+    costBreakdownTable: {
+      category: 'Category',
+      cost: 'Cost',
+      costPercent: 'Cost %',
+    },
   },
   dashboard: {
     title: 'Projects',

@@ -17,6 +17,7 @@ import {
   type ChartTimeBucket,
 } from './reportChartBuckets';
 import { buildReportsFinancialActivity } from './reportsFinancialActivity';
+import { computeCategoryPercentOfTotal } from './profitAndLossCalculations';
 import {
   computePeriodComparison,
   isTimestampInRange,
@@ -276,12 +277,17 @@ export function computeCrmReportsDashboard(
     }
   }
 
+  const totalCostCents = [...costByCategory.values()].reduce((sum, cents) => sum + cents, 0);
   const costBreakdown = CRM_BUDGET_CATEGORIES.filter(
     (cat) => (costByCategory.get(cat) ?? 0) > 0
-  ).map((category) => ({
-    category,
-    costCents: costByCategory.get(category) ?? 0,
-  }));
+  ).map((category) => {
+    const costCents = costByCategory.get(category) ?? 0;
+    return {
+      category,
+      costCents,
+      costPercent: computeCategoryPercentOfTotal(costCents, totalCostCents),
+    };
+  });
 
   return {
     period,
