@@ -44,7 +44,7 @@ import type {
 
 } from '@/domain/crm';
 
-import { buildProjectBudgetSummary } from '@/domain/crm';
+import { buildProjectBudgetSummary, resolvePaymentTimingFields } from '@/domain/crm';
 
 import type {
 
@@ -318,6 +318,19 @@ export class MockCrmWorkflowTasksRepository implements ICrmWorkflowTasksReposito
 
       input.assignedMemberId != null ? getMockCrmTeamMember(input.assignedMemberId) : null;
 
+    const isPayment = input.amountCents != null;
+    const now = new Date().toISOString();
+    const timing = resolvePaymentTimingFields({
+      isPayment,
+      previousStatus: input.status,
+      nextStatus: input.status,
+      previousInvoicedAt: null,
+      previousPaidAt: null,
+      invoicedAt: input.invoicedAt,
+      paidAt: input.paidAt,
+      now,
+    });
+
     const task: CrmWorkflowTask = {
 
       id: `wf-mock-${Date.now()}`,
@@ -336,13 +349,17 @@ export class MockCrmWorkflowTasksRepository implements ICrmWorkflowTasksReposito
 
       dueAt: input.dueAt,
 
-      completedAt: input.status === 'done' ? new Date().toISOString() : null,
+      completedAt: input.status === 'done' ? now : null,
 
       completedBy: input.status === 'done' ? assignee : null,
 
       sortOrder: detail.workflowTasks.length + 1,
 
       amountCents: input.amountCents ?? null,
+
+      invoicedAt: isPayment ? timing.invoicedAt : null,
+
+      paidAt: isPayment ? timing.paidAt : null,
 
     };
 
@@ -393,6 +410,21 @@ export class MockCrmWorkflowTasksRepository implements ICrmWorkflowTasksReposito
       });
     }
 
+    const now = new Date().toISOString();
+    const nextAmount =
+      input.amountCents !== undefined ? input.amountCents : found.task.amountCents;
+    const isPayment = nextAmount != null;
+    const timing = resolvePaymentTimingFields({
+      isPayment,
+      previousStatus: found.task.status,
+      nextStatus,
+      previousInvoicedAt: found.task.invoicedAt,
+      previousPaidAt: found.task.paidAt,
+      invoicedAt: input.invoicedAt,
+      paidAt: input.paidAt,
+      now,
+    });
+
     const next: CrmWorkflowTask = {
 
       ...found.task,
@@ -401,7 +433,7 @@ export class MockCrmWorkflowTasksRepository implements ICrmWorkflowTasksReposito
 
       stageSlug: input.stageSlug ?? found.task.stageSlug,
 
-      status: input.status ?? found.task.status,
+      status: nextStatus,
 
       documentsRequired: input.documentsRequired ?? found.task.documentsRequired,
 
@@ -423,23 +455,15 @@ export class MockCrmWorkflowTasksRepository implements ICrmWorkflowTasksReposito
 
       completedAt:
 
-        (input.status ?? found.task.status) === 'done'
+        nextStatus === 'done' ? found.task.completedAt ?? now : null,
 
-          ? found.task.completedAt ?? new Date().toISOString()
+      completedBy: nextStatus === 'done' ? found.task.completedBy ?? found.task.assignedTo : null,
 
-          : null,
+      amountCents: nextAmount,
 
-      completedBy:
+      invoicedAt: isPayment ? timing.invoicedAt : null,
 
-        (input.status ?? found.task.status) === 'done'
-
-          ? found.task.completedBy ?? found.task.assignedTo
-
-          : null,
-
-      amountCents:
-
-        input.amountCents !== undefined ? input.amountCents : found.task.amountCents,
+      paidAt: isPayment ? timing.paidAt : null,
 
     };
 

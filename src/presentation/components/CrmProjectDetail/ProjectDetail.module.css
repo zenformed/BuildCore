@@ -1565,6 +1565,17 @@
   grid-template-columns: 6.25rem minmax(0, 1fr) 4.5rem 5.5rem 4.5rem 6.25rem 1.75rem;
 }
 
+.workflowGridPaymentsWithDates {
+  grid-template-columns:
+    5.5rem minmax(0, 1fr) 4.25rem 4.75rem 4.25rem 5rem 3.5rem 3.5rem 3.5rem 1.75rem;
+}
+
+.paymentDatePlaceholder {
+  font-size: 0.75rem;
+  color: var(--color-text-muted, #64748b);
+  justify-content: center;
+}
+
 .workflowStatusCell {
   display: flex;
   align-items: center;

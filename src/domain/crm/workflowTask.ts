@@ -17,4 +17,8 @@ export type CrmWorkflowTask = {
   readonly sortOrder: number;
   /** Non-null when this row is a payment milestone (see paymentWorkflow.ts). */
   readonly amountCents: number | null;
+  /** Payment milestone: when amount was invoiced (reporting). */
+  readonly invoicedAt: string | null;
+  /** Payment milestone: when amount was collected/paid (reporting). */
+  readonly paidAt: string | null;
 };

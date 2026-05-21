@@ -33,7 +33,8 @@ export function PaymentsRail({
   const cols = content.projectDetail.workflow.columns;
   const milestones = listPaymentMilestones(project.workflowTasks);
   const docCounts = countDocumentsByTaskId(project.documents);
-  const gridClass = `${styles.workflowGrid} ${styles.workflowGridPayments}`;
+  const gridClass = `${styles.workflowGrid} ${styles.workflowGridPaymentsWithDates}`;
+  const payCols = content.projectDetail.payments.columns;
   const [draftOpen, setDraftOpen] = useState(false);
 
   const showTable = milestones.length > 0 || draftOpen;
@@ -59,6 +60,8 @@ export function PaymentsRail({
             <span role="columnheader">{cols.documents}</span>
             <span role="columnheader">{cols.assigned}</span>
             <span role="columnheader">{cols.due}</span>
+            <span role="columnheader">{payCols.invoiced}</span>
+            <span role="columnheader">{payCols.paid}</span>
             <span role="columnheader" className={styles.taskDeleteHeader} aria-hidden />
           </div>
           {milestones.map((task) => (

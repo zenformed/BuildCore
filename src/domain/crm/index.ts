@@ -6,6 +6,7 @@ export {
   type PipelineStage,
   type PipelineStageSlug,
 } from './pipelineStage';
+export { resolvePaymentTimingFields } from './paymentTiming';
 export {
   PAYMENT_WORKFLOW_STAGE_SLUG,
   PAYMENTS_WORKFLOW_COLLAPSE_KEY,

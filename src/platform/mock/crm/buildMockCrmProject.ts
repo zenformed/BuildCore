@@ -123,6 +123,8 @@ function defaultWorkflowTasks(
     completedBy: status === 'done' ? assignee : null,
     sortOrder,
     amountCents: null,
+    invoicedAt: null,
+    paidAt: null,
   });
 
   return [
@@ -146,20 +148,26 @@ function defaultPaymentMilestoneTasks(
     amountCents: number,
     status: WorkflowTaskStatus,
     sortOrder: number
-  ): CrmWorkflowTask => ({
-    id,
-    stageSlug: PAYMENT_WORKFLOW_STAGE_SLUG,
-    title,
-    status,
-    documentsRequired: true,
-    notes: null,
-    assignedTo: assignee,
-    dueAt: '2026-06-01T17:00:00.000Z',
-    completedAt: status === 'done' ? '2026-05-12T16:30:00.000Z' : null,
-    completedBy: status === 'done' ? assignee : null,
-    sortOrder,
-    amountCents,
-  });
+  ): CrmWorkflowTask => {
+    const completedAt = status === 'done' ? '2026-05-12T16:30:00.000Z' : null;
+    return {
+      id,
+      stageSlug: PAYMENT_WORKFLOW_STAGE_SLUG,
+      title,
+      status,
+      documentsRequired: true,
+      notes: null,
+      assignedTo: assignee,
+      dueAt: '2026-06-01T17:00:00.000Z',
+      completedAt,
+      completedBy: status === 'done' ? assignee : null,
+      sortOrder,
+      amountCents,
+      invoicedAt:
+        status === 'in_progress' || status === 'done' ? '2026-05-01T12:00:00.000Z' : null,
+      paidAt: status === 'done' ? completedAt : null,
+    };
+  };
 
   return [
     mkPayment(

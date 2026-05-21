@@ -252,6 +252,10 @@ export const buildCoreDashboardContent = {
       title: 'Payments',
       addMilestone: 'Add payment milestone',
       empty: 'No payment milestones yet.',
+      columns: {
+        invoiced: 'Invoiced',
+        paid: 'Paid',
+      },
       milestoneDrawerCreate: 'New payment milestone',
       milestoneDrawerEdit: 'Edit payment milestone',
       saveMilestone: 'Save payment milestone',

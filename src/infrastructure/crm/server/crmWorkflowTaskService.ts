@@ -4,7 +4,9 @@ import type {
   CreateCrmWorkflowTaskInput,
   UpdateCrmWorkflowTaskInput,
 } from '@/domain/crm/workflowTaskMutations';
+import { resolvePaymentTimingFields } from '@/domain/crm/paymentTiming';
 import { PAYMENT_WORKFLOW_STAGE_SLUG } from '@/domain/crm/paymentWorkflow';
+import type { WorkflowTaskStatus } from '@/domain/crm';
 import { mapDbWorkflowTask, type DbCrmWorkflowTaskRow } from '@/infrastructure/crm/mappers/mapCrmFromDb';
 import { loadCrmMemberMap } from './crmMemberMap';
 import { appendCrmAccountabilityEvent } from './crmAccountability';
@@ -14,7 +16,7 @@ import { isPaymentTaskRow, syncProjectBalanceFromPaymentTasks } from './crmPayme
 import { resolveCrmProjectIdBySlug } from './resolveCrmProjectIdBySlug';
 
 const TASK_SELECT =
-  'id, project_id, title, stage_slug, status, documents_required, notes, due_at, completed_at, assigned_member_id, completed_by_member_id, sort_order, amount_cents';
+  'id, project_id, title, stage_slug, status, documents_required, notes, due_at, completed_at, assigned_member_id, completed_by_member_id, sort_order, amount_cents, invoiced_at, paid_at';
 
 async function mapTaskRow(
   supabase: SupabaseClient,
@@ -91,6 +93,17 @@ export async function createCrmWorkflowTaskForOrg(
   const sortOrder = (maxRow?.sort_order ?? 0) + 1;
   const stageSlug = resolvePaymentStageSlug(input.amountCents) ?? input.stageSlug;
   const isPayment = input.amountCents != null;
+  const now = new Date().toISOString();
+  const timing = resolvePaymentTimingFields({
+    isPayment,
+    previousStatus: input.status,
+    nextStatus: input.status,
+    previousInvoicedAt: null,
+    previousPaidAt: null,
+    invoicedAt: input.invoicedAt,
+    paidAt: input.paidAt,
+    now,
+  });
 
   const { data, error } = await supabase
     .from('crm_workflow_tasks')
@@ -106,6 +119,8 @@ export async function createCrmWorkflowTaskForOrg(
       assigned_member_id: input.assignedMemberId,
       sort_order: sortOrder,
       amount_cents: input.amountCents ?? null,
+      invoiced_at: isPayment ? timing.invoicedAt : null,
+      paid_at: isPayment ? timing.paidAt : null,
     })
     .select(TASK_SELECT)
     .single();
@@ -154,7 +169,8 @@ export async function updateCrmWorkflowTaskForOrg(
   const existing = await getTaskForOrg(supabase, organizationId, input.taskId);
   if (existing == null) return null;
 
-  const nextStatus = input.status ?? existing.status;
+  const previousStatus = existing.status as WorkflowTaskStatus;
+  const nextStatus = (input.status ?? existing.status) as WorkflowTaskStatus;
   const statusChanged = nextStatus !== existing.status;
   const now = new Date().toISOString();
   const wasPayment = isPaymentTaskRow(existing);
@@ -186,6 +202,24 @@ export async function updateCrmWorkflowTaskForOrg(
   } else if (nextStatus !== 'done' && existing.status === 'done') {
     patch.completed_at = null;
     patch.completed_by_member_id = null;
+  }
+
+  if (wasPayment || willBePayment) {
+    const timing = resolvePaymentTimingFields({
+      isPayment: true,
+      previousStatus,
+      nextStatus,
+      previousInvoicedAt: existing.invoiced_at ?? null,
+      previousPaidAt: existing.paid_at ?? null,
+      invoicedAt: input.invoicedAt,
+      paidAt: input.paidAt,
+      now,
+    });
+    patch.invoiced_at = timing.invoicedAt;
+    patch.paid_at = timing.paidAt;
+  } else if (input.invoicedAt !== undefined || input.paidAt !== undefined) {
+    if (input.invoicedAt !== undefined) patch.invoiced_at = input.invoicedAt;
+    if (input.paidAt !== undefined) patch.paid_at = input.paidAt;
   }
 
   const { data, error } = await supabase

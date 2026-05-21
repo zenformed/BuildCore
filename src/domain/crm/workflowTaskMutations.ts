@@ -13,6 +13,8 @@ export type CreateCrmWorkflowTaskInput = {
   readonly notes: string | null;
   readonly assignedMemberId: string | null;
   readonly amountCents?: number | null;
+  readonly invoicedAt?: string | null;
+  readonly paidAt?: string | null;
 };
 
 export type UpdateCrmWorkflowTaskInput = {
@@ -25,4 +27,6 @@ export type UpdateCrmWorkflowTaskInput = {
   readonly notes?: string | null;
   readonly assignedMemberId?: string | null;
   readonly amountCents?: number | null;
+  readonly invoicedAt?: string | null;
+  readonly paidAt?: string | null;
 };

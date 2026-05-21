@@ -216,10 +216,42 @@ export function WorkflowTaskInlineRow({
     [patchTask, reportError, task.dueAt, task.id]
   );
 
+  const saveInvoiced = useCallback(
+    async (value: string) => {
+      const nextIso = dueInputValueToIso(value);
+      const currentIso = task.invoicedAt;
+      if (nextIso === currentIso || (nextIso == null && currentIso == null)) return;
+      try {
+        await patchTask({ taskId: task.id, invoicedAt: nextIso });
+      } catch (err) {
+        reportError(err);
+      }
+    },
+    [patchTask, reportError, task.id, task.invoicedAt]
+  );
+
+  const savePaid = useCallback(
+    async (value: string) => {
+      const nextIso = dueInputValueToIso(value);
+      const currentIso = task.paidAt;
+      if (nextIso === currentIso || (nextIso == null && currentIso == null)) return;
+      try {
+        await patchTask({ taskId: task.id, paidAt: nextIso });
+      } catch (err) {
+        reportError(err);
+      }
+    },
+    [patchTask, reportError, task.id, task.paidAt]
+  );
+
   const showAmount = showAmountColumn || isPaymentWorkflowTask(task);
+  const showPaymentDates = isPaymentWorkflowTask(task);
+  const paymentGrid = showPaymentDates
+    ? styles.workflowGridPaymentsWithDates
+    : styles.workflowGridPayments;
   const rowClass = [
     styles.tableRow,
-    showAmount ? `${styles.workflowGrid} ${styles.workflowGridPayments}` : styles.workflowGrid,
+    showAmount ? `${styles.workflowGrid} ${paymentGrid}` : styles.workflowGrid,
     styles.workflowInlineRow,
     rowDragOver ? styles.workflowInlineRow_fileDragOver : '',
   ]
@@ -526,6 +558,59 @@ export function WorkflowTaskInlineRow({
           onChange={(e) => void saveDue(e.target.value)}
         />
       </span>
+
+      {showPaymentDates ? (
+        <>
+          <span className={`${styles.inlineDueCell} ${styles.workflowMetaCell}`}>
+            <button
+              type="button"
+              className={styles.inlineCellBtn}
+              disabled={saving}
+              title={content.projectDetail.payments.columns.invoiced}
+              onClick={(e) => {
+                const input = (e.currentTarget.nextElementSibling as HTMLInputElement | null);
+                input?.showPicker?.();
+                input?.click();
+              }}
+            >
+              {formatShortDate(task.invoicedAt)}
+            </button>
+            <input
+              type="date"
+              className={styles.inlineDateInput}
+              value={workflowTaskDueToInputValue(task.invoicedAt)}
+              disabled={saving}
+              tabIndex={-1}
+              aria-label={content.projectDetail.payments.columns.invoiced}
+              onChange={(e) => void saveInvoiced(e.target.value)}
+            />
+          </span>
+          <span className={`${styles.inlineDueCell} ${styles.workflowMetaCell}`}>
+            <button
+              type="button"
+              className={styles.inlineCellBtn}
+              disabled={saving}
+              title={content.projectDetail.payments.columns.paid}
+              onClick={(e) => {
+                const input = (e.currentTarget.nextElementSibling as HTMLInputElement | null);
+                input?.showPicker?.();
+                input?.click();
+              }}
+            >
+              {formatShortDate(task.paidAt)}
+            </button>
+            <input
+              type="date"
+              className={styles.inlineDateInput}
+              value={workflowTaskDueToInputValue(task.paidAt)}
+              disabled={saving}
+              tabIndex={-1}
+              aria-label={content.projectDetail.payments.columns.paid}
+              onChange={(e) => void savePaid(e.target.value)}
+            />
+          </span>
+        </>
+      ) : null}
 
       <span className={styles.taskDeleteCell}>
         <button

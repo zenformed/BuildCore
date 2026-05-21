@@ -1,6 +1,6 @@
-import { isPaymentWorkflowTask, type CrmWorkflowTask, type WorkflowTaskStatus } from '@/domain/crm';
+import { isPaymentWorkflowTask, type CrmWorkflowTask } from '@/domain/crm';
 
-export type PaymentWorkflowTaskSlice = Pick<CrmWorkflowTask, 'amountCents' | 'status'>;
+export type PaymentWorkflowTaskSlice = Pick<CrmWorkflowTask, 'amountCents' | 'invoicedAt' | 'paidAt'>;
 
 export type PaymentRevenueTotals = {
   readonly totalInvoicedCents: number;
@@ -8,10 +8,12 @@ export type PaymentRevenueTotals = {
   readonly remainingReceivablesCents: number;
 };
 
-const PAID_PAYMENT_STATUSES: readonly WorkflowTaskStatus[] = ['done'];
-
 export function isPaidPaymentWorkflowTask(task: PaymentWorkflowTaskSlice): boolean {
-  return isPaymentWorkflowTask(task) && PAID_PAYMENT_STATUSES.includes(task.status);
+  return isPaymentWorkflowTask(task) && task.paidAt != null;
+}
+
+export function isInvoicedPaymentWorkflowTask(task: PaymentWorkflowTaskSlice): boolean {
+  return isPaymentWorkflowTask(task) && task.invoicedAt != null;
 }
 
 /** Revenue from Payments rail rows (workflow tasks with amounts). */
@@ -24,8 +26,10 @@ export function computePaymentRevenueFromWorkflowTasks(
   for (const task of tasks) {
     if (!isPaymentWorkflowTask(task)) continue;
     const amountCents = task.amountCents ?? 0;
-    totalInvoicedCents += amountCents;
-    if (isPaidPaymentWorkflowTask(task)) {
+    if (task.invoicedAt != null) {
+      totalInvoicedCents += amountCents;
+    }
+    if (task.paidAt != null) {
       totalPaidCents += amountCents;
     }
   }

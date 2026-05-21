@@ -84,7 +84,7 @@ export function PaymentMilestoneDraftRow({
     }
   }, [form, onCancel, onSaved, project.summary.id, project.summary.slug, wf.taskSubmitFailed]);
 
-  const rowClass = `${styles.tableRow} ${styles.workflowGrid} ${styles.workflowGridPayments} ${styles.workflowInlineRow} ${styles.paymentDraftRow}`;
+  const rowClass = `${styles.tableRow} ${styles.workflowGrid} ${styles.workflowGridPaymentsWithDates} ${styles.workflowInlineRow} ${styles.paymentDraftRow}`;
 
   return (
     <div className={styles.paymentDraftBlock}>
@@ -226,6 +226,13 @@ export function PaymentMilestoneDraftRow({
             disabled={saving}
             onChange={(e) => updateField('dueAt', e.target.value)}
           />
+        </span>
+
+        <span className={`${styles.workflowMetaCell} ${styles.paymentDatePlaceholder}`} aria-hidden>
+          —
+        </span>
+        <span className={`${styles.workflowMetaCell} ${styles.paymentDatePlaceholder}`} aria-hidden>
+          —
         </span>
 
         <span className={`${styles.taskDeleteCell} ${styles.paymentDraftActions}`}>

@@ -99,6 +99,12 @@ export function validateCreateWorkflowTaskBody(
       notes: asOptionalString(body.notes),
       assignedMemberId: asOptionalUserId(body.assignedMemberId),
       amountCents,
+      ...(amountCents != null
+        ? {
+            invoicedAt: asIsoOrNull(body.invoicedAt),
+            paidAt: asIsoOrNull(body.paidAt),
+          }
+        : {}),
     },
   };
 }
@@ -115,6 +121,8 @@ export function validateUpdateWorkflowTaskBody(
     notes?: string | null;
     assignedMemberId?: string | null;
     amountCents?: number | null;
+    invoicedAt?: string | null;
+    paidAt?: string | null;
   } = {};
 
   if ('title' in body) {
@@ -153,6 +161,8 @@ export function validateUpdateWorkflowTaskBody(
       patch.stageSlug = PAYMENT_WORKFLOW_STAGE_SLUG;
     }
   }
+  if ('invoicedAt' in body) patch.invoicedAt = asIsoOrNull(body.invoicedAt);
+  if ('paidAt' in body) patch.paidAt = asIsoOrNull(body.paidAt);
 
   if (Object.keys(patch).length === 0) {
     return { ok: false, message: 'No fields to update.' };

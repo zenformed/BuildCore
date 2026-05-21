@@ -70,6 +70,8 @@ export type DbCrmWorkflowTaskRow = {
   sort_order: number;
   documents_required: boolean;
   amount_cents: number | null;
+  invoiced_at: string | null;
+  paid_at: string | null;
 };
 
 export type DbCrmDocumentRow = {
@@ -334,6 +336,8 @@ export function mapDbWorkflowTask(
         : null,
     sortOrder: row.sort_order,
     amountCents: row.amount_cents != null ? Number(row.amount_cents) : null,
+    invoicedAt: row.invoiced_at ?? null,
+    paidAt: row.paid_at ?? null,
   };
 }
 
