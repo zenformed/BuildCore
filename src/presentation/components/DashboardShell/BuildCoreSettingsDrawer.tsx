@@ -73,7 +73,7 @@ export function BuildCoreSettingsDrawer({
       shellContext={shellContext}
       viewModelOverrides={viewModelOverrides}
       persistence={persistence}
-      showMockNote={!userSettings.hasLiveData}
+      showMockNote
     />
   );
 }
