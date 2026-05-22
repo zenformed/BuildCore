@@ -18,9 +18,12 @@ import {
 import { buildReportsFinancialActivity } from './reportsFinancialActivity';
 import {
   collectPaymentTasks,
+  computeMarginPercent,
+  countCollectedInRange,
   resolveCostIncurredAtForReporting,
   sumCollectedInRange,
   sumCostsInRange,
+  sumInvoicedInRange,
 } from './reportsFinancialMetrics';
 import { computeCategoryPercentOfTotal } from './profitAndLossCalculations';
 import {
@@ -28,31 +31,6 @@ import {
   isTimestampInRange,
   resolveReportPeriodRange,
 } from './reportPeriodRange';
-
-function countCollectedInRange(
-  payments: ReturnType<typeof collectPaymentTasks>,
-  start: Date,
-  end: Date
-): number {
-  let count = 0;
-  for (const p of payments) {
-    if (isTimestampInRange(p.paidAt, start, end)) count += 1;
-  }
-  return count;
-}
-
-function sumInvoicedInRange(
-  payments: ReturnType<typeof collectPaymentTasks>,
-  start: Date,
-  end: Date
-): number {
-  let total = 0;
-  for (const p of payments) {
-    if (!isTimestampInRange(p.invoicedAt, start, end)) continue;
-    total += p.amountCents ?? 0;
-  }
-  return total;
-}
 
 /** Open receivables: invoiced but not paid (point-in-time, not period-filtered). */
 function sumOpenReceivables(payments: ReturnType<typeof collectPaymentTasks>): {
@@ -99,11 +77,6 @@ function formatPercent(value: number | null): string {
   if (value == null || Number.isNaN(value)) return '—';
   const sign = value > 0 ? '+' : '';
   return `${sign}${value.toFixed(1)}%`;
-}
-
-function formatMarginPercent(profitCents: number, collectedCents: number): number | null {
-  if (collectedCents <= 0) return null;
-  return (profitCents / collectedCents) * 100;
 }
 
 function bucketValueForTab(
@@ -175,7 +148,7 @@ export function computeCrmReportsDashboard(
   );
   const profitCents = collectedCents - costsCents;
   const prevProfitCents = prevCollectedCents - prevCostsCents;
-  const marginPercent = formatMarginPercent(profitCents, collectedCents);
+  const marginPercent = computeMarginPercent(profitCents, collectedCents);
 
   const chartActivityStart = resolveChartActivityStart(projects);
   const chartBuckets = buildChartTimeBuckets(range, chartActivityStart);
@@ -191,7 +164,7 @@ export function computeCrmReportsDashboard(
     const rowCollected = sumCollectedInRange(projectPayments, range.start, range.end);
     const { totalCents: rowCosts } = sumCostsInRange([project], range.start, range.end);
     const rowProfit = rowCollected - rowCosts;
-    const rowMargin = formatMarginPercent(rowProfit, rowCollected);
+    const rowMargin = computeMarginPercent(rowProfit, rowCollected);
     const isCompleted = project.summary.completedAt != null;
     const isWaitingApproval =
       !isCompleted && project.summary.currentStageSlug === 'waiting-on-approval';

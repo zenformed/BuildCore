@@ -94,6 +94,15 @@ export const buildCoreDashboardContent = {
     downloadPdf: 'Download PDF',
     downloadPdfGenerating: 'Generating…',
     downloadPdfError: 'Could not generate the report PDF. Please try again.',
+    pdfExport: {
+      menuLabel: 'Reports',
+      currentReport: 'Current Report',
+      downloadCurrent: 'Download Current',
+      reportPeriod: 'Report Period',
+    },
+    yearlyPdf: {
+      reportTitle: 'BuildCore Financial Report',
+    },
     summaryPdf: {
       revenue: 'Revenue',
       collectedRevenue: 'Collected Revenue',
