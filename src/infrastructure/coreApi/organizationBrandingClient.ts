@@ -84,10 +84,16 @@ export async function getOrganizationBranding(
   return parseBrandingJsonResponse(res);
 }
 
+export type OrganizationBrandingPatch = {
+  displayName?: string;
+  industry?: string | null;
+  timezone?: string | null;
+};
+
 /** `PATCH /users/me/organization/branding` */
-export async function patchOrganizationBrandingDisplayName(
+export async function patchOrganizationBranding(
   accessToken: string,
-  displayName: string,
+  patch: OrganizationBrandingPatch,
   timeoutMs: number = DEFAULT_TIMEOUT_MS
 ): Promise<CoreApiResult<ZenformedCoreOrganizationBranding>> {
   const url = coreUrl(BRANDING_PATH);
@@ -100,7 +106,7 @@ export async function patchOrganizationBrandingDisplayName(
     {
       method: 'PATCH',
       headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
-      body: JSON.stringify({ displayName }),
+      body: JSON.stringify(patch),
     },
     timeoutMs
   );
@@ -108,6 +114,15 @@ export async function patchOrganizationBrandingDisplayName(
     return { ok: false, error: res.error };
   }
   return parseBrandingJsonResponse(res);
+}
+
+/** `PATCH /users/me/organization/branding` — display name only */
+export async function patchOrganizationBrandingDisplayName(
+  accessToken: string,
+  displayName: string,
+  timeoutMs: number = DEFAULT_TIMEOUT_MS
+): Promise<CoreApiResult<ZenformedCoreOrganizationBranding>> {
+  return patchOrganizationBranding(accessToken, { displayName }, timeoutMs);
 }
 
 /** `GET /users/me/organization/branding/logo` */

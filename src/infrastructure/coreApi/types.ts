@@ -164,6 +164,8 @@ export type ZenformedCoreUserAvatarMeta = {
 export type ZenformedCoreOrganizationBranding = {
   organizationId: string;
   displayName: string;
+  industry: string | null;
+  timezone: string | null;
   hasLogo: boolean;
   logoContentType?: string;
   logoUpdatedAt?: string;

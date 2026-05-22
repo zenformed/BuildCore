@@ -291,6 +291,10 @@ export function parseOrganizationBrandingJson(body: unknown): ZenformedCoreOrgan
   if (typeof o.organizationId !== 'string') return null;
   if (typeof o.displayName !== 'string') return null;
   if (typeof o.hasLogo !== 'boolean') return null;
+  const industry = o.industry;
+  const timezone = o.timezone;
+  if (industry != null && typeof industry !== 'string') return null;
+  if (timezone != null && typeof timezone !== 'string') return null;
   const logoContentType = o.logoContentType;
   const logoUpdatedAt = o.logoUpdatedAt;
   const revision = o.revision;
@@ -300,6 +304,8 @@ export function parseOrganizationBrandingJson(body: unknown): ZenformedCoreOrgan
   return {
     organizationId: o.organizationId,
     displayName: o.displayName,
+    industry: typeof industry === 'string' ? industry : null,
+    timezone: typeof timezone === 'string' ? timezone : null,
     hasLogo: o.hasLogo,
     ...(typeof logoContentType === 'string' ? { logoContentType } : {}),
     ...(typeof logoUpdatedAt === 'string' ? { logoUpdatedAt } : {}),

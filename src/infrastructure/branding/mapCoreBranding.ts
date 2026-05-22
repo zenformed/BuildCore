@@ -4,6 +4,8 @@ import type { ZenformedCoreOrganizationBranding } from '@/infrastructure/coreApi
 export type AppBrandingApiDto = {
   shopName: string;
   hasLogo: boolean;
+  industry: string | null;
+  timezone: string | null;
   organizationId?: string;
 };
 
@@ -11,6 +13,8 @@ export function mapCoreBrandingToAppApi(branding: ZenformedCoreOrganizationBrand
   return {
     shopName: branding.displayName,
     hasLogo: branding.hasLogo,
+    industry: branding.industry,
+    timezone: branding.timezone,
     organizationId: branding.organizationId,
   };
 }

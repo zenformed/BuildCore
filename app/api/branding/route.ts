@@ -6,6 +6,7 @@ import { coreBrandingHttpFailure } from '@/infrastructure/branding/coreBrandingR
 import { readRequestBearerToken } from '@/infrastructure/auth/readRequestBearer';
 import {
   getOrganizationBranding,
+  patchOrganizationBranding,
   patchOrganizationBrandingDisplayName,
   putOrganizationLogoRaw,
 } from '@/infrastructure/coreApi/organizationBrandingClient';
@@ -13,7 +14,7 @@ import {
 const MANIFEST_DEFAULT_NAME = buildcoreAppDefinition.displayName;
 
 function manifestBrandingFallback() {
-  return { shopName: MANIFEST_DEFAULT_NAME, hasLogo: false };
+  return { shopName: MANIFEST_DEFAULT_NAME, hasLogo: false, industry: null, timezone: null };
 }
 
 /**
@@ -42,6 +43,67 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   }
 
   return NextResponse.json(manifestBrandingFallback());
+}
+
+/**
+ * PATCH /api/branding — update organization profile fields (Core relay when configured).
+ */
+export async function PATCH(request: NextRequest): Promise<NextResponse> {
+  if (!usesCoreOrganizationBranding()) {
+    return NextResponse.json({ error: 'not_configured' }, { status: 501 });
+  }
+  const token = readRequestBearerToken(request);
+  if (token == null) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+  let body: Record<string, unknown>;
+  try {
+    body = (await request.json()) as Record<string, unknown>;
+  } catch {
+    return NextResponse.json({ error: 'invalid_body' }, { status: 400 });
+  }
+  const patch: {
+    displayName?: string;
+    industry?: string | null;
+    timezone?: string | null;
+  } = {};
+  if (typeof body.displayName === 'string') {
+    patch.displayName = body.displayName.trim();
+  }
+  if ('industry' in body) {
+    patch.industry =
+      body.industry === null || body.industry === ''
+        ? null
+        : typeof body.industry === 'string'
+          ? body.industry.trim()
+          : undefined;
+    if (patch.industry === undefined && body.industry !== null && body.industry !== '') {
+      return NextResponse.json({ error: 'invalid_industry' }, { status: 400 });
+    }
+  }
+  if ('timezone' in body) {
+    patch.timezone =
+      body.timezone === null || body.timezone === ''
+        ? null
+        : typeof body.timezone === 'string'
+          ? body.timezone.trim()
+          : undefined;
+    if (patch.timezone === undefined && body.timezone !== null && body.timezone !== '') {
+      return NextResponse.json({ error: 'invalid_timezone' }, { status: 400 });
+    }
+  }
+  if (Object.keys(patch).length === 0) {
+    return NextResponse.json({ error: 'no_updates' }, { status: 400 });
+  }
+  const result = await patchOrganizationBranding(token, patch);
+  if (!result.ok) {
+    const failure = coreBrandingHttpFailure(result.error);
+    if (failure != null) {
+      return NextResponse.json(failure.body, { status: failure.status });
+    }
+    return NextResponse.json({ error: 'branding_update_failed' }, { status: 502 });
+  }
+  return NextResponse.json(mapCoreBrandingToAppApi(result.data));
 }
 
 /**
