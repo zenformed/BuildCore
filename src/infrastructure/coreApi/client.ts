@@ -10,6 +10,7 @@ import {
   parseStaffMemberEnvelopeJson,
   parseStaffMembersListEnvelopeJson,
   parseUserAppConfigEnvelopeJson,
+  parseUserSettingsEnvelopeJson,
 } from '@/infrastructure/coreApi/parseResponse';
 import type {
   CoreApiError,
@@ -27,6 +28,8 @@ import type {
   ZenformedCoreStaffMemberRole,
   ZenformedCoreStaffMembersListEnvelope,
   ZenformedCoreUserAppConfigEnvelope,
+  ZenformedCoreUserSettingsEnvelope,
+  ZenformedCoreUserSettingsPatchRequest,
 } from '@/infrastructure/coreApi/types';
 
 const DEFAULT_TIMEOUT_MS = 5_000;
@@ -249,6 +252,21 @@ export async function patchMyProfile(
   body: ZenformedCoreProfilePatchRequest
 ): Promise<CoreApiResult<ZenformedCoreProfileEnvelope>> {
   return patchFromCoreWithBearer('/users/me/profile', accessToken, body, parseProfileEnvelopeJson);
+}
+
+/** `GET /users/me/settings` — account name + communication preferences; server-side / BFF only. */
+export async function getMySettings(
+  accessToken: string
+): Promise<CoreApiResult<ZenformedCoreUserSettingsEnvelope>> {
+  return getFromCoreWithBearer('/users/me/settings', accessToken, parseUserSettingsEnvelopeJson);
+}
+
+/** `PATCH /users/me/settings` — partial account/preferences update; server-side / BFF only. */
+export async function patchMySettings(
+  accessToken: string,
+  body: ZenformedCoreUserSettingsPatchRequest
+): Promise<CoreApiResult<ZenformedCoreUserSettingsEnvelope>> {
+  return patchFromCoreWithBearer('/users/me/settings', accessToken, body, parseUserSettingsEnvelopeJson);
 }
 
 /** `GET /users/me/app-config` — `data_source` + tier slice for SaaS app config; server-side only. */

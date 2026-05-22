@@ -13,6 +13,7 @@ export const buildCoreDashboardSettingsTab = {
 export const buildCoreDashboardNavigation = {
   apis: {
     branding: '/api/branding',
+    usersMeSettings: '/api/internal/users-me-settings',
   },
   routes: {
     dashboard: buildcoreAppDefinition.dashboardRoute ?? '/dashboard',

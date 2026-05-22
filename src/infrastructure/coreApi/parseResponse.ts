@@ -15,6 +15,7 @@ import type {
   ZenformedCoreStaffMemberEnvelope,
   ZenformedCoreStaffMembersListEnvelope,
   ZenformedCoreUserAppConfigEnvelope,
+  ZenformedCoreUserSettingsEnvelope,
 } from '@/infrastructure/coreApi/types';
 
 const RESOLUTION_SOURCES = new Set<SaaSEntitlementResolutionSource>([
@@ -79,6 +80,31 @@ export function parseProfileEnvelopeJson(body: unknown): ZenformedCoreProfileEnv
       industry: industry == null ? null : industry,
       force_password_reset: p.force_password_reset,
       updated_at: p.updated_at,
+    },
+  };
+}
+
+export function parseUserSettingsEnvelopeJson(body: unknown): ZenformedCoreUserSettingsEnvelope | null {
+  if (body == null || typeof body !== 'object') return null;
+  const o = body as Record<string, unknown>;
+  const settings = o.settings;
+  if (settings == null || typeof settings !== 'object') return null;
+  const s = settings as Record<string, unknown>;
+  const email = s.email;
+  if (email != null && typeof email !== 'string') return null;
+  const firstName = s.firstName;
+  if (firstName != null && typeof firstName !== 'string') return null;
+  const lastName = s.lastName;
+  if (lastName != null && typeof lastName !== 'string') return null;
+  if (typeof s.marketingEmailOptIn !== 'boolean') return null;
+  if (typeof s.smsOptIn !== 'boolean') return null;
+  return {
+    settings: {
+      email: email ?? null,
+      firstName: firstName ?? null,
+      lastName: lastName ?? null,
+      marketingEmailOptIn: s.marketingEmailOptIn,
+      smsOptIn: s.smsOptIn,
     },
   };
 }

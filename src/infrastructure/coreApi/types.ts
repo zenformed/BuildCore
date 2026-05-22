@@ -39,6 +39,26 @@ export type ZenformedCoreProfilePatchRequest = {
   forcePasswordReset?: false;
 };
 
+/** `GET|PATCH /users/me/settings` — account name + communication preferences. */
+export type ZenformedCoreUserSettingsDto = {
+  email: string | null;
+  firstName: string | null;
+  lastName: string | null;
+  marketingEmailOptIn: boolean;
+  smsOptIn: boolean;
+};
+
+export type ZenformedCoreUserSettingsEnvelope = {
+  settings: ZenformedCoreUserSettingsDto;
+};
+
+export type ZenformedCoreUserSettingsPatchRequest = {
+  firstName?: string | null;
+  lastName?: string | null;
+  marketingEmailOptIn?: boolean;
+  smsOptIn?: boolean;
+};
+
 /** `GET /apps/:appSlug/entitlement` — entitlement snapshot for the app context (platform-first on ZenformedCore). */
 export type ZenformedCoreAppEntitlementEnvelope = {
   appSlug: string;

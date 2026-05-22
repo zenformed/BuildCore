@@ -118,6 +118,7 @@ export function BuildCoreDashboardShell({
       <BuildCoreSettingsDrawer
         open={dash.settingsOpen}
         onClose={() => dash.setSettingsOpen(false)}
+        getAccessToken={dash.getAccessToken}
         shellContext={{
           userEmail: dash.user?.email ?? null,
           organizationName: dash.shopName ?? null,
