@@ -1,52 +1,37 @@
 'use client';
 
-import type { ReactElement, ReactNode } from 'react';
+import type { ReactElement } from 'react';
 import {
-  pickSettingsDrawerClassNames,
-  ZenformedSettingsDrawer,
-  type ZenformedSettingsDrawerSection,
-} from '@zenformed/core/dashboard-shell';
+  pickOrganizationSettingsDrawerClassNames,
+  ZenformedOrganizationSettingsDrawer,
+  type OrganizationSettingsShellContext,
+} from '@zenformed/core/organization-settings';
 import {
   buildCoreDashboardNavigation as nav,
-  buildCoreDashboardSettingsTab,
-  type BuildCoreSettingsSectionId,
 } from '@/platform/navigation/buildCoreDashboardNavigation';
 import styles from '../../../../app/(dashboard)/dashboard/dashboard.module.css';
 
-const settingsClassNames = pickSettingsDrawerClassNames(styles);
-
-const SETTINGS_SECTIONS: ZenformedSettingsDrawerSection[] = [
-  { id: buildCoreDashboardSettingsTab.about.id, label: buildCoreDashboardSettingsTab.about.label },
-];
+const drawerClassNames = pickOrganizationSettingsDrawerClassNames(styles);
 
 export type BuildCoreSettingsDrawerProps = {
   open: boolean;
-  activeSection: BuildCoreSettingsSectionId;
-  onSectionChange: (section: BuildCoreSettingsSectionId) => void;
   onClose: () => void;
-  aboutSectionContent: ReactNode;
+  shellContext?: OrganizationSettingsShellContext | null;
 };
 
 export function BuildCoreSettingsDrawer({
   open,
-  activeSection,
-  onSectionChange,
   onClose,
-  aboutSectionContent,
+  shellContext,
 }: BuildCoreSettingsDrawerProps): ReactElement | null {
   return (
-    <ZenformedSettingsDrawer
-      classNames={settingsClassNames}
+    <ZenformedOrganizationSettingsDrawer
       open={open}
       onClose={onClose}
+      classNames={drawerClassNames}
       title={nav.settingsDrawer.title}
       closeAriaLabel={nav.settingsDrawer.closeAriaLabel}
-      sections={SETTINGS_SECTIONS}
-      activeSectionId={activeSection}
-      onSectionChange={(id) => onSectionChange(id as BuildCoreSettingsSectionId)}
-      renderSectionContent={(sectionId) =>
-        sectionId === buildCoreDashboardSettingsTab.about.id ? aboutSectionContent : null
-      }
+      shellContext={shellContext}
     />
   );
 }

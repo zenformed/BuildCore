@@ -1037,6 +1037,10 @@
   box-shadow: -4px 0 1rem rgba(0, 0, 0, 0.15);
 }
 
+.settingsDrawerWide {
+  width: min(36rem, 100vw);
+}
+
 :global([data-theme="dark"]) .settingsDrawer {
   background: #1d2029;
 }
@@ -1046,11 +1050,7 @@
   align-items: center;
   justify-content: space-between;
   padding: 1rem 1.25rem;
-  border-bottom: 1px solid #c4c4c4;
-}
-
-:global([data-theme="dark"]) .settingsHeader {
-  border-bottom-color: #3d3e4a;
+  border: none;
 }
 
 .settingsTitle {

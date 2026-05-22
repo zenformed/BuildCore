@@ -116,16 +116,13 @@ export function BuildCoreDashboardShell({
       />
 
       <BuildCoreSettingsDrawer
-        open={dash.isAdmin && dash.settingsOpen}
-        activeSection={dash.settingsSection}
-        onSectionChange={dash.setSettingsSection}
+        open={dash.settingsOpen}
         onClose={() => dash.setSettingsOpen(false)}
-        aboutSectionContent={
-          <div>
-            <h3>{content.dashboard.aboutSectionTitle}</h3>
-            <p>{content.dashboard.aboutSectionBody}</p>
-          </div>
-        }
+        shellContext={{
+          userEmail: dash.user?.email ?? null,
+          organizationName: dash.shopName ?? null,
+          logoUrl: dash.logoUrl ?? null,
+        }}
       />
 
       <BuildCoreDashboardModals
