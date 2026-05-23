@@ -17,6 +17,8 @@ import type {
   ZenformedCoreUserAppConfigEnvelope,
   ZenformedCoreUserSettingsEnvelope,
   ZenformedCoreOrganizationMembersResponse,
+  ZenformedCoreOrganizationInvite,
+  ZenformedCoreOrganizationInviteMutationResponse,
   ZenformedCoreOrganizationInvitesResponse,
   ZenformedCoreOrganizationSeatsResponse,
   ZenformedCoreOrganizationAppAccessResponse,
@@ -385,6 +387,41 @@ export function parseOrganizationMembersJson(
   return { organizationId: o.organizationId, members };
 }
 
+function parseOrganizationInviteRecord(row: unknown): ZenformedCoreOrganizationInvite | null {
+  if (row == null || typeof row !== 'object') return null;
+  const inv = row as Record<string, unknown>;
+  if (typeof inv.id !== 'string' || typeof inv.email !== 'string') return null;
+  if (typeof inv.displayName !== 'string') return null;
+  if (
+    inv.status !== 'pending' &&
+    inv.status !== 'accepted' &&
+    inv.status !== 'revoked' &&
+    inv.status !== 'expired' &&
+    inv.status !== 'canceled'
+  ) {
+    return null;
+  }
+  if (inv.role !== 'owner' && inv.role !== 'admin' && inv.role !== 'member') return null;
+  if (inv.invitedBy != null && typeof inv.invitedBy !== 'string') return null;
+  if (inv.expiresAt != null && typeof inv.expiresAt !== 'string') return null;
+  if (inv.firstName != null && typeof inv.firstName !== 'string') return null;
+  if (inv.lastName != null && typeof inv.lastName !== 'string') return null;
+  if (typeof inv.createdAt !== 'string' || typeof inv.sentLabel !== 'string') return null;
+  return {
+    id: inv.id,
+    email: inv.email,
+    firstName: inv.firstName ?? null,
+    lastName: inv.lastName ?? null,
+    displayName: inv.displayName,
+    status: inv.status,
+    role: inv.role,
+    invitedBy: inv.invitedBy ?? null,
+    expiresAt: inv.expiresAt ?? null,
+    createdAt: inv.createdAt,
+    sentLabel: inv.sentLabel,
+  };
+}
+
 export function parseOrganizationInvitesJson(
   body: unknown
 ): ZenformedCoreOrganizationInvitesResponse | null {
@@ -394,33 +431,22 @@ export function parseOrganizationInvitesJson(
   if (!Array.isArray(o.invites)) return null;
   const invites: ZenformedCoreOrganizationInvitesResponse['invites'] = [];
   for (const inv of o.invites) {
-    if (inv == null || typeof inv !== 'object') return null;
-    const row = inv as Record<string, unknown>;
-    if (typeof row.id !== 'string' || typeof row.email !== 'string') return null;
-    if (
-      row.status !== 'pending' &&
-      row.status !== 'accepted' &&
-      row.status !== 'revoked' &&
-      row.status !== 'expired'
-    ) {
-      return null;
-    }
-    if (row.role !== 'owner' && row.role !== 'admin' && row.role !== 'member') return null;
-    if (row.invitedBy != null && typeof row.invitedBy !== 'string') return null;
-    if (row.expiresAt != null && typeof row.expiresAt !== 'string') return null;
-    if (typeof row.createdAt !== 'string' || typeof row.sentLabel !== 'string') return null;
-    invites.push({
-      id: row.id,
-      email: row.email,
-      status: row.status,
-      role: row.role,
-      invitedBy: row.invitedBy ?? null,
-      expiresAt: row.expiresAt ?? null,
-      createdAt: row.createdAt,
-      sentLabel: row.sentLabel,
-    });
+    const parsed = parseOrganizationInviteRecord(inv);
+    if (parsed == null) return null;
+    invites.push(parsed);
   }
   return { organizationId: o.organizationId, invites };
+}
+
+export function parseOrganizationInviteMutationJson(
+  body: unknown
+): ZenformedCoreOrganizationInviteMutationResponse | null {
+  if (body == null || typeof body !== 'object') return null;
+  const o = body as Record<string, unknown>;
+  if (typeof o.organizationId !== 'string') return null;
+  const invite = parseOrganizationInviteRecord(o.invite);
+  if (invite == null) return null;
+  return { organizationId: o.organizationId, invite };
 }
 
 export function parseOrganizationSeatsJson(

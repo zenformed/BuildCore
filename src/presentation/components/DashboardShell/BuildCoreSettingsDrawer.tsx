@@ -116,7 +116,12 @@ export function BuildCoreSettingsDrawer({
       loadError: orgWorkspace.loadError,
       hasLiveData: orgWorkspace.hasLiveData,
       snapshot: orgWorkspace.snapshot,
-      inviteActionsDisabled: true,
+      inviteActionsDisabled: !orgWorkspace.hasLiveData,
+      isCreatingInvite: orgWorkspace.isCreatingInvite,
+      cancelingInviteId: orgWorkspace.cancelingInviteId,
+      inviteMutationError: orgWorkspace.inviteMutationError,
+      onCreateInvite: orgWorkspace.createInvite,
+      onCancelInvite: orgWorkspace.cancelInvite,
     },
   }), [
     userSettings.isLoading,
@@ -140,6 +145,11 @@ export function BuildCoreSettingsDrawer({
     orgWorkspace.loadError,
     orgWorkspace.hasLiveData,
     orgWorkspace.snapshot,
+    orgWorkspace.isCreatingInvite,
+    orgWorkspace.cancelingInviteId,
+    orgWorkspace.inviteMutationError,
+    orgWorkspace.createInvite,
+    orgWorkspace.cancelInvite,
   ]);
 
   return (

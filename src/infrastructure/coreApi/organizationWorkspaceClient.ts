@@ -5,6 +5,7 @@
 import { env } from '@/infrastructure/config/env';
 import {
   parseOrganizationAppAccessJson,
+  parseOrganizationInviteMutationJson,
   parseOrganizationInvitesJson,
   parseOrganizationMembersJson,
   parseOrganizationSeatsJson,
@@ -13,6 +14,8 @@ import type {
   CoreApiError,
   CoreApiResult,
   ZenformedCoreOrganizationAppAccessResponse,
+  ZenformedCoreOrganizationInviteCreateRequest,
+  ZenformedCoreOrganizationInviteMutationResponse,
   ZenformedCoreOrganizationInvitesResponse,
   ZenformedCoreOrganizationMembersResponse,
   ZenformedCoreOrganizationSeatsResponse,
@@ -86,6 +89,57 @@ async function getJson<T>(
   return { ok: true, data: parsed };
 }
 
+async function mutateJson<T>(
+  path: string,
+  accessToken: string,
+  method: 'POST' | 'PATCH',
+  body: unknown | undefined,
+  parse: (json: unknown) => T | null,
+  timeoutMs: number = DEFAULT_TIMEOUT_MS
+): Promise<CoreApiResult<T>> {
+  const url = coreUrl(path);
+  if (url == null) return { ok: false, error: { kind: 'unconfigured' } };
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const headers: Record<string, string> = {
+      Accept: 'application/json',
+      Authorization: `Bearer ${accessToken}`,
+    };
+    const init: RequestInit = { method, signal: controller.signal, headers };
+    if (body !== undefined) {
+      headers['Content-Type'] = 'application/json';
+      init.body = JSON.stringify(body);
+    }
+    const res = await fetch(url, init);
+    let json: unknown;
+    try {
+      json = await res.json();
+    } catch {
+      return { ok: false, error: { kind: 'invalid_payload' } };
+    }
+    if (!res.ok) {
+      return { ok: false, error: { kind: 'http_error', status: res.status, body: json } };
+    }
+    const parsed = parse(json);
+    if (parsed == null) {
+      if (process.env.NODE_ENV !== 'production') {
+        // eslint-disable-next-line no-console
+        console.warn('[organizationWorkspaceClient] Core payload rejected by parser', path, json);
+      }
+      return { ok: false, error: { kind: 'invalid_payload' } };
+    }
+    return { ok: true, data: parsed };
+  } catch (e) {
+    const aborted = e instanceof Error && e.name === 'AbortError';
+    if (aborted) return { ok: false, error: { kind: 'timeout' } };
+    const message = e instanceof Error ? e.message : String(e);
+    return { ok: false, error: { kind: 'network', message } };
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 export function getOrganizationMembers(
   accessToken: string
 ): Promise<CoreApiResult<ZenformedCoreOrganizationMembersResponse>> {
@@ -108,4 +162,30 @@ export function getOrganizationAppAccess(
   accessToken: string
 ): Promise<CoreApiResult<ZenformedCoreOrganizationAppAccessResponse>> {
   return getJson('/organizations/me/app-access', accessToken, parseOrganizationAppAccessJson);
+}
+
+export function postOrganizationInvite(
+  accessToken: string,
+  body: ZenformedCoreOrganizationInviteCreateRequest
+): Promise<CoreApiResult<ZenformedCoreOrganizationInviteMutationResponse>> {
+  return mutateJson(
+    '/organizations/me/invites',
+    accessToken,
+    'POST',
+    body,
+    parseOrganizationInviteMutationJson
+  );
+}
+
+export function cancelOrganizationInvite(
+  accessToken: string,
+  inviteId: string
+): Promise<CoreApiResult<ZenformedCoreOrganizationInviteMutationResponse>> {
+  return mutateJson(
+    `/organizations/me/invites/${encodeURIComponent(inviteId)}/cancel`,
+    accessToken,
+    'PATCH',
+    undefined,
+    parseOrganizationInviteMutationJson
+  );
 }

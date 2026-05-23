@@ -185,19 +185,38 @@ export type ZenformedCoreOrganizationMembersResponse = {
   }>;
 };
 
+/** Shared invite record shape for organization workspace APIs. */
+export type ZenformedCoreOrganizationInvite = {
+  id: string;
+  email: string;
+  firstName: string | null;
+  lastName: string | null;
+  displayName: string;
+  status: 'pending' | 'accepted' | 'revoked' | 'expired' | 'canceled';
+  role: 'owner' | 'admin' | 'member';
+  invitedBy: string | null;
+  expiresAt: string | null;
+  createdAt: string;
+  sentLabel: string;
+};
+
 /** `GET /organizations/me/invites` */
 export type ZenformedCoreOrganizationInvitesResponse = {
   organizationId: string;
-  invites: Array<{
-    id: string;
-    email: string;
-    status: 'pending' | 'accepted' | 'revoked' | 'expired';
-    role: 'owner' | 'admin' | 'member';
-    invitedBy: string | null;
-    expiresAt: string | null;
-    createdAt: string;
-    sentLabel: string;
-  }>;
+  invites: ZenformedCoreOrganizationInvite[];
+};
+
+/** `POST /organizations/me/invites`, `PATCH /organizations/me/invites/:id/cancel` */
+export type ZenformedCoreOrganizationInviteMutationResponse = {
+  organizationId: string;
+  invite: ZenformedCoreOrganizationInvite;
+};
+
+export type ZenformedCoreOrganizationInviteCreateRequest = {
+  email: string;
+  firstName?: string | null;
+  lastName?: string | null;
+  role?: 'owner' | 'admin' | 'member';
 };
 
 /** `GET /organizations/me/seats` */
