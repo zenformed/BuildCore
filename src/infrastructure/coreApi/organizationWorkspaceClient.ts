@@ -5,6 +5,8 @@
 import { env } from '@/infrastructure/config/env';
 import {
   parseOrganizationAppAccessJson,
+  parseOrganizationInviteAcceptJson,
+  parseOrganizationInviteLookupJson,
   parseOrganizationInviteMutationJson,
   parseOrganizationInvitesJson,
   parseOrganizationMembersJson,
@@ -14,7 +16,10 @@ import type {
   CoreApiError,
   CoreApiResult,
   ZenformedCoreOrganizationAppAccessResponse,
+  ZenformedCoreOrganizationInviteAcceptRequest,
+  ZenformedCoreOrganizationInviteAcceptResponse,
   ZenformedCoreOrganizationInviteCreateRequest,
+  ZenformedCoreOrganizationInviteLookupResponse,
   ZenformedCoreOrganizationInviteMutationResponse,
   ZenformedCoreOrganizationInvitesResponse,
   ZenformedCoreOrganizationMembersResponse,
@@ -187,5 +192,67 @@ export function cancelOrganizationInvite(
     'PATCH',
     undefined,
     parseOrganizationInviteMutationJson
+  );
+}
+
+async function getPublicJson<T>(
+  path: string,
+  parse: (json: unknown) => T | null,
+  timeoutMs: number = DEFAULT_TIMEOUT_MS
+): Promise<CoreApiResult<T>> {
+  const url = coreUrl(path);
+  if (url == null) return { ok: false, error: { kind: 'unconfigured' } };
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const res = await fetch(url, {
+      method: 'GET',
+      signal: controller.signal,
+      headers: { Accept: 'application/json' },
+    });
+    let json: unknown;
+    try {
+      json = await res.json();
+    } catch {
+      return { ok: false, error: { kind: 'invalid_payload' } };
+    }
+    if (!res.ok) {
+      return { ok: false, error: { kind: 'http_error', status: res.status, body: json } };
+    }
+    const parsed = parse(json);
+    if (parsed == null) {
+      return { ok: false, error: { kind: 'invalid_payload' } };
+    }
+    return { ok: true, data: parsed };
+  } catch (e) {
+    const aborted = e instanceof Error && e.name === 'AbortError';
+    if (aborted) return { ok: false, error: { kind: 'timeout' } };
+    const message = e instanceof Error ? e.message : String(e);
+    return { ok: false, error: { kind: 'network', message } };
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+export function lookupOrganizationInvite(
+  token: string
+): Promise<CoreApiResult<ZenformedCoreOrganizationInviteLookupResponse>> {
+  const query = new URLSearchParams({ token });
+  return getPublicJson(
+    `/organizations/invites/lookup?${query.toString()}`,
+    parseOrganizationInviteLookupJson
+  );
+}
+
+export function acceptOrganizationInvite(
+  accessToken: string,
+  body: ZenformedCoreOrganizationInviteAcceptRequest
+): Promise<CoreApiResult<ZenformedCoreOrganizationInviteAcceptResponse>> {
+  return mutateJson(
+    '/organizations/invites/accept',
+    accessToken,
+    'POST',
+    body,
+    parseOrganizationInviteAcceptJson
   );
 }

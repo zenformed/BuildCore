@@ -12,6 +12,50 @@ export function readBearer(request: NextRequest): string | null {
   return raw || null;
 }
 
+export async function relayOrganizationPublicGet<T extends Record<string, unknown>>(
+  fetchCore: () => Promise<CoreApiResult<T>>
+): Promise<NextResponse> {
+  if (!runtimeModes.isSaasMode() || runtimeModes.useMockAuth()) {
+    return NextResponse.json(
+      {
+        error: 'bad_request',
+        message: 'Organization relay requires SaaS mode with real Supabase auth.',
+      },
+      { status: 400 }
+    );
+  }
+
+  if (env.zenformedCoreApiBaseUrl == null) {
+    return NextResponse.json({
+      relay: 'client_supabase_deprecated',
+      reason: 'core_unconfigured',
+    });
+  }
+
+  const result = await fetchCore();
+  if (!result.ok) {
+    if (result.error.kind === 'http_error') {
+      const upstream = coreUpstreamHttpResponsePayload(result.error);
+      if (upstream != null) {
+        return NextResponse.json(upstream.json, { status: upstream.status });
+      }
+    }
+    return NextResponse.json(
+      {
+        relay: 'error',
+        error: 'zenformed_core_unreachable',
+        detail: result.error,
+      },
+      { status: 502 }
+    );
+  }
+
+  return NextResponse.json({
+    relay: 'zenformed_core',
+    ...result.data,
+  });
+}
+
 export async function relayOrganizationGet<T extends Record<string, unknown>>(
   request: NextRequest,
   fetchCore: (token: string) => Promise<CoreApiResult<T>>

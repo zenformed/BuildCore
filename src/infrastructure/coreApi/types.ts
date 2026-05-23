@@ -210,6 +210,40 @@ export type ZenformedCoreOrganizationInvitesResponse = {
 export type ZenformedCoreOrganizationInviteMutationResponse = {
   organizationId: string;
   invite: ZenformedCoreOrganizationInvite;
+  acceptUrl?: string;
+};
+
+/** `GET /organizations/invites/lookup` */
+export type ZenformedCoreOrganizationInviteLookupResponse = {
+  organizationName: string;
+  invitedEmail: string;
+  invitedFirstName: string | null;
+  invitedLastName: string | null;
+  role: 'owner' | 'admin' | 'member';
+  expiresAt: string | null;
+};
+
+/** `POST /organizations/invites/accept` */
+export type ZenformedCoreOrganizationInviteAcceptResponse = {
+  organizationId: string;
+  organizationName: string;
+  member: {
+    id: string;
+    userId: string;
+    displayName: string;
+    email: string | null;
+    role: 'owner' | 'admin' | 'member';
+    status: 'active' | 'invited' | 'removed';
+  };
+  seats: {
+    seatsUsed: number;
+    seatLimit: number;
+    seatsAvailable: number;
+  };
+};
+
+export type ZenformedCoreOrganizationInviteAcceptRequest = {
+  token: string;
 };
 
 export type ZenformedCoreOrganizationInviteCreateRequest = {

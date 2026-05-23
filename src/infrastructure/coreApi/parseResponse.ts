@@ -18,6 +18,8 @@ import type {
   ZenformedCoreUserSettingsEnvelope,
   ZenformedCoreOrganizationMembersResponse,
   ZenformedCoreOrganizationInvite,
+  ZenformedCoreOrganizationInviteAcceptResponse,
+  ZenformedCoreOrganizationInviteLookupResponse,
   ZenformedCoreOrganizationInviteMutationResponse,
   ZenformedCoreOrganizationInvitesResponse,
   ZenformedCoreOrganizationSeatsResponse,
@@ -446,7 +448,75 @@ export function parseOrganizationInviteMutationJson(
   if (typeof o.organizationId !== 'string') return null;
   const invite = parseOrganizationInviteRecord(o.invite);
   if (invite == null) return null;
-  return { organizationId: o.organizationId, invite };
+  if (o.acceptUrl != null && typeof o.acceptUrl !== 'string') return null;
+  return {
+    organizationId: o.organizationId,
+    invite,
+    ...(typeof o.acceptUrl === 'string' ? { acceptUrl: o.acceptUrl } : {}),
+  };
+}
+
+export function parseOrganizationInviteLookupJson(
+  body: unknown
+): ZenformedCoreOrganizationInviteLookupResponse | null {
+  if (body == null || typeof body !== 'object') return null;
+  const o = body as Record<string, unknown>;
+  if (typeof o.organizationName !== 'string' || typeof o.invitedEmail !== 'string') return null;
+  if (o.invitedFirstName != null && typeof o.invitedFirstName !== 'string') return null;
+  if (o.invitedLastName != null && typeof o.invitedLastName !== 'string') return null;
+  if (o.role !== 'owner' && o.role !== 'admin' && o.role !== 'member') return null;
+  if (o.expiresAt != null && typeof o.expiresAt !== 'string') return null;
+  return {
+    organizationName: o.organizationName,
+    invitedEmail: o.invitedEmail,
+    invitedFirstName: typeof o.invitedFirstName === 'string' ? o.invitedFirstName : null,
+    invitedLastName: typeof o.invitedLastName === 'string' ? o.invitedLastName : null,
+    role: o.role,
+    expiresAt: typeof o.expiresAt === 'string' ? o.expiresAt : null,
+  };
+}
+
+export function parseOrganizationInviteAcceptJson(
+  body: unknown
+): ZenformedCoreOrganizationInviteAcceptResponse | null {
+  if (body == null || typeof body !== 'object') return null;
+  const o = body as Record<string, unknown>;
+  if (typeof o.organizationId !== 'string' || typeof o.organizationName !== 'string') return null;
+  if (o.member == null || typeof o.member !== 'object') return null;
+  const member = o.member as Record<string, unknown>;
+  if (typeof member.id !== 'string' || typeof member.userId !== 'string') return null;
+  if (typeof member.displayName !== 'string') return null;
+  if (member.role !== 'owner' && member.role !== 'admin' && member.role !== 'member') return null;
+  if (member.status !== 'active' && member.status !== 'invited' && member.status !== 'removed') {
+    return null;
+  }
+  if (member.email != null && typeof member.email !== 'string') return null;
+  if (o.seats == null || typeof o.seats !== 'object') return null;
+  const seats = o.seats as Record<string, unknown>;
+  if (
+    typeof seats.seatsUsed !== 'number' ||
+    typeof seats.seatLimit !== 'number' ||
+    typeof seats.seatsAvailable !== 'number'
+  ) {
+    return null;
+  }
+  return {
+    organizationId: o.organizationId,
+    organizationName: o.organizationName,
+    member: {
+      id: member.id,
+      userId: member.userId,
+      displayName: member.displayName,
+      email: typeof member.email === 'string' ? member.email : null,
+      role: member.role,
+      status: member.status,
+    },
+    seats: {
+      seatsUsed: seats.seatsUsed,
+      seatLimit: seats.seatLimit,
+      seatsAvailable: seats.seatsAvailable,
+    },
+  };
 }
 
 export function parseOrganizationSeatsJson(

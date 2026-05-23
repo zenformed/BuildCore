@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, type ReactElement } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { Suspense } from 'react';
 import { useAuth } from '@/presentation/hooks/useAuth';
 import { useBranding } from '@/presentation/hooks/useBranding';
 import { Card } from '@/presentation/components/Card';
@@ -9,12 +10,15 @@ import { ThemeToggle } from '@/presentation/components/ThemeToggle';
 import { LoginForm } from './LoginForm';
 import styles from './login.module.css';
 
-export default function LoginPage(): ReactElement {
+function LoginPageContent(): ReactElement {
   const { signIn, waitForSessionSync, isLoading } = useAuth();
   const { hasLogo, logoUrl } = useBranding();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [loggingIn, setLoggingIn] = useState(false);
   const [loginError, setLoginError] = useState<string | null>(null);
+
+  const redirectTarget = searchParams.get('redirect')?.trim() || '/dashboard';
 
   async function handleSubmit(email: string, password: string): Promise<void> {
     setLoggingIn(true);
@@ -23,7 +27,7 @@ export default function LoginPage(): ReactElement {
       const result = await signIn(email, password);
       if (result.success) {
         await waitForSessionSync();
-        router.replace('/dashboard');
+        router.replace(redirectTarget.startsWith('/') ? redirectTarget : '/dashboard');
         return;
       }
       const extendedResult = result as { mustResetPassword?: boolean; error?: string };
@@ -64,5 +68,13 @@ export default function LoginPage(): ReactElement {
         )}
       </Card>
     </div>
+  );
+}
+
+export default function LoginPage(): ReactElement {
+  return (
+    <Suspense fallback={<div className={styles.page}><p className={styles.loading}>Loading…</p></div>}>
+      <LoginPageContent />
+    </Suspense>
   );
 }

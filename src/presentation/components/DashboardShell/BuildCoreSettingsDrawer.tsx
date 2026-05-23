@@ -120,6 +120,8 @@ export function BuildCoreSettingsDrawer({
       isCreatingInvite: orgWorkspace.isCreatingInvite,
       cancelingInviteId: orgWorkspace.cancelingInviteId,
       inviteMutationError: orgWorkspace.inviteMutationError,
+      createdInviteAcceptUrl: orgWorkspace.createdInviteAcceptUrl,
+      onDismissCreatedInviteLink: orgWorkspace.clearCreatedInviteAcceptUrl,
       onCreateInvite: orgWorkspace.createInvite,
       onCancelInvite: orgWorkspace.cancelInvite,
     },
@@ -148,6 +150,8 @@ export function BuildCoreSettingsDrawer({
     orgWorkspace.isCreatingInvite,
     orgWorkspace.cancelingInviteId,
     orgWorkspace.inviteMutationError,
+    orgWorkspace.createdInviteAcceptUrl,
+    orgWorkspace.clearCreatedInviteAcceptUrl,
     orgWorkspace.createInvite,
     orgWorkspace.cancelInvite,
   ]);

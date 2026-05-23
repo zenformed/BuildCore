@@ -10,7 +10,7 @@ import { LicenseRequiredScreen } from './LicenseRequiredScreen';
 import { UpdatePasswordScreen } from './UpdatePasswordScreen';
 import { WelcomeOnboardingScreen } from './WelcomeOnboardingScreen';
 
-const PUBLIC_PATHS = ['/login', '/register', '/forgot-password', '/reset-password'];
+const PUBLIC_PATHS = ['/login', '/register', '/forgot-password', '/reset-password', '/accept-invite'];
 
 const LoadingShell = () => (
   <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -59,6 +59,7 @@ export function SaaSAuthGate({ children }: SaaSAuthGateProps): React.ReactElemen
   });
 
   const isPublicPath = PUBLIC_PATHS.some((p) => pathname?.startsWith(p));
+  const isAcceptInvitePath = pathname?.startsWith('/accept-invite');
 
   useEffect(() => {
     setMounted(true);
@@ -131,6 +132,10 @@ export function SaaSAuthGate({ children }: SaaSAuthGateProps): React.ReactElemen
 
   if (decision === 'passwordResetRequired') {
     return <UpdatePasswordScreen onSuccess={refetch} />;
+  }
+
+  if (isAcceptInvitePath && session && user) {
+    return <>{children}</>;
   }
 
   if (decision === 'onboardingRequired') {
