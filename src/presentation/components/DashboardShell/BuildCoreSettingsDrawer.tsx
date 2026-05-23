@@ -7,7 +7,9 @@ import {
   mergeViewModelOverrides,
   pickOrganizationSettingsDrawerClassNames,
   useZenformedOrganizationBranding,
+  useZenformedOrganizationWorkspace,
   useZenformedUserSettings,
+  workspaceSnapshotToViewModelOverrides,
   userSettingsToViewModelOverrides,
   ZenformedOrganizationSettingsDrawer,
   type OrganizationSettingsPersistence,
@@ -49,6 +51,17 @@ export function BuildCoreSettingsDrawer({
     enabled: open,
   });
 
+  const orgWorkspace = useZenformedOrganizationWorkspace({
+    apiUrls: {
+      members: nav.apis.organizationMembers,
+      invites: nav.apis.organizationInvites,
+      seats: nav.apis.organizationSeats,
+      appAccess: nav.apis.organizationAppAccess,
+    },
+    getAccessToken,
+    enabled: open,
+  });
+
   const refetchBranding = useCallback(async () => {
     await orgBranding.refetch();
     await refetchShellBranding();
@@ -69,15 +82,18 @@ export function BuildCoreSettingsDrawer({
           : undefined,
         orgBranding.profile != null
           ? brandingProfileToViewModelOverrides(orgBranding.profile)
+          : undefined,
+        orgWorkspace.snapshot != null
+          ? workspaceSnapshotToViewModelOverrides(orgWorkspace.snapshot)
           : undefined
       ),
-    [userSettings.settings, orgBranding.profile]
+    [userSettings.settings, orgBranding.profile, orgWorkspace.snapshot]
   );
 
   const persistence = useMemo((): OrganizationSettingsPersistence => ({
     isLoading: userSettings.isLoading,
     loadError: userSettings.loadError ?? orgBranding.loadError,
-    hasLiveData: userSettings.hasLiveData || orgBranding.hasLiveData,
+    hasLiveData: userSettings.hasLiveData || orgBranding.hasLiveData || orgWorkspace.hasLiveData,
     accountSaveStatus: userSettings.accountSaveStatus,
     notificationsSaveStatus: userSettings.notificationsSaveStatus,
     saveErrorMessage: userSettings.saveErrorMessage,
@@ -94,6 +110,13 @@ export function BuildCoreSettingsDrawer({
       onUploadLogoClick: () => logoUpload.headerLogoFileInputRef.current?.click(),
       logoInputRef: logoUpload.headerLogoFileInputRef,
       onLogoFileChange: logoUpload.handleLogoFileChange,
+    },
+    workspace: {
+      isLoading: orgWorkspace.isLoading,
+      loadError: orgWorkspace.loadError,
+      hasLiveData: orgWorkspace.hasLiveData,
+      snapshot: orgWorkspace.snapshot,
+      inviteActionsDisabled: true,
     },
   }), [
     userSettings.isLoading,
@@ -113,6 +136,10 @@ export function BuildCoreSettingsDrawer({
     logoUpload.logoUploading,
     logoUpload.headerLogoFileInputRef,
     logoUpload.handleLogoFileChange,
+    orgWorkspace.isLoading,
+    orgWorkspace.loadError,
+    orgWorkspace.hasLiveData,
+    orgWorkspace.snapshot,
   ]);
 
   return (

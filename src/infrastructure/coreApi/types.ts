@@ -172,6 +172,73 @@ export type ZenformedCoreOrganizationBranding = {
   revision?: string;
 };
 
+/** `GET /organizations/me/members` */
+export type ZenformedCoreOrganizationMembersResponse = {
+  organizationId: string;
+  members: Array<{
+    id: string;
+    userId: string;
+    displayName: string;
+    email: string | null;
+    role: 'owner' | 'admin' | 'member';
+    status: 'active' | 'invited' | 'removed';
+  }>;
+};
+
+/** `GET /organizations/me/invites` */
+export type ZenformedCoreOrganizationInvitesResponse = {
+  organizationId: string;
+  invites: Array<{
+    id: string;
+    email: string;
+    status: 'pending' | 'accepted' | 'revoked' | 'expired';
+    role: 'owner' | 'admin' | 'member';
+    invitedBy: string | null;
+    expiresAt: string | null;
+    createdAt: string;
+    sentLabel: string;
+  }>;
+};
+
+/** `GET /organizations/me/seats` */
+export type ZenformedCoreOrganizationSeatsResponse = {
+  organizationId: string;
+  seatsUsed: number;
+  seatLimit: number;
+  seatsAvailable: number;
+  source: string;
+  notes: string | null;
+  planName: string | null;
+  appBreakdown: Array<{
+    appSlug: string;
+    appName: string;
+    planCode: string | null;
+    entitlementStatus: string;
+  }>;
+};
+
+/** `GET /organizations/me/app-access` */
+export type ZenformedCoreOrganizationAppAccessResponse = {
+  organizationId: string;
+  entries: Array<{
+    userId: string;
+    displayName: string;
+    email: string | null;
+    appSlug: string;
+    appName: string;
+    accessStatus: string;
+    role: string;
+    planLabel: string | null;
+  }>;
+  orgApps: Array<{
+    appSlug: string;
+    appName: string;
+    planLabel: string | null;
+    statusLabel: string;
+    isActive: boolean;
+  }>;
+};
+
 export type CoreApiError =
   | { kind: 'unconfigured' }
   | { kind: 'http_error'; status: number; body?: unknown }

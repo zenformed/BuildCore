@@ -16,6 +16,10 @@ import type {
   ZenformedCoreStaffMembersListEnvelope,
   ZenformedCoreUserAppConfigEnvelope,
   ZenformedCoreUserSettingsEnvelope,
+  ZenformedCoreOrganizationMembersResponse,
+  ZenformedCoreOrganizationInvitesResponse,
+  ZenformedCoreOrganizationSeatsResponse,
+  ZenformedCoreOrganizationAppAccessResponse,
 } from '@/infrastructure/coreApi/types';
 
 const RESOLUTION_SOURCES = new Set<SaaSEntitlementResolutionSource>([
@@ -351,4 +355,152 @@ export function parseRegisteredAppEnvelopeJson(
       ...(typeof status === 'string' ? { status } : {}),
     },
   };
+}
+
+export function parseOrganizationMembersJson(
+  body: unknown
+): ZenformedCoreOrganizationMembersResponse | null {
+  if (body == null || typeof body !== 'object') return null;
+  const o = body as Record<string, unknown>;
+  if (typeof o.organizationId !== 'string') return null;
+  if (!Array.isArray(o.members)) return null;
+  const members: ZenformedCoreOrganizationMembersResponse['members'] = [];
+  for (const m of o.members) {
+    if (m == null || typeof m !== 'object') return null;
+    const row = m as Record<string, unknown>;
+    if (typeof row.id !== 'string' || typeof row.userId !== 'string') return null;
+    if (typeof row.displayName !== 'string') return null;
+    if (row.email != null && typeof row.email !== 'string') return null;
+    if (row.role !== 'owner' && row.role !== 'admin' && row.role !== 'member') return null;
+    if (row.status !== 'active' && row.status !== 'invited' && row.status !== 'removed') return null;
+    members.push({
+      id: row.id,
+      userId: row.userId,
+      displayName: row.displayName,
+      email: row.email ?? null,
+      role: row.role,
+      status: row.status,
+    });
+  }
+  return { organizationId: o.organizationId, members };
+}
+
+export function parseOrganizationInvitesJson(
+  body: unknown
+): ZenformedCoreOrganizationInvitesResponse | null {
+  if (body == null || typeof body !== 'object') return null;
+  const o = body as Record<string, unknown>;
+  if (typeof o.organizationId !== 'string') return null;
+  if (!Array.isArray(o.invites)) return null;
+  const invites: ZenformedCoreOrganizationInvitesResponse['invites'] = [];
+  for (const inv of o.invites) {
+    if (inv == null || typeof inv !== 'object') return null;
+    const row = inv as Record<string, unknown>;
+    if (typeof row.id !== 'string' || typeof row.email !== 'string') return null;
+    if (
+      row.status !== 'pending' &&
+      row.status !== 'accepted' &&
+      row.status !== 'revoked' &&
+      row.status !== 'expired'
+    ) {
+      return null;
+    }
+    if (row.role !== 'owner' && row.role !== 'admin' && row.role !== 'member') return null;
+    if (row.invitedBy != null && typeof row.invitedBy !== 'string') return null;
+    if (row.expiresAt != null && typeof row.expiresAt !== 'string') return null;
+    if (typeof row.createdAt !== 'string' || typeof row.sentLabel !== 'string') return null;
+    invites.push({
+      id: row.id,
+      email: row.email,
+      status: row.status,
+      role: row.role,
+      invitedBy: row.invitedBy ?? null,
+      expiresAt: row.expiresAt ?? null,
+      createdAt: row.createdAt,
+      sentLabel: row.sentLabel,
+    });
+  }
+  return { organizationId: o.organizationId, invites };
+}
+
+export function parseOrganizationSeatsJson(
+  body: unknown
+): ZenformedCoreOrganizationSeatsResponse | null {
+  if (body == null || typeof body !== 'object') return null;
+  const o = body as Record<string, unknown>;
+  if (typeof o.organizationId !== 'string') return null;
+  if (typeof o.seatsUsed !== 'number' || typeof o.seatLimit !== 'number') return null;
+  if (typeof o.seatsAvailable !== 'number' || typeof o.source !== 'string') return null;
+  if (o.notes != null && typeof o.notes !== 'string') return null;
+  if (o.planName != null && typeof o.planName !== 'string') return null;
+  if (!Array.isArray(o.appBreakdown)) return null;
+  const appBreakdown: ZenformedCoreOrganizationSeatsResponse['appBreakdown'] = [];
+  for (const a of o.appBreakdown) {
+    if (a == null || typeof a !== 'object') return null;
+    const row = a as Record<string, unknown>;
+    if (typeof row.appSlug !== 'string' || typeof row.appName !== 'string') return null;
+    if (row.planCode != null && typeof row.planCode !== 'string') return null;
+    if (typeof row.entitlementStatus !== 'string') return null;
+    appBreakdown.push({
+      appSlug: row.appSlug,
+      appName: row.appName,
+      planCode: row.planCode ?? null,
+      entitlementStatus: row.entitlementStatus,
+    });
+  }
+  return {
+    organizationId: o.organizationId,
+    seatsUsed: o.seatsUsed,
+    seatLimit: o.seatLimit,
+    seatsAvailable: o.seatsAvailable,
+    source: o.source,
+    notes: o.notes ?? null,
+    planName: o.planName ?? null,
+    appBreakdown,
+  };
+}
+
+export function parseOrganizationAppAccessJson(
+  body: unknown
+): ZenformedCoreOrganizationAppAccessResponse | null {
+  if (body == null || typeof body !== 'object') return null;
+  const o = body as Record<string, unknown>;
+  if (typeof o.organizationId !== 'string') return null;
+  if (!Array.isArray(o.entries) || !Array.isArray(o.orgApps)) return null;
+  const entries: ZenformedCoreOrganizationAppAccessResponse['entries'] = [];
+  for (const e of o.entries) {
+    if (e == null || typeof e !== 'object') return null;
+    const row = e as Record<string, unknown>;
+    if (typeof row.userId !== 'string' || typeof row.displayName !== 'string') return null;
+    if (row.email != null && typeof row.email !== 'string') return null;
+    if (typeof row.appSlug !== 'string' || typeof row.appName !== 'string') return null;
+    if (typeof row.accessStatus !== 'string' || typeof row.role !== 'string') return null;
+    if (row.planLabel != null && typeof row.planLabel !== 'string') return null;
+    entries.push({
+      userId: row.userId,
+      displayName: row.displayName,
+      email: row.email ?? null,
+      appSlug: row.appSlug,
+      appName: row.appName,
+      accessStatus: row.accessStatus,
+      role: row.role,
+      planLabel: row.planLabel ?? null,
+    });
+  }
+  const orgApps: ZenformedCoreOrganizationAppAccessResponse['orgApps'] = [];
+  for (const a of o.orgApps) {
+    if (a == null || typeof a !== 'object') return null;
+    const row = a as Record<string, unknown>;
+    if (typeof row.appSlug !== 'string' || typeof row.appName !== 'string') return null;
+    if (row.planLabel != null && typeof row.planLabel !== 'string') return null;
+    if (typeof row.statusLabel !== 'string' || typeof row.isActive !== 'boolean') return null;
+    orgApps.push({
+      appSlug: row.appSlug,
+      appName: row.appName,
+      planLabel: row.planLabel ?? null,
+      statusLabel: row.statusLabel,
+      isActive: row.isActive,
+    });
+  }
+  return { organizationId: o.organizationId, entries, orgApps };
 }
