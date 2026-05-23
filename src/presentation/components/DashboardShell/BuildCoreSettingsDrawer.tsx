@@ -5,13 +5,12 @@ import { useOrganizationLogoUpload } from '@zenformed/core/dashboard-shell';
 import {
   brandingProfileToViewModelOverrides,
   mergeViewModelOverrides,
-  pickOrganizationSettingsDrawerClassNames,
   useZenformedOrganizationBranding,
   useZenformedOrganizationWorkspace,
   useZenformedUserSettings,
   workspaceSnapshotToViewModelOverrides,
   userSettingsToViewModelOverrides,
-  ZenformedOrganizationSettingsDrawer,
+  ZenformedOrganizationSettingsOverlay,
   type OrganizationSettingsPersistence,
   type OrganizationSettingsShellContext,
 } from '@zenformed/core/organization-settings';
@@ -19,9 +18,6 @@ import {
   buildCoreDashboardNavigation as nav,
 } from '@/platform/navigation/buildCoreDashboardNavigation';
 import { useBrandingContext } from '@/presentation/providers/BrandingProvider';
-import styles from '../../../../app/(dashboard)/dashboard/dashboard.module.css';
-
-const drawerClassNames = pickOrganizationSettingsDrawerClassNames(styles);
 
 export type BuildCoreSettingsDrawerProps = {
   open: boolean;
@@ -159,10 +155,9 @@ export function BuildCoreSettingsDrawer({
   ]);
 
   return (
-    <ZenformedOrganizationSettingsDrawer
+    <ZenformedOrganizationSettingsOverlay
       open={open}
       onClose={onClose}
-      classNames={drawerClassNames}
       title={nav.settingsDrawer.title}
       closeAriaLabel={nav.settingsDrawer.closeAriaLabel}
       shellContext={shellContext}

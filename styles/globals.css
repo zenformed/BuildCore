@@ -37,19 +37,11 @@ body {
   transition: background-color 0.2s ease;
 }
 
-/* Inputs stay high-contrast for readability in both themes */
+/* Form fields — use semantic tokens; values flip with data-theme */
 input:not([type='checkbox']):not([type='radio']),
 textarea,
 select {
-  background-color: var(--theme-surface-elevated) !important;
-  color: var(--color-text) !important;
-  border-color: var(--theme-border-strong) !important;
-}
-
-[data-theme='dark'] input:not([type='checkbox']):not([type='radio']),
-[data-theme='dark'] textarea,
-[data-theme='dark'] select {
-  background-color: #ffffff !important;
-  color: #0f172a !important;
-  border-color: var(--theme-border-main, #3d3e4a) !important;
+  background-color: var(--theme-form-input-bg, var(--theme-surface-elevated)) !important;
+  color: var(--theme-form-input-text, var(--color-text)) !important;
+  border-color: var(--theme-form-input-border, var(--theme-border-strong)) !important;
 }

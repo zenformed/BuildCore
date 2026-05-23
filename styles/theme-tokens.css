@@ -154,6 +154,36 @@
 
 
 
+  /* Form fields (text inputs, selects, textareas) */
+
+  --theme-form-input-bg: #ffffff;
+
+  --theme-form-input-text: var(--color-text);
+
+  --theme-form-input-border: var(--theme-border-strong);
+
+
+
+  /* Settings overlay sidebar (dark rail in both themes) */
+
+  --theme-settings-sidebar-bg: #1e293b;
+
+  --theme-settings-nav-active: #5a7a9e;
+
+  --theme-settings-nav-active-text: #ffffff;
+
+  --theme-settings-sidebar-text: #f1f5f9;
+
+  --theme-settings-sidebar-text-muted: #94a3b8;
+
+  --theme-settings-sidebar-hover: #252b36;
+
+  --theme-settings-sidebar-border: rgba(255, 255, 255, 0.08);
+
+  --theme-settings-sidebar-input-bg: var(--theme-form-input-bg);
+
+
+
   /* ── Table & workflow stage headers (light) ── */
 
   --theme-table-header-bg: #5a7a9e;
@@ -327,6 +357,36 @@
   --color-info-bg: #1e3a8a;
 
   --color-overlay: rgba(0, 0, 0, 0.6);
+
+
+
+  /* Form fields (text inputs, selects, textareas) */
+
+  --theme-form-input-bg: #1f222a;
+
+  --theme-form-input-text: #f1f5f9;
+
+  --theme-form-input-border: var(--theme-border-main);
+
+
+
+  /* Settings overlay sidebar */
+
+  --theme-settings-sidebar-bg: #161922;
+
+  --theme-settings-nav-active: #3b82f6;
+
+  --theme-settings-nav-active-text: #ffffff;
+
+  --theme-settings-sidebar-text: #f1f5f9;
+
+  --theme-settings-sidebar-text-muted: #94a3b8;
+
+  --theme-settings-sidebar-hover: #1e2230;
+
+  --theme-settings-sidebar-border: #3d3e4a;
+
+  --theme-settings-sidebar-input-bg: var(--theme-form-input-bg);
 
 
 
