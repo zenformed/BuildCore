@@ -1,7 +1,7 @@
 import type { User } from '@/domain/entities/User';
 import type { TenantId } from '@/domain/value-objects/TenantId';
 import { createTenantId } from '@/domain/value-objects/TenantId';
-import type { IAuthService, SignInResult } from '@/application/ports/IAuthService';
+import type { IAuthService, SignInResult, SignUpResult } from '@/application/ports/IAuthService';
 import type { User as SupabaseUser } from '@supabase/supabase-js';
 import { getSupabaseClient } from '@/infrastructure/supabase/supabaseClient';
 
@@ -30,6 +30,20 @@ function mapSupabaseUserToDomain(su: SupabaseUser): User {
  * Auth adapter implementing IAuthService using the shared browser Supabase singleton.
  * Must not call `createClient` here — a second GoTrueClient desyncs sign-in from `SaaSProfileProvider`.
  */
+function persistElectronSession(session: {
+  access_token: string;
+  refresh_token: string | null;
+  expires_at?: number;
+}): void {
+  if (typeof window !== 'undefined' && window.electronAuth?.saveSession) {
+    window.electronAuth.saveSession({
+      access_token: session.access_token,
+      refresh_token: session.refresh_token ?? null,
+      expires_at: session.expires_at ?? undefined,
+    });
+  }
+}
+
 export class SupabaseAuthAdapter implements IAuthService {
   private get client() {
     return getSupabaseClient();
@@ -63,6 +77,50 @@ export class SupabaseAuthAdapter implements IAuthService {
       success: true,
       user: mapSupabaseUserToDomain(data.user),
     };
+  }
+
+  async signUp(
+    email: string,
+    password: string,
+    options?: { firstName?: string | null; lastName?: string | null }
+  ): Promise<SignUpResult> {
+    const firstName = options?.firstName?.trim() ?? '';
+    const lastName = options?.lastName?.trim() ?? '';
+    const fullName = `${firstName} ${lastName}`.trim();
+
+    const { data, error } = await this.client.auth.signUp({
+      email,
+      password,
+      options: {
+        data: {
+          ...(firstName ? { first_name: firstName } : {}),
+          ...(lastName ? { last_name: lastName } : {}),
+          ...(fullName ? { full_name: fullName } : {}),
+        },
+      },
+    });
+
+    if (error) {
+      return { success: false, error: error.message };
+    }
+
+    if (data.session && data.user) {
+      persistElectronSession(data.session);
+      return {
+        success: true,
+        user: mapSupabaseUserToDomain(data.user),
+      };
+    }
+
+    if (data.user && !data.session) {
+      return {
+        success: false,
+        needsEmailConfirmation: true,
+        error: 'Check your email to confirm your account before signing in.',
+      };
+    }
+
+    return { success: false, error: 'Account could not be created.' };
   }
 
   async signOut(): Promise<void> {

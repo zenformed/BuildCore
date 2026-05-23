@@ -11,6 +11,13 @@ export interface SignInResult {
   user?: User;
 }
 
+export interface SignUpResult {
+  success: boolean;
+  error?: string;
+  user?: User;
+  needsEmailConfirmation?: boolean;
+}
+
 /**
  * Port for authentication and session management.
  * UI and use cases depend on this interface only; concrete implementation (Supabase, NextAuth, etc.) lives in infrastructure.
@@ -30,6 +37,15 @@ export interface IAuthService {
    * @returns SignInResult with user on success.
    */
   signIn(email: string, password: string): Promise<SignInResult>;
+
+  /**
+   * Creates a new auth user with email and password.
+   */
+  signUp(
+    email: string,
+    password: string,
+    options?: { firstName?: string | null; lastName?: string | null }
+  ): Promise<SignUpResult>;
 
   /**
    * Signs out the current user and clears session.

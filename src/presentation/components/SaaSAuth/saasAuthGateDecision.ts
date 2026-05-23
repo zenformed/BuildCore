@@ -1,7 +1,13 @@
 import type { Session, User } from '@supabase/supabase-js';
 import type { SaaSEntitlementSnapshot } from '@/application/ports';
-import type { CorePlatformStatus, SaaSProfile } from '@/presentation/hooks/useSaaSProfile';
-import { requiresOnboarding, requiresPasswordReset } from '@/presentation/hooks/saasProfileSelectors';
+import type { CorePlatformStatus, SaaSProfile, MembershipContextStatus } from '@/presentation/hooks/useSaaSProfile';
+import { hasCompanyProfile, requiresOnboarding, requiresPasswordReset } from '@/presentation/hooks/saasProfileSelectors';
+
+export type OrganizationMembershipContext = {
+  hasActiveMembership: boolean;
+  hasNonPersonalOrganizationMembership: boolean;
+  membershipKind: 'none' | 'organization_bootstrap_owner' | 'invited_member';
+};
 
 export type SaaSAuthGateDecision =
   | 'unauthenticated'
@@ -21,7 +27,9 @@ export function getSaaSAuthGateDecision(
   profile: SaaSProfile | null,
   entitlementSnapshot: SaaSEntitlementSnapshot | null,
   corePlatformStatus: CorePlatformStatus,
-  loading: boolean
+  loading: boolean,
+  membershipContext: OrganizationMembershipContext | null,
+  membershipContextStatus: MembershipContextStatus
 ): SaaSAuthGateDecision {
   if (!session || !user) return 'unauthenticated';
   if (!profile) {
@@ -34,7 +42,14 @@ export function getSaaSAuthGateDecision(
     return 'allowed';
   }
 
-  if (requiresOnboarding(profile)) return 'onboardingRequired';
+  if (!hasCompanyProfile(profile)) {
+    if (membershipContextStatus === 'pending') {
+      return 'loadingProfile';
+    }
+    if (membershipContextStatus === 'ready' && requiresOnboarding(profile, membershipContext)) {
+      return 'onboardingRequired';
+    }
+  }
   if (!(entitlementSnapshot?.subscriptionActive ?? false)) return 'licenseRequired';
   return 'allowed';
 }

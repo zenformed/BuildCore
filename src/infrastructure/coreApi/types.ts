@@ -163,13 +163,28 @@ export type ZenformedCoreUserAvatarMeta = {
 /** `GET|PATCH /users/me/organization/branding` and successful logo PUT/DELETE on ZenformedCore. */
 export type ZenformedCoreOrganizationBranding = {
   organizationId: string;
-  displayName: string;
+  legalName: string;
+  displayName: string | null;
+  publicDisplayName: string;
   industry: string | null;
   timezone: string | null;
   hasLogo: boolean;
+  canEditOrganizationProfile: boolean;
   logoContentType?: string;
   logoUpdatedAt?: string;
   revision?: string;
+};
+
+/** `GET /organizations/me/membership-context` */
+export type OrganizationMembershipKind =
+  | 'none'
+  | 'organization_bootstrap_owner'
+  | 'invited_member';
+
+export type ZenformedCoreOrganizationMembershipContextResponse = {
+  hasActiveMembership: boolean;
+  hasNonPersonalOrganizationMembership: boolean;
+  membershipKind: OrganizationMembershipKind;
 };
 
 /** `GET /organizations/me/members` */

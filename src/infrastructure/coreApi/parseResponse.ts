@@ -17,6 +17,7 @@ import type {
   ZenformedCoreUserAppConfigEnvelope,
   ZenformedCoreUserSettingsEnvelope,
   ZenformedCoreOrganizationMembersResponse,
+  ZenformedCoreOrganizationMembershipContextResponse,
   ZenformedCoreOrganizationInvite,
   ZenformedCoreOrganizationInviteAcceptResponse,
   ZenformedCoreOrganizationInviteLookupResponse,
@@ -297,8 +298,12 @@ export function parseOrganizationBrandingJson(body: unknown): ZenformedCoreOrgan
   if (body == null || typeof body !== 'object') return null;
   const o = body as Record<string, unknown>;
   if (typeof o.organizationId !== 'string') return null;
-  if (typeof o.displayName !== 'string') return null;
+  if (typeof o.legalName !== 'string') return null;
+  if (typeof o.publicDisplayName !== 'string') return null;
   if (typeof o.hasLogo !== 'boolean') return null;
+  if (typeof o.canEditOrganizationProfile !== 'boolean') return null;
+  const displayName = o.displayName;
+  if (displayName != null && typeof displayName !== 'string') return null;
   const industry = o.industry;
   const timezone = o.timezone;
   if (industry != null && typeof industry !== 'string') return null;
@@ -311,10 +316,13 @@ export function parseOrganizationBrandingJson(body: unknown): ZenformedCoreOrgan
   if (revision != null && typeof revision !== 'string') return null;
   return {
     organizationId: o.organizationId,
-    displayName: o.displayName,
+    legalName: o.legalName,
+    displayName: typeof displayName === 'string' ? displayName : null,
+    publicDisplayName: o.publicDisplayName,
     industry: typeof industry === 'string' ? industry : null,
     timezone: typeof timezone === 'string' ? timezone : null,
     hasLogo: o.hasLogo,
+    canEditOrganizationProfile: o.canEditOrganizationProfile,
     ...(typeof logoContentType === 'string' ? { logoContentType } : {}),
     ...(typeof logoUpdatedAt === 'string' ? { logoUpdatedAt } : {}),
     ...(typeof revision === 'string' ? { revision } : {}),
@@ -358,6 +366,28 @@ export function parseRegisteredAppEnvelopeJson(
       ...(typeof description === 'string' ? { description } : {}),
       ...(typeof status === 'string' ? { status } : {}),
     },
+  };
+}
+
+export function parseOrganizationMembershipContextJson(
+  body: unknown
+): ZenformedCoreOrganizationMembershipContextResponse | null {
+  if (body == null || typeof body !== 'object') return null;
+  const o = body as Record<string, unknown>;
+  if (typeof o.hasActiveMembership !== 'boolean') return null;
+  if (typeof o.hasNonPersonalOrganizationMembership !== 'boolean') return null;
+  const kind = o.membershipKind;
+  if (
+    kind !== 'none' &&
+    kind !== 'organization_bootstrap_owner' &&
+    kind !== 'invited_member'
+  ) {
+    return null;
+  }
+  return {
+    hasActiveMembership: o.hasActiveMembership,
+    hasNonPersonalOrganizationMembership: o.hasNonPersonalOrganizationMembership,
+    membershipKind: kind,
   };
 }
 

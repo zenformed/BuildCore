@@ -4,15 +4,12 @@ import { useState, type ReactElement } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense } from 'react';
 import { useAuth } from '@/presentation/hooks/useAuth';
-import { useBranding } from '@/presentation/hooks/useBranding';
-import { Card } from '@/presentation/components/Card';
-import { ThemeToggle } from '@/presentation/components/ThemeToggle';
-import { LoginForm } from './LoginForm';
-import styles from './login.module.css';
+import { AuthPageShell } from '@/presentation/components/SaaSAuth/AuthPageShell';
+import { LoginForm } from '@/presentation/components/SaaSAuth/LoginForm';
+import pageStyles from '@/presentation/components/SaaSAuth/authPage.module.css';
 
 function LoginPageContent(): ReactElement {
   const { signIn, waitForSessionSync, isLoading } = useAuth();
-  const { hasLogo, logoUrl } = useBranding();
   const router = useRouter();
   const searchParams = useSearchParams();
   const [loggingIn, setLoggingIn] = useState(false);
@@ -44,36 +41,27 @@ function LoginPageContent(): ReactElement {
   }
 
   return (
-    <div className={styles.page}>
-      <div className={styles.themeSlot}>
-        <ThemeToggle />
-      </div>
-      {hasLogo && logoUrl ? (
-        <div className={styles.companyLogoSpot}>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={logoUrl} alt="Company" />
-        </div>
+    <AuthPageShell
+      cardTitle="Sign in"
+      loading={isLoading || loggingIn}
+      loadingMessage={isLoading ? 'Checking session…' : 'Logging in…'}
+    >
+      {!isLoading && !loggingIn ? (
+        <LoginForm onSubmit={handleSubmit} error={loginError} />
       ) : null}
-      <div className={styles.brandBlock}>
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/logo.png" alt="" width={160} height={40} />
-      </div>
-      <Card title="Sign in" className={styles.card}>
-        {isLoading ? (
-          <p className={styles.loading}>Checking session…</p>
-        ) : loggingIn ? (
-          <p className={styles.loading}>Logging in…</p>
-        ) : (
-          <LoginForm onSubmit={handleSubmit} error={loginError} />
-        )}
-      </Card>
-    </div>
+    </AuthPageShell>
   );
 }
 
 export default function LoginPage(): ReactElement {
   return (
-    <Suspense fallback={<div className={styles.page}><p className={styles.loading}>Loading…</p></div>}>
+    <Suspense
+      fallback={
+        <div className={pageStyles.page}>
+          <p className={pageStyles.loading}>Loading…</p>
+        </div>
+      }
+    >
       <LoginPageContent />
     </Suspense>
   );

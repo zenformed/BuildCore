@@ -35,6 +35,8 @@ export function SaaSAuthGate({ children }: SaaSAuthGateProps): React.ReactElemen
     session,
     user,
     profile,
+    organizationMembershipContext,
+    membershipContextStatus,
     entitlementSnapshot,
     corePlatformStatus,
     loading,
@@ -48,7 +50,9 @@ export function SaaSAuthGate({ children }: SaaSAuthGateProps): React.ReactElemen
     profile,
     entitlementSnapshot,
     corePlatformStatus,
-    loading
+    loading,
+    organizationMembershipContext,
+    membershipContextStatus
   );
 
   useShadowCapabilitySnapshot({
@@ -102,6 +106,10 @@ export function SaaSAuthGate({ children }: SaaSAuthGateProps): React.ReactElemen
     return <LoadingShell />;
   }
 
+  if (decision === 'loadingProfile') {
+    return <LoadingShell />;
+  }
+
   if (error && !profile) {
     return (
       <div
@@ -124,10 +132,6 @@ export function SaaSAuthGate({ children }: SaaSAuthGateProps): React.ReactElemen
       return <LoadingShell />;
     }
     return <>{children}</>;
-  }
-
-  if (decision === 'loadingProfile' && !profile) {
-    return <LoadingShell />;
   }
 
   if (decision === 'passwordResetRequired') {

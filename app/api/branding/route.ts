@@ -63,12 +63,24 @@ export async function PATCH(request: NextRequest): Promise<NextResponse> {
     return NextResponse.json({ error: 'invalid_body' }, { status: 400 });
   }
   const patch: {
-    displayName?: string;
+    legalName?: string;
+    displayName?: string | null;
     industry?: string | null;
     timezone?: string | null;
   } = {};
-  if (typeof body.displayName === 'string') {
-    patch.displayName = body.displayName.trim();
+  if (typeof body.legalName === 'string') {
+    patch.legalName = body.legalName.trim();
+  }
+  if ('displayName' in body) {
+    patch.displayName =
+      body.displayName === null
+        ? null
+        : typeof body.displayName === 'string'
+          ? body.displayName.trim()
+          : undefined;
+    if (patch.displayName === undefined && body.displayName !== null) {
+      return NextResponse.json({ error: 'invalid_display_name' }, { status: 400 });
+    }
   }
   if ('industry' in body) {
     patch.industry =

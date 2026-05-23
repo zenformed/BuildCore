@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import type { User } from '@/domain/entities/User';
 import { getCurrentUserUseCase } from '@/shared/di/container';
-import type { SignInResult } from '@/application/ports/IAuthService';
+import type { SignInResult, SignUpResult } from '@/application/ports/IAuthService';
 import { waitForAuthSessionSync } from '@/infrastructure/auth/authSessionSync';
 import { useSaaSProfile } from '@/presentation/hooks/useSaaSProfile';
 
@@ -16,9 +16,14 @@ export interface UseAuthState {
   user: User | null;
   isLoading: boolean;
   signIn: (email: string, password: string) => Promise<SignInResult>;
+  signUp: (
+    email: string,
+    password: string,
+    options?: { firstName?: string | null; lastName?: string | null }
+  ) => Promise<SignUpResult>;
   /** Ensure client auth session has settled before redirect-dependent flows. */
   waitForSessionSync: () => Promise<void>;
-  signOut: () => Promise<void>;
+  signOut: (options?: { redirectTo?: string | null }) => Promise<void>;
 }
 
 /**
@@ -55,16 +60,36 @@ export function useAuth(): UseAuthState {
     return result;
   }, []);
 
+  const signUp = useCallback(
+    async (
+      email: string,
+      password: string,
+      options?: { firstName?: string | null; lastName?: string | null }
+    ): Promise<SignUpResult> => {
+      const { authService } = await import('@/shared/di/container');
+      const result = await authService.signUp(email, password, options);
+      if (result.success && result.user) {
+        setUser(result.user);
+      }
+      return result;
+    },
+    []
+  );
+
   const waitForSessionSync = useCallback(async (): Promise<void> => {
     await waitForAuthSessionSync();
   }, []);
 
-  const signOut = useCallback(async (): Promise<void> => {
-    const { authService } = await import('@/shared/di/container');
-    await authService.signOut();
-    setUser(null);
-    router.push('/login');
-  }, [router]);
+  const signOut = useCallback(
+    async (options?: { redirectTo?: string | null }): Promise<void> => {
+      const { authService } = await import('@/shared/di/container');
+      await authService.signOut();
+      setUser(null);
+      if (options?.redirectTo === null) return;
+      router.push(options?.redirectTo ?? '/login');
+    },
+    [router]
+  );
 
-  return { user, isLoading, signIn, waitForSessionSync, signOut };
+  return { user, isLoading, signIn, signUp, waitForSessionSync, signOut };
 }

@@ -85,7 +85,8 @@ export async function getOrganizationBranding(
 }
 
 export type OrganizationBrandingPatch = {
-  displayName?: string;
+  legalName?: string;
+  displayName?: string | null;
   industry?: string | null;
   timezone?: string | null;
 };

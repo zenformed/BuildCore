@@ -6,8 +6,18 @@ export function coreBrandingHttpFailure(
 ): { status: number; body: Record<string, unknown> } | null {
   if (error.kind === 'http_error') {
     const st = error.status;
-    if (st === 401 || st === 403) {
+    if (st === 401) {
       return { status: 401, body: { error: 'unauthenticated' } };
+    }
+    if (st === 403) {
+      const body = error.body;
+      if (body != null && typeof body === 'object') {
+        const o = body as Record<string, unknown>;
+        if (o.error === 'forbidden') {
+          return { status: 403, body: { error: 'forbidden', message: o.message } };
+        }
+      }
+      return { status: 403, body: { error: 'forbidden' } };
     }
     if (st === 404) {
       const body = error.body;

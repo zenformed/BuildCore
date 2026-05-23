@@ -1,5 +1,5 @@
 import type { SaaSEntitlementSnapshot } from '@/application/ports';
-import type { SaaSProfile, LicenseTier } from './useSaaSProfile';
+import type { SaaSProfile, LicenseTier, OrganizationMembershipKind } from './useSaaSProfile';
 
 /**
  * Tier from entitlement snapshot (legacy-derived via useSaaSProfile entitlementSnapshot).
@@ -36,9 +36,21 @@ export function requiresPasswordReset(profile: SaaSProfile | null | undefined): 
 
 /**
  * True when company onboarding details are incomplete.
+ * Only org bootstrap owners without company profile require onboarding — not invited members.
  */
-export function requiresOnboarding(profile: SaaSProfile | null | undefined): boolean {
-  return !hasCompanyProfile(profile);
+export function requiresOnboarding(
+  profile: SaaSProfile | null | undefined,
+  membershipContext?: {
+    hasNonPersonalOrganizationMembership?: boolean;
+    membershipKind?: OrganizationMembershipKind;
+  } | null
+): boolean {
+  if (hasCompanyProfile(profile)) return false;
+  if (membershipContext?.membershipKind === 'invited_member') return false;
+  if (membershipContext?.hasNonPersonalOrganizationMembership === true) return false;
+  if (membershipContext?.membershipKind === 'organization_bootstrap_owner') return true;
+  if (membershipContext?.membershipKind === 'none') return true;
+  return membershipContext == null;
 }
 
 /**

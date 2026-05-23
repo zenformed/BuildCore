@@ -3,8 +3,12 @@
 import { Suspense, useCallback, useEffect, useState, type ReactElement } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Card } from '@/presentation/components/Card';
 import { Button } from '@/presentation/components/Button';
+import { AuthPageShell } from '@/presentation/components/SaaSAuth/AuthPageShell';
+import { InviteRegistrationForm } from '@/presentation/components/SaaSAuth/InviteRegistrationForm';
+import { LoginForm } from '@/presentation/components/SaaSAuth/LoginForm';
+import pageStyles from '@/presentation/components/SaaSAuth/authPage.module.css';
+import { useAuth } from '@/presentation/hooks/useAuth';
 import { useSaaSProfile } from '@/presentation/hooks/useSaaSProfile';
 
 type InviteLookup = {
@@ -16,6 +20,8 @@ type InviteLookup = {
   expiresAt: string | null;
 };
 
+type AuthMode = 'register' | 'signin';
+
 function readErrorMessage(json: unknown, fallback: string): string {
   if (json != null && typeof json === 'object') {
     const o = json as Record<string, unknown>;
@@ -25,22 +31,74 @@ function readErrorMessage(json: unknown, fallback: string): string {
   return fallback;
 }
 
+function isExistingAccountError(message: string): boolean {
+  const normalized = message.toLowerCase();
+  return (
+    normalized.includes('already registered') ||
+    normalized.includes('already exists') ||
+    normalized.includes('user already')
+  );
+}
+
+async function postAcceptInvite(accessToken: string, inviteToken: string): Promise<{ ok: true } | { ok: false; message: string }> {
+  const res = await fetch('/api/internal/organization/invites/accept', {
+    method: 'POST',
+    headers: {
+      Accept: 'application/json',
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${accessToken}`,
+    },
+    body: JSON.stringify({ token: inviteToken }),
+  });
+  const json: unknown = await res.json();
+  if (!res.ok) {
+    return { ok: false, message: readErrorMessage(json, 'Could not accept invite.') };
+  }
+  return { ok: true };
+}
+
+async function readAccessToken(): Promise<string | null> {
+  const { getSupabaseClient } = await import('@/infrastructure/supabase/supabaseClient');
+  const {
+    data: { session },
+  } = await getSupabaseClient().auth.getSession();
+  return session?.access_token?.trim() ?? null;
+}
+
+function InvitePreview({ lookup }: { lookup: InviteLookup }): ReactElement {
+  return (
+    <div className={pageStyles.preview}>
+      <p>
+        You have been invited to join <strong>{lookup.organizationName}</strong> as{' '}
+        <strong>{lookup.role}</strong>.
+      </p>
+      <p className={pageStyles.previewDetail}>
+        Invited email: <strong>{lookup.invitedEmail}</strong>
+      </p>
+      {lookup.expiresAt ? (
+        <p className={pageStyles.previewDetail}>
+          Expires: {new Date(lookup.expiresAt).toLocaleString()}
+        </p>
+      ) : null}
+    </div>
+  );
+}
+
 function AcceptInviteContent(): ReactElement {
   const searchParams = useSearchParams();
   const router = useRouter();
   const token = searchParams.get('token')?.trim() ?? '';
-  const { session, user, loading: authLoading } = useSaaSProfile();
+  const { session, user, loading: authLoading, refetch: refetchProfile } = useSaaSProfile();
+  const { signIn, signUp, waitForSessionSync, signOut } = useAuth();
 
   const [lookup, setLookup] = useState<InviteLookup | null>(null);
   const [lookupError, setLookupError] = useState<string | null>(null);
   const [lookupLoading, setLookupLoading] = useState(true);
+  const [authMode, setAuthMode] = useState<AuthMode>('register');
+  const [authError, setAuthError] = useState<string | null>(null);
   const [acceptError, setAcceptError] = useState<string | null>(null);
   const [accepting, setAccepting] = useState(false);
-
-  const returnPath = token
-    ? `/accept-invite?token=${encodeURIComponent(token)}`
-    : '/accept-invite';
-  const loginHref = `/login?redirect=${encodeURIComponent(returnPath)}`;
+  const [switchingAccount, setSwitchingAccount] = useState(false);
 
   useEffect(() => {
     if (!token) {
@@ -96,107 +154,223 @@ function AcceptInviteContent(): ReactElement {
     };
   }, [token]);
 
-  const handleAccept = useCallback(async () => {
-    const accessToken = session?.access_token?.trim();
-    if (!accessToken || !token) return;
-
-    setAccepting(true);
+  const completeAcceptFlow = useCallback(async (): Promise<{ ok: true } | { ok: false; message: string }> => {
+    if (!token) return { ok: false, message: 'Invite token is missing.' };
     setAcceptError(null);
+    setAccepting(true);
     try {
-      const res = await fetch('/api/internal/organization/invites/accept', {
-        method: 'POST',
-        headers: {
-          Accept: 'application/json',
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${accessToken}`,
-        },
-        body: JSON.stringify({ token }),
-      });
-      const json: unknown = await res.json();
-      if (!res.ok) {
-        setAcceptError(readErrorMessage(json, 'Could not accept invite.'));
-        return;
+      await waitForSessionSync();
+      const accessToken = (await readAccessToken()) ?? session?.access_token?.trim() ?? null;
+      if (!accessToken) {
+        const message = 'Session is not ready. Try signing in again.';
+        setAcceptError(message);
+        return { ok: false, message };
       }
+      const result = await postAcceptInvite(accessToken, token);
+      if (!result.ok) {
+        setAcceptError(result.message);
+        return result;
+      }
+      await refetchProfile();
       router.replace('/dashboard?settings=organization');
+      return { ok: true };
     } catch {
-      setAcceptError('Could not accept invite.');
+      const message = 'Could not accept invite.';
+      setAcceptError(message);
+      return { ok: false, message };
     } finally {
       setAccepting(false);
     }
-  }, [router, session?.access_token, token]);
+  }, [refetchProfile, router, session?.access_token, token, waitForSessionSync]);
+
+  const handleAccept = useCallback(async (): Promise<void> => {
+    await completeAcceptFlow();
+  }, [completeAcceptFlow]);
+
+  const handleRegister = useCallback(
+    async (password: string, confirmPassword: string): Promise<void> => {
+      if (!lookup) return;
+      setAuthError(null);
+      if (password !== confirmPassword) {
+        setAuthError('Passwords do not match.');
+        return;
+      }
+
+      const result = await signUp(lookup.invitedEmail, password, {
+        firstName: lookup.invitedFirstName,
+        lastName: lookup.invitedLastName,
+      });
+
+      if (!result.success) {
+        const message = result.error ?? 'Could not create account.';
+        if (isExistingAccountError(message)) {
+          setAuthMode('signin');
+          setAuthError('An account already exists for this email. Sign in to accept the invite.');
+          return;
+        }
+        setAuthError(message);
+        return;
+      }
+
+      const accepted = await completeAcceptFlow();
+      if (!accepted.ok) {
+        throw new Error(accepted.message);
+      }
+    },
+    [completeAcceptFlow, lookup, signUp]
+  );
+
+  const handleSignIn = useCallback(
+    async (email: string, password: string): Promise<void> => {
+      setAuthError(null);
+      const result = await signIn(email, password);
+      if (!result.success) {
+        const message = result.error ?? 'Sign in failed';
+        setAuthError(message);
+        throw new Error(message);
+      }
+      const accepted = await completeAcceptFlow();
+      if (!accepted.ok) {
+        throw new Error(accepted.message);
+      }
+    },
+    [completeAcceptFlow, signIn]
+  );
+
+  const handleSwitchAccount = useCallback(async (): Promise<void> => {
+    setSwitchingAccount(true);
+    setAuthError(null);
+    setAcceptError(null);
+    try {
+      await signOut({ redirectTo: null });
+      setAuthMode('register');
+    } finally {
+      setSwitchingAccount(false);
+    }
+  }, [signOut]);
 
   const signedInEmail = user?.email?.trim().toLowerCase() ?? null;
   const invitedEmail = lookup?.invitedEmail.trim().toLowerCase() ?? null;
   const emailMatches =
     signedInEmail != null && invitedEmail != null && signedInEmail === invitedEmail;
 
-  return (
-    <div
-      style={{
-        minHeight: '100vh',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: '1.5rem',
-      }}
-    >
-      <div style={{ width: '100%', maxWidth: '32rem' }}>
-        <Card title="Accept organization invite">
-          {!token ? (
-            <p role="alert">Invite link is missing a token.</p>
-          ) : lookupLoading || authLoading ? (
-            <p>Loading invite…</p>
-          ) : lookupError ? (
-            <p role="alert">{lookupError}</p>
-          ) : lookup ? (
-            <>
-              <p>
-                You have been invited to join <strong>{lookup.organizationName}</strong> as{' '}
-                <strong>{lookup.role}</strong>.
-              </p>
-              <p>
-                Invited email: <strong>{lookup.invitedEmail}</strong>
-              </p>
-              {lookup.expiresAt ? (
-                <p>Expires: {new Date(lookup.expiresAt).toLocaleString()}</p>
-              ) : null}
+  const pageLoading = lookupLoading || authLoading;
+  const cardTitle = lookup ? `Join ${lookup.organizationName}` : 'Accept invite';
 
-              {!session || !user ? (
-                <div
-                  style={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: '0.75rem',
-                    marginTop: '1rem',
-                  }}
-                >
-                  <p>Sign in with the invited email address to accept this invite.</p>
-                  <Link href={loginHref}>Sign in</Link>
-                </div>
-              ) : !emailMatches ? (
-                <p role="alert" style={{ marginTop: '1rem' }}>
-                  You are signed in as {user.email}. Sign in with {lookup.invitedEmail} to accept
-                  this invite.
-                </p>
+  return (
+    <AuthPageShell
+      cardTitle={cardTitle}
+      loading={pageLoading}
+      loadingMessage="Loading invite…"
+    >
+      {!pageLoading && !token ? (
+        <p className={pageStyles.error} role="alert">
+          Invite link is missing a token.
+        </p>
+      ) : null}
+      {!pageLoading && lookupError ? (
+        <p className={pageStyles.error} role="alert">
+          {lookupError}
+        </p>
+      ) : null}
+      {!pageLoading && lookup ? (
+        <>
+          <InvitePreview lookup={lookup} />
+
+          {!session || !user ? (
+            <>
+              {authMode === 'register' ? (
+                <InviteRegistrationForm
+                  email={lookup.invitedEmail}
+                  onSubmit={handleRegister}
+                  error={authError}
+                />
               ) : (
-                <div style={{ marginTop: '1rem' }}>
-                  {acceptError ? <p role="alert">{acceptError}</p> : null}
-                  <Button type="button" disabled={accepting} onClick={() => void handleAccept()}>
-                    {accepting ? 'Accepting…' : 'Accept invite'}
-                  </Button>
-                </div>
+                <LoginForm
+                  initialEmail={lookup.invitedEmail}
+                  emailReadOnly
+                  onSubmit={handleSignIn}
+                  error={authError}
+                  submitLabel="Sign in and accept"
+                  submittingLabel="Signing in…"
+                />
               )}
+              <div className={pageStyles.links}>
+                {authMode === 'register' ? (
+                  <button
+                    type="button"
+                    className={pageStyles.link}
+                    onClick={() => {
+                      setAuthError(null);
+                      setAuthMode('signin');
+                    }}
+                  >
+                    Already have an account? Sign in
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    className={pageStyles.link}
+                    onClick={() => {
+                      setAuthError(null);
+                      setAuthMode('register');
+                    }}
+                  >
+                    Need an account? Create one
+                  </button>
+                )}
+              </div>
             </>
-          ) : null}
-        </Card>
-      </div>
-    </div>
+          ) : !emailMatches ? (
+            <>
+              <p className={pageStyles.error} role="alert">
+                You are signed in as {user.email}. Sign in with {lookup.invitedEmail} to accept
+                this invite.
+              </p>
+              <div className={pageStyles.links}>
+                <button
+                  type="button"
+                  className={pageStyles.link}
+                  disabled={switchingAccount}
+                  onClick={() => void handleSwitchAccount()}
+                >
+                  {switchingAccount ? 'Signing out…' : 'Switch account'}
+                </button>
+                <Link
+                  href={`/login?redirect=${encodeURIComponent(`/accept-invite?token=${encodeURIComponent(token)}`)}`}
+                  className={pageStyles.link}
+                >
+                  Sign in
+                </Link>
+              </div>
+            </>
+          ) : (
+            <>
+              {acceptError ? (
+                <p className={pageStyles.error} role="alert">
+                  {acceptError}
+                </p>
+              ) : null}
+              <Button type="button" disabled={accepting} onClick={() => void handleAccept()}>
+                {accepting ? 'Accepting…' : 'Accept invite'}
+              </Button>
+            </>
+          )}
+        </>
+      ) : null}
+    </AuthPageShell>
   );
 }
 
 export default function AcceptInvitePage(): ReactElement {
   return (
-    <Suspense fallback={<div style={{ minHeight: '100vh', padding: '2rem' }}>Loading…</div>}>
+    <Suspense
+      fallback={
+        <div className={pageStyles.page}>
+          <p className={pageStyles.loading}>Loading…</p>
+        </div>
+      }
+    >
       <AcceptInviteContent />
     </Suspense>
   );

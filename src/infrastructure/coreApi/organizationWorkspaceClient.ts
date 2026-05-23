@@ -9,6 +9,7 @@ import {
   parseOrganizationInviteLookupJson,
   parseOrganizationInviteMutationJson,
   parseOrganizationInvitesJson,
+  parseOrganizationMembershipContextJson,
   parseOrganizationMembersJson,
   parseOrganizationSeatsJson,
 } from '@/infrastructure/coreApi/parseResponse';
@@ -22,6 +23,7 @@ import type {
   ZenformedCoreOrganizationInviteLookupResponse,
   ZenformedCoreOrganizationInviteMutationResponse,
   ZenformedCoreOrganizationInvitesResponse,
+  ZenformedCoreOrganizationMembershipContextResponse,
   ZenformedCoreOrganizationMembersResponse,
   ZenformedCoreOrganizationSeatsResponse,
 } from '@/infrastructure/coreApi/types';
@@ -149,6 +151,16 @@ export function getOrganizationMembers(
   accessToken: string
 ): Promise<CoreApiResult<ZenformedCoreOrganizationMembersResponse>> {
   return getJson('/organizations/me/members', accessToken, parseOrganizationMembersJson);
+}
+
+export function getOrganizationMembershipContext(
+  accessToken: string
+): Promise<CoreApiResult<ZenformedCoreOrganizationMembershipContextResponse>> {
+  return getJson(
+    '/organizations/me/membership-context',
+    accessToken,
+    parseOrganizationMembershipContextJson
+  );
 }
 
 export function getOrganizationInvites(

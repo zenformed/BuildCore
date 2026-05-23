@@ -32,10 +32,24 @@ import {
   saveCachedSaaSProfile,
 } from '@/infrastructure/profile/saasProfileFallback';
 import { getSupabaseClient, type Session } from '@/infrastructure/supabase/supabaseClient';
+import { parseOrganizationMembershipContextJson } from '@/infrastructure/coreApi/parseResponse';
 
 export type CorePlatformStatus = 'not_required' | 'loading' | 'available' | 'unavailable';
 
 export type LicenseTier = 'STANDARD' | 'PRO';
+
+export type OrganizationMembershipKind =
+  | 'none'
+  | 'organization_bootstrap_owner'
+  | 'invited_member';
+
+export type OrganizationMembershipContext = {
+  hasActiveMembership: boolean;
+  hasNonPersonalOrganizationMembership: boolean;
+  membershipKind: OrganizationMembershipKind;
+};
+
+export type MembershipContextStatus = 'pending' | 'ready' | 'failed';
 
 export type SaaSProfile = {
   id: string;
@@ -115,6 +129,8 @@ type SaaSProfileContextValue = {
   session: Session | null;
   user: User | null;
   profile: SaaSProfile | null;
+  organizationMembershipContext: OrganizationMembershipContext | null;
+  membershipContextStatus: MembershipContextStatus;
   entitlementSnapshot: SaaSEntitlementSnapshot | null;
   corePlatformStatus: CorePlatformStatus;
   loading: boolean;
@@ -138,10 +154,42 @@ async function fetchProfileFromCoreRelay(accessToken: string): Promise<Response>
   });
 }
 
+async function fetchMembershipContextFromRelay(
+  accessToken: string
+): Promise<OrganizationMembershipContext | null> {
+  try {
+    const res = await globalThis.fetch('/api/internal/organization/membership-context', {
+      method: 'GET',
+      headers: {
+        Accept: 'application/json',
+        Authorization: `Bearer ${accessToken}`,
+      },
+    });
+    let json: unknown;
+    try {
+      json = await res.json();
+    } catch {
+      return null;
+    }
+    if (!res.ok) return null;
+    return parseOrganizationMembershipContextJson(json);
+  } catch {
+    return null;
+  }
+}
+
+function shouldResolveMembershipContextForSaas(): boolean {
+  return runtimeModes.isSaasMode() && !runtimeModes.useMockAuth();
+}
+
 export function SaaSProfileProvider({ children }: { children: React.ReactNode }): React.ReactElement {
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<SaaSProfile | null>(null);
+  const [organizationMembershipContext, setOrganizationMembershipContext] =
+    useState<OrganizationMembershipContext | null>(null);
+  const [membershipContextStatus, setMembershipContextStatus] =
+    useState<MembershipContextStatus>('pending');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [coreEntitlementResolution, setCoreEntitlementResolution] =
@@ -193,6 +241,8 @@ export function SaaSProfileProvider({ children }: { children: React.ReactNode })
           setSession(s);
           setUser(null);
           setProfile(null);
+          setOrganizationMembershipContext(null);
+          setMembershipContextStatus('ready');
           bootstrappedUserIdRef.current = null;
           setCoreEntitlementResolution({ status: 'unused' });
           setCorePlatformStatus('not_required');
@@ -201,6 +251,10 @@ export function SaaSProfileProvider({ children }: { children: React.ReactNode })
         activeSession = s;
         setSession(s);
         setUser(s.user ?? null);
+        if (shouldResolveMembershipContextForSaas()) {
+          setOrganizationMembershipContext(null);
+          setMembershipContextStatus('pending');
+        }
         const bootSession = activeSession;
 
         if (
@@ -245,6 +299,32 @@ export function SaaSProfileProvider({ children }: { children: React.ReactNode })
           setCoreEntitlementResolution(r);
         };
 
+        const syncMembershipContext = async (token: string | null | undefined): Promise<void> => {
+          const canRelay =
+            runtimeModes.isSaasMode() &&
+            !runtimeModes.useMockAuth() &&
+            typeof token === 'string' &&
+            token.length > 0;
+          if (!canRelay) {
+            setOrganizationMembershipContext(null);
+            setMembershipContextStatus('ready');
+            return;
+          }
+          setMembershipContextStatus('pending');
+          const ctx = await fetchMembershipContextFromRelay(token);
+          if (ctx == null) {
+            setOrganizationMembershipContext({
+              hasActiveMembership: false,
+              hasNonPersonalOrganizationMembership: false,
+              membershipKind: 'none',
+            });
+            setMembershipContextStatus('failed');
+            return;
+          }
+          setOrganizationMembershipContext(ctx);
+          setMembershipContextStatus('ready');
+        };
+
         if (tryZenformedCoreRelay) {
           let coreRelayFailed = false;
           try {
@@ -263,6 +343,8 @@ export function SaaSProfileProvider({ children }: { children: React.ReactNode })
                 setSession(null);
                 setUser(null);
                 setProfile(null);
+                setOrganizationMembershipContext(null);
+                setMembershipContextStatus('ready');
                 setCoreEntitlementResolution({ status: 'unused' });
                 setCorePlatformStatus('not_required');
                 return;
@@ -295,6 +377,7 @@ export function SaaSProfileProvider({ children }: { children: React.ReactNode })
               bootstrappedUserIdRef.current = activeSession.user.id;
               setError(null);
               await finalizeCoreEntitlement(activeSession.access_token);
+              await syncMembershipContext(activeSession.access_token);
               return;
             } else if (isCoreRelayUnconfigured(parsedRelay)) {
               setCorePlatformStatus('not_required');
@@ -336,6 +419,9 @@ export function SaaSProfileProvider({ children }: { children: React.ReactNode })
           if (!coreRuntimeEnabled) {
             setCorePlatformStatus('not_required');
           }
+          await syncMembershipContext(
+            resolved && hasUsableAccessToken(bootSession) ? bootSession.access_token : null
+          );
         };
 
         if (e) {
@@ -433,6 +519,8 @@ export function SaaSProfileProvider({ children }: { children: React.ReactNode })
           setSession(null);
           setUser(null);
           setProfile(null);
+          setOrganizationMembershipContext(null);
+          setMembershipContextStatus('pending');
           setCoreEntitlementResolution({ status: 'unused' });
           cachedCoreEntitlementRef.current = null;
           coreUnavailableRef.current = false;
@@ -442,12 +530,20 @@ export function SaaSProfileProvider({ children }: { children: React.ReactNode })
           return;
         }
         case 'load_full':
+          if (shouldResolveMembershipContextForSaas() && newSession?.user) {
+            setOrganizationMembershipContext(null);
+            setMembershipContextStatus('pending');
+          }
           void loadProfile({
             soft: profileRef.current != null,
             force: profileRef.current == null,
           });
           return;
         case 'load_soft':
+          if (shouldResolveMembershipContextForSaas() && newSession?.user) {
+            setOrganizationMembershipContext(null);
+            setMembershipContextStatus('pending');
+          }
           void loadProfile({ soft: true, force: false });
           return;
         default:
@@ -506,13 +602,26 @@ export function SaaSProfileProvider({ children }: { children: React.ReactNode })
       session,
       user,
       profile,
+      organizationMembershipContext,
+      membershipContextStatus,
       entitlementSnapshot,
       corePlatformStatus,
       loading,
       error,
       refetch: refetchWithCooldown,
     }),
-    [session, user, profile, entitlementSnapshot, corePlatformStatus, loading, error, refetchWithCooldown]
+    [
+      session,
+      user,
+      profile,
+      organizationMembershipContext,
+      membershipContextStatus,
+      entitlementSnapshot,
+      corePlatformStatus,
+      loading,
+      error,
+      refetchWithCooldown,
+    ]
   );
 
   return <SaaSProfileContext.Provider value={value}>{children}</SaaSProfileContext.Provider>;

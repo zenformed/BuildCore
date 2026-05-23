@@ -4,6 +4,7 @@ import React, { useCallback, useState } from 'react';
 import { runtimeModes } from '@/infrastructure/config/runtimeModes';
 import { getSupabaseClient } from '@/infrastructure/supabase/supabaseClient';
 import { Button } from '@/presentation/components/Button';
+import { useAuthInterface } from '@/presentation/hooks/useAuthInterface';
 import styles from './SaaSAuth.module.css';
 
 const INDUSTRY_OPTIONS = [
@@ -17,6 +18,7 @@ export interface WelcomeOnboardingScreenProps {
 }
 
 export function WelcomeOnboardingScreen({ onSuccess }: WelcomeOnboardingScreenProps): React.ReactElement {
+  const { signOut } = useAuthInterface();
   const [companyName, setCompanyName] = useState('');
   const [industry, setIndustry] = useState<string>('cnc');
   const [loading, setLoading] = useState(false);
@@ -135,6 +137,9 @@ export function WelcomeOnboardingScreen({ onSuccess }: WelcomeOnboardingScreenPr
           <div className={styles.actions}>
             <Button type="submit" variant="primary" disabled={loading}>
               {loading ? 'Saving…' : 'Continue'}
+            </Button>
+            <Button type="button" variant="outline" onClick={() => void signOut()}>
+              Sign out
             </Button>
           </div>
         </form>
