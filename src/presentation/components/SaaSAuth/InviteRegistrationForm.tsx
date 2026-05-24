@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { Button } from '@/presentation/components/Button';
-import formStyles from './authForm.module.css';
+import { authFormStyles as formStyles } from '@zenformed/core/auth';
 
 const MIN_PASSWORD_LENGTH = 8;
 
