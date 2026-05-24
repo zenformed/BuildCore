@@ -189,6 +189,7 @@ export type ZenformedCoreOrganizationPermissions = {
   canInviteMembers: boolean;
   canCancelInvites: boolean;
   canManageMemberRoles: boolean;
+  canRemoveMembers: boolean;
   canViewAppsBilling: boolean;
   canEditAccountEmail: boolean;
 };
@@ -298,6 +299,13 @@ export type ZenformedCoreOrganizationMemberRoleUpdateRequest = {
 export type ZenformedCoreOrganizationMemberRoleUpdateResponse = {
   organizationId: string;
   member: ZenformedCoreOrganizationMembersResponse['members'][number];
+};
+
+/** `DELETE /organizations/me/members/:memberId` */
+export type ZenformedCoreOrganizationMemberRemoveResponse = {
+  organizationId: string;
+  memberId: string;
+  removed: true;
 };
 
 /** `GET /organizations/me/seats` */

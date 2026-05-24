@@ -11,6 +11,7 @@ import {
   parseOrganizationInvitesJson,
   parseOrganizationMembershipContextJson,
   parseOrganizationMemberRoleUpdateJson,
+  parseOrganizationMemberRemoveJson,
   parseOrganizationMembersJson,
   parseOrganizationSeatsJson,
 } from '@/infrastructure/coreApi/parseResponse';
@@ -27,6 +28,7 @@ import type {
   ZenformedCoreOrganizationMembershipContextResponse,
   ZenformedCoreOrganizationMemberRoleUpdateRequest,
   ZenformedCoreOrganizationMemberRoleUpdateResponse,
+  ZenformedCoreOrganizationMemberRemoveResponse,
   ZenformedCoreOrganizationMembersResponse,
   ZenformedCoreOrganizationSeatsResponse,
 } from '@/infrastructure/coreApi/types';
@@ -102,7 +104,7 @@ async function getJson<T>(
 async function mutateJson<T>(
   path: string,
   accessToken: string,
-  method: 'POST' | 'PATCH',
+  method: 'POST' | 'PATCH' | 'DELETE',
   body: unknown | undefined,
   parse: (json: unknown) => T | null,
   timeoutMs: number = DEFAULT_TIMEOUT_MS
@@ -221,6 +223,19 @@ export function patchOrganizationMemberRole(
     'PATCH',
     body,
     parseOrganizationMemberRoleUpdateJson
+  );
+}
+
+export function deleteOrganizationMember(
+  accessToken: string,
+  memberId: string
+): Promise<CoreApiResult<ZenformedCoreOrganizationMemberRemoveResponse>> {
+  return mutateJson(
+    `/organizations/me/members/${encodeURIComponent(memberId)}`,
+    accessToken,
+    'DELETE',
+    undefined,
+    parseOrganizationMemberRemoveJson
   );
 }
 

@@ -54,14 +54,12 @@ export function BuildCoreSettingsDrawer({
   });
 
   const workspacePermissions = orgWorkspace.snapshot?.membershipContext?.permissions ?? null;
-  const canViewOrganizationSettings =
-    workspacePermissions?.canViewOrganizationSettings ?? false;
 
   const orgBranding = useZenformedOrganizationBranding({
     brandingApiUrl: nav.apis.branding,
     brandingLogoApiUrl: '/api/branding/logo',
     getAccessToken,
-    enabled: open && canViewOrganizationSettings,
+    enabled: open,
   });
 
   const refetchBranding = useCallback(async () => {
@@ -124,16 +122,21 @@ export function BuildCoreSettingsDrawer({
       currentUserId: orgWorkspace.snapshot?.membershipContext?.currentUserId ?? null,
       inviteActionsDisabled: !(workspacePermissions?.canInviteMembers ?? false),
       roleManagementDisabled: !(workspacePermissions?.canManageMemberRoles ?? false),
+      removeMemberDisabled: !(workspacePermissions?.canRemoveMembers ?? false),
       isCreatingInvite: orgWorkspace.isCreatingInvite,
       cancelingInviteId: orgWorkspace.cancelingInviteId,
       updatingMemberRoleId: orgWorkspace.updatingMemberRoleId,
+      removingMemberId: orgWorkspace.removingMemberId,
       inviteMutationError: orgWorkspace.inviteMutationError,
       roleMutationError: orgWorkspace.roleMutationError,
+      removeMemberMutationError: orgWorkspace.removeMemberMutationError,
       createdInviteAcceptUrl: orgWorkspace.createdInviteAcceptUrl,
       onDismissCreatedInviteLink: orgWorkspace.clearCreatedInviteAcceptUrl,
       onCreateInvite: orgWorkspace.createInvite,
       onCancelInvite: orgWorkspace.cancelInvite,
       onUpdateMemberRole: orgWorkspace.updateMemberRole,
+      onRemoveMember: orgWorkspace.removeMember,
+      currentUserRole: orgWorkspace.snapshot?.membershipContext?.role ?? null,
     },
   }), [
     workspacePermissions,
@@ -162,13 +165,16 @@ export function BuildCoreSettingsDrawer({
     orgWorkspace.isCreatingInvite,
     orgWorkspace.cancelingInviteId,
     orgWorkspace.updatingMemberRoleId,
+    orgWorkspace.removingMemberId,
     orgWorkspace.inviteMutationError,
     orgWorkspace.roleMutationError,
+    orgWorkspace.removeMemberMutationError,
     orgWorkspace.createdInviteAcceptUrl,
     orgWorkspace.clearCreatedInviteAcceptUrl,
     orgWorkspace.createInvite,
     orgWorkspace.cancelInvite,
     orgWorkspace.updateMemberRole,
+    orgWorkspace.removeMember,
   ]);
 
   return (

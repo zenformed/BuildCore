@@ -26,6 +26,7 @@ import type {
   ZenformedCoreOrganizationSeatsResponse,
   ZenformedCoreOrganizationAppAccessResponse,
   ZenformedCoreOrganizationMemberRoleUpdateResponse,
+  ZenformedCoreOrganizationMemberRemoveResponse,
   ZenformedCoreOrganizationPermissions,
 } from '@/infrastructure/coreApi/types';
 
@@ -388,6 +389,7 @@ function parseOrganizationPermissionsJson(body: unknown): ZenformedCoreOrganizat
     'canInviteMembers',
     'canCancelInvites',
     'canManageMemberRoles',
+    'canRemoveMembers',
     'canViewAppsBilling',
     'canEditAccountEmail',
   ] as const;
@@ -617,6 +619,21 @@ export function parseOrganizationMemberRoleUpdateJson(
       role,
       status: row.status,
     },
+  };
+}
+
+export function parseOrganizationMemberRemoveJson(
+  body: unknown
+): ZenformedCoreOrganizationMemberRemoveResponse | null {
+  if (body == null || typeof body !== 'object') return null;
+  const o = body as Record<string, unknown>;
+  if (typeof o.organizationId !== 'string') return null;
+  if (typeof o.memberId !== 'string') return null;
+  if (o.removed !== true) return null;
+  return {
+    organizationId: o.organizationId,
+    memberId: o.memberId,
+    removed: true,
   };
 }
 
