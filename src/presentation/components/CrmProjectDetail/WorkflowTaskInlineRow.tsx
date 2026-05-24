@@ -612,10 +612,10 @@ export function WorkflowTaskInlineRow({
         </>
       ) : null}
 
-      <span className={styles.taskDeleteCell}>
+      <span className={shared.rowDeleteCell}>
         <button
           type="button"
-          className={styles.taskDeleteBtn}
+          className={shared.rowDeleteBtn}
           disabled={saving || !onRequestArchiveTask}
           title={wf.deleteTask}
           aria-label={wf.deleteTask}

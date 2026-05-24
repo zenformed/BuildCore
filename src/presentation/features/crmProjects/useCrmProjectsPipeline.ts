@@ -24,6 +24,7 @@ export function useCrmProjectsPipeline(
   filteredCount: number;
   isLoading: boolean;
   refetch: () => void;
+  removeProject: (projectId: string) => void;
 } {
   const isApiSource = getCrmDataSource() === 'api';
   const [reloadKey, setReloadKey] = useState(0);
@@ -59,11 +60,18 @@ export function useCrmProjectsPipeline(
     [summaries, searchQuery, stageFilter, priorityFilter]
   );
 
+  const removeProject = useCallback((projectId: string) => {
+    setAllSummaries((current) =>
+      current == null ? current : current.filter((project) => project.id !== projectId)
+    );
+  }, []);
+
   return {
     rows,
     totalCount: summaries.length,
     filteredCount: rows.length,
     isLoading,
     refetch,
+    removeProject,
   };
 }

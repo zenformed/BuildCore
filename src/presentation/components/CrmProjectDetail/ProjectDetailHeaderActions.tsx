@@ -1,12 +1,17 @@
 'use client';
 
 import type { ReactElement } from 'react';
+import type { CrmProjectSummary } from '@/domain/crm';
 import { ProjectDetailActionsMenu } from './ProjectDetailActionsMenu';
 import { ProjectDetailCompletionButton } from './ProjectDetailCompletionButton';
 import styles from './ProjectDetail.module.css';
 
 export type ProjectDetailHeaderActionsProps = {
   projectSlug: string;
+  projectSummary: CrmProjectSummary;
+  canDelete: boolean;
+  deleting: boolean;
+  onRequestDelete: (project: CrmProjectSummary) => void;
   isComplete: boolean;
   completionBusy: boolean;
   onMarkComplete: () => void;
@@ -17,6 +22,10 @@ export type ProjectDetailHeaderActionsProps = {
 
 export function ProjectDetailHeaderActions({
   projectSlug,
+  projectSummary,
+  canDelete,
+  deleting,
+  onRequestDelete,
   isComplete,
   completionBusy,
   onMarkComplete,
@@ -28,13 +37,19 @@ export function ProjectDetailHeaderActions({
     <div className={styles.detailHeaderActions}>
       <ProjectDetailCompletionButton
         isComplete={isComplete}
-        busy={completionBusy}
+        busy={completionBusy || deleting}
         onMarkComplete={onMarkComplete}
         onMarkIncomplete={onMarkIncomplete}
         markCompleteLabel={markCompleteLabel}
         markIncompleteLabel={markIncompleteLabel}
       />
-      <ProjectDetailActionsMenu projectSlug={projectSlug} />
+      <ProjectDetailActionsMenu
+        projectSlug={projectSlug}
+        projectSummary={projectSummary}
+        canDelete={canDelete}
+        deleting={deleting}
+        onRequestDelete={onRequestDelete}
+      />
     </div>
   );
 }

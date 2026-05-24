@@ -242,6 +242,10 @@ export class MockCrmProjectsRepository implements ICrmProjectsRepository {
 
   }
 
+  archive(_slug: string): Promise<boolean> {
+    return Promise.reject(new CrmWriteNotAvailableError());
+  }
+
 }
 
 

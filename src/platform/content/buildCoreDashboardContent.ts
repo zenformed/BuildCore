@@ -184,6 +184,20 @@ export const buildCoreDashboardContent = {
         actions: 'Actions',
       },
     },
+    delete: {
+      action: 'Delete project',
+      actionAriaLabel: (name: string): string => `Delete project ${name}`,
+      confirmTitle: 'Delete this project?',
+      confirmMessage: (name: string): string =>
+        `"${name}" will be removed from your project list.`,
+      confirmLabel: 'Delete',
+      cancelLabel: 'Cancel',
+      success: 'Project deleted.',
+      failed: 'Failed to delete project. Try again.',
+      notFound: 'Project not found.',
+      mockDisabledMessage:
+        'Deleting projects in the database requires NEXT_PUBLIC_CRM_DATA_SOURCE=api. Mock mode keeps existing demo data read-only.',
+    },
   },
   projectDetail: {
     backToProjects: 'All projects',

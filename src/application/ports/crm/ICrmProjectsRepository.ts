@@ -5,4 +5,5 @@ import type { CrmRepositoryResult } from '@/infrastructure/crm/types';
 export interface ICrmProjectsRepository {
   listSummaries(): CrmRepositoryResult<readonly CrmProjectSummary[]>;
   create(input: CreateCrmProjectInput): CrmRepositoryResult<CreateCrmProjectResult>;
+  archive(slug: string): CrmRepositoryResult<boolean>;
 }

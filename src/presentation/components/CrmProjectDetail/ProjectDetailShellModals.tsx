@@ -1,8 +1,10 @@
 'use client';
 
 import type { ReactElement } from 'react';
+import type { CrmProjectSummary } from '@/domain/crm';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
 import { ConfirmModal } from '@/presentation/components/ConfirmModal';
+import { CrmProjectDeleteConfirmModal } from '@/presentation/components/CrmProjects/CrmProjectDeleteConfirmModal';
 import type { useProjectCompletionToggle } from '@/presentation/features/crmProjectDetail/useProjectCompletionToggle';
 import type { useProjectDetailWorkspace } from '@/presentation/features/crmProjectDetail/useProjectDetailWorkspace';
 
@@ -20,12 +22,18 @@ export type ProjectDetailShellModalsProps = {
     | 'setToast'
     | 'wf'
   >;
+  pendingDeleteProject: CrmProjectSummary | null;
+  onCloseDelete: () => void;
+  onConfirmDelete: () => void;
 };
 
 export function ProjectDetailShellModals({
   showCompletion,
   completion,
   workspace,
+  pendingDeleteProject,
+  onCloseDelete,
+  onConfirmDelete,
 }: ProjectDetailShellModalsProps): ReactElement {
   const detail = content.projectDetail;
   const {
@@ -106,6 +114,11 @@ export function ProjectDetailShellModals({
         confirmLabel={wf.archiveTaskConfirmLabel}
         cancelLabel={wf.archiveTaskCancelLabel}
         variant="danger"
+      />
+      <CrmProjectDeleteConfirmModal
+        pendingProject={pendingDeleteProject}
+        onClose={onCloseDelete}
+        onConfirm={onConfirmDelete}
       />
     </>
   );

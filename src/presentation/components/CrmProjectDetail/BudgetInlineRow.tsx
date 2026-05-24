@@ -21,6 +21,7 @@ import { useProjectDetailShell } from '@/presentation/features/crmProjectDetail/
 import { useBudgetEntryDocumentActions } from '@/presentation/features/crmProjectDetail/useBudgetEntryDocumentActions';
 import { WorkflowDocumentFileIcon } from './WorkflowDocumentFileIcon';
 import { WorkflowInlineMenu } from './WorkflowInlineMenu';
+import shared from '@/presentation/components/crmShared/crmShared.module.css';
 import styles from './ProjectDetail.module.css';
 
 export type BudgetInlineRowProps = {
@@ -478,10 +479,10 @@ export function BudgetInlineRow({
         </WorkflowInlineMenu>
       </span>
 
-      <span className={styles.taskDeleteCell}>
+      <span className={shared.rowDeleteCell}>
         <button
           type="button"
-          className={styles.taskDeleteBtn}
+          className={shared.rowDeleteBtn}
           disabled={saving || !onRequestDelete}
           title={b.deleteItem}
           aria-label={b.deleteItem}

@@ -1,8 +1,10 @@
 'use client';
 
 import type { ReactElement, ReactNode } from 'react';
+import { useRouter } from 'next/navigation';
 import type { CrmProjectDetail } from '@/domain/crm';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
+import { buildCoreDashboardNavigation as nav } from '@/platform/navigation/buildCoreDashboardNavigation';
 import { useProjectCompletionToggle } from '@/presentation/features/crmProjectDetail/useProjectCompletionToggle';
 import { useProjectDetailWorkspace } from '@/presentation/features/crmProjectDetail/useProjectDetailWorkspace';
 import type { ProjectDetailPageContext } from '@/presentation/features/crmProjectDetail/projectDetailPageContext';
@@ -10,6 +12,8 @@ import {
   ProjectDetailShellProvider,
   type ProjectDetailShellContextValue,
 } from '@/presentation/features/crmProjectDetail/ProjectDetailShellContext';
+import { useCrmProjectDeleteConfirmation } from '@/presentation/features/crmProjects/useCrmProjectDeleteConfirmation';
+import { queueCrmProjectDeleteSuccessToast } from '@/presentation/features/crmProjects/crmProjectDeleteFeedback';
 import { DetailToast } from './DetailToast';
 import { ProjectDetailActionsMenu } from './ProjectDetailActionsMenu';
 import { ProjectDetailContextBlock } from './ProjectDetailContextBlock';
@@ -38,15 +42,41 @@ export function ProjectDetailShell({
   onRefresh,
   children,
 }: ProjectDetailShellProps): ReactElement {
+  const router = useRouter();
   const showCompletionActions = pageContext === 'detail';
   const completion = useProjectCompletionToggle(initialProject, onRefresh);
   const projectForWorkspace = showCompletionActions ? completion.project : initialProject;
   const workspace = useProjectDetailWorkspace(projectForWorkspace);
   const detail = content.projectDetail;
+  const projectSummary = workspace.project.summary;
+
+  const {
+    pendingDeleteProject,
+    setPendingDeleteProject,
+    deletingProjectId,
+    canDelete,
+    handleConfirmDelete,
+  } = useCrmProjectDeleteConfirmation({
+    onProjectDeleted: () => {},
+    onSuccess: (message) => {
+      queueCrmProjectDeleteSuccessToast(message);
+      router.push(nav.routes.dashboard);
+    },
+    onError: (message) => workspace.setToast({ kind: 'error', message }),
+  });
+
+  const deleting = deletingProjectId === projectSummary.id;
+  const actionsMenuProps = {
+    projectSlug: projectSummary.slug,
+    projectSummary,
+    canDelete,
+    deleting,
+    onRequestDelete: setPendingDeleteProject,
+  };
 
   const headerActions = showCompletionActions ? (
     <ProjectDetailHeaderActions
-      projectSlug={workspace.project.summary.slug}
+      {...actionsMenuProps}
       isComplete={completion.isComplete}
       completionBusy={completion.completionBusy}
       onMarkComplete={completion.requestMarkComplete}
@@ -55,7 +85,7 @@ export function ProjectDetailShell({
       markIncompleteLabel={detail.markIncomplete}
     />
   ) : (
-    <ProjectDetailActionsMenu projectSlug={workspace.project.summary.slug} />
+    <ProjectDetailActionsMenu {...actionsMenuProps} />
   );
 
   const shellValue: ProjectDetailShellContextValue = {
@@ -95,6 +125,9 @@ export function ProjectDetailShell({
           showCompletion={showCompletionActions}
           completion={showCompletionActions ? completion : null}
           workspace={workspace}
+          pendingDeleteProject={pendingDeleteProject}
+          onCloseDelete={() => setPendingDeleteProject(null)}
+          onConfirmDelete={() => void handleConfirmDelete()}
         />
       </div>
     </ProjectDetailShellProvider>

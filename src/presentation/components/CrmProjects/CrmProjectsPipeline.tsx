@@ -1,9 +1,13 @@
 'use client';
 
-import type { ReactElement } from 'react';
+import { useEffect, useState, type ReactElement } from 'react';
 import type { CrmProjectSummary } from '@/domain/crm';
 import { useCrmProjectsPipeline } from '@/presentation/features/crmProjects/useCrmProjectsPipeline';
+import { useCrmProjectDeleteConfirmation } from '@/presentation/features/crmProjects/useCrmProjectDeleteConfirmation';
+import { consumeCrmProjectDeleteSuccessToast } from '@/presentation/features/crmProjects/crmProjectDeleteFeedback';
 import type { CrmPriorityFilter, CrmStageFilter } from '@/presentation/features/crmProjects/crmProjectsPipelineViewModel';
+import { CrmProjectDeleteConfirmModal } from '@/presentation/components/CrmProjects/CrmProjectDeleteConfirmModal';
+import { DetailToast } from '@/presentation/components/CrmProjectDetail/DetailToast';
 import { CrmProjectsFilters } from './CrmProjectsFilters';
 import { CrmProjectsTable } from './CrmProjectsTable';
 import styles from './CrmProjects.module.css';
@@ -20,6 +24,8 @@ export type CrmProjectsPipelineProps = {
   onProjectCreated?: () => void | Promise<void>;
 };
 
+type PipelineToast = { kind: 'success' | 'error'; message: string };
+
 export function CrmProjectsPipeline({
   searchQuery,
   stageFilter,
@@ -31,11 +37,31 @@ export function CrmProjectsPipeline({
   onProjectRowClick,
   onProjectCreated,
 }: CrmProjectsPipelineProps): ReactElement {
-  const { rows, totalCount, filteredCount, isLoading, refetch } = useCrmProjectsPipeline(
+  const { rows, totalCount, filteredCount, isLoading, refetch, removeProject } = useCrmProjectsPipeline(
     searchQuery,
     stageFilter,
     priorityFilter
   );
+  const [toast, setToast] = useState<PipelineToast | null>(null);
+
+  const {
+    pendingDeleteProject,
+    setPendingDeleteProject,
+    deletingProjectId,
+    canDelete,
+    handleConfirmDelete,
+  } = useCrmProjectDeleteConfirmation({
+    onProjectDeleted: removeProject,
+    onSuccess: (message) => setToast({ kind: 'success', message }),
+    onError: (message) => setToast({ kind: 'error', message }),
+  });
+
+  useEffect(() => {
+    const message = consumeCrmProjectDeleteSuccessToast();
+    if (message) {
+      setToast({ kind: 'success', message });
+    }
+  }, []);
 
   const handleProjectCreated = async (): Promise<void> => {
     refetch();
@@ -45,6 +71,13 @@ export function CrmProjectsPipeline({
 
   return (
     <div className={styles.pipeline}>
+      {toast ? (
+        <DetailToast
+          kind={toast.kind}
+          message={toast.message}
+          onDismiss={() => setToast(null)}
+        />
+      ) : null}
       <CrmProjectsFilters
         stageFilter={stageFilter}
         priorityFilter={priorityFilter}
@@ -60,6 +93,14 @@ export function CrmProjectsPipeline({
         onDraftOpenChange={onCreateDraftOpenChange}
         onProjectCreated={handleProjectCreated}
         onRowClick={onProjectRowClick}
+        canDelete={canDelete}
+        deletingProjectId={deletingProjectId}
+        onRequestDelete={setPendingDeleteProject}
+      />
+      <CrmProjectDeleteConfirmModal
+        pendingProject={pendingDeleteProject}
+        onClose={() => setPendingDeleteProject(null)}
+        onConfirm={() => void handleConfirmDelete()}
       />
     </div>
   );

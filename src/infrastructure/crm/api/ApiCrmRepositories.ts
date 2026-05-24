@@ -104,6 +104,18 @@ export class ApiCrmProjectsRepository implements ICrmProjectsRepository {
 
   }
 
+  archive(slug: string): Promise<boolean> {
+    clearApiCrmDetailCache();
+    return crmApiDeleteJson<{ ok: boolean }>(
+      `/api/crm/projects/${encodeURIComponent(slug.trim())}`
+    )
+      .then(() => true)
+      .catch((err) => {
+        if (err instanceof CrmApiError && err.status === 404) return false;
+        throw err;
+      });
+  }
+
 }
 
 

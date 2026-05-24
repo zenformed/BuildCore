@@ -3,6 +3,7 @@
 import type { ReactElement } from 'react';
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import type { CrmProjectSummary } from '@/domain/crm';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
 import { buildCoreDashboardNavigation as nav } from '@/platform/navigation/buildCoreDashboardNavigation';
 import { WorkflowInlineMenu } from './WorkflowInlineMenu';
@@ -10,14 +11,26 @@ import styles from './ProjectDetail.module.css';
 
 export type ProjectDetailActionsMenuProps = {
   projectSlug: string;
+  projectSummary: CrmProjectSummary;
+  canDelete: boolean;
+  deleting: boolean;
+  onRequestDelete: (project: CrmProjectSummary) => void;
 };
 
-export function ProjectDetailActionsMenu({ projectSlug }: ProjectDetailActionsMenuProps): ReactElement {
+export function ProjectDetailActionsMenu({
+  projectSlug,
+  projectSummary,
+  canDelete,
+  deleting,
+  onRequestDelete,
+}: ProjectDetailActionsMenuProps): ReactElement {
   const router = useRouter();
   const detail = content.projectDetail;
+  const deleteCopy = content.crm.delete;
   const wf = detail.workflow;
   const [open, setOpen] = useState(false);
   const anchorRef = useRef<HTMLButtonElement>(null);
+  const menuDisabled = deleting;
 
   useEffect(() => {
     if (!open) return;
@@ -29,8 +42,14 @@ export function ProjectDetailActionsMenu({ projectSlug }: ProjectDetailActionsMe
   }, [open]);
 
   const closeAndNavigate = (path: string) => {
+    if (menuDisabled) return;
     setOpen(false);
     router.push(path);
+  };
+
+  const handleRequestDelete = () => {
+    setOpen(false);
+    onRequestDelete(projectSummary);
   };
 
   return (
@@ -41,6 +60,7 @@ export function ProjectDetailActionsMenu({ projectSlug }: ProjectDetailActionsMe
         className={`${styles.stageChip} ${styles.headerChipBtn}`}
         aria-expanded={open}
         aria-haspopup="menu"
+        disabled={menuDisabled}
         onClick={() => setOpen((value) => !value)}
       >
         {detail.actionsButton}
@@ -57,6 +77,7 @@ export function ProjectDetailActionsMenu({ projectSlug }: ProjectDetailActionsMe
           type="button"
           role="menuitem"
           className={`${styles.inlineMenuAction} ${styles.actionsMenuItem}`}
+          disabled={menuDisabled}
           onClick={() => closeAndNavigate(nav.routes.projectWorkflowTasks(projectSlug))}
         >
           <span className={`${styles.actionsMenuIcon} ${styles.actionsMenuWorkflowIcon}`} aria-hidden />
@@ -66,6 +87,7 @@ export function ProjectDetailActionsMenu({ projectSlug }: ProjectDetailActionsMe
           type="button"
           role="menuitem"
           className={`${styles.inlineMenuAction} ${styles.actionsMenuItem}`}
+          disabled={menuDisabled}
           onClick={() => closeAndNavigate(nav.routes.projectAccountability(projectSlug))}
         >
           <span
@@ -78,6 +100,7 @@ export function ProjectDetailActionsMenu({ projectSlug }: ProjectDetailActionsMe
           type="button"
           role="menuitem"
           className={`${styles.inlineMenuAction} ${styles.actionsMenuItem}`}
+          disabled={menuDisabled}
           onClick={() => closeAndNavigate(nav.routes.projectFinancials(projectSlug))}
         >
           <span className={`${styles.actionsMenuIcon} ${styles.actionsMenuFinancialsIcon}`} aria-hidden />
@@ -87,11 +110,25 @@ export function ProjectDetailActionsMenu({ projectSlug }: ProjectDetailActionsMe
           type="button"
           role="menuitem"
           className={`${styles.inlineMenuAction} ${styles.actionsMenuItem}`}
+          disabled={menuDisabled}
           onClick={() => closeAndNavigate(nav.routes.projectDocuments(projectSlug))}
         >
           <span className={`${styles.actionsMenuIcon} ${styles.actionsMenuFolderIcon}`} aria-hidden />
           {wf.openDocuments}
         </button>
+        {canDelete ? (
+          <button
+            type="button"
+            role="menuitem"
+            className={`${styles.inlineMenuAction} ${styles.actionsMenuItem} ${styles.actionsMenuItemDanger}`}
+            disabled={menuDisabled}
+            aria-label={deleteCopy.actionAriaLabel(projectSummary.name)}
+            onClick={handleRequestDelete}
+          >
+            <span className={`${styles.actionsMenuIcon} ${styles.actionsMenuDeleteIcon}`} aria-hidden />
+            {deleteCopy.action}
+          </button>
+        ) : null}
       </WorkflowInlineMenu>
     </>
   );

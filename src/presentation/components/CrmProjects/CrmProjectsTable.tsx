@@ -29,6 +29,9 @@ export type CrmProjectsTableProps = {
   onDraftOpenChange: (open: boolean) => void;
   onProjectCreated: () => void | Promise<void>;
   onRowClick: (project: CrmProjectSummary) => void;
+  canDelete?: boolean;
+  deletingProjectId?: string | null;
+  onRequestDelete?: (project: CrmProjectSummary) => void;
 };
 
 export function CrmProjectsTable({
@@ -38,6 +41,9 @@ export function CrmProjectsTable({
   onDraftOpenChange,
   onProjectCreated,
   onRowClick,
+  canDelete = false,
+  deletingProjectId = null,
+  onRequestDelete,
 }: CrmProjectsTableProps): ReactElement {
   const showTable = draftOpen || rows.length > 0 || isLoading;
 
@@ -58,7 +64,9 @@ export function CrmProjectsTable({
             <span role="columnheader" className={styles.gridHeaderAssignee}>
               {COLUMNS.assigned}
             </span>
-            <span role="columnheader" className={styles.gridHeaderActions} aria-hidden />
+            <span role="columnheader" className={styles.gridHeaderActions}>
+              {COLUMNS.actions}
+            </span>
           </div>
           <div className={styles.gridBody} role="rowgroup">
             {!showTable ? (
@@ -72,7 +80,14 @@ export function CrmProjectsTable({
                   />
                 ) : null}
                 {rows.map((project) => (
-                  <ProjectRow key={project.id} project={project} onRowClick={onRowClick} />
+                  <ProjectRow
+                    key={project.id}
+                    project={project}
+                    onRowClick={onRowClick}
+                    canDelete={canDelete}
+                    deleting={deletingProjectId === project.id}
+                    onRequestDelete={onRequestDelete}
+                  />
                 ))}
               </>
             )}
@@ -86,10 +101,17 @@ export function CrmProjectsTable({
 function ProjectRow({
   project,
   onRowClick,
+  canDelete,
+  deleting,
+  onRequestDelete,
 }: {
   project: CrmProjectSummary;
   onRowClick: (project: CrmProjectSummary) => void;
+  canDelete: boolean;
+  deleting: boolean;
+  onRequestDelete?: (project: CrmProjectSummary) => void;
 }): ReactElement {
+  const deleteCopy = content.crm.delete;
   const tradeSubtitle = getProjectTradeSubtitle(project.tradeType);
 
   const handleKeyDown = (e: KeyboardEvent<HTMLDivElement>): void => {
@@ -150,7 +172,25 @@ function ProjectRow({
           </span>
         )}
       </span>
-      <span className={styles.gridCellActions} role="cell" aria-hidden />
+      <span className={styles.gridCellActions} role="cell">
+        {canDelete ? (
+          <span className={shared.rowDeleteCell}>
+            <button
+              type="button"
+              className={shared.rowDeleteBtn}
+              disabled={deleting}
+              title={deleteCopy.action}
+              aria-label={deleteCopy.actionAriaLabel(project.name)}
+              onClick={(event) => {
+                event.stopPropagation();
+                onRequestDelete?.(project);
+              }}
+            >
+              <span aria-hidden>🗑️</span>
+            </button>
+          </span>
+        ) : null}
+      </span>
     </div>
   );
 }

@@ -240,3 +240,44 @@
 :global([data-theme='dark']) .projectCompleteIcon {
   background: #22c55e;
 }
+
+.rowDeleteHeader {
+  padding: 0;
+}
+
+.rowDeleteCell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.rowDeleteBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  padding: 0;
+  font-size: 0.9375rem;
+  line-height: 1;
+  background: transparent;
+  border: none;
+  border-radius: 0.25rem;
+  cursor: pointer;
+  opacity: 0.55;
+  transition: opacity 0.15s, background 0.15s;
+}
+
+.rowDeleteBtn:hover:not(:disabled) {
+  opacity: 1;
+  background: rgba(220, 38, 38, 0.08);
+}
+
+.rowDeleteBtn:disabled {
+  cursor: not-allowed;
+  opacity: 0.35;
+}
+
+:global([data-theme='dark']) .rowDeleteBtn:hover:not(:disabled) {
+  background: rgba(248, 113, 113, 0.12);
+}
