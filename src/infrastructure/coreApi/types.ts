@@ -190,6 +190,7 @@ export type ZenformedCoreOrganizationPermissions = {
   canCancelInvites: boolean;
   canManageMemberRoles: boolean;
   canRemoveMembers: boolean;
+  canManageMemberProfiles: boolean;
   canViewAppsBilling: boolean;
   canEditAccountEmail: boolean;
 };
@@ -217,6 +218,8 @@ export type ZenformedCoreOrganizationMembersResponse = {
     id: string;
     userId: string;
     displayName: string;
+    firstName: string | null;
+    lastName: string | null;
     email: string | null;
     role: ZenformedCoreOrganizationMemberRole;
     status: 'active' | 'invited' | 'removed';
@@ -236,6 +239,7 @@ export type ZenformedCoreOrganizationInvite = {
   expiresAt: string | null;
   createdAt: string;
   sentLabel: string;
+  emailDeliveryStatus?: 'sent' | 'failed' | null;
 };
 
 /** `GET /organizations/me/invites` */
@@ -249,6 +253,7 @@ export type ZenformedCoreOrganizationInviteMutationResponse = {
   organizationId: string;
   invite: ZenformedCoreOrganizationInvite;
   acceptUrl?: string;
+  emailDeliveryStatus?: 'sent' | 'failed';
 };
 
 /** `GET /organizations/invites/lookup` */
@@ -269,6 +274,8 @@ export type ZenformedCoreOrganizationInviteAcceptResponse = {
     id: string;
     userId: string;
     displayName: string;
+    firstName: string | null;
+    lastName: string | null;
     email: string | null;
     role: ZenformedCoreOrganizationMemberRole;
     status: 'active' | 'invited' | 'removed';
@@ -306,6 +313,18 @@ export type ZenformedCoreOrganizationMemberRemoveResponse = {
   organizationId: string;
   memberId: string;
   removed: true;
+};
+
+/** `PATCH /organizations/me/members/:memberId` */
+export type ZenformedCoreOrganizationMemberProfileUpdateRequest = {
+  firstName?: string | null;
+  lastName?: string | null;
+  email?: string | null;
+};
+
+export type ZenformedCoreOrganizationMemberProfileUpdateResponse = {
+  organizationId: string;
+  member: ZenformedCoreOrganizationMembersResponse['members'][number];
 };
 
 /** `GET /organizations/me/seats` */

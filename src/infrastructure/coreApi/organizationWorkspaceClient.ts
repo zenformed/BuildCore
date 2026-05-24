@@ -11,6 +11,7 @@ import {
   parseOrganizationInvitesJson,
   parseOrganizationMembershipContextJson,
   parseOrganizationMemberRoleUpdateJson,
+  parseOrganizationMemberProfileUpdateJson,
   parseOrganizationMemberRemoveJson,
   parseOrganizationMembersJson,
   parseOrganizationSeatsJson,
@@ -28,6 +29,8 @@ import type {
   ZenformedCoreOrganizationMembershipContextResponse,
   ZenformedCoreOrganizationMemberRoleUpdateRequest,
   ZenformedCoreOrganizationMemberRoleUpdateResponse,
+  ZenformedCoreOrganizationMemberProfileUpdateRequest,
+  ZenformedCoreOrganizationMemberProfileUpdateResponse,
   ZenformedCoreOrganizationMemberRemoveResponse,
   ZenformedCoreOrganizationMembersResponse,
   ZenformedCoreOrganizationSeatsResponse,
@@ -236,6 +239,20 @@ export function deleteOrganizationMember(
     'DELETE',
     undefined,
     parseOrganizationMemberRemoveJson
+  );
+}
+
+export function patchOrganizationMemberProfile(
+  accessToken: string,
+  memberId: string,
+  body: ZenformedCoreOrganizationMemberProfileUpdateRequest
+): Promise<CoreApiResult<ZenformedCoreOrganizationMemberProfileUpdateResponse>> {
+  return mutateJson(
+    `/organizations/me/members/${encodeURIComponent(memberId)}`,
+    accessToken,
+    'PATCH',
+    body,
+    parseOrganizationMemberProfileUpdateJson
   );
 }
 

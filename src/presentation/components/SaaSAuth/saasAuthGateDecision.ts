@@ -1,7 +1,10 @@
 import type { Session, User } from '@supabase/supabase-js';
 import type { SaaSEntitlementSnapshot } from '@/application/ports';
-import type { CorePlatformStatus, SaaSProfile, MembershipContextStatus } from '@/presentation/hooks/useSaaSProfile';
+import type { CorePlatformStatus, SaaSProfile, MembershipContextStatus, EntitlementResolutionStatus } from '@/presentation/hooks/useSaaSProfile';
 import { hasCompanyProfile, requiresOnboarding, requiresPasswordReset } from '@/presentation/hooks/saasProfileSelectors';
+import { getRuntimeEntitlementSourceMode } from '@/infrastructure/config/runtimeEntitlementSource';
+import { runtimeModes } from '@/infrastructure/config/runtimeModes';
+import { isZenformedCorePlatformRequired } from '@/infrastructure/coreApi/corePlatformRequirement';
 
 export type OrganizationMembershipContext = {
   hasActiveMembership: boolean;
@@ -29,7 +32,8 @@ export function getSaaSAuthGateDecision(
   corePlatformStatus: CorePlatformStatus,
   loading: boolean,
   membershipContext: OrganizationMembershipContext | null,
-  membershipContextStatus: MembershipContextStatus
+  membershipContextStatus: MembershipContextStatus,
+  entitlementResolutionStatus: EntitlementResolutionStatus
 ): SaaSAuthGateDecision {
   if (!session || !user) return 'unauthenticated';
   if (!profile) {
@@ -50,6 +54,17 @@ export function getSaaSAuthGateDecision(
       return 'onboardingRequired';
     }
   }
+
+  const coreEntitlementPending =
+    getRuntimeEntitlementSourceMode() === 'core' &&
+    runtimeModes.isSaasMode() &&
+    !runtimeModes.useMockAuth() &&
+    isZenformedCorePlatformRequired() &&
+    entitlementResolutionStatus === 'pending';
+  if (coreEntitlementPending || membershipContextStatus === 'pending') {
+    return 'loadingProfile';
+  }
+
   if (!(entitlementSnapshot?.subscriptionActive ?? false)) return 'licenseRequired';
   return 'allowed';
 }

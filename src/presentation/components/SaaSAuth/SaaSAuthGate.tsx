@@ -42,6 +42,7 @@ export function SaaSAuthGate({ children }: SaaSAuthGateProps): React.ReactElemen
     loading,
     error,
     refetch,
+    entitlementResolutionStatus,
   } = useSaaSProfile();
   const refetchedForProtectedRef = useRef(false);
   const decision = getSaaSAuthGateDecision(
@@ -52,7 +53,8 @@ export function SaaSAuthGate({ children }: SaaSAuthGateProps): React.ReactElemen
     corePlatformStatus,
     loading,
     organizationMembershipContext,
-    membershipContextStatus
+    membershipContextStatus,
+    entitlementResolutionStatus
   );
 
   useShadowCapabilitySnapshot({

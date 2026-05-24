@@ -88,7 +88,7 @@ function AcceptInviteContent(): ReactElement {
   const searchParams = useSearchParams();
   const router = useRouter();
   const token = searchParams.get('token')?.trim() ?? '';
-  const { session, user, loading: authLoading, refetch: refetchProfile } = useSaaSProfile();
+  const { session, user, loading: authLoading, waitForAppAccessReady } = useSaaSProfile();
   const { signIn, signUp, waitForSessionSync, signOut } = useAuth();
 
   const [lookup, setLookup] = useState<InviteLookup | null>(null);
@@ -171,7 +171,11 @@ function AcceptInviteContent(): ReactElement {
         setAcceptError(result.message);
         return result;
       }
-      await refetchProfile();
+      const accessReady = await waitForAppAccessReady();
+      if (!accessReady.ok) {
+        setAcceptError(accessReady.reason);
+        return { ok: false, message: accessReady.reason };
+      }
       router.replace('/dashboard?settings=organization');
       return { ok: true };
     } catch {
@@ -181,7 +185,7 @@ function AcceptInviteContent(): ReactElement {
     } finally {
       setAccepting(false);
     }
-  }, [refetchProfile, router, session?.access_token, token, waitForSessionSync]);
+  }, [router, session?.access_token, token, waitForAppAccessReady, waitForSessionSync]);
 
   const handleAccept = useCallback(async (): Promise<void> => {
     await completeAcceptFlow();
@@ -254,14 +258,17 @@ function AcceptInviteContent(): ReactElement {
   const emailMatches =
     signedInEmail != null && invitedEmail != null && signedInEmail === invitedEmail;
 
-  const pageLoading = lookupLoading || authLoading;
+  const pageLoading = lookupLoading || authLoading || accepting;
   const cardTitle = lookup ? `Join ${lookup.organizationName}` : 'Accept invite';
+  const loadingMessage = accepting
+    ? 'Setting up your access…'
+    : 'Loading invite…';
 
   return (
     <AuthPageShell
       cardTitle={cardTitle}
       loading={pageLoading}
-      loadingMessage="Loading invite…"
+      loadingMessage={loadingMessage}
     >
       {!pageLoading && !token ? (
         <p className={pageStyles.error} role="alert">

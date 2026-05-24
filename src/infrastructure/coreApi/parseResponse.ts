@@ -26,6 +26,7 @@ import type {
   ZenformedCoreOrganizationSeatsResponse,
   ZenformedCoreOrganizationAppAccessResponse,
   ZenformedCoreOrganizationMemberRoleUpdateResponse,
+  ZenformedCoreOrganizationMemberProfileUpdateResponse,
   ZenformedCoreOrganizationMemberRemoveResponse,
   ZenformedCoreOrganizationPermissions,
 } from '@/infrastructure/coreApi/types';
@@ -390,6 +391,7 @@ function parseOrganizationPermissionsJson(body: unknown): ZenformedCoreOrganizat
     'canCancelInvites',
     'canManageMemberRoles',
     'canRemoveMembers',
+    'canManageMemberProfiles',
     'canViewAppsBilling',
     'canEditAccountEmail',
   ] as const;
@@ -446,6 +448,8 @@ export function parseOrganizationMembersJson(
     const row = m as Record<string, unknown>;
     if (typeof row.id !== 'string' || typeof row.userId !== 'string') return null;
     if (typeof row.displayName !== 'string') return null;
+    if (row.firstName != null && typeof row.firstName !== 'string') return null;
+    if (row.lastName != null && typeof row.lastName !== 'string') return null;
     if (row.email != null && typeof row.email !== 'string') return null;
     const role = parseOrganizationMemberRole(row.role);
     if (role == null) return null;
@@ -454,6 +458,8 @@ export function parseOrganizationMembersJson(
       id: row.id,
       userId: row.userId,
       displayName: row.displayName,
+      firstName: row.firstName ?? null,
+      lastName: row.lastName ?? null,
       email: row.email ?? null,
       role,
       status: row.status,
@@ -483,6 +489,13 @@ function parseOrganizationInviteRecord(row: unknown): ZenformedCoreOrganizationI
   if (inv.firstName != null && typeof inv.firstName !== 'string') return null;
   if (inv.lastName != null && typeof inv.lastName !== 'string') return null;
   if (typeof inv.createdAt !== 'string' || typeof inv.sentLabel !== 'string') return null;
+  if (
+    inv.emailDeliveryStatus != null &&
+    inv.emailDeliveryStatus !== 'sent' &&
+    inv.emailDeliveryStatus !== 'failed'
+  ) {
+    return null;
+  }
   return {
     id: inv.id,
     email: inv.email,
@@ -495,6 +508,10 @@ function parseOrganizationInviteRecord(row: unknown): ZenformedCoreOrganizationI
     expiresAt: inv.expiresAt ?? null,
     createdAt: inv.createdAt,
     sentLabel: inv.sentLabel,
+    emailDeliveryStatus:
+      inv.emailDeliveryStatus === 'sent' || inv.emailDeliveryStatus === 'failed'
+        ? inv.emailDeliveryStatus
+        : null,
   };
 }
 
@@ -523,10 +540,20 @@ export function parseOrganizationInviteMutationJson(
   const invite = parseOrganizationInviteRecord(o.invite);
   if (invite == null) return null;
   if (o.acceptUrl != null && typeof o.acceptUrl !== 'string') return null;
+  if (
+    o.emailDeliveryStatus != null &&
+    o.emailDeliveryStatus !== 'sent' &&
+    o.emailDeliveryStatus !== 'failed'
+  ) {
+    return null;
+  }
   return {
     organizationId: o.organizationId,
     invite,
     ...(typeof o.acceptUrl === 'string' ? { acceptUrl: o.acceptUrl } : {}),
+    ...(o.emailDeliveryStatus === 'sent' || o.emailDeliveryStatus === 'failed'
+      ? { emailDeliveryStatus: o.emailDeliveryStatus }
+      : {}),
   };
 }
 
@@ -583,6 +610,8 @@ export function parseOrganizationInviteAcceptJson(
       id: member.id,
       userId: member.userId,
       displayName: member.displayName,
+      firstName: typeof member.firstName === 'string' ? member.firstName : null,
+      lastName: typeof member.lastName === 'string' ? member.lastName : null,
       email: typeof member.email === 'string' ? member.email : null,
       role: memberRole,
       status: member.status,
@@ -605,6 +634,8 @@ export function parseOrganizationMemberRoleUpdateJson(
   const row = o.member as Record<string, unknown>;
   if (typeof row.id !== 'string' || typeof row.userId !== 'string') return null;
   if (typeof row.displayName !== 'string') return null;
+  if (row.firstName != null && typeof row.firstName !== 'string') return null;
+  if (row.lastName != null && typeof row.lastName !== 'string') return null;
   if (row.email != null && typeof row.email !== 'string') return null;
   const role = parseOrganizationMemberRole(row.role);
   if (role == null) return null;
@@ -615,11 +646,19 @@ export function parseOrganizationMemberRoleUpdateJson(
       id: row.id,
       userId: row.userId,
       displayName: row.displayName,
+      firstName: row.firstName ?? null,
+      lastName: row.lastName ?? null,
       email: row.email ?? null,
       role,
       status: row.status,
     },
   };
+}
+
+export function parseOrganizationMemberProfileUpdateJson(
+  body: unknown
+): ZenformedCoreOrganizationMemberProfileUpdateResponse | null {
+  return parseOrganizationMemberRoleUpdateJson(body);
 }
 
 export function parseOrganizationMemberRemoveJson(

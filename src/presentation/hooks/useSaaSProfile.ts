@@ -2,6 +2,7 @@
 
 export type {
   CorePlatformStatus,
+  EntitlementResolutionStatus,
   LicenseTier,
   MembershipContextStatus,
   OrganizationMembershipContext,

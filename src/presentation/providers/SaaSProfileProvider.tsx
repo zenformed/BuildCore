@@ -71,6 +71,55 @@ type CoreEntitlementResolutionState =
   | { status: 'core_unreachable' }
   | { status: 'blocked_null' };
 
+export type EntitlementResolutionStatus = CoreEntitlementResolutionState['status'];
+
+type LoadProfileOptions = {
+  readonly soft?: boolean;
+  readonly force?: boolean;
+  readonly generation?: number;
+};
+
+type AppAccessLoadResult = {
+  readonly membershipContextStatus: MembershipContextStatus;
+  readonly entitlementResolutionPending: boolean;
+  readonly entitlementActive: boolean;
+};
+
+function resolveEntitlementSnapshot(
+  profile: SaaSProfile | null,
+  resolution: CoreEntitlementResolutionState,
+  cachedCoreEntitlement: SaaSEntitlementSnapshot | null
+): SaaSEntitlementSnapshot | null {
+  if (!profile) return null;
+  const coreRuntimeEnabled =
+    getRuntimeEntitlementSourceMode() === 'core' &&
+    runtimeModes.isSaasMode() &&
+    !runtimeModes.useMockAuth();
+  const legacy = mapLegacyProfilesFieldsToSnapshot({
+    subscription_status: profile.subscription_status,
+    license_tier: profile.license_tier,
+  });
+  if (!coreRuntimeEnabled) return legacy;
+  switch (resolution.status) {
+    case 'from_core':
+      return resolution.snapshot;
+    case 'blocked_null':
+    case 'pending':
+      return null;
+    case 'from_profile_fallback':
+    case 'core_unreachable':
+    case 'unused':
+    default:
+      return cachedCoreEntitlement ?? legacy;
+  }
+}
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => {
+    globalThis.setTimeout(resolve, ms);
+  });
+}
+
 async function fetchEntitlementSnapshotFromInternalRelay(
   accessToken: string
 ): Promise<Exclude<CoreEntitlementResolutionState, { status: 'unused' } | { status: 'pending' }>> {
@@ -133,10 +182,12 @@ type SaaSProfileContextValue = {
   organizationMembershipContext: OrganizationMembershipContext | null;
   membershipContextStatus: MembershipContextStatus;
   entitlementSnapshot: SaaSEntitlementSnapshot | null;
+  entitlementResolutionStatus: EntitlementResolutionStatus;
   corePlatformStatus: CorePlatformStatus;
   loading: boolean;
   error: string | null;
   refetch: () => Promise<void>;
+  waitForAppAccessReady: () => Promise<{ ok: true } | { ok: false; reason: string }>;
 };
 
 const SaaSProfileContext = createContext<SaaSProfileContextValue | null>(null);
@@ -203,7 +254,17 @@ export function SaaSProfileProvider({ children }: { children: React.ReactNode })
   const cachedCoreEntitlementRef = useRef<SaaSEntitlementSnapshot | null>(null);
   const bootstrappedUserIdRef = useRef<string | null>(null);
   const profileRef = useRef<SaaSProfile | null>(null);
+  const loadGenerationRef = useRef(0);
+  const coreEntitlementResolutionRef = useRef<CoreEntitlementResolutionState>({ status: 'unused' });
+  const membershipContextStatusRef = useRef<MembershipContextStatus>('pending');
+  const lastAppAccessLoadRef = useRef<AppAccessLoadResult>({
+    membershipContextStatus: 'pending',
+    entitlementResolutionPending: true,
+    entitlementActive: false,
+  });
   profileRef.current = profile;
+  coreEntitlementResolutionRef.current = coreEntitlementResolution;
+  membershipContextStatusRef.current = membershipContextStatus;
   if (profile?.id) {
     bootstrappedUserIdRef.current = profile.id;
   }
@@ -212,9 +273,15 @@ export function SaaSProfileProvider({ children }: { children: React.ReactNode })
    * `soft`: do not toggle `loading` (SaaSAuthGate full-screen shell).
    * `force`: bypass in-flight coalescing (explicit user/gate refetch).
    */
-  const loadProfile = useCallback(async (options?: { soft?: boolean; force?: boolean }) => {
+  const loadProfile = useCallback(async (options?: LoadProfileOptions) => {
     const soft = options?.soft ?? false;
     const force = options?.force ?? false;
+    const generation =
+      options?.generation ?? (force ? ++loadGenerationRef.current : loadGenerationRef.current);
+    if (force && options?.generation == null) {
+      cachedCoreEntitlementRef.current = null;
+    }
+    const isStale = (): boolean => force && generation !== loadGenerationRef.current;
 
     const run = async (): Promise<void> => {
       if (shouldShowSaasProfileFullPageLoading(soft, profileRef.current != null)) {
@@ -235,6 +302,7 @@ export function SaaSProfileProvider({ children }: { children: React.ReactNode })
         const {
           data: { session: s },
         } = await supabase.auth.getSession();
+        if (isStale()) return;
         if (!s?.user) {
           if (soft && profileRef.current != null) {
             return;
@@ -284,20 +352,26 @@ export function SaaSProfileProvider({ children }: { children: React.ReactNode })
         const finalizeCoreEntitlement = async (token: string): Promise<void> => {
           if (!coreRuntimeEnabled || !token) return;
           if (coreUnavailableRef.current) {
-            setCoreEntitlementResolution({ status: 'from_profile_fallback' });
+            const next = { status: 'from_profile_fallback' } as const;
+            coreEntitlementResolutionRef.current = next;
+            if (!isStale()) setCoreEntitlementResolution(next);
             return;
           }
           const r = await fetchEntitlementSnapshotFromInternalRelay(token);
+          if (isStale()) return;
           if (r.status === 'core_unreachable') {
             coreUnavailableRef.current = true;
-            setCorePlatformStatus('unavailable');
-            setCoreEntitlementResolution({ status: 'from_profile_fallback' });
+            if (!isStale()) setCorePlatformStatus('unavailable');
+            const next = { status: 'from_profile_fallback' } as const;
+            coreEntitlementResolutionRef.current = next;
+            if (!isStale()) setCoreEntitlementResolution(next);
             return;
           }
           if (r.status === 'from_core') {
             cachedCoreEntitlementRef.current = r.snapshot;
           }
-          setCoreEntitlementResolution(r);
+          coreEntitlementResolutionRef.current = r;
+          if (!isStale()) setCoreEntitlementResolution(r);
         };
 
         const syncMembershipContext = async (token: string | null | undefined): Promise<void> => {
@@ -307,24 +381,35 @@ export function SaaSProfileProvider({ children }: { children: React.ReactNode })
             typeof token === 'string' &&
             token.length > 0;
           if (!canRelay) {
-            setOrganizationMembershipContext(null);
-            setMembershipContextStatus('ready');
+            membershipContextStatusRef.current = 'ready';
+            if (!isStale()) {
+              setOrganizationMembershipContext(null);
+              setMembershipContextStatus('ready');
+            }
             return;
           }
-          setMembershipContextStatus('pending');
+          membershipContextStatusRef.current = 'pending';
+          if (!isStale()) setMembershipContextStatus('pending');
           const ctx = await fetchMembershipContextFromRelay(token);
+          if (isStale()) return;
           if (ctx == null) {
-            setOrganizationMembershipContext({
-              hasActiveMembership: false,
-              hasNonPersonalOrganizationMembership: false,
-              membershipKind: 'none',
-              role: null,
-            });
-            setMembershipContextStatus('failed');
+            membershipContextStatusRef.current = 'failed';
+            if (!isStale()) {
+              setOrganizationMembershipContext({
+                hasActiveMembership: false,
+                hasNonPersonalOrganizationMembership: false,
+                membershipKind: 'none',
+                role: null,
+              });
+              setMembershipContextStatus('failed');
+            }
             return;
           }
-          setOrganizationMembershipContext(ctx);
-          setMembershipContextStatus('ready');
+          membershipContextStatusRef.current = 'ready';
+          if (!isStale()) {
+            setOrganizationMembershipContext(ctx);
+            setMembershipContextStatus('ready');
+          }
         };
 
         if (tryZenformedCoreRelay) {
@@ -379,7 +464,9 @@ export function SaaSProfileProvider({ children }: { children: React.ReactNode })
               bootstrappedUserIdRef.current = activeSession.user.id;
               setError(null);
               await finalizeCoreEntitlement(activeSession.access_token);
+              if (isStale()) return;
               await syncMembershipContext(activeSession.access_token);
+              if (isStale()) return;
               return;
             } else if (isCoreRelayUnconfigured(parsedRelay)) {
               setCorePlatformStatus('not_required');
@@ -424,6 +511,7 @@ export function SaaSProfileProvider({ children }: { children: React.ReactNode })
           await syncMembershipContext(
             resolved && hasUsableAccessToken(bootSession) ? bootSession.access_token : null
           );
+          if (isStale()) return;
         };
 
         if (e) {
@@ -470,7 +558,19 @@ export function SaaSProfileProvider({ children }: { children: React.ReactNode })
           }
         }
       } finally {
-        setLoading(false);
+        if (!isStale()) {
+          const snap = resolveEntitlementSnapshot(
+            profileRef.current,
+            coreEntitlementResolutionRef.current,
+            cachedCoreEntitlementRef.current
+          );
+          lastAppAccessLoadRef.current = {
+            membershipContextStatus: membershipContextStatusRef.current,
+            entitlementResolutionPending: coreEntitlementResolutionRef.current.status === 'pending',
+            entitlementActive: snap?.subscriptionActive ?? false,
+          };
+          setLoading(false);
+        }
       }
     };
 
@@ -555,31 +655,71 @@ export function SaaSProfileProvider({ children }: { children: React.ReactNode })
     return () => subscription.unsubscribe();
   }, [loadProfile]);
 
-  const entitlementSnapshot = useMemo((): SaaSEntitlementSnapshot | null => {
-    if (!profile) return null;
-    const coreRuntimeEnabled =
-      getRuntimeEntitlementSourceMode() === 'core' &&
-      runtimeModes.isSaasMode() &&
-      !runtimeModes.useMockAuth();
-    const legacy = mapLegacyProfilesFieldsToSnapshot({
-      subscription_status: profile.subscription_status,
-      license_tier: profile.license_tier,
-    });
-    if (!coreRuntimeEnabled) return legacy;
-    switch (coreEntitlementResolution.status) {
-      case 'from_core':
-        return coreEntitlementResolution.snapshot;
-      case 'blocked_null':
-        return null;
-      case 'pending':
-        return cachedCoreEntitlementRef.current ?? legacy;
-      case 'from_profile_fallback':
-      case 'core_unreachable':
-      case 'unused':
-      default:
-        return cachedCoreEntitlementRef.current ?? legacy;
+  const entitlementSnapshot = useMemo(
+    (): SaaSEntitlementSnapshot | null =>
+      resolveEntitlementSnapshot(profile, coreEntitlementResolution, cachedCoreEntitlementRef.current),
+    [profile, coreEntitlementResolution]
+  );
+
+  const waitForAppAccessReady = useCallback(async (): Promise<
+    { ok: true } | { ok: false; reason: string }
+  > => {
+    const generation = ++loadGenerationRef.current;
+    cachedCoreEntitlementRef.current = null;
+    coreEntitlementResolutionRef.current = { status: 'pending' };
+    setCoreEntitlementResolution({ status: 'pending' });
+
+    const supabase = getSupabaseClient();
+    const {
+      data: { session: s },
+    } = await supabase.auth.getSession();
+    const token = s?.access_token?.trim();
+    if (!token) {
+      return { ok: false, reason: 'Session is not ready. Try signing in again.' };
     }
-  }, [profile, coreEntitlementResolution]);
+
+    for (let attempt = 0; attempt < 15; attempt += 1) {
+      if (generation !== loadGenerationRef.current) {
+        return { ok: false, reason: 'App access refresh was superseded.' };
+      }
+
+      const ent = await fetchEntitlementSnapshotFromInternalRelay(token);
+      const mem = await fetchMembershipContextFromRelay(token);
+      const entitlementActive = ent.status === 'from_core' && ent.snapshot.subscriptionActive;
+
+      if (entitlementActive && mem != null) {
+        if (ent.status === 'from_core') {
+          cachedCoreEntitlementRef.current = ent.snapshot;
+        }
+        coreEntitlementResolutionRef.current = ent;
+        membershipContextStatusRef.current = 'ready';
+        setCoreEntitlementResolution(ent);
+        setOrganizationMembershipContext(mem);
+        setMembershipContextStatus('ready');
+        await loadProfile({ soft: false, force: true, generation });
+        return { ok: true };
+      }
+
+      if (attempt < 14) {
+        await sleep(250);
+      }
+    }
+
+    await loadProfile({ soft: false, force: true, generation });
+    const finalEnt = await fetchEntitlementSnapshotFromInternalRelay(token);
+    if (finalEnt.status === 'from_core' && finalEnt.snapshot.subscriptionActive) {
+      cachedCoreEntitlementRef.current = finalEnt.snapshot;
+      coreEntitlementResolutionRef.current = finalEnt;
+      setCoreEntitlementResolution(finalEnt);
+      return { ok: true };
+    }
+
+    return {
+      ok: false,
+      reason:
+        'Your invite was accepted, but app access is still syncing. Try signing in again in a moment.',
+    };
+  }, [loadProfile]);
 
   const refetchWithCooldown = useCallback(async () => {
     if (coreUnavailableRef.current && !coreRefetchCooldownRef.current.canRun) {
@@ -607,10 +747,12 @@ export function SaaSProfileProvider({ children }: { children: React.ReactNode })
       organizationMembershipContext,
       membershipContextStatus,
       entitlementSnapshot,
+      entitlementResolutionStatus: coreEntitlementResolution.status,
       corePlatformStatus,
       loading,
       error,
       refetch: refetchWithCooldown,
+      waitForAppAccessReady,
     }),
     [
       session,
@@ -619,10 +761,12 @@ export function SaaSProfileProvider({ children }: { children: React.ReactNode })
       organizationMembershipContext,
       membershipContextStatus,
       entitlementSnapshot,
+      coreEntitlementResolution.status,
       corePlatformStatus,
       loading,
       error,
       refetchWithCooldown,
+      waitForAppAccessReady,
     ]
   );
 
