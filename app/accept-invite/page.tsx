@@ -1,8 +1,12 @@
 'use client';
 
 import { Suspense, useCallback, useEffect, useState, type ReactElement } from 'react';
-import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
+import {
+  ZenformedAuthLinkButton,
+  ZenformedAuthNavLink,
+  ZenformedAuthPageLinks,
+} from '@zenformed/core/auth';
 import { Button } from '@/presentation/components/Button';
 import { AuthPageShell } from '@/presentation/components/SaaSAuth/AuthPageShell';
 import { InviteRegistrationForm } from '@/presentation/components/SaaSAuth/InviteRegistrationForm';
@@ -302,31 +306,27 @@ function AcceptInviteContent(): ReactElement {
                   submittingLabel="Signing in…"
                 />
               )}
-              <div className={pageStyles.links}>
+              <ZenformedAuthPageLinks>
                 {authMode === 'register' ? (
-                  <button
-                    type="button"
-                    className={pageStyles.link}
+                  <ZenformedAuthLinkButton
                     onClick={() => {
                       setAuthError(null);
                       setAuthMode('signin');
                     }}
                   >
                     Already have an account? Sign in
-                  </button>
+                  </ZenformedAuthLinkButton>
                 ) : (
-                  <button
-                    type="button"
-                    className={pageStyles.link}
+                  <ZenformedAuthLinkButton
                     onClick={() => {
                       setAuthError(null);
                       setAuthMode('register');
                     }}
                   >
                     Need an account? Create one
-                  </button>
+                  </ZenformedAuthLinkButton>
                 )}
-              </div>
+              </ZenformedAuthPageLinks>
             </>
           ) : !emailMatches ? (
             <>
@@ -334,22 +334,19 @@ function AcceptInviteContent(): ReactElement {
                 You are signed in as {user.email}. Sign in with {lookup.invitedEmail} to accept
                 this invite.
               </p>
-              <div className={pageStyles.links}>
-                <button
-                  type="button"
-                  className={pageStyles.link}
+              <ZenformedAuthPageLinks>
+                <ZenformedAuthLinkButton
                   disabled={switchingAccount}
                   onClick={() => void handleSwitchAccount()}
                 >
                   {switchingAccount ? 'Signing out…' : 'Switch account'}
-                </button>
-                <Link
+                </ZenformedAuthLinkButton>
+                <ZenformedAuthNavLink
                   href={`/login?redirect=${encodeURIComponent(`/accept-invite?token=${encodeURIComponent(token)}`)}`}
-                  className={pageStyles.link}
                 >
                   Sign in
-                </Link>
-              </div>
+                </ZenformedAuthNavLink>
+              </ZenformedAuthPageLinks>
             </>
           ) : (
             <>

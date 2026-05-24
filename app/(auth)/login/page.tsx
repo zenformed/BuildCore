@@ -3,9 +3,15 @@
 import { useState, type ReactElement } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense } from 'react';
+import {
+  DEFAULT_AUTH_LABELS,
+  ZenformedAuthNavLink,
+  ZenformedAuthPageLinks,
+} from '@zenformed/core/auth';
 import { useAuth } from '@/presentation/hooks/useAuth';
 import { AuthPageShell } from '@/presentation/components/SaaSAuth/AuthPageShell';
 import { LoginForm } from '@/presentation/components/SaaSAuth/LoginForm';
+import { buildCoreDashboardNavigation as nav } from '@/platform/navigation/buildCoreDashboardNavigation';
 import pageStyles from '@/presentation/components/SaaSAuth/authPage.module.css';
 
 function LoginPageContent(): ReactElement {
@@ -47,7 +53,14 @@ function LoginPageContent(): ReactElement {
       loadingMessage={isLoading ? 'Checking session…' : 'Logging in…'}
     >
       {!isLoading && !loggingIn ? (
-        <LoginForm onSubmit={handleSubmit} error={loginError} />
+        <>
+          <LoginForm onSubmit={handleSubmit} error={loginError} />
+          <ZenformedAuthPageLinks>
+            <ZenformedAuthNavLink href={nav.routes.forgotPassword}>
+              {DEFAULT_AUTH_LABELS.forgotPassword}
+            </ZenformedAuthNavLink>
+          </ZenformedAuthPageLinks>
+        </>
       ) : null}
     </AuthPageShell>
   );

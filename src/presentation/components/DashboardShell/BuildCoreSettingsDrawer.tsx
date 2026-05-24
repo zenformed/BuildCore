@@ -100,6 +100,7 @@ export function BuildCoreSettingsDrawer({
     saveErrorMessage: userSettings.saveErrorMessage,
     onSaveAccount: userSettings.saveAccount,
     onSaveNotifications: userSettings.saveNotifications,
+    forgotPasswordHref: nav.routes.forgotPassword,
     branding: {
       isLoading: orgBranding.isLoading,
       loadError: orgBranding.loadError,
