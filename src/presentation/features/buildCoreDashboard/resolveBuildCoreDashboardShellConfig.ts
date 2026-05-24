@@ -9,6 +9,14 @@ export type BuildCoreDashboardShellConfig = {
 };
 
 export function resolveBuildCoreDashboardShellConfig(pathname: string): BuildCoreDashboardShellConfig {
+  if (pathname === nav.routes.teams || pathname.startsWith(`${nav.routes.teams}/`)) {
+    return {
+      sidebarActiveId: 'teams',
+      title: null,
+      showProjectActions: false,
+    };
+  }
+
   if (pathname === nav.routes.reports || pathname.startsWith(`${nav.routes.reports}/`)) {
     return {
       sidebarActiveId: 'reports',

@@ -31,6 +31,10 @@ export function BuildCorePersistentDashboardShell({
         router.push(nav.routes.reports);
         return;
       }
+      if (id === 'teams') {
+        router.push(nav.routes.teams);
+        return;
+      }
       router.push(nav.routes.dashboard);
     },
     [dash, router]

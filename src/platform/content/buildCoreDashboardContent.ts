@@ -125,6 +125,48 @@ export const buildCoreDashboardContent = {
     aboutSectionBody:
       'Construction/trades CRM shell: SaaS auth, ZenformedCore profile/entitlement relay, and shared dashboard chrome from @zenformed/core.',
   },
+  teams: {
+    breadcrumb: 'Organization / Teams',
+    title: 'Teams',
+    loading: 'Loading team members…',
+    loadError: 'Could not load team data. Try again.',
+    noAccess: 'You do not have permission to view team members for this organization.',
+    architectureNote:
+      'Organization membership controls organization-level access. BuildCore permissions will later control app-specific operational access. Organization role and BuildCore role are separate.',
+    sections: {
+      organizationMembership: 'Organization Membership',
+      organizationMembershipHint:
+        'Who belongs to your organization and their organization-level role.',
+      buildCoreAccess: 'BuildCore Access',
+      buildCoreAccessHint:
+        'Whether each member can use BuildCore. This is separate from organization membership.',
+      buildCorePermissions: 'BuildCore Permissions',
+      buildCorePermissionsHint: 'App-specific roles and capabilities (coming soon).',
+      assignmentPermissions: 'Assignment / Approval Permissions',
+      assignmentPermissionsHint: 'Workflow assignment and approval rules (coming soon).',
+    },
+    placeholders: {
+      permissionsComingSoon: 'Permission editing will be available in a future release.',
+      assignmentComingSoon: 'Assignment and approval rules will be configured here later.',
+      actionsComingSoon: 'Coming soon',
+      buildCoreRoleUnset: 'Not assigned',
+    },
+    table: {
+      title: 'Members',
+      regionAriaLabel: 'Organization members and BuildCore access',
+      name: 'Name',
+      email: 'Email',
+      organizationRole: 'Organization role',
+      buildCoreAccess: 'BuildCore access',
+      buildCoreRole: 'BuildCore role',
+      actions: 'Actions',
+      empty: 'No team members found.',
+    },
+    accessStatus: {
+      enabled: 'Enabled',
+      notConfigured: 'Not configured',
+    },
+  },
   crm: {
     resultCount: (filtered: number, total: number): string =>
       `Showing ${filtered} of ${total} projects`,

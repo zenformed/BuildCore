@@ -1,0 +1,134 @@
+.pageBody {
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+}
+
+.architectureNote {
+  margin: 0;
+  padding: 0.65rem 0.75rem;
+  border: 1px solid var(--theme-border-main, var(--color-border));
+  border-radius: var(--theme-radius-md, 0.5rem);
+  background: color-mix(in srgb, var(--color-primary, #2563eb) 8%, var(--theme-surface-card, var(--color-surface)));
+  font-size: 0.8125rem;
+  line-height: 1.45;
+  color: var(--color-text-muted, #64748b);
+}
+
+.sectionGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.625rem;
+}
+
+.placeholderCardBody {
+  margin: 0;
+  font-size: 0.8125rem;
+  line-height: 1.45;
+  color: var(--color-text-muted, #64748b);
+}
+
+.tableWrap {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.tableScroll {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+}
+
+.membersTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8125rem;
+}
+
+.membersTable thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  padding: 0.5rem 0.65rem;
+  text-align: left;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--color-text-muted, #64748b);
+  background: var(--theme-surface-card, var(--color-surface));
+  border-bottom: 1px solid var(--theme-border-main, var(--color-border));
+}
+
+.membersTable tbody td {
+  padding: 0.55rem 0.65rem;
+  vertical-align: top;
+  border-bottom: 1px solid var(--theme-border-main, var(--color-border));
+  color: var(--color-text, #0f172a);
+}
+
+:global([data-theme='dark']) .membersTable tbody td {
+  color: #f1f5f9;
+}
+
+.memberName {
+  font-weight: 500;
+}
+
+.memberEmail {
+  color: var(--color-text-muted, #64748b);
+}
+
+.accessBadge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.15rem 0.45rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.accessBadge_enabled {
+  background: color-mix(in srgb, var(--color-success, #16a34a) 25%, transparent);
+  color: var(--color-success, #16a34a);
+}
+
+.accessBadge_notConfigured {
+  background: color-mix(in srgb, var(--color-text-muted) 18%, transparent);
+  color: var(--color-text-muted, #64748b);
+}
+
+.actionsPlaceholder {
+  font-size: 0.75rem;
+  color: var(--color-text-muted, #64748b);
+}
+
+.loading,
+.error,
+.empty,
+.noAccess {
+  margin: 0;
+  font-size: 0.875rem;
+}
+
+.error {
+  color: var(--color-error, #dc2626);
+}
+
+.empty,
+.noAccess,
+.loading {
+  color: var(--color-text-muted, #64748b);
+}
+
+@media (max-width: 900px) {
+  .sectionGrid {
+    grid-template-columns: 1fr;
+  }
+}
