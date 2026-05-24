@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { Button } from '@/presentation/components/Button';
-import formStyles from './authForm.module.css';
+import { authFormStyles as formStyles } from '@zenformed/core/auth';
 
 export interface LoginFormProps {
   onSubmit: (email: string, password: string) => Promise<void>;

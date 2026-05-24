@@ -38,6 +38,13 @@ export const env = {
   get isSaasMode(): boolean {
     return process.env.NEXT_PUBLIC_SAAS_MODE === 'true';
   },
+  /** Public app URL for auth redirect callbacks (password recovery). Falls back to browser origin on the client. */
+  get appUrl(): string {
+    const configured = process.env.NEXT_PUBLIC_APP_URL?.trim();
+    if (configured) return configured.replace(/\/+$/, '');
+    if (typeof window !== 'undefined') return window.location.origin;
+    return '';
+  },
   /** Stripe payment/checkout URL for "License Required" screen. */
   get stripePaymentUrl(): string {
     return process.env.NEXT_PUBLIC_STRIPE_PAYMENT_URL ?? 'https://buy.stripe.com/';

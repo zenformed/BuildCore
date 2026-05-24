@@ -25,6 +25,7 @@ export const buildCoreDashboardNavigation = {
     dashboard: buildcoreAppDefinition.dashboardRoute ?? '/dashboard',
     login: '/login',
     forgotPassword: '/forgot-password',
+    resetPassword: '/reset-password',
     reports: '/reports',
     home: '/',
     projectDetail: (slug: string): string => `/projects/${slug}`,
