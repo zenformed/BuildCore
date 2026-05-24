@@ -14,6 +14,7 @@ import { useSaaSProfile } from '@/presentation/hooks/useSaaSProfile';
 import { useUserAvatar } from '@/presentation/hooks/useUserAvatar';
 import { useTenant } from '@/presentation/providers';
 import { computeIsAdmin } from '@/presentation/features/buildCoreDashboard/buildCoreDashboardViewModel';
+import { formatOrganizationRoleLabel } from '@zenformed/core/dashboard-shell';
 import type { BuildCoreSettingsSectionId } from '@/platform/navigation/buildCoreDashboardNavigation';
 import type { CrmProjectSummary } from '@/domain/crm';
 import type { CrmPriorityFilter, CrmStageFilter } from '@/presentation/features/crmProjects/crmProjectsPipelineViewModel';
@@ -31,6 +32,7 @@ export function useBuildCoreDashboard(): {
   hasLogo: boolean;
   brandingLoading: boolean;
   effectiveLicenseTier: string | undefined;
+  organizationRoleLabel: string | null;
   isAdmin: boolean;
   avatarUrl: string | null;
   avatarLoading: boolean;
@@ -66,7 +68,7 @@ export function useBuildCoreDashboard(): {
   const router = useRouter();
   const { user, isLoading: authLoading, signOut } = useAuth();
   const { shopName, logoUrl, hasLogo, isLoading: brandingLoading, refetch: refetchBranding } = useBranding();
-  const { profile: saasProfile, entitlementSnapshot, session: saasSession } = useSaaSProfile();
+  const { profile: saasProfile, entitlementSnapshot, session: saasSession, organizationMembershipContext } = useSaaSProfile();
   const { setTenantId } = useTenant();
 
   const saasSessionRef = useRef(saasSession);
@@ -108,7 +110,8 @@ export function useBuildCoreDashboard(): {
     }
   }, [user?.tenantId, setTenantId]);
 
-  const effectiveLicenseTier = saasProfile?.license_tier;
+  const effectiveLicenseTier = entitlementSnapshot?.licenseTier ?? saasProfile?.license_tier;
+  const organizationRoleLabel = formatOrganizationRoleLabel(organizationMembershipContext?.role);
   const isAdmin = computeIsAdmin(env.isSaasMode, user);
 
   const { logoUploading, headerLogoFileInputRef, handleLogoFileChange } = useOrganizationLogoUpload({
@@ -128,6 +131,7 @@ export function useBuildCoreDashboard(): {
     hasLogo,
     brandingLoading,
     effectiveLicenseTier,
+    organizationRoleLabel,
     isAdmin,
     avatarUrl,
     avatarLoading,

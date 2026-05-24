@@ -3,6 +3,7 @@
 import type { ReactElement } from 'react';
 import { ThemeToggle } from '@/presentation/components/ThemeToggle';
 import {
+  formatOrganizationRoleLabel,
   pickHeaderShellClassNames,
   ZenformedDashboardHeader,
   type ZenformedAccountMenuLabels,
@@ -18,6 +19,7 @@ const accountMenuLabels: ZenformedAccountMenuLabels = {
   menuTriggerAriaLabel: nav.header.account.menuTriggerAriaLabel,
   planAriaLabelPrefix: nav.header.account.planAriaLabelPrefix,
   adminBadgeLabel: nav.header.account.adminBadgeLabel,
+  roleAriaLabelPrefix: 'Role:',
   profilePhotoChangeTitle: nav.header.account.profilePhotoChange.title,
   profilePhotoChangeAriaLabel: nav.header.account.profilePhotoChange.ariaLabel,
   settingsButtonLabel: nav.header.account.settingsButton.label,
@@ -32,6 +34,7 @@ export type BuildCoreDashboardHeaderProps = {
   newProjectDisabled?: boolean;
   user: { email: string } | null;
   effectiveLicenseTier: string | null | undefined;
+  organizationRoleLabel?: string | null;
   isAdmin: boolean;
   avatarUrl: string | null | undefined;
   avatarLoading: boolean;
@@ -49,6 +52,7 @@ export function BuildCoreDashboardHeader({
   newProjectDisabled = false,
   user,
   effectiveLicenseTier,
+  organizationRoleLabel,
   isAdmin,
   avatarUrl,
   avatarLoading,
@@ -66,6 +70,7 @@ export function BuildCoreDashboardHeader({
       shopName={shopName}
       defaultShopNameFallback={content.branding.defaultShopNameFallback}
       effectiveLicenseTier={effectiveLicenseTier}
+      organizationRoleLabel={organizationRoleLabel}
       isAdmin={isAdmin}
       labels={accountMenuLabels}
       themeToggle={<ThemeToggle />}

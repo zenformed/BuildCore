@@ -87,8 +87,15 @@ export async function relayOrganizationGet<T extends Record<string, unknown>>(
   if (!result.ok) {
     if (result.error.kind === 'http_error') {
       const st = result.error.status;
-      if (st === 401 || st === 403) {
+      if (st === 401) {
         return NextResponse.json({ error: 'unauthenticated' }, { status: 401 });
+      }
+      if (st === 403) {
+        const upstream = coreUpstreamHttpResponsePayload(result.error);
+        if (upstream != null) {
+          return NextResponse.json(upstream.json, { status: 403 });
+        }
+        return NextResponse.json({ error: 'forbidden' }, { status: 403 });
       }
       if (st === 404) {
         return NextResponse.json({ relay: 'zenformed_core', error: 'organization_not_found' }, { status: 404 });
@@ -152,8 +159,15 @@ export async function relayOrganizationMutate<T extends Record<string, unknown>>
   if (!result.ok) {
     if (result.error.kind === 'http_error') {
       const st = result.error.status;
-      if (st === 401 || st === 403) {
+      if (st === 401) {
         return NextResponse.json({ error: 'unauthenticated' }, { status: 401 });
+      }
+      if (st === 403) {
+        const upstream = coreUpstreamHttpResponsePayload(result.error);
+        if (upstream != null) {
+          return NextResponse.json(upstream.json, { status: 403 });
+        }
+        return NextResponse.json({ error: 'forbidden' }, { status: 403 });
       }
       if (st === 404) {
         return NextResponse.json({ relay: 'zenformed_core', error: 'organization_not_found' }, { status: 404 });

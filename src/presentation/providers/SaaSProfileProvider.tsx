@@ -47,6 +47,7 @@ export type OrganizationMembershipContext = {
   hasActiveMembership: boolean;
   hasNonPersonalOrganizationMembership: boolean;
   membershipKind: OrganizationMembershipKind;
+  role: 'owner' | 'admin' | 'coordinator' | 'member' | null;
 };
 
 export type MembershipContextStatus = 'pending' | 'ready' | 'failed';
@@ -317,6 +318,7 @@ export function SaaSProfileProvider({ children }: { children: React.ReactNode })
               hasActiveMembership: false,
               hasNonPersonalOrganizationMembership: false,
               membershipKind: 'none',
+              role: null,
             });
             setMembershipContextStatus('failed');
             return;

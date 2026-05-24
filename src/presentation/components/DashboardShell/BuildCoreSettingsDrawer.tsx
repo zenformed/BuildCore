@@ -40,22 +40,28 @@ export function BuildCoreSettingsDrawer({
     enabled: open,
   });
 
-  const orgBranding = useZenformedOrganizationBranding({
-    brandingApiUrl: nav.apis.branding,
-    brandingLogoApiUrl: '/api/branding/logo',
-    getAccessToken,
-    enabled: open,
-  });
-
   const orgWorkspace = useZenformedOrganizationWorkspace({
     apiUrls: {
+      membershipContext: nav.apis.organizationMembershipContext,
       members: nav.apis.organizationMembers,
       invites: nav.apis.organizationInvites,
       seats: nav.apis.organizationSeats,
       appAccess: nav.apis.organizationAppAccess,
+      memberRole: nav.apis.organizationMemberRole,
     },
     getAccessToken,
     enabled: open,
+  });
+
+  const workspacePermissions = orgWorkspace.snapshot?.membershipContext?.permissions ?? null;
+  const canViewOrganizationSettings =
+    workspacePermissions?.canViewOrganizationSettings ?? false;
+
+  const orgBranding = useZenformedOrganizationBranding({
+    brandingApiUrl: nav.apis.branding,
+    brandingLogoApiUrl: '/api/branding/logo',
+    getAccessToken,
+    enabled: open && canViewOrganizationSettings,
   });
 
   const refetchBranding = useCallback(async () => {
@@ -87,8 +93,9 @@ export function BuildCoreSettingsDrawer({
   );
 
   const persistence = useMemo((): OrganizationSettingsPersistence => ({
-    isLoading: userSettings.isLoading,
-    loadError: userSettings.loadError ?? orgBranding.loadError,
+    permissions: workspacePermissions,
+    isLoading: userSettings.isLoading || orgWorkspace.isLoading,
+    loadError: userSettings.loadError ?? orgBranding.loadError ?? orgWorkspace.loadError,
     hasLiveData: userSettings.hasLiveData || orgBranding.hasLiveData || orgWorkspace.hasLiveData,
     accountSaveStatus: userSettings.accountSaveStatus,
     notificationsSaveStatus: userSettings.notificationsSaveStatus,
@@ -113,16 +120,23 @@ export function BuildCoreSettingsDrawer({
       loadError: orgWorkspace.loadError,
       hasLiveData: orgWorkspace.hasLiveData,
       snapshot: orgWorkspace.snapshot,
-      inviteActionsDisabled: !orgWorkspace.hasLiveData,
+      permissions: workspacePermissions,
+      currentUserId: orgWorkspace.snapshot?.membershipContext?.currentUserId ?? null,
+      inviteActionsDisabled: !(workspacePermissions?.canInviteMembers ?? false),
+      roleManagementDisabled: !(workspacePermissions?.canManageMemberRoles ?? false),
       isCreatingInvite: orgWorkspace.isCreatingInvite,
       cancelingInviteId: orgWorkspace.cancelingInviteId,
+      updatingMemberRoleId: orgWorkspace.updatingMemberRoleId,
       inviteMutationError: orgWorkspace.inviteMutationError,
+      roleMutationError: orgWorkspace.roleMutationError,
       createdInviteAcceptUrl: orgWorkspace.createdInviteAcceptUrl,
       onDismissCreatedInviteLink: orgWorkspace.clearCreatedInviteAcceptUrl,
       onCreateInvite: orgWorkspace.createInvite,
       onCancelInvite: orgWorkspace.cancelInvite,
+      onUpdateMemberRole: orgWorkspace.updateMemberRole,
     },
   }), [
+    workspacePermissions,
     userSettings.isLoading,
     userSettings.loadError,
     userSettings.hasLiveData,
@@ -147,11 +161,14 @@ export function BuildCoreSettingsDrawer({
     orgWorkspace.snapshot,
     orgWorkspace.isCreatingInvite,
     orgWorkspace.cancelingInviteId,
+    orgWorkspace.updatingMemberRoleId,
     orgWorkspace.inviteMutationError,
+    orgWorkspace.roleMutationError,
     orgWorkspace.createdInviteAcceptUrl,
     orgWorkspace.clearCreatedInviteAcceptUrl,
     orgWorkspace.createInvite,
     orgWorkspace.cancelInvite,
+    orgWorkspace.updateMemberRole,
   ]);
 
   return (

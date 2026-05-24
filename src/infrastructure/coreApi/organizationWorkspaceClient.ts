@@ -10,6 +10,7 @@ import {
   parseOrganizationInviteMutationJson,
   parseOrganizationInvitesJson,
   parseOrganizationMembershipContextJson,
+  parseOrganizationMemberRoleUpdateJson,
   parseOrganizationMembersJson,
   parseOrganizationSeatsJson,
 } from '@/infrastructure/coreApi/parseResponse';
@@ -24,6 +25,8 @@ import type {
   ZenformedCoreOrganizationInviteMutationResponse,
   ZenformedCoreOrganizationInvitesResponse,
   ZenformedCoreOrganizationMembershipContextResponse,
+  ZenformedCoreOrganizationMemberRoleUpdateRequest,
+  ZenformedCoreOrganizationMemberRoleUpdateResponse,
   ZenformedCoreOrganizationMembersResponse,
   ZenformedCoreOrganizationSeatsResponse,
 } from '@/infrastructure/coreApi/types';
@@ -204,6 +207,20 @@ export function cancelOrganizationInvite(
     'PATCH',
     undefined,
     parseOrganizationInviteMutationJson
+  );
+}
+
+export function patchOrganizationMemberRole(
+  accessToken: string,
+  memberId: string,
+  body: ZenformedCoreOrganizationMemberRoleUpdateRequest
+): Promise<CoreApiResult<ZenformedCoreOrganizationMemberRoleUpdateResponse>> {
+  return mutateJson(
+    `/organizations/me/members/${encodeURIComponent(memberId)}/role`,
+    accessToken,
+    'PATCH',
+    body,
+    parseOrganizationMemberRoleUpdateJson
   );
 }
 

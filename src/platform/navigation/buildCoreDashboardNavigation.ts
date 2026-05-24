@@ -15,6 +15,8 @@ export const buildCoreDashboardNavigation = {
     branding: '/api/branding',
     usersMeSettings: '/api/internal/users-me-settings',
     organizationMembers: '/api/internal/organization/members',
+    organizationMembershipContext: '/api/internal/organization/membership-context',
+    organizationMemberRole: '/api/internal/organization/members',
     organizationInvites: '/api/internal/organization/invites',
     organizationSeats: '/api/internal/organization/seats',
     organizationAppAccess: '/api/internal/organization/app-access',

@@ -94,6 +94,7 @@ export function BuildCoreDashboardShell({
               newProjectDisabled={dash.createProjectDraftOpen}
               user={dash.user ? { email: dash.user.email } : null}
               effectiveLicenseTier={dash.effectiveLicenseTier}
+              organizationRoleLabel={dash.organizationRoleLabel}
               isAdmin={dash.isAdmin}
               avatarUrl={dash.avatarUrl}
               avatarLoading={dash.avatarLoading}

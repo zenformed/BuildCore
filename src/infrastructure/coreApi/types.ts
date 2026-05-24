@@ -175,6 +175,24 @@ export type ZenformedCoreOrganizationBranding = {
   revision?: string;
 };
 
+/** Organization membership role (Core source of truth). */
+export type ZenformedCoreOrganizationMemberRole =
+  | 'owner'
+  | 'admin'
+  | 'coordinator'
+  | 'member';
+
+export type ZenformedCoreOrganizationPermissions = {
+  canViewOrganizationSettings: boolean;
+  canEditOrganizationProfile: boolean;
+  canViewTeamMembers: boolean;
+  canInviteMembers: boolean;
+  canCancelInvites: boolean;
+  canManageMemberRoles: boolean;
+  canViewAppsBilling: boolean;
+  canEditAccountEmail: boolean;
+};
+
 /** `GET /organizations/me/membership-context` */
 export type OrganizationMembershipKind =
   | 'none'
@@ -185,6 +203,10 @@ export type ZenformedCoreOrganizationMembershipContextResponse = {
   hasActiveMembership: boolean;
   hasNonPersonalOrganizationMembership: boolean;
   membershipKind: OrganizationMembershipKind;
+  organizationId: string | null;
+  currentUserId: string;
+  role: ZenformedCoreOrganizationMemberRole | null;
+  permissions: ZenformedCoreOrganizationPermissions;
 };
 
 /** `GET /organizations/me/members` */
@@ -195,7 +217,7 @@ export type ZenformedCoreOrganizationMembersResponse = {
     userId: string;
     displayName: string;
     email: string | null;
-    role: 'owner' | 'admin' | 'member';
+    role: ZenformedCoreOrganizationMemberRole;
     status: 'active' | 'invited' | 'removed';
   }>;
 };
@@ -208,7 +230,7 @@ export type ZenformedCoreOrganizationInvite = {
   lastName: string | null;
   displayName: string;
   status: 'pending' | 'accepted' | 'revoked' | 'expired' | 'canceled';
-  role: 'owner' | 'admin' | 'member';
+  role: ZenformedCoreOrganizationMemberRole;
   invitedBy: string | null;
   expiresAt: string | null;
   createdAt: string;
@@ -234,7 +256,7 @@ export type ZenformedCoreOrganizationInviteLookupResponse = {
   invitedEmail: string;
   invitedFirstName: string | null;
   invitedLastName: string | null;
-  role: 'owner' | 'admin' | 'member';
+  role: ZenformedCoreOrganizationMemberRole;
   expiresAt: string | null;
 };
 
@@ -247,7 +269,7 @@ export type ZenformedCoreOrganizationInviteAcceptResponse = {
     userId: string;
     displayName: string;
     email: string | null;
-    role: 'owner' | 'admin' | 'member';
+    role: ZenformedCoreOrganizationMemberRole;
     status: 'active' | 'invited' | 'removed';
   };
   seats: {
@@ -265,7 +287,17 @@ export type ZenformedCoreOrganizationInviteCreateRequest = {
   email: string;
   firstName?: string | null;
   lastName?: string | null;
-  role?: 'owner' | 'admin' | 'member';
+  role?: 'admin' | 'coordinator' | 'member';
+};
+
+/** `PATCH /organizations/me/members/:memberId/role` */
+export type ZenformedCoreOrganizationMemberRoleUpdateRequest = {
+  role: 'admin' | 'coordinator' | 'member';
+};
+
+export type ZenformedCoreOrganizationMemberRoleUpdateResponse = {
+  organizationId: string;
+  member: ZenformedCoreOrganizationMembersResponse['members'][number];
 };
 
 /** `GET /organizations/me/seats` */

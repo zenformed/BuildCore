@@ -25,6 +25,8 @@ import type {
   ZenformedCoreOrganizationInvitesResponse,
   ZenformedCoreOrganizationSeatsResponse,
   ZenformedCoreOrganizationAppAccessResponse,
+  ZenformedCoreOrganizationMemberRoleUpdateResponse,
+  ZenformedCoreOrganizationPermissions,
 } from '@/infrastructure/coreApi/types';
 
 const RESOLUTION_SOURCES = new Set<SaaSEntitlementResolutionSource>([
@@ -369,6 +371,32 @@ export function parseRegisteredAppEnvelopeJson(
   };
 }
 
+function parseOrganizationMemberRole(raw: unknown): ZenformedCoreOrganizationMembersResponse['members'][number]['role'] | null {
+  if (raw === 'owner' || raw === 'admin' || raw === 'coordinator' || raw === 'member') {
+    return raw;
+  }
+  return null;
+}
+
+function parseOrganizationPermissionsJson(body: unknown): ZenformedCoreOrganizationPermissions | null {
+  if (body == null || typeof body !== 'object') return null;
+  const o = body as Record<string, unknown>;
+  const keys = [
+    'canViewOrganizationSettings',
+    'canEditOrganizationProfile',
+    'canViewTeamMembers',
+    'canInviteMembers',
+    'canCancelInvites',
+    'canManageMemberRoles',
+    'canViewAppsBilling',
+    'canEditAccountEmail',
+  ] as const;
+  for (const key of keys) {
+    if (typeof o[key] !== 'boolean') return null;
+  }
+  return o as ZenformedCoreOrganizationPermissions;
+}
+
 export function parseOrganizationMembershipContextJson(
   body: unknown
 ): ZenformedCoreOrganizationMembershipContextResponse | null {
@@ -384,10 +412,22 @@ export function parseOrganizationMembershipContextJson(
   ) {
     return null;
   }
+  if (typeof o.currentUserId !== 'string') return null;
+  const permissions = parseOrganizationPermissionsJson(o.permissions);
+  if (permissions == null) return null;
+  const role =
+    o.role === null || o.role === undefined
+      ? null
+      : parseOrganizationMemberRole(o.role);
+  if (o.role != null && role == null) return null;
   return {
     hasActiveMembership: o.hasActiveMembership,
     hasNonPersonalOrganizationMembership: o.hasNonPersonalOrganizationMembership,
     membershipKind: kind,
+    organizationId: typeof o.organizationId === 'string' ? o.organizationId : null,
+    currentUserId: o.currentUserId,
+    role,
+    permissions,
   };
 }
 
@@ -405,14 +445,15 @@ export function parseOrganizationMembersJson(
     if (typeof row.id !== 'string' || typeof row.userId !== 'string') return null;
     if (typeof row.displayName !== 'string') return null;
     if (row.email != null && typeof row.email !== 'string') return null;
-    if (row.role !== 'owner' && row.role !== 'admin' && row.role !== 'member') return null;
+    const role = parseOrganizationMemberRole(row.role);
+    if (role == null) return null;
     if (row.status !== 'active' && row.status !== 'invited' && row.status !== 'removed') return null;
     members.push({
       id: row.id,
       userId: row.userId,
       displayName: row.displayName,
       email: row.email ?? null,
-      role: row.role,
+      role,
       status: row.status,
     });
   }
@@ -433,7 +474,8 @@ function parseOrganizationInviteRecord(row: unknown): ZenformedCoreOrganizationI
   ) {
     return null;
   }
-  if (inv.role !== 'owner' && inv.role !== 'admin' && inv.role !== 'member') return null;
+  const role = parseOrganizationMemberRole(inv.role);
+  if (role == null) return null;
   if (inv.invitedBy != null && typeof inv.invitedBy !== 'string') return null;
   if (inv.expiresAt != null && typeof inv.expiresAt !== 'string') return null;
   if (inv.firstName != null && typeof inv.firstName !== 'string') return null;
@@ -446,7 +488,7 @@ function parseOrganizationInviteRecord(row: unknown): ZenformedCoreOrganizationI
     lastName: inv.lastName ?? null,
     displayName: inv.displayName,
     status: inv.status,
-    role: inv.role,
+    role,
     invitedBy: inv.invitedBy ?? null,
     expiresAt: inv.expiresAt ?? null,
     createdAt: inv.createdAt,
@@ -494,14 +536,15 @@ export function parseOrganizationInviteLookupJson(
   if (typeof o.organizationName !== 'string' || typeof o.invitedEmail !== 'string') return null;
   if (o.invitedFirstName != null && typeof o.invitedFirstName !== 'string') return null;
   if (o.invitedLastName != null && typeof o.invitedLastName !== 'string') return null;
-  if (o.role !== 'owner' && o.role !== 'admin' && o.role !== 'member') return null;
+  const lookupRole = parseOrganizationMemberRole(o.role);
+  if (lookupRole == null) return null;
   if (o.expiresAt != null && typeof o.expiresAt !== 'string') return null;
   return {
     organizationName: o.organizationName,
     invitedEmail: o.invitedEmail,
     invitedFirstName: typeof o.invitedFirstName === 'string' ? o.invitedFirstName : null,
     invitedLastName: typeof o.invitedLastName === 'string' ? o.invitedLastName : null,
-    role: o.role,
+    role: lookupRole,
     expiresAt: typeof o.expiresAt === 'string' ? o.expiresAt : null,
   };
 }
@@ -516,7 +559,8 @@ export function parseOrganizationInviteAcceptJson(
   const member = o.member as Record<string, unknown>;
   if (typeof member.id !== 'string' || typeof member.userId !== 'string') return null;
   if (typeof member.displayName !== 'string') return null;
-  if (member.role !== 'owner' && member.role !== 'admin' && member.role !== 'member') return null;
+  const memberRole = parseOrganizationMemberRole(member.role);
+  if (memberRole == null) return null;
   if (member.status !== 'active' && member.status !== 'invited' && member.status !== 'removed') {
     return null;
   }
@@ -538,13 +582,40 @@ export function parseOrganizationInviteAcceptJson(
       userId: member.userId,
       displayName: member.displayName,
       email: typeof member.email === 'string' ? member.email : null,
-      role: member.role,
+      role: memberRole,
       status: member.status,
     },
     seats: {
       seatsUsed: seats.seatsUsed,
       seatLimit: seats.seatLimit,
       seatsAvailable: seats.seatsAvailable,
+    },
+  };
+}
+
+export function parseOrganizationMemberRoleUpdateJson(
+  body: unknown
+): ZenformedCoreOrganizationMemberRoleUpdateResponse | null {
+  if (body == null || typeof body !== 'object') return null;
+  const o = body as Record<string, unknown>;
+  if (typeof o.organizationId !== 'string') return null;
+  if (o.member == null || typeof o.member !== 'object') return null;
+  const row = o.member as Record<string, unknown>;
+  if (typeof row.id !== 'string' || typeof row.userId !== 'string') return null;
+  if (typeof row.displayName !== 'string') return null;
+  if (row.email != null && typeof row.email !== 'string') return null;
+  const role = parseOrganizationMemberRole(row.role);
+  if (role == null) return null;
+  if (row.status !== 'active' && row.status !== 'invited' && row.status !== 'removed') return null;
+  return {
+    organizationId: o.organizationId,
+    member: {
+      id: row.id,
+      userId: row.userId,
+      displayName: row.displayName,
+      email: row.email ?? null,
+      role,
+      status: row.status,
     },
   };
 }
