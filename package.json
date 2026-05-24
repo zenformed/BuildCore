@@ -17,7 +17,7 @@
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.45.0",
-    "@zenformed/core": "https://codeload.github.com/zenformed/zenformed-core-package/tar.gz/be3d69a307cbd4efbcca9b446b9781c644c6aa5e",
+    "@zenformed/core": "github:zenformed/zenformed-core-package",
     "chart.js": "^4.5.1",
     "jose": "^6.1.3",
     "jspdf": "^4.2.1",
