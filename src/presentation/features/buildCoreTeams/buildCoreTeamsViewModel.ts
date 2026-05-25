@@ -1,12 +1,10 @@
-import { buildcoreAppDefinition } from '@/platform/appDefinitions/buildcore';
 import type {
   ZenformedCoreOrganizationAppAccessResponse,
   ZenformedCoreOrganizationMembersResponse,
 } from '@/infrastructure/coreApi/types';
 import type { OrganizationWorkspaceSnapshot } from '@zenformed/core/organization-settings';
 import { formatOrganizationRoleLabel } from '@zenformed/core/dashboard-shell';
-
-const BUILDCORE_APP_SLUG = buildcoreAppDefinition.appSlug;
+import { memberHasBuildCoreAccess } from '@/presentation/features/crmAssignment/buildCoreAssignableMembers';
 
 type OrganizationMember = ZenformedCoreOrganizationMembersResponse['members'][number];
 
@@ -41,7 +39,7 @@ function resolveBuildCoreAccessForMember(
   }
 
   const entry = appAccess?.entries.find(
-    (row) => row.userId === member.userId && row.appSlug === BUILDCORE_APP_SLUG
+    (row) => row.userId === member.userId && row.appSlug === 'buildcore'
   );
 
   if (entry?.accessStatus === 'active') {
@@ -51,11 +49,7 @@ function resolveBuildCoreAccessForMember(
     };
   }
 
-  const orgBuildCoreActive = appAccess?.orgApps.some(
-    (app) => app.appSlug === BUILDCORE_APP_SLUG && app.isActive
-  );
-
-  if (subscriptionActive && orgBuildCoreActive && (appAccess?.entries.length ?? 0) === 0) {
+  if (memberHasBuildCoreAccess(member, appAccess, subscriptionActive)) {
     return {
       buildCoreAccessStatus: 'enabled',
       buildCoreRolePlaceholder: 'Not assigned',

@@ -12,9 +12,11 @@ function isUserAvatarApiPath(url: string): boolean {
 
 /**
  * Loads `/api/auth/user-avatar` (or `/api/auth/avatar`) with Bearer token and returns a blob URL.
- * Same auth pattern as `useUserAvatar` for the header.
  */
-export function useAuthenticatedAvatarBlob(apiPath: string | null | undefined): string | null {
+export function useAuthenticatedAvatarBlob(
+  apiPath: string | null | undefined,
+  getAccessToken?: () => string | null
+): string | null {
   const { session } = useSaaSProfile();
   const [blobUrl, setBlobUrl] = useState<string | null>(() => {
     if (apiPath && blobCache.has(apiPath)) return blobCache.get(apiPath) ?? null;
@@ -36,7 +38,9 @@ export function useAuthenticatedAvatarBlob(apiPath: string | null | undefined): 
     let cancelled = false;
     const load = async () => {
       try {
-        const token = env.isSaasMode ? session?.access_token ?? null : null;
+        const token = env.isSaasMode
+          ? (getAccessToken?.() ?? session?.access_token ?? null)
+          : null;
         const headers: HeadersInit = token ? { Authorization: `Bearer ${token}` } : {};
         const res = await fetch(apiPath, { credentials: 'include', headers });
         if (cancelled || !res.ok) return;
@@ -54,7 +58,7 @@ export function useAuthenticatedAvatarBlob(apiPath: string | null | undefined): 
     return () => {
       cancelled = true;
     };
-  }, [apiPath, session?.access_token]);
+  }, [apiPath, getAccessToken, session?.access_token]);
 
   return blobUrl;
 }

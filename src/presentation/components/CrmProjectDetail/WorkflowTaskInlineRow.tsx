@@ -16,6 +16,10 @@ import { parseUsdInputToCents } from '@/presentation/features/crmCreate/createCr
 import { formatCentsAsUsd } from '@/presentation/features/crmProjects/crmProjectFormatters';
 import { centsToUsdInput } from '@/presentation/features/crmProjectDetail/workflowTaskFormModel';
 import { getWorkflowTaskAssigneeOptions } from '@/presentation/features/crmProjectDetail/workflowTaskAssigneeOptions';
+import { normalizeAssigneeMemberIdForSave } from '@/presentation/features/crmAssignment/buildAssigneeOptions';
+import { AssigneeMenuOptionLabel } from '@/presentation/features/crmAssignment/AssigneeMenuOptionLabel';
+import { useAssignmentIdentityCatalog } from '@/presentation/providers/AssignmentIdentityProvider';
+import { useBuildCoreDashboardContext } from '@/presentation/providers/BuildCoreDashboardProvider';
 import { useProjectDetailShell } from '@/presentation/features/crmProjectDetail/ProjectDetailShellContext';
 import { useWorkflowTaskPatch } from '@/presentation/features/crmProjectDetail/useWorkflowTaskPatch';
 import { validateWorkflowTaskStatusChange } from '@/presentation/features/crmProjectDetail/workflowTaskDocumentsValidation';
@@ -25,7 +29,6 @@ import {
 } from '@/presentation/features/crmProjectDetail/workflowTaskInlineUtils';
 import { useWorkflowTaskDocumentActions } from '@/presentation/features/crmProjectDetail/useWorkflowTaskDocumentActions';
 import { useWorkflowTaskRowFileDrop } from '@/presentation/features/crmProjectDetail/useWorkflowTaskRowFileDrop';
-import { useAuth } from '@/presentation/hooks/useAuth';
 import shared from '@/presentation/components/crmShared/crmShared.module.css';
 import { TeamMemberAvatar } from './TeamMemberAvatar';
 import { WorkflowDocumentFileIcon } from './WorkflowDocumentFileIcon';
@@ -60,11 +63,13 @@ export function WorkflowTaskInlineRow({
   onRequestArchiveTask,
 }: WorkflowTaskInlineRowProps): ReactElement {
   const wf = content.projectDetail.workflow;
-  const { user } = useAuth();
   const {
+    project,
     onWorkflowTaskDocumentUploaded,
     onWorkflowTaskDocumentDeleted,
   } = useProjectDetailShell();
+  const dash = useBuildCoreDashboardContext();
+  const assignmentCatalog = useAssignmentIdentityCatalog();
   const { saving, patchTask } = useWorkflowTaskPatch(onUpdated);
   const documentActions = useWorkflowTaskDocumentActions({
     projectSlug,
@@ -89,7 +94,12 @@ export function WorkflowTaskInlineRow({
   const assigneeRef = useRef<HTMLDivElement>(null);
   const dueInputRef = useRef<HTMLInputElement>(null);
 
-  const assigneeOptions = getWorkflowTaskAssigneeOptions(isApiSource, user?.id, user?.email);
+  const assigneeOptions = getWorkflowTaskAssigneeOptions(
+    isApiSource,
+    assignmentCatalog,
+    project.summary.contact,
+    dash.user?.id
+  );
   const dueInputValue = workflowTaskDueToInputValue(task.dueAt);
 
   useEffect(() => {
@@ -173,7 +183,7 @@ export function WorkflowTaskInlineRow({
       try {
         await patchTask({
           taskId: task.id,
-          assignedMemberId: assignedMemberId || null,
+          assignedMemberId: normalizeAssigneeMemberIdForSave(assignedMemberId),
         });
       } catch (err) {
         reportError(err);
@@ -524,11 +534,14 @@ export function WorkflowTaskInlineRow({
             <button
               key={option.id || 'unassigned'}
               type="button"
-              className={styles.inlineMenuAction}
-              disabled={saving}
-              onClick={() => void saveAssignee(option.id)}
+              className={`${styles.inlineMenuAction} ${shared.assigneeMenuAction}`}
+              disabled={saving || option.disabled === true}
+              onClick={() => {
+                if (option.disabled) return;
+                void saveAssignee(option.id);
+              }}
             >
-              {option.label}
+              <AssigneeMenuOptionLabel option={option} />
             </button>
           ))}
         </WorkflowInlineMenu>

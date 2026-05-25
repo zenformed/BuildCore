@@ -72,6 +72,38 @@ export async function getMyAvatarMeta(
   return { ok: true, data: parsed };
 }
 
+/** `GET /organizations/me/member-avatar?userId=...` — org member image bytes (viewer must share org). */
+export async function getOrganizationMemberAvatarBytes(
+  accessToken: string,
+  userId: string,
+  timeoutMs: number = DEFAULT_TIMEOUT_MS
+): Promise<CoreApiResult<{ buffer: Buffer; contentType: string }>> {
+  const query = new URLSearchParams({ userId });
+  const url = coreAvatarUrl(`/organizations/me/member-avatar?${query.toString()}`);
+  if (url == null) {
+    return { ok: false, error: { kind: 'unconfigured' } };
+  }
+  const res = await fetchWithBearer(url, accessToken, { method: 'GET' }, timeoutMs);
+  if ('error' in res) {
+    return { ok: false, error: res.error };
+  }
+  if (res.status === 404) {
+    return { ok: false, error: { kind: 'http_error', status: 404 } };
+  }
+  if (!res.ok) {
+    let body: unknown;
+    try {
+      body = await res.json();
+    } catch {
+      body = undefined;
+    }
+    return { ok: false, error: { kind: 'http_error', status: res.status, body } };
+  }
+  const buffer = Buffer.from(await res.arrayBuffer());
+  const contentType = res.headers.get('content-type')?.split(';')[0]?.trim() || 'image/png';
+  return { ok: true, data: { buffer, contentType } };
+}
+
 /** `GET /users/me/avatar` — image bytes. */
 export async function getMyAvatarBytes(
   accessToken: string,

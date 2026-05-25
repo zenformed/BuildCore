@@ -1,51 +1,22 @@
-import type { CrmTeamMemberRef } from '@/domain/crm';
-import { getUserInitials } from '@zenformed/core/dashboard-shell';
+import type { CrmContact } from '@/domain/crm';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
-import { MOCK_CRM_TEAM_MEMBERS } from '@/platform/mock/crm';
+import { buildAssigneeOptions, type AssigneeOption } from '@/presentation/features/crmAssignment/buildAssigneeOptions';
+import type { AssignmentIdentityCatalog } from '@/presentation/features/crmAssignment/assignmentIdentityModel';
 
-export type CrmProjectAssigneeOption = {
-  readonly id: string;
-  readonly label: string;
-  readonly member: CrmTeamMemberRef | null;
-};
+export type CrmProjectAssigneeOption = AssigneeOption;
 
 export function getCrmProjectAssigneeOptions(
   isApiSource: boolean,
-  currentUserId: string | undefined,
-  currentUserEmail?: string
+  catalog: AssignmentIdentityCatalog | null,
+  projectContact?: CrmContact | null,
+  currentUserId?: string | null
 ): readonly CrmProjectAssigneeOption[] {
-  const create = content.crm.create;
-  const unassigned: CrmProjectAssigneeOption = {
-    id: '',
-    label: create.assigneeUnassigned,
-    member: null,
-  };
-
-  if (isApiSource) {
-    if (!currentUserId) return [unassigned];
-    const label = create.assigneeSelf;
-    return [
-      unassigned,
-      {
-        id: currentUserId,
-        label,
-        member: {
-          id: currentUserId,
-          displayName: label,
-          initials: currentUserEmail ? getUserInitials(currentUserEmail) : label.slice(0, 2).toUpperCase(),
-          avatarUrl: null,
-          email: currentUserEmail ?? null,
-        },
-      },
-    ];
-  }
-
-  return [
-    unassigned,
-    ...MOCK_CRM_TEAM_MEMBERS.map((member) => ({
-      id: member.id,
-      label: member.displayName,
-      member,
-    })),
-  ];
+  return buildAssigneeOptions({
+    isApiSource,
+    unassignedLabel: content.crm.create.assigneeUnassigned,
+    selfLabel: content.crm.assignee.self,
+    currentUserId,
+    catalog,
+    projectContact,
+  });
 }

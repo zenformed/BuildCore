@@ -7,6 +7,7 @@ import {
 } from '@/domain/crm';
 import type { CreateCrmWorkflowTaskInput, UpdateCrmWorkflowTaskInput } from '@/domain/crm';
 import { parseUsdInputToCents } from '@/presentation/features/crmCreate/createCrmProjectFormModel';
+import { normalizeAssigneeMemberIdForSave } from '@/presentation/features/crmAssignment/buildAssigneeOptions';
 import {
   validateWorkflowTaskStatusChange,
   WORKFLOW_TASK_DONE_REQUIRES_DOCUMENTS_MESSAGE,
@@ -115,7 +116,7 @@ export function validateWorkflowTaskForm(
         dueAt: form.dueAt.trim() ? `${form.dueAt.trim()}T12:00:00.000Z` : null,
         invoicedAt: form.invoicedAt.trim() ? `${form.invoicedAt.trim()}T12:00:00.000Z` : null,
         notes: form.notes.trim() || null,
-        assignedMemberId: form.assignedMemberId.trim() || null,
+        assignedMemberId: normalizeAssigneeMemberIdForSave(form.assignedMemberId),
         amountCents,
       },
     };
@@ -130,7 +131,7 @@ export function validateWorkflowTaskForm(
       documentsRequired: form.documentsRequired === 'yes',
       dueAt: form.dueAt.trim() ? `${form.dueAt.trim()}T12:00:00.000Z` : null,
       notes: form.notes.trim() || null,
-      assignedMemberId: form.assignedMemberId.trim() || null,
+      assignedMemberId: normalizeAssigneeMemberIdForSave(form.assignedMemberId),
       amountCents: null,
     },
   };

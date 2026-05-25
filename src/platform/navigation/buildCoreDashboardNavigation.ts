@@ -20,6 +20,7 @@ export const buildCoreDashboardNavigation = {
     organizationInvites: '/api/internal/organization/invites',
     organizationSeats: '/api/internal/organization/seats',
     organizationAppAccess: '/api/internal/organization/app-access',
+    organizationAssignmentIdentities: '/api/internal/organization/assignment-identities',
   },
   routes: {
     dashboard: buildcoreAppDefinition.dashboardRoute ?? '/dashboard',

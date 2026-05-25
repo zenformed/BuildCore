@@ -344,6 +344,25 @@ export type ZenformedCoreOrganizationSeatsResponse = {
   }>;
 };
 
+/** `GET /organizations/me/assignment-identities` */
+export type ZenformedCoreOrganizationAssignmentIdentity = {
+  userId: string;
+  email: string | null;
+  firstName: string | null;
+  lastName: string | null;
+  displayName: string;
+  organizationRole: ZenformedCoreOrganizationMembersResponse['members'][number]['role'];
+  appAccessStatus: string | null;
+  appRole: string | null;
+  avatarRevision: string | null;
+};
+
+export type ZenformedCoreOrganizationAssignmentIdentitiesResponse = {
+  organizationId: string;
+  appSlug: string;
+  identities: ZenformedCoreOrganizationAssignmentIdentity[];
+};
+
 /** `GET /organizations/me/app-access` */
 export type ZenformedCoreOrganizationAppAccessResponse = {
   organizationId: string;

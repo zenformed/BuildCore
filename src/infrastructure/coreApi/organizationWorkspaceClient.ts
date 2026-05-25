@@ -5,6 +5,7 @@
 import { env } from '@/infrastructure/config/env';
 import {
   parseOrganizationAppAccessJson,
+  parseOrganizationAssignmentIdentitiesJson,
   parseOrganizationInviteAcceptJson,
   parseOrganizationInviteLookupJson,
   parseOrganizationInviteMutationJson,
@@ -20,6 +21,7 @@ import type {
   CoreApiError,
   CoreApiResult,
   ZenformedCoreOrganizationAppAccessResponse,
+  ZenformedCoreOrganizationAssignmentIdentitiesResponse,
   ZenformedCoreOrganizationInviteAcceptRequest,
   ZenformedCoreOrganizationInviteAcceptResponse,
   ZenformedCoreOrganizationInviteCreateRequest,
@@ -187,6 +189,18 @@ export function getOrganizationAppAccess(
   accessToken: string
 ): Promise<CoreApiResult<ZenformedCoreOrganizationAppAccessResponse>> {
   return getJson('/organizations/me/app-access', accessToken, parseOrganizationAppAccessJson);
+}
+
+export function getOrganizationAssignmentIdentities(
+  accessToken: string,
+  appSlug = 'buildcore'
+): Promise<CoreApiResult<ZenformedCoreOrganizationAssignmentIdentitiesResponse>> {
+  const query = new URLSearchParams({ appSlug });
+  return getJson(
+    `/organizations/me/assignment-identities?${query.toString()}`,
+    accessToken,
+    parseOrganizationAssignmentIdentitiesJson
+  );
 }
 
 export function postOrganizationInvite(

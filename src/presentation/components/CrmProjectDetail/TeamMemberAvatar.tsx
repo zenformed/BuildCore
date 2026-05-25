@@ -4,7 +4,9 @@ import type { ReactElement } from 'react';
 import { useState } from 'react';
 import type { CrmTeamMemberRef } from '@/domain/crm';
 import { resolveTeamMemberAvatarUrl } from '@/presentation/features/crm/resolveTeamMemberAvatarUrl';
+import { useResolvedTeamMemberRef } from '@/presentation/hooks/useResolvedTeamMemberRef';
 import { useAuthenticatedAvatarBlob } from '@/presentation/hooks/useAuthenticatedAvatarBlob';
+import { useBuildCoreDashboardContext } from '@/presentation/providers/BuildCoreDashboardProvider';
 import { useCurrentUserAvatar } from '@/presentation/providers/CurrentUserAvatarContext';
 import shared from '@/presentation/components/crmShared/crmShared.module.css';
 
@@ -20,17 +22,22 @@ function memberTooltip(member: CrmTeamMemberRef, title?: string): string {
 }
 
 export function TeamMemberAvatar({ member, title }: TeamMemberAvatarProps): ReactElement {
+  const dash = useBuildCoreDashboardContext();
+  const resolvedMember = useResolvedTeamMemberRef(member) ?? member;
   const currentUser = useCurrentUserAvatar();
-  const resolvedUrl = resolveTeamMemberAvatarUrl(member, currentUser);
+  const resolvedUrl = resolveTeamMemberAvatarUrl(resolvedMember, currentUser);
   const isApiAvatarPath =
     resolvedUrl != null &&
     !resolvedUrl.startsWith('blob:') &&
     (resolvedUrl.startsWith('/api/auth/user-avatar') || resolvedUrl.startsWith('/api/auth/avatar'));
-  const authenticatedBlobUrl = useAuthenticatedAvatarBlob(isApiAvatarPath ? resolvedUrl : null);
+  const authenticatedBlobUrl = useAuthenticatedAvatarBlob(
+    isApiAvatarPath ? resolvedUrl : null,
+    dash.getAccessToken
+  );
   const displayUrl =
     resolvedUrl?.startsWith('blob:') === true ? resolvedUrl : authenticatedBlobUrl;
   const [imageFailed, setImageFailed] = useState(false);
-  const tooltip = memberTooltip(member, title);
+  const tooltip = memberTooltip(resolvedMember, title);
 
   if (displayUrl && !imageFailed) {
     return (
@@ -47,8 +54,8 @@ export function TeamMemberAvatar({ member, title }: TeamMemberAvatarProps): Reac
   }
 
   return (
-    <span className={shared.avatar} title={tooltip} aria-label={member.displayName}>
-      {member.initials}
+    <span className={shared.avatar} title={tooltip} aria-label={resolvedMember.displayName}>
+      {resolvedMember.initials}
     </span>
   );
 }

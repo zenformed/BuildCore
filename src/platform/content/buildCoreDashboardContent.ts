@@ -177,6 +177,10 @@ export const buildCoreDashboardContent = {
       priorityLabel: 'Priority',
       priorityAll: 'All priorities',
     },
+    assignee: {
+      customerComingSoon: 'Customer assignment coming soon',
+      self: 'Assign to myself',
+    },
     create: {
       title: 'New project',
       closeAriaLabel: 'Close new project drawer',
@@ -190,7 +194,7 @@ export const buildCoreDashboardContent = {
       mockDisabledMessage:
         'Creating projects in the database requires NEXT_PUBLIC_CRM_DATA_SOURCE=api. Mock mode keeps existing demo data read-only.',
       assigneeUnassigned: 'Unassigned',
-      assigneeSelf: 'Assign to me',
+      assigneeSelf: 'Assign to myself',
       fields: {
         name: 'Project / customer name',
         tradeType: 'Trade type',
@@ -286,7 +290,7 @@ export const buildCoreDashboardContent = {
       submitFailed: 'Failed to save project. Please try again.',
       notFound: 'Project not found.',
       assigneeUnassigned: 'Unassigned',
-      assigneeSelf: 'Assign to me',
+      assigneeSelf: 'Assign to myself',
       fields: {
         name: 'Project / customer name',
         tradeType: 'Trade type',

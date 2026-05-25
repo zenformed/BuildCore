@@ -16,8 +16,8 @@ import {
   updateCrmWorkflowTask,
 } from '@/application/use-cases/crm';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
-import { MOCK_CRM_TEAM_MEMBERS } from '@/platform/mock/crm';
-import { useAuth } from '@/presentation/hooks/useAuth';
+import { getWorkflowTaskAssigneeOptions } from '@/presentation/features/crmProjectDetail/workflowTaskAssigneeOptions';
+import { useAssignmentIdentityCatalog } from '@/presentation/providers/AssignmentIdentityProvider';
 import { formatWorkflowStageLabel } from '@/presentation/features/crmProjectDetail/crmProjectDetailFormatters';
 import {
   defaultWorkflowTaskFormState,
@@ -70,7 +70,7 @@ export function WorkflowTaskDrawer({
   onClose,
   onSaved,
 }: WorkflowTaskDrawerProps): ReactElement | null {
-  const { user } = useAuth();
+  const assignmentCatalog = useAssignmentIdentityCatalog();
   const wf = content.projectDetail.workflow;
   const [form, setForm] = useState<WorkflowTaskFormState>(() =>
     defaultFormForContext(drawerContext, project.summary.currentStageSlug, task, mode)
@@ -146,11 +146,11 @@ export function WorkflowTaskDrawer({
 
   if (!open) return null;
 
-  const assigneeOptions = isApiSource
-    ? user
-      ? [{ id: user.id, label: content.projectDetail.edit.assigneeSelf }]
-      : []
-    : MOCK_CRM_TEAM_MEMBERS.map((m) => ({ id: m.id, label: m.displayName }));
+  const assigneeOptions = getWorkflowTaskAssigneeOptions(
+    isApiSource,
+    assignmentCatalog,
+    project.summary.contact
+  );
 
   const payments = content.projectDetail.payments;
   const isPaymentDrawer = drawerContext === 'payment';
@@ -289,7 +289,7 @@ export function WorkflowTaskDrawer({
                 >
                   <option value="">{content.projectDetail.edit.assigneeUnassigned}</option>
                   {assigneeOptions.map((o) => (
-                    <option key={o.id} value={o.id}>
+                    <option key={o.id} value={o.id} disabled={o.disabled === true}>
                       {o.label}
                     </option>
                   ))}

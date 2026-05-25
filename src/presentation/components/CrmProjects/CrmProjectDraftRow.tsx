@@ -16,7 +16,10 @@ import {
 } from '@/presentation/features/crmCreate/createCrmProjectFormModel';
 import { getCrmProjectAssigneeOptions } from '@/presentation/features/crmProjects/crmProjectAssigneeOptions';
 import { CRM_TRADE_TYPE_OPTIONS } from '@/presentation/features/crmProjects/crmProjectFormatters';
-import { useAuth } from '@/presentation/hooks/useAuth';
+import { normalizeAssigneeMemberIdForSave } from '@/presentation/features/crmAssignment/buildAssigneeOptions';
+import { AssigneeMenuOptionLabel } from '@/presentation/features/crmAssignment/AssigneeMenuOptionLabel';
+import { useAssignmentIdentityCatalog } from '@/presentation/providers/AssignmentIdentityProvider';
+import { useBuildCoreDashboardContext } from '@/presentation/providers/BuildCoreDashboardProvider';
 import { TeamMemberAvatar } from '@/presentation/components/CrmProjectDetail/TeamMemberAvatar';
 import { WorkflowInlineMenu } from '@/presentation/components/CrmProjectDetail/WorkflowInlineMenu';
 import shared from '@/presentation/components/crmShared/crmShared.module.css';
@@ -33,7 +36,8 @@ export type CrmProjectDraftRowProps = {
 
 export function CrmProjectDraftRow({ onSaved, onCancel }: CrmProjectDraftRowProps): ReactElement {
   const router = useRouter();
-  const { user } = useAuth();
+  const dash = useBuildCoreDashboardContext();
+  const assignmentCatalog = useAssignmentIdentityCatalog();
   const create = content.crm.create;
   const isApiSource = getCrmDataSource() === 'api';
   const [form, setForm] = useState<CreateCrmProjectFormState>(defaultCreateCrmProjectFormState);
@@ -42,7 +46,20 @@ export function CrmProjectDraftRow({ onSaved, onCancel }: CrmProjectDraftRowProp
   const [assigneeMenuOpen, setAssigneeMenuOpen] = useState(false);
   const assigneeRef = useRef<HTMLSpanElement>(null);
 
-  const assigneeOptions = getCrmProjectAssigneeOptions(isApiSource, user?.id, user?.email);
+  const draftContact = {
+    id: 'draft-contact',
+    name: form.contactName.trim() || form.name.trim() || 'Customer',
+    email: form.email.trim(),
+    phone: form.phone.trim(),
+    title: null,
+  };
+
+  const assigneeOptions = getCrmProjectAssigneeOptions(
+    isApiSource,
+    assignmentCatalog,
+    draftContact,
+    dash.user?.id
+  );
   const selectedAssignee = assigneeOptions.find((option) => option.id === form.assignedMemberId);
 
   const updateField = useCallback(
@@ -230,14 +247,15 @@ export function CrmProjectDraftRow({ onSaved, onCancel }: CrmProjectDraftRowProp
               <button
                 key={option.id || 'unassigned'}
                 type="button"
-                className={styles.draftMenuAction}
-                disabled={saving}
+                className={`${styles.draftMenuAction} ${shared.assigneeMenuAction}`}
+                disabled={saving || option.disabled === true}
                 onClick={() => {
+                  if (option.disabled) return;
                   updateField('assignedMemberId', option.id);
                   setAssigneeMenuOpen(false);
                 }}
               >
-                {option.label}
+                <AssigneeMenuOptionLabel option={option} />
               </button>
             ))}
           </WorkflowInlineMenu>

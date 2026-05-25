@@ -21,6 +21,10 @@ import {
   type PipelineStageSlug,
   type WorkflowTaskStatus,
 } from '@/domain/crm';
+import {
+  displayNameFromProfileParts,
+  initialsFromPersonName,
+} from '@/domain/crm/teamMemberDisplay';
 
 export type DbCrmClientRow = {
   id: string;
@@ -133,6 +137,8 @@ export type DbCrmBudgetEntryRow = {
 export type DbProfileRow = {
   id: string;
   email: string | null;
+  first_name?: string | null;
+  last_name?: string | null;
 };
 
 const TRADE_TYPES: readonly CrmTradeType[] = [
@@ -209,31 +215,21 @@ function notesPreview(notes: string | null, max = 120): string | null {
   return `${trimmed.slice(0, max - 1)}…`;
 }
 
-function displayNameFromEmail(email: string | null | undefined, fallbackId: string): string {
-  if (email) {
-    const local = email.split('@')[0]?.trim();
-    if (local) return local.replace(/[._-]+/g, ' ');
-  }
-  return `Member ${fallbackId.slice(0, 8)}`;
-}
-
-function initialsFromDisplayName(displayName: string): string {
-  const parts = displayName.trim().split(/\s+/).filter(Boolean);
-  if (parts.length === 0) return '?';
-  if (parts.length === 1) return parts[0]!.slice(0, 2).toUpperCase();
-  return `${parts[0]![0] ?? ''}${parts[1]![0] ?? ''}`.toUpperCase();
-}
-
 export function mapProfileToTeamMemberRef(
   profile: DbProfileRow | null | undefined,
   userId: string,
   avatarUrl: string | null = null
 ): CrmTeamMemberRef {
-  const displayName = displayNameFromEmail(profile?.email, userId);
+  const displayName = displayNameFromProfileParts({
+    email: profile?.email,
+    firstName: profile?.first_name,
+    lastName: profile?.last_name,
+    userId,
+  });
   return {
     id: userId,
     displayName,
-    initials: initialsFromDisplayName(displayName),
+    initials: initialsFromPersonName(displayName),
     avatarUrl,
     email: profile?.email ?? null,
   };

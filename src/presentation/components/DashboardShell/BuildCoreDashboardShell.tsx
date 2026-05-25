@@ -19,6 +19,7 @@ import { BuildCoreSettingsDrawer } from './BuildCoreSettingsDrawer';
 import { BuildCoreSidebar, type BuildCoreSidebarNavId } from './BuildCoreSidebar';
 import { CorePlatformDegradedBanner } from '@/presentation/components/CorePlatform/CorePlatformDegradedBanner';
 import { CurrentUserAvatarProvider } from '@/presentation/providers/CurrentUserAvatarContext';
+import { AssignmentIdentityProvider } from '@/presentation/providers/AssignmentIdentityProvider';
 import shellStyles from '../../../../app/(dashboard)/dashboard/dashboard.module.css';
 
 const sidebarBrandingClassNames = pickSidebarBrandingClassNames(shellStyles);
@@ -109,7 +110,9 @@ export function BuildCoreDashboardShell({
                 currentUserId={dash.user?.id ?? null}
                 currentUserAvatarUrl={dash.avatarUrl}
               >
-                <div className={shellStyles.listViewWrap}>{children}</div>
+                <AssignmentIdentityProvider>
+                  <div className={shellStyles.listViewWrap}>{children}</div>
+                </AssignmentIdentityProvider>
               </CurrentUserAvatarProvider>
             </main>
           </>

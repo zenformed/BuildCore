@@ -14,8 +14,11 @@ import {
   type WorkflowTaskFormState,
 } from '@/presentation/features/crmProjectDetail/workflowTaskFormModel';
 import { getWorkflowTaskAssigneeOptions } from '@/presentation/features/crmProjectDetail/workflowTaskAssigneeOptions';
+import { normalizeAssigneeMemberIdForSave } from '@/presentation/features/crmAssignment/buildAssigneeOptions';
+import { AssigneeMenuOptionLabel } from '@/presentation/features/crmAssignment/AssigneeMenuOptionLabel';
+import { useAssignmentIdentityCatalog } from '@/presentation/providers/AssignmentIdentityProvider';
+import { useBuildCoreDashboardContext } from '@/presentation/providers/BuildCoreDashboardProvider';
 import { crmRepositories } from '@/shared/di/container';
-import { useAuth } from '@/presentation/hooks/useAuth';
 import shared from '@/presentation/components/crmShared/crmShared.module.css';
 import { TeamMemberAvatar } from './TeamMemberAvatar';
 import { WorkflowInlineMenu } from './WorkflowInlineMenu';
@@ -41,7 +44,8 @@ export function WorkflowOpsTaskDraftRow({
   onCancel,
 }: WorkflowOpsTaskDraftRowProps): ReactElement {
   const wf = content.projectDetail.workflow;
-  const { user } = useAuth();
+  const dash = useBuildCoreDashboardContext();
+  const assignmentCatalog = useAssignmentIdentityCatalog();
   const [form, setForm] = useState<WorkflowTaskFormState>(() =>
     defaultWorkflowTaskFormState(stageSlug)
   );
@@ -53,7 +57,12 @@ export function WorkflowOpsTaskDraftRow({
   const statusRef = useRef<HTMLDivElement>(null);
   const assigneeRef = useRef<HTMLDivElement>(null);
 
-  const assigneeOptions = getWorkflowTaskAssigneeOptions(isApiSource, user?.id, user?.email);
+  const assigneeOptions = getWorkflowTaskAssigneeOptions(
+    isApiSource,
+    assignmentCatalog,
+    project.summary.contact,
+    dash.user?.id
+  );
   const selectedAssignee = assigneeOptions.find((o) => o.id === form.assignedMemberId);
 
   const updateField = useCallback(
@@ -201,14 +210,15 @@ export function WorkflowOpsTaskDraftRow({
               <button
                 key={option.id || 'unassigned'}
                 type="button"
-                className={styles.inlineMenuAction}
-                disabled={saving}
+                className={`${styles.inlineMenuAction} ${shared.assigneeMenuAction}`}
+                disabled={saving || option.disabled === true}
                 onClick={() => {
+                  if (option.disabled) return;
                   updateField('assignedMemberId', option.id);
                   setAssigneeMenuOpen(false);
                 }}
               >
-                {option.label}
+                <AssigneeMenuOptionLabel option={option} />
               </button>
             ))}
           </WorkflowInlineMenu>

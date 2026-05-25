@@ -1,4 +1,5 @@
 import type { CreateCrmProjectInput, CrmPriority, CrmTradeType, PipelineStageSlug } from '@/domain/crm';
+import { normalizeAssigneeMemberIdForSave } from '@/presentation/features/crmAssignment/buildAssigneeOptions';
 
 export type CreateCrmProjectFormState = {
   name: string;
@@ -78,7 +79,7 @@ export function validateCreateCrmProjectForm(
       notes: form.notes.trim() || null,
       dealValueCents,
       balanceRemainingCents,
-      assignedMemberId: form.assignedMemberId.trim() || null,
+      assignedMemberId: normalizeAssigneeMemberIdForSave(form.assignedMemberId),
     },
   };
 }

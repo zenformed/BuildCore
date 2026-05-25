@@ -10,8 +10,9 @@ import { getCrmDataSource } from '@/infrastructure/config/crmDataSource';
 import { CrmCreateNotAvailableError } from '@/infrastructure/crm/errors';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
 import { buildCoreDashboardNavigation as nav } from '@/platform/navigation/buildCoreDashboardNavigation';
-import { MOCK_CRM_TEAM_MEMBERS } from '@/platform/mock/crm';
-import { useAuth } from '@/presentation/hooks/useAuth';
+import { getCrmProjectAssigneeOptions } from '@/presentation/features/crmProjects/crmProjectAssigneeOptions';
+import { useAssignmentIdentityCatalog } from '@/presentation/providers/AssignmentIdentityProvider';
+import { useBuildCoreDashboardContext } from '@/presentation/providers/BuildCoreDashboardProvider';
 import {
   defaultCreateCrmProjectFormState,
   validateCreateCrmProjectForm,
@@ -28,7 +29,8 @@ export type CreateCrmProjectDrawerProps = {
 
 export function CreateCrmProjectDrawer({ open, onClose }: CreateCrmProjectDrawerProps): ReactElement | null {
   const router = useRouter();
-  const { user } = useAuth();
+  const dash = useBuildCoreDashboardContext();
+  const assignmentCatalog = useAssignmentIdentityCatalog();
   const isApiSource = getCrmDataSource() === 'api';
   const create = content.crm.create;
 
@@ -88,11 +90,20 @@ export function CreateCrmProjectDrawer({ open, onClose }: CreateCrmProjectDrawer
 
   if (!open) return null;
 
-  const assigneeOptions = isApiSource
-    ? user
-      ? [{ id: user.id, label: create.assigneeSelf }]
-      : []
-    : MOCK_CRM_TEAM_MEMBERS.map((m) => ({ id: m.id, label: m.displayName }));
+  const draftContact = {
+    id: 'draft-contact',
+    name: form.contactName.trim() || form.name.trim() || 'Customer',
+    email: form.email.trim(),
+    phone: form.phone.trim(),
+    title: null,
+  };
+
+  const assigneeOptions = getCrmProjectAssigneeOptions(
+    isApiSource,
+    assignmentCatalog,
+    draftContact,
+    dash.user?.id
+  );
 
   return (
     <div className={shellStyles.settingsOverlay} onClick={onClose} role="presentation">
@@ -296,7 +307,7 @@ export function CreateCrmProjectDrawer({ open, onClose }: CreateCrmProjectDrawer
                 >
                   <option value="">{create.assigneeUnassigned}</option>
                   {assigneeOptions.map((opt) => (
-                    <option key={opt.id} value={opt.id}>
+                    <option key={opt.id} value={opt.id} disabled={opt.disabled === true}>
                       {opt.label}
                     </option>
                   ))}

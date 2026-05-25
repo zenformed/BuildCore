@@ -25,6 +25,8 @@ import type {
   ZenformedCoreOrganizationInvitesResponse,
   ZenformedCoreOrganizationSeatsResponse,
   ZenformedCoreOrganizationAppAccessResponse,
+  ZenformedCoreOrganizationAssignmentIdentitiesResponse,
+  ZenformedCoreOrganizationAssignmentIdentity,
   ZenformedCoreOrganizationMemberRoleUpdateResponse,
   ZenformedCoreOrganizationMemberProfileUpdateResponse,
   ZenformedCoreOrganizationMemberRemoveResponse,
@@ -466,6 +468,45 @@ export function parseOrganizationMembersJson(
     });
   }
   return { organizationId: o.organizationId, members };
+}
+
+export function parseOrganizationAssignmentIdentitiesJson(
+  body: unknown
+): ZenformedCoreOrganizationAssignmentIdentitiesResponse | null {
+  if (body == null || typeof body !== 'object') return null;
+  const o = body as Record<string, unknown>;
+  if (typeof o.organizationId !== 'string') return null;
+  if (typeof o.appSlug !== 'string') return null;
+  if (!Array.isArray(o.identities)) return null;
+
+  const identities: ZenformedCoreOrganizationAssignmentIdentity[] = [];
+  for (const row of o.identities) {
+    if (row == null || typeof row !== 'object') return null;
+    const item = row as Record<string, unknown>;
+    if (typeof item.userId !== 'string') return null;
+    if (typeof item.displayName !== 'string') return null;
+    if (item.firstName != null && typeof item.firstName !== 'string') return null;
+    if (item.lastName != null && typeof item.lastName !== 'string') return null;
+    if (item.email != null && typeof item.email !== 'string') return null;
+    const role = parseOrganizationMemberRole(item.organizationRole);
+    if (role == null) return null;
+    if (item.appAccessStatus != null && typeof item.appAccessStatus !== 'string') return null;
+    if (item.appRole != null && typeof item.appRole !== 'string') return null;
+    if (item.avatarRevision != null && typeof item.avatarRevision !== 'string') return null;
+    identities.push({
+      userId: item.userId,
+      email: item.email ?? null,
+      firstName: item.firstName ?? null,
+      lastName: item.lastName ?? null,
+      displayName: item.displayName,
+      organizationRole: role,
+      appAccessStatus: item.appAccessStatus ?? null,
+      appRole: item.appRole ?? null,
+      avatarRevision: item.avatarRevision ?? null,
+    });
+  }
+
+  return { organizationId: o.organizationId, appSlug: o.appSlug, identities };
 }
 
 function parseOrganizationInviteRecord(row: unknown): ZenformedCoreOrganizationInvite | null {

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { readRequestBearerToken } from '@/infrastructure/auth/readRequestBearer';
-import { getMyAvatarBytes } from '@/infrastructure/coreApi/userAvatarClient';
+import { getMyAvatarBytes, getOrganizationMemberAvatarBytes } from '@/infrastructure/coreApi/userAvatarClient';
 import { coreUpstreamHttpResponsePayload } from '@/infrastructure/coreApi/zenformedCoreRelayHttp';
 import { getSupabaseUserFromToken } from '@/infrastructure/supabase/supabaseServer';
 import { getUserPhotoBuffer } from '@/infrastructure/userPhoto/UserPhotoService';
@@ -40,27 +40,39 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   }
 
   if (usesCoreUserAvatars()) {
-    const service = createPlatformAvatarServiceClient();
-    if (service == null) {
-      return new NextResponse(null, { status: 404 });
+    const coreResult = await getOrganizationMemberAvatarBytes(token, userId);
+    if (coreResult.ok) {
+      return new NextResponse(coreResult.data.buffer, {
+        headers: {
+          'Content-Type': coreResult.data.contentType,
+          'Cache-Control': 'private, max-age=3600',
+        },
+      });
     }
 
-    const sameOrg = await usersShareActiveOrganization(service, authUser.id, userId);
-    if (!sameOrg) {
+    if (coreResult.error.kind === 'http_error' && coreResult.error.status === 403) {
       return new NextResponse(null, { status: 403 });
     }
 
-    const downloaded = await downloadPlatformUserAvatar(service, userId);
-    if (downloaded == null) {
-      return new NextResponse(null, { status: 404 });
+    if (coreResult.error.kind !== 'http_error' || coreResult.error.status !== 404) {
+      const service = createPlatformAvatarServiceClient();
+      if (service != null) {
+        const sameOrg = await usersShareActiveOrganization(service, authUser.id, userId);
+        if (sameOrg) {
+          const downloaded = await downloadPlatformUserAvatar(service, userId);
+          if (downloaded != null) {
+            return new NextResponse(downloaded.buffer, {
+              headers: {
+                'Content-Type': downloaded.contentType,
+                'Cache-Control': 'private, max-age=3600',
+              },
+            });
+          }
+        }
+      }
     }
 
-    return new NextResponse(downloaded.buffer, {
-      headers: {
-        'Content-Type': downloaded.contentType,
-        'Cache-Control': 'private, max-age=3600',
-      },
-    });
+    return new NextResponse(null, { status: 404 });
   }
 
   return new NextResponse(null, { status: 404 });
