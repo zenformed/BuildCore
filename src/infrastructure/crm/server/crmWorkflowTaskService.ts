@@ -20,12 +20,13 @@ const TASK_SELECT =
 
 async function mapTaskRow(
   supabase: SupabaseClient,
+  organizationId: string,
   row: DbCrmWorkflowTaskRow
 ): Promise<CrmWorkflowTask> {
   const ids = [row.assigned_member_id, row.completed_by_member_id].filter(
     (id): id is string => id != null
   );
-  const memberById = await loadCrmMemberMap(supabase, ids);
+  const memberById = await loadCrmMemberMap(supabase, ids, { organizationId });
   return mapDbWorkflowTask(row, memberById);
 }
 
@@ -71,7 +72,7 @@ export async function listCrmWorkflowTasksForOrg(
   const memberIds = rows.flatMap((row) =>
     [row.assigned_member_id, row.completed_by_member_id].filter((id): id is string => id != null)
   );
-  const memberById = await loadCrmMemberMap(supabase, memberIds);
+  const memberById = await loadCrmMemberMap(supabase, memberIds, { organizationId });
   return rows.map((row) => mapDbWorkflowTask(row, memberById));
 }
 
@@ -157,7 +158,7 @@ export async function createCrmWorkflowTaskForOrg(
     );
   }
 
-  return mapTaskRow(supabase, data as DbCrmWorkflowTaskRow);
+  return mapTaskRow(supabase, organizationId, data as DbCrmWorkflowTaskRow);
 }
 
 export async function updateCrmWorkflowTaskForOrg(
@@ -302,7 +303,7 @@ export async function updateCrmWorkflowTaskForOrg(
     );
   }
 
-  return mapTaskRow(supabase, data as DbCrmWorkflowTaskRow);
+  return mapTaskRow(supabase, organizationId, data as DbCrmWorkflowTaskRow);
 }
 
 export async function archiveCrmWorkflowTaskForOrg(

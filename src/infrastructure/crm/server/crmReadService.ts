@@ -100,7 +100,9 @@ export async function listCrmProjectSummariesForOrg(
   }
 
   const projects = (data ?? []) as DbCrmProjectRow[];
-  const memberById = await loadCrmMemberMap(supabase, collectMemberIds({ projects }));
+  const memberById = await loadCrmMemberMap(supabase, collectMemberIds({ projects }), {
+    organizationId,
+  });
   return projects.map((row) => mapDbProjectSummary(row, memberById));
 }
 
@@ -177,7 +179,8 @@ export async function getCrmProjectDetailBySlugForOrg(
 
   const memberById = await loadCrmMemberMap(
     supabase,
-    collectMemberIds({ projects: [project], workflowTasks, documents, accountability, budgetEntries })
+    collectMemberIds({ projects: [project], workflowTasks, documents, accountability, budgetEntries }),
+    { organizationId }
   );
 
   return mapDbProjectDetail({

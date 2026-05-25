@@ -1,9 +1,10 @@
 'use client';
 
 import type { ReactElement } from 'react';
-import type { CrmAccountabilityAction } from '@/domain/crm';
+import type { CrmAccountabilityAction, CrmTeamMemberRef } from '@/domain/crm';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
 import { formatStageLabel } from '@/presentation/features/crmProjects/crmProjectFormatters';
+import { useResolvedTeamMemberRef } from '@/presentation/hooks/useResolvedTeamMemberRef';
 import { TeamMemberAvatar } from './TeamMemberAvatar';
 import styles from './ProjectDetail.module.css';
 
@@ -22,6 +23,16 @@ function formatDateTime(iso: string): string {
     hour: 'numeric',
     minute: '2-digit',
   }).format(date);
+}
+
+function AccountabilityUserCell({ actor }: { actor: CrmTeamMemberRef }): ReactElement {
+  const resolved = useResolvedTeamMemberRef(actor) ?? actor;
+  return (
+    <>
+      <TeamMemberAvatar member={resolved} />
+      <span>{resolved.displayName}</span>
+    </>
+  );
 }
 
 export type AccountabilityLogTableProps = {
@@ -52,8 +63,7 @@ export function AccountabilityLogTable({
         <div key={entry.id} className={`${styles.tableRow} ${gridClass}`} role="row">
           <span className={styles.accountabilityDate}>{formatDateTime(entry.at)}</span>
           <span className={styles.accountabilityUser}>
-            <TeamMemberAvatar member={entry.actor} />
-            <span>{entry.actor.displayName}</span>
+            <AccountabilityUserCell actor={entry.actor} />
           </span>
           <span className={styles.accountabilityEvent}>
             {entry.action.split('—')[0]?.trim() ?? entry.action}
