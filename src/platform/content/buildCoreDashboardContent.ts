@@ -141,7 +141,7 @@ export const buildCoreDashboardContent = {
       buildCoreAccessHint:
         'Whether each member can use BuildCore. This is separate from organization membership.',
       buildCorePermissions: 'BuildCore Permissions',
-      buildCorePermissionsHint: 'App-specific roles and capabilities (coming soon).',
+      buildCorePermissionsHint: 'App-specific roles and capabilities.',
       assignmentPermissions: 'Assignment / Approval Permissions',
       assignmentPermissionsHint: 'Workflow assignment and approval rules (coming soon).',
     },
@@ -165,6 +165,13 @@ export const buildCoreDashboardContent = {
     accessStatus: {
       enabled: 'Enabled',
       notConfigured: 'Not configured',
+    },
+    workflowTaskPermissions: {
+      title: 'Workflow Task Permissions',
+      hint: 'Control what each BuildCore role can do with workflow tasks. Payment and budget permissions will be added later.',
+      roleColumn: 'Role',
+      loading: 'Loading workflow task permissions…',
+      empty: 'No permission settings available.',
     },
   },
   crm: {

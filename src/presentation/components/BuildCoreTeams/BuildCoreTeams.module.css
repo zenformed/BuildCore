@@ -127,6 +127,126 @@
   color: var(--color-text-muted, #64748b);
 }
 
+.permissionsSection {
+  min-width: 0;
+}
+
+.permissionStatusLine {
+  margin: 0.5rem 0 0;
+  font-size: 0.8125rem;
+}
+
+.permissionStatusSuccess {
+  color: var(--color-success, #16a34a);
+}
+
+.permissionStatusError {
+  color: var(--color-error, #dc2626);
+}
+
+.matrixWrap {
+  overflow-x: auto;
+}
+
+.permissionsMatrix {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8125rem;
+}
+
+.permissionsMatrix thead th {
+  padding: 0.45rem 0.5rem;
+  text-align: center;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-text-muted, #64748b);
+  border-bottom: 1px solid var(--theme-border-main, var(--color-border));
+}
+
+.permissionsMatrix thead th.matrixRoleCol {
+  text-align: left;
+}
+
+.permissionsMatrix tbody td {
+  padding: 0.5rem 0.5rem;
+  text-align: center;
+  vertical-align: middle;
+  border-bottom: 1px solid var(--theme-border-main, var(--color-border));
+}
+
+.permissionsMatrix tbody td.matrixRoleCell {
+  text-align: left;
+  font-weight: 500;
+  color: var(--color-text, #0f172a);
+}
+
+:global([data-theme='dark']) .permissionsMatrix tbody td.matrixRoleCell {
+  color: #f1f5f9;
+}
+
+.permissionsMatrix tbody tr.matrixRowLocked td.matrixRoleCell {
+  color: var(--color-text-muted, #64748b);
+}
+
+.permissionSwitchCell {
+  text-align: center;
+}
+
+/* Editable off: clearer track so coordinators can see what they can change */
+.permissionSwitch {
+  position: relative;
+  display: inline-block;
+  width: 2.75rem;
+  height: 1.5rem;
+  padding: 0;
+  border: none;
+  border-radius: 999px;
+  background: #94a3b8;
+  cursor: pointer;
+  vertical-align: middle;
+  transition: background-color 0.2s ease;
+}
+
+.permissionSwitchOn {
+  background: var(--color-primary, #0ea5e9);
+}
+
+.permissionSwitchThumb {
+  position: absolute;
+  top: 0.125rem;
+  left: 0.125rem;
+  width: 1.25rem;
+  height: 1.25rem;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.2);
+  transition: transform 0.2s ease;
+}
+
+.permissionSwitchOn .permissionSwitchThumb {
+  transform: translateX(1.25rem);
+}
+
+/* Locked rows: one flat track color (on or off) so non-editable is obvious */
+.permissionSwitch:disabled,
+.permissionSwitch:disabled.permissionSwitchOn {
+  cursor: not-allowed;
+  background: #f1f5f9;
+}
+
+/* Dark mode: soften locked tracks so they are not glaring white, but still lighter than editable-off */
+:global([data-theme='dark']) .permissionSwitch:disabled,
+:global([data-theme='dark']) .permissionSwitch:disabled.permissionSwitchOn {
+  background: #cbd5e1;
+}
+
+.permissionSwitch:focus-visible {
+  outline: 2px solid var(--color-primary, #0ea5e9);
+  outline-offset: 2px;
+}
+
 @media (max-width: 900px) {
   .sectionGrid {
     grid-template-columns: 1fr;

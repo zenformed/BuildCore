@@ -1,0 +1,77 @@
+/**
+ * BuildCore role permission types (mirrors @zenformed/core/buildcore-permissions).
+ */
+
+import type { OrganizationMemberRole } from '@zenformed/core/organization-settings';
+
+export type BuildCorePermissionDomain = 'workflow_tasks';
+
+export type BuildCorePermissionRoleKey = 'admin' | 'coordinator' | 'member';
+
+export const BUILDCORE_PERMISSION_ROLE_KEYS: readonly BuildCorePermissionRoleKey[] = [
+  'admin',
+  'coordinator',
+  'member',
+];
+
+export type BuildCorePermissionColumnId =
+  | 'canView'
+  | 'canEdit'
+  | 'canApprove'
+  | 'canDelete'
+  | 'canCreate'
+  | 'canUpload';
+
+export const BUILDCORE_WORKFLOW_TASK_PERMISSION_COLUMNS: readonly {
+  readonly id: BuildCorePermissionColumnId;
+  readonly label: string;
+}[] = [
+  { id: 'canView', label: 'View' },
+  { id: 'canEdit', label: 'Edit' },
+  { id: 'canApprove', label: 'Approve' },
+  { id: 'canDelete', label: 'Delete' },
+  { id: 'canCreate', label: 'Create' },
+  { id: 'canUpload', label: 'Upload' },
+];
+
+export type BuildCoreRolePermissionFlags = {
+  readonly canView: boolean;
+  readonly canCreate: boolean;
+  readonly canEdit: boolean;
+  readonly canDelete: boolean;
+  readonly canApprove: boolean;
+  readonly canUpload: boolean;
+};
+
+export type BuildCoreRolePermissionRow = BuildCoreRolePermissionFlags & {
+  readonly roleKey: BuildCorePermissionRoleKey;
+};
+
+export type BuildCoreRolePermissionsResponse = {
+  readonly domain: BuildCorePermissionDomain;
+  readonly actorRole: OrganizationMemberRole;
+  readonly editableRoleKeys: readonly BuildCorePermissionRoleKey[];
+  readonly rows: readonly BuildCoreRolePermissionRow[];
+};
+
+export function roleLabelForBuildCorePermissionKey(roleKey: BuildCorePermissionRoleKey): string {
+  switch (roleKey) {
+    case 'admin':
+      return 'Admin';
+    case 'coordinator':
+      return 'Coordinator';
+    case 'member':
+      return 'Member';
+    default: {
+      const _exhaustive: never = roleKey;
+      return _exhaustive;
+    }
+  }
+}
+
+export function canEditBuildCorePermissionRoleRow(
+  editableRoleKeys: readonly BuildCorePermissionRoleKey[],
+  roleKey: BuildCorePermissionRoleKey
+): boolean {
+  return editableRoleKeys.includes(roleKey);
+}

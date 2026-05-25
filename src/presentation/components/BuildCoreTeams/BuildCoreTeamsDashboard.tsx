@@ -4,6 +4,7 @@ import type { ReactElement } from 'react';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
 import { useBuildCoreTeamsPage } from '@/presentation/features/buildCoreTeams/useBuildCoreTeamsPage';
 import { BuildCoreTeamsAccessGate } from './BuildCoreTeamsAccessGate';
+import { BuildCoreWorkflowTaskPermissionsSection } from './BuildCoreWorkflowTaskPermissionsSection';
 import projectStyles from '../CrmProjectDetail/ProjectDetail.module.css';
 import styles from './BuildCoreTeams.module.css';
 
@@ -57,7 +58,6 @@ function BuildCoreTeamsDashboardContent(): ReactElement {
               {copy.sections.buildCorePermissions}
             </h2>
             <p className={projectStyles.cardHelper}>{copy.sections.buildCorePermissionsHint}</p>
-            <p className={styles.placeholderCardBody}>{copy.placeholders.permissionsComingSoon}</p>
           </section>
           <section className={projectStyles.card} aria-labelledby="teams-assignment-permissions-heading">
             <h2 id="teams-assignment-permissions-heading" className={projectStyles.cardTitle}>
@@ -67,6 +67,8 @@ function BuildCoreTeamsDashboardContent(): ReactElement {
             <p className={styles.placeholderCardBody}>{copy.placeholders.assignmentComingSoon}</p>
           </section>
         </div>
+
+        <BuildCoreWorkflowTaskPermissionsSection enabled />
 
         <section
           className={`${projectStyles.card} ${styles.tableWrap}`}
