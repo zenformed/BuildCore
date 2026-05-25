@@ -2,8 +2,6 @@ import { NextRequest } from 'next/server';
 import { cancelOrganizationInvite } from '@/infrastructure/coreApi/organizationWorkspaceClient';
 import { relayOrganizationMutate } from '../../../coreOrganizationRelay';
 
-import { relayOrganizationMutate } from '../../../coreOrganizationRelay';
-
 export async function PATCH(
   request: NextRequest,
   context: { params: Promise<{ inviteId: string }> }
