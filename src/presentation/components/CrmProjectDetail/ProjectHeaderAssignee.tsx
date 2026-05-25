@@ -2,9 +2,9 @@
 
 import type { ReactElement } from 'react';
 import { useCallback, useRef, useState } from 'react';
-import type { CrmContact, CrmTeamMemberRef } from '@/domain/crm';
+import type { CrmTeamMemberRef } from '@/domain/crm';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
-import { getWorkflowTaskAssigneeOptions } from '@/presentation/features/crmProjectDetail/workflowTaskAssigneeOptions';
+import { getCrmProjectAssigneeOptions } from '@/presentation/features/crmProjects/crmProjectAssigneeOptions';
 import { normalizeAssigneeMemberIdForSave } from '@/presentation/features/crmAssignment/buildAssigneeOptions';
 import { AssigneeMenuOptionLabel } from '@/presentation/features/crmAssignment/AssigneeMenuOptionLabel';
 import { useAssignmentIdentityCatalog } from '@/presentation/providers/AssignmentIdentityProvider';
@@ -18,7 +18,6 @@ export type ProjectHeaderAssigneeProps = {
   assignedTo: CrmTeamMemberRef | null;
   isApiSource: boolean;
   isSaving: boolean;
-  projectContact: CrmContact;
   onAssigneeChange: (assignedMemberId: string) => Promise<boolean>;
 };
 
@@ -26,7 +25,6 @@ export function ProjectHeaderAssignee({
   assignedTo,
   isApiSource,
   isSaving,
-  projectContact,
   onAssigneeChange,
 }: ProjectHeaderAssigneeProps): ReactElement {
   const fields = content.projectDetail.fields;
@@ -35,10 +33,9 @@ export function ProjectHeaderAssignee({
   const assignmentCatalog = useAssignmentIdentityCatalog();
   const anchorRef = useRef<HTMLDivElement>(null);
   const [menuOpen, setMenuOpen] = useState(false);
-  const assigneeOptions = getWorkflowTaskAssigneeOptions(
+  const assigneeOptions = getCrmProjectAssigneeOptions(
     isApiSource,
     assignmentCatalog,
-    projectContact,
     dash.user?.id
   );
 

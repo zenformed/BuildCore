@@ -17,6 +17,7 @@ export function getWorkflowTaskAssigneeOptions(
     selfLabel: content.crm.assignee.self,
     currentUserId,
     catalog,
+    includeCustomerOption: true,
     projectContact,
   });
 }

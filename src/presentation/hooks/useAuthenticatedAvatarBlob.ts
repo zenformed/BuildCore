@@ -5,9 +5,22 @@ import { env } from '@/infrastructure/config/env';
 import { useSaaSProfile } from '@/presentation/hooks/useSaaSProfile';
 
 const blobCache = new Map<string, string>();
+const absentCache = new Set<string>();
 
 function isUserAvatarApiPath(url: string): boolean {
   return url.startsWith('/api/auth/user-avatar') || url.startsWith('/api/auth/avatar');
+}
+
+/** Cross-user avatars require `t=` (revision); missing revision means show initials, no fetch. */
+function shouldFetchAvatarApiPath(url: string): boolean {
+  if (!isUserAvatarApiPath(url)) return false;
+  if (!url.startsWith('/api/auth/user-avatar')) return true;
+  try {
+    const parsed = new URL(url, 'http://local');
+    return parsed.searchParams.has('t');
+  } catch {
+    return false;
+  }
 }
 
 /**
@@ -24,7 +37,12 @@ export function useAuthenticatedAvatarBlob(
   });
 
   useEffect(() => {
-    if (!apiPath || !isUserAvatarApiPath(apiPath)) {
+    if (!apiPath || !shouldFetchAvatarApiPath(apiPath)) {
+      setBlobUrl(null);
+      return;
+    }
+
+    if (absentCache.has(apiPath)) {
       setBlobUrl(null);
       return;
     }
@@ -43,7 +61,12 @@ export function useAuthenticatedAvatarBlob(
           : null;
         const headers: HeadersInit = token ? { Authorization: `Bearer ${token}` } : {};
         const res = await fetch(apiPath, { credentials: 'include', headers });
-        if (cancelled || !res.ok) return;
+        if (cancelled) return;
+        if (!res.ok) {
+          absentCache.add(apiPath);
+          setBlobUrl(null);
+          return;
+        }
         const blob = await res.blob();
         if (cancelled) return;
         const url = URL.createObjectURL(blob);

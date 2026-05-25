@@ -46,18 +46,9 @@ export function CrmProjectDraftRow({ onSaved, onCancel }: CrmProjectDraftRowProp
   const [assigneeMenuOpen, setAssigneeMenuOpen] = useState(false);
   const assigneeRef = useRef<HTMLSpanElement>(null);
 
-  const draftContact = {
-    id: 'draft-contact',
-    name: form.contactName.trim() || form.name.trim() || 'Customer',
-    email: form.email.trim(),
-    phone: form.phone.trim(),
-    title: null,
-  };
-
   const assigneeOptions = getCrmProjectAssigneeOptions(
     isApiSource,
     assignmentCatalog,
-    draftContact,
     dash.user?.id
   );
   const selectedAssignee = assigneeOptions.find((option) => option.id === form.assignedMemberId);

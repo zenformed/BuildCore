@@ -90,18 +90,9 @@ export function CreateCrmProjectDrawer({ open, onClose }: CreateCrmProjectDrawer
 
   if (!open) return null;
 
-  const draftContact = {
-    id: 'draft-contact',
-    name: form.contactName.trim() || form.name.trim() || 'Customer',
-    email: form.email.trim(),
-    phone: form.phone.trim(),
-    title: null,
-  };
-
   const assigneeOptions = getCrmProjectAssigneeOptions(
     isApiSource,
     assignmentCatalog,
-    draftContact,
     dash.user?.id
   );
 

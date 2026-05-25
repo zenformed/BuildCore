@@ -12,10 +12,7 @@ export function mapOrganizationAssignmentIdentityToTeamMemberRef(
     email: identity.email,
     firstName: identity.firstName,
     lastName: identity.lastName,
-    avatarUrl:
-      identity.avatarRevision != null && identity.avatarRevision !== ''
-        ? buildAuthUserAvatarUrl(identity.userId, identity.avatarRevision)
-        : buildAuthUserAvatarUrl(identity.userId),
+    avatarUrl: buildAuthUserAvatarUrl(identity.userId, identity.avatarRevision),
   });
 }
 

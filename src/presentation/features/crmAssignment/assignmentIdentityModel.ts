@@ -4,7 +4,6 @@ import {
   displayNameFromProfileParts,
   initialsFromPersonName,
 } from '@/domain/crm/teamMemberDisplay';
-import { buildAuthUserAvatarUrl } from '@/infrastructure/userAvatar/authUserAvatarUrl';
 
 export const ASSIGNMENT_CONTACT_ID_PREFIX = 'crm-contact:';
 
@@ -45,7 +44,7 @@ export function teamMemberRefFromOrgMember(input: {
     id: input.userId,
     displayName,
     initials: initialsFromPersonName(displayName),
-    avatarUrl: input.avatarUrl ?? buildAuthUserAvatarUrl(input.userId),
+    avatarUrl: input.avatarUrl ?? null,
     email: input.email,
   };
 }

@@ -49,7 +49,6 @@ export function ProjectDetailContextBlock({
             assignedTo={project.summary.assignedTo}
             isApiSource={isApiSource}
             isSaving={savingField === 'assignedMemberId'}
-            projectContact={project.summary.contact}
             onAssigneeChange={(id) => patchField('assignedMemberId', id)}
           />
         }
