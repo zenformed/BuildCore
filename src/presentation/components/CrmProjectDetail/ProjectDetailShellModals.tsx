@@ -5,6 +5,7 @@ import type { CrmProjectSummary } from '@/domain/crm';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
 import { ConfirmModal } from '@/presentation/components/ConfirmModal';
 import { CrmProjectDeleteConfirmModal } from '@/presentation/components/CrmProjects/CrmProjectDeleteConfirmModal';
+import { WorkflowTaskCustomerNotifyDialog } from '@/presentation/components/CrmProjectDetail/WorkflowTaskCustomerNotifyDialog';
 import type { useProjectCompletionToggle } from '@/presentation/features/crmProjectDetail/useProjectCompletionToggle';
 import type { useProjectDetailWorkspace } from '@/presentation/features/crmProjectDetail/useProjectDetailWorkspace';
 
@@ -21,6 +22,11 @@ export type ProjectDetailShellModalsProps = {
     | 'handleConfirmArchiveTask'
     | 'setToast'
     | 'wf'
+    | 'customerNotifyPrompt'
+    | 'customerNotifySending'
+    | 'customerNotifyFeedback'
+    | 'closeCustomerNotifyPrompt'
+    | 'sendCustomerNotifyEmail'
   >;
   pendingDeleteProject: CrmProjectSummary | null;
   onCloseDelete: () => void;
@@ -45,6 +51,11 @@ export function ProjectDetailShellModals({
     handleConfirmArchiveTask,
     setToast,
     wf,
+    customerNotifyPrompt,
+    customerNotifySending,
+    customerNotifyFeedback,
+    closeCustomerNotifyPrompt,
+    sendCustomerNotifyEmail,
   } = workspace;
 
   return (
@@ -119,6 +130,15 @@ export function ProjectDetailShellModals({
         pendingProject={pendingDeleteProject}
         onClose={onCloseDelete}
         onConfirm={onConfirmDelete}
+      />
+      <WorkflowTaskCustomerNotifyDialog
+        prompt={customerNotifyPrompt}
+        sending={customerNotifySending}
+        feedback={customerNotifyFeedback}
+        onClose={closeCustomerNotifyPrompt}
+        onSendEmail={() => {
+          void sendCustomerNotifyEmail();
+        }}
       />
     </>
   );

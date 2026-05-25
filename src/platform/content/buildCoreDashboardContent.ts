@@ -396,6 +396,19 @@ export const buildCoreDashboardContent = {
         taskKind: 'Task type',
         amountUsd: 'Amount (USD)',
       },
+      customerNotify: {
+        title: 'Notify customer?',
+        messageWithEmail: (customerName: string) =>
+          `Would you like to email ${customerName} about this task?`,
+        messageNoEmail:
+          'This customer does not have an email address on file, so no notification can be sent.',
+        notNow: 'Not now',
+        sendEmail: 'Send email',
+        sending: 'Sending…',
+        success: 'Notification email sent.',
+        sendFailed: 'Could not send the notification email. Try again.',
+        closeAriaLabel: 'Close notify customer dialog',
+      },
     },
     payments: {
       title: 'Payments',

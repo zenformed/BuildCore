@@ -16,6 +16,7 @@ import { useBudgetSection } from '@/presentation/features/crmProjectDetail/useBu
 import { useWorkflowTasksSection } from '@/presentation/features/crmProjectDetail/useWorkflowTasksSection';
 import type { WorkflowTaskDrawerContext } from '@/presentation/components/CrmProjectDetail/WorkflowTaskDrawer';
 import { crmRepositories } from '@/shared/di/container';
+import { useWorkflowTaskCustomerNotifyPrompt } from '@/presentation/features/crmProjectDetail/useWorkflowTaskCustomerNotifyPrompt';
 
 export type ProjectDetailToast = { kind: 'success' | 'error'; message: string };
 
@@ -41,6 +42,7 @@ export function useProjectDetailWorkspace(initialProject: CrmProjectDetail) {
 
   const workflowSection = useWorkflowTasksSection(project, setProject);
   const budgetSection = useBudgetSection(project, setProject);
+  const customerNotify = useWorkflowTaskCustomerNotifyPrompt(project.summary.contact);
 
   const handleProjectSaved = useCallback((next: CrmProjectDetail) => {
     setProject(next);
@@ -195,5 +197,12 @@ export function useProjectDetailWorkspace(initialProject: CrmProjectDetail) {
     openCreateTask,
     closeTaskDrawer,
     wf,
+    customerNotifyPrompt: customerNotify.customerNotifyPrompt,
+    customerNotifySending: customerNotify.customerNotifySending,
+    customerNotifyFeedback: customerNotify.customerNotifyFeedback,
+    closeCustomerNotifyPrompt: customerNotify.closeCustomerNotifyPrompt,
+    requestCustomerNotifyAfterAssigneeChange:
+      customerNotify.requestCustomerNotifyAfterAssigneeChange,
+    sendCustomerNotifyEmail: customerNotify.sendCustomerNotifyEmail,
   };
 }

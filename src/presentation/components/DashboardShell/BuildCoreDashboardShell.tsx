@@ -66,7 +66,11 @@ export function BuildCoreDashboardShell({
           mainColumn: layoutClassNames.mainColumn,
         }}
         sidebar={
-          <BuildCoreSidebar activeId={sidebarActiveId} onSelect={onSidebarSelect}>
+          <BuildCoreSidebar
+            activeId={sidebarActiveId}
+            onSelect={onSidebarSelect}
+            canAccessTeams={dash.canAccessBuildCoreTeams}
+          >
             <ZenformedSidebarBranding
               classNames={sidebarBrandingClassNames}
               shopName={dash.shopName}

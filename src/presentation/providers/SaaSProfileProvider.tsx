@@ -33,6 +33,7 @@ import {
 } from '@/infrastructure/profile/saasProfileFallback';
 import { getSupabaseClient, type Session } from '@/infrastructure/supabase/supabaseClient';
 import { parseOrganizationMembershipContextJson } from '@/infrastructure/coreApi/parseResponse';
+import type { OrganizationPermissions } from '@zenformed/core/organization-settings';
 
 export type CorePlatformStatus = 'not_required' | 'loading' | 'available' | 'unavailable';
 
@@ -48,6 +49,7 @@ export type OrganizationMembershipContext = {
   hasNonPersonalOrganizationMembership: boolean;
   membershipKind: OrganizationMembershipKind;
   role: 'owner' | 'admin' | 'coordinator' | 'member' | null;
+  permissions?: OrganizationPermissions;
 };
 
 export type MembershipContextStatus = 'pending' | 'ready' | 'failed';

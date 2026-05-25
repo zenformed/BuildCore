@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useMemo, type ReactElement, type ReactNode } from 'react';
+import { useCallback, useEffect, useMemo, type ReactElement, type ReactNode } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { buildCoreDashboardNavigation as nav } from '@/platform/navigation/buildCoreDashboardNavigation';
 import { resolveBuildCoreDashboardShellConfig } from '@/presentation/features/buildCoreDashboard/resolveBuildCoreDashboardShellConfig';
@@ -32,13 +32,23 @@ export function BuildCorePersistentDashboardShell({
         return;
       }
       if (id === 'teams') {
-        router.push(nav.routes.teams);
+        if (dash.canAccessBuildCoreTeams) {
+          router.push(nav.routes.teams);
+        }
         return;
       }
       router.push(nav.routes.dashboard);
     },
     [dash, router]
   );
+
+  useEffect(() => {
+    const onTeamsRoute =
+      pathname === nav.routes.teams || pathname.startsWith(`${nav.routes.teams}/`);
+    if (onTeamsRoute && !dash.canAccessBuildCoreTeams) {
+      router.replace(nav.routes.dashboard);
+    }
+  }, [dash.canAccessBuildCoreTeams, pathname, router]);
 
   return (
     <BuildCoreDashboardShell

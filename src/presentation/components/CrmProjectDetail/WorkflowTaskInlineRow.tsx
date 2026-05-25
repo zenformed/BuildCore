@@ -21,6 +21,7 @@ import { AssigneeMenuOptionLabel } from '@/presentation/features/crmAssignment/A
 import { useAssignmentIdentityCatalog } from '@/presentation/providers/AssignmentIdentityProvider';
 import { useBuildCoreDashboardContext } from '@/presentation/providers/BuildCoreDashboardProvider';
 import { useProjectDetailShell } from '@/presentation/features/crmProjectDetail/ProjectDetailShellContext';
+import { shouldOfferWorkflowTaskCustomerNotify } from '@/presentation/features/crmProjectDetail/workflowTaskCustomerNotify';
 import { useWorkflowTaskPatch } from '@/presentation/features/crmProjectDetail/useWorkflowTaskPatch';
 import { validateWorkflowTaskStatusChange } from '@/presentation/features/crmProjectDetail/workflowTaskDocumentsValidation';
 import {
@@ -67,6 +68,7 @@ export function WorkflowTaskInlineRow({
     project,
     onWorkflowTaskDocumentUploaded,
     onWorkflowTaskDocumentDeleted,
+    requestCustomerNotifyAfterAssigneeChange,
   } = useProjectDetailShell();
   const dash = useBuildCoreDashboardContext();
   const assignmentCatalog = useAssignmentIdentityCatalog();
@@ -186,11 +188,32 @@ export function WorkflowTaskInlineRow({
           taskId: task.id,
           assignedMemberId: normalizeWorkflowTaskAssigneeIdForSave(assignedMemberId),
         });
+        if (
+          shouldOfferWorkflowTaskCustomerNotify({
+            isApiSource,
+            previousAssigneeId: current,
+            newAssigneeId: assignedMemberId,
+          })
+        ) {
+          requestCustomerNotifyAfterAssigneeChange(
+            isApiSource,
+            task.id,
+            current,
+            assignedMemberId
+          );
+        }
       } catch (err) {
         reportError(err);
       }
     },
-    [patchTask, reportError, task.assignedTo?.id, task.id]
+    [
+      isApiSource,
+      patchTask,
+      reportError,
+      requestCustomerNotifyAfterAssigneeChange,
+      task.assignedTo?.id,
+      task.id,
+    ]
   );
 
   const saveAmount = useCallback(async () => {

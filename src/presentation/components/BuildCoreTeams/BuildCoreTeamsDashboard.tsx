@@ -3,10 +3,11 @@
 import type { ReactElement } from 'react';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
 import { useBuildCoreTeamsPage } from '@/presentation/features/buildCoreTeams/useBuildCoreTeamsPage';
+import { BuildCoreTeamsAccessGate } from './BuildCoreTeamsAccessGate';
 import projectStyles from '../CrmProjectDetail/ProjectDetail.module.css';
 import styles from './BuildCoreTeams.module.css';
 
-export function BuildCoreTeamsDashboard(): ReactElement {
+function BuildCoreTeamsDashboardContent(): ReactElement {
   const { model, isLoading, loadError } = useBuildCoreTeamsPage();
   const copy = content.teams;
 
@@ -16,10 +17,6 @@ export function BuildCoreTeamsDashboard(): ReactElement {
 
   if (loadError) {
     return <p className={styles.error}>{loadError ?? copy.loadError}</p>;
-  }
-
-  if (!model.canViewTeamMembers) {
-    return <p className={styles.noAccess}>{copy.noAccess}</p>;
   }
 
   return (
@@ -127,5 +124,13 @@ export function BuildCoreTeamsDashboard(): ReactElement {
         </section>
       </div>
     </div>
+  );
+}
+
+export function BuildCoreTeamsDashboard(): ReactElement {
+  return (
+    <BuildCoreTeamsAccessGate>
+      <BuildCoreTeamsDashboardContent />
+    </BuildCoreTeamsAccessGate>
   );
 }

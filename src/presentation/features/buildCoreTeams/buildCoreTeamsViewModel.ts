@@ -5,6 +5,7 @@ import type {
 import type { OrganizationWorkspaceSnapshot } from '@zenformed/core/organization-settings';
 import { formatOrganizationRoleLabel } from '@zenformed/core/dashboard-shell';
 import { memberHasBuildCoreAccess } from '@/presentation/features/crmAssignment/buildCoreAssignableMembers';
+import { canAccessBuildCoreTeams } from '@/presentation/features/buildCoreTeams/buildCoreTeamsAccess';
 
 type OrganizationMember = ZenformedCoreOrganizationMembersResponse['members'][number];
 
@@ -66,7 +67,10 @@ export function buildBuildCoreTeamsPageModel(
   snapshot: OrganizationWorkspaceSnapshot | null,
   subscriptionActive: boolean
 ): BuildCoreTeamsPageModel {
-  const canViewTeamMembers = snapshot?.membershipContext?.permissions.canViewTeamMembers ?? false;
+  const canViewTeamMembers = canAccessBuildCoreTeams({
+    role: snapshot?.membershipContext?.role,
+    permissions: snapshot?.membershipContext?.permissions ?? null,
+  });
   const members = snapshot?.members?.filter((member) => member.status !== 'removed') ?? [];
   const appAccess = snapshot?.appAccess as ZenformedCoreOrganizationAppAccessResponse | null;
 

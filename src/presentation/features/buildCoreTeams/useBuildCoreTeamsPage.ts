@@ -28,7 +28,7 @@ export function useBuildCoreTeamsPage(): {
       memberRole: nav.apis.organizationMemberRole,
     },
     getAccessToken: dash.getAccessToken,
-    enabled: true,
+    enabled: dash.canAccessBuildCoreTeams,
   });
 
   const model = useMemo(

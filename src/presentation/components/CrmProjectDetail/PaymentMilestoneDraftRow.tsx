@@ -18,6 +18,8 @@ import { normalizeAssigneeMemberIdForSave } from '@/presentation/features/crmAss
 import { AssigneeMenuOptionLabel } from '@/presentation/features/crmAssignment/AssigneeMenuOptionLabel';
 import { useAssignmentIdentityCatalog } from '@/presentation/providers/AssignmentIdentityProvider';
 import { useBuildCoreDashboardContext } from '@/presentation/providers/BuildCoreDashboardProvider';
+import { useProjectDetailShell } from '@/presentation/features/crmProjectDetail/ProjectDetailShellContext';
+import { shouldOfferWorkflowTaskCustomerNotify } from '@/presentation/features/crmProjectDetail/workflowTaskCustomerNotify';
 import { crmRepositories } from '@/shared/di/container';
 import shared from '@/presentation/components/crmShared/crmShared.module.css';
 import { TeamMemberAvatar } from './TeamMemberAvatar';
@@ -44,6 +46,7 @@ export function PaymentMilestoneDraftRow({
   const wf = content.projectDetail.workflow;
   const payments = content.projectDetail.payments;
   const dash = useBuildCoreDashboardContext();
+  const { requestCustomerNotifyAfterAssigneeChange } = useProjectDetailShell();
   const assignmentCatalog = useAssignmentIdentityCatalog();
   const [form, setForm] = useState<WorkflowTaskFormState>(defaultPaymentMilestoneFormState);
   const [error, setError] = useState<string | null>(null);
@@ -86,13 +89,36 @@ export function PaymentMilestoneDraftRow({
         ...validated.body,
       });
       await onSaved(created);
+      if (
+        shouldOfferWorkflowTaskCustomerNotify({
+          isApiSource,
+          previousAssigneeId: '',
+          newAssigneeId: form.assignedMemberId,
+        })
+      ) {
+        requestCustomerNotifyAfterAssigneeChange(
+          isApiSource,
+          created.id,
+          '',
+          form.assignedMemberId
+        );
+      }
       onCancel();
     } catch (err) {
       setError(err instanceof Error ? err.message : wf.taskSubmitFailed);
     } finally {
       setSaving(false);
     }
-  }, [form, onCancel, onSaved, project.summary.id, project.summary.slug, wf.taskSubmitFailed]);
+  }, [
+    form,
+    isApiSource,
+    onCancel,
+    onSaved,
+    project.summary.id,
+    project.summary.slug,
+    requestCustomerNotifyAfterAssigneeChange,
+    wf.taskSubmitFailed,
+  ]);
 
   const rowClass = `${styles.tableRow} ${styles.workflowGrid} ${styles.workflowGridPaymentsWithDates} ${styles.workflowInlineRow} ${styles.paymentDraftRow}`;
 

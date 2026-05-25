@@ -18,6 +18,8 @@ import { normalizeAssigneeMemberIdForSave } from '@/presentation/features/crmAss
 import { AssigneeMenuOptionLabel } from '@/presentation/features/crmAssignment/AssigneeMenuOptionLabel';
 import { useAssignmentIdentityCatalog } from '@/presentation/providers/AssignmentIdentityProvider';
 import { useBuildCoreDashboardContext } from '@/presentation/providers/BuildCoreDashboardProvider';
+import { useProjectDetailShell } from '@/presentation/features/crmProjectDetail/ProjectDetailShellContext';
+import { shouldOfferWorkflowTaskCustomerNotify } from '@/presentation/features/crmProjectDetail/workflowTaskCustomerNotify';
 import { crmRepositories } from '@/shared/di/container';
 import shared from '@/presentation/components/crmShared/crmShared.module.css';
 import { TeamMemberAvatar } from './TeamMemberAvatar';
@@ -45,6 +47,7 @@ export function WorkflowOpsTaskDraftRow({
 }: WorkflowOpsTaskDraftRowProps): ReactElement {
   const wf = content.projectDetail.workflow;
   const dash = useBuildCoreDashboardContext();
+  const { requestCustomerNotifyAfterAssigneeChange } = useProjectDetailShell();
   const assignmentCatalog = useAssignmentIdentityCatalog();
   const [form, setForm] = useState<WorkflowTaskFormState>(() =>
     defaultWorkflowTaskFormState(stageSlug)
@@ -89,6 +92,20 @@ export function WorkflowOpsTaskDraftRow({
         ...validated.body,
       });
       await onSaved(created);
+      if (
+        shouldOfferWorkflowTaskCustomerNotify({
+          isApiSource,
+          previousAssigneeId: '',
+          newAssigneeId: form.assignedMemberId,
+        })
+      ) {
+        requestCustomerNotifyAfterAssigneeChange(
+          isApiSource,
+          created.id,
+          '',
+          form.assignedMemberId
+        );
+      }
       onCancel();
     } catch (err) {
       setError(err instanceof Error ? err.message : wf.taskSubmitFailed);
@@ -103,6 +120,8 @@ export function WorkflowOpsTaskDraftRow({
     project.summary.slug,
     stageSlug,
     wf.taskSubmitFailed,
+    isApiSource,
+    requestCustomerNotifyAfterAssigneeChange,
   ]);
 
   const rowClass = `${styles.tableRow} ${styles.workflowGrid} ${styles.workflowInlineRow} ${styles.paymentDraftRow}`;

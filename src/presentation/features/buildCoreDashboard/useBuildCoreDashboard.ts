@@ -1,10 +1,11 @@
 'use client';
 
 import type { SaaSEntitlementSnapshot } from '@/application/ports';
-import { useCallback, useEffect, useRef, useState, type ChangeEvent, type RefObject } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type ChangeEvent, type RefObject } from 'react';
 import { useRouter } from 'next/navigation';
 import type { User } from '@/domain/entities/User';
 import { env } from '@/infrastructure/config/env';
+import { runtimeModes } from '@/infrastructure/config/runtimeModes';
 import { useAuth } from '@/presentation/hooks/useAuth';
 import { useBranding } from '@/presentation/hooks/useBranding';
 import { useOrganizationLogoUpload } from '@zenformed/core/dashboard-shell';
@@ -14,6 +15,7 @@ import { useSaaSProfile } from '@/presentation/hooks/useSaaSProfile';
 import { useUserAvatar } from '@/presentation/hooks/useUserAvatar';
 import { useTenant } from '@/presentation/providers';
 import { computeIsAdmin } from '@/presentation/features/buildCoreDashboard/buildCoreDashboardViewModel';
+import { canAccessBuildCoreTeams } from '@/presentation/features/buildCoreTeams/buildCoreTeamsAccess';
 import { formatOrganizationRoleLabel } from '@zenformed/core/dashboard-shell';
 import type { BuildCoreSettingsSectionId } from '@/platform/navigation/buildCoreDashboardNavigation';
 import type { CrmProjectSummary } from '@/domain/crm';
@@ -33,6 +35,7 @@ export function useBuildCoreDashboard(): {
   brandingLoading: boolean;
   effectiveLicenseTier: string | undefined;
   organizationRoleLabel: string | null;
+  canAccessBuildCoreTeams: boolean;
   isAdmin: boolean;
   avatarUrl: string | null;
   avatarLoading: boolean;
@@ -68,7 +71,13 @@ export function useBuildCoreDashboard(): {
   const router = useRouter();
   const { user, isLoading: authLoading, signOut } = useAuth();
   const { shopName, logoUrl, hasLogo, isLoading: brandingLoading, refetch: refetchBranding } = useBranding();
-  const { profile: saasProfile, entitlementSnapshot, session: saasSession, organizationMembershipContext } = useSaaSProfile();
+  const {
+    profile: saasProfile,
+    entitlementSnapshot,
+    session: saasSession,
+    organizationMembershipContext,
+    membershipContextStatus,
+  } = useSaaSProfile();
   const { setTenantId } = useTenant();
 
   const saasSessionRef = useRef(saasSession);
@@ -114,6 +123,23 @@ export function useBuildCoreDashboard(): {
   const organizationRoleLabel = formatOrganizationRoleLabel(organizationMembershipContext?.role);
   const isAdmin = computeIsAdmin(env.isSaasMode, user);
 
+  const canAccessBuildCoreTeamsNav = useMemo(() => {
+    if (!env.isSaasMode || runtimeModes.useMockAuth()) {
+      return true;
+    }
+    if (membershipContextStatus !== 'ready') {
+      return false;
+    }
+    return canAccessBuildCoreTeams({
+      role: organizationMembershipContext?.role,
+      permissions: organizationMembershipContext?.permissions ?? null,
+    });
+  }, [
+    organizationMembershipContext?.permissions,
+    organizationMembershipContext?.role,
+    membershipContextStatus,
+  ]);
+
   const { logoUploading, headerLogoFileInputRef, handleLogoFileChange } = useOrganizationLogoUpload({
     brandingApiUrl: nav.apis.branding,
     getAccessToken,
@@ -132,6 +158,7 @@ export function useBuildCoreDashboard(): {
     brandingLoading,
     effectiveLicenseTier,
     organizationRoleLabel,
+    canAccessBuildCoreTeams: canAccessBuildCoreTeamsNav,
     isAdmin,
     avatarUrl,
     avatarLoading,

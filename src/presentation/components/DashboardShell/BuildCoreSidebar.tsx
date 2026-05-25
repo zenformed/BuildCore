@@ -16,15 +16,23 @@ const SIDEBAR_ICONS: Record<BuildCoreSidebarNavId, () => ReactElement> = {
 export type BuildCoreSidebarProps = {
   activeId: BuildCoreSidebarNavId;
   onSelect: (id: BuildCoreSidebarNavId) => void;
+  /** When false, the Teams nav control is omitted (org members). */
+  canAccessTeams?: boolean;
   children?: React.ReactNode;
 };
 
-export function BuildCoreSidebar({ activeId, onSelect, children }: BuildCoreSidebarProps): ReactElement {
+export function BuildCoreSidebar({
+  activeId,
+  onSelect,
+  canAccessTeams = true,
+  children,
+}: BuildCoreSidebarProps): ReactElement {
   const { ariaLabel, items } = nav.sidebar;
+  const visibleItems = items.filter((item) => item.id !== 'teams' || canAccessTeams);
   return (
     <nav className={styles.sidebar} aria-label={ariaLabel}>
       {children ? <div className={styles.sidebarLogoSlot}>{children}</div> : null}
-      {items.map((item) => {
+      {visibleItems.map((item) => {
         const Icon = SIDEBAR_ICONS[item.id];
         return (
           <button
