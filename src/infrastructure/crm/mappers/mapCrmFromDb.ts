@@ -25,6 +25,7 @@ import {
   displayNameFromProfileParts,
   initialsFromPersonName,
 } from '@/domain/crm/teamMemberDisplay';
+import { workflowTaskAssigneeIdFromContactId } from '@/domain/crm/workflowTaskAssignee';
 
 export type DbCrmClientRow = {
   id: string;
@@ -70,6 +71,7 @@ export type DbCrmWorkflowTaskRow = {
   due_at: string | null;
   completed_at: string | null;
   assigned_member_id: string | null;
+  assigned_contact_id: string | null;
   completed_by_member_id: string | null;
   sort_order: number;
   documents_required: boolean;
@@ -307,10 +309,32 @@ export function mapDbProjectSummary(
   };
 }
 
+function mapContactToAssigneeRef(contact: CrmContact): CrmTeamMemberRef {
+  const name = contact.name.trim() || 'Customer';
+  return {
+    id: workflowTaskAssigneeIdFromContactId(contact.id),
+    displayName: `${name} (Customer)`,
+    initials: initialsFromPersonName(name),
+    avatarUrl: null,
+    email: contact.email.trim() || null,
+  };
+}
+
 export function mapDbWorkflowTask(
   row: DbCrmWorkflowTaskRow,
-  memberById: ReadonlyMap<string, CrmTeamMemberRef>
+  memberById: ReadonlyMap<string, CrmTeamMemberRef>,
+  contactById: ReadonlyMap<string, CrmContact> = new Map()
 ): CrmWorkflowTask {
+  const assignedTo =
+    row.assigned_contact_id != null
+      ? (contactById.get(row.assigned_contact_id) != null
+          ? mapContactToAssigneeRef(contactById.get(row.assigned_contact_id)!)
+          : null)
+      : row.assigned_member_id != null
+        ? (memberById.get(row.assigned_member_id) ??
+          mapProfileToTeamMemberRef(null, row.assigned_member_id))
+        : null;
+
   return {
     id: row.id,
     stageSlug: asPipelineStageSlug(row.stage_slug),
@@ -318,11 +342,7 @@ export function mapDbWorkflowTask(
     status: asWorkflowStatus(row.status),
     documentsRequired: row.documents_required ?? true,
     notes: row.notes,
-    assignedTo:
-      row.assigned_member_id != null
-        ? (memberById.get(row.assigned_member_id) ??
-          mapProfileToTeamMemberRef(null, row.assigned_member_id))
-        : null,
+    assignedTo,
     dueAt: row.due_at,
     completedAt: row.completed_at,
     completedBy:
@@ -455,7 +475,10 @@ export function mapDbProjectDetail(input: {
   memberById: ReadonlyMap<string, CrmTeamMemberRef>;
 }): CrmProjectDetail {
   const baseSummary = mapDbProjectSummary(input.project, input.memberById);
-  const workflowTasks = input.workflowTasks.map((row) => mapDbWorkflowTask(row, input.memberById));
+  const contactById = new Map<string, CrmContact>([[baseSummary.contact.id, baseSummary.contact]]);
+  const workflowTasks = input.workflowTasks.map((row) =>
+    mapDbWorkflowTask(row, input.memberById, contactById)
+  );
   const balanceRemainingCents = computeProjectBalanceCents(
     workflowTasks,
     baseSummary.balanceRemainingCents

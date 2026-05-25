@@ -178,7 +178,7 @@ export const buildCoreDashboardContent = {
       priorityAll: 'All priorities',
     },
     assignee: {
-      customerComingSoon: 'Customer assignment coming soon',
+      customer: 'Assign to Customer',
       self: 'Assign to myself',
     },
     create: {

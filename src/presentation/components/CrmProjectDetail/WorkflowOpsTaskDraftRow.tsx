@@ -61,7 +61,8 @@ export function WorkflowOpsTaskDraftRow({
     isApiSource,
     assignmentCatalog,
     project.summary.contact,
-    dash.user?.id
+    dash.user?.id,
+    form.assignedMemberId
   );
   const selectedAssignee = assigneeOptions.find((o) => o.id === form.assignedMemberId);
 

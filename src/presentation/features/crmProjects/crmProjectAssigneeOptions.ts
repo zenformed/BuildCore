@@ -16,6 +16,5 @@ export function getCrmProjectAssigneeOptions(
     selfLabel: content.crm.assignee.self,
     currentUserId,
     catalog,
-    includeCustomerOption: false,
   });
 }

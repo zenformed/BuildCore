@@ -57,6 +57,7 @@ import type {
 } from '@/domain/crm/budgetMutations';
 
 import { getMockCrmTeamMember } from '@/platform/mock/crm';
+import { resolveMockWorkflowTaskAssigneeFromDetail } from '@/infrastructure/crm/mock/resolveMockWorkflowTaskAssignee';
 
 import { MOCK_CRM_PROJECT_DETAILS, MOCK_CRM_PROJECT_SUMMARIES } from '@/platform/mock/crm';
 
@@ -318,9 +319,7 @@ export class MockCrmWorkflowTasksRepository implements ICrmWorkflowTasksReposito
 
     if (detail == null) throw new Error('Project not found');
 
-    const assignee =
-
-      input.assignedMemberId != null ? getMockCrmTeamMember(input.assignedMemberId) : null;
+    const assignee = resolveMockWorkflowTaskAssigneeFromDetail(input.assignedMemberId, detail);
 
     const isPayment = input.amountCents != null;
     const now = new Date().toISOString();
@@ -447,11 +446,7 @@ export class MockCrmWorkflowTasksRepository implements ICrmWorkflowTasksReposito
 
         input.assignedMemberId !== undefined
 
-          ? input.assignedMemberId
-
-            ? getMockCrmTeamMember(input.assignedMemberId)
-
-            : null
+          ? resolveMockWorkflowTaskAssigneeFromDetail(input.assignedMemberId, found.detail)
 
           : found.task.assignedTo,
 

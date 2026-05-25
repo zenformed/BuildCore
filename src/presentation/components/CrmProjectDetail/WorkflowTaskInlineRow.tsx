@@ -16,7 +16,7 @@ import { parseUsdInputToCents } from '@/presentation/features/crmCreate/createCr
 import { formatCentsAsUsd } from '@/presentation/features/crmProjects/crmProjectFormatters';
 import { centsToUsdInput } from '@/presentation/features/crmProjectDetail/workflowTaskFormModel';
 import { getWorkflowTaskAssigneeOptions } from '@/presentation/features/crmProjectDetail/workflowTaskAssigneeOptions';
-import { normalizeAssigneeMemberIdForSave } from '@/presentation/features/crmAssignment/buildAssigneeOptions';
+import { normalizeWorkflowTaskAssigneeIdForSave } from '@/presentation/features/crmAssignment/buildWorkflowTaskAssigneeOptions';
 import { AssigneeMenuOptionLabel } from '@/presentation/features/crmAssignment/AssigneeMenuOptionLabel';
 import { useAssignmentIdentityCatalog } from '@/presentation/providers/AssignmentIdentityProvider';
 import { useBuildCoreDashboardContext } from '@/presentation/providers/BuildCoreDashboardProvider';
@@ -98,7 +98,8 @@ export function WorkflowTaskInlineRow({
     isApiSource,
     assignmentCatalog,
     project.summary.contact,
-    dash.user?.id
+    dash.user?.id,
+    task.assignedTo?.id
   );
   const dueInputValue = workflowTaskDueToInputValue(task.dueAt);
 
@@ -183,7 +184,7 @@ export function WorkflowTaskInlineRow({
       try {
         await patchTask({
           taskId: task.id,
-          assignedMemberId: normalizeAssigneeMemberIdForSave(assignedMemberId),
+          assignedMemberId: normalizeWorkflowTaskAssigneeIdForSave(assignedMemberId),
         });
       } catch (err) {
         reportError(err);

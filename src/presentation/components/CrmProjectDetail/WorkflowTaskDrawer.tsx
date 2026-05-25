@@ -18,6 +18,7 @@ import {
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
 import { getWorkflowTaskAssigneeOptions } from '@/presentation/features/crmProjectDetail/workflowTaskAssigneeOptions';
 import { useAssignmentIdentityCatalog } from '@/presentation/providers/AssignmentIdentityProvider';
+import { useBuildCoreDashboardContext } from '@/presentation/providers/BuildCoreDashboardProvider';
 import { formatWorkflowStageLabel } from '@/presentation/features/crmProjectDetail/crmProjectDetailFormatters';
 import {
   defaultWorkflowTaskFormState,
@@ -71,6 +72,7 @@ export function WorkflowTaskDrawer({
   onSaved,
 }: WorkflowTaskDrawerProps): ReactElement | null {
   const assignmentCatalog = useAssignmentIdentityCatalog();
+  const dash = useBuildCoreDashboardContext();
   const wf = content.projectDetail.workflow;
   const [form, setForm] = useState<WorkflowTaskFormState>(() =>
     defaultFormForContext(drawerContext, project.summary.currentStageSlug, task, mode)
@@ -149,7 +151,9 @@ export function WorkflowTaskDrawer({
   const assigneeOptions = getWorkflowTaskAssigneeOptions(
     isApiSource,
     assignmentCatalog,
-    project.summary.contact
+    project.summary.contact,
+    dash.user?.id,
+    form.assignedMemberId
   );
 
   const payments = content.projectDetail.payments;

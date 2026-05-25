@@ -5,7 +5,14 @@ import {
   initialsFromPersonName,
 } from '@/domain/crm/teamMemberDisplay';
 
-export const ASSIGNMENT_CONTACT_ID_PREFIX = 'crm-contact:';
+import {
+  WORKFLOW_TASK_CONTACT_ASSIGNEE_PREFIX as ASSIGNMENT_CONTACT_ID_PREFIX,
+  contactIdFromWorkflowTaskAssigneeId,
+  isWorkflowTaskContactAssigneeId,
+  workflowTaskAssigneeIdFromContactId,
+} from '@/domain/crm/workflowTaskAssignee';
+
+export { ASSIGNMENT_CONTACT_ID_PREFIX };
 
 export type AssignmentIdentityCatalog = {
   readonly byUserId: ReadonlyMap<string, CrmTeamMemberRef>;
@@ -52,7 +59,7 @@ export function teamMemberRefFromOrgMember(input: {
 export function teamMemberRefFromContact(contact: CrmContact): CrmTeamMemberRef {
   const name = contact.name.trim() || 'Customer';
   return {
-    id: `${ASSIGNMENT_CONTACT_ID_PREFIX}${contact.id}`,
+    id: workflowTaskAssigneeIdFromContactId(contact.id),
     displayName: `${name} (Customer)`,
     initials: initialsFromPersonName(name),
     avatarUrl: null,
@@ -61,8 +68,10 @@ export function teamMemberRefFromContact(contact: CrmContact): CrmTeamMemberRef 
 }
 
 export function isAssignmentContactMemberId(memberId: string): boolean {
-  return memberId.startsWith(ASSIGNMENT_CONTACT_ID_PREFIX);
+  return isWorkflowTaskContactAssigneeId(memberId);
 }
+
+export { contactIdFromWorkflowTaskAssigneeId };
 
 export function resolveAssignmentTeamMemberRef(
   ref: CrmTeamMemberRef | null,

@@ -14,9 +14,38 @@ import { assertWorkflowTaskCanBeMarkedDone } from './crmDocumentService';
 import { CrmDocumentServiceError } from '@/infrastructure/crm/errors';
 import { isPaymentTaskRow, syncProjectBalanceFromPaymentTasks } from './crmPaymentBalance';
 import { resolveCrmProjectIdBySlug } from './resolveCrmProjectIdBySlug';
+import {
+  mapDbContact,
+  type DbCrmContactRow,
+  type DbCrmProjectRow,
+} from '@/infrastructure/crm/mappers/mapCrmFromDb';
+import { resolveWorkflowTaskAssigneeDbColumns } from './workflowTaskAssigneePersistence';
 
 const TASK_SELECT =
-  'id, project_id, title, stage_slug, status, documents_required, notes, due_at, completed_at, assigned_member_id, completed_by_member_id, sort_order, amount_cents, invoiced_at, paid_at';
+  'id, project_id, title, stage_slug, status, documents_required, notes, due_at, completed_at, assigned_member_id, assigned_contact_id, completed_by_member_id, sort_order, amount_cents, invoiced_at, paid_at';
+
+async function loadProjectContactById(
+  supabase: SupabaseClient,
+  projectId: string
+): Promise<ReadonlyMap<string, import('@/domain/crm').CrmContact>> {
+  const { data, error } = await supabase
+    .from('crm_projects')
+    .select(
+      'id, primary_contact_id, crm_clients ( id, company_name ), crm_contacts:primary_contact_id ( id, full_name, email, phone, role_title )'
+    )
+    .eq('id', projectId)
+    .maybeSingle();
+
+  if (error) throw new Error(error.message);
+  if (!data) return new Map();
+
+  const row = data as DbCrmProjectRow;
+  const clientRow = Array.isArray(row.crm_clients) ? row.crm_clients[0] : row.crm_clients;
+  const contactRow = Array.isArray(row.crm_contacts) ? row.crm_contacts[0] : row.crm_contacts;
+  const clientName = clientRow?.company_name ?? 'Client';
+  const contact = mapDbContact((contactRow as DbCrmContactRow | null) ?? null, projectId, clientName);
+  return new Map([[contact.id, contact]]);
+}
 
 async function mapTaskRow(
   supabase: SupabaseClient,
@@ -26,8 +55,11 @@ async function mapTaskRow(
   const ids = [row.assigned_member_id, row.completed_by_member_id].filter(
     (id): id is string => id != null
   );
-  const memberById = await loadCrmMemberMap(supabase, ids, { organizationId });
-  return mapDbWorkflowTask(row, memberById);
+  const [memberById, contactById] = await Promise.all([
+    loadCrmMemberMap(supabase, ids, { organizationId }),
+    loadProjectContactById(supabase, row.project_id),
+  ]);
+  return mapDbWorkflowTask(row, memberById, contactById);
 }
 
 async function getTaskForOrg(
@@ -73,7 +105,9 @@ export async function listCrmWorkflowTasksForOrg(
     [row.assigned_member_id, row.completed_by_member_id].filter((id): id is string => id != null)
   );
   const memberById = await loadCrmMemberMap(supabase, memberIds, { organizationId });
-  return rows.map((row) => mapDbWorkflowTask(row, memberById));
+  const contactById =
+    rows.length > 0 ? await loadProjectContactById(supabase, rows[0]!.project_id) : new Map();
+  return rows.map((row) => mapDbWorkflowTask(row, memberById, contactById));
 }
 
 export async function createCrmWorkflowTaskForOrg(
@@ -106,6 +140,12 @@ export async function createCrmWorkflowTaskForOrg(
     now,
   });
 
+  const assigneeColumns = await resolveWorkflowTaskAssigneeDbColumns(
+    supabase,
+    input.projectId,
+    input.assignedMemberId
+  );
+
   const { data, error } = await supabase
     .from('crm_workflow_tasks')
     .insert({
@@ -117,7 +157,7 @@ export async function createCrmWorkflowTaskForOrg(
       documents_required: input.documentsRequired,
       notes: input.notes,
       due_at: input.dueAt,
-      assigned_member_id: input.assignedMemberId,
+      ...assigneeColumns,
       sort_order: sortOrder,
       amount_cents: input.amountCents ?? null,
       invoiced_at: isPayment ? timing.invoicedAt : null,
@@ -188,7 +228,12 @@ export async function updateCrmWorkflowTaskForOrg(
   if (input.dueAt !== undefined) patch.due_at = input.dueAt;
   if (input.notes !== undefined) patch.notes = input.notes;
   if (input.documentsRequired !== undefined) patch.documents_required = input.documentsRequired;
-  if (input.assignedMemberId !== undefined) patch.assigned_member_id = input.assignedMemberId;
+  if (input.assignedMemberId !== undefined) {
+    Object.assign(
+      patch,
+      await resolveWorkflowTaskAssigneeDbColumns(supabase, existing.project_id, input.assignedMemberId)
+    );
+  }
   if (input.amountCents !== undefined) {
     patch.amount_cents = input.amountCents;
     if (input.amountCents != null) {

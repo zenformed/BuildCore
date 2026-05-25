@@ -131,7 +131,7 @@ export async function getCrmProjectDetailBySlugForOrg(
     supabase
       .from('crm_workflow_tasks')
       .select(
-        'id, project_id, title, stage_slug, status, documents_required, notes, due_at, completed_at, assigned_member_id, completed_by_member_id, sort_order, amount_cents, invoiced_at, paid_at'
+        'id, project_id, title, stage_slug, status, documents_required, notes, due_at, completed_at, assigned_member_id, assigned_contact_id, completed_by_member_id, sort_order, amount_cents, invoiced_at, paid_at'
       )
       .eq('project_id', project.id)
       .is('archived_at', null)

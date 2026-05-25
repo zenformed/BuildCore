@@ -1,10 +1,8 @@
-import type { CrmContact, CrmTeamMemberRef } from '@/domain/crm';
-import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
+import type { CrmTeamMemberRef } from '@/domain/crm';
 import { MOCK_CRM_TEAM_MEMBERS } from '@/platform/mock/crm';
 import {
   type AssignmentIdentityCatalog,
   isAssignmentContactMemberId,
-  teamMemberRefFromContact,
 } from './assignmentIdentityModel';
 
 export type AssigneeOption = {
@@ -63,9 +61,6 @@ export function buildAssigneeOptions(input: {
   readonly selfLabel?: string;
   readonly currentUserId?: string | null;
   readonly catalog: AssignmentIdentityCatalog | null;
-  /** When true, appends the project customer (disabled until customer assignment ships). */
-  readonly includeCustomerOption?: boolean;
-  readonly projectContact?: CrmContact | null;
 }): readonly AssigneeOption[] {
   const unassigned: AssigneeOption = {
     id: '',
@@ -92,16 +87,6 @@ export function buildAssigneeOptions(input: {
       input.selfLabel
     ),
   ];
-
-  if (input.includeCustomerOption === true && input.projectContact != null) {
-    const contactRef = teamMemberRefFromContact(input.projectContact);
-    options.push({
-      id: contactRef.id,
-      label: content.crm.assignee.customerComingSoon,
-      member: contactRef,
-      disabled: true,
-    });
-  }
 
   return options;
 }
