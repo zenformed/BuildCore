@@ -14,6 +14,7 @@ export type CenterConfirmDialogProps = {
   readonly onConfirm?: () => void;
   readonly confirmDisabled?: boolean;
   readonly cancelDisabled?: boolean;
+  readonly hideActions?: boolean;
   readonly closeAriaLabel: string;
 };
 
@@ -28,6 +29,7 @@ export function CenterConfirmDialog({
   onConfirm,
   confirmDisabled = false,
   cancelDisabled = false,
+  hideActions = false,
   closeAriaLabel,
 }: CenterConfirmDialogProps): ReactElement | null {
   if (!isOpen) return null;
@@ -62,26 +64,28 @@ export function CenterConfirmDialog({
             {feedback.message}
           </p>
         ) : null}
-        <div className={styles.actions}>
-          <button
-            type="button"
-            className={styles.cancelBtn}
-            onClick={onClose}
-            disabled={cancelDisabled}
-          >
-            {cancelLabel}
-          </button>
-          {showConfirm ? (
+        {hideActions ? null : (
+          <div className={styles.actions}>
             <button
               type="button"
-              className={styles.confirmBtn}
-              onClick={onConfirm}
-              disabled={confirmDisabled}
+              className={styles.cancelBtn}
+              onClick={onClose}
+              disabled={cancelDisabled}
             >
-              {confirmLabel}
+              {cancelLabel}
             </button>
-          ) : null}
-        </div>
+            {showConfirm ? (
+              <button
+                type="button"
+                className={styles.confirmBtn}
+                onClick={onConfirm}
+                disabled={confirmDisabled}
+              >
+                {confirmLabel}
+              </button>
+            ) : null}
+          </div>
+        )}
       </div>
     </div>
   );

@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import type { CrmContact } from '@/domain/crm';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
 import { CrmApiError } from '@/infrastructure/crm/api/crmApiClient';
@@ -15,6 +15,8 @@ export type WorkflowTaskCustomerNotifyFeedback = {
   readonly kind: 'success' | 'error';
   readonly message: string;
 };
+
+const CUSTOMER_NOTIFY_SUCCESS_AUTO_CLOSE_MS = 2500;
 
 export function useWorkflowTaskCustomerNotifyPrompt(projectContact: CrmContact) {
   const copy = content.projectDetail.workflow.customerNotify;
@@ -67,6 +69,12 @@ export function useWorkflowTaskCustomerNotifyPrompt(projectContact: CrmContact) 
       setSending(false);
     }
   }, [copy.sendFailed, copy.success, prompt, sending]);
+
+  useEffect(() => {
+    if (feedback?.kind !== 'success') return;
+    const timer = setTimeout(() => closePrompt(), CUSTOMER_NOTIFY_SUCCESS_AUTO_CLOSE_MS);
+    return () => clearTimeout(timer);
+  }, [closePrompt, feedback]);
 
   return {
     customerNotifyPrompt: prompt,

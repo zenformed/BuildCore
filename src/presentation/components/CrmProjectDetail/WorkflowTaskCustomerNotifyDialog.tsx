@@ -23,26 +23,29 @@ export function WorkflowTaskCustomerNotifyDialog({
 }: WorkflowTaskCustomerNotifyDialogProps): ReactElement | null {
   const copy = content.projectDetail.workflow.customerNotify;
   const hasEmail = prompt?.customerEmail != null;
-  const successDismiss = feedback?.kind === 'success';
+  const sent = feedback?.kind === 'success';
 
   return (
     <CenterConfirmDialog
       isOpen={prompt != null}
-      title={copy.title}
+      title={sent ? copy.sentTitle : copy.title}
       message={
-        prompt == null
+        sent
           ? undefined
-          : hasEmail
-            ? copy.messageWithEmail(prompt.customerName)
-            : copy.messageNoEmail
+          : prompt == null
+            ? undefined
+            : hasEmail
+              ? copy.messageWithEmail(prompt.customerName)
+              : copy.messageNoEmail
       }
-      feedback={feedback}
+      feedback={sent ? { kind: 'success', message: copy.success } : feedback}
       cancelLabel={copy.notNow}
-      confirmLabel={hasEmail && !successDismiss ? (sending ? copy.sending : copy.sendEmail) : undefined}
+      confirmLabel={hasEmail && !sent ? (sending ? copy.sending : copy.sendEmail) : undefined}
       onClose={onClose}
-      onConfirm={hasEmail && !successDismiss ? onSendEmail : undefined}
+      onConfirm={hasEmail && !sent ? onSendEmail : undefined}
       confirmDisabled={sending || prompt == null}
       cancelDisabled={sending}
+      hideActions={sent}
       closeAriaLabel={copy.closeAriaLabel}
     />
   );

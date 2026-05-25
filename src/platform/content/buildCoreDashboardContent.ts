@@ -405,6 +405,7 @@ export const buildCoreDashboardContent = {
         notNow: 'Not now',
         sendEmail: 'Send email',
         sending: 'Sending…',
+        sentTitle: 'Sent',
         success: 'Notification email sent.',
         sendFailed: 'Could not send the notification email. Try again.',
         closeAriaLabel: 'Close notify customer dialog',
