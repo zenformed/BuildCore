@@ -21,11 +21,18 @@
   border-color: var(--theme-border-main, #3d3e4a);
 }
 
+.itemHeader {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+}
+
 .itemMain {
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
   min-width: 0;
+  flex: 1;
 }
 
 .itemName {
@@ -33,6 +40,65 @@
   font-size: 0.9375rem;
   font-weight: 600;
   color: var(--color-text, #0f172a);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.defaultBadge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.1rem 0.4rem;
+  border-radius: 999px;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-primary, #2563eb);
+  background: color-mix(in srgb, var(--color-primary, #2563eb) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--color-primary, #2563eb) 35%, transparent);
+}
+
+.defaultToggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 1.75rem;
+  height: 1.75rem;
+  padding: 0;
+  border: 1px solid var(--color-border, #e2e8f0);
+  border-radius: 0.375rem;
+  background: var(--color-muted, #f8fafc);
+  cursor: pointer;
+}
+
+.defaultToggle:hover:not(:disabled) {
+  border-color: var(--color-primary, #2563eb);
+}
+
+.defaultToggle:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.defaultToggle_active {
+  border-color: var(--color-primary, #2563eb);
+  background: color-mix(in srgb, var(--color-primary, #2563eb) 14%, var(--color-muted, #f8fafc));
+}
+
+.defaultToggleMark {
+  display: block;
+  width: 0.5rem;
+  height: 0.875rem;
+  border-right: 2px solid var(--color-text-muted, #64748b);
+  border-bottom: 2px solid var(--color-text-muted, #64748b);
+  transform: rotate(45deg) translate(-1px, -1px);
+}
+
+.defaultToggle_active .defaultToggleMark {
+  border-color: var(--color-primary, #2563eb);
 }
 
 :global([data-theme='dark']) .itemName {

@@ -11,10 +11,28 @@ export type DbBuildCoreProjectTemplateRow = {
   name: string;
   workflow_tasks_payload: unknown;
   payments_payload: unknown;
+  is_default: boolean;
   created_by_user_id: string | null;
   created_at: string;
   updated_at: string;
 };
+
+export function parseProjectTemplateBlueprintsFromUnknown(raw: {
+  readonly workflowTasksPayload?: unknown;
+  readonly paymentsPayload?: unknown;
+  readonly workflow_tasks_payload?: unknown;
+  readonly payments_payload?: unknown;
+}): {
+  workflowTasksPayload: readonly BuildCoreProjectTemplateWorkflowTaskBlueprint[];
+  paymentsPayload: readonly BuildCoreProjectTemplatePaymentBlueprint[];
+} {
+  const workflowRaw = raw.workflowTasksPayload ?? raw.workflow_tasks_payload;
+  const paymentsRaw = raw.paymentsPayload ?? raw.payments_payload;
+  return {
+    workflowTasksPayload: parseBlueprintArray(workflowRaw, parseWorkflowTaskBlueprint),
+    paymentsPayload: parseBlueprintArray(paymentsRaw, parsePaymentBlueprint),
+  };
+}
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return value != null && typeof value === 'object' && !Array.isArray(value);
@@ -78,6 +96,7 @@ export function mapDbBuildCoreProjectTemplate(
       parseWorkflowTaskBlueprint
     ),
     paymentsPayload: parseBlueprintArray(row.payments_payload, parsePaymentBlueprint),
+    isDefault: Boolean(row.is_default),
     createdByUserId: row.created_by_user_id,
     createdAt: row.created_at,
     updatedAt: row.updated_at,

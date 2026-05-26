@@ -3,11 +3,11 @@
 import type { ReactElement } from 'react';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
 import { ConfirmModal } from '@/presentation/components/ConfirmModal';
-import type { useLoadProjectTemplate } from '@/presentation/features/crmProjectDetail/useLoadProjectTemplate';
+import type { useProjectTemplateManager } from '@/presentation/features/projectTemplates/useProjectTemplateManager';
 import { ProjectTemplateListModal } from './ProjectTemplateListModal';
 
 export type LoadProjectTemplateDialogsProps = {
-  readonly controller: ReturnType<typeof useLoadProjectTemplate>;
+  readonly controller: ReturnType<typeof useProjectTemplateManager>;
 };
 
 export function LoadProjectTemplateDialogs({
@@ -23,9 +23,11 @@ export function LoadProjectTemplateDialogs({
         loading={controller.loading}
         loadError={controller.loadError}
         busy={controller.busy}
+        settingDefaultId={controller.settingDefaultId}
         onClose={controller.closeList}
         onLoad={controller.requestApply}
         onDelete={controller.requestDelete}
+        onToggleDefault={controller.toggleDefault}
       />
 
       <ConfirmModal
@@ -33,7 +35,7 @@ export function LoadProjectTemplateDialogs({
         onClose={controller.cancelApply}
         onConfirm={() => void controller.confirmApply()}
         title={copy.applyConfirmTitle}
-        message={copy.applyConfirmMessage}
+        message={controller.applyConfirmMessage}
         confirmLabel={controller.applying ? 'Applying…' : copy.applyConfirmLabel}
         cancelLabel={content.projectDetail.saveTemplate.cancel}
         variant="primary"

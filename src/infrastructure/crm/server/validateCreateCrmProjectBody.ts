@@ -1,6 +1,7 @@
 import type { CreateCrmProjectInput } from '@/domain/crm/createProject';
 import type { CrmPriority, CrmTradeType } from '@/domain/crm';
 import { CRM_TRADE_TYPES, DEFAULT_PIPELINE_STAGES, type PipelineStageSlug } from '@/domain/crm';
+import { parseProjectTemplateBlueprintsFromUnknown } from '@/infrastructure/crm/mappers/mapProjectTemplateFromDb';
 
 const PRIORITIES: readonly CrmPriority[] = ['low', 'normal', 'high', 'urgent'];
 const STAGE_SLUGS = new Set(DEFAULT_PIPELINE_STAGES.map((s) => s.slug));
@@ -18,6 +19,7 @@ export type CreateCrmProjectBody = {
   dealValueCents?: unknown;
   balanceRemainingCents?: unknown;
   assignedMemberId?: unknown;
+  initialTemplateBlueprints?: unknown;
 };
 
 export type ValidateCreateCrmProjectResult =
@@ -102,6 +104,19 @@ export function validateCreateCrmProjectBody(body: CreateCrmProjectBody): Valida
     return { ok: false, message: 'Balance must be a non-negative amount in cents.' };
   }
 
+  let initialTemplateBlueprints: CreateCrmProjectInput['initialTemplateBlueprints'] = null;
+  if (body.initialTemplateBlueprints != null) {
+    if (typeof body.initialTemplateBlueprints !== 'object' || Array.isArray(body.initialTemplateBlueprints)) {
+      return { ok: false, message: 'Template blueprints must be an object.' };
+    }
+    const parsed = parseProjectTemplateBlueprintsFromUnknown(
+      body.initialTemplateBlueprints as Record<string, unknown>
+    );
+    if (parsed.workflowTasksPayload.length > 0 || parsed.paymentsPayload.length > 0) {
+      initialTemplateBlueprints = parsed;
+    }
+  }
+
   return {
     ok: true,
     input: {
@@ -117,6 +132,7 @@ export function validateCreateCrmProjectBody(body: CreateCrmProjectBody): Valida
       dealValueCents,
       balanceRemainingCents,
       assignedMemberId: asOptionalUserId(body.assignedMemberId),
+      initialTemplateBlueprints,
     },
   };
 }

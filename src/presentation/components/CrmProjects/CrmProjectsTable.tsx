@@ -32,6 +32,7 @@ export type CrmProjectsTableProps = {
   canDelete?: boolean;
   deletingProjectId?: string | null;
   onRequestDelete?: (project: CrmProjectSummary) => void;
+  onTemplateToast?: (toast: { kind: 'success' | 'error'; message: string }) => void;
 };
 
 export function CrmProjectsTable({
@@ -44,6 +45,7 @@ export function CrmProjectsTable({
   canDelete = false,
   deletingProjectId = null,
   onRequestDelete,
+  onTemplateToast,
 }: CrmProjectsTableProps): ReactElement {
   const showTable = draftOpen || rows.length > 0 || isLoading;
 
@@ -77,6 +79,7 @@ export function CrmProjectsTable({
                   <CrmProjectDraftRow
                     onSaved={onProjectCreated}
                     onCancel={() => onDraftOpenChange(false)}
+                    onTemplateToast={onTemplateToast}
                   />
                 ) : null}
                 {rows.map((project) => (

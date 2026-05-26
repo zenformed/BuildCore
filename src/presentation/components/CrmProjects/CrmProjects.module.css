@@ -310,6 +310,13 @@
   color: #b91c1c;
 }
 
+.draftTemplateHint {
+  margin: 0;
+  padding: 0 1rem 0.35rem;
+  font-size: 0.75rem;
+  color: var(--color-text-muted, #64748b);
+}
+
 .emptyState {
   padding: 2rem 1rem;
   text-align: center;

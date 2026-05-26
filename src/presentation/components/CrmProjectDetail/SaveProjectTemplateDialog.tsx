@@ -8,8 +8,10 @@ import formStyles from '../CrmProjects/CreateCrmProjectDrawer.module.css';
 export type SaveProjectTemplateDialogProps = {
   readonly isOpen: boolean;
   readonly templateName: string;
+  readonly setAsDefault: boolean;
   readonly saving: boolean;
   readonly onTemplateNameChange: (value: string) => void;
+  readonly onSetAsDefaultChange: (value: boolean) => void;
   readonly onClose: () => void;
   readonly onSave: () => void;
 };
@@ -17,8 +19,10 @@ export type SaveProjectTemplateDialogProps = {
 export function SaveProjectTemplateDialog({
   isOpen,
   templateName,
+  setAsDefault,
   saving,
   onTemplateNameChange,
+  onSetAsDefaultChange,
   onClose,
   onSave,
 }: SaveProjectTemplateDialogProps): ReactElement {
@@ -29,21 +33,33 @@ export function SaveProjectTemplateDialog({
       isOpen={isOpen}
       title={copy.title}
       body={
-        <div className={formStyles.field}>
-          <label className={formStyles.label} htmlFor="save-project-template-name">
-            {copy.nameLabel}
+        <>
+          <div className={formStyles.field}>
+            <label className={formStyles.label} htmlFor="save-project-template-name">
+              {copy.nameLabel}
+            </label>
+            <input
+              id="save-project-template-name"
+              type="text"
+              className={formStyles.input}
+              value={templateName}
+              onChange={(event) => onTemplateNameChange(event.target.value)}
+              placeholder={copy.namePlaceholder}
+              disabled={saving}
+              autoFocus
+            />
+          </div>
+          <label className={formStyles.checkboxRow}>
+            <input
+              type="checkbox"
+              checked={setAsDefault}
+              disabled={saving}
+              onChange={(event) => onSetAsDefaultChange(event.target.checked)}
+            />
+            <span>{copy.setAsDefaultLabel}</span>
           </label>
-          <input
-            id="save-project-template-name"
-            type="text"
-            className={formStyles.input}
-            value={templateName}
-            onChange={(event) => onTemplateNameChange(event.target.value)}
-            placeholder={copy.namePlaceholder}
-            disabled={saving}
-            autoFocus
-          />
-        </div>
+          <p className={formStyles.checkboxHint}>{copy.setAsDefaultHint}</p>
+        </>
       }
       cancelLabel={copy.cancel}
       confirmLabel={saving ? copy.saving : copy.confirm}

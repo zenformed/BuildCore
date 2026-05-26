@@ -16,7 +16,12 @@ export const dynamic = 'force-dynamic';
 type CreateProjectTemplateBody = {
   name?: unknown;
   projectSlug?: unknown;
+  setAsDefault?: unknown;
 };
+
+function parseSetAsDefault(raw: unknown): boolean {
+  return raw === true;
+}
 
 function parseTemplateName(raw: unknown): string | null {
   if (typeof raw !== 'string') return null;
@@ -92,7 +97,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       auth.context.organizationId,
       auth.context.user.id,
       projectSlug,
-      name
+      name,
+      parseSetAsDefault(body.setAsDefault)
     );
     return NextResponse.json({ template });
   } catch (err) {

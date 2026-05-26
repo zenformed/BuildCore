@@ -74,6 +74,14 @@ export type {
 } from './projectTemplate';
 export { snapshotProjectTemplateBlueprintsFromWorkflowTasks } from './projectTemplate';
 export {
+  buildWorkflowTaskInputsFromBlueprints,
   buildWorkflowTaskInputsFromProjectTemplate,
   type BuildCoreProjectTemplateApplyInputs,
 } from './applyProjectTemplate';
+export type { CreateProjectTemplateDraft } from './projectTemplateDraft';
+export {
+  createProjectTemplateDraftFromTemplate,
+  createProjectTemplateDraftSummary,
+  emptyCreateProjectTemplateDraft,
+  hasCreateProjectTemplateDraftContent,
+} from './projectTemplateDraft';

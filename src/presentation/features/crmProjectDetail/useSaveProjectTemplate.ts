@@ -19,10 +19,12 @@ export function useSaveProjectTemplate({
   const copy = content.projectDetail.saveTemplate;
   const [open, setOpen] = useState(false);
   const [templateName, setTemplateName] = useState('');
+  const [setAsDefault, setSetAsDefault] = useState(false);
   const [saving, setSaving] = useState(false);
 
   const openDialog = useCallback(() => {
     setTemplateName('');
+    setSetAsDefault(false);
     setOpen(true);
   }, []);
 
@@ -30,6 +32,7 @@ export function useSaveProjectTemplate({
     if (saving) return;
     setOpen(false);
     setTemplateName('');
+    setSetAsDefault(false);
   }, [saving]);
 
   const saveTemplate = useCallback(async () => {
@@ -41,9 +44,14 @@ export function useSaveProjectTemplate({
 
     setSaving(true);
     try {
-      await createBuildCoreProjectTemplate({ name: trimmed, projectSlug });
+      await createBuildCoreProjectTemplate({
+        name: trimmed,
+        projectSlug,
+        setAsDefault,
+      });
       setOpen(false);
       setTemplateName('');
+      setSetAsDefault(false);
       onSuccess(copy.success);
     } catch (err) {
       const message =
@@ -56,12 +64,14 @@ export function useSaveProjectTemplate({
     } finally {
       setSaving(false);
     }
-  }, [copy.failed, copy.nameRequired, copy.success, onError, onSuccess, projectSlug, templateName]);
+  }, [copy.failed, copy.nameRequired, copy.success, onError, onSuccess, projectSlug, setAsDefault, templateName]);
 
   return {
     open,
     templateName,
     setTemplateName,
+    setAsDefault,
+    setSetAsDefault,
     saving,
     openDialog,
     closeDialog,

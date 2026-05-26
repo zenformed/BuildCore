@@ -1,12 +1,20 @@
 'use client';
 
 import type { ReactElement } from 'react';
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { DEFAULT_PIPELINE_STAGES, type CrmPriority, type CrmTradeType } from '@/domain/crm';
+import { canManageBuildCoreProjectTemplates } from '@/domain/buildcore/projectTemplateAccess';
+import {
+  createProjectTemplateDraftFromTemplate,
+  createProjectTemplateDraftSummary,
+  hasCreateProjectTemplateDraftContent,
+  type CreateProjectTemplateDraft,
+} from '@/domain/crm/projectTemplateDraft';
 import { createCrmProject } from '@/application/use-cases/crm';
 import { getCrmDataSource } from '@/infrastructure/config/crmDataSource';
 import { CrmCreateNotAvailableError } from '@/infrastructure/crm/errors';
+import { listBuildCoreProjectTemplates } from '@/infrastructure/crm/api/crmProjectTemplateClient';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
 import { buildCoreDashboardNavigation as nav } from '@/platform/navigation/buildCoreDashboardNavigation';
 import {
@@ -18,8 +26,11 @@ import { getCrmProjectAssigneeOptions } from '@/presentation/features/crmProject
 import { CRM_TRADE_TYPE_OPTIONS } from '@/presentation/features/crmProjects/crmProjectFormatters';
 import { normalizeAssigneeMemberIdForSave } from '@/presentation/features/crmAssignment/buildAssigneeOptions';
 import { AssigneeMenuOptionLabel } from '@/presentation/features/crmAssignment/AssigneeMenuOptionLabel';
+import { useProjectTemplateManager } from '@/presentation/features/projectTemplates/useProjectTemplateManager';
 import { useAssignmentIdentityCatalog } from '@/presentation/providers/AssignmentIdentityProvider';
 import { useBuildCoreDashboardContext } from '@/presentation/providers/BuildCoreDashboardProvider';
+import { useSaaSProfile } from '@/presentation/hooks/useSaaSProfile';
+import { LoadProjectTemplateDialogs } from '@/presentation/components/ProjectTemplates';
 import { TeamMemberAvatar } from '@/presentation/components/CrmProjectDetail/TeamMemberAvatar';
 import { WorkflowInlineMenu } from '@/presentation/components/CrmProjectDetail/WorkflowInlineMenu';
 import shared from '@/presentation/components/crmShared/crmShared.module.css';
@@ -32,19 +43,66 @@ const draftFieldCell = `${styles.gridCell} ${styles.draftFieldCell}`;
 export type CrmProjectDraftRowProps = {
   onSaved: () => void | Promise<void>;
   onCancel: () => void;
+  onTemplateToast?: (toast: { kind: 'success' | 'error'; message: string }) => void;
 };
 
-export function CrmProjectDraftRow({ onSaved, onCancel }: CrmProjectDraftRowProps): ReactElement {
+export function CrmProjectDraftRow({
+  onSaved,
+  onCancel,
+  onTemplateToast,
+}: CrmProjectDraftRowProps): ReactElement {
   const router = useRouter();
   const dash = useBuildCoreDashboardContext();
+  const { organizationMembershipContext } = useSaaSProfile();
   const assignmentCatalog = useAssignmentIdentityCatalog();
   const create = content.crm.create;
+  const templateCopy = content.projectDetail.loadTemplate;
   const isApiSource = getCrmDataSource() === 'api';
+  const canManageTemplates = useMemo(
+    () => canManageBuildCoreProjectTemplates(organizationMembershipContext?.role),
+    [organizationMembershipContext?.role]
+  );
+
   const [form, setForm] = useState<CreateCrmProjectFormState>(defaultCreateCrmProjectFormState);
+  const [templateDraft, setTemplateDraft] = useState<CreateProjectTemplateDraft | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [assigneeMenuOpen, setAssigneeMenuOpen] = useState(false);
   const assigneeRef = useRef<HTMLSpanElement>(null);
+  const defaultAppliedRef = useRef(false);
+
+  const notifyTemplate = useCallback(
+    (kind: 'success' | 'error', message: string) => {
+      onTemplateToast?.({ kind, message });
+    },
+    [onTemplateToast]
+  );
+
+  const templateManager = useProjectTemplateManager({
+    applyTarget: {
+      mode: 'draft',
+      onApplyDraft: (blueprints) => setTemplateDraft(blueprints),
+    },
+    onSuccess: (message) => notifyTemplate('success', message),
+    onError: (message) => notifyTemplate('error', message),
+  });
+
+  useEffect(() => {
+    if (!isApiSource || !canManageTemplates || defaultAppliedRef.current) return;
+    defaultAppliedRef.current = true;
+
+    void (async () => {
+      try {
+        const templates = await listBuildCoreProjectTemplates();
+        const defaultTemplate = templates.find((item) => item.isDefault);
+        if (defaultTemplate != null) {
+          setTemplateDraft(createProjectTemplateDraftFromTemplate(defaultTemplate));
+        }
+      } catch {
+        /* Draft still works without auto-default */
+      }
+    })();
+  }, [canManageTemplates, isApiSource]);
 
   const assigneeOptions = getCrmProjectAssigneeOptions(
     isApiSource,
@@ -52,6 +110,8 @@ export function CrmProjectDraftRow({ onSaved, onCancel }: CrmProjectDraftRowProp
     dash.user?.id
   );
   const selectedAssignee = assigneeOptions.find((option) => option.id === form.assignedMemberId);
+
+  const draftSummary = createProjectTemplateDraftSummary(templateDraft);
 
   const updateField = useCallback(
     <K extends keyof CreateCrmProjectFormState>(key: K, value: CreateCrmProjectFormState[K]) => {
@@ -76,7 +136,13 @@ export function CrmProjectDraftRow({ onSaved, onCancel }: CrmProjectDraftRowProp
 
     setSaving(true);
     try {
-      const created = await createCrmProject(crmRepositories, validated.input);
+      const created = await createCrmProject(crmRepositories, {
+        ...validated.input,
+        initialTemplateBlueprints: hasCreateProjectTemplateDraftContent(templateDraft)
+          ? templateDraft
+          : null,
+      });
+      setTemplateDraft(null);
       await onSaved();
       router.push(nav.routes.projectDetail(created.slug));
     } catch (err) {
@@ -90,7 +156,15 @@ export function CrmProjectDraftRow({ onSaved, onCancel }: CrmProjectDraftRowProp
     } finally {
       setSaving(false);
     }
-  }, [create.mockDisabledMessage, create.submitFailed, form, isApiSource, onSaved, router]);
+  }, [
+    create.mockDisabledMessage,
+    create.submitFailed,
+    form,
+    isApiSource,
+    onSaved,
+    router,
+    templateDraft,
+  ]);
 
   return (
     <div className={styles.draftRowBlock}>
@@ -264,19 +338,42 @@ export function CrmProjectDraftRow({ onSaved, onCancel }: CrmProjectDraftRowProp
               ✓
             </span>
           </button>
+          {canManageTemplates && isApiSource ? (
+            <button
+              type="button"
+              className={detailStyles.paymentDraftActionBtn}
+              disabled={saving || templateManager.busy}
+              title={templateCopy.loadAction}
+              aria-label={templateCopy.loadTemplateDraftAriaLabel}
+              onClick={templateManager.openList}
+            >
+              <span className={detailStyles.draftTemplateLoadIcon} aria-hidden />
+            </button>
+          ) : null}
           <button
             type="button"
             className={detailStyles.paymentDraftActionBtn}
             disabled={saving}
             title={create.cancelProject}
             aria-label={create.cancelProject}
-            onClick={onCancel}
+            onClick={() => {
+              setTemplateDraft(null);
+              onCancel();
+            }}
           >
             <span className={detailStyles.taskOpenIcon} aria-hidden />
           </button>
         </span>
       </div>
+      {hasCreateProjectTemplateDraftContent(templateDraft) ? (
+        <p className={styles.draftTemplateHint}>
+          {templateCopy.draftTemplateApplied(draftSummary.workflowCount, draftSummary.paymentCount)}
+        </p>
+      ) : null}
       {error ? <p className={styles.draftError}>{error}</p> : null}
+      {canManageTemplates && isApiSource ? (
+        <LoadProjectTemplateDialogs controller={templateManager} />
+      ) : null}
     </div>
   );
 }

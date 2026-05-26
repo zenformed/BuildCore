@@ -96,6 +96,7 @@ export function CrmProjectsPipeline({
         canDelete={canDelete}
         deletingProjectId={deletingProjectId}
         onRequestDelete={setPendingDeleteProject}
+        onTemplateToast={(toast) => setToast(toast)}
       />
       <CrmProjectDeleteConfirmModal
         pendingProject={pendingDeleteProject}

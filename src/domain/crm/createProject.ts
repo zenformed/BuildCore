@@ -1,5 +1,6 @@
 import type { CrmPriority, CrmTradeType } from './project';
 import type { PipelineStageSlug } from './pipelineStage';
+import type { BuildCoreProjectTemplateBlueprints } from './projectTemplate';
 
 /** Input for creating a CRM project + linked client/contact. */
 export type CreateCrmProjectInput = {
@@ -15,6 +16,8 @@ export type CreateCrmProjectInput = {
   readonly dealValueCents: number;
   readonly balanceRemainingCents: number;
   readonly assignedMemberId: string | null;
+  /** Applied after project insert when creating from a template-backed draft. */
+  readonly initialTemplateBlueprints?: BuildCoreProjectTemplateBlueprints | null;
 };
 
 export type CreateCrmProjectResult = {

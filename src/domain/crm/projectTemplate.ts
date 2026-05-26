@@ -23,6 +23,7 @@ export type BuildCoreProjectTemplate = {
   readonly name: string;
   readonly workflowTasksPayload: readonly BuildCoreProjectTemplateWorkflowTaskBlueprint[];
   readonly paymentsPayload: readonly BuildCoreProjectTemplatePaymentBlueprint[];
+  readonly isDefault: boolean;
   readonly createdByUserId: string | null;
   readonly createdAt: string;
   readonly updatedAt: string;

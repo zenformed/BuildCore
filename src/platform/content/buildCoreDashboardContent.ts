@@ -132,7 +132,7 @@ export const buildCoreDashboardContent = {
     loadError: 'Could not load team data. Try again.',
     noAccess: 'You do not have permission to view team members for this organization.',
     architectureNote:
-      'Organization membership controls organization-level access. BuildCore permissions will later control app-specific operational access. Organization role and BuildCore role are separate.',
+      'Organization membership controls organization-level access. BuildCore permissions are for app-specific operational access.',
     sections: {
       organizationMembership: 'Organization Membership',
       organizationMembershipHint:
@@ -357,6 +357,8 @@ export const buildCoreDashboardContent = {
       success: 'Project template saved.',
       failed: 'Could not save project template. Try again.',
       closeAriaLabel: 'Close save template dialog',
+      setAsDefaultLabel: 'Set as default template',
+      setAsDefaultHint: 'New projects will start with this template applied to the draft.',
     },
     loadTemplate: {
       title: 'Load project template',
@@ -370,11 +372,22 @@ export const buildCoreDashboardContent = {
         `${workflowCount} workflow task${workflowCount === 1 ? '' : 's'} · ${paymentCount} payment${paymentCount === 1 ? '' : 's'}`,
       loadAction: 'Load Template',
       deleteAction: 'Delete',
+      defaultBadge: 'Default',
+      setDefaultTitle: 'Set as default template',
+      unsetDefaultTitle: 'Remove as default template',
+      setDefaultAriaLabel: (name: string): string => `Set ${name} as default template`,
+      unsetDefaultAriaLabel: (name: string): string => `Remove ${name} as default template`,
+      setDefaultSuccess: 'Default template updated.',
+      unsetDefaultSuccess: 'Default template removed.',
+      setDefaultFailed: 'Could not update default template.',
       applyConfirmTitle: 'Apply this template?',
       applyConfirmMessage:
         'This will add workflow tasks and payments to the current project.',
+      applyDraftConfirmMessage:
+        'This will add workflow tasks and payments to the new project draft.',
       applyConfirmLabel: 'Apply Template',
       applySuccess: 'Template applied to this project.',
+      applyDraftSuccess: 'Template applied to the new project draft.',
       applyFailed: 'Could not apply template. Try again.',
       deleteConfirmTitle: 'Delete this template?',
       deleteConfirmMessage: (name: string): string =>
@@ -382,6 +395,9 @@ export const buildCoreDashboardContent = {
       deleteConfirmLabel: 'Delete',
       deleteSuccess: 'Template deleted.',
       deleteFailed: 'Could not delete template. Try again.',
+      loadTemplateDraftAriaLabel: 'Load project template into draft',
+      draftTemplateApplied: (workflowCount: number, paymentCount: number): string =>
+        `Template draft: ${workflowCount} workflow task${workflowCount === 1 ? '' : 's'}, ${paymentCount} payment${paymentCount === 1 ? '' : 's'} (applied on create).`,
     },
     breadcrumbCrm: 'CRM',
     breadcrumbProjects: 'Projects',

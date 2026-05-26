@@ -160,8 +160,10 @@ export function ProjectDetailShell({
         <SaveProjectTemplateDialog
           isOpen={saveTemplate.open}
           templateName={saveTemplate.templateName}
+          setAsDefault={saveTemplate.setAsDefault}
           saving={saveTemplate.saving}
           onTemplateNameChange={saveTemplate.setTemplateName}
+          onSetAsDefaultChange={saveTemplate.setSetAsDefault}
           onClose={saveTemplate.closeDialog}
           onSave={() => void saveTemplate.saveTemplate()}
         />

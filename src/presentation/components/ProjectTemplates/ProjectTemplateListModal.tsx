@@ -13,9 +13,11 @@ export type ProjectTemplateListModalProps = {
   readonly loading: boolean;
   readonly loadError: string | null;
   readonly busy: boolean;
+  readonly settingDefaultId: string | null;
   readonly onClose: () => void;
   readonly onLoad: (template: BuildCoreProjectTemplate) => void;
   readonly onDelete: (template: BuildCoreProjectTemplate) => void;
+  readonly onToggleDefault: (template: BuildCoreProjectTemplate) => void;
 };
 
 export function ProjectTemplateListModal({
@@ -24,9 +26,11 @@ export function ProjectTemplateListModal({
   loading,
   loadError,
   busy,
+  settingDefaultId,
   onClose,
   onLoad,
   onDelete,
+  onToggleDefault,
 }: ProjectTemplateListModalProps): ReactElement {
   const copy = content.projectDetail.loadTemplate;
 
@@ -45,8 +49,10 @@ export function ProjectTemplateListModal({
             key={template.id}
             template={template}
             busy={busy}
+            defaultBusy={settingDefaultId === template.id}
             onLoad={onLoad}
             onDelete={onDelete}
+            onToggleDefault={onToggleDefault}
           />
         ))}
       </ul>
