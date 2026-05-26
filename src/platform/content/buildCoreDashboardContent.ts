@@ -334,6 +334,10 @@ export const buildCoreDashboardContent = {
     saveError: 'Could not save changes.',
     workflow: {
       empty: 'No workflow tasks for this project.',
+      permissionsLoading: 'Loading workflow task permissions…',
+      noViewPermission: 'You do not have permission to view workflow tasks.',
+      noUploadPermission: 'You do not have permission to upload workflow task documents.',
+      statusDoneNotAllowed: 'You do not have permission to mark tasks as done.',
       collapseStageTasks: 'Collapse stage tasks',
       expandStageTasks: 'Expand stage tasks',
       taskSingular: 'task',

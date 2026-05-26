@@ -30,6 +30,7 @@ import {
 } from '@/presentation/features/crmProjectDetail/workflowTaskInlineUtils';
 import { useWorkflowTaskDocumentActions } from '@/presentation/features/crmProjectDetail/useWorkflowTaskDocumentActions';
 import { useWorkflowTaskRowFileDrop } from '@/presentation/features/crmProjectDetail/useWorkflowTaskRowFileDrop';
+import { useBuildCoreWorkflowTaskAccess } from '@/presentation/providers/BuildCoreWorkflowTaskAccessProvider';
 import shared from '@/presentation/components/crmShared/crmShared.module.css';
 import { TeamMemberAvatar } from './TeamMemberAvatar';
 import { WorkflowDocumentFileIcon } from './WorkflowDocumentFileIcon';
@@ -80,8 +81,15 @@ export function WorkflowTaskInlineRow({
     onDocumentDeleted: onWorkflowTaskDocumentDeleted,
     onError: (message) => onTaskError?.(message),
   });
+  const { permissions, isReady } = useBuildCoreWorkflowTaskAccess();
+  const canEdit = isReady && permissions.canEdit;
+  const canDelete = isReady && permissions.canDelete;
+  const canUpload = isReady && permissions.canUpload;
+  const canApprove = isReady && permissions.canApprove;
+  const canChangeStatus = canEdit || canApprove;
   const documentAccept = BUILDCORE_DOCUMENT_ALLOWED_EXTENSIONS.join(',');
-  const { rowDragOver, rowDropHandlers } = useWorkflowTaskRowFileDrop(task);
+  const { rowDragOver, rowDropHandlers: rawRowDropHandlers } = useWorkflowTaskRowFileDrop(task);
+  const rowDropHandlers = canUpload ? rawRowDropHandlers : {};
 
   const [editingTitle, setEditingTitle] = useState(false);
   const [titleDraft, setTitleDraft] = useState(task.title);
@@ -127,6 +135,7 @@ export function WorkflowTaskInlineRow({
   );
 
   const saveTitle = useCallback(async () => {
+    if (!canEdit) return;
     const title = titleDraft.trim();
     setEditingTitle(false);
     if (!title || title === task.title) {
@@ -139,10 +148,11 @@ export function WorkflowTaskInlineRow({
       setTitleDraft(task.title);
       reportError(err);
     }
-  }, [patchTask, reportError, task.id, task.title, titleDraft]);
+  }, [canEdit, patchTask, reportError, task.id, task.title, titleDraft]);
 
   const saveStatus = useCallback(
     async (status: WorkflowTaskStatus) => {
+      if (status === 'done' ? !canApprove : !canEdit) return;
       setStatusMenuOpen(false);
       if (status === task.status) return;
       const validation = validateWorkflowTaskStatusChange(task, status, docCount);
@@ -156,17 +166,21 @@ export function WorkflowTaskInlineRow({
         reportError(err);
       }
     },
-    [docCount, onTaskError, patchTask, reportError, task]
+    [canApprove, canEdit, docCount, onTaskError, patchTask, reportError, task]
   );
 
   const isStatusDisabled = useCallback(
-    (status: WorkflowTaskStatus) =>
-      !validateWorkflowTaskStatusChange(task, status, docCount).ok,
-    [docCount, task]
+    (status: WorkflowTaskStatus) => {
+      if (status === 'done' && !canApprove) return true;
+      if (status !== task.status && status !== 'done' && !canEdit) return true;
+      return !validateWorkflowTaskStatusChange(task, status, docCount).ok;
+    },
+    [canApprove, canEdit, docCount, task]
   );
 
   const saveDocumentsRequired = useCallback(
     async (documentsRequired: boolean) => {
+      if (!canEdit) return;
       setDocumentsMenuOpen(false);
       if (documentsRequired === task.documentsRequired) return;
       try {
@@ -175,11 +189,12 @@ export function WorkflowTaskInlineRow({
         reportError(err);
       }
     },
-    [patchTask, reportError, task.documentsRequired, task.id]
+    [canEdit, patchTask, reportError, task.documentsRequired, task.id]
   );
 
   const saveAssignee = useCallback(
     async (assignedMemberId: string) => {
+      if (!canEdit) return;
       setAssigneeMenuOpen(false);
       const current = task.assignedTo?.id ?? '';
       if (assignedMemberId === current) return;
@@ -208,6 +223,7 @@ export function WorkflowTaskInlineRow({
     },
     [
       isApiSource,
+      canEdit,
       patchTask,
       reportError,
       requestCustomerNotifyAfterAssigneeChange,
@@ -217,6 +233,7 @@ export function WorkflowTaskInlineRow({
   );
 
   const saveAmount = useCallback(async () => {
+    if (!canEdit) return;
     const amountCents = parseUsdInputToCents(amountDraft);
     if (amountCents == null) {
       onTaskError?.('Amount must be a valid USD value.');
@@ -234,10 +251,11 @@ export function WorkflowTaskInlineRow({
     } catch (err) {
       reportError(err);
     }
-  }, [amountDraft, onTaskError, patchTask, reportError, task.amountCents, task.id]);
+  }, [amountDraft, canEdit, onTaskError, patchTask, reportError, task.amountCents, task.id]);
 
   const saveDue = useCallback(
     async (value: string) => {
+      if (!canEdit) return;
       const nextIso = dueInputValueToIso(value);
       const currentIso = task.dueAt;
       if (nextIso === currentIso || (nextIso == null && currentIso == null)) return;
@@ -247,11 +265,12 @@ export function WorkflowTaskInlineRow({
         reportError(err);
       }
     },
-    [patchTask, reportError, task.dueAt, task.id]
+    [canEdit, patchTask, reportError, task.dueAt, task.id]
   );
 
   const saveInvoiced = useCallback(
     async (value: string) => {
+      if (!canEdit) return;
       const nextIso = dueInputValueToIso(value);
       const currentIso = task.invoicedAt;
       if (nextIso === currentIso || (nextIso == null && currentIso == null)) return;
@@ -261,11 +280,12 @@ export function WorkflowTaskInlineRow({
         reportError(err);
       }
     },
-    [patchTask, reportError, task.id, task.invoicedAt]
+    [canEdit, patchTask, reportError, task.id, task.invoicedAt]
   );
 
   const savePaid = useCallback(
     async (value: string) => {
+      if (!canEdit) return;
       const nextIso = dueInputValueToIso(value);
       const currentIso = task.paidAt;
       if (nextIso === currentIso || (nextIso == null && currentIso == null)) return;
@@ -275,7 +295,7 @@ export function WorkflowTaskInlineRow({
         reportError(err);
       }
     },
-    [patchTask, reportError, task.id, task.paidAt]
+    [canEdit, patchTask, reportError, task.id, task.paidAt]
   );
 
   const showAmount = showAmountColumn || isPaymentWorkflowTask(task);
@@ -312,7 +332,7 @@ export function WorkflowTaskInlineRow({
         <button
           type="button"
           className={styles.inlinePillBtn}
-          disabled={saving}
+          disabled={saving || !canChangeStatus}
           aria-expanded={statusMenuOpen}
           onClick={() => {
             setDocumentsMenuOpen(false);
@@ -335,6 +355,9 @@ export function WorkflowTaskInlineRow({
               type="button"
               className={styles.inlineMenuPillOption}
               disabled={saving || status === task.status || isStatusDisabled(status)}
+              title={
+                status === 'done' && !canApprove ? wf.statusDoneNotAllowed : undefined
+              }
               onClick={() => void saveStatus(status)}
             >
               <span className={`${styles.statusPill} ${statusBadgeClass(status)}`}>
@@ -353,7 +376,7 @@ export function WorkflowTaskInlineRow({
         ) : (
           <span className={styles.taskOpenIcon} title={wf.taskOpenIndicator} aria-label={wf.taskOpenIndicator} />
         )}
-        {editingTitle ? (
+        {editingTitle && canEdit ? (
           <input
             className={styles.inlineFieldInput}
             value={titleDraft}
@@ -369,7 +392,7 @@ export function WorkflowTaskInlineRow({
             }}
             autoFocus
           />
-        ) : (
+        ) : canEdit ? (
           <button
             type="button"
             className={styles.inlineCellBtn}
@@ -383,12 +406,16 @@ export function WorkflowTaskInlineRow({
           >
             <span className={styles.taskTitleBtnText}>{task.title}</span>
           </button>
+        ) : (
+          <span className={styles.taskTitleBtnText} title={task.title}>
+            {task.title}
+          </span>
         )}
       </span>
 
       {showAmount ? (
         <span className={`${styles.inlineAmountCell} ${styles.workflowMetaCell}`}>
-          {editingAmount ? (
+          {editingAmount && canEdit ? (
             <input
               className={styles.inlineFieldInput}
               value={amountDraft}
@@ -405,7 +432,7 @@ export function WorkflowTaskInlineRow({
               }}
               autoFocus
             />
-          ) : (
+          ) : canEdit ? (
             <button
               type="button"
               className={styles.inlineCellBtn}
@@ -418,6 +445,8 @@ export function WorkflowTaskInlineRow({
             >
               {formatCentsAsUsd(task.amountCents ?? 0)}
             </button>
+          ) : (
+            <span className={styles.inlineCellBtn}>{formatCentsAsUsd(task.amountCents ?? 0)}</span>
           )}
         </span>
       ) : null}
@@ -426,7 +455,7 @@ export function WorkflowTaskInlineRow({
         <button
           type="button"
           className={`${styles.inlineCellBtn} ${styles.documentsCell}`}
-          disabled={saving}
+          disabled={saving || (!canUpload && !canEdit && taskDocuments.length === 0)}
           aria-expanded={documentsMenuOpen}
           onClick={() => {
             setStatusMenuOpen(false);
@@ -455,18 +484,20 @@ export function WorkflowTaskInlineRow({
           onClose={() => setDocumentsMenuOpen(false)}
           anchorRef={documentsRef}
         >
-          <button
-            type="button"
-            className={`${styles.inlineMenuAction} ${styles.inlineMenuUploadAction}`}
-            disabled={saving || documentActions.uploading}
-            onClick={() => {
-              setDocumentsMenuOpen(false);
-              documentActions.openFilePicker();
-            }}
-          >
-            <span className={styles.inlineMenuUploadIcon} aria-hidden />
-            {wf.documentsUpload}
-          </button>
+          {canUpload ? (
+            <button
+              type="button"
+              className={`${styles.inlineMenuAction} ${styles.inlineMenuUploadAction}`}
+              disabled={saving || documentActions.uploading}
+              onClick={() => {
+                setDocumentsMenuOpen(false);
+                documentActions.openFilePicker();
+              }}
+            >
+              <span className={styles.inlineMenuUploadIcon} aria-hidden />
+              {wf.documentsUpload}
+            </button>
+          ) : null}
           {taskDocuments.map((doc) => (
             <div key={doc.id} className={styles.inlineMenuDocRow}>
               <WorkflowDocumentFileIcon fileName={doc.name} mimeType={doc.mimeType} compact />
@@ -486,22 +517,24 @@ export function WorkflowTaskInlineRow({
               >
                 <span className={styles.inlineMenuDownloadIcon} aria-hidden />
               </button>
-              <button
-                type="button"
-                className={styles.inlineMenuIconBtn}
-                disabled={saving || documentActions.uploading}
-                title={wf.documentDelete}
-                aria-label={`${wf.documentDelete} ${doc.name}`}
-                onClick={() => {
-                  setDocumentsMenuOpen(false);
-                  void documentActions.deleteDocument(doc.id);
-                }}
-              >
-                <span className={styles.inlineMenuDeleteIcon} aria-hidden />
-              </button>
+              {canEdit ? (
+                <button
+                  type="button"
+                  className={styles.inlineMenuIconBtn}
+                  disabled={saving || documentActions.uploading}
+                  title={wf.documentDelete}
+                  aria-label={`${wf.documentDelete} ${doc.name}`}
+                  onClick={() => {
+                    setDocumentsMenuOpen(false);
+                    void documentActions.deleteDocument(doc.id);
+                  }}
+                >
+                  <span className={styles.inlineMenuDeleteIcon} aria-hidden />
+                </button>
+              ) : null}
             </div>
           ))}
-          {!task.documentsRequired ? (
+          {canEdit && !task.documentsRequired ? (
             <button
               type="button"
               className={styles.inlineMenuAction}
@@ -511,7 +544,7 @@ export function WorkflowTaskInlineRow({
               {wf.documentsMarkRequired}
             </button>
           ) : null}
-          {task.documentsRequired && taskDocuments.length === 0 ? (
+          {canEdit && task.documentsRequired && taskDocuments.length === 0 ? (
             <button
               type="button"
               className={styles.inlineMenuAction}
@@ -528,7 +561,7 @@ export function WorkflowTaskInlineRow({
         <button
           type="button"
           className={`${styles.inlineCellBtn} ${styles.assignedCell}`}
-          disabled={saving}
+          disabled={saving || !canEdit}
           aria-expanded={assigneeMenuOpen}
           onClick={() => {
             setStatusMenuOpen(false);
@@ -575,7 +608,7 @@ export function WorkflowTaskInlineRow({
         <button
           type="button"
           className={styles.inlineCellBtn}
-          disabled={saving}
+          disabled={saving || !canEdit}
           onClick={() => {
             closeMenus();
             dueInputRef.current?.showPicker?.();
@@ -589,7 +622,7 @@ export function WorkflowTaskInlineRow({
           type="date"
           className={styles.inlineDateInput}
           value={dueInputValue}
-          disabled={saving}
+          disabled={saving || !canEdit}
           tabIndex={-1}
           aria-hidden
           onChange={(e) => void saveDue(e.target.value)}
@@ -649,21 +682,25 @@ export function WorkflowTaskInlineRow({
         </>
       ) : null}
 
-      <span className={shared.rowDeleteCell}>
-        <button
-          type="button"
-          className={shared.rowDeleteBtn}
-          disabled={saving || !onRequestArchiveTask}
-          title={wf.deleteTask}
-          aria-label={wf.deleteTask}
-          onClick={() => {
-            closeMenus();
-            onRequestArchiveTask?.(task);
-          }}
-        >
-          <span aria-hidden>🗑️</span>
-        </button>
-      </span>
+      {canDelete && onRequestArchiveTask ? (
+        <span className={shared.rowDeleteCell}>
+          <button
+            type="button"
+            className={shared.rowDeleteBtn}
+            disabled={saving}
+            title={wf.deleteTask}
+            aria-label={wf.deleteTask}
+            onClick={() => {
+              closeMenus();
+              onRequestArchiveTask(task);
+            }}
+          >
+            <span aria-hidden>🗑️</span>
+          </button>
+        </span>
+      ) : (
+        <span className={shared.rowDeleteCell} aria-hidden />
+      )}
     </div>
   );
 }

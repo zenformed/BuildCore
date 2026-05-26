@@ -11,6 +11,11 @@ import {
   uploadWorkflowTaskDocumentForOrg,
 } from '@/infrastructure/crm/server/crmDocumentService';
 import { getDocumentStorageProviderForCrmAuth } from '@/infrastructure/crm/server/documentStorageProviderForCrmAuth';
+import {
+  requireBuildCoreWorkflowTaskPermission,
+  resolveBuildCoreWorkflowTaskAccessForUser,
+  workflowTaskPermissionForbiddenResponse,
+} from '@/infrastructure/crm/server/buildCoreWorkflowTaskPermissionService';
 
 export const dynamic = 'force-dynamic';
 
@@ -30,6 +35,17 @@ export async function GET(
   }
 
   try {
+    const access = await resolveBuildCoreWorkflowTaskAccessForUser(
+      auth.context.supabase,
+      auth.context.organizationId,
+      auth.context.user.id
+    );
+    if (!access.canView) {
+      return workflowTaskPermissionForbiddenResponse(
+        'You do not have permission to view workflow tasks.'
+      );
+    }
+
     const documents = await listWorkflowTaskDocumentsForOrg(
       auth.context.supabase,
       auth.context.organizationId,
@@ -73,6 +89,15 @@ export async function POST(
   }
 
   try {
+    const permission = await requireBuildCoreWorkflowTaskPermission(
+      auth.context.supabase,
+      auth.context.organizationId,
+      auth.context.user.id,
+      (flags) => flags.canUpload,
+      'You do not have permission to upload workflow task documents.'
+    );
+    if (!permission.ok) return permission.response;
+
     const buffer = await file.arrayBuffer();
     const document = await uploadWorkflowTaskDocumentForOrg(
       auth.context.supabase,

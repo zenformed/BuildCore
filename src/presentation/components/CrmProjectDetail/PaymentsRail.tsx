@@ -6,6 +6,7 @@ import type { CrmProjectDetail, CrmWorkflowTask } from '@/domain/crm';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
 import { countDocumentsByTaskId } from '@/presentation/features/crmProjectDetail/workflowDocumentCounts';
 import { listPaymentMilestones } from '@/presentation/features/crmProjectDetail/workflowTaskGroups';
+import { useBuildCoreWorkflowTaskAccess } from '@/presentation/providers/BuildCoreWorkflowTaskAccessProvider';
 import { PaymentMilestoneDraftRow } from './PaymentMilestoneDraftRow';
 import { DetailPanelHeader } from './DetailPanelHeader';
 import { DetailPanelHeaderButton } from './DetailPanelHeaderButton';
@@ -30,6 +31,11 @@ export function PaymentsRail({
   onRequestArchiveTask,
 }: PaymentsRailProps): ReactElement {
   const payments = content.projectDetail.payments;
+  const wf = content.projectDetail.workflow;
+  const { permissions, isLoading, isReady } = useBuildCoreWorkflowTaskAccess();
+  const canView = isReady && permissions.canView;
+  const canCreate = isReady && permissions.canCreate;
+  const canDelete = isReady && permissions.canDelete;
   const cols = content.projectDetail.workflow.columns;
   const milestones = listPaymentMilestones(project.workflowTasks);
   const docCounts = countDocumentsByTaskId(project.documents);
@@ -37,19 +43,25 @@ export function PaymentsRail({
   const payCols = content.projectDetail.payments.columns;
   const [draftOpen, setDraftOpen] = useState(false);
 
-  const showTable = milestones.length > 0 || draftOpen;
+  const showTable = canView && (milestones.length > 0 || draftOpen);
 
   return (
     <section className={styles.paymentsPanel} aria-labelledby="payments-rail-heading">
       <DetailPanelHeader title={payments.title} titleId="payments-rail-heading">
-        <DetailPanelHeaderButton
-          variant="add"
-          disabled={draftOpen}
-          title={payments.addMilestone}
-          onClick={() => setDraftOpen(true)}
-        />
+        {canCreate ? (
+          <DetailPanelHeaderButton
+            variant="add"
+            disabled={draftOpen}
+            title={payments.addMilestone}
+            onClick={() => setDraftOpen(true)}
+          />
+        ) : null}
       </DetailPanelHeader>
-      {!showTable ? (
+      {isLoading ? (
+        <p className={styles.subtitle}>{wf.permissionsLoading}</p>
+      ) : !canView ? (
+        <p className={styles.subtitle}>{wf.noViewPermission}</p>
+      ) : !showTable ? (
         <p className={styles.subtitle}>{payments.empty}</p>
       ) : (
         <div className={styles.paymentsList}>
@@ -75,7 +87,7 @@ export function PaymentsRail({
               isApiSource={isApiSource}
               onUpdated={onTaskUpdated}
               onTaskError={onTaskError}
-              onRequestArchiveTask={onRequestArchiveTask}
+              onRequestArchiveTask={canDelete ? onRequestArchiveTask : undefined}
             />
           ))}
           {draftOpen ? (

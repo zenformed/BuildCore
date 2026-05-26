@@ -17,6 +17,7 @@ import {
   WORKFLOW_TASKS_PREVIEW_LIMIT,
 } from '@/presentation/features/crmProjectDetail/workflowTaskGroups';
 import { writeWorkflowStageExpanded } from '@/presentation/features/crmProjectDetail/workflowStageCollapseStorage';
+import { useBuildCoreWorkflowTaskAccess } from '@/presentation/providers/BuildCoreWorkflowTaskAccessProvider';
 import { DetailPanelHeader } from './DetailPanelHeader';
 import { WorkflowOpsTaskDraftRow } from './WorkflowOpsTaskDraftRow';
 import { WorkflowStageTaskGroup } from './WorkflowStageTaskGroup';
@@ -47,6 +48,10 @@ export function WorkflowTasksTable({
 }: WorkflowTasksTableProps): ReactElement {
   const router = useRouter();
   const wf = content.projectDetail.workflow;
+  const { permissions, isLoading, isReady } = useBuildCoreWorkflowTaskAccess();
+  const canView = isReady && permissions.canView;
+  const canCreate = isReady && permissions.canCreate;
+  const canDelete = isReady && permissions.canDelete;
   const isFullLayout = layout === 'full';
   const currentStage = project.summary.currentStageSlug;
   const [draftStageSlug, setDraftStageSlug] = useState<PipelineStageSlug | null>(null);
@@ -112,12 +117,22 @@ export function WorkflowTasksTable({
   return (
     <section className={panelClass} aria-labelledby="workflow-tasks-heading">
       <DetailPanelHeader title={content.projectDetail.sections.workflow} titleId="workflow-tasks-heading">
-        <WorkflowTaskStageAddButton
-          disabled={draftStageSlug != null}
-          onSelectStage={handleSelectStage}
-        />
+        {canCreate ? (
+          <WorkflowTaskStageAddButton
+            disabled={draftStageSlug != null}
+            onSelectStage={handleSelectStage}
+          />
+        ) : null}
       </DetailPanelHeader>
-      {!showWorkflowContent ? (
+      {isLoading ? (
+        <div className={isFullLayout ? undefined : styles.workflowPanelGrow}>
+          <p className={styles.subtitle}>{wf.permissionsLoading}</p>
+        </div>
+      ) : !canView ? (
+        <div className={isFullLayout ? undefined : styles.workflowPanelGrow}>
+          <p className={styles.subtitle}>{wf.noViewPermission}</p>
+        </div>
+      ) : !showWorkflowContent ? (
         <div className={isFullLayout ? undefined : styles.workflowPanelGrow}>
           <p className={styles.subtitle}>{wf.empty}</p>
         </div>
@@ -133,7 +148,7 @@ export function WorkflowTasksTable({
               isApiSource={isApiSource}
               onTaskUpdated={onTaskUpdated}
               onTaskError={onTaskError}
-              onRequestArchiveTask={onRequestArchiveTask}
+              onRequestArchiveTask={canDelete ? onRequestArchiveTask : undefined}
               forceExpanded={draftStageSlug === group.stageSlug}
               draftRow={
                 draftStageSlug === group.stageSlug ? (

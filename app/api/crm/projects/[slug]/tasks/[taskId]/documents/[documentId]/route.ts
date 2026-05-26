@@ -7,6 +7,7 @@ import { requireCrmApiAuth } from '@/infrastructure/crm/server/crmApiRouteAuth';
 import { crmDocumentErrorResponse } from '@/infrastructure/crm/server/crmDocumentRouteErrors';
 import { deleteWorkflowTaskDocumentForOrg } from '@/infrastructure/crm/server/crmDocumentService';
 import { getDocumentStorageProviderForCrmAuth } from '@/infrastructure/crm/server/documentStorageProviderForCrmAuth';
+import { requireBuildCoreWorkflowTaskPermission } from '@/infrastructure/crm/server/buildCoreWorkflowTaskPermissionService';
 
 export const dynamic = 'force-dynamic';
 
@@ -27,6 +28,15 @@ export async function DELETE(
   }
 
   try {
+    const permission = await requireBuildCoreWorkflowTaskPermission(
+      auth.context.supabase,
+      auth.context.organizationId,
+      auth.context.user.id,
+      (flags) => flags.canEdit,
+      'You do not have permission to edit workflow tasks.'
+    );
+    if (!permission.ok) return permission.response;
+
     await deleteWorkflowTaskDocumentForOrg(
       auth.context.supabase,
       getDocumentStorageProviderForCrmAuth(auth.context),

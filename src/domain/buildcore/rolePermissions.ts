@@ -1,5 +1,5 @@
 /**
- * BuildCore role permission types (mirrors @zenformed/core/buildcore-permissions).
+ * BuildCore role permission types (mirrors @zenformed/core/buildcore-permissions until published).
  */
 
 import type { OrganizationMemberRole } from '@zenformed/core/organization-settings';
@@ -75,3 +75,22 @@ export function canEditBuildCorePermissionRoleRow(
 ): boolean {
   return editableRoleKeys.includes(roleKey);
 }
+
+export {
+  assertWorkflowTaskCreateAllowed,
+  assertWorkflowTaskUpdateAllowed,
+  BUILDCORE_WORKFLOW_TASK_PERMISSION_ROLE_KEYS,
+  classifyWorkflowTaskUpdatePatch,
+  defaultBuildCoreRolePermissionFlags,
+  DENIED_BUILDCORE_WORKFLOW_TASK_PERMISSIONS,
+  fullAdminBuildCoreWorkflowTaskAccess,
+  fullOwnerBuildCoreWorkflowTaskAccess,
+  isBuildCoreWorkflowTaskOwnerUnrestricted,
+  organizationRoleToBuildCorePermissionRoleKey,
+  pickBuildCoreRolePermissionRow,
+  resolveBuildCoreWorkflowTaskPermissions,
+  UNRESTRICTED_BUILDCORE_WORKFLOW_TASK_PERMISSIONS,
+  type BuildCoreWorkflowTaskAccess,
+  type WorkflowTaskUpdatePatchLike,
+  type WorkflowTaskUpdatePermissionRequirements,
+} from './workflowTaskPermissions';

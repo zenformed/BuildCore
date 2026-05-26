@@ -14,6 +14,13 @@ import {
   validateUpdateWorkflowTaskBody,
   type WorkflowTaskBody,
 } from '@/infrastructure/crm/server/validateWorkflowTaskBody';
+import {
+  requireBuildCoreWorkflowTaskPermission,
+  resolveBuildCoreWorkflowTaskAccessForUser,
+  workflowTaskPermissionFlagsFromAccess,
+  workflowTaskPermissionForbiddenResponse,
+} from '@/infrastructure/crm/server/buildCoreWorkflowTaskPermissionService';
+import { assertWorkflowTaskUpdateAllowed } from '@/domain/buildcore/rolePermissions';
 
 export const dynamic = 'force-dynamic';
 
@@ -44,6 +51,17 @@ export async function PATCH(
   }
 
   try {
+    const access = await resolveBuildCoreWorkflowTaskAccessForUser(
+      auth.context.supabase,
+      auth.context.organizationId,
+      auth.context.user.id
+    );
+    const permissions = workflowTaskPermissionFlagsFromAccess(access);
+    const updateCheck = assertWorkflowTaskUpdateAllowed(permissions, validated.patch);
+    if (!updateCheck.ok) {
+      return workflowTaskPermissionForbiddenResponse(updateCheck.message);
+    }
+
     const task = await updateCrmWorkflowTaskForOrg(
       auth.context.supabase,
       auth.context.organizationId,
@@ -72,6 +90,15 @@ export async function DELETE(
   }
 
   try {
+    const permission = await requireBuildCoreWorkflowTaskPermission(
+      auth.context.supabase,
+      auth.context.organizationId,
+      auth.context.user.id,
+      (flags) => flags.canDelete,
+      'You do not have permission to delete workflow tasks.'
+    );
+    if (!permission.ok) return permission.response;
+
     const archived = await archiveCrmWorkflowTaskForOrg(
       auth.context.supabase,
       auth.context.organizationId,

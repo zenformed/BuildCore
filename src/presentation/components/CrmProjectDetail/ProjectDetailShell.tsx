@@ -12,6 +12,7 @@ import {
   ProjectDetailShellProvider,
   type ProjectDetailShellContextValue,
 } from '@/presentation/features/crmProjectDetail/ProjectDetailShellContext';
+import { BuildCoreWorkflowTaskAccessProvider } from '@/presentation/providers/BuildCoreWorkflowTaskAccessProvider';
 import { useCrmProjectDeleteConfirmation } from '@/presentation/features/crmProjects/useCrmProjectDeleteConfirmation';
 import { queueCrmProjectDeleteSuccessToast } from '@/presentation/features/crmProjects/crmProjectDeleteFeedback';
 import { DetailToast } from './DetailToast';
@@ -99,7 +100,8 @@ export function ProjectDetailShell({
 
   return (
     <ProjectDetailShellProvider value={shellValue}>
-      <div className={styles.pageShell}>
+      <BuildCoreWorkflowTaskAccessProvider>
+        <div className={styles.pageShell}>
         {workspace.toast ? (
           <DetailToast
             kind={workspace.toast.kind}
@@ -129,7 +131,8 @@ export function ProjectDetailShell({
           onCloseDelete={() => setPendingDeleteProject(null)}
           onConfirmDelete={() => void handleConfirmDelete()}
         />
-      </div>
+        </div>
+      </BuildCoreWorkflowTaskAccessProvider>
     </ProjectDetailShellProvider>
   );
 }

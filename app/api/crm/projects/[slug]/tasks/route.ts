@@ -14,6 +14,12 @@ import {
   validateCreateWorkflowTaskBody,
   type WorkflowTaskBody,
 } from '@/infrastructure/crm/server/validateWorkflowTaskBody';
+import {
+  resolveBuildCoreWorkflowTaskAccessForUser,
+  workflowTaskPermissionFlagsFromAccess,
+  workflowTaskPermissionForbiddenResponse,
+} from '@/infrastructure/crm/server/buildCoreWorkflowTaskPermissionService';
+import { assertWorkflowTaskCreateAllowed } from '@/domain/buildcore/rolePermissions';
 
 export const dynamic = 'force-dynamic';
 
@@ -32,6 +38,17 @@ export async function GET(
   }
 
   try {
+    const access = await resolveBuildCoreWorkflowTaskAccessForUser(
+      auth.context.supabase,
+      auth.context.organizationId,
+      auth.context.user.id
+    );
+    if (!access.canView) {
+      return workflowTaskPermissionForbiddenResponse(
+        'You do not have permission to view workflow tasks.'
+      );
+    }
+
     const tasks = await listCrmWorkflowTasksForOrg(
       auth.context.supabase,
       auth.context.organizationId,
@@ -69,6 +86,17 @@ export async function POST(
   }
 
   try {
+    const access = await resolveBuildCoreWorkflowTaskAccessForUser(
+      auth.context.supabase,
+      auth.context.organizationId,
+      auth.context.user.id
+    );
+    const permissions = workflowTaskPermissionFlagsFromAccess(access);
+    const createCheck = assertWorkflowTaskCreateAllowed(permissions, validated.input.status);
+    if (!createCheck.ok) {
+      return workflowTaskPermissionForbiddenResponse(createCheck.message);
+    }
+
     const projectId = await resolveCrmProjectIdBySlug(
       auth.context.supabase,
       auth.context.organizationId,

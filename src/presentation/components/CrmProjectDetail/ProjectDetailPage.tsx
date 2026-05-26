@@ -3,6 +3,7 @@
 import type { ReactElement } from 'react';
 import { useProjectDetailShell } from '@/presentation/features/crmProjectDetail/ProjectDetailShellContext';
 import { WorkflowTaskFileDragProvider } from '@/presentation/features/crmProjectDetail/workflowTaskFileDragContext';
+import { useGuardedWorkflowTaskDocumentDrop } from '@/presentation/features/crmProjectDetail/useGuardedWorkflowTaskDocumentDrop';
 import { AccountabilityPanel } from './AccountabilityPanel';
 import { PaymentsRail } from './PaymentsRail';
 import { WorkflowTasksTable } from './WorkflowTasksTable';
@@ -18,9 +19,13 @@ export function ProjectOverviewContent(): ReactElement {
     setArchiveConfirmTask,
     setToast,
   } = useProjectDetailShell();
+  const guardedTaskDocumentDrop = useGuardedWorkflowTaskDocumentDrop(
+    handleTaskDocumentDrop,
+    (message) => setToast({ kind: 'error', message })
+  );
 
   return (
-    <WorkflowTaskFileDragProvider onTaskDocumentDrop={handleTaskDocumentDrop}>
+    <WorkflowTaskFileDragProvider onTaskDocumentDrop={guardedTaskDocumentDrop}>
       <div className={styles.detailPanelsScroll}>
         <div className={styles.detailMiddle}>
           <WorkflowTasksTable
