@@ -73,3 +73,7 @@ export type {
   BuildCoreProjectTemplateWorkflowTaskBlueprint,
 } from './projectTemplate';
 export { snapshotProjectTemplateBlueprintsFromWorkflowTasks } from './projectTemplate';
+export {
+  buildWorkflowTaskInputsFromProjectTemplate,
+  type BuildCoreProjectTemplateApplyInputs,
+} from './applyProjectTemplate';

@@ -1,7 +1,10 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { BuildCoreProjectTemplate } from '@/domain/crm/projectTemplate';
 import { snapshotProjectTemplateBlueprintsFromWorkflowTasks } from '@/domain/crm/projectTemplate';
+import { buildWorkflowTaskInputsFromProjectTemplate } from '@/domain/crm/applyProjectTemplate';
 import { getCrmProjectDetailBySlugForOrg } from './crmReadService';
+import { createCrmWorkflowTaskForOrg } from './crmWorkflowTaskService';
+import { resolveCrmProjectIdBySlug } from './resolveCrmProjectIdBySlug';
 import {
   mapDbBuildCoreProjectTemplate,
   serializeProjectTemplateBlueprintsForDb,
@@ -62,4 +65,87 @@ export async function createBuildCoreProjectTemplateFromProject(
   }
 
   return mapDbBuildCoreProjectTemplate(data as DbBuildCoreProjectTemplateRow);
+}
+
+export async function getBuildCoreProjectTemplateByIdForOrg(
+  supabase: SupabaseClient,
+  organizationId: string,
+  templateId: string
+): Promise<BuildCoreProjectTemplate | null> {
+  const { data, error } = await supabase
+    .from('buildcore_project_templates')
+    .select(TEMPLATE_LIST_SELECT)
+    .eq('id', templateId)
+    .eq('organization_id', organizationId)
+    .maybeSingle();
+
+  if (error != null) {
+    throw new Error(`buildcore_project_templates_read_failed: ${error.message}`);
+  }
+  if (data == null) return null;
+  return mapDbBuildCoreProjectTemplate(data as DbBuildCoreProjectTemplateRow);
+}
+
+export async function deleteBuildCoreProjectTemplateForOrg(
+  supabase: SupabaseClient,
+  organizationId: string,
+  templateId: string
+): Promise<boolean> {
+  const { data, error } = await supabase
+    .from('buildcore_project_templates')
+    .delete()
+    .eq('id', templateId)
+    .eq('organization_id', organizationId)
+    .select('id')
+    .maybeSingle();
+
+  if (error != null) {
+    throw new Error(`buildcore_project_templates_delete_failed: ${error.message}`);
+  }
+  return data != null;
+}
+
+export type ApplyBuildCoreProjectTemplateResult = {
+  readonly workflowTasksCreated: number;
+  readonly paymentsCreated: number;
+};
+
+export async function applyBuildCoreProjectTemplateToProject(
+  supabase: SupabaseClient,
+  organizationId: string,
+  userId: string,
+  templateId: string,
+  projectSlug: string
+): Promise<ApplyBuildCoreProjectTemplateResult> {
+  const template = await getBuildCoreProjectTemplateByIdForOrg(
+    supabase,
+    organizationId,
+    templateId
+  );
+  if (template == null) {
+    throw new Error('template_not_found');
+  }
+
+  const projectId = await resolveCrmProjectIdBySlug(supabase, organizationId, projectSlug);
+  if (projectId == null) {
+    throw new Error('project_not_found');
+  }
+
+  const { workflowTaskInputs, paymentInputs } = buildWorkflowTaskInputsFromProjectTemplate(
+    template,
+    projectId,
+    projectSlug
+  );
+
+  for (const input of workflowTaskInputs) {
+    await createCrmWorkflowTaskForOrg(supabase, organizationId, userId, input);
+  }
+  for (const input of paymentInputs) {
+    await createCrmWorkflowTaskForOrg(supabase, organizationId, userId, input);
+  }
+
+  return {
+    workflowTasksCreated: workflowTaskInputs.length,
+    paymentsCreated: paymentInputs.length,
+  };
 }

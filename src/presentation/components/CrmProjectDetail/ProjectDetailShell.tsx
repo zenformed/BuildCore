@@ -17,7 +17,9 @@ import {
 import { BuildCoreWorkflowTaskAccessProvider } from '@/presentation/providers/BuildCoreWorkflowTaskAccessProvider';
 import { useCrmProjectDeleteConfirmation } from '@/presentation/features/crmProjects/useCrmProjectDeleteConfirmation';
 import { queueCrmProjectDeleteSuccessToast } from '@/presentation/features/crmProjects/crmProjectDeleteFeedback';
+import { useLoadProjectTemplate } from '@/presentation/features/crmProjectDetail/useLoadProjectTemplate';
 import { useSaveProjectTemplate } from '@/presentation/features/crmProjectDetail/useSaveProjectTemplate';
+import { LoadProjectTemplateDialogs } from '@/presentation/components/ProjectTemplates';
 import { useSaaSProfile } from '@/presentation/hooks/useSaaSProfile';
 import { DetailToast } from './DetailToast';
 import { SaveProjectTemplateDialog } from './SaveProjectTemplateDialog';
@@ -82,6 +84,12 @@ export function ProjectDetailShell({
     onSuccess: (message) => workspace.setToast({ kind: 'success', message }),
     onError: (message) => workspace.setToast({ kind: 'error', message }),
   });
+  const loadTemplate = useLoadProjectTemplate({
+    projectSlug: projectSummary.slug,
+    onRefresh,
+    onSuccess: (message) => workspace.setToast({ kind: 'success', message }),
+    onError: (message) => workspace.setToast({ kind: 'error', message }),
+  });
   const actionsMenuProps = {
     projectSlug: projectSummary.slug,
     projectSummary,
@@ -90,6 +98,7 @@ export function ProjectDetailShell({
     deleting,
     onRequestDelete: setPendingDeleteProject,
     onSaveTemplate: saveTemplate.openDialog,
+    onLoadTemplate: loadTemplate.openList,
   };
 
   const headerActions = showCompletionActions ? (
@@ -156,6 +165,7 @@ export function ProjectDetailShell({
           onClose={saveTemplate.closeDialog}
           onSave={() => void saveTemplate.saveTemplate()}
         />
+        <LoadProjectTemplateDialogs controller={loadTemplate} />
         </div>
       </BuildCoreWorkflowTaskAccessProvider>
     </ProjectDetailShellProvider>

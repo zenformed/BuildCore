@@ -17,6 +17,7 @@ export type ProjectDetailActionsMenuProps = {
   deleting: boolean;
   onRequestDelete: (project: CrmProjectSummary) => void;
   onSaveTemplate: () => void;
+  onLoadTemplate: () => void;
 };
 
 export function ProjectDetailActionsMenu({
@@ -27,6 +28,7 @@ export function ProjectDetailActionsMenu({
   deleting,
   onRequestDelete,
   onSaveTemplate,
+  onLoadTemplate,
 }: ProjectDetailActionsMenuProps): ReactElement {
   const router = useRouter();
   const detail = content.projectDetail;
@@ -59,6 +61,11 @@ export function ProjectDetailActionsMenu({
   const handleSaveTemplate = () => {
     setOpen(false);
     onSaveTemplate();
+  };
+
+  const handleLoadTemplate = () => {
+    setOpen(false);
+    onLoadTemplate();
   };
 
   return (
@@ -126,19 +133,34 @@ export function ProjectDetailActionsMenu({
           {wf.openDocuments}
         </button>
         {canSaveTemplate ? (
-          <button
-            type="button"
-            role="menuitem"
-            className={`${styles.inlineMenuAction} ${styles.actionsMenuItem}`}
-            disabled={menuDisabled}
-            onClick={handleSaveTemplate}
-          >
-            <span
-              className={`${styles.actionsMenuIcon} ${styles.actionsMenuSaveTemplateIcon}`}
-              aria-hidden
-            />
-            {detail.actions.saveTemplate}
-          </button>
+          <>
+            <button
+              type="button"
+              role="menuitem"
+              className={`${styles.inlineMenuAction} ${styles.actionsMenuItem}`}
+              disabled={menuDisabled}
+              onClick={handleLoadTemplate}
+            >
+              <span
+                className={`${styles.actionsMenuIcon} ${styles.actionsMenuLoadTemplateIcon}`}
+                aria-hidden
+              />
+              {detail.actions.loadTemplate}
+            </button>
+            <button
+              type="button"
+              role="menuitem"
+              className={`${styles.inlineMenuAction} ${styles.actionsMenuItem}`}
+              disabled={menuDisabled}
+              onClick={handleSaveTemplate}
+            >
+              <span
+                className={`${styles.actionsMenuIcon} ${styles.actionsMenuSaveTemplateIcon}`}
+                aria-hidden
+              />
+              {detail.actions.saveTemplate}
+            </button>
+          </>
         ) : null}
         {canDelete ? (
           <button

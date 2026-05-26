@@ -1,0 +1,121 @@
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  max-height: min(24rem, 60vh);
+  overflow-y: auto;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.item {
+  border: 1px solid var(--theme-border-main, var(--color-border, #e2e8f0));
+  border-radius: var(--theme-radius-md, 0.5rem);
+  background: var(--theme-surface-main, var(--color-surface, #fff));
+  padding: 0.75rem;
+}
+
+:global([data-theme='dark']) .item {
+  background: var(--theme-surface-main, #252836);
+  border-color: var(--theme-border-main, #3d3e4a);
+}
+
+.itemMain {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: 0;
+}
+
+.itemName {
+  margin: 0;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--color-text, #0f172a);
+}
+
+:global([data-theme='dark']) .itemName {
+  color: #f1f5f9;
+}
+
+.itemMeta {
+  margin: 0;
+  font-size: 0.8125rem;
+  line-height: 1.4;
+  color: var(--color-text-muted, #64748b);
+}
+
+.itemActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.65rem;
+}
+
+.actionBtn {
+  padding: 0.35rem 0.75rem;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  border-radius: 0.375rem;
+  border: 1px solid var(--color-border, #e2e8f0);
+  background: var(--color-muted, #f1f5f9);
+  color: var(--color-text, #0f172a);
+  cursor: pointer;
+}
+
+.actionBtn:hover:not(:disabled) {
+  background: var(--color-muted-hover, #e2e8f0);
+}
+
+.actionBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+:global([data-theme='dark']) .actionBtn {
+  background: #2a3140;
+  border-color: #3d3e4a;
+  color: #f1f5f9;
+}
+
+.actionBtnPrimary {
+  composes: actionBtn;
+  color: #fff;
+  background: var(--color-primary, #2563eb);
+  border-color: var(--color-primary, #2563eb);
+}
+
+.actionBtnPrimary:hover:not(:disabled) {
+  opacity: 0.92;
+  background: var(--color-primary, #2563eb);
+}
+
+.actionBtnDanger {
+  composes: actionBtn;
+  color: var(--color-error, #dc2626);
+  border-color: color-mix(in srgb, var(--color-error, #dc2626) 35%, var(--color-border));
+  background: var(--color-error-bg, #fef2f2);
+}
+
+:global([data-theme='dark']) .actionBtnDanger {
+  color: #f87171;
+  background: rgba(248, 113, 113, 0.12);
+  border-color: rgba(248, 113, 113, 0.35);
+}
+
+.loading,
+.empty,
+.error {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--color-text-muted, #64748b);
+}
+
+.error {
+  color: var(--color-error, #dc2626);
+}
+
+.widePanel {
+  width: min(36rem, 100%);
+}

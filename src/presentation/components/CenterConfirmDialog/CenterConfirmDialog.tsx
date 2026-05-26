@@ -18,6 +18,7 @@ export type CenterConfirmDialogProps = {
   readonly cancelDisabled?: boolean;
   readonly hideActions?: boolean;
   readonly closeAriaLabel: string;
+  readonly panelClassName?: string;
 };
 
 export function CenterConfirmDialog({
@@ -34,6 +35,7 @@ export function CenterConfirmDialog({
   cancelDisabled = false,
   hideActions = false,
   closeAriaLabel,
+  panelClassName,
 }: CenterConfirmDialogProps): ReactElement | null {
   if (!isOpen) return null;
 
@@ -46,7 +48,7 @@ export function CenterConfirmDialog({
       role="presentation"
     >
       <div
-        className={styles.panel}
+        className={[styles.panel, panelClassName].filter(Boolean).join(' ')}
         role="dialog"
         aria-modal="true"
         aria-labelledby="center-confirm-dialog-title"

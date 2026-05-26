@@ -1,5 +1,5 @@
 import type { BuildCoreProjectTemplate } from '@/domain/crm/projectTemplate';
-import { crmApiGetJson, crmApiPostJson } from './crmApiClient';
+import { crmApiDeleteJson, crmApiGetJson, crmApiPostJson } from './crmApiClient';
 
 export type ListBuildCoreProjectTemplatesResponse = {
   readonly templates: readonly BuildCoreProjectTemplate[];
@@ -27,4 +27,25 @@ export async function createBuildCoreProjectTemplate(input: {
     input
   );
   return body.template;
+}
+
+export type ApplyBuildCoreProjectTemplateResponse = {
+  readonly workflowTasksCreated: number;
+  readonly paymentsCreated: number;
+};
+
+export async function applyBuildCoreProjectTemplate(input: {
+  readonly templateId: string;
+  readonly projectSlug: string;
+}): Promise<ApplyBuildCoreProjectTemplateResponse> {
+  return crmApiPostJson<ApplyBuildCoreProjectTemplateResponse>(
+    `/api/crm/project-templates/${encodeURIComponent(input.templateId)}/apply`,
+    { projectSlug: input.projectSlug }
+  );
+}
+
+export async function deleteBuildCoreProjectTemplate(templateId: string): Promise<void> {
+  await crmApiDeleteJson<{ ok: true }>(
+    `/api/crm/project-templates/${encodeURIComponent(templateId)}`
+  );
 }

@@ -14,6 +14,7 @@ export type ProjectDetailHeaderActionsProps = {
   deleting: boolean;
   onRequestDelete: (project: CrmProjectSummary) => void;
   onSaveTemplate: () => void;
+  onLoadTemplate: () => void;
   isComplete: boolean;
   completionBusy: boolean;
   onMarkComplete: () => void;
@@ -30,6 +31,7 @@ export function ProjectDetailHeaderActions({
   deleting,
   onRequestDelete,
   onSaveTemplate,
+  onLoadTemplate,
   isComplete,
   completionBusy,
   onMarkComplete,
@@ -55,6 +57,7 @@ export function ProjectDetailHeaderActions({
         deleting={deleting}
         onRequestDelete={onRequestDelete}
         onSaveTemplate={onSaveTemplate}
+        onLoadTemplate={onLoadTemplate}
       />
     </div>
   );
