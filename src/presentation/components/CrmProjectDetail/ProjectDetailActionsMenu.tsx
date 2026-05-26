@@ -13,16 +13,20 @@ export type ProjectDetailActionsMenuProps = {
   projectSlug: string;
   projectSummary: CrmProjectSummary;
   canDelete: boolean;
+  canSaveTemplate: boolean;
   deleting: boolean;
   onRequestDelete: (project: CrmProjectSummary) => void;
+  onSaveTemplate: () => void;
 };
 
 export function ProjectDetailActionsMenu({
   projectSlug,
   projectSummary,
   canDelete,
+  canSaveTemplate,
   deleting,
   onRequestDelete,
+  onSaveTemplate,
 }: ProjectDetailActionsMenuProps): ReactElement {
   const router = useRouter();
   const detail = content.projectDetail;
@@ -50,6 +54,11 @@ export function ProjectDetailActionsMenu({
   const handleRequestDelete = () => {
     setOpen(false);
     onRequestDelete(projectSummary);
+  };
+
+  const handleSaveTemplate = () => {
+    setOpen(false);
+    onSaveTemplate();
   };
 
   return (
@@ -116,6 +125,21 @@ export function ProjectDetailActionsMenu({
           <span className={`${styles.actionsMenuIcon} ${styles.actionsMenuFolderIcon}`} aria-hidden />
           {wf.openDocuments}
         </button>
+        {canSaveTemplate ? (
+          <button
+            type="button"
+            role="menuitem"
+            className={`${styles.inlineMenuAction} ${styles.actionsMenuItem}`}
+            disabled={menuDisabled}
+            onClick={handleSaveTemplate}
+          >
+            <span
+              className={`${styles.actionsMenuIcon} ${styles.actionsMenuSaveTemplateIcon}`}
+              aria-hidden
+            />
+            {detail.actions.saveTemplate}
+          </button>
+        ) : null}
         {canDelete ? (
           <button
             type="button"

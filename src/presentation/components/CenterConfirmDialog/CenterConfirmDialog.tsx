@@ -7,6 +7,8 @@ export type CenterConfirmDialogProps = {
   readonly isOpen: boolean;
   readonly title: string;
   readonly message?: ReactNode;
+  /** Replaces `message` when provided (e.g. form fields). */
+  readonly body?: ReactNode;
   readonly feedback?: { readonly kind: 'success' | 'error'; readonly message: string } | null;
   readonly cancelLabel: string;
   readonly confirmLabel?: string;
@@ -22,6 +24,7 @@ export function CenterConfirmDialog({
   isOpen,
   title,
   message,
+  body,
   feedback,
   cancelLabel,
   confirmLabel,
@@ -53,7 +56,11 @@ export function CenterConfirmDialog({
         <h2 id="center-confirm-dialog-title" className={styles.title}>
           {title}
         </h2>
-        {message != null ? <p className={styles.message}>{message}</p> : null}
+        {body != null ? (
+          <div className={styles.body}>{body}</div>
+        ) : message != null ? (
+          <p className={styles.message}>{message}</p>
+        ) : null}
         {feedback != null ? (
           <p
             className={`${styles.feedback} ${

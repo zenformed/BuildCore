@@ -66,3 +66,10 @@ export type {
   CreateCrmWorkflowTaskInput,
   UpdateCrmWorkflowTaskInput,
 } from './workflowTaskMutations';
+export type {
+  BuildCoreProjectTemplate,
+  BuildCoreProjectTemplateBlueprints,
+  BuildCoreProjectTemplatePaymentBlueprint,
+  BuildCoreProjectTemplateWorkflowTaskBlueprint,
+} from './projectTemplate';
+export { snapshotProjectTemplateBlueprintsFromWorkflowTasks } from './projectTemplate';

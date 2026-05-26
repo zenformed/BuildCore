@@ -1,8 +1,10 @@
 'use client';
 
 import type { ReactElement, ReactNode } from 'react';
+import { useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import type { CrmProjectDetail } from '@/domain/crm';
+import { canManageBuildCoreProjectTemplates } from '@/domain/buildcore/projectTemplateAccess';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
 import { buildCoreDashboardNavigation as nav } from '@/platform/navigation/buildCoreDashboardNavigation';
 import { useProjectCompletionToggle } from '@/presentation/features/crmProjectDetail/useProjectCompletionToggle';
@@ -15,7 +17,10 @@ import {
 import { BuildCoreWorkflowTaskAccessProvider } from '@/presentation/providers/BuildCoreWorkflowTaskAccessProvider';
 import { useCrmProjectDeleteConfirmation } from '@/presentation/features/crmProjects/useCrmProjectDeleteConfirmation';
 import { queueCrmProjectDeleteSuccessToast } from '@/presentation/features/crmProjects/crmProjectDeleteFeedback';
+import { useSaveProjectTemplate } from '@/presentation/features/crmProjectDetail/useSaveProjectTemplate';
+import { useSaaSProfile } from '@/presentation/hooks/useSaaSProfile';
 import { DetailToast } from './DetailToast';
+import { SaveProjectTemplateDialog } from './SaveProjectTemplateDialog';
 import { ProjectDetailActionsMenu } from './ProjectDetailActionsMenu';
 import { ProjectDetailContextBlock } from './ProjectDetailContextBlock';
 import { ProjectDetailHeaderActions } from './ProjectDetailHeaderActions';
@@ -44,7 +49,12 @@ export function ProjectDetailShell({
   children,
 }: ProjectDetailShellProps): ReactElement {
   const router = useRouter();
+  const { organizationMembershipContext } = useSaaSProfile();
   const showCompletionActions = pageContext === 'detail';
+  const canSaveTemplate = useMemo(
+    () => canManageBuildCoreProjectTemplates(organizationMembershipContext?.role),
+    [organizationMembershipContext?.role]
+  );
   const completion = useProjectCompletionToggle(initialProject, onRefresh);
   const projectForWorkspace = showCompletionActions ? completion.project : initialProject;
   const workspace = useProjectDetailWorkspace(projectForWorkspace);
@@ -67,12 +77,19 @@ export function ProjectDetailShell({
   });
 
   const deleting = deletingProjectId === projectSummary.id;
+  const saveTemplate = useSaveProjectTemplate({
+    projectSlug: projectSummary.slug,
+    onSuccess: (message) => workspace.setToast({ kind: 'success', message }),
+    onError: (message) => workspace.setToast({ kind: 'error', message }),
+  });
   const actionsMenuProps = {
     projectSlug: projectSummary.slug,
     projectSummary,
     canDelete,
+    canSaveTemplate,
     deleting,
     onRequestDelete: setPendingDeleteProject,
+    onSaveTemplate: saveTemplate.openDialog,
   };
 
   const headerActions = showCompletionActions ? (
@@ -130,6 +147,14 @@ export function ProjectDetailShell({
           pendingDeleteProject={pendingDeleteProject}
           onCloseDelete={() => setPendingDeleteProject(null)}
           onConfirmDelete={() => void handleConfirmDelete()}
+        />
+        <SaveProjectTemplateDialog
+          isOpen={saveTemplate.open}
+          templateName={saveTemplate.templateName}
+          saving={saveTemplate.saving}
+          onTemplateNameChange={saveTemplate.setTemplateName}
+          onClose={saveTemplate.closeDialog}
+          onSave={() => void saveTemplate.saveTemplate()}
         />
         </div>
       </BuildCoreWorkflowTaskAccessProvider>

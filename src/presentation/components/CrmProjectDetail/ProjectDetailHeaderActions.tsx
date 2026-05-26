@@ -10,8 +10,10 @@ export type ProjectDetailHeaderActionsProps = {
   projectSlug: string;
   projectSummary: CrmProjectSummary;
   canDelete: boolean;
+  canSaveTemplate: boolean;
   deleting: boolean;
   onRequestDelete: (project: CrmProjectSummary) => void;
+  onSaveTemplate: () => void;
   isComplete: boolean;
   completionBusy: boolean;
   onMarkComplete: () => void;
@@ -24,8 +26,10 @@ export function ProjectDetailHeaderActions({
   projectSlug,
   projectSummary,
   canDelete,
+  canSaveTemplate,
   deleting,
   onRequestDelete,
+  onSaveTemplate,
   isComplete,
   completionBusy,
   onMarkComplete,
@@ -47,8 +51,10 @@ export function ProjectDetailHeaderActions({
         projectSlug={projectSlug}
         projectSummary={projectSummary}
         canDelete={canDelete}
+        canSaveTemplate={canSaveTemplate}
         deleting={deleting}
         onRequestDelete={onRequestDelete}
+        onSaveTemplate={onSaveTemplate}
       />
     </div>
   );

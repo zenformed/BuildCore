@@ -42,6 +42,10 @@
   color: var(--color-text-muted, #64748b);
 }
 
+.body {
+  margin: 0 0 1rem;
+}
+
 .feedback {
   margin: 0 0 1rem;
   font-size: 0.875rem;
