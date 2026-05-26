@@ -4,19 +4,19 @@ import type { ReactElement } from 'react';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
 import { BuildCoreRolePermissionsSection } from './BuildCoreRolePermissionsSection';
 
-export type BuildCoreWorkflowTaskPermissionsSectionProps = {
+export type BuildCoreBudgetPermissionsSectionProps = {
   readonly enabled: boolean;
 };
 
-export function BuildCoreWorkflowTaskPermissionsSection({
+export function BuildCoreBudgetPermissionsSection({
   enabled,
-}: BuildCoreWorkflowTaskPermissionsSectionProps): ReactElement {
-  const copy = content.teams.workflowTaskPermissions;
+}: BuildCoreBudgetPermissionsSectionProps): ReactElement {
+  const copy = content.teams.budgetPermissions;
   return (
     <BuildCoreRolePermissionsSection
-      domain="workflow_tasks"
+      domain="budget"
       enabled={enabled}
-      headingId="teams-workflow-task-permissions-heading"
+      headingId="teams-budget-permissions-heading"
       copy={copy}
     />
   );

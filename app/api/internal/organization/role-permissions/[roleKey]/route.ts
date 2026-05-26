@@ -1,5 +1,5 @@
 /**
- * PATCH /api/internal/organization/role-permissions/[roleKey]?domain=workflow_tasks
+ * PATCH /api/internal/organization/role-permissions/[roleKey]?domain=workflow_tasks|payments|budget
  */
 
 import { NextRequest } from 'next/server';
@@ -8,6 +8,7 @@ import type {
   BuildCorePermissionRoleKey,
   BuildCoreRolePermissionFlags,
 } from '@/domain/buildcore/rolePermissions';
+import { parseBuildCorePermissionDomain } from '@/domain/buildcore/rolePermissions';
 import { relayOrganizationMutate } from '../../coreOrganizationRelay';
 
 export const dynamic = 'force-dynamic';
@@ -45,9 +46,14 @@ export async function PATCH(
     return Response.json({ error: 'invalid_role', message: 'Invalid role key.' }, { status: 400 });
   }
 
-  const domainParam = request.nextUrl.searchParams.get('domain') ?? 'workflow_tasks';
-  if (domainParam !== 'workflow_tasks') {
-    return Response.json({ error: 'invalid_domain', message: 'Unsupported permission domain.' }, { status: 400 });
+  const domain = parseBuildCorePermissionDomain(
+    request.nextUrl.searchParams.get('domain') ?? 'workflow_tasks'
+  );
+  if (domain == null) {
+    return Response.json(
+      { error: 'invalid_domain', message: 'Unsupported permission domain.' },
+      { status: 400 }
+    );
   }
 
   let body: unknown;
@@ -67,7 +73,7 @@ export async function PATCH(
 
   return relayOrganizationMutate(
     request,
-    (token) => patchBuildCoreRolePermission(token, 'workflow_tasks', roleKey, flags),
+    (token) => patchBuildCoreRolePermission(token, domain, roleKey, flags),
     { rejectedError: 'role_permission_update_rejected' }
   );
 }

@@ -4,7 +4,20 @@
 
 import type { OrganizationMemberRole } from '@zenformed/core/organization-settings';
 
-export type BuildCorePermissionDomain = 'workflow_tasks';
+export type BuildCorePermissionDomain = 'workflow_tasks' | 'payments' | 'budget';
+
+export const BUILDCORE_PERMISSION_DOMAINS: readonly BuildCorePermissionDomain[] = [
+  'workflow_tasks',
+  'payments',
+  'budget',
+];
+
+export function parseBuildCorePermissionDomain(
+  raw: string | null | undefined
+): BuildCorePermissionDomain | null {
+  if (raw === 'workflow_tasks' || raw === 'payments' || raw === 'budget') return raw;
+  return null;
+}
 
 export type BuildCorePermissionRoleKey = 'admin' | 'coordinator' | 'member';
 
@@ -22,7 +35,7 @@ export type BuildCorePermissionColumnId =
   | 'canCreate'
   | 'canUpload';
 
-export const BUILDCORE_WORKFLOW_TASK_PERMISSION_COLUMNS: readonly {
+export const BUILDCORE_PERMISSION_COLUMNS: readonly {
   readonly id: BuildCorePermissionColumnId;
   readonly label: string;
 }[] = [
@@ -33,6 +46,8 @@ export const BUILDCORE_WORKFLOW_TASK_PERMISSION_COLUMNS: readonly {
   { id: 'canCreate', label: 'Create' },
   { id: 'canUpload', label: 'Upload' },
 ];
+
+export const BUILDCORE_WORKFLOW_TASK_PERMISSION_COLUMNS = BUILDCORE_PERMISSION_COLUMNS;
 
 export type BuildCoreRolePermissionFlags = {
   readonly canView: boolean;
