@@ -16,9 +16,13 @@
     font-size: 0.8125rem;
   }
 
-  .avatar {
+  .avatar,
+  .avatarPhoto {
     width: 1.75rem;
     height: 1.75rem;
+  }
+
+  .avatarInitials {
     font-size: 0.75rem;
   }
 }
@@ -39,9 +43,13 @@
     padding: 0.25rem 0.55rem;
   }
 
-  .avatar {
+  .avatar,
+  .avatarPhoto {
     width: 2.25rem;
     height: 2.25rem;
+  }
+
+  .avatarInitials {
     font-size: 0.875rem;
   }
 }
@@ -104,11 +112,23 @@
   width: 1.5rem;
   height: 1.5rem;
   border-radius: 50%;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.avatarInitials {
   font-size: 0.625rem;
   font-weight: 600;
   color: #fff;
   background: #475569;
-  flex-shrink: 0;
+}
+
+.avatarPhoto {
+  display: block;
+  padding: 0;
+  border: none;
+  background: transparent;
+  object-fit: cover;
 }
 
 .assigneeMenuAction {
@@ -139,9 +159,14 @@
 }
 
 .assigneeMenuAvatar .avatar,
+.assigneeMenuAvatar .avatarPhoto,
+.assigneeMenuAvatar .avatarInitials,
 .assigneeMenuAvatar img {
   width: 1.125rem;
   height: 1.125rem;
+}
+
+.assigneeMenuAvatar .avatarInitials {
   font-size: 0.5625rem;
 }
 

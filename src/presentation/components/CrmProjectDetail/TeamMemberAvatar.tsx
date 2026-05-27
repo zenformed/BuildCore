@@ -44,7 +44,7 @@ export function TeamMemberAvatar({ member, title }: TeamMemberAvatarProps): Reac
       <img
         src={displayUrl}
         alt=""
-        className={shared.avatar}
+        className={`${shared.avatar} ${shared.avatarPhoto}`}
         title={tooltip}
         width={24}
         height={24}
@@ -54,7 +54,11 @@ export function TeamMemberAvatar({ member, title }: TeamMemberAvatarProps): Reac
   }
 
   return (
-    <span className={shared.avatar} title={tooltip} aria-label={resolvedMember.displayName}>
+    <span
+      className={`${shared.avatar} ${shared.avatarInitials}`}
+      title={tooltip}
+      aria-label={resolvedMember.displayName}
+    >
       {resolvedMember.initials}
     </span>
   );
