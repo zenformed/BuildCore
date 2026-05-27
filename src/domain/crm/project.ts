@@ -37,7 +37,6 @@ export type CrmProjectSummary = {
   readonly client: CrmClient;
   readonly priority: CrmPriority;
   readonly currentStageSlug: PipelineStageSlug;
-  readonly waitingOn: string | null;
   readonly notesPreview: string | null;
   readonly dealValueCents: number;
   readonly balanceRemainingCents: number;

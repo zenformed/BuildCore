@@ -11,7 +11,6 @@ export type CreateCrmProjectInput = {
   readonly phone: string;
   readonly priority: CrmPriority;
   readonly currentStageSlug: PipelineStageSlug;
-  readonly waitingOn: string | null;
   readonly notes: string | null;
   readonly dealValueCents: number;
   readonly balanceRemainingCents: number;

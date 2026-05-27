@@ -258,15 +258,6 @@ export function CrmProjectDraftRow({
             ))}
           </select>
         </span>
-        <span className={draftFieldCell} role="cell">
-          <input
-            className={styles.draftInput}
-            value={form.waitingOn}
-            disabled={saving}
-            placeholder={create.fields.waitingOn}
-            onChange={(e) => updateField('waitingOn', e.target.value)}
-          />
-        </span>
         <span className={`${draftFieldCell} ${styles.draftFieldCellWrap}`} role="cell">
           <input
             className={styles.draftInput}
@@ -276,7 +267,7 @@ export function CrmProjectDraftRow({
             onChange={(e) => updateField('notes', e.target.value)}
           />
         </span>
-        <span className={draftFieldCell} role="cell">
+        <span className={`${draftFieldCell} ${styles.gridCellDealValue}`} role="cell">
           <input
             className={styles.draftInput}
             inputMode="decimal"

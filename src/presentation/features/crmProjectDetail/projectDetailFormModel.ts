@@ -111,7 +111,6 @@ export function projectDetailToFormState(project: CrmProjectDetail): CreateCrmPr
     phone: summary.contact.phone,
     priority: summary.priority,
     currentStageSlug: summary.currentStageSlug,
-    waitingOn: summary.waitingOn ?? '',
     notes: notes ?? '',
     dealValueUsd: (summary.dealValueCents / 100).toFixed(2),
     balanceUsd: (summary.balanceRemainingCents / 100).toFixed(2),

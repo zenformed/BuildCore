@@ -137,8 +137,6 @@ function applyProjectUpdate(detail: CrmProjectDetail, input: UpdateCrmProjectInp
 
     currentStageSlug: input.currentStageSlug,
 
-    waitingOn: input.waitingOn,
-
     notesPreview: notesPreview(input.notes),
 
     dealValueCents: input.dealValueCents,

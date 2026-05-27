@@ -29,7 +29,6 @@ export type BuildMockCrmProjectInput = {
   readonly client: CrmClient;
   readonly priority: CrmPriority;
   readonly currentStageSlug: PipelineStageSlug;
-  readonly waitingOn: string | null;
   readonly notes: string;
   readonly dealValueCents: number;
   readonly paidCents?: number;
@@ -329,7 +328,6 @@ export function buildMockCrmProjectDetail(input: BuildMockCrmProjectInput): CrmP
     client: input.client,
     priority: input.priority,
     currentStageSlug: input.currentStageSlug,
-    waitingOn: input.waitingOn,
     notesPreview: notesPreview(input.notes),
     dealValueCents: input.dealValueCents,
     balanceRemainingCents,

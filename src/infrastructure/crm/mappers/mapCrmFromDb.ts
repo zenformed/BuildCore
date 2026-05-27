@@ -47,7 +47,6 @@ export type DbCrmProjectRow = {
   trade_type: string;
   priority: string;
   current_stage_slug: string;
-  waiting_on: string | null;
   notes: string | null;
   deal_value_cents: number;
   balance_cents: number;
@@ -298,7 +297,6 @@ export function mapDbProjectSummary(
     client,
     priority: asPriority(row.priority),
     currentStageSlug: asPipelineStageSlug(row.current_stage_slug),
-    waitingOn: row.waiting_on,
     notesPreview: notesPreview(row.notes),
     dealValueCents: Number(row.deal_value_cents),
     balanceRemainingCents: Number(row.balance_cents),

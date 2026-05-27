@@ -11,7 +11,6 @@ function projectSearchHaystack(project: CrmProjectSummary): string {
     project.contact.name,
     project.contact.email,
     project.contact.phone,
-    project.waitingOn,
     project.notesPreview,
     project.assignedTo?.displayName,
   ]

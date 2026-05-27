@@ -60,9 +60,10 @@ export function CrmProjectsTable({
             <span role="columnheader">{COLUMNS.phone}</span>
             <span role="columnheader">{COLUMNS.priority}</span>
             <span role="columnheader">{COLUMNS.stage}</span>
-            <span role="columnheader">{COLUMNS.waitingOn}</span>
             <span role="columnheader">{COLUMNS.notes}</span>
-            <span role="columnheader">{COLUMNS.dealValue}</span>
+            <span role="columnheader" className={styles.gridHeaderDealValue}>
+              {COLUMNS.dealValue}
+            </span>
             <span role="columnheader" className={styles.gridHeaderAssignee}>
               {COLUMNS.assigned}
             </span>
@@ -157,13 +158,10 @@ function ProjectRow({
       <span className={styles.gridCell} role="cell">
         <span className={shared.stagePill}>{formatStageLabel(project.currentStageSlug)}</span>
       </span>
-      <span className={styles.gridCell} role="cell" title={project.waitingOn ?? undefined}>
-        {project.waitingOn ?? '—'}
-      </span>
       <span className={`${styles.gridCell} ${styles.gridCellWrap}`} role="cell" title={project.notesPreview ?? undefined}>
         {project.notesPreview ?? '—'}
       </span>
-      <span className={styles.gridCell} role="cell">
+      <span className={`${styles.gridCell} ${styles.gridCellDealValue}`} role="cell">
         {formatCentsAsUsd(project.dealValueCents)}
       </span>
       <span className={styles.gridCellAssignee} role="cell">

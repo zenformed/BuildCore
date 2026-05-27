@@ -233,18 +233,6 @@ export function CreateCrmProjectDrawer({ open, onClose }: CreateCrmProjectDrawer
             </div>
 
             <div className={styles.field}>
-              <label className={styles.label} htmlFor="crm-create-waiting">
-                {create.fields.waitingOn}
-              </label>
-              <input
-                id="crm-create-waiting"
-                className={styles.input}
-                value={form.waitingOn}
-                onChange={(e) => updateField('waitingOn', e.target.value)}
-              />
-            </div>
-
-            <div className={styles.field}>
               <label className={styles.label} htmlFor="crm-create-notes">
                 {create.fields.notes}
               </label>

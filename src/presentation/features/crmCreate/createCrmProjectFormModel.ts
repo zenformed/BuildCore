@@ -9,7 +9,6 @@ export type CreateCrmProjectFormState = {
   phone: string;
   priority: CrmPriority;
   currentStageSlug: PipelineStageSlug;
-  waitingOn: string;
   notes: string;
   dealValueUsd: string;
   balanceUsd: string;
@@ -24,7 +23,6 @@ export const defaultCreateCrmProjectFormState = (): CreateCrmProjectFormState =>
   phone: '',
   priority: 'normal',
   currentStageSlug: 'new-lead',
-  waitingOn: '',
   notes: '',
   dealValueUsd: '',
   balanceUsd: '',
@@ -75,7 +73,6 @@ export function validateCreateCrmProjectForm(
       phone: form.phone.trim(),
       priority: form.priority,
       currentStageSlug: form.currentStageSlug,
-      waitingOn: form.waitingOn.trim() || null,
       notes: form.notes.trim() || null,
       dealValueCents,
       balanceRemainingCents,

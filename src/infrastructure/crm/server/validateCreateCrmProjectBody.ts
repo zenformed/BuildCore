@@ -14,7 +14,6 @@ export type CreateCrmProjectBody = {
   priority?: unknown;
   tradeType?: unknown;
   currentStageSlug?: unknown;
-  waitingOn?: unknown;
   notes?: unknown;
   dealValueCents?: unknown;
   balanceRemainingCents?: unknown;
@@ -127,7 +126,6 @@ export function validateCreateCrmProjectBody(body: CreateCrmProjectBody): Valida
       phone: typeof body.phone === 'string' ? body.phone.trim() : '',
       priority,
       currentStageSlug,
-      waitingOn: asOptionalString(body.waitingOn),
       notes: asOptionalString(body.notes),
       dealValueCents,
       balanceRemainingCents,

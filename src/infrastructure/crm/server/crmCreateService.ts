@@ -54,7 +54,6 @@ export async function createCrmProjectForOrg(
       trade_type: input.tradeType,
       priority: input.priority,
       current_stage_slug: input.currentStageSlug,
-      waiting_on: input.waitingOn,
       notes: input.notes,
       deal_value_cents: input.dealValueCents,
       balance_cents: input.balanceRemainingCents,
