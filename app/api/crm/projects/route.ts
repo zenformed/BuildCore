@@ -5,6 +5,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { requireCrmApiAuth } from '@/infrastructure/crm/server/crmApiRouteAuth';
+import { requireBuildCoreProjectManagementAccess } from '@/infrastructure/crm/server/buildCoreProjectManagementAccess';
 import { createCrmProjectForOrg } from '@/infrastructure/crm/server/crmCreateService';
 import { listCrmProjectSummariesForOrg } from '@/infrastructure/crm/server/crmReadService';
 import {
@@ -36,6 +37,14 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 export async function POST(request: NextRequest): Promise<NextResponse> {
   const auth = await requireCrmApiAuth(request.headers.get('Authorization'));
   if (!auth.ok) return auth.response;
+
+  const access = await requireBuildCoreProjectManagementAccess(
+    auth.context.supabase,
+    auth.context.organizationId,
+    auth.context.user.id,
+    'create'
+  );
+  if (!access.ok) return access.response;
 
   let body: CreateCrmProjectBody;
   try {

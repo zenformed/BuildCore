@@ -16,6 +16,7 @@ import { useUserAvatar } from '@/presentation/hooks/useUserAvatar';
 import { useTenant } from '@/presentation/providers';
 import { computeIsAdmin } from '@/presentation/features/buildCoreDashboard/buildCoreDashboardViewModel';
 import { canAccessBuildCoreTeams } from '@/presentation/features/buildCoreTeams/buildCoreTeamsAccess';
+import { isBuildCoreMemberRole } from '@/domain/buildcore/memberRole';
 import { formatOrganizationRoleLabel } from '@zenformed/core/dashboard-shell';
 import type { BuildCoreSettingsSectionId } from '@/platform/navigation/buildCoreDashboardNavigation';
 import type { CrmProjectSummary } from '@/domain/crm';
@@ -110,8 +111,15 @@ export function useBuildCoreDashboard(): {
   );
 
   const onNewProjectClick = useCallback(() => {
+    if (isBuildCoreMemberRole(organizationMembershipContext?.role)) return;
     setCreateProjectDraftOpen(true);
-  }, []);
+  }, [organizationMembershipContext?.role]);
+
+  useEffect(() => {
+    if (isBuildCoreMemberRole(organizationMembershipContext?.role) && createProjectDraftOpen) {
+      setCreateProjectDraftOpen(false);
+    }
+  }, [createProjectDraftOpen, organizationMembershipContext?.role]);
 
   useEffect(() => {
     if (user?.tenantId) {

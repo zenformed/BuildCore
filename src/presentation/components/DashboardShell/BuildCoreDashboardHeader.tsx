@@ -30,6 +30,7 @@ export type BuildCoreDashboardHeaderProps = {
   searchQuery: string;
   onSearchQueryChange: (query: string) => void;
   showProjectActions: boolean;
+  showNewProjectButton?: boolean;
   onNewProjectClick: () => void;
   newProjectDisabled?: boolean;
   user: { email: string } | null;
@@ -48,6 +49,7 @@ export function BuildCoreDashboardHeader({
   searchQuery,
   onSearchQueryChange,
   showProjectActions,
+  showNewProjectButton = showProjectActions,
   onNewProjectClick,
   newProjectDisabled = false,
   user,
@@ -89,16 +91,18 @@ export function BuildCoreDashboardHeader({
               className={styles.headerSearch}
               aria-label={nav.header.search.ariaLabel}
             />
-            <button
-              type="button"
-              className={styles.headerNewOrderBtn}
-              disabled={newProjectDisabled}
-              onClick={onNewProjectClick}
-              title={nav.header.newProject.title}
-              aria-label={nav.header.newProject.ariaLabel}
-            >
-              +
-            </button>
+            {showNewProjectButton ? (
+              <button
+                type="button"
+                className={styles.headerNewOrderBtn}
+                disabled={newProjectDisabled}
+                onClick={onNewProjectClick}
+                title={nav.header.newProject.title}
+                aria-label={nav.header.newProject.ariaLabel}
+              >
+                +
+              </button>
+            ) : null}
           </div>
         ) : undefined
       }

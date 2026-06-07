@@ -73,6 +73,16 @@
   min-width: 61rem;
 }
 
+.tableInnerMember {
+  min-width: 44rem;
+}
+
+.projectsGridMember {
+  grid-template-columns:
+    minmax(11rem, 1.35fr) minmax(7rem, 0.95fr) minmax(9rem, 1.05fr) minmax(6.5rem, 0.75fr)
+    minmax(5.5rem, 0.55fr) minmax(9rem, 1fr) minmax(4.5rem, 0.5fr);
+}
+
 .projectsGrid {
   display: grid;
   grid-template-columns:

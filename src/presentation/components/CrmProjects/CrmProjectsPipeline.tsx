@@ -2,10 +2,12 @@
 
 import { useEffect, useState, type ReactElement } from 'react';
 import type { CrmProjectSummary } from '@/domain/crm';
+import { isBuildCoreMemberRole } from '@/domain/buildcore/memberRole';
 import { useCrmProjectsPipeline } from '@/presentation/features/crmProjects/useCrmProjectsPipeline';
 import { useCrmProjectDeleteConfirmation } from '@/presentation/features/crmProjects/useCrmProjectDeleteConfirmation';
 import { consumeCrmProjectDeleteSuccessToast } from '@/presentation/features/crmProjects/crmProjectDeleteFeedback';
 import type { CrmPriorityFilter, CrmStageFilter } from '@/presentation/features/crmProjects/crmProjectsPipelineViewModel';
+import { useSaaSProfile } from '@/presentation/hooks/useSaaSProfile';
 import { CrmProjectDeleteConfirmModal } from '@/presentation/components/CrmProjects/CrmProjectDeleteConfirmModal';
 import { DetailToast } from '@/presentation/components/CrmProjectDetail/DetailToast';
 import { CrmProjectsFilters } from './CrmProjectsFilters';
@@ -37,6 +39,8 @@ export function CrmProjectsPipeline({
   onProjectRowClick,
   onProjectCreated,
 }: CrmProjectsPipelineProps): ReactElement {
+  const { organizationMembershipContext } = useSaaSProfile();
+  const isMemberRole = isBuildCoreMemberRole(organizationMembershipContext?.role);
   const { rows, totalCount, filteredCount, isLoading, refetch, removeProject } = useCrmProjectsPipeline(
     searchQuery,
     stageFilter,
@@ -89,11 +93,12 @@ export function CrmProjectsPipeline({
       <CrmProjectsTable
         rows={rows}
         isLoading={isLoading}
-        draftOpen={createDraftOpen}
+        draftOpen={createDraftOpen && !isMemberRole}
         onDraftOpenChange={onCreateDraftOpenChange}
         onProjectCreated={handleProjectCreated}
         onRowClick={onProjectRowClick}
-        canDelete={canDelete}
+        isMemberRole={isMemberRole}
+        canDelete={canDelete && !isMemberRole}
         deletingProjectId={deletingProjectId}
         onRequestDelete={setPendingDeleteProject}
         onTemplateToast={(toast) => setToast(toast)}

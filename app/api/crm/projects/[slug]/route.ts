@@ -6,6 +6,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { requireCrmApiAuth } from '@/infrastructure/crm/server/crmApiRouteAuth';
+import { requireBuildCoreProjectManagementAccess } from '@/infrastructure/crm/server/buildCoreProjectManagementAccess';
 import { archiveCrmProjectBySlugForOrg } from '@/infrastructure/crm/server/crmArchiveProjectService';
 import { getCrmProjectDetailBySlugForOrg } from '@/infrastructure/crm/server/crmReadService';
 import { scopeCrmProjectDetailForViewer } from '@/infrastructure/crm/server/crmMemberProjectDetailService';
@@ -112,6 +113,14 @@ export async function DELETE(
   if (!slug) {
     return NextResponse.json({ error: 'not_found', message: 'Project not found' }, { status: 404 });
   }
+
+  const access = await requireBuildCoreProjectManagementAccess(
+    auth.context.supabase,
+    auth.context.organizationId,
+    auth.context.user.id,
+    'delete'
+  );
+  if (!access.ok) return access.response;
 
   try {
     const archived = await archiveCrmProjectBySlugForOrg(
