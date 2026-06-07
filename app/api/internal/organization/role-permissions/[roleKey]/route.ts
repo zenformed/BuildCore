@@ -20,6 +20,7 @@ import {
 } from '@/infrastructure/crm/server/buildCoreRolePermissionService';
 import { loadActiveOrganizationMemberRole } from '@/infrastructure/crm/server/buildCoreWorkflowTaskVisibilityService';
 import { runtimeModes } from '@/infrastructure/config/runtimeModes';
+import { BUILDCORE_ADMIN_NO_CACHE_HEADERS } from '@/infrastructure/coreApi/buildCoreAdminFetch';
 
 export const dynamic = 'force-dynamic';
 
@@ -82,7 +83,7 @@ export async function PATCH(
   }
 
   if (runtimeModes.useMockAuth()) {
-    return NextResponse.json({ row: { roleKey, ...flags } });
+    return NextResponse.json({ row: { roleKey, ...flags } }, { headers: BUILDCORE_ADMIN_NO_CACHE_HEADERS });
   }
 
   const auth = await requireCrmApiAuth(request.headers.get('Authorization'));
@@ -116,7 +117,7 @@ export async function PATCH(
       roleKey,
       flags
     );
-    return NextResponse.json({ row });
+    return NextResponse.json({ row }, { headers: BUILDCORE_ADMIN_NO_CACHE_HEADERS });
   } catch (err) {
     const message =
       err instanceof Error ? err.message : 'Could not save BuildCore role permissions.';

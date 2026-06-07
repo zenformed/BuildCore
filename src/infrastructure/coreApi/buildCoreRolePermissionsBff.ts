@@ -9,6 +9,10 @@ import {
   parseBuildCoreRolePermissionPatchRowJson,
   parseBuildCoreRolePermissionsJson,
 } from '@/infrastructure/coreApi/parseBuildCoreRolePermissionsJson';
+import {
+  buildCoreAdminFetchInit,
+  buildCoreAdminFetchUrl,
+} from '@/infrastructure/coreApi/buildCoreAdminFetch';
 
 export { parseBuildCoreRolePermissionsJson as parseBuildCoreRolePermissionsBffJson } from '@/infrastructure/coreApi/parseBuildCoreRolePermissionsJson';
 
@@ -17,15 +21,10 @@ export async function fetchBuildCoreRolePermissionsBff(
   domain: BuildCorePermissionDomain
 ): Promise<BuildCoreRolePermissionsResponse> {
   const res = await fetch(
-    `/api/internal/organization/role-permissions?domain=${encodeURIComponent(domain)}`,
-    {
-      method: 'GET',
-      headers: {
-        Accept: 'application/json',
-        Authorization: `Bearer ${accessToken}`,
-      },
-      cache: 'no-store',
-    }
+    buildCoreAdminFetchUrl(
+      `/api/internal/organization/role-permissions?domain=${encodeURIComponent(domain)}`
+    ),
+    buildCoreAdminFetchInit(accessToken, { method: 'GET' })
   );
   let json: unknown;
   try {
@@ -54,17 +53,14 @@ export async function patchBuildCoreRolePermissionBff(
   flags: BuildCoreRolePermissionFlags
 ): Promise<BuildCoreRolePermissionRow> {
   const res = await fetch(
-    `/api/internal/organization/role-permissions/${encodeURIComponent(roleKey)}?domain=${encodeURIComponent(domain)}`,
-    {
+    buildCoreAdminFetchUrl(
+      `/api/internal/organization/role-permissions/${encodeURIComponent(roleKey)}?domain=${encodeURIComponent(domain)}`
+    ),
+    buildCoreAdminFetchInit(accessToken, {
       method: 'PATCH',
-      headers: {
-        Accept: 'application/json',
-        Authorization: `Bearer ${accessToken}`,
-        'Content-Type': 'application/json',
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(flags),
-      cache: 'no-store',
-    }
+    })
   );
   let json: unknown;
   try {

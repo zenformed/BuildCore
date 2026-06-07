@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   fetchBuildCoreRolePermissionsBff,
   patchBuildCoreRolePermissionBff,
@@ -10,7 +10,6 @@ import type {
   BuildCorePermissionColumnId,
   BuildCorePermissionDomain,
   BuildCorePermissionRoleKey,
-  BuildCoreRolePermissionRow,
   BuildCoreRolePermissionsResponse,
 } from '@/domain/buildcore/rolePermissions';
 import { canEditBuildCorePermissionRoleRow } from '@/domain/buildcore/rolePermissions';
@@ -33,7 +32,7 @@ export function useBuildCoreRolePermissions(
   ) => Promise<void>;
   refetch: () => Promise<void>;
 } {
-  const dash = useBuildCoreDashboardContext();
+  const { getAccessToken } = useBuildCoreDashboardContext();
   const [data, setData] = useState<BuildCoreRolePermissionsResponse | null>(null);
   const [isLoading, setIsLoading] = useState(enabled);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -43,31 +42,65 @@ export function useBuildCoreRolePermissions(
     roleKey: BuildCorePermissionRoleKey;
     columnId: BuildCorePermissionColumnId;
   } | null>(null);
+  const loadGenerationRef = useRef(0);
 
   const load = useCallback(async () => {
     if (!enabled) return;
-    const token = dash.getAccessToken();
+
+    const token = getAccessToken();
     if (!token) {
       setLoadError('Sign in required.');
       setIsLoading(false);
       return;
     }
+
+    const generation = loadGenerationRef.current + 1;
+    loadGenerationRef.current = generation;
     setIsLoading(true);
     setLoadError(null);
+
     try {
       const next = await fetchBuildCoreRolePermissionsBff(token, domain);
+      if (loadGenerationRef.current !== generation) return;
       setData(next);
     } catch (err) {
+      if (loadGenerationRef.current !== generation) return;
+      if (err instanceof DOMException && err.name === 'AbortError') return;
       setLoadError(err instanceof Error ? err.message : 'Could not load permissions.');
       setData(null);
     } finally {
-      setIsLoading(false);
+      if (loadGenerationRef.current === generation) {
+        setIsLoading(false);
+      }
     }
-  }, [dash, domain, enabled]);
+  }, [domain, enabled, getAccessToken]);
 
   useEffect(() => {
+    if (!enabled) return;
     void load();
-  }, [load]);
+  }, [enabled, load]);
+
+  useEffect(() => {
+    if (!enabled) return;
+
+    const onPageShow = (event: PageTransitionEvent) => {
+      if (event.persisted) {
+        void load();
+      }
+    };
+    const onVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        void load();
+      }
+    };
+
+    window.addEventListener('pageshow', onPageShow);
+    document.addEventListener('visibilitychange', onVisibilityChange);
+    return () => {
+      window.removeEventListener('pageshow', onPageShow);
+      document.removeEventListener('visibilitychange', onVisibilityChange);
+    };
+  }, [enabled, load]);
 
   const canEditRow = useCallback(
     (roleKey: BuildCorePermissionRoleKey) => {
@@ -84,44 +117,34 @@ export function useBuildCoreRolePermissions(
       nextValue: boolean
     ) => {
       if (data == null || !canEditRow(roleKey)) return;
-      const token = dash.getAccessToken();
+      const token = getAccessToken();
       if (!token) return;
 
-      const previousRows = data.rows;
-      const row = previousRows.find((r) => r.roleKey === roleKey);
+      const previousData = data;
+      const row = previousData.rows.find((r) => r.roleKey === roleKey);
       if (row == null) return;
 
       const nextFlags = { ...row, [columnId]: nextValue };
-      const optimisticRows = previousRows.map((r) =>
-        r.roleKey === roleKey ? { ...r, ...nextFlags } : r
-      );
 
       setBusyCell({ roleKey, columnId });
       setStatusMessage(null);
       setStatusKind(null);
-      setData({ ...data, rows: optimisticRows });
 
       try {
-        const updated = await patchBuildCoreRolePermissionBff(token, domain, roleKey, nextFlags);
-        setData((current) =>
-          current == null
-            ? current
-            : {
-                ...current,
-                rows: current.rows.map((r) => (r.roleKey === roleKey ? updated : r)),
-              }
-        );
+        await patchBuildCoreRolePermissionBff(token, domain, roleKey, nextFlags);
+        const refreshed = await fetchBuildCoreRolePermissionsBff(token, domain);
+        setData(refreshed);
         setStatusKind('success');
         setStatusMessage('Permissions saved.');
       } catch (err) {
-        setData((current) => (current == null ? current : { ...current, rows: previousRows }));
+        setData(previousData);
         setStatusKind('error');
         setStatusMessage(err instanceof Error ? err.message : 'Could not update permissions.');
       } finally {
         setBusyCell(null);
       }
     },
-    [canEditRow, dash, data, domain]
+    [canEditRow, data, domain, getAccessToken]
   );
 
   return {

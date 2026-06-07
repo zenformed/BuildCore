@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   fetchBuildCoreWorkflowTaskMemberVisibilityBff,
   patchBuildCoreWorkflowTaskMemberVisibilityBff,
@@ -19,7 +19,7 @@ export function useBuildCoreWorkflowTaskMemberVisibility(enabled: boolean): {
   toggleOnlyAssignedUserCanView: (nextValue: boolean) => Promise<void>;
   refetch: () => Promise<void>;
 } {
-  const dash = useBuildCoreDashboardContext();
+  const { getAccessToken } = useBuildCoreDashboardContext();
   const [onlyAssignedUserCanView, setOnlyAssignedUserCanView] = useState(false);
   const [memberRoleUserIds, setMemberRoleUserIds] = useState<readonly string[]>([]);
   const [canEdit, setCanEdit] = useState(false);
@@ -28,61 +28,108 @@ export function useBuildCoreWorkflowTaskMemberVisibility(enabled: boolean): {
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [statusKind, setStatusKind] = useState<'success' | 'error' | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const loadGenerationRef = useRef(0);
+
+  const applyResponse = useCallback(
+    (next: {
+      onlyAssignedUserCanView: boolean;
+      memberRoleUserIds: readonly string[];
+      canEdit: boolean;
+    }) => {
+      setOnlyAssignedUserCanView(next.onlyAssignedUserCanView);
+      setMemberRoleUserIds(next.memberRoleUserIds);
+      setCanEdit(next.canEdit);
+    },
+    []
+  );
 
   const load = useCallback(async () => {
     if (!enabled) return;
-    const token = dash.getAccessToken();
+
+    const token = getAccessToken();
     if (!token) {
       setLoadError('Sign in required.');
       setIsLoading(false);
       return;
     }
+
+    const generation = loadGenerationRef.current + 1;
+    loadGenerationRef.current = generation;
     setIsLoading(true);
     setLoadError(null);
+
     try {
       const next = await fetchBuildCoreWorkflowTaskMemberVisibilityBff(token);
-      setOnlyAssignedUserCanView(next.onlyAssignedUserCanView);
-      setMemberRoleUserIds(next.memberRoleUserIds);
-      setCanEdit(next.canEdit);
+      if (loadGenerationRef.current !== generation) return;
+      applyResponse(next);
     } catch (err) {
+      if (loadGenerationRef.current !== generation) return;
       setLoadError(err instanceof Error ? err.message : 'Could not load visibility settings.');
     } finally {
-      setIsLoading(false);
+      if (loadGenerationRef.current === generation) {
+        setIsLoading(false);
+      }
     }
-  }, [dash, enabled]);
+  }, [applyResponse, enabled, getAccessToken]);
 
   useEffect(() => {
+    if (!enabled) return;
     void load();
-  }, [load]);
+  }, [enabled, load]);
+
+  useEffect(() => {
+    if (!enabled) return;
+
+    const onPageShow = (event: PageTransitionEvent) => {
+      if (event.persisted) {
+        void load();
+      }
+    };
+    const onVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        void load();
+      }
+    };
+
+    window.addEventListener('pageshow', onPageShow);
+    document.addEventListener('visibilitychange', onVisibilityChange);
+    return () => {
+      window.removeEventListener('pageshow', onPageShow);
+      document.removeEventListener('visibilitychange', onVisibilityChange);
+    };
+  }, [enabled, load]);
 
   const toggleOnlyAssignedUserCanView = useCallback(
     async (nextValue: boolean) => {
       if (!canEdit) return;
-      const token = dash.getAccessToken();
+      const token = getAccessToken();
       if (!token) return;
 
-      const previous = onlyAssignedUserCanView;
-      setOnlyAssignedUserCanView(nextValue);
+      const previous = {
+        onlyAssignedUserCanView,
+        memberRoleUserIds,
+        canEdit,
+      };
+
       setIsSaving(true);
       setStatusMessage(null);
       setStatusKind(null);
 
       try {
-        const saved = await patchBuildCoreWorkflowTaskMemberVisibilityBff(token, nextValue);
-        setOnlyAssignedUserCanView(saved.onlyAssignedUserCanView);
-        setMemberRoleUserIds(saved.memberRoleUserIds);
-        setCanEdit(saved.canEdit);
+        await patchBuildCoreWorkflowTaskMemberVisibilityBff(token, nextValue);
+        const refreshed = await fetchBuildCoreWorkflowTaskMemberVisibilityBff(token);
+        applyResponse(refreshed);
         setStatusKind('success');
         setStatusMessage('Visibility setting saved.');
       } catch (err) {
-        setOnlyAssignedUserCanView(previous);
+        applyResponse(previous);
         setStatusKind('error');
         setStatusMessage(err instanceof Error ? err.message : 'Could not save visibility setting.');
       } finally {
         setIsSaving(false);
       }
     },
-    [canEdit, dash, onlyAssignedUserCanView]
+    [applyResponse, canEdit, getAccessToken, memberRoleUserIds, onlyAssignedUserCanView]
   );
 
   return {

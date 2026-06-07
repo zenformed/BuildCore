@@ -13,15 +13,19 @@ import {
   saveBuildCoreWorkflowTaskVisibilitySettings,
 } from '@/infrastructure/crm/server/buildCoreWorkflowTaskVisibilityService';
 import { runtimeModes } from '@/infrastructure/config/runtimeModes';
+import { BUILDCORE_ADMIN_NO_CACHE_HEADERS } from '@/infrastructure/coreApi/buildCoreAdminFetch';
 
 export const dynamic = 'force-dynamic';
 
 function defaultResponse(canEdit: boolean) {
-  return NextResponse.json({
-    onlyAssignedUserCanView: false,
-    canEdit,
-    memberRoleUserIds: [] as string[],
-  });
+  return NextResponse.json(
+    {
+      onlyAssignedUserCanView: false,
+      canEdit,
+      memberRoleUserIds: [] as string[],
+    },
+    { headers: BUILDCORE_ADMIN_NO_CACHE_HEADERS }
+  );
 }
 
 export async function GET(request: NextRequest): Promise<NextResponse> {
@@ -42,14 +46,17 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       auth.context.supabase,
       auth.context.organizationId
     );
-    return NextResponse.json({
-      onlyAssignedUserCanView: settings.onlyAssignedUserCanView,
-      canEdit: isBuildCoreTeamsManagerRole(actorRole),
-      memberRoleUserIds: await loadActiveBuildCoreMemberUserIdsForOrg(
-        auth.context.supabase,
-        auth.context.organizationId
-      ),
-    });
+    return NextResponse.json(
+      {
+        onlyAssignedUserCanView: settings.onlyAssignedUserCanView,
+        canEdit: isBuildCoreTeamsManagerRole(actorRole),
+        memberRoleUserIds: await loadActiveBuildCoreMemberUserIdsForOrg(
+          auth.context.supabase,
+          auth.context.organizationId
+        ),
+      },
+      { headers: BUILDCORE_ADMIN_NO_CACHE_HEADERS }
+    );
   } catch (err) {
     const message =
       err instanceof Error ? err.message : 'Could not load workflow task visibility settings.';
@@ -59,7 +66,10 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 
 export async function PATCH(request: NextRequest): Promise<NextResponse> {
   if (runtimeModes.useMockAuth()) {
-    return NextResponse.json({ onlyAssignedUserCanView: false, canEdit: true });
+    return NextResponse.json(
+      { onlyAssignedUserCanView: false, canEdit: true },
+      { headers: BUILDCORE_ADMIN_NO_CACHE_HEADERS }
+    );
   }
 
   const auth = await requireCrmApiAuth(request.headers.get('Authorization'));
@@ -103,14 +113,17 @@ export async function PATCH(request: NextRequest): Promise<NextResponse> {
         onlyAssignedUserCanView: (body as Record<string, unknown>).onlyAssignedUserCanView as boolean,
       }
     );
-    return NextResponse.json({
-      onlyAssignedUserCanView: saved.onlyAssignedUserCanView,
-      canEdit: true,
-      memberRoleUserIds: await loadActiveBuildCoreMemberUserIdsForOrg(
-        auth.context.supabase,
-        auth.context.organizationId
-      ),
-    });
+    return NextResponse.json(
+      {
+        onlyAssignedUserCanView: saved.onlyAssignedUserCanView,
+        canEdit: true,
+        memberRoleUserIds: await loadActiveBuildCoreMemberUserIdsForOrg(
+          auth.context.supabase,
+          auth.context.organizationId
+        ),
+      },
+      { headers: BUILDCORE_ADMIN_NO_CACHE_HEADERS }
+    );
   } catch (err) {
     const message =
       err instanceof Error ? err.message : 'Could not save workflow task visibility settings.';

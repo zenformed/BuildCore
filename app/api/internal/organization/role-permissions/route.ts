@@ -11,6 +11,7 @@ import {
   buildDefaultBuildCoreRolePermissionsResponse,
 } from '@/infrastructure/crm/server/buildCoreRolePermissionService';
 import { runtimeModes } from '@/infrastructure/config/runtimeModes';
+import { BUILDCORE_ADMIN_NO_CACHE_HEADERS } from '@/infrastructure/coreApi/buildCoreAdminFetch';
 
 export const dynamic = 'force-dynamic';
 
@@ -26,7 +27,9 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   }
 
   if (runtimeModes.useMockAuth()) {
-    return NextResponse.json(buildDefaultBuildCoreRolePermissionsResponse(domain));
+    return NextResponse.json(buildDefaultBuildCoreRolePermissionsResponse(domain), {
+      headers: BUILDCORE_ADMIN_NO_CACHE_HEADERS,
+    });
   }
 
   const auth = await requireCrmApiAuth(request.headers.get('Authorization'));
@@ -39,7 +42,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       auth.context.user.id,
       domain
     );
-    return NextResponse.json(response);
+    return NextResponse.json(response, { headers: BUILDCORE_ADMIN_NO_CACHE_HEADERS });
   } catch (err) {
     const message =
       err instanceof Error ? err.message : 'Could not load BuildCore role permissions.';

@@ -1,3 +1,8 @@
+import {
+  buildCoreAdminFetchInit,
+  buildCoreAdminFetchUrl,
+} from '@/infrastructure/coreApi/buildCoreAdminFetch';
+
 export type BuildCoreWorkflowTaskMemberVisibilityResponse = {
   readonly onlyAssignedUserCanView: boolean;
   readonly canEdit: boolean;
@@ -24,14 +29,10 @@ export function parseBuildCoreWorkflowTaskMemberVisibilityJson(
 export async function fetchBuildCoreWorkflowTaskMemberVisibilityBff(
   accessToken: string
 ): Promise<BuildCoreWorkflowTaskMemberVisibilityResponse> {
-  const res = await fetch('/api/internal/organization/workflow-task-member-visibility', {
-    method: 'GET',
-    headers: {
-      Accept: 'application/json',
-      Authorization: `Bearer ${accessToken}`,
-    },
-    cache: 'no-store',
-  });
+  const res = await fetch(
+    buildCoreAdminFetchUrl('/api/internal/organization/workflow-task-member-visibility'),
+    buildCoreAdminFetchInit(accessToken, { method: 'GET' })
+  );
   let json: unknown;
   try {
     json = await res.json();
@@ -56,16 +57,14 @@ export async function patchBuildCoreWorkflowTaskMemberVisibilityBff(
   accessToken: string,
   onlyAssignedUserCanView: boolean
 ): Promise<BuildCoreWorkflowTaskMemberVisibilityResponse> {
-  const res = await fetch('/api/internal/organization/workflow-task-member-visibility', {
-    method: 'PATCH',
-    headers: {
-      Accept: 'application/json',
-      Authorization: `Bearer ${accessToken}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ onlyAssignedUserCanView }),
-    cache: 'no-store',
-  });
+  const res = await fetch(
+    buildCoreAdminFetchUrl('/api/internal/organization/workflow-task-member-visibility'),
+    buildCoreAdminFetchInit(accessToken, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ onlyAssignedUserCanView }),
+    })
+  );
   let json: unknown;
   try {
     json = await res.json();
