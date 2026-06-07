@@ -9,6 +9,7 @@ import { consumeCrmProjectDeleteSuccessToast } from '@/presentation/features/crm
 import type { CrmPriorityFilter, CrmStageFilter } from '@/presentation/features/crmProjects/crmProjectsPipelineViewModel';
 import { useSaaSProfile } from '@/presentation/hooks/useSaaSProfile';
 import { CrmProjectDeleteConfirmModal } from '@/presentation/components/CrmProjects/CrmProjectDeleteConfirmModal';
+import { CreateCrmProjectModal } from '@/presentation/components/CrmProjects/CreateCrmProjectModal';
 import { DetailToast } from '@/presentation/components/CrmProjectDetail/DetailToast';
 import { CrmProjectsFilters } from './CrmProjectsFilters';
 import { CrmProjectsTable } from './CrmProjectsTable';
@@ -93,14 +94,16 @@ export function CrmProjectsPipeline({
       <CrmProjectsTable
         rows={rows}
         isLoading={isLoading}
-        draftOpen={createDraftOpen && !isMemberRole}
-        onDraftOpenChange={onCreateDraftOpenChange}
-        onProjectCreated={handleProjectCreated}
         onRowClick={onProjectRowClick}
         isMemberRole={isMemberRole}
         canDelete={canDelete && !isMemberRole}
         deletingProjectId={deletingProjectId}
         onRequestDelete={setPendingDeleteProject}
+      />
+      <CreateCrmProjectModal
+        open={createDraftOpen && !isMemberRole}
+        onClose={() => onCreateDraftOpenChange(false)}
+        onCreated={handleProjectCreated}
         onTemplateToast={(toast) => setToast(toast)}
       />
       <CrmProjectDeleteConfirmModal

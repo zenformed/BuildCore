@@ -204,5 +204,6 @@ export function useProjectDetailWorkspace(initialProject: CrmProjectDetail) {
     requestCustomerNotifyAfterAssigneeChange:
       customerNotify.requestCustomerNotifyAfterAssigneeChange,
     sendCustomerNotifyEmail: customerNotify.sendCustomerNotifyEmail,
+    onProjectSaved: handleProjectSaved,
   };
 }

@@ -22,7 +22,12 @@ export type SummaryEditableField =
   | 'priority'
   | 'dealValueUsd'
   | 'assignedMemberId'
-  | 'notes';
+  | 'notes'
+  | 'addressLine1'
+  | 'addressLine2'
+  | 'city'
+  | 'state'
+  | 'postalCode';
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -58,6 +63,16 @@ export function applySummaryFieldToForm(
       return { ...form, assignedMemberId: value };
     case 'notes':
       return { ...form, notes: value };
+    case 'addressLine1':
+      return { ...form, addressLine1: value };
+    case 'addressLine2':
+      return { ...form, addressLine2: value };
+    case 'city':
+      return { ...form, city: value };
+    case 'state':
+      return { ...form, state: value };
+    case 'postalCode':
+      return { ...form, postalCode: value };
     default: {
       const _exhaustive: never = field;
       return _exhaustive;
@@ -94,6 +109,16 @@ export function isSummaryFieldUnchanged(
       return value === (summary.assignedTo?.id ?? '');
     case 'notes':
       return value.trim() === (project.notes ?? '').trim();
+    case 'addressLine1':
+      return value.trim() === (summary.address.addressLine1 ?? '').trim();
+    case 'addressLine2':
+      return value.trim() === (summary.address.addressLine2 ?? '').trim();
+    case 'city':
+      return value.trim() === (summary.address.city ?? '').trim();
+    case 'state':
+      return value.trim() === (summary.address.state ?? '').trim();
+    case 'postalCode':
+      return value.trim() === (summary.address.postalCode ?? '').trim();
     default: {
       const _exhaustive: never = field;
       return _exhaustive;
@@ -115,6 +140,11 @@ export function projectDetailToFormState(project: CrmProjectDetail): CreateCrmPr
     dealValueUsd: (summary.dealValueCents / 100).toFixed(2),
     balanceUsd: (summary.balanceRemainingCents / 100).toFixed(2),
     assignedMemberId: summary.assignedTo?.id ?? '',
+    addressLine1: summary.address.addressLine1 ?? '',
+    addressLine2: summary.address.addressLine2 ?? '',
+    city: summary.address.city ?? '',
+    state: summary.address.state ?? '',
+    postalCode: summary.address.postalCode ?? '',
   };
 }
 

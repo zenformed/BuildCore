@@ -25,6 +25,7 @@ export type ProjectDetailContextBlockProps = {
   actions?: ReactNode;
   savingField: SummaryEditableField | null;
   patchField: (field: SummaryEditableField, value: string) => Promise<boolean>;
+  onEditProject?: () => void;
 };
 
 export function ProjectDetailContextBlock({
@@ -37,6 +38,7 @@ export function ProjectDetailContextBlock({
   actions,
   savingField,
   patchField,
+  onEditProject,
 }: ProjectDetailContextBlockProps): ReactElement {
   const readOnly = isMemberRole;
 
@@ -74,6 +76,7 @@ export function ProjectDetailContextBlock({
         readOnly={readOnly}
         savingField={savingField}
         patchField={patchField}
+        onEditClick={onEditProject}
       />
       <ProjectNotesInline
         label={content.projectDetail.projectNotesLabel}

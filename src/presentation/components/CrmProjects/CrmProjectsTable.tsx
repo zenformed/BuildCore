@@ -13,7 +13,6 @@ import {
 } from '@/presentation/features/crmProjects/crmProjectFormatters';
 import { TeamMemberAvatar } from '@/presentation/components/CrmProjectDetail/TeamMemberAvatar';
 import shared from '@/presentation/components/crmShared/crmShared.module.css';
-import { CrmProjectDraftRow } from './CrmProjectDraftRow';
 import styles from './CrmProjects.module.css';
 
 const COLUMNS = content.crm.table.columns;
@@ -25,31 +24,23 @@ function priorityClassName(priority: CrmPriority): string {
 export type CrmProjectsTableProps = {
   rows: readonly CrmProjectSummary[];
   isLoading?: boolean;
-  draftOpen: boolean;
-  onDraftOpenChange: (open: boolean) => void;
-  onProjectCreated: () => void | Promise<void>;
   onRowClick: (project: CrmProjectSummary) => void;
   isMemberRole?: boolean;
   canDelete?: boolean;
   deletingProjectId?: string | null;
   onRequestDelete?: (project: CrmProjectSummary) => void;
-  onTemplateToast?: (toast: { kind: 'success' | 'error'; message: string }) => void;
 };
 
 export function CrmProjectsTable({
   rows,
   isLoading = false,
-  draftOpen,
-  onDraftOpenChange,
-  onProjectCreated,
   onRowClick,
   isMemberRole = false,
   canDelete = false,
   deletingProjectId = null,
   onRequestDelete,
-  onTemplateToast,
 }: CrmProjectsTableProps): ReactElement {
-  const showTable = draftOpen || rows.length > 0 || isLoading;
+  const showTable = rows.length > 0 || isLoading;
   const gridClassName = isMemberRole
     ? `${styles.projectsGrid} ${styles.projectsGridMember}`
     : styles.projectsGrid;
@@ -84,26 +75,17 @@ export function CrmProjectsTable({
             {!showTable ? (
               <p className={styles.emptyState}>{content.crm.table.empty}</p>
             ) : (
-              <>
-                {draftOpen ? (
-                  <CrmProjectDraftRow
-                    onSaved={onProjectCreated}
-                    onCancel={() => onDraftOpenChange(false)}
-                    onTemplateToast={onTemplateToast}
-                  />
-                ) : null}
-                {rows.map((project) => (
-                  <ProjectRow
-                    key={project.id}
-                    project={project}
-                    onRowClick={onRowClick}
-                    isMemberRole={isMemberRole}
-                    canDelete={canDelete}
-                    deleting={deletingProjectId === project.id}
-                    onRequestDelete={onRequestDelete}
-                  />
-                ))}
-              </>
+              rows.map((project) => (
+                <ProjectRow
+                  key={project.id}
+                  project={project}
+                  onRowClick={onRowClick}
+                  isMemberRole={isMemberRole}
+                  canDelete={canDelete}
+                  deleting={deletingProjectId === project.id}
+                  onRequestDelete={onRequestDelete}
+                />
+              ))
             )}
           </div>
         </div>

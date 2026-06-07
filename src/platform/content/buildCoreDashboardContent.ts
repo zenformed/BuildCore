@@ -212,7 +212,7 @@ export const buildCoreDashboardContent = {
     },
     create: {
       title: 'New project',
-      closeAriaLabel: 'Close new project drawer',
+      closeAriaLabel: 'Close new project modal',
       cancel: 'Cancel',
       submit: 'Create project',
       saveProject: 'Save project',
@@ -236,6 +236,11 @@ export const buildCoreDashboardContent = {
         dealValue: 'Contract value (USD)',
         balance: 'Balance remaining (USD)',
         assigned: 'Assigned to',
+        addressLine1: 'Address line 1',
+        addressLine2: 'Address line 2 (optional)',
+        city: 'City',
+        state: 'State',
+        postalCode: 'Zip code',
       },
     },
     table: {
@@ -296,6 +301,7 @@ export const buildCoreDashboardContent = {
       contact: 'Contact',
       email: 'Email',
       phone: 'Phone',
+      address: 'Address',
       customer: 'Customer',
       assigned: 'Assigned',
       updated: 'Last updated',

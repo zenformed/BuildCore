@@ -15,6 +15,11 @@ export type CreateCrmProjectInput = {
   readonly dealValueCents: number;
   readonly balanceRemainingCents: number;
   readonly assignedMemberId: string | null;
+  readonly addressLine1: string | null;
+  readonly addressLine2: string | null;
+  readonly city: string | null;
+  readonly state: string | null;
+  readonly postalCode: string | null;
   /** Applied after project insert when creating from a template-backed draft. */
   readonly initialTemplateBlueprints?: BuildCoreProjectTemplateBlueprints | null;
 };

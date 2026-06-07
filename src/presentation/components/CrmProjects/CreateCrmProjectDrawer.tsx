@@ -244,33 +244,18 @@ export function CreateCrmProjectDrawer({ open, onClose }: CreateCrmProjectDrawer
               />
             </div>
 
-            <div className={styles.rowTwoCol}>
-              <div className={styles.field}>
-                <label className={styles.label} htmlFor="crm-create-deal">
-                  {create.fields.dealValue}
-                </label>
-                <input
-                  id="crm-create-deal"
-                  className={styles.input}
-                  inputMode="decimal"
-                  placeholder="0.00"
-                  value={form.dealValueUsd}
-                  onChange={(e) => updateField('dealValueUsd', e.target.value)}
-                />
-              </div>
-              <div className={styles.field}>
-                <label className={styles.label} htmlFor="crm-create-balance">
-                  {create.fields.balance}
-                </label>
-                <input
-                  id="crm-create-balance"
-                  className={styles.input}
-                  inputMode="decimal"
-                  placeholder="0.00"
-                  value={form.balanceUsd}
-                  onChange={(e) => updateField('balanceUsd', e.target.value)}
-                />
-              </div>
+            <div className={styles.field}>
+              <label className={styles.label} htmlFor="crm-create-deal">
+                {create.fields.dealValue}
+              </label>
+              <input
+                id="crm-create-deal"
+                className={styles.input}
+                inputMode="decimal"
+                placeholder="0.00"
+                value={form.dealValueUsd}
+                onChange={(e) => updateField('dealValueUsd', e.target.value)}
+              />
             </div>
 
             {assigneeOptions.length > 0 ? (
@@ -284,9 +269,12 @@ export function CreateCrmProjectDrawer({ open, onClose }: CreateCrmProjectDrawer
                   value={form.assignedMemberId}
                   onChange={(e) => updateField('assignedMemberId', e.target.value)}
                 >
-                  <option value="">{create.assigneeUnassigned}</option>
                   {assigneeOptions.map((opt) => (
-                    <option key={opt.id} value={opt.id} disabled={opt.disabled === true}>
+                    <option
+                      key={opt.id || 'unassigned'}
+                      value={opt.id}
+                      disabled={opt.disabled === true}
+                    >
                       {opt.label}
                     </option>
                   ))}

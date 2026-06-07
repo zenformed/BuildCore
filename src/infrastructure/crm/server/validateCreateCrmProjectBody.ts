@@ -1,6 +1,7 @@
 import type { CreateCrmProjectInput } from '@/domain/crm/createProject';
 import type { CrmPriority, CrmTradeType } from '@/domain/crm';
 import { CRM_TRADE_TYPES, DEFAULT_PIPELINE_STAGES, type PipelineStageSlug } from '@/domain/crm';
+import { US_STATE_CODES } from '@/domain/crm/usStates';
 import { parseProjectTemplateBlueprintsFromUnknown } from '@/infrastructure/crm/mappers/mapProjectTemplateFromDb';
 
 const PRIORITIES: readonly CrmPriority[] = ['low', 'normal', 'high', 'urgent'];
@@ -18,6 +19,11 @@ export type CreateCrmProjectBody = {
   dealValueCents?: unknown;
   balanceRemainingCents?: unknown;
   assignedMemberId?: unknown;
+  addressLine1?: unknown;
+  addressLine2?: unknown;
+  city?: unknown;
+  state?: unknown;
+  postalCode?: unknown;
   initialTemplateBlueprints?: unknown;
 };
 
@@ -98,7 +104,10 @@ export function validateCreateCrmProjectBody(body: CreateCrmProjectBody): Valida
     return { ok: false, message: 'Deal value must be a non-negative amount in cents.' };
   }
 
-  const balanceRemainingCents = asCents(body.balanceRemainingCents, 'balanceRemainingCents');
+  const balanceRemainingCents =
+    body.balanceRemainingCents === undefined || body.balanceRemainingCents === null
+      ? dealValueCents
+      : asCents(body.balanceRemainingCents, 'balanceRemainingCents');
   if (balanceRemainingCents == null) {
     return { ok: false, message: 'Balance must be a non-negative amount in cents.' };
   }
@@ -116,6 +125,11 @@ export function validateCreateCrmProjectBody(body: CreateCrmProjectBody): Valida
     }
   }
 
+  const state = asOptionalString(body.state);
+  if (state != null && !US_STATE_CODES.has(state)) {
+    return { ok: false, message: 'State must be a valid US state code.' };
+  }
+
   return {
     ok: true,
     input: {
@@ -130,6 +144,11 @@ export function validateCreateCrmProjectBody(body: CreateCrmProjectBody): Valida
       dealValueCents,
       balanceRemainingCents,
       assignedMemberId: asOptionalUserId(body.assignedMemberId),
+      addressLine1: asOptionalString(body.addressLine1),
+      addressLine2: asOptionalString(body.addressLine2),
+      city: asOptionalString(body.city),
+      state,
+      postalCode: asOptionalString(body.postalCode),
       initialTemplateBlueprints,
     },
   };

@@ -1,4 +1,5 @@
 import type { CreateCrmProjectInput, CrmPriority, CrmTradeType, PipelineStageSlug } from '@/domain/crm';
+import { US_STATE_CODES } from '@/domain/crm/usStates';
 import { normalizeAssigneeMemberIdForSave } from '@/presentation/features/crmAssignment/buildAssigneeOptions';
 
 export type CreateCrmProjectFormState = {
@@ -13,6 +14,11 @@ export type CreateCrmProjectFormState = {
   dealValueUsd: string;
   balanceUsd: string;
   assignedMemberId: string;
+  addressLine1: string;
+  addressLine2: string;
+  city: string;
+  state: string;
+  postalCode: string;
 };
 
 export const defaultCreateCrmProjectFormState = (): CreateCrmProjectFormState => ({
@@ -27,6 +33,11 @@ export const defaultCreateCrmProjectFormState = (): CreateCrmProjectFormState =>
   dealValueUsd: '',
   balanceUsd: '',
   assignedMemberId: '',
+  addressLine1: '',
+  addressLine2: '',
+  city: '',
+  state: '',
+  postalCode: '',
 });
 
 export function parseUsdInputToCents(value: string): number | null {
@@ -57,11 +68,15 @@ export function validateCreateCrmProjectForm(
     return { ok: false, message: 'Enter a valid deal value.' };
   }
 
-  const balanceUsd = form.balanceUsd.trim();
-  const balanceRemainingCents = balanceUsd ? parseUsdInputToCents(balanceUsd) : 0;
-  if (balanceRemainingCents == null) {
-    return { ok: false, message: 'Enter a valid balance.' };
+  const state = form.state.trim();
+  if (state && !US_STATE_CODES.has(state)) {
+    return { ok: false, message: 'Select a valid US state.' };
   }
+
+  const optionalText = (value: string): string | null => {
+    const trimmed = value.trim();
+    return trimmed.length > 0 ? trimmed : null;
+  };
 
   return {
     ok: true,
@@ -75,8 +90,13 @@ export function validateCreateCrmProjectForm(
       currentStageSlug: form.currentStageSlug,
       notes: form.notes.trim() || null,
       dealValueCents,
-      balanceRemainingCents,
+      balanceRemainingCents: dealValueCents,
       assignedMemberId: normalizeAssigneeMemberIdForSave(form.assignedMemberId),
+      addressLine1: optionalText(form.addressLine1),
+      addressLine2: optionalText(form.addressLine2),
+      city: optionalText(form.city),
+      state: state || null,
+      postalCode: optionalText(form.postalCode),
     },
   };
 }

@@ -19,6 +19,7 @@ export type CenterConfirmDialogProps = {
   readonly hideActions?: boolean;
   readonly closeAriaLabel: string;
   readonly panelClassName?: string;
+  readonly bodyClassName?: string;
 };
 
 export function CenterConfirmDialog({
@@ -36,6 +37,7 @@ export function CenterConfirmDialog({
   hideActions = false,
   closeAriaLabel,
   panelClassName,
+  bodyClassName,
 }: CenterConfirmDialogProps): ReactElement | null {
   if (!isOpen) return null;
 
@@ -59,7 +61,7 @@ export function CenterConfirmDialog({
           {title}
         </h2>
         {body != null ? (
-          <div className={styles.body}>{body}</div>
+          <div className={[styles.body, bodyClassName].filter(Boolean).join(' ')}>{body}</div>
         ) : message != null ? (
           <p className={styles.message}>{message}</p>
         ) : null}

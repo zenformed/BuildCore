@@ -1,7 +1,7 @@
 'use client';
 
 import type { ReactElement, ReactNode } from 'react';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import type { CrmProjectDetail } from '@/domain/crm';
 import { isBuildCoreMemberRole } from '@/domain/buildcore/memberRole';
@@ -29,6 +29,7 @@ import { ProjectDetailActionsMenu } from './ProjectDetailActionsMenu';
 import { ProjectDetailContextBlock } from './ProjectDetailContextBlock';
 import { ProjectDetailHeaderActions } from './ProjectDetailHeaderActions';
 import { ProjectDetailShellModals } from './ProjectDetailShellModals';
+import { CreateCrmProjectModal } from '@/presentation/components/CrmProjects/CreateCrmProjectModal';
 import styles from './ProjectDetail.module.css';
 
 export type { ProjectDetailPageContext } from '@/presentation/features/crmProjectDetail/projectDetailPageContext';
@@ -58,6 +59,7 @@ function ProjectDetailShellBody({
   isMemberRole,
 }: ProjectDetailShellBodyProps): ReactElement {
   const router = useRouter();
+  const [editProjectOpen, setEditProjectOpen] = useState(false);
   const { organizationMembershipContext } = useSaaSProfile();
   const showCompletionActions = pageContext === 'detail' && !isMemberRole;
   const scopedProject = useBuildCoreMemberScopedProject(initialProject, isMemberRole, isApiSource);
@@ -158,6 +160,7 @@ function ProjectDetailShellBody({
           actions={headerActions}
           savingField={workspace.savingField}
           patchField={workspace.patchField}
+          onEditProject={isMemberRole ? undefined : () => setEditProjectOpen(true)}
         />
 
         {children}
@@ -183,6 +186,13 @@ function ProjectDetailShellBody({
               onSave={() => void saveTemplate.saveTemplate()}
             />
             <LoadProjectTemplateDialogs controller={loadTemplate} />
+            <CreateCrmProjectModal
+              open={editProjectOpen}
+              mode="edit"
+              project={workspace.project}
+              onClose={() => setEditProjectOpen(false)}
+              onUpdated={workspace.onProjectSaved}
+            />
           </>
         ) : null}
       </div>

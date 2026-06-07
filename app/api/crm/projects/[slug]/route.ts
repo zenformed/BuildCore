@@ -78,6 +78,14 @@ export async function PATCH(
     return NextResponse.json({ error: 'validation_error', message: validated.message }, { status: 400 });
   }
 
+  const access = await requireBuildCoreProjectManagementAccess(
+    auth.context.supabase,
+    auth.context.organizationId,
+    auth.context.user.id,
+    'update'
+  );
+  if (!access.ok) return access.response;
+
   try {
     const project = await updateCrmProjectBySlugForOrg(
       auth.context.supabase,

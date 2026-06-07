@@ -567,6 +567,10 @@
   border-right: none;
 }
 
+.summaryStrip > .summaryMetric:has(+ .summaryStripEditAction) {
+  border-right: none;
+}
+
 :global([data-theme='dark']) .summaryMetric {
   border-right-color: #34384a;
 }
@@ -642,6 +646,124 @@
   line-height: 1.25;
   padding: 0 0.25rem;
   box-sizing: border-box;
+}
+
+.summaryMetricAddress {
+  flex: 1.35 1 12rem;
+}
+
+.summaryStripEditAction {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  align-self: center;
+  flex: 0 0 auto;
+  padding: 0 0.625rem;
+  border-right: none;
+}
+
+.summaryStripEditBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  padding: 0;
+  color: var(--color-text-muted, #64748b);
+  background: none;
+  border: 1px solid transparent;
+  border-radius: 0.375rem;
+  cursor: pointer;
+  transition:
+    background-color 0.12s ease,
+    border-color 0.12s ease,
+    color 0.12s ease;
+}
+
+.summaryStripEditBtn:hover:not(:disabled) {
+  color: var(--color-text, #0f172a);
+  background: var(--color-muted, #f1f5f9);
+  border-color: var(--color-border, #e2e8f0);
+}
+
+.summaryStripEditIcon {
+  display: inline-block;
+  width: 0.9375rem;
+  height: 0.9375rem;
+  background: currentColor;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M17 3a2.828 2.828 0 114 4L7.5 20.5 2 22l1.5-5.5L17 3z'/%3E%3C/svg%3E")
+    center / contain no-repeat;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M17 3a2.828 2.828 0 114 4L7.5 20.5 2 22l1.5-5.5L17 3z'/%3E%3C/svg%3E")
+    center / contain no-repeat;
+}
+
+:global([data-theme='dark']) .summaryStripEditBtn:hover:not(:disabled) {
+  color: #f1f5f9;
+  background: #34384a;
+  border-color: #4b5563;
+}
+
+.summaryAddressEditor {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+  min-width: 14rem;
+  max-width: 100%;
+  padding: 0.125rem 0.25rem 0.25rem;
+}
+
+.summaryAddressFieldLabel {
+  display: block;
+  font-size: 0.6875rem;
+  font-weight: 500;
+  color: var(--color-text-muted, #64748b);
+}
+
+:global([data-theme='dark']) .summaryAddressFieldLabel {
+  color: #94a3b8;
+}
+
+.summaryAddressInput,
+.summaryAddressSelect {
+  width: 100%;
+  min-width: 0;
+  padding: 0.3125rem 0.5rem;
+  font: inherit;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--color-text, #0f172a);
+  background: var(--color-bg, #fff);
+  border: 1px solid var(--theme-border-main, var(--color-border, #e2e8f0));
+  border-radius: 0.375rem;
+  box-sizing: border-box;
+}
+
+:global([data-theme='dark']) .summaryAddressInput,
+:global([data-theme='dark']) .summaryAddressSelect {
+  color: #f1f5f9;
+  background: #1d2029;
+  border-color: #3d3e4a;
+}
+
+.summaryAddressInput:focus,
+.summaryAddressSelect:focus {
+  outline: none;
+  border-color: var(--color-primary, #2563eb);
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
+}
+
+.summaryAddressRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(6.5rem, 0.75fr);
+  gap: 0.5rem;
+}
+
+.summaryAddressFieldGrow {
+  min-width: 0;
+}
+
+.summaryAddressFieldState {
+  min-width: 0;
 }
 
 .summaryMetric_saving {

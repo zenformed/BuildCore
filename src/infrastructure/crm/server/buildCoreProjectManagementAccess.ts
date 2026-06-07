@@ -7,7 +7,7 @@ export async function requireBuildCoreProjectManagementAccess(
   supabase: SupabaseClient,
   organizationId: string,
   userId: string,
-  action: 'create' | 'delete'
+  action: 'create' | 'delete' | 'update'
 ): Promise<{ ok: true } | { ok: false; response: NextResponse }> {
   const actorRole = await loadActiveOrganizationMemberRole(supabase, organizationId, userId);
   if (!isBuildCoreMemberRole(actorRole)) {
@@ -15,7 +15,11 @@ export async function requireBuildCoreProjectManagementAccess(
   }
 
   const message =
-    action === 'create' ? 'Members cannot create projects.' : 'Members cannot delete projects.';
+    action === 'create'
+      ? 'Members cannot create projects.'
+      : action === 'delete'
+        ? 'Members cannot delete projects.'
+        : 'Members cannot update project details.';
   return {
     ok: false,
     response: NextResponse.json({ error: 'forbidden', message }, { status: 403 }),

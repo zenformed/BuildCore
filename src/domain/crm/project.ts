@@ -4,6 +4,7 @@ import type { CrmClient } from './client';
 import type { CrmContact } from './contact';
 import type { CrmDocumentMetadata } from './document';
 import type { CrmMilestonePaymentSummary } from './milestonePayment';
+import type { CrmProjectAddress } from './projectAddress';
 import type { PipelineStageSlug } from './pipelineStage';
 import type { CrmTeamMemberRef } from './teamMember';
 import type { CrmWorkflowTask } from './workflowTask';
@@ -35,6 +36,7 @@ export type CrmProjectSummary = {
   readonly tradeType: CrmTradeType;
   readonly contact: CrmContact;
   readonly client: CrmClient;
+  readonly address: CrmProjectAddress;
   readonly priority: CrmPriority;
   readonly currentStageSlug: PipelineStageSlug;
   readonly notesPreview: string | null;

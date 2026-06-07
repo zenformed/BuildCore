@@ -62,6 +62,13 @@ export {
 export { isCrmProjectComplete, type SetCrmProjectCompletionInput } from './projectCompletion';
 export type { CreateCrmProjectInput, CreateCrmProjectResult } from './createProject';
 export type { UpdateCrmProjectInput } from './updateProject';
+export type { CrmProjectAddress } from './projectAddress';
+export {
+  buildCrmProjectMapsSearchUrl,
+  emptyCrmProjectAddress,
+  formatCrmProjectAddressLine,
+} from './projectAddress';
+export { US_STATE_OPTIONS, type UsStateOption } from './usStates';
 export type {
   CreateCrmWorkflowTaskInput,
   UpdateCrmWorkflowTaskInput,

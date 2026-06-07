@@ -15,6 +15,7 @@ import {
   type PipelineStageSlug,
   type WorkflowTaskStatus,
 } from '@/domain/crm';
+import { emptyCrmProjectAddress } from '@/domain/crm/projectAddress';
 import type { CrmClient } from '@/domain/crm/client';
 import type { CrmContact } from '@/domain/crm/contact';
 import type { CrmTeamMemberRef } from '@/domain/crm/teamMember';
@@ -326,6 +327,7 @@ export function buildMockCrmProjectDetail(input: BuildMockCrmProjectInput): CrmP
     tradeType: input.tradeType,
     contact: input.contact,
     client: input.client,
+    address: emptyCrmProjectAddress(),
     priority: input.priority,
     currentStageSlug: input.currentStageSlug,
     notesPreview: notesPreview(input.notes),

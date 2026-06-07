@@ -11,6 +11,10 @@
 
 .panel {
   width: min(28rem, 100%);
+  max-height: calc(100vh - 3rem);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
   padding: 1.5rem;
   border-radius: 0.75rem;
   background: var(--color-surface, #fff);
@@ -25,6 +29,7 @@
 }
 
 .title {
+  flex-shrink: 0;
   margin: 0 0 0.5rem;
   font-size: 1.125rem;
   font-weight: 600;
@@ -43,10 +48,13 @@
 }
 
 .body {
+  flex: 1;
+  min-height: 0;
   margin: 0 0 1rem;
 }
 
 .feedback {
+  flex-shrink: 0;
   margin: 0 0 1rem;
   font-size: 0.875rem;
   line-height: 1.4;
@@ -61,6 +69,7 @@
 }
 
 .actions {
+  flex-shrink: 0;
   display: flex;
   justify-content: flex-end;
   gap: 0.5rem;

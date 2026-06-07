@@ -27,6 +27,7 @@ import {
 } from '@/domain/crm/teamMemberDisplay';
 import { workflowTaskAssigneeIdFromContactId } from '@/domain/crm/workflowTaskAssignee';
 import { isWorkflowTaskStatus } from '@/domain/crm/workflowTaskStatuses';
+import type { CrmProjectAddress } from '@/domain/crm/projectAddress';
 
 export type DbCrmClientRow = {
   id: string;
@@ -55,6 +56,11 @@ export type DbCrmProjectRow = {
   last_activity_at: string;
   completed_at: string | null;
   completed_by: string | null;
+  address_line_1: string | null;
+  address_line_2: string | null;
+  city: string | null;
+  state: string | null;
+  postal_code: string | null;
   client_id: string;
   primary_contact_id: string | null;
   crm_clients: DbCrmClientRow | DbCrmClientRow[] | null;
@@ -270,6 +276,16 @@ export function mapDbContact(
   };
 }
 
+export function mapDbProjectAddress(row: DbCrmProjectRow): CrmProjectAddress {
+  return {
+    addressLine1: row.address_line_1,
+    addressLine2: row.address_line_2,
+    city: row.city,
+    state: row.state,
+    postalCode: row.postal_code,
+  };
+}
+
 export function mapDbProjectSummary(
   row: DbCrmProjectRow,
   memberById: ReadonlyMap<string, CrmTeamMemberRef>
@@ -295,6 +311,7 @@ export function mapDbProjectSummary(
     tradeType: asTradeType(row.trade_type),
     contact,
     client,
+    address: mapDbProjectAddress(row),
     priority: asPriority(row.priority),
     currentStageSlug: asPipelineStageSlug(row.current_stage_slug),
     notesPreview: notesPreview(row.notes),

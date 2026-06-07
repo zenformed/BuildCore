@@ -145,6 +145,14 @@ function applyProjectUpdate(detail: CrmProjectDetail, input: UpdateCrmProjectInp
 
     assignedTo,
 
+    address: {
+      addressLine1: input.addressLine1,
+      addressLine2: input.addressLine2,
+      city: input.city,
+      state: input.state,
+      postalCode: input.postalCode,
+    },
+
     lastUpdatedAt: now,
     completedAt: detail.summary.completedAt,
     completedBy: detail.summary.completedBy,

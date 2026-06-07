@@ -48,6 +48,11 @@ export async function updateCrmProjectBySlugForOrg(
       deal_value_cents: input.dealValueCents,
       balance_cents: input.balanceRemainingCents,
       assigned_member_id: input.assignedMemberId,
+      address_line_1: input.addressLine1,
+      address_line_2: input.addressLine2,
+      city: input.city,
+      state: input.state,
+      postal_code: input.postalCode,
       last_activity_at: now,
     })
     .eq('id', existing.summary.id)

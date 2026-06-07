@@ -17,6 +17,7 @@ import {
 } from '@/presentation/features/crmProjects/crmProjectFormatters';
 import { centsToUsdInput } from '@/presentation/features/crmProjectDetail/workflowTaskFormModel';
 import type { SummaryEditableField } from '@/presentation/features/crmProjectDetail/projectDetailFormModel';
+import { ProjectSummaryAddress } from './ProjectSummaryAddress';
 import shared from '@/presentation/components/crmShared/crmShared.module.css';
 import styles from './ProjectDetail.module.css';
 
@@ -247,6 +248,7 @@ export type ProjectSummaryStripProps = {
   readOnly?: boolean;
   savingField: SummaryEditableField | null;
   patchField: (field: SummaryEditableField, value: string) => Promise<boolean>;
+  onEditClick?: () => void;
 };
 
 export function ProjectSummaryStrip({
@@ -255,6 +257,7 @@ export function ProjectSummaryStrip({
   readOnly = false,
   savingField,
   patchField,
+  onEditClick,
 }: ProjectSummaryStripProps): ReactElement {
   const { summary } = project;
   const fields = content.projectDetail.fields;
@@ -310,6 +313,7 @@ export function ProjectSummaryStrip({
         displayClassName={styles.summaryLink}
         onPatch={patchField}
       />
+      <ProjectSummaryAddress address={summary.address} label={fields.address} />
       {memberView ? null : (
         <SummaryInlineSelect
           fieldKey="currentStageSlug"
@@ -353,6 +357,18 @@ export function ProjectSummaryStrip({
           </SummaryMetric>
         </>
       )}
+      {onEditClick ? (
+        <div className={styles.summaryStripEditAction}>
+          <button
+            type="button"
+            className={styles.summaryStripEditBtn}
+            onClick={onEditClick}
+            aria-label={edit.title}
+          >
+            <span className={styles.summaryStripEditIcon} aria-hidden />
+          </button>
+        </div>
+      ) : null}
     </section>
   );
 }
