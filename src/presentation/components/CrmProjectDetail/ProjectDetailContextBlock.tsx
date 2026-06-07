@@ -19,6 +19,7 @@ export type ProjectDetailContextBlockProps = {
   project: CrmProjectDetail;
   isApiSource: boolean;
   pageContext?: ProjectDetailPageContext;
+  isMemberRole?: boolean;
   onBack: () => void;
   onOpenProject?: () => void;
   actions?: ReactNode;
@@ -30,12 +31,15 @@ export function ProjectDetailContextBlock({
   project,
   isApiSource,
   pageContext = 'detail',
+  isMemberRole = false,
   onBack,
   onOpenProject,
   actions,
   savingField,
   patchField,
 }: ProjectDetailContextBlockProps): ReactElement {
+  const readOnly = isMemberRole;
+
   return (
     <div className={styles.detailTop}>
       <ProjectDetailHeader
@@ -45,29 +49,40 @@ export function ProjectDetailContextBlock({
         onOpenProject={onOpenProject}
         actions={actions}
         assigneeControl={
-          <ProjectHeaderAssignee
-            assignedTo={project.summary.assignedTo}
-            isApiSource={isApiSource}
-            isSaving={savingField === 'assignedMemberId'}
-            onAssigneeChange={(id) => patchField('assignedMemberId', id)}
-          />
+          isMemberRole ? null : (
+            <ProjectHeaderAssignee
+              assignedTo={project.summary.assignedTo}
+              isApiSource={isApiSource}
+              isSaving={savingField === 'assignedMemberId'}
+              onAssigneeChange={(id) => patchField('assignedMemberId', id)}
+            />
+          )
         }
         tradeTypeControl={
-          <ProjectHeaderTradeType
-            tradeType={project.summary.tradeType}
-            isSaving={savingField === 'tradeType'}
-            onTradeTypeChange={(value) => patchField('tradeType', value)}
-          />
+          isMemberRole ? null : (
+            <ProjectHeaderTradeType
+              tradeType={project.summary.tradeType}
+              isSaving={savingField === 'tradeType'}
+              onTradeTypeChange={(value) => patchField('tradeType', value)}
+            />
+          )
         }
       />
-      <ProjectSummaryStrip project={project} savingField={savingField} patchField={patchField} />
+      <ProjectSummaryStrip
+        project={project}
+        memberView={isMemberRole}
+        readOnly={readOnly}
+        savingField={savingField}
+        patchField={patchField}
+      />
       <ProjectNotesInline
         label={content.projectDetail.projectNotesLabel}
         notes={project.notes}
+        readOnly={readOnly}
         savingField={savingField}
         onPatch={patchField}
       />
-      <StageProgressBar stageProgress={project.stageProgress} />
+      {isMemberRole ? null : <StageProgressBar stageProgress={project.stageProgress} />}
     </div>
   );
 }

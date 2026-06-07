@@ -2,10 +2,12 @@
 
 import type { ReactElement, ReactNode } from 'react';
 import { useParams, usePathname, useRouter } from 'next/navigation';
-import { useCallback, useMemo } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
+import { isBuildCoreMemberRole } from '@/domain/buildcore/memberRole';
 import { useCrmProjectDetail } from '@/presentation/features/crmProjectDetail/useCrmProjectDetail';
 import { resolveProjectDetailPageContext } from '@/presentation/features/crmProjectDetail/resolveProjectDetailPageContext';
 import { buildCoreDashboardNavigation as nav } from '@/platform/navigation/buildCoreDashboardNavigation';
+import { useSaaSProfile } from '@/presentation/hooks/useSaaSProfile';
 import { ProjectDetailNotFound } from './ProjectDetailNotFound';
 import { ProjectDetailPageBody } from './ProjectDetailPageBody';
 import { ProjectDetailShell } from './ProjectDetailShell';
@@ -25,6 +27,8 @@ export function ProjectDetailRouteLayout({ children }: ProjectDetailRouteLayoutP
     [pathname, slug]
   );
   const { state: detailState, refetch, isApiSource } = useCrmProjectDetail(slug);
+  const { organizationMembershipContext } = useSaaSProfile();
+  const isMemberRole = isBuildCoreMemberRole(organizationMembershipContext?.role);
 
   const goToProjects = useCallback(() => {
     router.push(nav.routes.dashboard);
@@ -34,6 +38,12 @@ export function ProjectDetailRouteLayout({ children }: ProjectDetailRouteLayoutP
     if (!slug) return;
     router.push(nav.routes.projectDetail(slug));
   }, [router, slug]);
+
+  useEffect(() => {
+    if (!isMemberRole || !slug) return;
+    if (pageContext === 'detail' || pageContext === 'workflowTasks') return;
+    goToProject();
+  }, [goToProject, isMemberRole, pageContext, slug]);
 
   if (detailState.status === 'loading') {
     return <div className={styles.pageShellLoading} aria-hidden />;

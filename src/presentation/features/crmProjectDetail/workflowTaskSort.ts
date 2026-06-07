@@ -3,9 +3,10 @@ import type { CrmWorkflowTask, PipelineStageSlug, WorkflowTaskStatus } from '@/d
 const STATUS_ORDER: Record<WorkflowTaskStatus, number> = {
   in_progress: 0,
   blocked: 1,
-  pending: 2,
-  done: 3,
-  skipped: 4,
+  request_review: 2,
+  pending: 3,
+  done: 4,
+  skipped: 5,
 };
 
 export function sortWorkflowTasksForDisplay(

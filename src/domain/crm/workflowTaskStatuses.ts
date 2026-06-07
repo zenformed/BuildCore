@@ -4,6 +4,20 @@ export const WORKFLOW_TASK_STATUSES: readonly WorkflowTaskStatus[] = [
   'pending',
   'in_progress',
   'blocked',
-  'done',
   'skipped',
+  'request_review',
+  'done',
 ] as const;
+
+export const WORKFLOW_TASK_STATUS_LABELS: Record<WorkflowTaskStatus, string> = {
+  pending: 'Pending',
+  in_progress: 'In Progress',
+  blocked: 'Blocked',
+  skipped: 'Skipped',
+  request_review: 'Request Review',
+  done: 'Done',
+};
+
+export function isWorkflowTaskStatus(value: string): value is WorkflowTaskStatus {
+  return (WORKFLOW_TASK_STATUSES as readonly string[]).includes(value);
+}

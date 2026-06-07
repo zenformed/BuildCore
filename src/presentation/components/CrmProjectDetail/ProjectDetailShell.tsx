@@ -4,11 +4,13 @@ import type { ReactElement, ReactNode } from 'react';
 import { useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import type { CrmProjectDetail } from '@/domain/crm';
+import { isBuildCoreMemberRole } from '@/domain/buildcore/memberRole';
 import { canManageBuildCoreProjectTemplates } from '@/domain/buildcore/projectTemplateAccess';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
 import { buildCoreDashboardNavigation as nav } from '@/platform/navigation/buildCoreDashboardNavigation';
 import { useProjectCompletionToggle } from '@/presentation/features/crmProjectDetail/useProjectCompletionToggle';
 import { useProjectDetailWorkspace } from '@/presentation/features/crmProjectDetail/useProjectDetailWorkspace';
+import { useBuildCoreMemberScopedProject } from '@/presentation/features/crmProjectDetail/useBuildCoreMemberScopedProject';
 import type { ProjectDetailPageContext } from '@/presentation/features/crmProjectDetail/projectDetailPageContext';
 import {
   ProjectDetailShellProvider,
@@ -41,7 +43,11 @@ export type ProjectDetailShellProps = {
   children: ReactNode;
 };
 
-export function ProjectDetailShell({
+type ProjectDetailShellBodyProps = ProjectDetailShellProps & {
+  readonly isMemberRole: boolean;
+};
+
+function ProjectDetailShellBody({
   pageContext,
   project: initialProject,
   isApiSource,
@@ -49,16 +55,18 @@ export function ProjectDetailShell({
   onOpenProject,
   onRefresh,
   children,
-}: ProjectDetailShellProps): ReactElement {
+  isMemberRole,
+}: ProjectDetailShellBodyProps): ReactElement {
   const router = useRouter();
   const { organizationMembershipContext } = useSaaSProfile();
-  const showCompletionActions = pageContext === 'detail';
+  const showCompletionActions = pageContext === 'detail' && !isMemberRole;
+  const scopedProject = useBuildCoreMemberScopedProject(initialProject, isMemberRole);
   const canSaveTemplate = useMemo(
     () => canManageBuildCoreProjectTemplates(organizationMembershipContext?.role),
     [organizationMembershipContext?.role]
   );
-  const completion = useProjectCompletionToggle(initialProject, onRefresh);
-  const projectForWorkspace = showCompletionActions ? completion.project : initialProject;
+  const completion = useProjectCompletionToggle(scopedProject, onRefresh);
+  const projectForWorkspace = showCompletionActions ? completion.project : scopedProject;
   const workspace = useProjectDetailWorkspace(projectForWorkspace);
   const detail = content.projectDetail;
   const projectSummary = workspace.project.summary;
@@ -101,33 +109,37 @@ export function ProjectDetailShell({
     onLoadTemplate: loadTemplate.openList,
   };
 
-  const headerActions = showCompletionActions ? (
-    <ProjectDetailHeaderActions
-      {...actionsMenuProps}
-      isComplete={completion.isComplete}
-      completionBusy={completion.completionBusy}
-      onMarkComplete={completion.requestMarkComplete}
-      onMarkIncomplete={completion.requestMarkIncomplete}
-      markCompleteLabel={detail.markComplete}
-      markIncompleteLabel={detail.markIncomplete}
-    />
-  ) : (
-    <ProjectDetailActionsMenu {...actionsMenuProps} />
-  );
+  const headerActions = isMemberRole
+    ? undefined
+    : showCompletionActions
+      ? (
+          <ProjectDetailHeaderActions
+            {...actionsMenuProps}
+            isComplete={completion.isComplete}
+            completionBusy={completion.completionBusy}
+            onMarkComplete={completion.requestMarkComplete}
+            onMarkIncomplete={completion.requestMarkIncomplete}
+            markCompleteLabel={detail.markComplete}
+            markIncompleteLabel={detail.markIncomplete}
+          />
+        )
+      : (
+          <ProjectDetailActionsMenu {...actionsMenuProps} />
+        );
 
   const shellValue: ProjectDetailShellContextValue = {
     pageContext,
     isApiSource,
     onRefresh,
     showCompletionActions,
+    isMemberRole,
     completion: showCompletionActions ? completion : null,
     ...workspace,
   };
 
   return (
     <ProjectDetailShellProvider value={shellValue}>
-      <BuildCoreWorkflowTaskAccessProvider>
-        <div className={styles.pageShell}>
+      <div className={styles.pageShell}>
         {workspace.toast ? (
           <DetailToast
             kind={workspace.toast.kind}
@@ -140,6 +152,7 @@ export function ProjectDetailShell({
           project={workspace.project}
           isApiSource={isApiSource}
           pageContext={pageContext}
+          isMemberRole={isMemberRole}
           onBack={onBack}
           onOpenProject={onOpenProject}
           actions={headerActions}
@@ -149,27 +162,41 @@ export function ProjectDetailShell({
 
         {children}
 
-        <ProjectDetailShellModals
-          showCompletion={showCompletionActions}
-          completion={showCompletionActions ? completion : null}
-          workspace={workspace}
-          pendingDeleteProject={pendingDeleteProject}
-          onCloseDelete={() => setPendingDeleteProject(null)}
-          onConfirmDelete={() => void handleConfirmDelete()}
-        />
-        <SaveProjectTemplateDialog
-          isOpen={saveTemplate.open}
-          templateName={saveTemplate.templateName}
-          setAsDefault={saveTemplate.setAsDefault}
-          saving={saveTemplate.saving}
-          onTemplateNameChange={saveTemplate.setTemplateName}
-          onSetAsDefaultChange={saveTemplate.setSetAsDefault}
-          onClose={saveTemplate.closeDialog}
-          onSave={() => void saveTemplate.saveTemplate()}
-        />
-        <LoadProjectTemplateDialogs controller={loadTemplate} />
-        </div>
-      </BuildCoreWorkflowTaskAccessProvider>
+        {!isMemberRole ? (
+          <>
+            <ProjectDetailShellModals
+              showCompletion={showCompletionActions}
+              completion={showCompletionActions ? completion : null}
+              workspace={workspace}
+              pendingDeleteProject={pendingDeleteProject}
+              onCloseDelete={() => setPendingDeleteProject(null)}
+              onConfirmDelete={() => void handleConfirmDelete()}
+            />
+            <SaveProjectTemplateDialog
+              isOpen={saveTemplate.open}
+              templateName={saveTemplate.templateName}
+              setAsDefault={saveTemplate.setAsDefault}
+              saving={saveTemplate.saving}
+              onTemplateNameChange={saveTemplate.setTemplateName}
+              onSetAsDefaultChange={saveTemplate.setSetAsDefault}
+              onClose={saveTemplate.closeDialog}
+              onSave={() => void saveTemplate.saveTemplate()}
+            />
+            <LoadProjectTemplateDialogs controller={loadTemplate} />
+          </>
+        ) : null}
+      </div>
     </ProjectDetailShellProvider>
+  );
+}
+
+export function ProjectDetailShell(props: ProjectDetailShellProps): ReactElement {
+  const { organizationMembershipContext } = useSaaSProfile();
+  const isMemberRole = isBuildCoreMemberRole(organizationMembershipContext?.role);
+
+  return (
+    <BuildCoreWorkflowTaskAccessProvider>
+      <ProjectDetailShellBody {...props} isMemberRole={isMemberRole} />
+    </BuildCoreWorkflowTaskAccessProvider>
   );
 }

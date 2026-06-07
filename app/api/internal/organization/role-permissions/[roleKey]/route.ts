@@ -1,15 +1,25 @@
 /**
  * PATCH /api/internal/organization/role-permissions/[roleKey]?domain=workflow_tasks|payments|budget
+ * BuildCore-only upsert into buildcore_role_permissions (not ForgeCore relay).
  */
 
-import { NextRequest } from 'next/server';
-import { patchBuildCoreRolePermission } from '@/infrastructure/coreApi/buildCoreRolePermissionsClient';
+import { NextRequest, NextResponse } from 'next/server';
 import type {
   BuildCorePermissionRoleKey,
   BuildCoreRolePermissionFlags,
 } from '@/domain/buildcore/rolePermissions';
-import { parseBuildCorePermissionDomain } from '@/domain/buildcore/rolePermissions';
-import { relayOrganizationMutate } from '../../coreOrganizationRelay';
+import {
+  canEditBuildCorePermissionRoleRow,
+  parseBuildCorePermissionDomain,
+} from '@/domain/buildcore/rolePermissions';
+import { isBuildCoreTeamsManagerRole } from '@/domain/buildcore/memberRole';
+import { requireCrmApiAuth } from '@/infrastructure/crm/server/crmApiRouteAuth';
+import {
+  buildCoreEditablePermissionRoleKeys,
+  saveBuildCoreRolePermissionRow,
+} from '@/infrastructure/crm/server/buildCoreRolePermissionService';
+import { loadActiveOrganizationMemberRole } from '@/infrastructure/crm/server/buildCoreWorkflowTaskVisibilityService';
+import { runtimeModes } from '@/infrastructure/config/runtimeModes';
 
 export const dynamic = 'force-dynamic';
 
@@ -39,18 +49,18 @@ function parseFlags(body: unknown): BuildCoreRolePermissionFlags | null {
 export async function PATCH(
   request: NextRequest,
   context: { params: Promise<{ roleKey: string }> }
-) {
+): Promise<NextResponse> {
   const { roleKey: roleKeyRaw } = await context.params;
   const roleKey = roleKeyRaw as BuildCorePermissionRoleKey;
   if (roleKey !== 'admin' && roleKey !== 'coordinator' && roleKey !== 'member') {
-    return Response.json({ error: 'invalid_role', message: 'Invalid role key.' }, { status: 400 });
+    return NextResponse.json({ error: 'invalid_role', message: 'Invalid role key.' }, { status: 400 });
   }
 
   const domain = parseBuildCorePermissionDomain(
     request.nextUrl.searchParams.get('domain') ?? 'workflow_tasks'
   );
   if (domain == null) {
-    return Response.json(
+    return NextResponse.json(
       { error: 'invalid_domain', message: 'Unsupported permission domain.' },
       { status: 400 }
     );
@@ -60,20 +70,56 @@ export async function PATCH(
   try {
     body = await request.json();
   } catch {
-    return Response.json({ error: 'invalid_body', message: 'JSON body required' }, { status: 400 });
+    return NextResponse.json({ error: 'invalid_body', message: 'JSON body required' }, { status: 400 });
   }
 
   const flags = parseFlags(body);
   if (flags == null) {
-    return Response.json(
+    return NextResponse.json(
       { error: 'invalid_payload', message: 'Request body must include boolean permission flags.' },
       { status: 400 }
     );
   }
 
-  return relayOrganizationMutate(
-    request,
-    (token) => patchBuildCoreRolePermission(token, domain, roleKey, flags),
-    { rejectedError: 'role_permission_update_rejected' }
+  if (runtimeModes.useMockAuth()) {
+    return NextResponse.json({ row: { roleKey, ...flags } });
+  }
+
+  const auth = await requireCrmApiAuth(request.headers.get('Authorization'));
+  if (!auth.ok) return auth.response;
+
+  const actorRole = await loadActiveOrganizationMemberRole(
+    auth.context.supabase,
+    auth.context.organizationId,
+    auth.context.user.id
   );
+  if (!isBuildCoreTeamsManagerRole(actorRole)) {
+    return NextResponse.json(
+      { error: 'forbidden', message: 'You do not have permission to update role permissions.' },
+      { status: 403 }
+    );
+  }
+
+  const editableRoleKeys = buildCoreEditablePermissionRoleKeys(actorRole ?? 'member');
+  if (!canEditBuildCorePermissionRoleRow(editableRoleKeys, roleKey)) {
+    return NextResponse.json(
+      { error: 'forbidden', message: 'You do not have permission to update this role row.' },
+      { status: 403 }
+    );
+  }
+
+  try {
+    const row = await saveBuildCoreRolePermissionRow(
+      auth.context.supabase,
+      auth.context.organizationId,
+      domain,
+      roleKey,
+      flags
+    );
+    return NextResponse.json({ row });
+  } catch (err) {
+    const message =
+      err instanceof Error ? err.message : 'Could not save BuildCore role permissions.';
+    return NextResponse.json({ error: 'internal_error', message }, { status: 500 });
+  }
 }

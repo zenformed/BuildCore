@@ -2362,6 +2362,19 @@
   min-width: 0;
 }
 
+.detailMiddleMember {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+}
+
+.detailMiddleMember .workflowPanel {
+  flex: 1;
+  width: 100%;
+  min-height: 0;
+}
+
 @media (max-width: 1100px) {
   .detailMiddle {
     grid-template-columns: 1fr;

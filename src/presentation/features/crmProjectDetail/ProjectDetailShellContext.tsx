@@ -10,6 +10,7 @@ export type ProjectDetailShellContextValue = {
   isApiSource: boolean;
   onRefresh: () => Promise<void>;
   showCompletionActions: boolean;
+  isMemberRole: boolean;
   completion: ReturnType<typeof useProjectCompletionToggle> | null;
 } & ReturnType<typeof useProjectDetailWorkspace>;
 

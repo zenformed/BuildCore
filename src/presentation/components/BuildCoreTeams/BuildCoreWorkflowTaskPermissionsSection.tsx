@@ -3,6 +3,8 @@
 import type { ReactElement } from 'react';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
 import { BuildCoreRolePermissionsSection } from './BuildCoreRolePermissionsSection';
+import { BuildCoreWorkflowTaskMemberVisibilitySetting } from './BuildCoreWorkflowTaskMemberVisibilitySetting';
+import styles from './BuildCoreTeams.module.css';
 
 export type BuildCoreWorkflowTaskPermissionsSectionProps = {
   readonly enabled: boolean;
@@ -18,6 +20,7 @@ export function BuildCoreWorkflowTaskPermissionsSection({
       enabled={enabled}
       headingId="teams-workflow-task-permissions-heading"
       copy={copy}
+      footer={<BuildCoreWorkflowTaskMemberVisibilitySetting enabled={enabled} />}
     />
   );
 }

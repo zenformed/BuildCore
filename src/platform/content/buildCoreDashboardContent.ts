@@ -174,6 +174,11 @@ export const buildCoreDashboardContent = {
       roleColumn: 'Role',
       loading: 'Loading workflow task permissions…',
       empty: 'No permission settings available.',
+      memberVisibility: {
+        toggleLabel: 'Only assigned user can view',
+        hint: 'When enabled, members only see workflow tasks assigned to themselves. When disabled, members see tasks assigned to any member.',
+        loading: 'Loading member visibility setting…',
+      },
     },
     paymentPermissions: {
       title: 'Payment Permissions',

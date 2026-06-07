@@ -8,6 +8,7 @@ import styles from './ProjectDetail.module.css';
 export type ProjectNotesInlineProps = {
   label: string;
   notes: string | null;
+  readOnly?: boolean;
   savingField: SummaryEditableField | null;
   onPatch: (field: SummaryEditableField, value: string) => Promise<boolean>;
 };
@@ -15,6 +16,7 @@ export type ProjectNotesInlineProps = {
 export function ProjectNotesInline({
   label,
   notes,
+  readOnly = false,
   savingField,
   onPatch,
 }: ProjectNotesInlineProps): ReactElement {
@@ -94,6 +96,12 @@ export function ProjectNotesInline({
             onBlur={() => void save()}
             onKeyDown={onKeyDown}
           />
+        ) : readOnly ? (
+          <span
+            className={`${styles.notesDisplayOverlay}${!value.trim() ? ` ${styles.notesDisplayOverlay_empty}` : ''}`}
+          >
+            {displayText}
+          </span>
         ) : (
           <button
             type="button"

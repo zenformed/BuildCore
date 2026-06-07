@@ -82,11 +82,12 @@ export function WorkflowTaskInlineRow({
     onError: (message) => onTaskError?.(message),
   });
   const { permissions, isReady } = useBuildCoreWorkflowTaskAccess();
+  const canView = isReady && permissions.canView;
   const canEdit = isReady && permissions.canEdit;
   const canDelete = isReady && permissions.canDelete;
   const canUpload = isReady && permissions.canUpload;
   const canApprove = isReady && permissions.canApprove;
-  const canChangeStatus = canEdit || canApprove;
+  const canChangeStatus = canView;
   const documentAccept = BUILDCORE_DOCUMENT_ALLOWED_EXTENSIONS.join(',');
   const { rowDragOver, rowDropHandlers: rawRowDropHandlers } = useWorkflowTaskRowFileDrop(task);
   const rowDropHandlers = canUpload ? rawRowDropHandlers : {};
@@ -152,7 +153,7 @@ export function WorkflowTaskInlineRow({
 
   const saveStatus = useCallback(
     async (status: WorkflowTaskStatus) => {
-      if (status === 'done' ? !canApprove : !canEdit) return;
+      if (status === 'done' ? !canApprove : !canView) return;
       setStatusMenuOpen(false);
       if (status === task.status) return;
       const validation = validateWorkflowTaskStatusChange(task, status, docCount);
@@ -166,16 +167,16 @@ export function WorkflowTaskInlineRow({
         reportError(err);
       }
     },
-    [canApprove, canEdit, docCount, onTaskError, patchTask, reportError, task]
+    [canApprove, canView, docCount, onTaskError, patchTask, reportError, task]
   );
 
   const isStatusDisabled = useCallback(
     (status: WorkflowTaskStatus) => {
       if (status === 'done' && !canApprove) return true;
-      if (status !== task.status && status !== 'done' && !canEdit) return true;
+      if (status !== 'done' && status !== task.status && !canView) return true;
       return !validateWorkflowTaskStatusChange(task, status, docCount).ok;
     },
-    [canApprove, canEdit, docCount, task]
+    [canApprove, canView, docCount, task]
   );
 
   const saveDocumentsRequired = useCallback(

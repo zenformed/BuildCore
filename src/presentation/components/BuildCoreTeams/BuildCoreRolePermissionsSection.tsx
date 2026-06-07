@@ -1,6 +1,6 @@
 'use client';
 
-import { useId, useState, type ReactElement } from 'react';
+import { useId, useState, type ReactElement, type ReactNode } from 'react';
 import type { BuildCorePermissionDomain } from '@/domain/buildcore/rolePermissions';
 import { BUILDCORE_PERMISSION_COLUMNS } from '@/domain/buildcore/rolePermissions';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
@@ -23,6 +23,7 @@ export type BuildCoreRolePermissionsSectionProps = {
   readonly headingId: string;
   readonly copy: BuildCoreRolePermissionsSectionCopy;
   readonly defaultExpanded?: boolean;
+  readonly footer?: ReactNode;
 };
 
 export function BuildCoreRolePermissionsSection({
@@ -31,6 +32,7 @@ export function BuildCoreRolePermissionsSection({
   headingId,
   copy,
   defaultExpanded = true,
+  footer,
 }: BuildCoreRolePermissionsSectionProps): ReactElement {
   const teamsCopy = content.teams;
   const [expanded, setExpanded] = useState(defaultExpanded);
@@ -106,6 +108,7 @@ export function BuildCoreRolePermissionsSection({
                   {permissions.statusMessage}
                 </p>
               ) : null}
+              {footer}
             </>
           )}
         </div>

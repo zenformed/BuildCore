@@ -1,7 +1,13 @@
 import type { PipelineStageSlug } from './pipelineStage';
 import type { CrmTeamMemberRef } from './teamMember';
 
-export type WorkflowTaskStatus = 'pending' | 'in_progress' | 'blocked' | 'done' | 'skipped';
+export type WorkflowTaskStatus =
+  | 'pending'
+  | 'in_progress'
+  | 'blocked'
+  | 'skipped'
+  | 'request_review'
+  | 'done';
 
 export type CrmWorkflowTask = {
   readonly id: string;

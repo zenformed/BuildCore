@@ -13,6 +13,9 @@ import type {
 export type BuildCoreWorkflowTaskAccess = BuildCoreRolePermissionFlags & {
   readonly roleKey: BuildCorePermissionRoleKey | null;
   readonly actorRole: OrganizationMemberRole | null;
+  readonly onlyAssignedUserCanView: boolean;
+  readonly viewerUserId: string | null;
+  readonly memberRoleUserIds: readonly string[];
 };
 
 export const DENIED_BUILDCORE_WORKFLOW_TASK_PERMISSIONS: BuildCoreRolePermissionFlags = {
@@ -111,6 +114,9 @@ export function resolveBuildCoreWorkflowTaskPermissions(
     return {
       actorRole: actorRole ?? null,
       roleKey: null,
+      onlyAssignedUserCanView: false,
+      viewerUserId: null,
+      memberRoleUserIds: [],
       ...DENIED_BUILDCORE_WORKFLOW_TASK_PERMISSIONS,
     };
   }
@@ -118,6 +124,9 @@ export function resolveBuildCoreWorkflowTaskPermissions(
   return {
     actorRole: actorRole ?? null,
     roleKey,
+    onlyAssignedUserCanView: false,
+    viewerUserId: null,
+    memberRoleUserIds: [],
     canView: flags.canView,
     canCreate: flags.canCreate,
     canEdit: flags.canEdit,
@@ -131,6 +140,9 @@ export function fullOwnerBuildCoreWorkflowTaskAccess(): BuildCoreWorkflowTaskAcc
   return {
     actorRole: 'owner',
     roleKey: null,
+    onlyAssignedUserCanView: false,
+    viewerUserId: null,
+    memberRoleUserIds: [],
     ...UNRESTRICTED_BUILDCORE_WORKFLOW_TASK_PERMISSIONS,
   };
 }
@@ -145,12 +157,19 @@ export function fullAdminBuildCoreWorkflowTaskAccess(
   return {
     actorRole,
     roleKey: 'admin',
+    onlyAssignedUserCanView: false,
+    viewerUserId: null,
+    memberRoleUserIds: [],
     ...defaultBuildCoreRolePermissionFlags('admin'),
   };
 }
 
 export type WorkflowTaskUpdatePermissionRequirements = {
+  /** Non-status field changes (title, assignee, due date, etc.). */
   readonly requiresCanEdit: boolean;
+  /** Status change to a value other than done (view permission is sufficient). */
+  readonly requiresCanView: boolean;
+  /** Status change to done. */
   readonly requiresCanApprove: boolean;
 };
 
@@ -167,6 +186,11 @@ export type WorkflowTaskUpdatePatchLike = {
   readonly paidAt?: string | null;
 };
 
+export function isWorkflowTaskStatusOnlyPatch(patch: WorkflowTaskUpdatePatchLike): boolean {
+  const keys = Object.keys(patch) as (keyof WorkflowTaskUpdatePatchLike)[];
+  return keys.length === 1 && keys[0] === 'status';
+}
+
 export function classifyWorkflowTaskUpdatePatch(
   patch: WorkflowTaskUpdatePatchLike
 ): WorkflowTaskUpdatePermissionRequirements {
@@ -177,7 +201,8 @@ export function classifyWorkflowTaskUpdatePatch(
 
   return {
     requiresCanApprove: hasStatus && statusIsDone,
-    requiresCanEdit: hasNonStatusFields || (hasStatus && !statusIsDone),
+    requiresCanView: hasStatus && !statusIsDone,
+    requiresCanEdit: hasNonStatusFields,
   };
 }
 
@@ -188,6 +213,9 @@ export function assertWorkflowTaskUpdateAllowed(
   const requirements = classifyWorkflowTaskUpdatePatch(patch);
   if (requirements.requiresCanEdit && !permissions.canEdit) {
     return { ok: false, message: 'You do not have permission to edit workflow tasks.' };
+  }
+  if (requirements.requiresCanView && !permissions.canView) {
+    return { ok: false, message: 'You do not have permission to view workflow tasks.' };
   }
   if (requirements.requiresCanApprove && !permissions.canApprove) {
     return { ok: false, message: 'You do not have permission to mark workflow tasks as done.' };

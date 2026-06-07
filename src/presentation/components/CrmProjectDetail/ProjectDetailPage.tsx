@@ -13,6 +13,7 @@ export function ProjectOverviewContent(): ReactElement {
   const {
     project,
     isApiSource,
+    isMemberRole,
     handleWorkflowTaskPatched,
     handleWorkflowTaskCreated,
     handleTaskDocumentDrop,
@@ -23,6 +24,26 @@ export function ProjectOverviewContent(): ReactElement {
     handleTaskDocumentDrop,
     (message) => setToast({ kind: 'error', message })
   );
+
+  if (isMemberRole) {
+    return (
+      <WorkflowTaskFileDragProvider onTaskDocumentDrop={guardedTaskDocumentDrop}>
+        <div className={styles.detailPanelsScroll}>
+          <div className={styles.detailMiddleMember}>
+            <WorkflowTasksTable
+              layout="full"
+              project={project}
+              isApiSource={isApiSource}
+              onTaskUpdated={handleWorkflowTaskPatched}
+              onTaskAdded={handleWorkflowTaskCreated}
+              onTaskError={(message) => setToast({ kind: 'error', message })}
+              onRequestArchiveTask={setArchiveConfirmTask}
+            />
+          </div>
+        </div>
+      </WorkflowTaskFileDragProvider>
+    );
+  }
 
   return (
     <WorkflowTaskFileDragProvider onTaskDocumentDrop={guardedTaskDocumentDrop}>

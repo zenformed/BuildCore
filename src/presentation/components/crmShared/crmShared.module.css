@@ -12,7 +12,8 @@
   .statusBadge_in_progress,
   .statusBadge_blocked,
   .statusBadge_pending,
-  .statusBadge_skipped {
+  .statusBadge_skipped,
+  .statusBadge_request_review {
     font-size: 0.8125rem;
   }
 
@@ -38,7 +39,8 @@
   .statusBadge_in_progress,
   .statusBadge_blocked,
   .statusBadge_pending,
-  .statusBadge_skipped {
+  .statusBadge_skipped,
+  .statusBadge_request_review {
     font-size: 0.875rem;
     padding: 0.25rem 0.55rem;
   }
@@ -216,6 +218,12 @@
   border-color: #e2e8f0;
 }
 
+.statusBadge_request_review {
+  background: #fef3c7;
+  color: #b45309;
+  border-color: #fde68a;
+}
+
 :global([data-theme='dark']) .statusBadge_done {
   background: #14532d;
   color: #86efac;
@@ -239,6 +247,12 @@
   background: #1a1d26;
   color: #94a3b8;
   border-color: #3d3e4a;
+}
+
+:global([data-theme='dark']) .statusBadge_request_review {
+  background: #78350f;
+  color: #fcd34d;
+  border-color: #92400e;
 }
 
 .docStatusReviewed {

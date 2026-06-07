@@ -39,6 +39,12 @@ export function parseBuildCoreWorkflowTaskAccessJson(json: unknown): BuildCoreWo
     canDelete: o.canDelete,
     canApprove: o.canApprove,
     canUpload: o.canUpload,
+    onlyAssignedUserCanView:
+      typeof o.onlyAssignedUserCanView === 'boolean' ? o.onlyAssignedUserCanView : false,
+    viewerUserId: typeof o.viewerUserId === 'string' ? o.viewerUserId : null,
+    memberRoleUserIds: Array.isArray(o.memberRoleUserIds)
+      ? o.memberRoleUserIds.filter((id): id is string => typeof id === 'string')
+      : [],
   };
 }
 

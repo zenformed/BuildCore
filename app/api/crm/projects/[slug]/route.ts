@@ -8,6 +8,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requireCrmApiAuth } from '@/infrastructure/crm/server/crmApiRouteAuth';
 import { archiveCrmProjectBySlugForOrg } from '@/infrastructure/crm/server/crmArchiveProjectService';
 import { getCrmProjectDetailBySlugForOrg } from '@/infrastructure/crm/server/crmReadService';
+import { scopeCrmProjectDetailForViewer } from '@/infrastructure/crm/server/crmMemberProjectDetailService';
 import { updateCrmProjectBySlugForOrg } from '@/infrastructure/crm/server/crmUpdateProjectService';
 import {
   validateCreateCrmProjectBody,
@@ -39,7 +40,13 @@ export async function GET(
     if (project == null) {
       return NextResponse.json({ error: 'not_found', message: 'Project not found' }, { status: 404 });
     }
-    return NextResponse.json(project);
+    const scoped = await scopeCrmProjectDetailForViewer(
+      auth.context.supabase,
+      auth.context.organizationId,
+      auth.context.user.id,
+      project
+    );
+    return NextResponse.json(scoped);
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Failed to load CRM project';
     return NextResponse.json({ error: 'internal_error', message }, { status: 500 });
@@ -81,7 +88,13 @@ export async function PATCH(
     if (project == null) {
       return NextResponse.json({ error: 'not_found', message: 'Project not found' }, { status: 404 });
     }
-    return NextResponse.json(project);
+    const scoped = await scopeCrmProjectDetailForViewer(
+      auth.context.supabase,
+      auth.context.organizationId,
+      auth.context.user.id,
+      project
+    );
+    return NextResponse.json(scoped);
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Failed to update CRM project';
     return NextResponse.json({ error: 'internal_error', message }, { status: 500 });

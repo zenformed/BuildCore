@@ -4,7 +4,12 @@ import {
   PAYMENT_WORKFLOW_STAGE_SLUG,
   type CrmWorkflowTask,
   type PipelineStageSlug,
+  type WorkflowTaskStatus,
 } from '@/domain/crm';
+import {
+  isWorkflowTaskStatus,
+  WORKFLOW_TASK_STATUS_LABELS,
+} from '@/domain/crm/workflowTaskStatuses';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
 
 export function formatFileSize(bytes: number): string {
@@ -28,6 +33,9 @@ export function formatDocumentKind(kind: string): string {
 }
 
 export function formatWorkflowStatus(status: string): string {
+  if (isWorkflowTaskStatus(status)) {
+    return WORKFLOW_TASK_STATUS_LABELS[status as WorkflowTaskStatus];
+  }
   return status.replace(/_/g, ' ');
 }
 

@@ -163,6 +163,7 @@ type SummaryInlineSelectProps = {
   label: string;
   value: string;
   savingField: SummaryEditableField | null;
+  disabled?: boolean;
   options: readonly { value: string; label: string }[];
   renderValue: (value: string) => ReactNode;
   onPatch: (field: SummaryEditableField, value: string) => Promise<boolean>;
@@ -173,6 +174,7 @@ function SummaryInlineSelect({
   label,
   value,
   savingField,
+  disabled = false,
   options,
   renderValue,
   onPatch,
@@ -228,7 +230,7 @@ function SummaryInlineSelect({
           <button
             type="button"
             className={styles.summaryInlineDisplayOverlay}
-            disabled={isSaving}
+            disabled={disabled || isSaving}
             onClick={() => setEditing(true)}
           >
             {displayNode}
@@ -241,12 +243,16 @@ function SummaryInlineSelect({
 
 export type ProjectSummaryStripProps = {
   project: CrmProjectDetail;
+  memberView?: boolean;
+  readOnly?: boolean;
   savingField: SummaryEditableField | null;
   patchField: (field: SummaryEditableField, value: string) => Promise<boolean>;
 };
 
 export function ProjectSummaryStrip({
   project,
+  memberView = false,
+  readOnly = false,
   savingField,
   patchField,
 }: ProjectSummaryStripProps): ReactElement {
@@ -272,6 +278,7 @@ export function ProjectSummaryStrip({
         label={fields.customer}
         value={summary.name}
         savingField={savingField}
+        disabled={readOnly}
         onPatch={patchField}
       />
       <SummaryInlineText
@@ -279,6 +286,7 @@ export function ProjectSummaryStrip({
         label={fields.contact}
         value={summary.contact.name}
         savingField={savingField}
+        disabled={readOnly}
         onPatch={patchField}
       />
       <SummaryInlineText
@@ -286,6 +294,7 @@ export function ProjectSummaryStrip({
         label={fields.email}
         value={summary.contact.email}
         savingField={savingField}
+        disabled={readOnly}
         inputType="email"
         displayClassName={styles.summaryLink}
         onPatch={patchField}
@@ -296,46 +305,54 @@ export function ProjectSummaryStrip({
         value={summary.contact.phone}
         displayValue={formatPhoneDisplay(summary.contact.phone)}
         savingField={savingField}
+        disabled={readOnly}
         inputType="tel"
         displayClassName={styles.summaryLink}
         onPatch={patchField}
       />
-      <SummaryInlineSelect
-        fieldKey="currentStageSlug"
-        label={content.projectDetail.currentStage}
-        value={summary.currentStageSlug}
-        savingField={savingField}
-        options={stageOptions}
-        renderValue={(slug) => (
-          <span className={shared.stagePill}>{formatStageLabel(slug as PipelineStageSlug)}</span>
-        )}
-        onPatch={patchField}
-      />
+      {memberView ? null : (
+        <SummaryInlineSelect
+          fieldKey="currentStageSlug"
+          label={content.projectDetail.currentStage}
+          value={summary.currentStageSlug}
+          savingField={savingField}
+          options={stageOptions}
+          renderValue={(slug) => (
+            <span className={shared.stagePill}>{formatStageLabel(slug as PipelineStageSlug)}</span>
+          )}
+          onPatch={patchField}
+        />
+      )}
       <SummaryInlineSelect
         fieldKey="priority"
         label={fields.priority}
         value={summary.priority}
         savingField={savingField}
+        disabled={readOnly}
         options={priorityOptions}
         renderValue={(p) => <span className={priorityClass(p)}>{p}</span>}
         onPatch={patchField}
       />
-      <SummaryInlineText
-        fieldKey="dealValueUsd"
-        label={fields.dealValue}
-        value={centsToUsdInput(summary.dealValueCents)}
-        displayValue={formatCentsAsUsd(summary.dealValueCents)}
-        savingField={savingField}
-        onPatch={patchField}
-      />
-      <SummaryMetric label={fields.balance} savingField={savingField}>
-        <span
-          className={styles.summaryText}
-          title={hasPaymentMilestones ? edit.fields.balanceDerivedHint : undefined}
-        >
-          {formatCentsAsUsd(summary.balanceRemainingCents)}
-        </span>
-      </SummaryMetric>
+      {memberView ? null : (
+        <>
+          <SummaryInlineText
+            fieldKey="dealValueUsd"
+            label={fields.dealValue}
+            value={centsToUsdInput(summary.dealValueCents)}
+            displayValue={formatCentsAsUsd(summary.dealValueCents)}
+            savingField={savingField}
+            onPatch={patchField}
+          />
+          <SummaryMetric label={fields.balance} savingField={savingField}>
+            <span
+              className={styles.summaryText}
+              title={hasPaymentMilestones ? edit.fields.balanceDerivedHint : undefined}
+            >
+              {formatCentsAsUsd(summary.balanceRemainingCents)}
+            </span>
+          </SummaryMetric>
+        </>
+      )}
     </section>
   );
 }

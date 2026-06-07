@@ -1,9 +1,9 @@
 import type { CreateCrmWorkflowTaskInput, UpdateCrmWorkflowTaskInput } from '@/domain/crm';
 import { DEFAULT_PIPELINE_STAGES, PAYMENT_WORKFLOW_STAGE_SLUG, type PipelineStageSlug } from '@/domain/crm';
 import type { WorkflowTaskStatus } from '@/domain/crm';
+import { isWorkflowTaskStatus } from '@/domain/crm/workflowTaskStatuses';
 
 const STAGE_SLUGS = new Set(DEFAULT_PIPELINE_STAGES.map((s) => s.slug));
-const STATUSES: readonly WorkflowTaskStatus[] = ['pending', 'in_progress', 'blocked', 'done', 'skipped'];
 
 export type WorkflowTaskBody = Record<string, unknown>;
 
@@ -27,7 +27,7 @@ function asStageSlug(value: unknown): PipelineStageSlug | null {
 
 function asStatus(value: unknown): WorkflowTaskStatus | null {
   if (typeof value !== 'string') return null;
-  return (STATUSES as readonly string[]).includes(value) ? (value as WorkflowTaskStatus) : null;
+  return isWorkflowTaskStatus(value) ? value : null;
 }
 
 function asOptionalUserId(value: unknown): string | null {

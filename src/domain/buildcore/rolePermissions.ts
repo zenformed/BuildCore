@@ -96,6 +96,7 @@ export {
   assertWorkflowTaskUpdateAllowed,
   BUILDCORE_WORKFLOW_TASK_PERMISSION_ROLE_KEYS,
   classifyWorkflowTaskUpdatePatch,
+  isWorkflowTaskStatusOnlyPatch,
   defaultBuildCoreRolePermissionFlags,
   DENIED_BUILDCORE_WORKFLOW_TASK_PERMISSIONS,
   fullAdminBuildCoreWorkflowTaskAccess,

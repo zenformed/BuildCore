@@ -26,6 +26,7 @@ import {
   initialsFromPersonName,
 } from '@/domain/crm/teamMemberDisplay';
 import { workflowTaskAssigneeIdFromContactId } from '@/domain/crm/workflowTaskAssignee';
+import { isWorkflowTaskStatus } from '@/domain/crm/workflowTaskStatuses';
 
 export type DbCrmClientRow = {
   id: string;
@@ -177,9 +178,8 @@ function asPriority(value: string): CrmPriority {
 }
 
 function asWorkflowStatus(value: string): WorkflowTaskStatus {
-  const allowed: WorkflowTaskStatus[] = ['pending', 'in_progress', 'blocked', 'done', 'skipped'];
-  if ((allowed as readonly string[]).includes(value)) {
-    return value as WorkflowTaskStatus;
+  if (isWorkflowTaskStatus(value)) {
+    return value;
   }
   return 'pending';
 }
