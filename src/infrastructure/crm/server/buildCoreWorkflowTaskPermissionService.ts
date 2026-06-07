@@ -13,9 +13,8 @@ import {
 } from '@/domain/buildcore/rolePermissions';
 import type { OrganizationMemberRole } from '@zenformed/core/organization-settings';
 import {
-  loadActiveBuildCoreMemberUserIdsForOrg,
-  loadBuildCoreWorkflowTaskVisibilitySettings,
   loadActiveOrganizationMemberRole,
+  resolveBuildCoreWorkflowTaskMemberVisibilityInput,
 } from './buildCoreWorkflowTaskVisibilityService';
 import { loadBuildCoreRolePermissionRows } from './buildCoreRolePermissionService';
 
@@ -36,16 +35,17 @@ export async function resolveBuildCoreWorkflowTaskAccessForUser(
     return base;
   }
 
-  const [visibility, memberRoleUserIds] = await Promise.all([
-    loadBuildCoreWorkflowTaskVisibilitySettings(supabase, organizationId),
-    loadActiveBuildCoreMemberUserIdsForOrg(supabase, organizationId),
-  ]);
+  const visibilityInput = await resolveBuildCoreWorkflowTaskMemberVisibilityInput(
+    supabase,
+    organizationId,
+    userId
+  );
 
   return {
     ...base,
-    onlyAssignedUserCanView: visibility.onlyAssignedUserCanView,
-    viewerUserId: userId,
-    memberRoleUserIds,
+    onlyAssignedUserCanView: visibilityInput.onlyAssignedUserCanView,
+    viewerUserId: visibilityInput.viewerUserId,
+    memberRoleUserIds: visibilityInput.memberRoleUserIds,
   };
 }
 

@@ -46,7 +46,10 @@ export function BuildCoreWorkflowTaskMemberVisibilitySetting({
           <span className={styles.permissionSwitchThumb} aria-hidden />
         </button>
       </div>
-      <p className={styles.memberVisibilitySettingLabel}>{copy.toggleLabel}</p>
+      <p className={styles.memberVisibilitySettingLabel}>
+        {copy.toggleLabel}
+        <span className={projectStyles.cardHelper}> · {copy.defaultNote}</span>
+      </p>
       {visibility.statusMessage ? (
         <p
           className={`${styles.permissionStatusLine} ${

@@ -4,13 +4,17 @@
 
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { OrganizationMemberRole } from '@zenformed/core/organization-settings';
+import {
+  DEFAULT_BUILDCORE_WORKFLOW_TASK_ONLY_ASSIGNED_USER_CAN_VIEW,
+  type BuildCoreWorkflowTaskMemberVisibilityInput,
+} from '@/domain/buildcore/workflowTaskMemberVisibility';
 
 export type BuildCoreWorkflowTaskVisibilitySettings = {
   readonly onlyAssignedUserCanView: boolean;
 };
 
 const DEFAULT_SETTINGS: BuildCoreWorkflowTaskVisibilitySettings = {
-  onlyAssignedUserCanView: false,
+  onlyAssignedUserCanView: DEFAULT_BUILDCORE_WORKFLOW_TASK_ONLY_ASSIGNED_USER_CAN_VIEW,
 };
 
 export async function loadBuildCoreWorkflowTaskVisibilitySettings(
@@ -64,20 +68,34 @@ export async function loadActiveBuildCoreMemberUserIdsForOrg(
   supabase: SupabaseClient,
   organizationId: string
 ): Promise<string[]> {
-  const { data, error } = await supabase
-    .from('platform_organization_members')
-    .select('user_id')
-    .eq('organization_id', organizationId)
-    .eq('membership_status', 'active')
-    .eq('role', 'member');
+  const { data, error } = await supabase.rpc('buildcore_active_member_role_user_ids', {
+    p_organization_id: organizationId,
+  });
 
   if (error != null) {
     throw new Error(`org_member_ids_read_failed: ${error.message}`);
   }
 
   return (data ?? [])
-    .map((row) => (row.user_id != null ? String(row.user_id) : ''))
-    .filter((id) => id.length > 0);
+    .map((userId: unknown) => (userId != null ? String(userId) : ''))
+    .filter((id: string) => id.length > 0);
+}
+
+export async function resolveBuildCoreWorkflowTaskMemberVisibilityInput(
+  supabase: SupabaseClient,
+  organizationId: string,
+  viewerUserId: string
+): Promise<BuildCoreWorkflowTaskMemberVisibilityInput> {
+  const [visibility, memberRoleUserIds] = await Promise.all([
+    loadBuildCoreWorkflowTaskVisibilitySettings(supabase, organizationId),
+    loadActiveBuildCoreMemberUserIdsForOrg(supabase, organizationId),
+  ]);
+
+  return {
+    viewerUserId,
+    onlyAssignedUserCanView: visibility.onlyAssignedUserCanView,
+    memberRoleUserIds,
+  };
 }
 
 export async function loadActiveOrganizationMemberRole(

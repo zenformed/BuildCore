@@ -6,6 +6,7 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import type { OrganizationMemberRole } from '@zenformed/core/organization-settings';
 import {
   BUILDCORE_PERMISSION_ROLE_KEYS,
+  buildCoreEditablePermissionRoleKeys,
   defaultBuildCoreRolePermissionFlags,
   type BuildCorePermissionDomain,
   type BuildCorePermissionRoleKey,
@@ -42,18 +43,6 @@ function rowFromDb(db: DbPermissionRow): BuildCoreRolePermissionRow | null {
     canApprove: Boolean(db.can_approve),
     canUpload: Boolean(db.can_upload),
   };
-}
-
-export function buildCoreEditablePermissionRoleKeys(
-  actorRole: OrganizationMemberRole
-): readonly BuildCorePermissionRoleKey[] {
-  if (actorRole === 'owner' || actorRole === 'admin') {
-    return BUILDCORE_PERMISSION_ROLE_KEYS;
-  }
-  if (actorRole === 'coordinator') {
-    return ['member'];
-  }
-  return [];
 }
 
 export async function loadBuildCoreRolePermissionRows(

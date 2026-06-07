@@ -176,7 +176,8 @@ export const buildCoreDashboardContent = {
       empty: 'No permission settings available.',
       memberVisibility: {
         toggleLabel: 'Only assigned user can view',
-        hint: 'When enabled, members only see workflow tasks assigned to themselves. When disabled, members see tasks assigned to any member.',
+        defaultNote: 'Default: Enabled',
+        hint: 'When enabled, members only see workflow tasks assigned to themselves. When disabled, members see tasks assigned to any member-role user.',
         loading: 'Loading member visibility setting…',
       },
     },

@@ -8,6 +8,9 @@ export type BuildCoreWorkflowTaskMemberVisibilityInput = {
   readonly memberRoleUserIds: readonly string[];
 };
 
+/** Fallback when an org has no saved visibility row: members see only self-assigned tasks. */
+export const DEFAULT_BUILDCORE_WORKFLOW_TASK_ONLY_ASSIGNED_USER_CAN_VIEW = true;
+
 export function isWorkflowTaskVisibleToBuildCoreMember(
   task: CrmWorkflowTask,
   input: BuildCoreWorkflowTaskMemberVisibilityInput

@@ -5,6 +5,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { isBuildCoreTeamsManagerRole } from '@/domain/buildcore/memberRole';
+import { DEFAULT_BUILDCORE_WORKFLOW_TASK_ONLY_ASSIGNED_USER_CAN_VIEW } from '@/domain/buildcore/workflowTaskMemberVisibility';
 import { requireCrmApiAuth } from '@/infrastructure/crm/server/crmApiRouteAuth';
 import {
   loadActiveBuildCoreMemberUserIdsForOrg,
@@ -20,7 +21,7 @@ export const dynamic = 'force-dynamic';
 function defaultResponse(canEdit: boolean) {
   return NextResponse.json(
     {
-      onlyAssignedUserCanView: false,
+      onlyAssignedUserCanView: DEFAULT_BUILDCORE_WORKFLOW_TASK_ONLY_ASSIGNED_USER_CAN_VIEW,
       canEdit,
       memberRoleUserIds: [] as string[],
     },
@@ -67,7 +68,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 export async function PATCH(request: NextRequest): Promise<NextResponse> {
   if (runtimeModes.useMockAuth()) {
     return NextResponse.json(
-      { onlyAssignedUserCanView: false, canEdit: true },
+      { onlyAssignedUserCanView: DEFAULT_BUILDCORE_WORKFLOW_TASK_ONLY_ASSIGNED_USER_CAN_VIEW, canEdit: true },
       { headers: BUILDCORE_ADMIN_NO_CACHE_HEADERS }
     );
   }

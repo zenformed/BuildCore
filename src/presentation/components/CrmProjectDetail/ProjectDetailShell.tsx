@@ -60,7 +60,7 @@ function ProjectDetailShellBody({
   const router = useRouter();
   const { organizationMembershipContext } = useSaaSProfile();
   const showCompletionActions = pageContext === 'detail' && !isMemberRole;
-  const scopedProject = useBuildCoreMemberScopedProject(initialProject, isMemberRole);
+  const scopedProject = useBuildCoreMemberScopedProject(initialProject, isMemberRole, isApiSource);
   const canSaveTemplate = useMemo(
     () => canManageBuildCoreProjectTemplates(organizationMembershipContext?.role),
     [organizationMembershipContext?.role]

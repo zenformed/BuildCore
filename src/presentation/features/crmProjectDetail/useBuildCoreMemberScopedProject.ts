@@ -1,32 +1,36 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { CrmProjectDetail } from '@/domain/crm';
 import {
   applyBuildCoreMemberProjectDetailView,
+  DEFAULT_BUILDCORE_WORKFLOW_TASK_ONLY_ASSIGNED_USER_CAN_VIEW,
   filterWorkflowTasksForBuildCoreMember,
 } from '@/domain/buildcore/workflowTaskMemberVisibility';
 import { useBuildCoreWorkflowTaskAccess } from '@/presentation/providers/BuildCoreWorkflowTaskAccessProvider';
 import { useAuth } from '@/presentation/hooks/useAuth';
 import { fetchBuildCoreWorkflowTaskMemberVisibilityBff } from '@/infrastructure/coreApi/buildCoreWorkflowTaskMemberVisibilityBff';
 import { useBuildCoreDashboardContext } from '@/presentation/providers/BuildCoreDashboardProvider';
-import { useCallback, useEffect, useState } from 'react';
 
 export function useBuildCoreMemberScopedProject(
   project: CrmProjectDetail,
-  isMemberRole: boolean
+  isMemberRole: boolean,
+  isApiSource: boolean
 ): CrmProjectDetail {
   const { user } = useAuth();
   const dash = useBuildCoreDashboardContext();
   const { access, isReady } = useBuildCoreWorkflowTaskAccess();
   const [fallbackMemberIds, setFallbackMemberIds] = useState<readonly string[]>([]);
-  const [fallbackOnlyAssigned, setFallbackOnlyAssigned] = useState(false);
+  const [fallbackOnlyAssigned, setFallbackOnlyAssigned] = useState(
+    DEFAULT_BUILDCORE_WORKFLOW_TASK_ONLY_ASSIGNED_USER_CAN_VIEW
+  );
   const [fallbackLoaded, setFallbackLoaded] = useState(false);
 
-  const needsFallback = isMemberRole && isReady && access?.actorRole !== 'member';
+  const needsMockVisibility = isMemberRole && !isApiSource;
+  const needsFallback = needsMockVisibility && isReady && access?.actorRole !== 'member';
 
   const loadFallbackVisibility = useCallback(async () => {
-    if (!needsFallback) {
+    if (!needsMockVisibility) {
       setFallbackLoaded(true);
       return;
     }
@@ -40,12 +44,12 @@ export function useBuildCoreMemberScopedProject(
       setFallbackOnlyAssigned(settings.onlyAssignedUserCanView);
       setFallbackMemberIds(settings.memberRoleUserIds);
     } catch {
-      setFallbackOnlyAssigned(false);
+      setFallbackOnlyAssigned(DEFAULT_BUILDCORE_WORKFLOW_TASK_ONLY_ASSIGNED_USER_CAN_VIEW);
       setFallbackMemberIds([]);
     } finally {
       setFallbackLoaded(true);
     }
-  }, [dash, needsFallback]);
+  }, [dash, needsMockVisibility]);
 
   useEffect(() => {
     setFallbackLoaded(false);
@@ -54,6 +58,9 @@ export function useBuildCoreMemberScopedProject(
 
   return useMemo(() => {
     if (!isMemberRole) return project;
+
+    // API responses are already scoped server-side in scopeCrmProjectDetailForViewer().
+    if (isApiSource) return project;
 
     const viewerUserId = access?.viewerUserId ?? user?.id ?? null;
     if (!viewerUserId) return project;
@@ -81,6 +88,7 @@ export function useBuildCoreMemberScopedProject(
     fallbackLoaded,
     fallbackMemberIds,
     fallbackOnlyAssigned,
+    isApiSource,
     isMemberRole,
     needsFallback,
     project,

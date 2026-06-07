@@ -9,15 +9,13 @@ import type {
   BuildCoreRolePermissionFlags,
 } from '@/domain/buildcore/rolePermissions';
 import {
+  buildCoreEditablePermissionRoleKeys,
   canEditBuildCorePermissionRoleRow,
   parseBuildCorePermissionDomain,
 } from '@/domain/buildcore/rolePermissions';
 import { isBuildCoreTeamsManagerRole } from '@/domain/buildcore/memberRole';
 import { requireCrmApiAuth } from '@/infrastructure/crm/server/crmApiRouteAuth';
-import {
-  buildCoreEditablePermissionRoleKeys,
-  saveBuildCoreRolePermissionRow,
-} from '@/infrastructure/crm/server/buildCoreRolePermissionService';
+import { saveBuildCoreRolePermissionRow } from '@/infrastructure/crm/server/buildCoreRolePermissionService';
 import { loadActiveOrganizationMemberRole } from '@/infrastructure/crm/server/buildCoreWorkflowTaskVisibilityService';
 import { runtimeModes } from '@/infrastructure/config/runtimeModes';
 import { BUILDCORE_ADMIN_NO_CACHE_HEADERS } from '@/infrastructure/coreApi/buildCoreAdminFetch';

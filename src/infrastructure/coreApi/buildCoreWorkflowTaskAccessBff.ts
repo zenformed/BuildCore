@@ -1,4 +1,9 @@
 import type { BuildCoreWorkflowTaskAccess } from '@/domain/buildcore/rolePermissions';
+import { DEFAULT_BUILDCORE_WORKFLOW_TASK_ONLY_ASSIGNED_USER_CAN_VIEW } from '@/domain/buildcore/workflowTaskMemberVisibility';
+import {
+  buildCoreAdminFetchInit,
+  buildCoreAdminFetchUrl,
+} from '@/infrastructure/coreApi/buildCoreAdminFetch';
 
 export function parseBuildCoreWorkflowTaskAccessJson(json: unknown): BuildCoreWorkflowTaskAccess | null {
   if (json == null || typeof json !== 'object') return null;
@@ -40,7 +45,9 @@ export function parseBuildCoreWorkflowTaskAccessJson(json: unknown): BuildCoreWo
     canApprove: o.canApprove,
     canUpload: o.canUpload,
     onlyAssignedUserCanView:
-      typeof o.onlyAssignedUserCanView === 'boolean' ? o.onlyAssignedUserCanView : false,
+      typeof o.onlyAssignedUserCanView === 'boolean'
+        ? o.onlyAssignedUserCanView
+        : DEFAULT_BUILDCORE_WORKFLOW_TASK_ONLY_ASSIGNED_USER_CAN_VIEW,
     viewerUserId: typeof o.viewerUserId === 'string' ? o.viewerUserId : null,
     memberRoleUserIds: Array.isArray(o.memberRoleUserIds)
       ? o.memberRoleUserIds.filter((id): id is string => typeof id === 'string')
@@ -51,14 +58,10 @@ export function parseBuildCoreWorkflowTaskAccessJson(json: unknown): BuildCoreWo
 export async function fetchBuildCoreWorkflowTaskAccessBff(
   accessToken: string
 ): Promise<BuildCoreWorkflowTaskAccess> {
-  const res = await fetch('/api/internal/organization/workflow-task-access', {
-    method: 'GET',
-    headers: {
-      Accept: 'application/json',
-      Authorization: `Bearer ${accessToken}`,
-    },
-    cache: 'no-store',
-  });
+  const res = await fetch(
+    buildCoreAdminFetchUrl('/api/internal/organization/workflow-task-access'),
+    buildCoreAdminFetchInit(accessToken, { method: 'GET' })
+  );
   let json: unknown;
   try {
     json = await res.json();

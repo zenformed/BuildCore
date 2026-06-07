@@ -6,9 +6,8 @@ import {
   filterWorkflowTasksForBuildCoreMember,
 } from '@/domain/buildcore/workflowTaskMemberVisibility';
 import {
-  loadActiveBuildCoreMemberUserIdsForOrg,
   loadActiveOrganizationMemberRole,
-  loadBuildCoreWorkflowTaskVisibilitySettings,
+  resolveBuildCoreWorkflowTaskMemberVisibilityInput,
 } from './buildCoreWorkflowTaskVisibilityService';
 
 export async function scopeCrmProjectDetailForViewer(
@@ -22,16 +21,13 @@ export async function scopeCrmProjectDetailForViewer(
     return project;
   }
 
-  const [visibility, memberRoleUserIds] = await Promise.all([
-    loadBuildCoreWorkflowTaskVisibilitySettings(supabase, organizationId),
-    loadActiveBuildCoreMemberUserIdsForOrg(supabase, organizationId),
-  ]);
+  const visibilityInput = await resolveBuildCoreWorkflowTaskMemberVisibilityInput(
+    supabase,
+    organizationId,
+    userId
+  );
 
-  const visibleTasks = filterWorkflowTasksForBuildCoreMember(project.workflowTasks, {
-    viewerUserId: userId,
-    onlyAssignedUserCanView: visibility.onlyAssignedUserCanView,
-    memberRoleUserIds,
-  });
+  const visibleTasks = filterWorkflowTasksForBuildCoreMember(project.workflowTasks, visibilityInput);
 
   return applyBuildCoreMemberProjectDetailView(project, visibleTasks);
 }

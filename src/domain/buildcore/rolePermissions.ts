@@ -91,6 +91,19 @@ export function canEditBuildCorePermissionRoleRow(
   return editableRoleKeys.includes(roleKey);
 }
 
+/** Which matrix rows the signed-in actor may edit (Teams UI + server PATCH guard). */
+export function buildCoreEditablePermissionRoleKeys(
+  actorRole: OrganizationMemberRole
+): readonly BuildCorePermissionRoleKey[] {
+  if (actorRole === 'owner' || actorRole === 'admin') {
+    return BUILDCORE_PERMISSION_ROLE_KEYS;
+  }
+  if (actorRole === 'coordinator') {
+    return ['member'];
+  }
+  return [];
+}
+
 export {
   assertWorkflowTaskCreateAllowed,
   assertWorkflowTaskUpdateAllowed,
