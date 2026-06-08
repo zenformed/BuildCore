@@ -18,6 +18,8 @@ export type BuildCoreSidebarProps = {
   onSelect: (id: BuildCoreSidebarNavId) => void;
   /** When false, the Teams nav control is omitted (org members). */
   canAccessTeams?: boolean;
+  /** When false, the Reports nav control is omitted (org members). */
+  canAccessReports?: boolean;
   children?: React.ReactNode;
 };
 
@@ -25,10 +27,15 @@ export function BuildCoreSidebar({
   activeId,
   onSelect,
   canAccessTeams = true,
+  canAccessReports = true,
   children,
 }: BuildCoreSidebarProps): ReactElement {
   const { ariaLabel, items } = nav.sidebar;
-  const visibleItems = items.filter((item) => item.id !== 'teams' || canAccessTeams);
+  const visibleItems = items.filter((item) => {
+    if (item.id === 'teams' && !canAccessTeams) return false;
+    if (item.id === 'reports' && !canAccessReports) return false;
+    return true;
+  });
   return (
     <nav className={styles.sidebar} aria-label={ariaLabel}>
       {children ? <div className={styles.sidebarLogoSlot}>{children}</div> : null}

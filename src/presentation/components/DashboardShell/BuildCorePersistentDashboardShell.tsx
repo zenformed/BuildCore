@@ -33,7 +33,9 @@ export function BuildCorePersistentDashboardShell({
     (id: BuildCoreSidebarNavId) => {
       dash.setSidebarNav(id);
       if (id === 'reports') {
-        router.push(nav.routes.reports);
+        if (dash.canAccessBuildCoreReports) {
+          router.push(nav.routes.reports);
+        }
         return;
       }
       if (id === 'teams') {
@@ -54,6 +56,14 @@ export function BuildCorePersistentDashboardShell({
       router.replace(nav.routes.dashboard);
     }
   }, [dash.canAccessBuildCoreTeams, pathname, router]);
+
+  useEffect(() => {
+    const onReportsRoute =
+      pathname === nav.routes.reports || pathname.startsWith(`${nav.routes.reports}/`);
+    if (onReportsRoute && isMemberRole) {
+      router.replace(nav.routes.dashboard);
+    }
+  }, [isMemberRole, pathname, router]);
 
   return (
     <BuildCoreDashboardShell

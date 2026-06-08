@@ -16,6 +16,7 @@ import { useUserAvatar } from '@/presentation/hooks/useUserAvatar';
 import { useTenant } from '@/presentation/providers';
 import { computeIsAdmin } from '@/presentation/features/buildCoreDashboard/buildCoreDashboardViewModel';
 import { canAccessBuildCoreTeams } from '@/presentation/features/buildCoreTeams/buildCoreTeamsAccess';
+import { canAccessBuildCoreReports } from '@/presentation/features/crmReports/buildCoreReportsAccess';
 import { isBuildCoreMemberRole } from '@/domain/buildcore/memberRole';
 import { formatOrganizationRoleLabel } from '@zenformed/core/dashboard-shell';
 import type { BuildCoreSettingsSectionId } from '@/platform/navigation/buildCoreDashboardNavigation';
@@ -37,6 +38,7 @@ export function useBuildCoreDashboard(): {
   effectiveLicenseTier: string | undefined;
   organizationRoleLabel: string | null;
   canAccessBuildCoreTeams: boolean;
+  canAccessBuildCoreReports: boolean;
   isAdmin: boolean;
   avatarUrl: string | null;
   avatarLoading: boolean;
@@ -148,6 +150,16 @@ export function useBuildCoreDashboard(): {
     membershipContextStatus,
   ]);
 
+  const canAccessBuildCoreReportsNav = useMemo(() => {
+    if (!env.isSaasMode || runtimeModes.useMockAuth()) {
+      return true;
+    }
+    if (membershipContextStatus !== 'ready') {
+      return false;
+    }
+    return canAccessBuildCoreReports(organizationMembershipContext?.role);
+  }, [membershipContextStatus, organizationMembershipContext?.role]);
+
   const { logoUploading, headerLogoFileInputRef, handleLogoFileChange } = useOrganizationLogoUpload({
     brandingApiUrl: nav.apis.branding,
     getAccessToken,
@@ -167,6 +179,7 @@ export function useBuildCoreDashboard(): {
     effectiveLicenseTier,
     organizationRoleLabel,
     canAccessBuildCoreTeams: canAccessBuildCoreTeamsNav,
+    canAccessBuildCoreReports: canAccessBuildCoreReportsNav,
     isAdmin,
     avatarUrl,
     avatarLoading,

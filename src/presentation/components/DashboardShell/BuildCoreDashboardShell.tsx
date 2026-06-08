@@ -72,6 +72,7 @@ export function BuildCoreDashboardShell({
             activeId={sidebarActiveId}
             onSelect={onSidebarSelect}
             canAccessTeams={dash.canAccessBuildCoreTeams}
+            canAccessReports={dash.canAccessBuildCoreReports}
           >
             <ZenformedSidebarBranding
               classNames={sidebarBrandingClassNames}
