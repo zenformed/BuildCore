@@ -4,7 +4,8 @@ import type { ReactElement } from 'react';
 import { useProjectDetailShell } from '@/presentation/features/crmProjectDetail/ProjectDetailShellContext';
 import { WorkflowTaskFileDragProvider } from '@/presentation/features/crmProjectDetail/workflowTaskFileDragContext';
 import { useGuardedWorkflowTaskDocumentDrop } from '@/presentation/features/crmProjectDetail/useGuardedWorkflowTaskDocumentDrop';
-import { AccountabilityPanel } from './AccountabilityPanel';
+import { useBuildCoreProjectSectionAccess } from '@/presentation/providers/BuildCoreProjectSectionAccessProvider';
+import { BudgetTable } from './BudgetTable';
 import { PaymentsRail } from './PaymentsRail';
 import { WorkflowTasksTable } from './WorkflowTasksTable';
 import styles from './ProjectDetail.module.css';
@@ -13,43 +14,32 @@ export function ProjectOverviewContent(): ReactElement {
   const {
     project,
     isApiSource,
-    isMemberRole,
     handleWorkflowTaskPatched,
     handleWorkflowTaskCreated,
     handleTaskDocumentDrop,
     setArchiveConfirmTask,
     setToast,
   } = useProjectDetailShell();
+  const { payment, budget } = useBuildCoreProjectSectionAccess();
   const guardedTaskDocumentDrop = useGuardedWorkflowTaskDocumentDrop(
     handleTaskDocumentDrop,
     (message) => setToast({ kind: 'error', message })
   );
 
-  if (isMemberRole) {
-    return (
-      <WorkflowTaskFileDragProvider onTaskDocumentDrop={guardedTaskDocumentDrop}>
-        <div className={styles.detailPanelsScroll}>
-          <div className={styles.detailMiddleMember}>
-            <WorkflowTasksTable
-              layout="full"
-              project={project}
-              isApiSource={isApiSource}
-              onTaskUpdated={handleWorkflowTaskPatched}
-              onTaskAdded={handleWorkflowTaskCreated}
-              onTaskError={(message) => setToast({ kind: 'error', message })}
-              onRequestArchiveTask={setArchiveConfirmTask}
-            />
-          </div>
-        </div>
-      </WorkflowTaskFileDragProvider>
-    );
-  }
+  const showPayments = payment.isReady && payment.permissions.canView;
+  const showBudget = budget.isReady && budget.permissions.canView;
+  const showFinancialsRow = showPayments || showBudget;
+  const financialsRowClass =
+    showPayments && showBudget
+      ? styles.detailFinancialsRow
+      : styles.detailFinancialsRowSingle;
 
   return (
     <WorkflowTaskFileDragProvider onTaskDocumentDrop={guardedTaskDocumentDrop}>
       <div className={styles.detailPanelsScroll}>
-        <div className={styles.detailMiddle}>
+        <div className={styles.detailWorkflowSection}>
           <WorkflowTasksTable
+            layout="full"
             project={project}
             isApiSource={isApiSource}
             onTaskUpdated={handleWorkflowTaskPatched}
@@ -57,16 +47,22 @@ export function ProjectOverviewContent(): ReactElement {
             onTaskError={(message) => setToast({ kind: 'error', message })}
             onRequestArchiveTask={setArchiveConfirmTask}
           />
-          <PaymentsRail
-            project={project}
-            isApiSource={isApiSource}
-            onTaskUpdated={handleWorkflowTaskPatched}
-            onTaskCreated={handleWorkflowTaskCreated}
-            onTaskError={(message) => setToast({ kind: 'error', message })}
-            onRequestArchiveTask={setArchiveConfirmTask}
-          />
         </div>
-        <AccountabilityPanel project={project} />
+        {showFinancialsRow ? (
+          <div className={financialsRowClass}>
+            {showBudget ? <BudgetTable onError={(message) => setToast({ kind: 'error', message })} /> : null}
+            {showPayments ? (
+              <PaymentsRail
+                project={project}
+                isApiSource={isApiSource}
+                onTaskUpdated={handleWorkflowTaskPatched}
+                onTaskCreated={handleWorkflowTaskCreated}
+                onTaskError={(message) => setToast({ kind: 'error', message })}
+                onRequestArchiveTask={setArchiveConfirmTask}
+              />
+            ) : null}
+          </div>
+        ) : null}
       </div>
     </WorkflowTaskFileDragProvider>
   );

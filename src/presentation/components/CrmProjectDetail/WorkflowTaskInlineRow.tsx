@@ -31,6 +31,7 @@ import {
 import { useWorkflowTaskDocumentActions } from '@/presentation/features/crmProjectDetail/useWorkflowTaskDocumentActions';
 import { useWorkflowTaskRowFileDrop } from '@/presentation/features/crmProjectDetail/useWorkflowTaskRowFileDrop';
 import { useBuildCoreWorkflowTaskAccess } from '@/presentation/providers/BuildCoreWorkflowTaskAccessProvider';
+import { useBuildCoreProjectSectionAccess } from '@/presentation/providers/BuildCoreProjectSectionAccessProvider';
 import shared from '@/presentation/components/crmShared/crmShared.module.css';
 import { TeamMemberAvatar } from './TeamMemberAvatar';
 import { WorkflowDocumentFileIcon } from './WorkflowDocumentFileIcon';
@@ -41,12 +42,15 @@ function statusBadgeClass(status: WorkflowTaskStatus): string {
   return shared[`statusBadge_${status}`] ?? shared.statusBadge_pending;
 }
 
+export type WorkflowTaskPermissionDomain = 'workflow_tasks' | 'payments';
+
 export type WorkflowTaskInlineRowProps = {
   projectSlug: string;
   task: CrmWorkflowTask;
   docCount: number;
   taskDocuments: readonly CrmDocumentMetadata[];
   showAmountColumn?: boolean;
+  permissionDomain?: WorkflowTaskPermissionDomain;
   isApiSource: boolean;
   onUpdated: (task: CrmWorkflowTask) => Promise<void>;
   onTaskError?: (message: string) => void;
@@ -59,6 +63,7 @@ export function WorkflowTaskInlineRow({
   docCount,
   taskDocuments,
   showAmountColumn = false,
+  permissionDomain = 'workflow_tasks',
   isApiSource,
   onUpdated,
   onTaskError,
@@ -81,7 +86,10 @@ export function WorkflowTaskInlineRow({
     onDocumentDeleted: onWorkflowTaskDocumentDeleted,
     onError: (message) => onTaskError?.(message),
   });
-  const { permissions, isReady } = useBuildCoreWorkflowTaskAccess();
+  const workflowAccess = useBuildCoreWorkflowTaskAccess();
+  const sectionAccess = useBuildCoreProjectSectionAccess();
+  const accessState = permissionDomain === 'payments' ? sectionAccess.payment : workflowAccess;
+  const { permissions, isReady } = accessState;
   const canView = isReady && permissions.canView;
   const canEdit = isReady && permissions.canEdit;
   const canDelete = isReady && permissions.canDelete;

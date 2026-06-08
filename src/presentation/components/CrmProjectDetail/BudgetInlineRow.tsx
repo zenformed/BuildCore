@@ -18,6 +18,7 @@ import {
   formatCostDateDisplay,
 } from '@/presentation/features/crmProjectDetail/budgetCostDate';
 import { useProjectDetailShell } from '@/presentation/features/crmProjectDetail/ProjectDetailShellContext';
+import { useBuildCoreProjectSectionAccess } from '@/presentation/providers/BuildCoreProjectSectionAccessProvider';
 import { useBudgetEntryDocumentActions } from '@/presentation/features/crmProjectDetail/useBudgetEntryDocumentActions';
 import { WorkflowDocumentFileIcon } from './WorkflowDocumentFileIcon';
 import { WorkflowInlineMenu } from './WorkflowInlineMenu';
@@ -62,6 +63,11 @@ export function BudgetInlineRow({
     onBudgetEntryDocumentUploaded,
     onBudgetEntryDocumentDeleted,
   } = useProjectDetailShell();
+  const { budget: budgetAccess } = useBuildCoreProjectSectionAccess();
+  const { permissions, isReady } = budgetAccess;
+  const canEdit = isReady && permissions.canEdit;
+  const canUpload = isReady && permissions.canUpload;
+  const canDelete = isReady && permissions.canDelete;
   const documentActions = useBudgetEntryDocumentActions({
     projectSlug,
     budgetEntryId: entry.id,
@@ -96,6 +102,7 @@ export function BudgetInlineRow({
 
   const commit = useCallback(
     async (patch: Partial<BudgetEntryDraft>) => {
+      if (!canEdit) return;
       setSaving(true);
       try {
         await onSave(entry.id, patch);
@@ -105,7 +112,7 @@ export function BudgetInlineRow({
         setSaving(false);
       }
     },
-    [entry.id, onSave, reportError]
+    [canEdit, entry.id, onSave, reportError]
   );
 
   const saveName = useCallback(async () => {
@@ -206,9 +213,10 @@ export function BudgetInlineRow({
           <button
             type="button"
             className={styles.inlineCellBtn}
-            disabled={saving}
+            disabled={saving || !canEdit}
             title={entry.itemName}
             onClick={() => {
+              if (!canEdit) return;
               setCategoryMenuOpen(false);
               setDocumentsMenuOpen(false);
               setNameDraft(entry.itemName);
@@ -227,9 +235,10 @@ export function BudgetInlineRow({
         <button
           type="button"
           className={styles.inlineCellBtn}
-          disabled={saving}
+          disabled={saving || !canEdit}
           aria-expanded={categoryMenuOpen}
           onClick={() => {
+            if (!canEdit) return;
             setDocumentsMenuOpen(false);
             setCategoryMenuOpen((open) => !open);
           }}
@@ -237,7 +246,7 @@ export function BudgetInlineRow({
           {formatBudgetCategory(entry.category)}
         </button>
         <WorkflowInlineMenu
-          open={categoryMenuOpen}
+          open={categoryMenuOpen && canEdit}
           onClose={() => setCategoryMenuOpen(false)}
           anchorRef={categoryRef}
         >
@@ -280,8 +289,9 @@ export function BudgetInlineRow({
           <button
             type="button"
             className={styles.inlineCellBtn}
-            disabled={saving}
+            disabled={saving || !canEdit}
             onClick={() => {
+              if (!canEdit) return;
               setCategoryMenuOpen(false);
               setDocumentsMenuOpen(false);
               setCostDraft(centsToUsdInput(entry.costCents));
@@ -315,8 +325,9 @@ export function BudgetInlineRow({
           <button
             type="button"
             className={styles.inlineCellBtn}
-            disabled={saving}
+            disabled={saving || !canEdit}
             onClick={() => {
+              if (!canEdit) return;
               setCategoryMenuOpen(false);
               setDocumentsMenuOpen(false);
               setBudgetDraft(centsToUsdInput(entry.budgetCents));
@@ -365,8 +376,9 @@ export function BudgetInlineRow({
           <button
             type="button"
             className={styles.inlineCellBtn}
-            disabled={saving}
+            disabled={saving || !canEdit}
             onClick={() => {
+              if (!canEdit) return;
               setCategoryMenuOpen(false);
               setDocumentsMenuOpen(false);
               setCostDateDraft(dateInputFromCostIncurredAt(entry.costIncurredAt));
@@ -410,18 +422,20 @@ export function BudgetInlineRow({
           onClose={() => setDocumentsMenuOpen(false)}
           anchorRef={documentsRef}
         >
-          <button
-            type="button"
-            className={`${styles.inlineMenuAction} ${styles.inlineMenuUploadAction}`}
-            disabled={saving || documentActions.uploading}
-            onClick={() => {
-              setDocumentsMenuOpen(false);
-              documentActions.openFilePicker();
-            }}
-          >
-            <span className={styles.inlineMenuUploadIcon} aria-hidden />
-            {wf.documentsUpload}
-          </button>
+          {canUpload ? (
+            <button
+              type="button"
+              className={`${styles.inlineMenuAction} ${styles.inlineMenuUploadAction}`}
+              disabled={saving || documentActions.uploading}
+              onClick={() => {
+                setDocumentsMenuOpen(false);
+                documentActions.openFilePicker();
+              }}
+            >
+              <span className={styles.inlineMenuUploadIcon} aria-hidden />
+              {wf.documentsUpload}
+            </button>
+          ) : null}
           {entryDocuments.map((doc) => (
             <div key={doc.id} className={styles.inlineMenuDocRow}>
               <WorkflowDocumentFileIcon fileName={doc.name} mimeType={doc.mimeType} compact />
@@ -441,22 +455,24 @@ export function BudgetInlineRow({
               >
                 <span className={styles.inlineMenuDownloadIcon} aria-hidden />
               </button>
-              <button
-                type="button"
-                className={styles.inlineMenuIconBtn}
-                disabled={saving || documentActions.uploading}
-                title={wf.documentDelete}
-                aria-label={`${wf.documentDelete} ${doc.name}`}
-                onClick={() => {
-                  setDocumentsMenuOpen(false);
-                  void documentActions.deleteDocument(doc.id);
-                }}
-              >
-                <span className={styles.inlineMenuDeleteIcon} aria-hidden />
-              </button>
+              {canDelete ? (
+                <button
+                  type="button"
+                  className={styles.inlineMenuIconBtn}
+                  disabled={saving || documentActions.uploading}
+                  title={wf.documentDelete}
+                  aria-label={`${wf.documentDelete} ${doc.name}`}
+                  onClick={() => {
+                    setDocumentsMenuOpen(false);
+                    void documentActions.deleteDocument(doc.id);
+                  }}
+                >
+                  <span className={styles.inlineMenuDeleteIcon} aria-hidden />
+                </button>
+              ) : null}
             </div>
           ))}
-          {!entry.documentsRequired ? (
+          {canEdit && !entry.documentsRequired ? (
             <button
               type="button"
               className={styles.inlineMenuAction}
@@ -466,7 +482,7 @@ export function BudgetInlineRow({
               {wf.documentsMarkRequired}
             </button>
           ) : null}
-          {entry.documentsRequired && entryDocuments.length === 0 ? (
+          {canEdit && entry.documentsRequired && entryDocuments.length === 0 ? (
             <button
               type="button"
               className={styles.inlineMenuAction}

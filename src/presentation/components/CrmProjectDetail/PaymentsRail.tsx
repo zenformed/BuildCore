@@ -6,7 +6,7 @@ import type { CrmProjectDetail, CrmWorkflowTask } from '@/domain/crm';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
 import { countDocumentsByTaskId } from '@/presentation/features/crmProjectDetail/workflowDocumentCounts';
 import { listPaymentMilestones } from '@/presentation/features/crmProjectDetail/workflowTaskGroups';
-import { useBuildCoreWorkflowTaskAccess } from '@/presentation/providers/BuildCoreWorkflowTaskAccessProvider';
+import { useBuildCoreProjectSectionAccess } from '@/presentation/providers/BuildCoreProjectSectionAccessProvider';
 import { PaymentMilestoneDraftRow } from './PaymentMilestoneDraftRow';
 import { DetailPanelHeader } from './DetailPanelHeader';
 import { DetailPanelHeaderButton } from './DetailPanelHeaderButton';
@@ -31,8 +31,10 @@ export function PaymentsRail({
   onRequestArchiveTask,
 }: PaymentsRailProps): ReactElement {
   const payments = content.projectDetail.payments;
+  const paymentPermissionsCopy = content.teams.paymentPermissions;
   const wf = content.projectDetail.workflow;
-  const { permissions, isLoading, isReady } = useBuildCoreWorkflowTaskAccess();
+  const { payment } = useBuildCoreProjectSectionAccess();
+  const { permissions, isLoading, isReady } = payment;
   const canView = isReady && permissions.canView;
   const canCreate = isReady && permissions.canCreate;
   const canDelete = isReady && permissions.canDelete;
@@ -58,7 +60,7 @@ export function PaymentsRail({
         ) : null}
       </DetailPanelHeader>
       {isLoading ? (
-        <p className={styles.subtitle}>{wf.permissionsLoading}</p>
+        <p className={styles.subtitle}>{paymentPermissionsCopy.loading}</p>
       ) : !canView ? (
         <p className={styles.subtitle}>{wf.noViewPermission}</p>
       ) : !showTable ? (
@@ -84,6 +86,7 @@ export function PaymentsRail({
               docCount={docCounts.get(task.id) ?? 0}
               taskDocuments={project.documents.filter((doc) => doc.workflowTaskId === task.id)}
               showAmountColumn
+              permissionDomain="payments"
               isApiSource={isApiSource}
               onUpdated={onTaskUpdated}
               onTaskError={onTaskError}

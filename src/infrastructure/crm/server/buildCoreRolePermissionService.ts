@@ -7,13 +7,13 @@ import type { OrganizationMemberRole } from '@zenformed/core/organization-settin
 import {
   BUILDCORE_PERMISSION_ROLE_KEYS,
   buildCoreEditablePermissionRoleKeys,
-  defaultBuildCoreRolePermissionFlags,
   type BuildCorePermissionDomain,
   type BuildCorePermissionRoleKey,
   type BuildCoreRolePermissionFlags,
   type BuildCoreRolePermissionRow,
   type BuildCoreRolePermissionsResponse,
 } from '@/domain/buildcore/rolePermissions';
+import { defaultBuildCoreRolePermissionFlagsForDomain } from '@/domain/buildcore/roleAccessPermissions';
 import { loadActiveOrganizationMemberRole } from './buildCoreWorkflowTaskVisibilityService';
 
 type DbPermissionRow = {
@@ -73,7 +73,7 @@ export async function loadBuildCoreRolePermissionRows(
   return BUILDCORE_PERMISSION_ROLE_KEYS.map((roleKey) =>
     byKey.has(roleKey)
       ? byKey.get(roleKey)!
-      : { roleKey, ...defaultBuildCoreRolePermissionFlags(roleKey) }
+      : { roleKey, ...defaultBuildCoreRolePermissionFlagsForDomain(domain, roleKey) }
   );
 }
 
@@ -87,7 +87,7 @@ export function buildDefaultBuildCoreRolePermissionsResponse(
     editableRoleKeys: buildCoreEditablePermissionRoleKeys(actorRole),
     rows: BUILDCORE_PERMISSION_ROLE_KEYS.map((roleKey) => ({
       roleKey,
-      ...defaultBuildCoreRolePermissionFlags(roleKey),
+      ...defaultBuildCoreRolePermissionFlagsForDomain(domain, roleKey),
     })),
   };
 }

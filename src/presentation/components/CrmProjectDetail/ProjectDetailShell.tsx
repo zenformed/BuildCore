@@ -17,6 +17,7 @@ import {
   type ProjectDetailShellContextValue,
 } from '@/presentation/features/crmProjectDetail/ProjectDetailShellContext';
 import { BuildCoreWorkflowTaskAccessProvider } from '@/presentation/providers/BuildCoreWorkflowTaskAccessProvider';
+import { BuildCoreProjectSectionAccessProvider } from '@/presentation/providers/BuildCoreProjectSectionAccessProvider';
 import { useCrmProjectDeleteConfirmation } from '@/presentation/features/crmProjects/useCrmProjectDeleteConfirmation';
 import { queueCrmProjectDeleteSuccessToast } from '@/presentation/features/crmProjects/crmProjectDeleteFeedback';
 import { useLoadProjectTemplate } from '@/presentation/features/crmProjectDetail/useLoadProjectTemplate';
@@ -206,7 +207,9 @@ export function ProjectDetailShell(props: ProjectDetailShellProps): ReactElement
 
   return (
     <BuildCoreWorkflowTaskAccessProvider>
-      <ProjectDetailShellBody {...props} isMemberRole={isMemberRole} />
+      <BuildCoreProjectSectionAccessProvider>
+        <ProjectDetailShellBody {...props} isMemberRole={isMemberRole} />
+      </BuildCoreProjectSectionAccessProvider>
     </BuildCoreWorkflowTaskAccessProvider>
   );
 }

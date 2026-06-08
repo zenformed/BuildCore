@@ -12,6 +12,7 @@ import {
 } from '@/presentation/features/crmProjectDetail/budgetFilterModel';
 import { useBudgetEntryActions } from '@/presentation/features/crmProjectDetail/useBudgetEntryActions';
 import { useProjectDetailShell } from '@/presentation/features/crmProjectDetail/ProjectDetailShellContext';
+import { useBuildCoreProjectSectionAccess } from '@/presentation/providers/BuildCoreProjectSectionAccessProvider';
 import { formatCentsAsUsd } from '@/presentation/features/crmProjects/crmProjectFormatters';
 import { BudgetDraftRow } from './BudgetDraftRow';
 import { BudgetInlineRow } from './BudgetInlineRow';
@@ -30,6 +31,10 @@ export function BudgetTable({ onError }: BudgetTableProps): ReactElement {
     handleBudgetEntryCreated,
     handleBudgetEntryDeleted,
   } = useProjectDetailShell();
+  const { budget: budgetAccess } = useBuildCoreProjectSectionAccess();
+  const { permissions, isReady } = budgetAccess;
+  const canCreate = isReady && permissions.canCreate;
+  const canDelete = isReady && permissions.canDelete;
   const b = content.projectDetail.budget;
   const [filter, setFilter] = useState<BudgetTableFilter>('all');
   const [draftOpen, setDraftOpen] = useState(false);
@@ -74,12 +79,14 @@ export function BudgetTable({ onError }: BudgetTableProps): ReactElement {
       aria-labelledby="budget-table-heading"
     >
       <DetailPanelHeader title={b.tableTitle} titleId="budget-table-heading">
-        <DetailPanelHeaderButton
-          variant="add"
-          disabled={draftOpen}
-          title={b.addItem}
-          onClick={() => setDraftOpen(true)}
-        />
+        {canCreate ? (
+          <DetailPanelHeaderButton
+            variant="add"
+            disabled={draftOpen}
+            title={b.addItem}
+            onClick={() => setDraftOpen(true)}
+          />
+        ) : null}
       </DetailPanelHeader>
 
       <div className={styles.docFilterRow} role="tablist" aria-label={b.filterAriaLabel}>
@@ -122,7 +129,7 @@ export function BudgetTable({ onError }: BudgetTableProps): ReactElement {
               entryDocuments={project.documents.filter((doc) => doc.budgetEntryId === entry.id)}
               onSave={updateEntry}
               onError={onError}
-              onRequestDelete={() => setDeleteConfirmEntry(entry)}
+              onRequestDelete={canDelete ? () => setDeleteConfirmEntry(entry) : undefined}
             />
           ))}
           {draftOpen ? (

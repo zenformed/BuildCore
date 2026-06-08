@@ -752,6 +752,12 @@
   box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
 }
 
+:global([data-theme='dark']) .summaryAddressInput:focus,
+:global([data-theme='dark']) .summaryAddressSelect:focus {
+  border-color: #60a5fa;
+  box-shadow: 0 0 0 2px rgba(96, 165, 250, 0.25);
+}
+
 .summaryAddressRow {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(6.5rem, 0.75fr);
@@ -818,8 +824,8 @@
 
 .summaryInlineInputOverlay,
 .summaryInlineSelectOverlay {
-  outline: 1px solid var(--theme-border-main, var(--color-border, #e2e8f0));
-  outline-offset: -1px;
+  border: 1px solid var(--theme-border-main, var(--color-border, #e2e8f0));
+  outline: none;
   background: var(--theme-surface-main, var(--color-surface, #fff));
   color: var(--color-text, #0f172a);
   cursor: text;
@@ -838,8 +844,8 @@
 
 :global([data-theme='dark']) .summaryInlineInputOverlay,
 :global([data-theme='dark']) .summaryInlineSelectOverlay {
-  background: #1e2030;
-  outline-color: #3d3e4a;
+  background: #1d2029;
+  border-color: #3d3e4a;
   color: #f1f5f9;
 }
 
@@ -1239,16 +1245,16 @@
 }
 
 .headerTradeSelect {
-  outline: 1px solid var(--theme-border-main, var(--color-border, #e2e8f0));
-  outline-offset: -1px;
+  border: 1px solid var(--theme-border-main, var(--color-border, #e2e8f0));
+  outline: none;
   background: var(--theme-surface-main, var(--color-surface, #fff));
   color: var(--color-text, #0f172a);
   cursor: pointer;
 }
 
 :global([data-theme='dark']) .headerTradeSelect {
-  background: #1e2030;
-  outline-color: #3d3e4a;
+  background: #1d2029;
+  border-color: #3d3e4a;
   color: #f1f5f9;
 }
 
@@ -1371,15 +1377,17 @@
 .notesTextareaOverlay {
   resize: none;
   overflow: hidden;
-  outline: 1px solid var(--theme-border-main, var(--color-border, #cbd5e1));
-  outline-offset: -1px;
-  background: var(--color-muted, #f1f5f9);
+  border: 1px solid var(--theme-border-main, var(--color-border, #cbd5e1));
+  outline: none;
+  background: var(--theme-surface-main, var(--color-surface, #fff));
+  color: var(--color-text, #0f172a);
   cursor: text;
 }
 
 :global([data-theme='dark']) .notesTextareaOverlay {
-  background: rgba(255, 255, 255, 0.06);
-  outline-color: #3d3e4a;
+  background: #1d2029;
+  border-color: #3d3e4a;
+  color: #f1f5f9;
 }
 
 .notesInlineSavingHint {
@@ -2092,15 +2100,59 @@
   font-size: inherit;
   font-weight: 500;
   color: inherit;
-  background: var(--color-surface, #fff);
-  border: 1px solid var(--theme-border-main, #cbd5e1);
+  background: var(--theme-surface-main, var(--color-surface, #fff));
+  border: 1px solid var(--theme-border-main, var(--color-border, #cbd5e1));
   border-radius: 0.25rem;
+  outline: none;
+  box-sizing: border-box;
 }
 
 :global([data-theme='dark']) .inlineFieldInput {
-  background: #1a1d26;
+  background: #1d2029;
   border-color: #3d3e4a;
   color: #f1f5f9;
+}
+
+:global([data-theme='dark']) .inlineFieldInput[type='date'] {
+  color-scheme: dark;
+}
+
+/* Inline edit fields — shared focus ring (matches CreateCrmProjectDrawer form controls) */
+.inlineFieldInput:focus,
+.inlineFieldInput:focus-visible,
+.paymentDraftSelect:focus,
+.paymentDraftSelect:focus-visible,
+.paymentDraftDateInput:focus,
+.paymentDraftDateInput:focus-visible,
+.summaryInlineInputOverlay:focus,
+.summaryInlineInputOverlay:focus-visible,
+.summaryInlineSelectOverlay:focus,
+.summaryInlineSelectOverlay:focus-visible,
+.notesTextareaOverlay:focus,
+.notesTextareaOverlay:focus-visible,
+.headerTradeSelect:focus,
+.headerTradeSelect:focus-visible {
+  outline: none;
+  border-color: var(--color-primary, #2563eb);
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
+}
+
+:global([data-theme='dark']) .inlineFieldInput:focus,
+:global([data-theme='dark']) .inlineFieldInput:focus-visible,
+:global([data-theme='dark']) .paymentDraftSelect:focus,
+:global([data-theme='dark']) .paymentDraftSelect:focus-visible,
+:global([data-theme='dark']) .paymentDraftDateInput:focus,
+:global([data-theme='dark']) .paymentDraftDateInput:focus-visible,
+:global([data-theme='dark']) .summaryInlineInputOverlay:focus,
+:global([data-theme='dark']) .summaryInlineInputOverlay:focus-visible,
+:global([data-theme='dark']) .summaryInlineSelectOverlay:focus,
+:global([data-theme='dark']) .summaryInlineSelectOverlay:focus-visible,
+:global([data-theme='dark']) .notesTextareaOverlay:focus,
+:global([data-theme='dark']) .notesTextareaOverlay:focus-visible,
+:global([data-theme='dark']) .headerTradeSelect:focus,
+:global([data-theme='dark']) .headerTradeSelect:focus-visible {
+  border-color: #60a5fa;
+  box-shadow: 0 0 0 2px rgba(96, 165, 250, 0.25);
 }
 
 .inlineDueCell {
@@ -2484,6 +2536,33 @@
   min-width: 0;
 }
 
+.detailWorkflowSection {
+  flex-shrink: 0;
+  min-width: 0;
+}
+
+.detailWorkflowSection .workflowPanel {
+  width: 100%;
+}
+
+.detailFinancialsRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 0.625rem;
+  align-items: stretch;
+  flex-shrink: 0;
+  min-width: 0;
+}
+
+.detailFinancialsRowSingle {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.625rem;
+  align-items: stretch;
+  flex-shrink: 0;
+  min-width: 0;
+}
+
 .detailMiddleMember {
   display: flex;
   flex: 1;
@@ -2498,7 +2577,8 @@
 }
 
 @media (max-width: 1100px) {
-  .detailMiddle {
+  .detailMiddle,
+  .detailFinancialsRow {
     grid-template-columns: 1fr;
     align-items: start;
   }
@@ -2580,15 +2660,19 @@
   font: inherit;
   font-size: 0.75rem;
   color: inherit;
-  background: var(--color-surface, #fff);
+  background: var(--theme-surface-main, var(--color-surface, #fff));
   border: 1px solid var(--theme-border-main, var(--color-border, #e2e8f0));
   border-radius: 0.25rem;
+  outline: none;
+  box-sizing: border-box;
 }
 
 :global([data-theme='dark']) .paymentDraftSelect,
 :global([data-theme='dark']) .paymentDraftDateInput {
-  background: #1a1d26;
+  background: #1d2029;
   border-color: #3d3e4a;
+  color: #f1f5f9;
+  color-scheme: dark;
 }
 
 .paymentDraftActions {

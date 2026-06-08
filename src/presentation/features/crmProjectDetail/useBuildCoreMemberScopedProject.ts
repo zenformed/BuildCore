@@ -5,9 +5,11 @@ import type { CrmProjectDetail } from '@/domain/crm';
 import {
   applyBuildCoreMemberProjectDetailView,
   DEFAULT_BUILDCORE_WORKFLOW_TASK_ONLY_ASSIGNED_USER_CAN_VIEW,
+  filterBudgetEntriesForBuildCoreMember,
   filterWorkflowTasksForBuildCoreMember,
 } from '@/domain/buildcore/workflowTaskMemberVisibility';
 import { useBuildCoreWorkflowTaskAccess } from '@/presentation/providers/BuildCoreWorkflowTaskAccessProvider';
+import { useBuildCoreProjectSectionAccess } from '@/presentation/providers/BuildCoreProjectSectionAccessProvider';
 import { useAuth } from '@/presentation/hooks/useAuth';
 import { fetchBuildCoreWorkflowTaskMemberVisibilityBff } from '@/infrastructure/coreApi/buildCoreWorkflowTaskMemberVisibilityBff';
 import { useBuildCoreDashboardContext } from '@/presentation/providers/BuildCoreDashboardProvider';
@@ -20,6 +22,7 @@ export function useBuildCoreMemberScopedProject(
   const { user } = useAuth();
   const dash = useBuildCoreDashboardContext();
   const { access, isReady } = useBuildCoreWorkflowTaskAccess();
+  const { payment: paymentAccess, budget: budgetAccess } = useBuildCoreProjectSectionAccess();
   const [fallbackMemberIds, setFallbackMemberIds] = useState<readonly string[]>([]);
   const [fallbackOnlyAssigned, setFallbackOnlyAssigned] = useState(
     DEFAULT_BUILDCORE_WORKFLOW_TASK_ONLY_ASSIGNED_USER_CAN_VIEW
@@ -76,13 +79,23 @@ export function useBuildCoreMemberScopedProject(
       return project;
     }
 
-    const visibleTasks = filterWorkflowTasksForBuildCoreMember(project.workflowTasks, {
+    const scopeInput = {
       viewerUserId,
       onlyAssignedUserCanView,
       memberRoleUserIds,
-    });
+      includePaymentsAssignedToViewer:
+        paymentAccess.isReady && paymentAccess.permissions.canView,
+      includeBudgetForViewer:
+        budgetAccess.isReady && budgetAccess.permissions.canView,
+    };
 
-    return applyBuildCoreMemberProjectDetailView(project, visibleTasks);
+    const visibleTasks = filterWorkflowTasksForBuildCoreMember(project.workflowTasks, scopeInput);
+    const visibleBudgetEntries = filterBudgetEntriesForBuildCoreMember(
+      project.budget.entries,
+      scopeInput
+    );
+
+    return applyBuildCoreMemberProjectDetailView(project, visibleTasks, visibleBudgetEntries);
   }, [
     access,
     fallbackLoaded,
@@ -91,6 +104,10 @@ export function useBuildCoreMemberScopedProject(
     isApiSource,
     isMemberRole,
     needsFallback,
+    paymentAccess.isReady,
+    paymentAccess.permissions.canView,
+    budgetAccess.isReady,
+    budgetAccess.permissions.canView,
     project,
     user?.id,
   ]);

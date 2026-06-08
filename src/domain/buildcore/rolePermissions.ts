@@ -123,3 +123,12 @@ export {
   type WorkflowTaskUpdatePatchLike,
   type WorkflowTaskUpdatePermissionRequirements,
 } from './workflowTaskPermissions';
+
+export {
+  defaultBuildCoreRolePermissionFlagsForDomain,
+  fullAdminBuildCoreRoleAccess,
+  fullOwnerBuildCoreRoleAccess,
+  pickBuildCoreRolePermissionRowForDomain,
+  resolveBuildCoreRoleAccess,
+  type BuildCoreRoleAccess,
+} from './roleAccessPermissions';
