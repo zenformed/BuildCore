@@ -6,10 +6,12 @@ import { BuildCoreRolePermissionsSection } from './BuildCoreRolePermissionsSecti
 
 export type BuildCorePaymentPermissionsSectionProps = {
   readonly enabled: boolean;
+  readonly layout?: 'accordion' | 'tabPanel';
 };
 
 export function BuildCorePaymentPermissionsSection({
   enabled,
+  layout = 'accordion',
 }: BuildCorePaymentPermissionsSectionProps): ReactElement {
   const copy = content.teams.paymentPermissions;
   return (
@@ -18,6 +20,7 @@ export function BuildCorePaymentPermissionsSection({
       enabled={enabled}
       headingId="teams-payment-permissions-heading"
       copy={copy}
+      layout={layout}
     />
   );
 }

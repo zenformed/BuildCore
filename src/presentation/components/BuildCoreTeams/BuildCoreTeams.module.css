@@ -1,3 +1,7 @@
+.teamsPageShell {
+  overflow: hidden;
+}
+
 .pageBody {
   display: flex;
   flex-direction: column;
@@ -5,28 +9,62 @@
   flex: 1;
   min-height: 0;
   min-width: 0;
+  overflow: hidden;
 }
 
-.teamsMainColumns {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  gap: 0.625rem;
+.teamsFolderTabs {
+  composes: folderTabsRoot from '../CrmProjectDetail/ProjectDetail.module.css';
   flex: 1;
   min-height: 0;
-  align-items: stretch;
+  align-self: stretch;
+  width: 100%;
 }
 
-.membersColumn,
-.permissionsColumn {
+.teamsFolderTabPanel {
+  composes: folderTabPanel from '../CrmProjectDetail/ProjectDetail.module.css';
+  flex: 1;
   min-height: 0;
-  min-width: 0;
+}
+
+.teamsFolderTabPanelInner {
+  composes: folderTabPanelInner from '../CrmProjectDetail/ProjectDetail.module.css';
+  flex: 1;
+  min-height: 0;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
 }
 
-.permissionsColumn {
-  gap: 0.625rem;
+.teamsFolderTabPanelInner .membersTabPanel,
+.teamsFolderTabPanelInner .permissionsTabPanel {
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  background: transparent;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 0.75rem 0.875rem;
+}
+
+.teamsFolderTabPanelInner .permissionsTabPanelBody {
+  flex: 1;
+  min-height: 0;
   overflow-y: auto;
+}
+
+.permissionsTabPanelSrOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 
 .architectureNote {
@@ -396,12 +434,7 @@
 }
 
 @media (max-width: 900px) {
-  .sectionGrid,
-  .teamsMainColumns {
+  .sectionGrid {
     grid-template-columns: 1fr;
-  }
-
-  .permissionsColumn {
-    overflow-y: visible;
   }
 }

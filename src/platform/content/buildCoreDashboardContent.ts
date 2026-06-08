@@ -168,6 +168,12 @@ export const buildCoreDashboardContent = {
     },
     permissionsExpand: 'Expand section',
     permissionsCollapse: 'Collapse section',
+    folderTabs: {
+      members: 'Members',
+      taskPermissions: 'Task Permissions',
+      paymentPermissions: 'Payment Permissions',
+      budgetPermissions: 'Budget Permissions',
+    },
     workflowTaskPermissions: {
       title: 'Workflow Task Permissions',
       hint: 'Control what each BuildCore role can do with workflow tasks.',
@@ -257,7 +263,7 @@ export const buildCoreDashboardContent = {
         priority: 'Priority',
         stage: 'Stage',
         notes: 'Notes',
-        dealValue: 'Contract value',
+        dealValue: 'Value',
         assigned: 'Assigned',
         actions: 'Actions',
       },

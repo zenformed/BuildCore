@@ -31,6 +31,50 @@ type MenuPosition = {
   minWidth: number;
 };
 
+const MENU_GAP_PX = 4;
+const VIEWPORT_PADDING_PX = 8;
+
+function computeMenuPosition(
+  anchor: HTMLElement,
+  menu: HTMLElement | null,
+  align: 'start' | 'end',
+  sizeToContent: boolean
+): MenuPosition {
+  const rect = anchor.getBoundingClientRect();
+  const minWidth = sizeToContent ? 0 : Math.max(rect.width, 136);
+  const menuHeight = menu?.offsetHeight ?? 0;
+  const menuWidth = menu?.offsetWidth ?? minWidth;
+
+  let top = rect.bottom + MENU_GAP_PX;
+  const spaceBelow = window.innerHeight - rect.bottom - MENU_GAP_PX;
+  const spaceAbove = rect.top - MENU_GAP_PX;
+
+  if (menuHeight > 0) {
+    if (menuHeight > spaceBelow && spaceAbove >= spaceBelow) {
+      top = rect.top - menuHeight - MENU_GAP_PX;
+    }
+
+    const maxTop = window.innerHeight - menuHeight - VIEWPORT_PADDING_PX;
+    top = Math.max(VIEWPORT_PADDING_PX, Math.min(top, maxTop));
+  } else if (spaceBelow < 160 && spaceAbove > spaceBelow) {
+    top = Math.max(VIEWPORT_PADDING_PX, rect.top - 160 - MENU_GAP_PX);
+  }
+
+  let left = align === 'end' ? rect.right : rect.left;
+
+  if (menuWidth > 0) {
+    if (align === 'end') {
+      if (left - menuWidth < VIEWPORT_PADDING_PX) {
+        left = Math.min(rect.right, window.innerWidth - VIEWPORT_PADDING_PX);
+      }
+    } else if (left + menuWidth > window.innerWidth - VIEWPORT_PADDING_PX) {
+      left = Math.max(VIEWPORT_PADDING_PX, window.innerWidth - menuWidth - VIEWPORT_PADDING_PX);
+    }
+  }
+
+  return { top, left, minWidth };
+}
+
 export type WorkflowInlineMenuProps = {
   open: boolean;
   onClose: () => void;
@@ -58,13 +102,8 @@ export function WorkflowInlineMenu({
   const updatePosition = useCallback(() => {
     const anchor = anchorRef.current;
     if (!anchor) return;
-    const rect = anchor.getBoundingClientRect();
-    setPosition({
-      top: rect.bottom + 4,
-      left: align === 'end' ? rect.right : rect.left,
-      minWidth: Math.max(rect.width, 136),
-    });
-  }, [align, anchorRef]);
+    setPosition(computeMenuPosition(anchor, menuRef.current, align, sizeToContent));
+  }, [align, anchorRef, sizeToContent]);
 
   useLayoutEffect(() => {
     if (!open) {
@@ -72,7 +111,9 @@ export function WorkflowInlineMenu({
       return;
     }
     updatePosition();
-  }, [open, updatePosition]);
+    const frame = requestAnimationFrame(() => updatePosition());
+    return () => cancelAnimationFrame(frame);
+  }, [open, updatePosition, children]);
 
   useEffect(() => {
     if (!open) return;

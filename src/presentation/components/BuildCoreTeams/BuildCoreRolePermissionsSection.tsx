@@ -23,8 +23,59 @@ export type BuildCoreRolePermissionsSectionProps = {
   readonly headingId: string;
   readonly copy: BuildCoreRolePermissionsSectionCopy;
   readonly defaultExpanded?: boolean;
+  readonly layout?: 'accordion' | 'tabPanel';
   readonly footer?: ReactNode;
 };
+
+function PermissionsSectionBody({
+  copy,
+  permissions,
+  footer,
+}: {
+  copy: BuildCoreRolePermissionsSectionCopy;
+  permissions: ReturnType<typeof useBuildCoreRolePermissions>;
+  footer?: ReactNode;
+}): ReactElement {
+  return (
+    <>
+      <p className={projectStyles.cardHelper}>{copy.hint}</p>
+
+      {permissions.isLoading ? (
+        <p className={styles.loading}>{copy.loading}</p>
+      ) : permissions.loadError ? (
+        <p className={styles.error}>{permissions.loadError}</p>
+      ) : permissions.data == null ? (
+        <p className={styles.empty}>{copy.empty}</p>
+      ) : (
+        <>
+          <BuildCorePermissionMatrix
+            columns={BUILDCORE_PERMISSION_COLUMNS}
+            rows={permissions.data.rows}
+            canEditRow={permissions.canEditRow}
+            onToggle={(roleKey, columnId, nextValue) => {
+              void permissions.togglePermission(roleKey, columnId, nextValue);
+            }}
+            busyCell={permissions.busyCell}
+            roleColumnLabel={copy.roleColumn}
+          />
+          {permissions.statusMessage ? (
+            <p
+              className={`${styles.permissionStatusLine} ${
+                permissions.statusKind === 'success'
+                  ? styles.permissionStatusSuccess
+                  : styles.permissionStatusError
+              }`}
+              role="status"
+            >
+              {permissions.statusMessage}
+            </p>
+          ) : null}
+          {footer}
+        </>
+      )}
+    </>
+  );
+}
 
 export function BuildCoreRolePermissionsSection({
   domain,
@@ -32,12 +83,29 @@ export function BuildCoreRolePermissionsSection({
   headingId,
   copy,
   defaultExpanded = true,
+  layout = 'accordion',
   footer,
 }: BuildCoreRolePermissionsSectionProps): ReactElement {
   const teamsCopy = content.teams;
   const [expanded, setExpanded] = useState(defaultExpanded);
   const panelId = useId();
   const permissions = useBuildCoreRolePermissions(domain, enabled);
+
+  if (layout === 'tabPanel') {
+    return (
+      <section
+        className={`${projectStyles.card} ${styles.permissionsTabPanel}`}
+        aria-labelledby={headingId}
+      >
+        <h2 id={headingId} className={styles.permissionsTabPanelSrOnly}>
+          {copy.title}
+        </h2>
+        <div className={styles.permissionsTabPanelBody}>
+          <PermissionsSectionBody copy={copy} permissions={permissions} footer={footer} />
+        </div>
+      </section>
+    );
+  }
 
   const sectionClass = [
     projectStyles.card,
@@ -76,41 +144,7 @@ export function BuildCoreRolePermissionsSection({
 
       {expanded ? (
         <div id={panelId} className={styles.permissionsSectionBody}>
-          <p className={projectStyles.cardHelper}>{copy.hint}</p>
-
-          {permissions.isLoading ? (
-            <p className={styles.loading}>{copy.loading}</p>
-          ) : permissions.loadError ? (
-            <p className={styles.error}>{permissions.loadError}</p>
-          ) : permissions.data == null ? (
-            <p className={styles.empty}>{copy.empty}</p>
-          ) : (
-            <>
-              <BuildCorePermissionMatrix
-                columns={BUILDCORE_PERMISSION_COLUMNS}
-                rows={permissions.data.rows}
-                canEditRow={permissions.canEditRow}
-                onToggle={(roleKey, columnId, nextValue) => {
-                  void permissions.togglePermission(roleKey, columnId, nextValue);
-                }}
-                busyCell={permissions.busyCell}
-                roleColumnLabel={copy.roleColumn}
-              />
-              {permissions.statusMessage ? (
-                <p
-                  className={`${styles.permissionStatusLine} ${
-                    permissions.statusKind === 'success'
-                      ? styles.permissionStatusSuccess
-                      : styles.permissionStatusError
-                  }`}
-                  role="status"
-                >
-                  {permissions.statusMessage}
-                </p>
-              ) : null}
-              {footer}
-            </>
-          )}
+          <PermissionsSectionBody copy={copy} permissions={permissions} footer={footer} />
         </div>
       ) : null}
     </section>

@@ -31,11 +31,14 @@ export function ProjectSummaryAddress({ address, label }: ProjectSummaryAddressP
             target="_blank"
             rel="noopener noreferrer"
             className={`${styles.summaryText} ${styles.summaryLink}`}
+            title={formattedAddress}
           >
             {formattedAddress}
           </a>
         ) : (
-          <span className={styles.summaryText}>{displayText}</span>
+          <span className={styles.summaryText} title={formattedAddress ?? undefined}>
+            {displayText}
+          </span>
         )}
       </div>
       <span className={styles.summaryLabel}>{label}</span>

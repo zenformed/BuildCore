@@ -54,15 +54,15 @@ export function ProjectDetailFolderTabs(): ReactElement {
       { id: 'workflow', label: detail.actions.workflowTasks },
     ];
 
-    if (budget.isReady && budget.permissions.canView) {
-      items.push({ id: 'budget', label: detail.budget.tableTitle });
-    }
     if (payment.isReady && payment.permissions.canView) {
       items.push({ id: 'payments', label: detail.payments.title });
     }
+    if (budget.isReady && budget.permissions.canView) {
+      items.push({ id: 'budget', label: detail.budget.tableTitle });
+    }
     if (!isMemberRole) {
-      items.push({ id: 'documents', label: detail.sections.documents });
       items.push({ id: 'financials', label: 'Reports' });
+      items.push({ id: 'documents', label: detail.sections.documents });
       items.push({ id: 'accountability', label: detail.actions.accountability });
     }
 

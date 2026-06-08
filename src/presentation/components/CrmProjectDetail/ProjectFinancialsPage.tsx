@@ -3,7 +3,6 @@
 import type { ReactElement } from 'react';
 import { useProjectDetailShell } from '@/presentation/features/crmProjectDetail/ProjectDetailShellContext';
 import { useProjectProfitAndLossPdfExport } from '@/presentation/features/crmProjectDetail/useProjectProfitAndLossPdfExport';
-import { BudgetTable } from './BudgetTable';
 import { ProjectCostSummary } from './ProjectCostSummary';
 import styles from './ProjectDetail.module.css';
 
@@ -15,8 +14,7 @@ export function ProjectFinancialsContent(): ReactElement {
   );
 
   return (
-    <div className={styles.detailMiddle}>
-      <BudgetTable onError={(message) => setToast({ kind: 'error', message })} />
+    <div className={styles.detailFinancialsRowSingle}>
       <ProjectCostSummary
         budget={project.budget}
         generatingPl={exportingPl}

@@ -276,6 +276,7 @@ export function ProjectSummaryStrip({
 
   return (
     <section className={styles.summaryStrip} aria-label="Project summary">
+      <div className={styles.summaryStripScroll}>
       <SummaryInlineText
         fieldKey="name"
         label={fields.customer}
@@ -369,6 +370,7 @@ export function ProjectSummaryStrip({
           </button>
         </div>
       ) : null}
+      </div>
     </section>
   );
 }
