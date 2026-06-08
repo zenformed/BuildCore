@@ -1,7 +1,7 @@
 'use client';
 
 import type { ReactElement, ReactNode } from 'react';
-import type { CrmProjectDetail } from '@/domain/crm';
+import type { CrmProjectDetail, CrmProjectSummary } from '@/domain/crm';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
 import type { ProjectDetailPageContext } from '@/presentation/features/crmProjectDetail/projectDetailPageContext';
 import type { SummaryEditableField } from '@/presentation/features/crmProjectDetail/projectDetailFormModel';
@@ -22,6 +22,8 @@ export type ProjectDetailContextBlockProps = {
   isMemberRole?: boolean;
   onBack: () => void;
   onOpenProject?: () => void;
+  onOpenParentProject?: () => void;
+  parentProject?: CrmProjectSummary | null;
   actions?: ReactNode;
   savingField: SummaryEditableField | null;
   patchField: (field: SummaryEditableField, value: string) => Promise<boolean>;
@@ -35,6 +37,8 @@ export function ProjectDetailContextBlock({
   isMemberRole = false,
   onBack,
   onOpenProject,
+  onOpenParentProject,
+  parentProject = null,
   actions,
   savingField,
   patchField,
@@ -46,9 +50,11 @@ export function ProjectDetailContextBlock({
     <div className={styles.detailTop}>
       <ProjectDetailHeader
         project={project.summary}
+        parentProject={parentProject}
         pageContext={pageContext}
         onBack={onBack}
         onOpenProject={onOpenProject}
+        onOpenParentProject={onOpenParentProject}
         actions={actions}
         assigneeControl={
           isMemberRole ? null : (

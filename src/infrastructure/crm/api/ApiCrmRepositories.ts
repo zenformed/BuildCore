@@ -90,10 +90,22 @@ type ProjectsListResponse = {
 
 export class ApiCrmProjectsRepository implements ICrmProjectsRepository {
 
-  listSummaries(): Promise<readonly CrmProjectSummary[]> {
+  listSummaries(options?: { rootsOnly?: boolean }): Promise<readonly CrmProjectSummary[]> {
+    const rootsOnly = options?.rootsOnly !== false;
+    const query = rootsOnly ? '' : '?includeSubprojects=1';
+    return crmApiGetJson<ProjectsListResponse>(`/api/crm/projects${query}`).then(
+      (body) => body.projects
+    );
+  }
 
-    return crmApiGetJson<ProjectsListResponse>('/api/crm/projects').then((body) => body.projects);
-
+  listChildSummaries(input: {
+    parentProjectId: string;
+    parentSlug: string;
+  }): Promise<readonly CrmProjectSummary[]> {
+    void input.parentProjectId;
+    return crmApiGetJson<{ projects: CrmProjectSummary[] }>(
+      `/api/crm/projects/${encodeURIComponent(input.parentSlug.trim())}/subprojects`
+    ).then((body) => body.projects);
   }
 
 

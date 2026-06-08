@@ -4147,3 +4147,77 @@
     font-size: 1.125rem;
   }
 }
+
+.subprojectsSection {
+  margin-top: 1rem;
+}
+
+.subprojectsSectionHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.subprojectsSectionHeaderBtn {
+  display: inline-flex;
+  align-items: center;
+  border: 0;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+  color: var(--color-text);
+  text-align: left;
+}
+
+.subprojectsSectionHeaderBtn:focus {
+  outline: none;
+}
+
+.subprojectsSectionHeaderBtn:focus-visible {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+  border-radius: 0.25rem;
+}
+
+:global([data-theme='dark']) .subprojectsSectionHeaderBtn:focus-visible {
+  outline-color: #60a5fa;
+}
+
+.subprojectsSectionHeaderBtn .stageGroupName {
+  color: inherit;
+}
+
+.subprojectsSectionHeaderBtn .stageGroupChevron,
+.subprojectsSectionHeaderBtn .stageGroupChevron_expanded {
+  border-color: var(--color-text-muted);
+}
+
+.subprojectsSectionToolbar {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-left: auto;
+}
+
+.subprojectsSearch {
+  min-width: 12rem;
+  max-width: 18rem;
+  width: 100%;
+  padding: 0.4375rem 0.75rem;
+  border: 1px solid var(--border-subtle, #d8dee8);
+  border-radius: 0.5rem;
+  background: var(--surface-elevated, #fff);
+  color: inherit;
+  font: inherit;
+}
+
+.subprojectsSectionBody {
+  margin-top: 0.875rem;
+}
+
+.subprojectsSection_collapsed .subprojectsSectionBody,
+.subprojectsSection_collapsed .subprojectsSectionToolbar {
+  display: none;
+}

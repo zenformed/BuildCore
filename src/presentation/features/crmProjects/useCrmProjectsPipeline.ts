@@ -27,9 +27,12 @@ export function useCrmProjectsPipeline(
   removeProject: (projectId: string) => void;
 } {
   const isApiSource = getCrmDataSource() === 'api';
+  const includeSubprojects = searchQuery.trim().length > 0;
   const [reloadKey, setReloadKey] = useState(0);
   const [allSummaries, setAllSummaries] = useState<readonly CrmProjectSummary[] | null>(() =>
-    isApiSource ? null : listCrmProjectSummariesSync(crmRepositories)
+    isApiSource
+      ? null
+      : listCrmProjectSummariesSync(crmRepositories, { rootsOnly: !includeSubprojects })
   );
 
   const refetch = useCallback(() => {
@@ -37,20 +40,24 @@ export function useCrmProjectsPipeline(
       setReloadKey((key) => key + 1);
       return;
     }
-    setAllSummaries(listCrmProjectSummariesSync(crmRepositories));
-  }, [isApiSource]);
+    setAllSummaries(
+      listCrmProjectSummariesSync(crmRepositories, { rootsOnly: !includeSubprojects })
+    );
+  }, [includeSubprojects, isApiSource]);
 
   useEffect(() => {
     if (!isApiSource) return;
 
     let cancelled = false;
-    void listCrmProjectSummaries(crmRepositories).then((data) => {
-      if (!cancelled) setAllSummaries(data);
-    });
+    void listCrmProjectSummaries(crmRepositories, { rootsOnly: !includeSubprojects }).then(
+      (data) => {
+        if (!cancelled) setAllSummaries(data);
+      }
+    );
     return () => {
       cancelled = true;
     };
-  }, [isApiSource, reloadKey]);
+  }, [includeSubprojects, isApiSource, reloadKey]);
 
   const summaries = allSummaries ?? [];
   const isLoading = allSummaries === null;

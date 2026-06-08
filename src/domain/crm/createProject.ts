@@ -22,6 +22,8 @@ export type CreateCrmProjectInput = {
   readonly postalCode: string | null;
   /** Applied after project insert when creating from a template-backed draft. */
   readonly initialTemplateBlueprints?: BuildCoreProjectTemplateBlueprints | null;
+  /** When set, creates a subproject under the given parent project id. */
+  readonly parentProjectId?: string | null;
 };
 
 export type CreateCrmProjectResult = {

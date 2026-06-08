@@ -16,6 +16,10 @@ export {
   listCrmProjectSummariesSync,
 } from './listCrmProjectSummaries';
 export {
+  listCrmProjectChildSummaries,
+  listCrmProjectChildSummariesSync,
+} from './listCrmProjectChildSummaries';
+export {
   listCrmProjectsForReporting,
   listCrmProjectsForReportingSync,
 } from './listCrmProjectsForReporting';

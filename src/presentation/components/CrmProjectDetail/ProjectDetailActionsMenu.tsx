@@ -5,12 +5,12 @@ import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import type { CrmProjectSummary } from '@/domain/crm';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
-import { buildCoreDashboardNavigation as nav } from '@/platform/navigation/buildCoreDashboardNavigation';
+import type { ProjectDetailRoutes } from '@/platform/navigation/projectDetailRoutes';
 import { WorkflowInlineMenu } from './WorkflowInlineMenu';
 import styles from './ProjectDetail.module.css';
 
 export type ProjectDetailActionsMenuProps = {
-  projectSlug: string;
+  routes: ProjectDetailRoutes;
   projectSummary: CrmProjectSummary;
   canDelete: boolean;
   canSaveTemplate: boolean;
@@ -21,7 +21,7 @@ export type ProjectDetailActionsMenuProps = {
 };
 
 export function ProjectDetailActionsMenu({
-  projectSlug,
+  routes,
   projectSummary,
   canDelete,
   canSaveTemplate,
@@ -94,7 +94,7 @@ export function ProjectDetailActionsMenu({
           role="menuitem"
           className={`${styles.inlineMenuAction} ${styles.actionsMenuItem}`}
           disabled={menuDisabled}
-          onClick={() => closeAndNavigate(nav.routes.projectWorkflowTasks(projectSlug))}
+          onClick={() => closeAndNavigate(routes.workflowTasks)}
         >
           <span className={`${styles.actionsMenuIcon} ${styles.actionsMenuWorkflowIcon}`} aria-hidden />
           {detail.actions.workflowTasks}
@@ -104,7 +104,7 @@ export function ProjectDetailActionsMenu({
           role="menuitem"
           className={`${styles.inlineMenuAction} ${styles.actionsMenuItem}`}
           disabled={menuDisabled}
-          onClick={() => closeAndNavigate(nav.routes.projectAccountability(projectSlug))}
+          onClick={() => closeAndNavigate(routes.accountability)}
         >
           <span
             className={`${styles.actionsMenuIcon} ${styles.actionsMenuAccountabilityIcon}`}
@@ -117,7 +117,7 @@ export function ProjectDetailActionsMenu({
           role="menuitem"
           className={`${styles.inlineMenuAction} ${styles.actionsMenuItem}`}
           disabled={menuDisabled}
-          onClick={() => closeAndNavigate(nav.routes.projectFinancials(projectSlug))}
+          onClick={() => closeAndNavigate(routes.financials)}
         >
           <span className={`${styles.actionsMenuIcon} ${styles.actionsMenuFinancialsIcon}`} aria-hidden />
           {detail.actions.financials}
@@ -127,7 +127,7 @@ export function ProjectDetailActionsMenu({
           role="menuitem"
           className={`${styles.inlineMenuAction} ${styles.actionsMenuItem}`}
           disabled={menuDisabled}
-          onClick={() => closeAndNavigate(nav.routes.projectDocuments(projectSlug))}
+          onClick={() => closeAndNavigate(routes.documents)}
         >
           <span className={`${styles.actionsMenuIcon} ${styles.actionsMenuFolderIcon}`} aria-hidden />
           {wf.openDocuments}

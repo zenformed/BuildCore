@@ -25,6 +25,7 @@ export type CreateCrmProjectBody = {
   state?: unknown;
   postalCode?: unknown;
   initialTemplateBlueprints?: unknown;
+  parentProjectId?: unknown;
 };
 
 export type ValidateCreateCrmProjectResult =
@@ -67,6 +68,14 @@ function asStageSlug(value: unknown): PipelineStageSlug | null {
 }
 
 function asOptionalUserId(value: unknown): string | null {
+  if (value == null || value === '') return null;
+  if (typeof value !== 'string') return null;
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : null;
+}
+
+function asOptionalParentProjectId(value: unknown): string | null | undefined {
+  if (value === undefined) return undefined;
   if (value == null || value === '') return null;
   if (typeof value !== 'string') return null;
   const trimmed = value.trim();
@@ -130,6 +139,11 @@ export function validateCreateCrmProjectBody(body: CreateCrmProjectBody): Valida
     return { ok: false, message: 'State must be a valid US state code.' };
   }
 
+  const parentProjectId = asOptionalParentProjectId(body.parentProjectId);
+  if (parentProjectId === null && body.parentProjectId != null && body.parentProjectId !== '') {
+    return { ok: false, message: 'Parent project id is invalid.' };
+  }
+
   return {
     ok: true,
     input: {
@@ -150,6 +164,7 @@ export function validateCreateCrmProjectBody(body: CreateCrmProjectBody): Valida
       state,
       postalCode: asOptionalString(body.postalCode),
       initialTemplateBlueprints,
+      ...(parentProjectId !== undefined ? { parentProjectId } : {}),
     },
   };
 }

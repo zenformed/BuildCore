@@ -15,6 +15,7 @@ import { loadCrmMemberMap } from './crmMemberMap';
 const PROJECT_LIST_SELECT = `
   id,
   slug,
+  parent_project_id,
   name,
   trade_type,
   priority,
@@ -40,6 +41,7 @@ const PROJECT_LIST_SELECT = `
 const PROJECT_DETAIL_SELECT = `
   id,
   slug,
+  parent_project_id,
   name,
   trade_type,
   priority,
@@ -94,14 +96,20 @@ function collectMemberIds(rows: {
 
 export async function listCrmProjectSummariesForOrg(
   supabase: SupabaseClient,
-  organizationId: string
+  organizationId: string,
+  options?: { rootsOnly?: boolean }
 ): Promise<readonly CrmProjectSummary[]> {
-  const { data, error } = await supabase
+  let query = supabase
     .from('crm_projects')
     .select(PROJECT_LIST_SELECT)
     .eq('organization_id', organizationId)
-    .is('archived_at', null)
-    .order('last_activity_at', { ascending: false });
+    .is('archived_at', null);
+
+  if (options?.rootsOnly !== false) {
+    query = query.is('parent_project_id', null);
+  }
+
+  const { data, error } = await query.order('last_activity_at', { ascending: false });
 
   if (error) {
     throw new Error(error.message);
@@ -202,12 +210,64 @@ export async function getCrmProjectDetailBySlugForOrg(
   });
 }
 
+export async function listCrmProjectChildSummariesForOrg(
+  supabase: SupabaseClient,
+  organizationId: string,
+  parentProjectId: string
+): Promise<readonly CrmProjectSummary[]> {
+  const { data, error } = await supabase
+    .from('crm_projects')
+    .select(PROJECT_LIST_SELECT)
+    .eq('organization_id', organizationId)
+    .eq('parent_project_id', parentProjectId)
+    .is('archived_at', null)
+    .order('last_activity_at', { ascending: false });
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  const projects = (data ?? []) as DbCrmProjectRow[];
+  const memberById = await loadCrmMemberMap(supabase, collectMemberIds({ projects }), {
+    organizationId,
+  });
+  return projects.map((row) => mapDbProjectSummary(row, memberById));
+}
+
+export async function getCrmProjectChildDetailBySlugsForOrg(
+  supabase: SupabaseClient,
+  organizationId: string,
+  parentSlug: string,
+  childSlug: string
+): Promise<CrmProjectDetail | null> {
+  const { data: parentRow, error: parentError } = await supabase
+    .from('crm_projects')
+    .select('id')
+    .eq('organization_id', organizationId)
+    .eq('slug', parentSlug)
+    .is('archived_at', null)
+    .maybeSingle();
+
+  if (parentError) {
+    throw new Error(parentError.message);
+  }
+  if (!parentRow) return null;
+
+  const childDetail = await getCrmProjectDetailBySlugForOrg(supabase, organizationId, childSlug);
+  if (childDetail == null) return null;
+  if (childDetail.summary.parentProjectId !== parentRow.id) return null;
+
+  return childDetail;
+}
+
 /** Full project details for org-wide CRM reporting (N project fetches). */
 export async function listCrmProjectsForReportingForOrg(
   supabase: SupabaseClient,
   organizationId: string
 ): Promise<readonly CrmProjectDetail[]> {
-  const summaries = await listCrmProjectSummariesForOrg(supabase, organizationId);
+  const summaries = await listCrmProjectSummariesForOrg(supabase, organizationId, {
+    rootsOnly: false,
+  });
   const details = await Promise.all(
     summaries.map((summary) =>
       getCrmProjectDetailBySlugForOrg(supabase, organizationId, summary.slug)

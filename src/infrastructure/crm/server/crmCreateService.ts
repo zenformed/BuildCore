@@ -43,12 +43,30 @@ export async function createCrmProjectForOrg(
 
   const now = new Date().toISOString();
 
+  if (input.parentProjectId) {
+    const { data: parentRow, error: parentError } = await supabase
+      .from('crm_projects')
+      .select('id')
+      .eq('organization_id', organizationId)
+      .eq('id', input.parentProjectId)
+      .is('archived_at', null)
+      .maybeSingle();
+
+    if (parentError) {
+      throw new Error(parentError.message);
+    }
+    if (!parentRow) {
+      throw new Error('Parent project not found.');
+    }
+  }
+
   const { data: projectRow, error: projectError } = await supabase
     .from('crm_projects')
     .insert({
       organization_id: organizationId,
       slug,
       name: input.name,
+      parent_project_id: input.parentProjectId ?? null,
       client_id: clientRow.id,
       primary_contact_id: contactRow.id,
       trade_type: input.tradeType,

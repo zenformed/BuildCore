@@ -46,6 +46,7 @@ export type DbCrmProjectRow = {
   id: string;
   slug: string;
   name: string;
+  parent_project_id?: string | null;
   trade_type: string;
   priority: string;
   current_stage_slug: string;
@@ -307,6 +308,7 @@ export function mapDbProjectSummary(
   return {
     id: row.id,
     slug: row.slug,
+    parentProjectId: row.parent_project_id ?? null,
     name: row.name,
     tradeType: asTradeType(row.trade_type),
     contact,

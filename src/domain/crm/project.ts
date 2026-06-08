@@ -32,6 +32,8 @@ export const CRM_TRADE_TYPES: readonly CrmTradeType[] = [
 export type CrmProjectSummary = {
   readonly id: string;
   readonly slug: string;
+  /** Null for root/parent projects; set when this project is a subproject. */
+  readonly parentProjectId: string | null;
   readonly name: string;
   readonly tradeType: CrmTradeType;
   readonly contact: CrmContact;

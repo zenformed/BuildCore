@@ -4,8 +4,8 @@ import type { ReactElement } from 'react';
 import { useRouter } from 'next/navigation';
 import type { CrmProjectDetail } from '@/domain/crm';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
-import { buildCoreDashboardNavigation as nav } from '@/platform/navigation/buildCoreDashboardNavigation';
 import { useAccountabilityPreviewLimit } from '@/presentation/features/crmProjectDetail/useAccountabilityPreviewLimit';
+import { useProjectDetailShell } from '@/presentation/features/crmProjectDetail/ProjectDetailShellContext';
 import { AccountabilityLogTable, sortAccountabilityEntries } from './AccountabilityLogTable';
 import styles from './ProjectDetail.module.css';
 
@@ -15,6 +15,7 @@ export type AccountabilityPanelProps = {
 
 export function AccountabilityPanel({ project }: AccountabilityPanelProps): ReactElement {
   const router = useRouter();
+  const { routes } = useProjectDetailShell();
   const acc = content.projectDetail.accountability;
   const previewLimit = useAccountabilityPreviewLimit();
   const entries = sortAccountabilityEntries(project.accountabilityLog);
@@ -39,7 +40,7 @@ export function AccountabilityPanel({ project }: AccountabilityPanelProps): Reac
           <button
             type="button"
             className={styles.panelFooterLink}
-            onClick={() => router.push(nav.routes.projectAccountability(project.summary.slug))}
+            onClick={() => router.push(routes.accountability)}
           >
             {acc.viewAll}
           </button>

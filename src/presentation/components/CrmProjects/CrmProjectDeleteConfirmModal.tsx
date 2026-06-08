@@ -9,12 +9,16 @@ export type CrmProjectDeleteConfirmModalProps = {
   pendingProject: CrmProjectSummary | null;
   onClose: () => void;
   onConfirm: () => void;
+  confirmTitle?: string;
+  confirmMessage?: (name: string) => string;
 };
 
 export function CrmProjectDeleteConfirmModal({
   pendingProject,
   onClose,
   onConfirm,
+  confirmTitle,
+  confirmMessage,
 }: CrmProjectDeleteConfirmModalProps): ReactElement {
   const deleteCopy = content.crm.delete;
 
@@ -23,9 +27,11 @@ export function CrmProjectDeleteConfirmModal({
       isOpen={pendingProject != null}
       onClose={onClose}
       onConfirm={onConfirm}
-      title={deleteCopy.confirmTitle}
+      title={confirmTitle ?? deleteCopy.confirmTitle}
       message={
-        pendingProject ? deleteCopy.confirmMessage(pendingProject.name) : undefined
+        pendingProject
+          ? (confirmMessage ?? deleteCopy.confirmMessage)(pendingProject.name)
+          : undefined
       }
       confirmLabel={deleteCopy.confirmLabel}
       cancelLabel={deleteCopy.cancelLabel}

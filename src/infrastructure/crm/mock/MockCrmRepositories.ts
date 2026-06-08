@@ -232,13 +232,23 @@ function applyProjectCompletion(
 
 export class MockCrmProjectsRepository implements ICrmProjectsRepository {
 
-  listSummaries(): readonly CrmProjectSummary[] {
-
+  listSummaries(options?: { rootsOnly?: boolean }): readonly CrmProjectSummary[] {
+    const rootsOnly = options?.rootsOnly !== false;
     return MOCK_CRM_PROJECT_DETAILS.map((seed) => {
       const effective = getEffectiveMockProjectDetailBySlug(seed.summary.slug);
       return effective?.summary ?? seed.summary;
-    });
+    }).filter((summary) => !rootsOnly || summary.parentProjectId == null);
+  }
 
+  listChildSummaries(input: {
+    parentProjectId: string;
+    parentSlug: string;
+  }): readonly CrmProjectSummary[] {
+    void input.parentSlug;
+    return MOCK_CRM_PROJECT_DETAILS.map((seed) => {
+      const effective = getEffectiveMockProjectDetailBySlug(seed.summary.slug);
+      return effective?.summary ?? seed.summary;
+    }).filter((summary) => summary.parentProjectId === input.parentProjectId);
   }
 
 

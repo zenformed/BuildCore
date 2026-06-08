@@ -19,10 +19,13 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   const auth = await requireCrmApiAuth(request.headers.get('Authorization'));
   if (!auth.ok) return auth.response;
 
+  const includeSubprojects = request.nextUrl.searchParams.get('includeSubprojects') === '1';
+
   try {
     const projects = await listCrmProjectSummariesForOrg(
       auth.context.supabase,
-      auth.context.organizationId
+      auth.context.organizationId,
+      { rootsOnly: !includeSubprojects }
     );
     return NextResponse.json({
       projects,

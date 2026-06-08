@@ -5,8 +5,8 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import type { CrmProjectDetail, CrmWorkflowTask, PipelineStageSlug } from '@/domain/crm';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
-import { buildCoreDashboardNavigation as nav } from '@/platform/navigation/buildCoreDashboardNavigation';
 import { countDocumentsByTaskId } from '@/presentation/features/crmProjectDetail/workflowDocumentCounts';
+import { useProjectDetailShell } from '@/presentation/features/crmProjectDetail/ProjectDetailShellContext';
 import {
   countWorkflowTasksInGroups,
   groupOpsWorkflowTasksByStage,
@@ -47,6 +47,7 @@ export function WorkflowTasksTable({
   onRequestArchiveTask,
 }: WorkflowTasksTableProps): ReactElement {
   const router = useRouter();
+  const { routes } = useProjectDetailShell();
   const wf = content.projectDetail.workflow;
   const { permissions, isLoading, isReady } = useBuildCoreWorkflowTaskAccess();
   const canView = isReady && permissions.canView;
@@ -170,7 +171,7 @@ export function WorkflowTasksTable({
           <button
             type="button"
             className={styles.panelFooterLink}
-            onClick={() => router.push(nav.routes.projectWorkflowTasks(project.summary.slug))}
+            onClick={() => router.push(routes.workflowTasks)}
           >
             {wf.viewAll}
           </button>

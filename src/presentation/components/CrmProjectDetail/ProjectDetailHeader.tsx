@@ -10,9 +10,11 @@ import styles from './ProjectDetail.module.css';
 
 export type ProjectDetailHeaderProps = {
   project: CrmProjectSummary;
+  parentProject?: CrmProjectSummary | null;
   pageContext?: ProjectDetailPageContext;
   onBack: () => void;
   onOpenProject?: () => void;
+  onOpenParentProject?: () => void;
   assigneeControl?: ReactNode;
   tradeTypeControl?: ReactNode;
   actions?: ReactNode;
@@ -20,9 +22,11 @@ export type ProjectDetailHeaderProps = {
 
 export function ProjectDetailHeader({
   project,
+  parentProject = null,
   pageContext = 'detail',
   onBack,
   onOpenProject,
+  onOpenParentProject,
   assigneeControl,
   tradeTypeControl,
   actions,
@@ -39,6 +43,7 @@ export function ProjectDetailHeader({
             ? content.projectDetail.actions.financials
             : null;
   const showSubPageBreadcrumb = subPageLabel != null && onOpenProject != null;
+  const showParentBreadcrumb = parentProject != null && onOpenParentProject != null;
   const isComplete = isCrmProjectComplete(project);
 
   return (
@@ -56,6 +61,16 @@ export function ProjectDetailHeader({
             <span className={styles.breadcrumbSep} aria-hidden>
               /
             </span>
+            {showParentBreadcrumb ? (
+              <>
+                <button type="button" className={styles.breadcrumbLink} onClick={onOpenParentProject}>
+                  {parentProject.name}
+                </button>
+                <span className={styles.breadcrumbSep} aria-hidden>
+                  /
+                </span>
+              </>
+            ) : null}
             {showSubPageBreadcrumb ? (
               <>
                 <button type="button" className={styles.breadcrumbLink} onClick={onOpenProject}>

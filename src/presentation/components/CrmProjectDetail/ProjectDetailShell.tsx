@@ -3,11 +3,12 @@
 import type { ReactElement, ReactNode } from 'react';
 import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import type { CrmProjectDetail } from '@/domain/crm';
+import type { CrmProjectDetail, CrmProjectSummary } from '@/domain/crm';
 import { isBuildCoreMemberRole } from '@/domain/buildcore/memberRole';
 import { canManageBuildCoreProjectTemplates } from '@/domain/buildcore/projectTemplateAccess';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
 import { buildCoreDashboardNavigation as nav } from '@/platform/navigation/buildCoreDashboardNavigation';
+import type { ProjectDetailRoutes } from '@/platform/navigation/projectDetailRoutes';
 import { useProjectCompletionToggle } from '@/presentation/features/crmProjectDetail/useProjectCompletionToggle';
 import { useProjectDetailWorkspace } from '@/presentation/features/crmProjectDetail/useProjectDetailWorkspace';
 import { useBuildCoreMemberScopedProject } from '@/presentation/features/crmProjectDetail/useBuildCoreMemberScopedProject';
@@ -41,6 +42,11 @@ export type ProjectDetailShellProps = {
   isApiSource: boolean;
   onBack: () => void;
   onOpenProject?: () => void;
+  onOpenParentProject?: () => void;
+  parentProject?: CrmProjectSummary | null;
+  routes: ProjectDetailRoutes;
+  parentRouteSlug: string;
+  subSlug?: string;
   onRefresh: () => Promise<void>;
   children: ReactNode;
 };
@@ -55,6 +61,11 @@ function ProjectDetailShellBody({
   isApiSource,
   onBack,
   onOpenProject,
+  onOpenParentProject,
+  parentProject = null,
+  routes,
+  parentRouteSlug,
+  subSlug,
   onRefresh,
   children,
   isMemberRole,
@@ -102,7 +113,7 @@ function ProjectDetailShellBody({
     onError: (message) => workspace.setToast({ kind: 'error', message }),
   });
   const actionsMenuProps = {
-    projectSlug: projectSummary.slug,
+    routes,
     projectSummary,
     canDelete,
     canSaveTemplate,
@@ -137,6 +148,10 @@ function ProjectDetailShellBody({
     showCompletionActions,
     isMemberRole,
     completion: showCompletionActions ? completion : null,
+    parentRouteSlug,
+    subSlug,
+    parentProject,
+    routes,
     ...workspace,
   };
 
@@ -158,6 +173,8 @@ function ProjectDetailShellBody({
           isMemberRole={isMemberRole}
           onBack={onBack}
           onOpenProject={onOpenProject}
+          onOpenParentProject={onOpenParentProject}
+          parentProject={parentProject}
           actions={headerActions}
           savingField={workspace.savingField}
           patchField={workspace.patchField}

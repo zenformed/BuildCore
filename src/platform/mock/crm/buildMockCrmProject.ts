@@ -25,6 +25,7 @@ export type BuildMockCrmProjectInput = {
   readonly id: string;
   readonly slug: string;
   readonly name: string;
+  readonly parentProjectId?: string | null;
   readonly tradeType: CrmTradeType;
   readonly contact: CrmContact;
   readonly client: CrmClient;
@@ -323,6 +324,7 @@ export function buildMockCrmProjectDetail(input: BuildMockCrmProjectInput): CrmP
   const summary: CrmProjectSummary = {
     id: input.id,
     slug: input.slug,
+    parentProjectId: input.parentProjectId ?? null,
     name: input.name,
     tradeType: input.tradeType,
     contact: input.contact,

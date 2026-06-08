@@ -416,6 +416,25 @@ export const buildCoreDashboardContent = {
     },
     breadcrumbCrm: 'CRM',
     breadcrumbProjects: 'Projects',
+    subprojects: {
+      title: 'Subprojects',
+      expand: 'Expand subprojects',
+      collapse: 'Collapse subprojects',
+      searchPlaceholder: 'Search subprojects…',
+      searchAriaLabel: 'Search subprojects',
+      newSubprojectTitle: 'New subproject',
+      newSubprojectAriaLabel: 'New subproject',
+      projectColumn: 'Subproject',
+      empty: 'No subprojects yet.',
+      delete: {
+        action: 'Delete subproject',
+        actionAriaLabel: (name: string): string => `Delete subproject ${name}`,
+        confirmTitle: 'Delete this subproject?',
+        confirmMessage: (name: string): string =>
+          `"${name}" will be permanently removed. This subproject and its data will no longer be accessible.`,
+        success: 'Subproject deleted.',
+      },
+    },
     saveSuccess: 'Changes saved.',
     saveError: 'Could not save changes.',
     workflow: {

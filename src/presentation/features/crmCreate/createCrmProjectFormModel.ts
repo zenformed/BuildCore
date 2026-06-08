@@ -1,4 +1,4 @@
-import type { CreateCrmProjectInput, CrmPriority, CrmTradeType, PipelineStageSlug } from '@/domain/crm';
+import type { CreateCrmProjectInput, CrmPriority, CrmTradeType, PipelineStageSlug, CrmProjectDetail } from '@/domain/crm';
 import { US_STATE_CODES } from '@/domain/crm/usStates';
 import { normalizeAssigneeMemberIdForSave } from '@/presentation/features/crmAssignment/buildAssigneeOptions';
 
@@ -39,6 +39,26 @@ export const defaultCreateCrmProjectFormState = (): CreateCrmProjectFormState =>
   state: '',
   postalCode: '',
 });
+
+/** Initial create form values copied from a parent project (subproject defaults only). */
+export function createSubprojectFormDefaultsFromParent(
+  parent: CrmProjectDetail
+): CreateCrmProjectFormState {
+  const base = defaultCreateCrmProjectFormState();
+  const { summary } = parent;
+  return {
+    ...base,
+    name: summary.name,
+    contactName: summary.contact.name,
+    email: summary.contact.email,
+    phone: summary.contact.phone,
+    addressLine1: summary.address.addressLine1 ?? '',
+    addressLine2: summary.address.addressLine2 ?? '',
+    city: summary.address.city ?? '',
+    state: summary.address.state ?? '',
+    postalCode: summary.address.postalCode ?? '',
+  };
+}
 
 export function parseUsdInputToCents(value: string): number | null {
   const trimmed = value.trim();

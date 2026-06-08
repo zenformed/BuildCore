@@ -228,8 +228,16 @@
   white-space: nowrap;
 }
 
+.gridCellAlignCenter {
+  display: flex;
+  align-items: center;
+  align-self: stretch;
+  min-height: 100%;
+}
+
 .gridCellWrap {
   min-width: 0;
+  width: 100%;
   white-space: normal;
   line-height: 1.35;
   display: -webkit-box;
@@ -279,6 +287,10 @@
 .gridHeaderDealValue,
 .gridCellDealValue {
   text-align: right;
+}
+
+.gridCellDealValue.gridCellAlignCenter {
+  justify-content: flex-end;
 }
 
 .gridCellDealValue .draftInput {

@@ -2,12 +2,13 @@
 
 import type { ReactElement } from 'react';
 import type { CrmProjectSummary } from '@/domain/crm';
+import type { ProjectDetailRoutes } from '@/platform/navigation/projectDetailRoutes';
 import { ProjectDetailActionsMenu } from './ProjectDetailActionsMenu';
 import { ProjectDetailCompletionButton } from './ProjectDetailCompletionButton';
 import styles from './ProjectDetail.module.css';
 
 export type ProjectDetailHeaderActionsProps = {
-  projectSlug: string;
+  routes: ProjectDetailRoutes;
   projectSummary: CrmProjectSummary;
   canDelete: boolean;
   canSaveTemplate: boolean;
@@ -24,7 +25,7 @@ export type ProjectDetailHeaderActionsProps = {
 };
 
 export function ProjectDetailHeaderActions({
-  projectSlug,
+  routes,
   projectSummary,
   canDelete,
   canSaveTemplate,
@@ -50,7 +51,7 @@ export function ProjectDetailHeaderActions({
         markIncompleteLabel={markIncompleteLabel}
       />
       <ProjectDetailActionsMenu
-        projectSlug={projectSlug}
+        routes={routes}
         projectSummary={projectSummary}
         canDelete={canDelete}
         canSaveTemplate={canSaveTemplate}

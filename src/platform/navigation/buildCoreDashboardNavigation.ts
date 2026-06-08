@@ -1,4 +1,8 @@
 import { buildcoreAppDefinition } from '@/platform/appDefinitions/buildcore';
+import {
+  buildProjectDetailRoutes,
+  type ProjectDetailRouteParams,
+} from '@/platform/navigation/projectDetailRoutes';
 
 export type BuildCoreSettingsSectionId = 'about';
 
@@ -31,6 +35,9 @@ export const buildCoreDashboardNavigation = {
     teams: '/teams',
     home: '/',
     projectDetail: (slug: string): string => `/projects/${slug}`,
+    projectSubDetail: (parentSlug: string, subSlug: string): string =>
+      `/projects/${parentSlug}/${subSlug}`,
+    projectRoutes: (params: ProjectDetailRouteParams) => buildProjectDetailRoutes(params),
     projectWorkflowTasks: (slug: string): string => `/projects/${slug}/tasks`,
     projectDocuments: (slug: string): string => `/projects/${slug}/documents`,
     projectAccountability: (slug: string): string => `/projects/${slug}/accountability`,

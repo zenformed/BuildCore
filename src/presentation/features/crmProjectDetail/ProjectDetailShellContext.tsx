@@ -4,6 +4,8 @@ import { createContext, useContext, type ReactElement, type ReactNode } from 're
 import type { ProjectDetailPageContext } from './projectDetailPageContext';
 import type { useProjectCompletionToggle } from './useProjectCompletionToggle';
 import type { useProjectDetailWorkspace } from './useProjectDetailWorkspace';
+import type { CrmProjectSummary } from '@/domain/crm';
+import type { ProjectDetailRoutes } from '@/platform/navigation/projectDetailRoutes';
 
 export type ProjectDetailShellContextValue = {
   pageContext: ProjectDetailPageContext;
@@ -12,6 +14,10 @@ export type ProjectDetailShellContextValue = {
   showCompletionActions: boolean;
   isMemberRole: boolean;
   completion: ReturnType<typeof useProjectCompletionToggle> | null;
+  parentRouteSlug: string;
+  subSlug?: string;
+  parentProject: CrmProjectSummary | null;
+  routes: ProjectDetailRoutes;
 } & ReturnType<typeof useProjectDetailWorkspace>;
 
 const ProjectDetailShellContext = createContext<ProjectDetailShellContextValue | null>(null);

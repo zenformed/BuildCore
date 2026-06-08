@@ -21,6 +21,11 @@ function priorityClassName(priority: CrmPriority): string {
   return shared[`priority_${priority}`] ?? shared.priority_normal;
 }
 
+export type CrmProjectsTableDeleteLabels = {
+  readonly action: string;
+  readonly actionAriaLabel: (name: string) => string;
+};
+
 export type CrmProjectsTableProps = {
   rows: readonly CrmProjectSummary[];
   isLoading?: boolean;
@@ -29,6 +34,10 @@ export type CrmProjectsTableProps = {
   canDelete?: boolean;
   deletingProjectId?: string | null;
   onRequestDelete?: (project: CrmProjectSummary) => void;
+  showActions?: boolean;
+  projectColumnLabel?: string;
+  emptyMessage?: string;
+  deleteLabels?: CrmProjectsTableDeleteLabels;
 };
 
 export function CrmProjectsTable({
@@ -39,11 +48,16 @@ export function CrmProjectsTable({
   canDelete = false,
   deletingProjectId = null,
   onRequestDelete,
+  showActions = true,
+  projectColumnLabel,
+  emptyMessage,
+  deleteLabels,
 }: CrmProjectsTableProps): ReactElement {
   const showTable = rows.length > 0 || isLoading;
   const tableInnerClass = isMemberRole
     ? `${styles.tableInner} ${styles.tableInnerMember}`
     : styles.tableInner;
+  const projectHeader = projectColumnLabel ?? COLUMNS.project;
 
   return (
     <div className={styles.tableWrap}>
@@ -51,7 +65,7 @@ export function CrmProjectsTable({
         <div className={tableInnerClass}>
           <div className={styles.tableGridShell}>
             <div className={styles.gridHeader} role="row">
-            <span role="columnheader">{COLUMNS.project}</span>
+            <span role="columnheader">{projectHeader}</span>
             <span role="columnheader">{COLUMNS.contact}</span>
             <span role="columnheader">{COLUMNS.email}</span>
             <span role="columnheader">{COLUMNS.phone}</span>
@@ -66,7 +80,7 @@ export function CrmProjectsTable({
             <span role="columnheader" className={styles.gridHeaderAssignee}>
               {COLUMNS.assigned}
             </span>
-            {!isMemberRole ? (
+            {!isMemberRole && showActions ? (
               <span role="columnheader" className={styles.gridHeaderActions}>
                 {COLUMNS.actions}
               </span>
@@ -74,7 +88,7 @@ export function CrmProjectsTable({
           </div>
           <div className={styles.gridBody} role="rowgroup">
             {!showTable ? (
-              <p className={styles.emptyState}>{content.crm.table.empty}</p>
+              <p className={styles.emptyState}>{emptyMessage ?? content.crm.table.empty}</p>
             ) : (
               rows.map((project) => (
                 <ProjectRow
@@ -82,9 +96,11 @@ export function CrmProjectsTable({
                   project={project}
                   onRowClick={onRowClick}
                   isMemberRole={isMemberRole}
-                  canDelete={canDelete}
+                  canDelete={canDelete && showActions}
+                  showActions={showActions}
                   deleting={deletingProjectId === project.id}
                   onRequestDelete={onRequestDelete}
+                  deleteLabels={deleteLabels}
                 />
               ))
             )}
@@ -101,17 +117,23 @@ function ProjectRow({
   onRowClick,
   isMemberRole,
   canDelete,
+  showActions,
   deleting,
   onRequestDelete,
+  deleteLabels,
 }: {
   project: CrmProjectSummary;
   onRowClick: (project: CrmProjectSummary) => void;
   isMemberRole: boolean;
   canDelete: boolean;
+  showActions: boolean;
   deleting: boolean;
   onRequestDelete?: (project: CrmProjectSummary) => void;
+  deleteLabels?: CrmProjectsTableDeleteLabels;
 }): ReactElement {
   const deleteCopy = content.crm.delete;
+  const deleteAction = deleteLabels?.action ?? deleteCopy.action;
+  const deleteAriaLabel = deleteLabels?.actionAriaLabel ?? deleteCopy.actionAriaLabel;
   const tradeSubtitle = getProjectTradeSubtitle(project.tradeType);
 
   const handleKeyDown = (e: KeyboardEvent<HTMLDivElement>): void => {
@@ -139,28 +161,28 @@ function ProjectRow({
         </span>
         {tradeSubtitle ? <span className={styles.projectMeta}>{tradeSubtitle}</span> : null}
       </span>
-      <span className={styles.gridCell} role="cell">
+      <span className={`${styles.gridCell} ${styles.gridCellAlignCenter}`} role="cell">
         {project.contact.name}
       </span>
-      <span className={styles.gridCell} role="cell" title={project.contact.email}>
+      <span className={`${styles.gridCell} ${styles.gridCellAlignCenter}`} role="cell" title={project.contact.email}>
         {project.contact.email || '—'}
       </span>
-      <span className={styles.gridCell} role="cell">
+      <span className={`${styles.gridCell} ${styles.gridCellAlignCenter}`} role="cell">
         {formatPhoneDisplay(project.contact.phone) || '—'}
       </span>
-      <span className={styles.gridCell} role="cell">
+      <span className={`${styles.gridCell} ${styles.gridCellAlignCenter}`} role="cell">
         <span className={priorityClassName(project.priority)}>{project.priority}</span>
       </span>
       {!isMemberRole ? (
-        <span className={styles.gridCell} role="cell">
+        <span className={`${styles.gridCell} ${styles.gridCellAlignCenter}`} role="cell">
           <span className={shared.stagePill}>{formatStageLabel(project.currentStageSlug)}</span>
         </span>
       ) : null}
-      <span className={`${styles.gridCell} ${styles.gridCellWrap}`} role="cell" title={project.notesPreview ?? undefined}>
-        {project.notesPreview ?? '—'}
+      <span className={`${styles.gridCell} ${styles.gridCellAlignCenter}`} role="cell" title={project.notesPreview ?? undefined}>
+        <span className={styles.gridCellWrap}>{project.notesPreview ?? '—'}</span>
       </span>
       {!isMemberRole ? (
-        <span className={`${styles.gridCell} ${styles.gridCellDealValue}`} role="cell">
+        <span className={`${styles.gridCell} ${styles.gridCellDealValue} ${styles.gridCellAlignCenter}`} role="cell">
           {formatCentsAsUsd(project.dealValueCents)}
         </span>
       ) : null}
@@ -173,7 +195,7 @@ function ProjectRow({
           </span>
         )}
       </span>
-      {!isMemberRole ? (
+      {!isMemberRole && showActions ? (
         <span className={styles.gridCellActions} role="cell">
           {canDelete ? (
             <span className={shared.rowDeleteCell}>
@@ -181,8 +203,8 @@ function ProjectRow({
                 type="button"
                 className={shared.rowDeleteBtn}
                 disabled={deleting}
-                title={deleteCopy.action}
-                aria-label={deleteCopy.actionAriaLabel(project.name)}
+                title={deleteAction}
+                aria-label={deleteAriaLabel(project.name)}
                 onClick={(event) => {
                   event.stopPropagation();
                   onRequestDelete?.(project);
