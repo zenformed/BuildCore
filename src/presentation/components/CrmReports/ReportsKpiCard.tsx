@@ -38,6 +38,20 @@ const KPI_ICON_CLASS: Record<ReportsKpiIcon, string> = {
   netProfit: styles.kpiIcon_netProfit,
 };
 
+function kpiMainSizeClass(display: string, hasTrend: boolean): string | undefined {
+  const len = display.length;
+  if (hasTrend) {
+    if (len >= 10) return styles.kpiMain_xs;
+    if (len >= 8) return styles.kpiMain_sm;
+    if (len >= 6) return styles.kpiMain_md;
+    return undefined;
+  }
+  if (len >= 11) return styles.kpiMain_xs;
+  if (len >= 9) return styles.kpiMain_sm;
+  if (len >= 7) return styles.kpiMain_md;
+  return undefined;
+}
+
 export function ReportsKpiCard({
   icon,
   mainDisplay,
@@ -51,6 +65,7 @@ export function ReportsKpiCard({
   const showTrend = comparison.percent != null && !Number.isNaN(comparison.percent);
   const trendUp = (comparison.percent ?? 0) > 0;
   const trendDown = (comparison.percent ?? 0) < 0;
+  const mainSizeClass = kpiMainSizeClass(mainDisplay, showTrend);
 
   return (
     <article
@@ -61,19 +76,21 @@ export function ReportsKpiCard({
         <div className={styles.kpiHeroCluster}>
           <span className={`${styles.kpiIcon} ${KPI_ICON_CLASS[icon]}`} aria-hidden />
           <div className={styles.kpiHeroText}>
-            <div className={styles.kpiAmountRow}>
-              <div className={styles.kpiAmountStack}>
-                <span className={styles.kpiMain}>{mainDisplay}</span>
-                <p className={styles.kpiMetricLabel}>{metricLabel}</p>
-              </div>
-              {showTrend ? (
-                <span className={trendClass(comparison.percent)} title={comparison.label}>
-                  <span className={styles.kpiTrendArrow} aria-hidden>
-                    {trendUp ? '▲' : trendDown ? '▼' : '•'}
-                  </span>
-                  {formatTrendPercent(comparison.percent!)}
+            <div className={styles.kpiAmountStack}>
+              <span className={styles.kpiMainLine}>
+                <span className={[styles.kpiMain, mainSizeClass].filter(Boolean).join(' ')}>
+                  {mainDisplay}
                 </span>
-              ) : null}
+                {showTrend ? (
+                  <span className={trendClass(comparison.percent)} title={comparison.label}>
+                    <span className={styles.kpiTrendArrow} aria-hidden>
+                      {trendUp ? '▲' : trendDown ? '▼' : '•'}
+                    </span>
+                    {formatTrendPercent(comparison.percent!)}
+                  </span>
+                ) : null}
+              </span>
+              <p className={styles.kpiMetricLabel}>{metricLabel}</p>
             </div>
           </div>
         </div>
