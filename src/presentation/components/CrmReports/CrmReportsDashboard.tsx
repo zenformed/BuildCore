@@ -6,17 +6,13 @@ import { formatCentsAsUsd } from '@/presentation/features/crmProjects/crmProject
 import { useCrmReportsDashboard } from '@/presentation/features/crmReports/useCrmReportsDashboard';
 import { useCrmReportsPdfExport } from '@/presentation/features/crmReports/useCrmReportsPdfExport';
 import { ReportsPdfExportControls } from './ReportsPdfExportControls';
-import type { ReportChartTabId, ReportPeriodId } from '@/reports/types/crmReportsDashboard';
+import type { ReportPeriodId } from '@/reports/types/crmReportsDashboard';
 import projectStyles from '../CrmProjectDetail/ProjectDetail.module.css';
-import { ReportsCostBreakdownPanel } from './ReportsCostBreakdownPanel';
+import { ReportsFolderTabs } from './ReportsFolderTabs';
 import { ReportsKpiCard } from './ReportsKpiCard';
-import { ReportsLineChart } from './ReportsLineChart';
-import { ReportsProjectPerformanceSection } from './ReportsProjectPerformanceSection';
-import { ReportsRecentActivityPanel } from './ReportsRecentActivityPanel';
 import styles from './CrmReports.module.css';
 
 const PERIOD_IDS: readonly ReportPeriodId[] = ['mtd', 'qtd', 'ytd', 'all'];
-const CHART_TAB_IDS: readonly ReportChartTabId[] = ['revenue', 'profit', 'costs', 'receivables'];
 
 export function CrmReportsDashboard(): ReactElement {
   const { dashboard, projects, isLoading, error, period, setPeriod, chartTab, setChartTab } =
@@ -34,7 +30,7 @@ export function CrmReportsDashboard(): ReactElement {
   const detail = content.projectDetail;
 
   return (
-    <div className={projectStyles.pageShell} data-crm-reports-page>
+    <div className={`${styles.reportsPageShell}`} data-crm-reports-page>
       <header className={projectStyles.detailHeader}>
         <div className={projectStyles.detailHeaderMain}>
           <div className={projectStyles.titleBlock}>
@@ -113,43 +109,12 @@ export function CrmReportsDashboard(): ReactElement {
           />
         </section>
 
-        <section className={styles.middleRow}>
-          <div className={`${projectStyles.card} ${styles.chartPanel}`}>
-            <div className={styles.chartToolbar}>
-              <div className={projectStyles.pillRow} role="tablist" aria-label="Chart metric">
-                {CHART_TAB_IDS.map((id) => (
-                  <button
-                    key={id}
-                    type="button"
-                    role="tab"
-                    aria-selected={chartTab === id}
-                    className={
-                      chartTab === id
-                        ? `${projectStyles.stageChip} ${projectStyles.stageChip_current}`
-                        : projectStyles.stageChip
-                    }
-                    onClick={() => setChartTab(id)}
-                  >
-                    {content.reports.chartTabs[id]}
-                  </button>
-                ))}
-              </div>
-              <p className={styles.chartPeriodLabel} aria-live="polite">
-                {content.reports.periods[period]}
-              </p>
-            </div>
-            <ReportsLineChart series={dashboard.chart} formatValue={formatCentsAsUsd} />
-          </div>
-          <ReportsCostBreakdownPanel
-            rows={dashboard.costBreakdown}
-            costsIncludeUndatedEntries={dashboard.costsIncludeUndatedEntries}
-          />
-        </section>
-
-        <section className={styles.lowerRow}>
-          <ReportsProjectPerformanceSection rows={dashboard.projectRows} />
-          <ReportsRecentActivityPanel items={dashboard.recentActivity} />
-        </section>
+        <ReportsFolderTabs
+          dashboard={dashboard}
+          period={period}
+          chartTab={chartTab}
+          onChartTabChange={setChartTab}
+        />
       </div>
     </div>
   );

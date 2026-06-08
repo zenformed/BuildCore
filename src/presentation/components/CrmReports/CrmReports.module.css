@@ -1,5 +1,12 @@
 /* Reports-specific layout; panels use ProjectDetail.module.css (.card, .cardTitle, .breadcrumb, etc.) */
 
+.reportsPageShell {
+  composes: pageShell from '../CrmProjectDetail/ProjectDetail.module.css';
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
 .dashboardBody {
   display: flex;
   flex-direction: column;
@@ -9,10 +16,92 @@
   min-width: 0;
 }
 
+.reportsFolderTabs {
+  composes: folderTabsRoot from '../CrmProjectDetail/ProjectDetail.module.css';
+  flex: 1;
+  min-height: 0;
+  align-self: stretch;
+  width: 100%;
+}
+
+.reportsFolderTabs[data-reports-tab='graphs'] {
+  flex: none;
+  align-self: flex-start;
+}
+
+.reportsFolderTabPanel {
+  composes: folderTabPanel from '../CrmProjectDetail/ProjectDetail.module.css';
+  flex: 1;
+  min-height: 0;
+}
+
+.reportsFolderTabs[data-reports-tab='graphs'] .reportsFolderTabPanel {
+  flex: none;
+}
+
+.reportsFolderTabPanelInner {
+  composes: folderTabPanelInner from '../CrmProjectDetail/ProjectDetail.module.css';
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.reportsFolderTabPanelInner[data-reports-tab='graphs'] {
+  flex: none;
+  min-height: auto;
+}
+
+.reportsFolderTabPanelInner[data-reports-tab='graphs'] .chartPanel {
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  background: transparent;
+}
+
+.reportsFolderTabPanelInner[data-reports-tab='costBreakdown'] .costBreakdownPanel,
+.reportsFolderTabPanelInner[data-reports-tab='projectPerformance'] .lowerPanel,
+.reportsFolderTabPanelInner[data-reports-tab='recentActivity'] .activityPanel {
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  background: transparent;
+  flex: 1;
+  min-height: 0;
+  max-height: none;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.reportsFolderTabPanelInner[data-reports-tab='costBreakdown'] .costTableWrap {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.reportsFolderTabPanelInner[data-reports-tab='costBreakdown'] .costList {
+  flex: 1 1 auto;
+  min-height: 0;
+  max-height: none;
+  overflow-y: auto;
+}
+
+.reportsFolderTabPanelInner[data-reports-tab='projectPerformance'] .tableWrap,
+.reportsFolderTabPanelInner[data-reports-tab='recentActivity'] .activityFeed {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+}
+
 .kpiRow {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 0.625rem;
+  flex-shrink: 0;
+}
+
+.reportsPageShell > header {
   flex-shrink: 0;
 }
 
@@ -194,19 +283,10 @@
   opacity: 0.92;
 }
 
-.middleRow {
-  display: grid;
-  grid-template-columns: minmax(0, 7fr) minmax(12rem, 3fr);
-  gap: 0.625rem;
-  flex-shrink: 0;
-  align-items: stretch;
-}
-
 .chartPanel {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
-  min-height: 0;
   min-width: 0;
   padding: 0.625rem 0.75rem !important;
 }
@@ -357,8 +437,8 @@
 .costBreakdownPanel {
   display: flex;
   flex-direction: column;
-  min-height: 0;
   min-width: 0;
+  min-height: 0;
   padding: 0.625rem 0.75rem !important;
 }
 
@@ -367,20 +447,11 @@
   flex-shrink: 0;
 }
 
-.lowerRow {
-  display: grid;
-  grid-template-columns: minmax(0, 13fr) minmax(14rem, 7fr);
-  gap: 0.625rem;
-  flex: 1;
-  min-height: 0;
-}
-
 .lowerPanel {
   display: flex;
   flex-direction: column;
-  flex: 1;
-  min-height: 0;
   min-width: 0;
+  min-height: 0;
   padding: 0.625rem 0.75rem !important;
 }
 
@@ -401,9 +472,8 @@
 .activityPanel {
   display: flex;
   flex-direction: column;
-  flex: 1;
-  min-height: 0;
   min-width: 0;
+  min-height: 0;
   padding: 0.625rem 0.75rem !important;
 }
 
@@ -417,7 +487,7 @@
   padding: 0;
   flex: 1 1 auto;
   min-height: 0;
-  overflow: auto;
+  overflow-y: auto;
 }
 
 .activityItem {
@@ -476,7 +546,8 @@
 }
 
 .activityPanel > .chartEmpty {
-  flex: 1 1 auto;
+  flex: none;
+  min-height: 8rem;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -485,7 +556,7 @@
 .tableWrap {
   flex: 1 1 auto;
   min-height: 0;
-  overflow: auto;
+  overflow-y: auto;
 }
 
 .table {
@@ -549,8 +620,6 @@
 }
 
 .costTableWrap {
-  --cost-breakdown-visible-rows: 5;
-  --cost-breakdown-row-block: 2.8rem;
   display: flex;
   flex-direction: column;
   flex: 1 1 auto;
@@ -579,11 +648,8 @@
   display: flex;
   flex-direction: column;
   gap: 0;
-  flex: 0 1 auto;
+  flex: 1 1 auto;
   min-height: 0;
-  max-height: calc(
-    var(--cost-breakdown-visible-rows) * var(--cost-breakdown-row-block)
-  );
   overflow-y: auto;
   overflow-x: hidden;
   scrollbar-gutter: stable;
@@ -634,8 +700,8 @@
 }
 
 .lowerPanel > .chartEmpty {
-  flex: 1 1 auto;
-  min-height: 0;
+  flex: none;
+  min-height: 8rem;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -652,17 +718,10 @@
   color: #b91c1c;
 }
 
-@media (max-width: 1100px) {
-  .kpiRow {
-    grid-template-columns: 1fr;
-  }
-
-  .middleRow {
-    grid-template-columns: 1fr;
-  }
-
-  .lowerRow {
-    grid-template-columns: 1fr;
+@media (max-width: 1024px) {
+  .chartToolbar {
+    flex-direction: column;
+    align-items: flex-start;
   }
 
   .lowerPanelHeader {

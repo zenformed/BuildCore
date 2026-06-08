@@ -160,7 +160,7 @@
   overflow: auto;
 }
 
-/* CRM reports: fit dashboard on one screen; internal panels scroll if needed */
+/* CRM reports: fill main column; tab panels grow and scroll internally */
 .listViewWrap:has([data-crm-reports-page]) {
   flex: 1;
   min-height: 0;
