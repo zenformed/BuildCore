@@ -41,15 +41,16 @@ export function CrmProjectsTable({
   onRequestDelete,
 }: CrmProjectsTableProps): ReactElement {
   const showTable = rows.length > 0 || isLoading;
-  const gridClassName = isMemberRole
-    ? `${styles.projectsGrid} ${styles.projectsGridMember}`
-    : styles.projectsGrid;
+  const tableInnerClass = isMemberRole
+    ? `${styles.tableInner} ${styles.tableInnerMember}`
+    : styles.tableInner;
 
   return (
     <div className={styles.tableWrap}>
       <div className={styles.scrollContainer} role="region" aria-label={content.crm.table.regionAriaLabel}>
-        <div className={`${styles.tableInner} ${isMemberRole ? styles.tableInnerMember : ''}`}>
-          <div className={`${gridClassName} ${styles.gridHeader}`} role="row">
+        <div className={tableInnerClass}>
+          <div className={styles.tableGridShell}>
+            <div className={styles.gridHeader} role="row">
             <span role="columnheader">{COLUMNS.project}</span>
             <span role="columnheader">{COLUMNS.contact}</span>
             <span role="columnheader">{COLUMNS.email}</span>
@@ -88,6 +89,7 @@ export function CrmProjectsTable({
               ))
             )}
           </div>
+          </div>
         </div>
       </div>
     </div>
@@ -111,9 +113,6 @@ function ProjectRow({
 }): ReactElement {
   const deleteCopy = content.crm.delete;
   const tradeSubtitle = getProjectTradeSubtitle(project.tradeType);
-  const gridClassName = isMemberRole
-    ? `${styles.projectsGrid} ${styles.projectsGridMember}`
-    : styles.projectsGrid;
 
   const handleKeyDown = (e: KeyboardEvent<HTMLDivElement>): void => {
     if (e.key === 'Enter' || e.key === ' ') {
@@ -126,7 +125,7 @@ function ProjectRow({
     <div
       role="row"
       tabIndex={0}
-      className={`${gridClassName} ${styles.gridRow}`}
+      className={styles.gridRow}
       onClick={() => onRowClick(project)}
       onKeyDown={handleKeyDown}
       aria-label={content.crm.table.rowAriaLabel(project.name)}
