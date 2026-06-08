@@ -570,6 +570,7 @@
 }
 
 .folderTabPanelInner .paymentsPanel > .paymentsList,
+.folderTabPanelInner .paymentsPanel > .paymentsTableScroll,
 .folderTabPanelInner .paymentsPanel > .subtitle {
   flex: none;
   min-height: unset;
@@ -2761,10 +2762,91 @@
 }
 
 .paymentsPanel > .paymentsList,
+.paymentsPanel > .paymentsTableScroll,
 .paymentsPanel > .subtitle {
   flex: 1 1 auto;
   min-width: 0;
   min-height: 0;
+}
+
+.paymentsTableScroll {
+  width: 100%;
+  min-width: 0;
+  overflow-x: auto;
+  overflow-y: visible;
+  -webkit-overflow-scrolling: touch;
+}
+
+.paymentsTableGridShell {
+  --payments-grid-gap: 0.625rem;
+  --payments-grid-columns:
+    5.5rem minmax(10rem, 2fr) minmax(4rem, 0.7fr) minmax(4.75rem, 0.85fr) minmax(4rem, 0.7fr)
+    minmax(4.75rem, 0.85fr) minmax(3.25rem, 0.6fr) minmax(3.25rem, 0.6fr) 1.75rem;
+  --payments-table-min-width: 46.25rem;
+  display: grid;
+  grid-template-columns: var(--payments-grid-columns);
+  column-gap: var(--payments-grid-gap);
+  width: max(100%, var(--payments-table-min-width));
+  min-width: max(100%, var(--payments-table-min-width));
+}
+
+.paymentsTableGridShell .tableHeader {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: subgrid;
+  gap: 0;
+  padding-block: 0.5rem;
+  padding-inline: 0;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.paymentsTableGridShell .tableHeader > * {
+  padding-inline: 0.625rem;
+  min-width: 0;
+}
+
+.paymentsTableGridShell .tableRow.workflowGrid,
+.paymentsTableGridShell .paymentDraftRow.workflowGrid {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: subgrid;
+  gap: 0;
+  padding-block: 0.5rem;
+  padding-inline: 0;
+  width: auto;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.paymentsTableGridShell .tableRow > *,
+.paymentsTableGridShell .paymentDraftRow > * {
+  padding-inline: 0.625rem;
+  min-width: 0;
+}
+
+.paymentsTableGridShell .paymentDraftBlock {
+  display: contents;
+}
+
+.paymentsTableGridShell .paymentDraftError {
+  grid-column: 1 / -1;
+  padding-inline: 0.625rem;
+}
+
+.paymentsTableGridShell .tableHeader > *:first-child,
+.paymentsTableGridShell .tableRow > *:first-child {
+  text-align: center;
+}
+
+.paymentsTableGridShell .tableHeader > *:nth-child(2),
+.paymentsTableGridShell .tableRow .taskTitleCell {
+  text-align: left;
+}
+
+.paymentsTableGridShell .tableHeader > *:nth-child(n + 3):not(.taskDeleteHeader) {
+  text-align: center;
 }
 
 .paymentsTableHeader {

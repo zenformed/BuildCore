@@ -41,7 +41,6 @@ export function PaymentsRail({
   const cols = content.projectDetail.workflow.columns;
   const milestones = listPaymentMilestones(project.workflowTasks);
   const docCounts = countDocumentsByTaskId(project.documents);
-  const gridClass = `${styles.workflowGrid} ${styles.workflowGridPaymentsWithDates}`;
   const payCols = content.projectDetail.payments.columns;
   const [draftOpen, setDraftOpen] = useState(false);
 
@@ -66,41 +65,43 @@ export function PaymentsRail({
       ) : !showTable ? (
         <p className={styles.subtitle}>{payments.empty}</p>
       ) : (
-        <div className={styles.paymentsList}>
-          <div className={`${styles.tableHeader} ${gridClass} ${styles.paymentsTableHeader}`} role="row">
-            <span role="columnheader">{cols.status}</span>
-            <span role="columnheader">{cols.task}</span>
-            <span role="columnheader">{cols.amount}</span>
-            <span role="columnheader">{cols.documents}</span>
-            <span role="columnheader">{cols.assigned}</span>
-            <span role="columnheader">{cols.due}</span>
-            <span role="columnheader">{payCols.invoiced}</span>
-            <span role="columnheader">{payCols.paid}</span>
-            <span role="columnheader" className={styles.taskDeleteHeader} aria-hidden />
+        <div className={styles.paymentsTableScroll}>
+          <div className={styles.paymentsTableGridShell}>
+            <div className={`${styles.tableHeader} ${styles.paymentsTableHeader}`} role="row">
+              <span role="columnheader">{cols.status}</span>
+              <span role="columnheader">{cols.task}</span>
+              <span role="columnheader">{cols.amount}</span>
+              <span role="columnheader">{cols.documents}</span>
+              <span role="columnheader">{cols.assigned}</span>
+              <span role="columnheader">{cols.due}</span>
+              <span role="columnheader">{payCols.invoiced}</span>
+              <span role="columnheader">{payCols.paid}</span>
+              <span role="columnheader" className={styles.taskDeleteHeader} aria-hidden />
+            </div>
+            {milestones.map((task) => (
+              <WorkflowTaskInlineRow
+                key={task.id}
+                projectSlug={project.summary.slug}
+                task={task}
+                docCount={docCounts.get(task.id) ?? 0}
+                taskDocuments={project.documents.filter((doc) => doc.workflowTaskId === task.id)}
+                showAmountColumn
+                permissionDomain="payments"
+                isApiSource={isApiSource}
+                onUpdated={onTaskUpdated}
+                onTaskError={onTaskError}
+                onRequestArchiveTask={canDelete ? onRequestArchiveTask : undefined}
+              />
+            ))}
+            {draftOpen ? (
+              <PaymentMilestoneDraftRow
+                project={project}
+                isApiSource={isApiSource}
+                onSaved={onTaskCreated ?? onTaskUpdated}
+                onCancel={() => setDraftOpen(false)}
+              />
+            ) : null}
           </div>
-          {milestones.map((task) => (
-            <WorkflowTaskInlineRow
-              key={task.id}
-              projectSlug={project.summary.slug}
-              task={task}
-              docCount={docCounts.get(task.id) ?? 0}
-              taskDocuments={project.documents.filter((doc) => doc.workflowTaskId === task.id)}
-              showAmountColumn
-              permissionDomain="payments"
-              isApiSource={isApiSource}
-              onUpdated={onTaskUpdated}
-              onTaskError={onTaskError}
-              onRequestArchiveTask={canDelete ? onRequestArchiveTask : undefined}
-            />
-          ))}
-          {draftOpen ? (
-            <PaymentMilestoneDraftRow
-              project={project}
-              isApiSource={isApiSource}
-              onSaved={onTaskCreated ?? onTaskUpdated}
-              onCancel={() => setDraftOpen(false)}
-            />
-          ) : null}
         </div>
       )}
     </section>
