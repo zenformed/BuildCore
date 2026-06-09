@@ -13,7 +13,6 @@ import type { CrmProjectDetail } from '@/domain/crm';
 import { canManageBuildCoreProjectTemplates } from '@/domain/buildcore/projectTemplateAccess';
 
 import {
-  createProjectTemplateDraftSummary,
   hasCreateProjectTemplateDraftContent,
   type CreateProjectTemplateDraft,
 } from '@/domain/crm/projectTemplateDraft';
@@ -47,8 +46,9 @@ import {
 
 import { getCrmProjectAssigneeOptions } from '@/presentation/features/crmProjects/crmProjectAssigneeOptions';
 
-import { getProjectTemplateScopeCopy } from '@/presentation/features/projectTemplates/projectTemplateCopy';
 import { ProjectTemplateDraftSelect } from '@/presentation/components/ProjectTemplates/ProjectTemplateDraftSelect';
+import { LoadProjectTemplateDialogs } from '@/presentation/components/ProjectTemplates/LoadProjectTemplateDialogs';
+import { useProjectTemplateManager } from '@/presentation/features/projectTemplates/useProjectTemplateManager';
 
 import { useAssignmentIdentityCatalog } from '@/presentation/providers/AssignmentIdentityProvider';
 
@@ -148,7 +148,6 @@ export function CreateCrmProjectModal({
 
   const templateScope: BuildCoreProjectTemplateScope =
     parentProjectId != null ? 'subproject' : 'project';
-  const templateCopy = getProjectTemplateScopeCopy(templateScope).load;
 
   const canManageTemplates = useMemo(
 
@@ -164,8 +163,31 @@ export function CreateCrmProjectModal({
 
   const [templateDraft, setTemplateDraft] = useState<CreateProjectTemplateDraft | null>(null);
   const [selectedTemplateId, setSelectedTemplateId] = useState('');
+  const [templateRefreshKey, setTemplateRefreshKey] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+
+  const handleTemplateToast = useCallback(
+    (kind: 'success' | 'error', message: string) => {
+      onTemplateToast?.({ kind, message });
+    },
+    [onTemplateToast]
+  );
+
+  const templateManager = useProjectTemplateManager({
+    templateScope,
+    applyTarget: {
+      mode: 'draft',
+      onApplyDraft: () => {},
+    },
+    onSuccess: (message) => handleTemplateToast('success', message),
+    onError: (message) => handleTemplateToast('error', message),
+  });
+
+  const handleCloseTemplateManage = useCallback(() => {
+    templateManager.closeList();
+    setTemplateRefreshKey((current) => current + 1);
+  }, [templateManager]);
 
 
 
@@ -189,6 +211,7 @@ export function CreateCrmProjectModal({
 
       setTemplateDraft(null);
       setSelectedTemplateId('');
+      setTemplateRefreshKey(0);
 
     }
 
@@ -223,8 +246,6 @@ export function CreateCrmProjectModal({
     assignmentCatalog,
     dash.user?.id
   );
-
-  const draftSummary = createProjectTemplateDraftSummary(templateDraft);
 
 
 
@@ -457,31 +478,17 @@ export function CreateCrmProjectModal({
                   templateScope={templateScope}
                   disabled={saving}
                   selectedTemplateId={selectedTemplateId}
+                  templatesRefreshKey={templateRefreshKey}
                   onDraftChange={handleTemplateDraftChange}
+                  onManageClick={templateManager.openList}
                 />
-              ) : null}
-
-              {!isEditMode && hasCreateProjectTemplateDraftContent(templateDraft) ? (
-
-                <p className={styles.templateHint}>
-
-                  {templateCopy.draftTemplateApplied(
-
-                    draftSummary.workflowCount,
-
-                    draftSummary.paymentCount
-
-                  )}
-
-                </p>
-
               ) : null}
 
               {error ? <p className={formStyles.error}>{error}</p> : null}
 
             </div>
 
-            <div className={`${formStyles.actions} ${styles.formFooter}`}>
+            <div className={styles.formFooter}>
 
               <button type="button" className={formStyles.cancelButton} onClick={onClose} disabled={saving}>
 
@@ -516,6 +523,14 @@ export function CreateCrmProjectModal({
         bodyClassName={styles.modalBody}
 
       />
+
+      {!isEditMode && canManageTemplates && isApiSource ? (
+        <LoadProjectTemplateDialogs
+          controller={templateManager}
+          mode="manage"
+          onCloseList={handleCloseTemplateManage}
+        />
+      ) : null}
 
     </>
 

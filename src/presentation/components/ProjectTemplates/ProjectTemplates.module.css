@@ -60,6 +60,56 @@
   border: 1px solid color-mix(in srgb, var(--color-primary, #2563eb) 35%, transparent);
 }
 
+.itemHeaderActions {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex-shrink: 0;
+}
+
+.actionBtnIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  padding: 0;
+  border: 1px solid var(--color-border, #e2e8f0);
+  border-radius: 0.375rem;
+  background: var(--color-muted, #f8fafc);
+  cursor: pointer;
+}
+
+.actionBtnIcon:hover:not(:disabled) {
+  border-color: var(--color-text-muted, #94a3b8);
+}
+
+.actionBtnIcon:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.actionBtnIconDanger {
+  color: var(--color-error, #dc2626);
+  border-color: color-mix(in srgb, var(--color-error, #dc2626) 35%, var(--color-border));
+  background: var(--color-error-bg, #fef2f2);
+}
+
+.actionBtnIconDanger:hover:not(:disabled) {
+  border-color: var(--color-error, #dc2626);
+}
+
+:global([data-theme='dark']) .actionBtnIcon {
+  background: #2a3140;
+  border-color: #3d3e4a;
+}
+
+:global([data-theme='dark']) .actionBtnIconDanger {
+  color: #f87171;
+  background: rgba(248, 113, 113, 0.12);
+  border-color: rgba(248, 113, 113, 0.35);
+}
+
 .defaultToggle {
   display: inline-flex;
   align-items: center;
@@ -184,4 +234,8 @@
 
 .widePanel {
   width: min(36rem, 100%);
+}
+
+.stackedOverlay {
+  z-index: 10002;
 }

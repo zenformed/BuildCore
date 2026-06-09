@@ -77,13 +77,17 @@ export function ProjectDetailActionsMenu({
       <button
         ref={anchorRef}
         type="button"
-        className={`${styles.stageChip} ${styles.headerChipBtn}`}
+        className={styles.headerIconBtn}
         aria-expanded={open}
         aria-haspopup="menu"
+        aria-label={detail.actionsButton}
+        title={detail.actionsButton}
         disabled={menuDisabled}
         onClick={() => setOpen((value) => !value)}
       >
-        {detail.actionsButton}
+        <span className={`${styles.headerIconMark} ${styles.headerIconDots}`} aria-hidden>
+          ⋮
+        </span>
       </button>
       <WorkflowInlineMenu
         open={open}

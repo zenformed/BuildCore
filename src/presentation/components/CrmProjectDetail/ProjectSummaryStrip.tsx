@@ -2,34 +2,23 @@
 
 import type { KeyboardEvent, ReactElement, ReactNode } from 'react';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import {
-  projectHasPaymentMilestones,
-  type CrmPriority,
-  type CrmProjectDetail,
-} from '@/domain/crm';
+import { projectHasPaymentMilestones, type CrmProjectDetail } from '@/domain/crm';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
 import {
   formatCentsAsUsd,
   formatPhoneDisplay,
-  formatStageLabel,
 } from '@/presentation/features/crmProjects/crmProjectFormatters';
 import type { SummaryEditableField } from '@/presentation/features/crmProjectDetail/projectDetailFormModel';
 import { useProjectDetailShell } from '@/presentation/features/crmProjectDetail/ProjectDetailShellContext';
 import { useProjectDetailPaymentFinancials } from '@/presentation/features/crmProjectDetail/useProjectDetailPaymentFinancials';
 import { ProjectSummaryAddress } from './ProjectSummaryAddress';
-import shared from '@/presentation/components/crmShared/crmShared.module.css';
 import styles from './ProjectDetail.module.css';
-
-const PRIORITY_OPTIONS: readonly CrmPriority[] = ['low', 'normal', 'high', 'urgent'];
-
-function priorityClass(priority: string): string {
-  return shared[`priority_${priority}`] ?? shared.priority_normal;
-}
 
 type SummaryMetricProps = {
   label: string;
   fieldKey?: SummaryEditableField;
   savingField: SummaryEditableField | null;
+  className?: string;
   children: ReactNode;
 };
 
@@ -37,13 +26,16 @@ function SummaryMetric({
   label,
   fieldKey,
   savingField,
+  className,
   children,
 }: SummaryMetricProps): ReactElement {
   const isSaving = fieldKey != null && savingField === fieldKey;
 
   return (
     <div
-      className={`${styles.summaryMetric}${isSaving ? ` ${styles.summaryMetric_saving}` : ''}`}
+      className={`${styles.summaryMetric}${className ? ` ${className}` : ''}${
+        isSaving ? ` ${styles.summaryMetric_saving}` : ''
+      }`}
       role="group"
       aria-label={label}
       aria-busy={isSaving || undefined}
@@ -158,89 +150,6 @@ function SummaryInlineText({
   );
 }
 
-type SummaryInlineSelectProps = {
-  fieldKey: 'currentStageSlug' | 'priority';
-  label: string;
-  value: string;
-  savingField: SummaryEditableField | null;
-  disabled?: boolean;
-  options: readonly { value: string; label: string }[];
-  renderValue: (value: string) => ReactNode;
-  onPatch: (field: SummaryEditableField, value: string) => Promise<boolean>;
-};
-
-function SummaryInlineSelect({
-  fieldKey,
-  label,
-  value,
-  savingField,
-  disabled = false,
-  options,
-  renderValue,
-  onPatch,
-}: SummaryInlineSelectProps): ReactElement {
-  const [editing, setEditing] = useState(false);
-  const selectRef = useRef<HTMLSelectElement>(null);
-  const isSaving = savingField === fieldKey;
-
-  useEffect(() => {
-    if (editing) selectRef.current?.focus();
-  }, [editing]);
-
-  const onChange = useCallback(
-    async (next: string) => {
-      setEditing(false);
-      if (next === value) return;
-      await onPatch(fieldKey, next);
-    },
-    [fieldKey, onPatch, value]
-  );
-
-  const displayNode = renderValue(value);
-
-  return (
-    <SummaryMetric label={label} fieldKey={fieldKey} savingField={savingField}>
-      <div className={styles.summaryValueSlot}>
-        <span className={styles.summaryInlineGhost} aria-hidden>
-          {displayNode}
-        </span>
-        {editing ? (
-          <select
-            ref={selectRef}
-            className={styles.summaryInlineSelectOverlay}
-            value={value}
-            disabled={isSaving}
-            aria-label={label}
-            onChange={(e) => void onChange(e.target.value)}
-            onBlur={() => setEditing(false)}
-            onKeyDown={(e) => {
-              if (e.key === 'Escape') {
-                e.preventDefault();
-                setEditing(false);
-              }
-            }}
-          >
-            {options.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-        ) : (
-          <button
-            type="button"
-            className={styles.summaryInlineDisplayOverlay}
-            disabled={disabled || isSaving}
-            onClick={() => setEditing(true)}
-          >
-            {displayNode}
-          </button>
-        )}
-      </div>
-    </SummaryMetric>
-  );
-}
-
 export type ProjectSummaryStripProps = {
   project: CrmProjectDetail;
   memberView?: boolean;
@@ -268,107 +177,95 @@ export function ProjectSummaryStrip({
   const edit = content.projectDetail.edit;
   const hasPaymentMilestones = projectHasPaymentMilestones(project);
   const isSubproject = summary.parentProjectId != null;
-  const valueLabel = isSubproject ? fields.subValue : fields.projectValue;
-
-  const priorityOptions = PRIORITY_OPTIONS.map((p) => ({
-    value: p,
-    label: p,
-  }));
+  const valueLabel = isSubproject ? fields.subValue : fields.value;
 
   return (
     <section className={styles.summaryStrip} aria-label="Project summary">
       <div className={styles.summaryStripScroll}>
-      <SummaryInlineText
-        fieldKey="name"
-        label={fields.customer}
-        value={summary.name}
-        savingField={savingField}
-        disabled={readOnly}
-        onPatch={patchField}
-      />
-      <SummaryInlineText
-        fieldKey="contactName"
-        label={fields.contact}
-        value={summary.contact.name}
-        savingField={savingField}
-        disabled={readOnly}
-        onPatch={patchField}
-      />
-      <SummaryInlineText
-        fieldKey="email"
-        label={fields.email}
-        value={summary.contact.email}
-        savingField={savingField}
-        disabled={readOnly}
-        inputType="email"
-        displayClassName={styles.summaryLink}
-        onPatch={patchField}
-      />
-      <SummaryInlineText
-        fieldKey="phone"
-        label={fields.phone}
-        value={summary.contact.phone}
-        displayValue={formatPhoneDisplay(summary.contact.phone)}
-        savingField={savingField}
-        disabled={readOnly}
-        inputType="tel"
-        displayClassName={styles.summaryLink}
-        onPatch={patchField}
-      />
-      <ProjectSummaryAddress address={summary.address} label={fields.address} />
-      {memberView ? null : (
-        <SummaryMetric
-          label={content.projectDetail.currentStage}
-          fieldKey="currentStageSlug"
+        <SummaryInlineText
+          fieldKey="name"
+          label={fields.customer}
+          value={summary.name}
           savingField={savingField}
-        >
-          <span
-            className={shared.stagePill}
-            aria-busy={savingField === 'currentStageSlug' || undefined}
-          >
-            {formatStageLabel(summary.currentStageSlug)}
-          </span>
-        </SummaryMetric>
-      )}
-      <SummaryInlineSelect
-        fieldKey="priority"
-        label={fields.priority}
-        value={summary.priority}
-        savingField={savingField}
-        disabled={readOnly}
-        options={priorityOptions}
-        renderValue={(p) => <span className={priorityClass(p)}>{p}</span>}
-        onPatch={patchField}
-      />
-      {memberView ? null : (
-        <>
-          <SummaryMetric label={valueLabel} savingField={savingField}>
-            <span className={styles.summaryText}>
-              {formatCentsAsUsd(paymentFinancials.valueCents)}
-            </span>
-          </SummaryMetric>
-          <SummaryMetric label={fields.balance} savingField={savingField}>
-            <span
-              className={styles.summaryText}
-              title={hasPaymentMilestones ? edit.fields.balanceDerivedHint : undefined}
+          disabled={readOnly}
+          onPatch={patchField}
+        />
+        <SummaryInlineText
+          fieldKey="contactName"
+          label={fields.contact}
+          value={summary.contact.name}
+          savingField={savingField}
+          disabled={readOnly}
+          onPatch={patchField}
+        />
+        <SummaryInlineText
+          fieldKey="email"
+          label={fields.email}
+          value={summary.contact.email}
+          savingField={savingField}
+          disabled={readOnly}
+          inputType="email"
+          displayClassName={styles.summaryLink}
+          onPatch={patchField}
+        />
+        <SummaryInlineText
+          fieldKey="phone"
+          label={fields.phone}
+          value={summary.contact.phone}
+          displayValue={formatPhoneDisplay(summary.contact.phone)}
+          savingField={savingField}
+          disabled={readOnly}
+          inputType="tel"
+          displayClassName={styles.summaryLink}
+          onPatch={patchField}
+        />
+        <ProjectSummaryAddress address={summary.address} label={fields.address} />
+        {memberView ? null : (
+          <>
+            <SummaryMetric
+              label={valueLabel}
+              savingField={savingField}
+              className={styles.summaryMetricFinancial}
             >
-              {formatCentsAsUsd(paymentFinancials.balanceDueCents)}
-            </span>
-          </SummaryMetric>
-        </>
-      )}
-      {onEditClick ? (
-        <div className={styles.summaryStripEditAction}>
-          <button
-            type="button"
-            className={styles.summaryStripEditBtn}
-            onClick={onEditClick}
-            aria-label={edit.title}
-          >
-            <span className={styles.summaryStripEditIcon} aria-hidden />
-          </button>
-        </div>
-      ) : null}
+              <span className={styles.summaryText}>
+                {formatCentsAsUsd(paymentFinancials.valueCents)}
+              </span>
+            </SummaryMetric>
+            <SummaryMetric
+              label={fields.collected}
+              savingField={savingField}
+              className={styles.summaryMetricFinancial}
+            >
+              <span className={styles.summaryText}>
+                {formatCentsAsUsd(paymentFinancials.collectedCents)}
+              </span>
+            </SummaryMetric>
+            <SummaryMetric
+              label={fields.balance}
+              savingField={savingField}
+              className={styles.summaryMetricFinancial}
+            >
+              <span
+                className={styles.summaryText}
+                title={hasPaymentMilestones ? edit.fields.balanceDerivedHint : undefined}
+              >
+                {formatCentsAsUsd(paymentFinancials.balanceCents)}
+              </span>
+            </SummaryMetric>
+          </>
+        )}
+        {onEditClick ? (
+          <div className={styles.summaryStripEditAction}>
+            <button
+              type="button"
+              className={styles.summaryStripEditBtn}
+              onClick={onEditClick}
+              aria-label={edit.title}
+            >
+              <span className={styles.summaryStripEditIcon} aria-hidden />
+            </button>
+          </div>
+        ) : null}
       </div>
     </section>
   );

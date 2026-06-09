@@ -19,6 +19,8 @@ import { DetailPanelSectionRefresh } from '@/presentation/components/CrmProjectD
 import { CrmProjectDeleteConfirmModal } from '@/presentation/components/CrmProjects/CrmProjectDeleteConfirmModal';
 import { CreateCrmProjectModal } from '@/presentation/components/CrmProjects/CreateCrmProjectModal';
 import { DetailToast } from '@/presentation/components/CrmProjectDetail/DetailToast';
+import { ConfirmModal } from '@/presentation/components/ConfirmModal';
+import { useCrmProjectTableRowActions } from '@/presentation/features/crmProjects/useCrmProjectTableRowActions';
 import { CrmProjectsFilterMenu } from './CrmProjectsFilterMenu';
 import { CrmProjectsTable } from './CrmProjectsTable';
 import styles from './CrmProjects.module.css';
@@ -36,6 +38,7 @@ export function CrmProjectsPipeline({
 }: CrmProjectsPipelineProps): ReactElement {
   const router = useRouter();
   const panelCopy = content.crm.panel;
+  const detailCopy = content.projectDetail;
   const { organizationMembershipContext } = useSaaSProfile();
   const isMemberRole = isBuildCoreMemberRole(organizationMembershipContext?.role);
   const [searchQuery, setSearchQuery] = useState('');
@@ -60,6 +63,19 @@ export function CrmProjectsPipeline({
     handleConfirmDelete,
   } = useCrmProjectDeleteConfirmation({
     onProjectDeleted: removeProject,
+    onSuccess: (message) => setToast({ kind: 'success', message }),
+    onError: (message) => setToast({ kind: 'error', message }),
+  });
+
+  const {
+    busyProjectId,
+    pendingCompletionChange,
+    setPendingCompletionChange,
+    togglePriority,
+    requestCompletionChange,
+    confirmCompletionChange,
+  } = useCrmProjectTableRowActions({
+    onRefresh: refetch,
     onSuccess: (message) => setToast({ kind: 'success', message }),
     onError: (message) => setToast({ kind: 'error', message }),
   });
@@ -142,7 +158,10 @@ export function CrmProjectsPipeline({
           isMemberRole={isMemberRole}
           canDelete={canDelete && !isMemberRole}
           deletingProjectId={deletingProjectId}
+          busyProjectId={busyProjectId}
           onRequestDelete={setPendingDeleteProject}
+          onTogglePriority={togglePriority}
+          onRequestCompletionChange={requestCompletionChange}
         />
       </div>
       <CreateCrmProjectModal
@@ -155,6 +174,31 @@ export function CrmProjectsPipeline({
         pendingProject={pendingDeleteProject}
         onClose={() => setPendingDeleteProject(null)}
         onConfirm={() => void handleConfirmDelete()}
+      />
+      <ConfirmModal
+        isOpen={pendingCompletionChange != null}
+        onClose={() => setPendingCompletionChange(null)}
+        onConfirm={() => {
+          void confirmCompletionChange();
+        }}
+        title={
+          pendingCompletionChange?.complete
+            ? detailCopy.markCompleteConfirmTitle
+            : detailCopy.markIncompleteConfirmTitle
+        }
+        message={
+          pendingCompletionChange?.complete
+            ? detailCopy.markCompleteConfirmMessage
+            : detailCopy.markIncompleteConfirmMessage
+        }
+        confirmLabel={
+          pendingCompletionChange?.complete
+            ? detailCopy.markComplete
+            : detailCopy.markIncomplete
+        }
+        cancelLabel={detailCopy.workflow.archiveTaskCancelLabel}
+        variant="primary"
+        hideIcon
       />
     </section>
   );

@@ -8,6 +8,7 @@ import { CRM_TRADE_TYPE_OPTIONS } from '@/presentation/features/crmProjects/crmP
 import type { CreateCrmProjectFormState } from '@/presentation/features/crmCreate/createCrmProjectFormModel';
 import type { CrmProjectAssigneeOption } from '@/presentation/features/crmProjects/crmProjectAssigneeOptions';
 import { CreateFormAssigneePicker } from '@/presentation/components/crmShared/CreateFormAssigneePicker';
+import { CreateFormSelectPicker } from '@/presentation/components/crmShared/CreateFormSelectPicker';
 import { PriorityPillPicker } from '@/presentation/components/crmShared/PriorityPillPicker';
 import formStyles from './CreateCrmProjectDrawer.module.css';
 
@@ -60,19 +61,6 @@ export function CreateCrmProjectFormFields({
             onChange={(priority) => updateField('priority', priority)}
           />
         </div>
-        {assigneeOptions.length > 0 ? (
-          <div className={formStyles.fieldAssigneeCompact}>
-            <span className={formStyles.label}>{create.fields.assignedShort}</span>
-            <CreateFormAssigneePicker
-              value={form.assignedMemberId}
-              options={assigneeOptions}
-              disabled={saving}
-              unassignedLabel={create.assigneeUnassigned}
-              ariaLabel={create.fields.assignedShort}
-              onChange={(memberId) => updateField('assignedMemberId', memberId)}
-            />
-          </div>
-        ) : null}
       </div>
 
       <div className={formStyles.rowTradeDeal}>
@@ -94,6 +82,19 @@ export function CreateCrmProjectFormFields({
             ))}
           </select>
         </div>
+        {assigneeOptions.length > 0 ? (
+          <div className={formStyles.fieldAssigneeCompact}>
+            <span className={formStyles.label}>{create.fields.assignedShort}</span>
+            <CreateFormAssigneePicker
+              value={form.assignedMemberId}
+              options={assigneeOptions}
+              disabled={saving}
+              unassignedLabel={create.assigneeUnassigned}
+              ariaLabel={create.fields.assignedShort}
+              onChange={(memberId) => updateField('assignedMemberId', memberId)}
+            />
+          </div>
+        ) : null}
       </div>
 
       <div className={formStyles.field}>
@@ -181,20 +182,18 @@ export function CreateCrmProjectFormFields({
           <label className={formStyles.label} htmlFor="crm-create-state">
             {create.fields.state}
           </label>
-          <select
+          <CreateFormSelectPicker
             id="crm-create-state"
-            className={formStyles.select}
             value={form.state}
+            options={US_STATE_OPTIONS.map((state) => ({
+              value: state.code,
+              label: state.name,
+            }))}
+            placeholder="Select state"
             disabled={saving}
-            onChange={(e) => updateField('state', e.target.value)}
-          >
-            <option value="">Select state</option>
-            {US_STATE_OPTIONS.map((state) => (
-              <option key={state.code} value={state.code}>
-                {state.name}
-              </option>
-            ))}
-          </select>
+            ariaLabel={create.fields.state}
+            onChange={(state) => updateField('state', state)}
+          />
         </div>
         <div className={formStyles.field}>
           <label className={formStyles.label} htmlFor="crm-create-postal-code">

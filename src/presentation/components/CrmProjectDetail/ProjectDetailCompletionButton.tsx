@@ -1,6 +1,7 @@
 'use client';
 
 import type { ReactElement } from 'react';
+import { CrmProjectStatusCircleIcon } from '@/presentation/components/crmShared/CrmProjectStatusCircleIcon';
 import styles from './ProjectDetail.module.css';
 
 export type ProjectDetailCompletionButtonProps = {
@@ -20,18 +21,20 @@ export function ProjectDetailCompletionButton({
   markCompleteLabel,
   markIncompleteLabel,
 }: ProjectDetailCompletionButtonProps): ReactElement {
+  const label = isComplete ? markIncompleteLabel : markCompleteLabel;
+
   return (
     <button
       type="button"
-      className={
-        isComplete
-          ? `${styles.stageChip} ${styles.headerChipBtn} ${styles.completionBtn} ${styles.completionBtnComplete}`
-          : `${styles.stageChip} ${styles.headerChipBtn} ${styles.completionBtn}`
-      }
+      className={styles.headerIconBtn}
       disabled={busy}
+      title={label}
+      aria-label={label}
+      aria-pressed={isComplete}
+      aria-busy={busy || undefined}
       onClick={isComplete ? onMarkIncomplete : onMarkComplete}
     >
-      {isComplete ? markIncompleteLabel : markCompleteLabel}
+      <CrmProjectStatusCircleIcon kind="complete" active={isComplete} size={18} />
     </button>
   );
 }

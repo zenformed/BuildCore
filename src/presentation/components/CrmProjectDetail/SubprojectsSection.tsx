@@ -8,10 +8,12 @@ import { CrmProjectDeleteConfirmModal } from '@/presentation/components/CrmProje
 import { CreateCrmProjectModal } from '@/presentation/components/CrmProjects/CreateCrmProjectModal';
 import { CrmProjectsTable } from '@/presentation/components/CrmProjects/CrmProjectsTable';
 import { DetailToast } from '@/presentation/components/CrmProjectDetail/DetailToast';
+import { ConfirmModal } from '@/presentation/components/ConfirmModal';
 import {
   filterSubprojects,
 } from '@/presentation/features/crmProjectDetail/useCrmProjectChildSummaries';
 import { useCrmProjectDeleteConfirmation } from '@/presentation/features/crmProjects/useCrmProjectDeleteConfirmation';
+import { useCrmProjectTableRowActions } from '@/presentation/features/crmProjects/useCrmProjectTableRowActions';
 import { useCrmProjectPaymentTasksIndex } from '@/presentation/features/crmProjects/useCrmProjectPaymentTasksIndex';
 import { useProjectDetailShell } from '@/presentation/features/crmProjectDetail/ProjectDetailShellContext';
 import { useSaaSProfile } from '@/presentation/hooks/useSaaSProfile';
@@ -28,6 +30,7 @@ export function SubprojectsSection(): ReactElement | null {
   const panelId = useId();
   const copy = content.projectDetail.subprojects;
   const deleteCopy = copy.delete;
+  const detailCopy = content.projectDetail;
   const { project, routes, parentRouteSlug, subSlug, isMemberRole, childSummaries } =
     useProjectDetailShell();
   const { organizationMembershipContext } = useSaaSProfile();
@@ -56,6 +59,19 @@ export function SubprojectsSection(): ReactElement | null {
       refetch();
     },
     onSuccess: () => setToast({ kind: 'success', message: deleteCopy.success }),
+    onError: (message) => setToast({ kind: 'error', message }),
+  });
+
+  const {
+    busyProjectId,
+    pendingCompletionChange,
+    setPendingCompletionChange,
+    togglePriority,
+    requestCompletionChange,
+    confirmCompletionChange,
+  } = useCrmProjectTableRowActions({
+    onRefresh: refetch,
+    onSuccess: (message) => setToast({ kind: 'success', message }),
     onError: (message) => setToast({ kind: 'error', message }),
   });
 
@@ -134,11 +150,13 @@ export function SubprojectsSection(): ReactElement | null {
               isMemberRole={isMemberRole}
               canDelete={canDelete && !isMemberRole}
               deletingProjectId={deletingProjectId}
+              busyProjectId={busyProjectId}
               onRequestDelete={setPendingDeleteProject}
+              onTogglePriority={togglePriority}
+              onRequestCompletionChange={requestCompletionChange}
               showActions={!isMemberRole}
               projectColumnLabel={copy.projectColumn}
               emptyMessage={copy.empty}
-              deleteLabels={deleteCopy}
               onRowClick={(child) => router.push(routes.subproject(child.slug))}
             />
           </div>
@@ -161,13 +179,40 @@ export function SubprojectsSection(): ReactElement | null {
       ) : null}
 
       {!isMemberRole ? (
-        <CrmProjectDeleteConfirmModal
-          pendingProject={pendingDeleteProject}
-          onClose={() => setPendingDeleteProject(null)}
-          onConfirm={() => void handleConfirmDelete()}
-          confirmTitle={deleteCopy.confirmTitle}
-          confirmMessage={deleteCopy.confirmMessage}
-        />
+        <>
+          <CrmProjectDeleteConfirmModal
+            pendingProject={pendingDeleteProject}
+            onClose={() => setPendingDeleteProject(null)}
+            onConfirm={() => void handleConfirmDelete()}
+            confirmTitle={deleteCopy.confirmTitle}
+            confirmMessage={deleteCopy.confirmMessage}
+          />
+          <ConfirmModal
+            isOpen={pendingCompletionChange != null}
+            onClose={() => setPendingCompletionChange(null)}
+            onConfirm={() => {
+              void confirmCompletionChange();
+            }}
+            title={
+              pendingCompletionChange?.complete
+                ? detailCopy.markCompleteConfirmTitle
+                : detailCopy.markIncompleteConfirmTitle
+            }
+            message={
+              pendingCompletionChange?.complete
+                ? detailCopy.markCompleteConfirmMessage
+                : detailCopy.markIncompleteConfirmMessage
+            }
+            confirmLabel={
+              pendingCompletionChange?.complete
+                ? detailCopy.markComplete
+                : detailCopy.markIncomplete
+            }
+            cancelLabel={detailCopy.workflow.archiveTaskCancelLabel}
+            variant="primary"
+            hideIcon
+          />
+        </>
       ) : null}
     </section>
   );

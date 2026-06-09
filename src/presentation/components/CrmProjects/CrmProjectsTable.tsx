@@ -31,7 +31,10 @@ export type CrmProjectsTableProps = {
   isMemberRole?: boolean;
   canDelete?: boolean;
   deletingProjectId?: string | null;
+  busyProjectId?: string | null;
   onRequestDelete?: (project: CrmProjectSummary) => void;
+  onTogglePriority?: (project: CrmProjectSummary) => void | Promise<void>;
+  onRequestCompletionChange?: (project: CrmProjectSummary) => void;
   showActions?: boolean;
   projectColumnLabel?: string;
   emptyMessage?: string;
@@ -51,7 +54,10 @@ export function CrmProjectsTable({
   isMemberRole = false,
   canDelete = false,
   deletingProjectId = null,
+  busyProjectId = null,
   onRequestDelete,
+  onTogglePriority,
+  onRequestCompletionChange,
   showActions = true,
   projectColumnLabel,
   emptyMessage,
@@ -88,13 +94,19 @@ export function CrmProjectsTable({
               <span role="columnheader">{COLUMNS.contact}</span>
               <span role="columnheader">{COLUMNS.email}</span>
               <span role="columnheader">{COLUMNS.phone}</span>
-              <span role="columnheader">{COLUMNS.priority}</span>
-              {!isMemberRole ? <span role="columnheader">{COLUMNS.stage}</span> : null}
               <span role="columnheader">{COLUMNS.notes}</span>
               {!isMemberRole ? (
-                <span role="columnheader" className={styles.gridHeaderDealValue}>
-                  {COLUMNS.dealValue}
-                </span>
+                <>
+                  <span role="columnheader" className={styles.gridHeaderFinancial}>
+                    {COLUMNS.value}
+                  </span>
+                  <span role="columnheader" className={styles.gridHeaderFinancial}>
+                    {COLUMNS.collected}
+                  </span>
+                  <span role="columnheader" className={styles.gridHeaderFinancial}>
+                    {COLUMNS.balance}
+                  </span>
+                </>
               ) : null}
               <span role="columnheader" className={styles.gridHeaderAssignee}>
                 {COLUMNS.assigned}
@@ -133,15 +145,17 @@ export function CrmProjectsTable({
                       key={project.id}
                       project={project}
                       variant={rowVariant}
-                      valueCents={rowFinancials.valueCents}
+                      financials={rowFinancials}
                       valueLabel={rowValueLabel}
                       onRowClick={() => onRowClick(project)}
                       isMemberRole={isMemberRole}
                       canDelete={canDelete && showActions}
                       showActions={showActions}
+                      busy={busyProjectId === project.id}
                       deleting={deletingProjectId === project.id}
                       onRequestDelete={onRequestDelete}
-                      deleteLabels={deleteLabels}
+                      onTogglePriority={onTogglePriority}
+                      onRequestCompletionChange={onRequestCompletionChange}
                       hasChildren={hasChildren}
                       isExpanded={isExpanded}
                       onToggleExpand={hasChildren ? () => toggleExpanded(project.id) : undefined}
@@ -162,7 +176,7 @@ export function CrmProjectsTable({
                       key={child.id}
                       project={child}
                       variant="child"
-                      valueCents={childFinancials.valueCents}
+                      financials={childFinancials}
                       valueLabel={valueLabels.subValueLabel}
                       onRowClick={() =>
                         onSubprojectRowClick
@@ -172,9 +186,11 @@ export function CrmProjectsTable({
                       isMemberRole={isMemberRole}
                       canDelete={canDelete && showActions}
                       showActions={showActions}
+                      busy={busyProjectId === child.id}
                       deleting={deletingProjectId === child.id}
                       onRequestDelete={onRequestDelete}
-                      deleteLabels={deleteLabels}
+                      onTogglePriority={onTogglePriority}
+                      onRequestCompletionChange={onRequestCompletionChange}
                     />
                     );
                   });

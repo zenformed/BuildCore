@@ -29,7 +29,7 @@ export function MilestoneSummaryPanel({ project }: MilestoneSummaryPanelProps): 
   });
   const fields = content.projectDetail.fields;
   const isSubproject = summary.parentProjectId != null;
-  const valueLabel = isSubproject ? fields.subValue : fields.projectValue;
+  const valueLabel = isSubproject ? fields.subValue : fields.value;
 
   return (
     <section className={styles.card} aria-labelledby="milestone-summary-heading">
@@ -42,18 +42,20 @@ export function MilestoneSummaryPanel({ project }: MilestoneSummaryPanelProps): 
           <span className={styles.metricValue}>{formatCentsAsUsd(paymentFinancials.valueCents)}</span>
         </div>
         <div className={styles.metric}>
+          <span className={styles.metricLabel}>{fields.collected}</span>
+          <span className={styles.metricValue}>
+            {formatCentsAsUsd(paymentFinancials.collectedCents)}
+          </span>
+        </div>
+        <div className={styles.metric}>
           <span className={styles.metricLabel}>{fields.balance}</span>
           <span className={styles.metricValue}>
-            {formatCentsAsUsd(paymentFinancials.balanceDueCents)}
+            {formatCentsAsUsd(paymentFinancials.balanceCents)}
           </span>
         </div>
         <div className={styles.metric}>
           <span className={styles.metricLabel}>{fields.invoiced}</span>
           <span className={styles.metricValue}>{formatCentsAsUsd(milestonePayment.invoicedCents)}</span>
-        </div>
-        <div className={styles.metric}>
-          <span className={styles.metricLabel}>{fields.paid}</span>
-          <span className={styles.metricValue}>{formatCentsAsUsd(milestonePayment.paidCents)}</span>
         </div>
       </div>
       {milestonePayment.milestones.length === 0 ? (

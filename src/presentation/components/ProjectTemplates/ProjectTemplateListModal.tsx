@@ -8,8 +8,11 @@ import { CenterConfirmDialog } from '@/presentation/components/CenterConfirmDial
 import { ProjectTemplateListItem } from './ProjectTemplateListItem';
 import styles from './ProjectTemplates.module.css';
 
+export type ProjectTemplateListModalMode = 'load' | 'manage';
+
 export type ProjectTemplateListModalProps = {
   readonly templateScope: BuildCoreProjectTemplateScope;
+  readonly mode?: ProjectTemplateListModalMode;
   readonly isOpen: boolean;
   readonly templates: readonly BuildCoreProjectTemplate[];
   readonly loading: boolean;
@@ -20,10 +23,12 @@ export type ProjectTemplateListModalProps = {
   readonly onLoad: (template: BuildCoreProjectTemplate) => void;
   readonly onDelete: (template: BuildCoreProjectTemplate) => void;
   readonly onToggleDefault: (template: BuildCoreProjectTemplate) => void;
+  readonly overlayClassName?: string;
 };
 
 export function ProjectTemplateListModal({
   templateScope,
+  mode = 'load',
   isOpen,
   templates,
   loading,
@@ -34,8 +39,10 @@ export function ProjectTemplateListModal({
   onLoad,
   onDelete,
   onToggleDefault,
+  overlayClassName,
 }: ProjectTemplateListModalProps): ReactElement {
   const copy = getProjectTemplateScopeCopy(templateScope).load;
+  const isManageMode = mode === 'manage';
 
   let body: ReactElement;
   if (loading) {
@@ -54,6 +61,7 @@ export function ProjectTemplateListModal({
             template={template}
             busy={busy}
             defaultBusy={settingDefaultId === template.id}
+            showLoad={!isManageMode}
             onLoad={onLoad}
             onDelete={onDelete}
             onToggleDefault={onToggleDefault}
@@ -66,13 +74,18 @@ export function ProjectTemplateListModal({
   return (
     <CenterConfirmDialog
       isOpen={isOpen}
-      title={copy.title}
+      title={isManageMode ? copy.manageTitle : copy.title}
       body={body}
-      cancelLabel={copy.close}
+      cancelLabel={isManageMode ? copy.back : copy.close}
       onClose={onClose}
       cancelDisabled={busy}
-      closeAriaLabel={copy.closeAriaLabel}
+      closeAriaLabel={isManageMode ? copy.backAriaLabel : copy.closeAriaLabel}
       panelClassName={styles.widePanel}
+      overlayClassName={
+        isManageMode
+          ? [styles.stackedOverlay, overlayClassName].filter(Boolean).join(' ')
+          : overlayClassName
+      }
     />
   );
 }

@@ -289,29 +289,68 @@
   color: #fdba74;
 }
 
-.projectCompleteIcon {
+.statusCircleIconSlot {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   flex-shrink: 0;
   width: 1rem;
   height: 1rem;
-  border-radius: 50%;
-  background: #16a34a;
+}
+
+.statusCircleIcon {
+  display: block;
+  flex-shrink: 0;
+}
+
+.statusCircleIconStack {
   position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
 }
 
-.projectCompleteIcon::after {
-  content: '';
+.statusCircleIconSymbol {
   position: absolute;
-  left: 0.32rem;
-  top: 0.2rem;
-  width: 0.28rem;
-  height: 0.48rem;
-  border: solid #fff;
-  border-width: 0 0.14rem 0.14rem 0;
-  transform: rotate(45deg);
+  color: #fff;
 }
 
-:global([data-theme='dark']) .projectCompleteIcon {
-  background: #22c55e;
+.statusCircleIcon_priorityInactive {
+  color: #94a3b8;
+}
+
+.statusCircleIcon_priorityActive {
+  color: #dc2626;
+}
+
+.statusCircleIcon_completeInactive {
+  color: #94a3b8;
+}
+
+.statusCircleIcon_completeActive {
+  color: #16a34a;
+}
+
+.statusCircleIcon_incomplete {
+  color: #dc2626;
+}
+
+:global([data-theme='dark']) .statusCircleIcon_priorityInactive,
+:global([data-theme='dark']) .statusCircleIcon_completeInactive {
+  color: #64748b;
+}
+
+:global([data-theme='dark']) .statusCircleIcon_priorityActive {
+  color: #f87171;
+}
+
+:global([data-theme='dark']) .statusCircleIcon_completeActive {
+  color: #4ade80;
+}
+
+:global([data-theme='dark']) .statusCircleIcon_incomplete {
+  color: #f87171;
 }
 
 .rowDeleteHeader {

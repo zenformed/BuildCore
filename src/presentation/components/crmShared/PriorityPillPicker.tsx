@@ -44,7 +44,6 @@ export function PriorityPillPicker({
         onClick={() => setOpen((isOpen) => !isOpen)}
       >
         <span className={priorityClass(value)}>{value}</span>
-        <span className={formStyles.priorityPickerCaret} aria-hidden />
       </button>
       <WorkflowInlineMenu
         open={open}

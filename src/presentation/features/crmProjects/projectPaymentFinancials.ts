@@ -1,9 +1,7 @@
 import type { CrmProjectSummary } from '@/domain/crm';
 import {
-  computeBalanceDueFromPayments,
-  computeBalanceDueWithChildren,
-  computeProjectValueFromPayments,
-  computeProjectValueWithChildren,
+  computePaymentFinancialsFromTasks,
+  computePaymentFinancialsWithChildren,
   getPaymentTasksForProject,
   type CrmProjectPaymentTasksIndex,
   type ProjectPaymentFinancials,
@@ -18,10 +16,7 @@ export function resolveDashboardRootRowFinancials(
   const childTasksList = visibleChildren.map((child) =>
     getPaymentTasksForProject(paymentTasksIndex, child.id)
   );
-  return {
-    valueCents: computeProjectValueWithChildren(parentTasks, childTasksList),
-    balanceDueCents: computeBalanceDueWithChildren(parentTasks, childTasksList),
-  };
+  return computePaymentFinancialsWithChildren(parentTasks, childTasksList);
 }
 
 export function resolveDashboardChildRowFinancials(
@@ -29,8 +24,5 @@ export function resolveDashboardChildRowFinancials(
   paymentTasksIndex: CrmProjectPaymentTasksIndex
 ): ProjectPaymentFinancials {
   const tasks = getPaymentTasksForProject(paymentTasksIndex, child.id);
-  return {
-    valueCents: computeProjectValueFromPayments(tasks),
-    balanceDueCents: computeBalanceDueFromPayments(tasks),
-  };
+  return computePaymentFinancialsFromTasks(tasks);
 }

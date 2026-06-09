@@ -1,11 +1,14 @@
 'use client';
 
 import type { KeyboardEvent, ReactElement } from 'react';
-import type { CrmPriority, CrmProjectSummary } from '@/domain/crm';
+import type { CrmProjectSummary } from '@/domain/crm';
+import type { ProjectPaymentFinancials } from '@/domain/crm/projectPaymentValue';
 import { isCrmProjectComplete } from '@/domain/crm';
+import { isProjectPriorityUrgent } from '@/domain/crm/projectPriorityToggle';
 import { resolveProjectSummaryProgressDisplay } from '@/domain/buildcore/projectPipelineProgress';
 import { ProjectProgressPercent } from '@/presentation/components/CrmProjectDetail/ProjectProgressPercent';
 import { CrmProjectCompleteIcon } from '@/presentation/components/crmShared/CrmProjectCompleteIcon';
+import { CrmProjectPriorityIcon } from '@/presentation/components/crmShared/CrmProjectPriorityIcon';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
 import {
   formatCentsAsUsd,
@@ -14,6 +17,7 @@ import {
   getProjectTradeSubtitle,
 } from '@/presentation/features/crmProjects/crmProjectFormatters';
 import { TeamMemberAvatar } from '@/presentation/components/CrmProjectDetail/TeamMemberAvatar';
+import { CrmProjectTableRowActionsMenu } from './CrmProjectTableRowActionsMenu';
 import shared from '@/presentation/components/crmShared/crmShared.module.css';
 import styles from './CrmProjects.module.css';
 
@@ -25,48 +29,45 @@ export type CrmProjectTableRowDeleteLabels = {
 export type CrmProjectTableRowProps = {
   project: CrmProjectSummary;
   variant?: 'root' | 'child';
-  valueCents?: number;
+  financials?: ProjectPaymentFinancials;
   valueLabel?: string;
   onRowClick: () => void;
   isMemberRole?: boolean;
   canDelete?: boolean;
   showActions?: boolean;
   deleting?: boolean;
+  busy?: boolean;
   onRequestDelete?: (project: CrmProjectSummary) => void;
-  deleteLabels?: CrmProjectTableRowDeleteLabels;
+  onTogglePriority?: (project: CrmProjectSummary) => void | Promise<void>;
+  onRequestCompletionChange?: (project: CrmProjectSummary) => void;
   hasChildren?: boolean;
   isExpanded?: boolean;
   onToggleExpand?: () => void;
 };
 
-function priorityClassName(priority: CrmPriority): string {
-  return shared[`priority_${priority}`] ?? shared.priority_normal;
-}
-
 export function CrmProjectTableRow({
   project,
   variant = 'root',
-  valueCents,
+  financials,
   valueLabel,
   onRowClick,
   isMemberRole = false,
   canDelete = false,
   showActions = true,
   deleting = false,
+  busy = false,
   onRequestDelete,
-  deleteLabels,
+  onTogglePriority,
+  onRequestCompletionChange,
   hasChildren = false,
   isExpanded = false,
   onToggleExpand,
 }: CrmProjectTableRowProps): ReactElement {
-  const deleteCopy = content.crm.delete;
   const tableCopy = content.crm.table;
-  const deleteAction = deleteLabels?.action ?? deleteCopy.action;
-  const deleteAriaLabel = deleteLabels?.actionAriaLabel ?? deleteCopy.actionAriaLabel;
   const tradeSubtitle = getProjectTradeSubtitle(project.tradeType);
   const progress = resolveProjectSummaryProgressDisplay(project);
   const isChild = variant === 'child';
-  const displayValueCents = valueCents ?? 0;
+  const displayFinancials = financials ?? { valueCents: 0, collectedCents: 0, balanceCents: 0 };
   const valueLabels = tableCopy.columns;
   const displayValueLabel =
     valueLabel ?? (isChild ? valueLabels.subValueLabel : valueLabels.projectValueLabel);
@@ -97,6 +98,9 @@ export function CrmProjectTableRow({
     >
       <span className={projectCellClass} role="cell">
         <span className={styles.projectNameRow}>
+          {isProjectPriorityUrgent(project.priority) ? (
+            <CrmProjectPriorityIcon ariaLabel={tableCopy.priorityMarkAriaLabel} />
+          ) : null}
           {isCrmProjectComplete(project) ? (
             <CrmProjectCompleteIcon ariaLabel={tableCopy.completionCheckAriaLabel} />
           ) : null}
@@ -125,7 +129,14 @@ export function CrmProjectTableRow({
           ) : null}
         </span>
         {tradeSubtitle ? <span className={styles.projectMeta}>{tradeSubtitle}</span> : null}
-        <ProjectProgressPercent variant="compact" progress={progress} />
+        <span className={styles.projectProgressRow}>
+          <ProjectProgressPercent variant="compact" progress={progress} />
+          {!isMemberRole ? (
+            <span className={`${shared.stagePill} ${styles.projectMetaStagePill}`}>
+              {formatStageLabel(project.currentStageSlug)}
+            </span>
+          ) : null}
+        </span>
       </span>
       <span className={`${styles.gridCell} ${styles.gridCellAlignCenter}`} role="cell">
         {project.contact.name}
@@ -140,14 +151,6 @@ export function CrmProjectTableRow({
       <span className={`${styles.gridCell} ${styles.gridCellAlignCenter}`} role="cell">
         {formatPhoneDisplay(project.contact.phone) || '—'}
       </span>
-      <span className={`${styles.gridCell} ${styles.gridCellAlignCenter}`} role="cell">
-        <span className={priorityClassName(project.priority)}>{project.priority}</span>
-      </span>
-      {!isMemberRole ? (
-        <span className={`${styles.gridCell} ${styles.gridCellAlignCenter}`} role="cell">
-          <span className={shared.stagePill}>{formatStageLabel(project.currentStageSlug)}</span>
-        </span>
-      ) : null}
       <span
         className={`${styles.gridCell} ${styles.gridCellAlignCenter}`}
         role="cell"
@@ -156,13 +159,29 @@ export function CrmProjectTableRow({
         <span className={styles.gridCellWrap}>{project.notesPreview ?? '—'}</span>
       </span>
       {!isMemberRole ? (
-        <span
-          className={`${styles.gridCell} ${styles.gridCellDealValue} ${styles.gridCellAlignCenter}`}
-          role="cell"
-          title={displayValueLabel}
-        >
-          {formatCentsAsUsd(displayValueCents)}
-        </span>
+        <>
+          <span
+            className={`${styles.gridCell} ${styles.gridCellFinancial} ${styles.gridCellAlignCenter}`}
+            role="cell"
+            title={displayValueLabel}
+          >
+            {formatCentsAsUsd(displayFinancials.valueCents)}
+          </span>
+          <span
+            className={`${styles.gridCell} ${styles.gridCellFinancial} ${styles.gridCellAlignCenter}`}
+            role="cell"
+            title={valueLabels.collected}
+          >
+            {formatCentsAsUsd(displayFinancials.collectedCents)}
+          </span>
+          <span
+            className={`${styles.gridCell} ${styles.gridCellFinancial} ${styles.gridCellAlignCenter}`}
+            role="cell"
+            title={valueLabels.balance}
+          >
+            {formatCentsAsUsd(displayFinancials.balanceCents)}
+          </span>
+        </>
       ) : null}
       <span className={styles.gridCellAssignee} role="cell">
         {project.assignedTo ? (
@@ -175,23 +194,14 @@ export function CrmProjectTableRow({
       </span>
       {!isMemberRole && showActions ? (
         <span className={styles.gridCellActions} role="cell">
-          {canDelete ? (
-            <span className={shared.rowDeleteCell}>
-              <button
-                type="button"
-                className={shared.rowDeleteBtn}
-                disabled={deleting}
-                title={deleteAction}
-                aria-label={deleteAriaLabel(project.name)}
-                onClick={(event) => {
-                  event.stopPropagation();
-                  onRequestDelete?.(project);
-                }}
-              >
-                <span aria-hidden>🗑️</span>
-              </button>
-            </span>
-          ) : null}
+          <CrmProjectTableRowActionsMenu
+            project={project}
+            busy={busy || deleting}
+            canDelete={canDelete}
+            onRequestDelete={onRequestDelete}
+            onTogglePriority={onTogglePriority}
+            onRequestCompletionChange={onRequestCompletionChange}
+          />
         </span>
       ) : null}
     </div>

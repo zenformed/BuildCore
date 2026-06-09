@@ -45,6 +45,7 @@ import type {
 } from '@/domain/crm';
 
 import { buildProjectBudgetSummary, resolvePaymentTimingFields } from '@/domain/crm';
+import { CRM_PROJECT_COMPLETE_STAGE_SLUG } from '@/domain/crm/projectCompletion';
 
 import type {
 
@@ -211,6 +212,8 @@ function applyProjectCompletion(
     ...detail.summary,
     completedAt: complete ? now : null,
     completedBy: complete ? actor : null,
+    priority: complete ? 'low' : detail.summary.priority,
+    currentStageSlug: complete ? CRM_PROJECT_COMPLETE_STAGE_SLUG : detail.summary.currentStageSlug,
     lastUpdatedAt: now,
   };
   const accountability: CrmAccountabilityAction = {
@@ -220,7 +223,7 @@ function applyProjectCompletion(
     action: complete
       ? `Marked project ${detail.summary.name} as complete`
       : `Marked project ${detail.summary.name} as incomplete`,
-    stageSlug: detail.summary.currentStageSlug,
+    stageSlug: summary.currentStageSlug,
   };
   return saveAndReturn(detail.summary.slug, {
     ...detail,

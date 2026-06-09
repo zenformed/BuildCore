@@ -3,10 +3,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { CrmProjectDetail, CrmProjectSummary } from '@/domain/crm';
 import {
-  computeBalanceDueFromPayments,
-  computeBalanceDueWithChildren,
-  computeProjectValueFromPayments,
-  computeProjectValueWithChildren,
+  computePaymentFinancialsFromTasks,
+  computePaymentFinancialsWithChildren,
   getPaymentTasksForProject,
   type CrmProjectPaymentTasksIndex,
   type ProjectPaymentFinancials,
@@ -60,15 +58,9 @@ export function useProjectDetailPaymentFinancials({
       const childTasksList = childSummaries.map((child) =>
         getPaymentTasksForProject(index, child.id)
       );
-      return {
-        valueCents: computeProjectValueWithChildren(ownTasks, childTasksList),
-        balanceDueCents: computeBalanceDueWithChildren(ownTasks, childTasksList),
-      };
+      return computePaymentFinancialsWithChildren(ownTasks, childTasksList);
     }
 
-    return {
-      valueCents: computeProjectValueFromPayments(ownTasks),
-      balanceDueCents: computeBalanceDueFromPayments(ownTasks),
-    };
+    return computePaymentFinancialsFromTasks(ownTasks);
   }, [childSummaries, paymentTasksIndex, project]);
 }

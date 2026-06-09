@@ -3,7 +3,7 @@
 import type { ReactElement } from 'react';
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import type { CrmPriority, CrmTradeType } from '@/domain/crm';
+import type { CrmTradeType } from '@/domain/crm';
 import { canManageBuildCoreProjectTemplates } from '@/domain/buildcore/projectTemplateAccess';
 import {
   createProjectTemplateDraftSummary,
@@ -166,6 +166,9 @@ export function CrmProjectDraftRow({
               </option>
             ))}
           </select>
+          <span className={`${shared.stagePill} ${styles.projectMetaStagePill}`}>
+            {formatStageLabel('new-lead')}
+          </span>
         </span>
         <span className={draftFieldCell} role="cell">
           <input
@@ -195,24 +198,6 @@ export function CrmProjectDraftRow({
             placeholder={create.fields.phone}
             onChange={(e) => updateField('phone', e.target.value)}
           />
-        </span>
-        <span className={draftFieldCell} role="cell">
-          <select
-            className={styles.draftSelect}
-            value={form.priority}
-            disabled={saving}
-            aria-label={create.fields.priority}
-            onChange={(e) => updateField('priority', e.target.value as CrmPriority)}
-          >
-            {(['low', 'normal', 'high', 'urgent'] as const).map((priority) => (
-              <option key={priority} value={priority}>
-                {priority}
-              </option>
-            ))}
-          </select>
-        </span>
-        <span className={`${draftFieldCell} ${styles.gridCellAlignCenter}`} role="cell">
-          <span className={shared.stagePill}>{formatStageLabel('new-lead')}</span>
         </span>
         <span className={`${draftFieldCell} ${styles.gridFieldCellWrap}`} role="cell">
           <input

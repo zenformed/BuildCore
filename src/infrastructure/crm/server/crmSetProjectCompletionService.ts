@@ -1,5 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { CrmProjectDetail } from '@/domain/crm';
+import { CRM_PROJECT_COMPLETE_STAGE_SLUG } from '@/domain/crm/projectCompletion';
 import { appendCrmAccountabilityEvent } from './crmAccountability';
 import { getCrmProjectDetailBySlugForOrg } from './crmReadService';
 
@@ -21,6 +22,9 @@ export async function setCrmProjectCompletionBySlugForOrg(
       completed_at: complete ? now : null,
       completed_by: complete ? actorUserId : null,
       last_activity_at: now,
+      ...(complete
+        ? { priority: 'low', current_stage_slug: CRM_PROJECT_COMPLETE_STAGE_SLUG }
+        : {}),
     })
     .eq('id', existing.summary.id)
     .eq('organization_id', organizationId);

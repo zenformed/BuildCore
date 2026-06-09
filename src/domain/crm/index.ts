@@ -20,6 +20,10 @@ export {
 export {
   computeBalanceDueFromPayments,
   computeBalanceDueWithChildren,
+  computeCollectedFromPayments,
+  computeCollectedWithChildren,
+  computePaymentFinancialsFromTasks,
+  computePaymentFinancialsWithChildren,
   computeProjectValueFromPayments,
   computeProjectValueWithChildren,
   getPaymentTasksForProject,
@@ -69,7 +73,14 @@ export {
   CRM_TRADE_TYPES,
   type CrmTradeType,
 } from './project';
-export { isCrmProjectComplete, type SetCrmProjectCompletionInput } from './projectCompletion';
+export { isCrmProjectComplete, CRM_PROJECT_COMPLETE_STAGE_SLUG, type SetCrmProjectCompletionInput } from './projectCompletion';
+export {
+  isProjectPriorityActive,
+  isProjectPriorityUrgent,
+  toggleProjectPriority,
+  getCrmProjectListSortRank,
+  sortCrmProjectsForList,
+} from './projectPriorityToggle';
 export type { CreateCrmProjectInput, CreateCrmProjectResult } from './createProject';
 export type { UpdateCrmProjectInput } from './updateProject';
 export type { CrmProjectAddress } from './projectAddress';

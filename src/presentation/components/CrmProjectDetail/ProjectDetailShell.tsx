@@ -3,7 +3,7 @@
 import type { ReactElement, ReactNode } from 'react';
 import { useCallback, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import type { CrmProjectDetail, CrmProjectSummary } from '@/domain/crm';
+import type { CrmProjectDetail, CrmProjectSummary, CrmPriority } from '@/domain/crm';
 import { isBuildCoreMemberRole } from '@/domain/buildcore/memberRole';
 import { canManageBuildCoreProjectTemplates } from '@/domain/buildcore/projectTemplateAccess';
 import { resolveProjectTemplateScopeForProject } from '@/domain/crm/projectTemplateScope';
@@ -34,6 +34,7 @@ import { ProjectDetailActionsMenu } from './ProjectDetailActionsMenu';
 import { ProjectDetailContextBlock } from './ProjectDetailContextBlock';
 import { ProjectDetailHeaderActions } from './ProjectDetailHeaderActions';
 import { ProjectDetailHeaderProgress } from './ProjectDetailHeaderProgress';
+import { ProjectPriorityToggle } from './ProjectPriorityToggle';
 import { ProjectDetailShellModals } from './ProjectDetailShellModals';
 import { CreateCrmProjectModal } from '@/presentation/components/CrmProjects/CreateCrmProjectModal';
 import styles from './ProjectDetail.module.css';
@@ -158,12 +159,24 @@ function ProjectDetailShellBody({
   const showDetailProgress = pageContext === 'detail';
   const headerProgress = showDetailProgress ? <ProjectDetailHeaderProgress /> : null;
 
+  const priorityToggleProps = {
+    priority: projectSummary.priority,
+    priorityBusy: workspace.savingField === 'priority',
+    priorityDisabled: !isApiSource,
+    markPriorityLabel: detail.markPriority,
+    removePriorityLabel: detail.removePriority,
+    onPriorityToggle: (nextPriority: CrmPriority) => {
+      void workspace.patchField('priority', nextPriority);
+    },
+  };
+
   const headerActions = isMemberRole
     ? undefined
     : showCompletionActions
       ? (
           <ProjectDetailHeaderActions
             {...actionsMenuProps}
+            {...priorityToggleProps}
             isComplete={completion.isComplete}
             completionBusy={completion.completionBusy}
             onMarkComplete={completion.requestMarkComplete}
@@ -173,7 +186,17 @@ function ProjectDetailShellBody({
           />
         )
       : (
-          <ProjectDetailActionsMenu {...actionsMenuProps} />
+          <div className={styles.detailHeaderActions}>
+            <ProjectPriorityToggle
+              priority={priorityToggleProps.priority}
+              busy={priorityToggleProps.priorityBusy || deleting}
+              disabled={priorityToggleProps.priorityDisabled}
+              markPriorityLabel={priorityToggleProps.markPriorityLabel}
+              removePriorityLabel={priorityToggleProps.removePriorityLabel}
+              onToggle={priorityToggleProps.onPriorityToggle}
+            />
+            <ProjectDetailActionsMenu {...actionsMenuProps} />
+          </div>
         );
 
   const shellValue: ProjectDetailShellContextValue = {

@@ -19,6 +19,7 @@ export type CenterConfirmDialogProps = {
   readonly hideActions?: boolean;
   readonly closeAriaLabel: string;
   readonly panelClassName?: string;
+  readonly overlayClassName?: string;
   readonly bodyClassName?: string;
   readonly titleClassName?: string;
   readonly actionsClassName?: string;
@@ -41,6 +42,7 @@ export function CenterConfirmDialog({
   hideActions = false,
   closeAriaLabel,
   panelClassName,
+  overlayClassName,
   bodyClassName,
   titleClassName,
   actionsClassName,
@@ -52,7 +54,7 @@ export function CenterConfirmDialog({
 
   return (
     <div
-      className={styles.overlay}
+      className={[styles.overlay, overlayClassName].filter(Boolean).join(' ')}
       onClick={cancelDisabled ? undefined : onClose}
       role="presentation"
     >
