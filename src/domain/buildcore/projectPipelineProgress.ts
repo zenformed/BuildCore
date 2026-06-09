@@ -48,8 +48,13 @@ export function averagePipelineProgressPercents(values: readonly number[]): numb
 
 export function resolveProjectDetailProgressDisplay(input: {
   readonly currentStageSlug: PipelineStageSlug;
-  readonly childStageSlugs: readonly PipelineStageSlug[];
-}): ProjectProgressDisplay {
+  /** Null while parent subprojects are still loading; empty when none exist. */
+  readonly childStageSlugs: readonly PipelineStageSlug[] | null;
+}): ProjectProgressDisplay | null {
+  if (input.childStageSlugs === null) {
+    return null;
+  }
+
   if (input.childStageSlugs.length > 0) {
     const childPercents = input.childStageSlugs.map(pipelineStageProgressPercent);
     const rawAverage = averagePipelineProgressPercents(childPercents);

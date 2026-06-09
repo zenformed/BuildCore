@@ -6,11 +6,11 @@ import { useCrmProjectChildSummaries } from '@/presentation/features/crmProjectD
 import { useProjectDetailShell } from '@/presentation/features/crmProjectDetail/ProjectDetailShellContext';
 import { ProjectProgressPercent } from './ProjectProgressPercent';
 
-export function ProjectDetailHeaderProgress(): ReactElement {
+export function ProjectDetailHeaderProgress(): ReactElement | null {
   const { project, subSlug } = useProjectDetailShell();
   const isParentOverview =
     subSlug == null && project.summary.parentProjectId == null;
-  const { rows: childSummaries } = useCrmProjectChildSummaries(
+  const { rows: childSummaries, isLoading: childrenLoading } = useCrmProjectChildSummaries(
     isParentOverview ? project.summary : null,
     ''
   );
@@ -20,11 +20,17 @@ export function ProjectDetailHeaderProgress(): ReactElement {
       resolveProjectDetailProgressDisplay({
         currentStageSlug: project.summary.currentStageSlug,
         childStageSlugs: isParentOverview
-          ? childSummaries.map((child) => child.currentStageSlug)
+          ? childrenLoading
+            ? null
+            : childSummaries.map((child) => child.currentStageSlug)
           : [],
       }),
-    [childSummaries, isParentOverview, project.summary.currentStageSlug]
+    [childSummaries, childrenLoading, isParentOverview, project.summary.currentStageSlug]
   );
+
+  if (progress == null) {
+    return null;
+  }
 
   return <ProjectProgressPercent progress={progress} />;
 }
