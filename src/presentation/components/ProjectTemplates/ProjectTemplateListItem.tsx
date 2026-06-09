@@ -2,11 +2,13 @@
 
 import type { ReactElement } from 'react';
 import type { BuildCoreProjectTemplate } from '@/domain/crm/projectTemplate';
-import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
+import type { BuildCoreProjectTemplateScope } from '@/domain/crm/projectTemplateScope';
+import { getProjectTemplateScopeCopy } from '@/presentation/features/projectTemplates/projectTemplateCopy';
 import { formatProjectTemplateCreatedDate } from '@/presentation/features/projectTemplates/projectTemplateFormatters';
 import styles from './ProjectTemplates.module.css';
 
 export type ProjectTemplateListItemProps = {
+  readonly templateScope: BuildCoreProjectTemplateScope;
   readonly template: BuildCoreProjectTemplate;
   readonly busy: boolean;
   readonly defaultBusy: boolean;
@@ -16,6 +18,7 @@ export type ProjectTemplateListItemProps = {
 };
 
 export function ProjectTemplateListItem({
+  templateScope,
   template,
   busy,
   defaultBusy,
@@ -23,7 +26,7 @@ export function ProjectTemplateListItem({
   onDelete,
   onToggleDefault,
 }: ProjectTemplateListItemProps): ReactElement {
-  const copy = content.projectDetail.loadTemplate;
+  const copy = getProjectTemplateScopeCopy(templateScope).load;
   const workflowCount = template.workflowTasksPayload.length;
   const paymentCount = template.paymentsPayload.length;
 
@@ -65,7 +68,7 @@ export function ProjectTemplateListItem({
           disabled={busy}
           onClick={() => onLoad(template)}
         >
-          {copy.loadAction}
+          {copy.itemLoadAction}
         </button>
         <button
           type="button"

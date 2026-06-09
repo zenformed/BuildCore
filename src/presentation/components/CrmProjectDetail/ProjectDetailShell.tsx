@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import type { CrmProjectDetail, CrmProjectSummary } from '@/domain/crm';
 import { isBuildCoreMemberRole } from '@/domain/buildcore/memberRole';
 import { canManageBuildCoreProjectTemplates } from '@/domain/buildcore/projectTemplateAccess';
+import { resolveProjectTemplateScopeForProject } from '@/domain/crm/projectTemplateScope';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
 import { buildCoreDashboardNavigation as nav } from '@/platform/navigation/buildCoreDashboardNavigation';
 import type { ProjectDetailRoutes } from '@/platform/navigation/projectDetailRoutes';
@@ -24,6 +25,7 @@ import { useCrmProjectDeleteConfirmation } from '@/presentation/features/crmProj
 import { queueCrmProjectDeleteSuccessToast } from '@/presentation/features/crmProjects/crmProjectDeleteFeedback';
 import { useLoadProjectTemplate } from '@/presentation/features/crmProjectDetail/useLoadProjectTemplate';
 import { useSaveProjectTemplate } from '@/presentation/features/crmProjectDetail/useSaveProjectTemplate';
+import { getProjectTemplateScopeCopy } from '@/presentation/features/projectTemplates/projectTemplateCopy';
 import { LoadProjectTemplateDialogs } from '@/presentation/components/ProjectTemplates';
 import { useSaaSProfile } from '@/presentation/hooks/useSaaSProfile';
 import { DetailToast } from './DetailToast';
@@ -81,6 +83,10 @@ function ProjectDetailShellBody({
     () => canManageBuildCoreProjectTemplates(organizationMembershipContext?.role),
     [organizationMembershipContext?.role]
   );
+  const templateScope = resolveProjectTemplateScopeForProject({
+    parentProjectId: scopedProject.summary.parentProjectId,
+  });
+  const templateScopeCopy = getProjectTemplateScopeCopy(templateScope);
   const isParentOverview =
     subSlug == null && scopedProject.summary.parentProjectId == null;
   const {
@@ -125,11 +131,13 @@ function ProjectDetailShellBody({
   const deleting = deletingProjectId === projectSummary.id;
   const saveTemplate = useSaveProjectTemplate({
     projectSlug: projectSummary.slug,
+    templateScope,
     onSuccess: (message) => workspace.setToast({ kind: 'success', message }),
     onError: (message) => workspace.setToast({ kind: 'error', message }),
   });
   const loadTemplate = useLoadProjectTemplate({
     projectSlug: projectSummary.slug,
+    templateScope,
     onRefresh: refreshProjectDetail,
     onSuccess: (message) => workspace.setToast({ kind: 'success', message }),
     onError: (message) => workspace.setToast({ kind: 'error', message }),
@@ -139,6 +147,8 @@ function ProjectDetailShellBody({
     projectSummary,
     canDelete,
     canSaveTemplate,
+    loadTemplateLabel: templateScopeCopy.actionsLoad,
+    saveTemplateLabel: templateScopeCopy.actionsSave,
     deleting,
     onRequestDelete: setPendingDeleteProject,
     onSaveTemplate: saveTemplate.openDialog,
@@ -223,6 +233,7 @@ function ProjectDetailShellBody({
               onConfirmDelete={() => void handleConfirmDelete()}
             />
             <SaveProjectTemplateDialog
+              templateScope={templateScope}
               isOpen={saveTemplate.open}
               templateName={saveTemplate.templateName}
               setAsDefault={saveTemplate.setAsDefault}

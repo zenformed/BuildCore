@@ -3,6 +3,7 @@
 import { useCallback, useRef, useState } from 'react';
 import type { BuildCoreProjectTemplate } from '@/domain/crm/projectTemplate';
 import type { BuildCoreProjectTemplateBlueprints } from '@/domain/crm/projectTemplate';
+import type { BuildCoreProjectTemplateScope } from '@/domain/crm/projectTemplateScope';
 import { createProjectTemplateDraftFromTemplate } from '@/domain/crm/projectTemplateDraft';
 import { CrmApiError } from '@/infrastructure/crm/api/crmApiClient';
 import {
@@ -11,7 +12,7 @@ import {
   listBuildCoreProjectTemplates,
   setBuildCoreProjectTemplateDefault,
 } from '@/infrastructure/crm/api/crmProjectTemplateClient';
-import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
+import { getProjectTemplateScopeCopy } from '@/presentation/features/projectTemplates/projectTemplateCopy';
 
 export type ProjectTemplateApplyTarget =
   | {
@@ -25,17 +26,19 @@ export type ProjectTemplateApplyTarget =
     };
 
 export type UseProjectTemplateManagerArgs = {
+  readonly templateScope: BuildCoreProjectTemplateScope;
   readonly applyTarget: ProjectTemplateApplyTarget;
   readonly onSuccess: (message: string) => void;
   readonly onError: (message: string) => void;
 };
 
 export function useProjectTemplateManager({
+  templateScope,
   applyTarget,
   onSuccess,
   onError,
 }: UseProjectTemplateManagerArgs) {
-  const copy = content.projectDetail.loadTemplate;
+  const copy = getProjectTemplateScopeCopy(templateScope).load;
   const [listOpen, setListOpen] = useState(false);
   const [templates, setTemplates] = useState<readonly BuildCoreProjectTemplate[]>([]);
   const [loading, setLoading] = useState(false);
@@ -53,7 +56,7 @@ export function useProjectTemplateManager({
     setLoading(true);
     setLoadError(null);
     try {
-      const list = await listBuildCoreProjectTemplates();
+      const list = await listBuildCoreProjectTemplates({ templateScope });
       setTemplates(list);
       return list;
     } catch (err) {
@@ -69,7 +72,7 @@ export function useProjectTemplateManager({
     } finally {
       setLoading(false);
     }
-  }, [copy.loadFailed]);
+  }, [copy.loadFailed, templateScope]);
 
   const openList = useCallback(() => {
     setListOpen(true);
@@ -162,7 +165,7 @@ export function useProjectTemplateManager({
         setTemplates((current) =>
           current.map((item) => {
             if (item.id === updated.id) return updated;
-            if (nextDefault && item.isDefault) {
+            if (nextDefault && item.isDefault && item.templateScope === updated.templateScope) {
               return { ...item, isDefault: false };
             }
             return item;
@@ -188,6 +191,7 @@ export function useProjectTemplateManager({
     applyTarget.mode === 'draft' ? copy.applyDraftConfirmMessage : copy.applyConfirmMessage;
 
   return {
+    templateScope,
     listOpen,
     templates,
     loading,

@@ -4,7 +4,7 @@
 
 import type { FormEvent, ReactElement } from 'react';
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { useRouter } from 'next/navigation';
 
@@ -13,25 +13,16 @@ import type { CrmProjectDetail } from '@/domain/crm';
 import { canManageBuildCoreProjectTemplates } from '@/domain/buildcore/projectTemplateAccess';
 
 import {
-
-  createProjectTemplateDraftFromTemplate,
-
   createProjectTemplateDraftSummary,
-
   hasCreateProjectTemplateDraftContent,
-
   type CreateProjectTemplateDraft,
-
 } from '@/domain/crm/projectTemplateDraft';
+import type { BuildCoreProjectTemplateScope } from '@/domain/crm/projectTemplateScope';
 
 import { createCrmProject, updateCrmProject } from '@/application/use-cases/crm';
 
 import { getCrmDataSource } from '@/infrastructure/config/crmDataSource';
-
 import { CrmCreateNotAvailableError } from '@/infrastructure/crm/errors';
-
-import { listBuildCoreProjectTemplates } from '@/infrastructure/crm/api/crmProjectTemplateClient';
-
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
 
 import { buildCoreDashboardNavigation as nav } from '@/platform/navigation/buildCoreDashboardNavigation';
@@ -56,7 +47,8 @@ import {
 
 import { getCrmProjectAssigneeOptions } from '@/presentation/features/crmProjects/crmProjectAssigneeOptions';
 
-import { useProjectTemplateManager } from '@/presentation/features/projectTemplates/useProjectTemplateManager';
+import { getProjectTemplateScopeCopy } from '@/presentation/features/projectTemplates/projectTemplateCopy';
+import { ProjectTemplateDraftSelect } from '@/presentation/components/ProjectTemplates/ProjectTemplateDraftSelect';
 
 import { useAssignmentIdentityCatalog } from '@/presentation/providers/AssignmentIdentityProvider';
 
@@ -65,8 +57,6 @@ import { useBuildCoreDashboardContext } from '@/presentation/providers/BuildCore
 import { useSaaSProfile } from '@/presentation/hooks/useSaaSProfile';
 
 import { CenterConfirmDialog } from '@/presentation/components/CenterConfirmDialog';
-
-import { LoadProjectTemplateDialogs } from '@/presentation/components/ProjectTemplates';
 
 import { crmRepositories } from '@/shared/di/container';
 
@@ -156,7 +146,9 @@ export function CreateCrmProjectModal({
   const copy = isEditMode ? edit : create;
   const modalTitle = !isEditMode && createTitle ? createTitle : copy.title;
 
-  const templateCopy = content.projectDetail.loadTemplate;
+  const templateScope: BuildCoreProjectTemplateScope =
+    parentProjectId != null ? 'subproject' : 'project';
+  const templateCopy = getProjectTemplateScopeCopy(templateScope).load;
 
   const canManageTemplates = useMemo(
 
@@ -171,12 +163,9 @@ export function CreateCrmProjectModal({
   const [form, setForm] = useState<CreateCrmProjectFormState>(defaultCreateCrmProjectFormState);
 
   const [templateDraft, setTemplateDraft] = useState<CreateProjectTemplateDraft | null>(null);
-
+  const [selectedTemplateId, setSelectedTemplateId] = useState('');
   const [error, setError] = useState<string | null>(null);
-
   const [saving, setSaving] = useState(false);
-
-  const defaultAppliedRef = useRef(false);
 
 
 
@@ -199,8 +188,7 @@ export function CreateCrmProjectModal({
       );
 
       setTemplateDraft(null);
-
-      defaultAppliedRef.current = false;
+      setSelectedTemplateId('');
 
     }
 
@@ -214,100 +202,26 @@ export function CreateCrmProjectModal({
 
 
 
-  useEffect(() => {
-
-    if (!open || isEditMode || !isApiSource || !canManageTemplates || defaultAppliedRef.current) {
-
-      return;
-
-    }
-
-    defaultAppliedRef.current = true;
-
-
-
-    void (async () => {
-
-      try {
-
-        const templates = await listBuildCoreProjectTemplates();
-
-        const defaultTemplate = templates.find((item) => item.isDefault);
-
-        if (defaultTemplate != null) {
-
-          setTemplateDraft(createProjectTemplateDraftFromTemplate(defaultTemplate));
-
-        }
-
-      } catch {
-
-        /* Modal still works without auto-default template */
-
-      }
-
-    })();
-
-  }, [canManageTemplates, isApiSource, isEditMode, open]);
-
-
+  const handleTemplateDraftChange = useCallback(
+    (draft: CreateProjectTemplateDraft | null, templateId: string) => {
+      setTemplateDraft(draft);
+      setSelectedTemplateId(templateId);
+    },
+    []
+  );
 
   const updateField = useCallback(
-
     <K extends keyof CreateCrmProjectFormState>(key: K, value: CreateCrmProjectFormState[K]) => {
-
       setForm((prev) => ({ ...prev, [key]: value }));
-
       setError(null);
-
     },
-
     []
-
   );
-
-
-
-  const notifyTemplate = useCallback(
-
-    (kind: 'success' | 'error', message: string) => {
-
-      onTemplateToast?.({ kind, message });
-
-    },
-
-    [onTemplateToast]
-
-  );
-
-
-
-  const templateManager = useProjectTemplateManager({
-
-    applyTarget: {
-
-      mode: 'draft',
-
-      onApplyDraft: (blueprints) => setTemplateDraft(blueprints),
-
-    },
-
-    onSuccess: (message) => notifyTemplate('success', message),
-
-    onError: (message) => notifyTemplate('error', message),
-
-  });
-
-
 
   const assigneeOptions = getCrmProjectAssigneeOptions(
-
     isApiSource,
-
     assignmentCatalog,
-
     dash.user?.id
-
   );
 
   const draftSummary = createProjectTemplateDraftSummary(templateDraft);
@@ -543,27 +457,12 @@ export function CreateCrmProjectModal({
               />
 
               {!isEditMode && canManageTemplates && isApiSource ? (
-
-                <div className={styles.templateRow}>
-
-                  <button
-
-                    type="button"
-
-                    className={styles.templateBtn}
-
-                    disabled={saving || templateManager.busy}
-
-                    onClick={templateManager.openList}
-
-                  >
-
-                    {templateCopy.loadAction}
-
-                  </button>
-
-                </div>
-
+                <ProjectTemplateDraftSelect
+                  templateScope={templateScope}
+                  disabled={saving}
+                  selectedTemplateId={selectedTemplateId}
+                  onDraftChange={handleTemplateDraftChange}
+                />
               ) : null}
 
               {!isEditMode && hasCreateProjectTemplateDraftContent(templateDraft) ? (
@@ -621,12 +520,6 @@ export function CreateCrmProjectModal({
         bodyClassName={styles.modalBody}
 
       />
-
-      {!isEditMode && canManageTemplates && isApiSource ? (
-
-        <LoadProjectTemplateDialogs controller={templateManager} />
-
-      ) : null}
 
     </>
 

@@ -1,11 +1,13 @@
 'use client';
 
 import type { ReactElement } from 'react';
-import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
+import type { BuildCoreProjectTemplateScope } from '@/domain/crm/projectTemplateScope';
+import { getProjectTemplateScopeCopy } from '@/presentation/features/projectTemplates/projectTemplateCopy';
 import { CenterConfirmDialog } from '@/presentation/components/CenterConfirmDialog';
 import formStyles from '../CrmProjects/CreateCrmProjectDrawer.module.css';
 
 export type SaveProjectTemplateDialogProps = {
+  readonly templateScope: BuildCoreProjectTemplateScope;
   readonly isOpen: boolean;
   readonly templateName: string;
   readonly setAsDefault: boolean;
@@ -17,6 +19,7 @@ export type SaveProjectTemplateDialogProps = {
 };
 
 export function SaveProjectTemplateDialog({
+  templateScope,
   isOpen,
   templateName,
   setAsDefault,
@@ -26,7 +29,7 @@ export function SaveProjectTemplateDialog({
   onClose,
   onSave,
 }: SaveProjectTemplateDialogProps): ReactElement {
-  const copy = content.projectDetail.saveTemplate;
+  const copy = getProjectTemplateScopeCopy(templateScope).save;
 
   return (
     <CenterConfirmDialog

@@ -1,7 +1,7 @@
 'use client';
 
 import type { ReactElement } from 'react';
-import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
+import { getProjectTemplateScopeCopy } from '@/presentation/features/projectTemplates/projectTemplateCopy';
 import { ConfirmModal } from '@/presentation/components/ConfirmModal';
 import type { useProjectTemplateManager } from '@/presentation/features/projectTemplates/useProjectTemplateManager';
 import { ProjectTemplateListModal } from './ProjectTemplateListModal';
@@ -13,11 +13,13 @@ export type LoadProjectTemplateDialogsProps = {
 export function LoadProjectTemplateDialogs({
   controller,
 }: LoadProjectTemplateDialogsProps): ReactElement {
-  const copy = content.projectDetail.loadTemplate;
+  const copy = getProjectTemplateScopeCopy(controller.templateScope).load;
+  const saveCancel = getProjectTemplateScopeCopy(controller.templateScope).save.cancel;
 
   return (
     <>
       <ProjectTemplateListModal
+        templateScope={controller.templateScope}
         isOpen={controller.listOpen}
         templates={controller.templates}
         loading={controller.loading}
@@ -37,7 +39,7 @@ export function LoadProjectTemplateDialogs({
         title={copy.applyConfirmTitle}
         message={controller.applyConfirmMessage}
         confirmLabel={controller.applying ? 'Applying…' : copy.applyConfirmLabel}
-        cancelLabel={content.projectDetail.saveTemplate.cancel}
+        cancelLabel={saveCancel}
         variant="primary"
       />
 
@@ -52,7 +54,7 @@ export function LoadProjectTemplateDialogs({
             : undefined
         }
         confirmLabel={copy.deleteConfirmLabel}
-        cancelLabel={content.projectDetail.saveTemplate.cancel}
+        cancelLabel={saveCancel}
         variant="danger"
       />
     </>

@@ -1,5 +1,6 @@
 import { isPaymentWorkflowTask } from './paymentWorkflow';
 import type { PipelineStageSlug } from './pipelineStage';
+import type { BuildCoreProjectTemplateScope } from './projectTemplateScope';
 import type { CrmWorkflowTask } from './workflowTask';
 
 /** Blueprint item saved on a project template (non-payment workflow task). */
@@ -21,6 +22,7 @@ export type BuildCoreProjectTemplate = {
   readonly id: string;
   readonly organizationId: string;
   readonly name: string;
+  readonly templateScope: BuildCoreProjectTemplateScope;
   readonly workflowTasksPayload: readonly BuildCoreProjectTemplateWorkflowTaskBlueprint[];
   readonly paymentsPayload: readonly BuildCoreProjectTemplatePaymentBlueprint[];
   readonly isDefault: boolean;

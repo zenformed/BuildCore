@@ -72,6 +72,12 @@ export async function POST(
     if (message === 'project_not_found') {
       return NextResponse.json({ error: 'not_found', message: 'Project not found' }, { status: 404 });
     }
+    if (message === 'template_scope_mismatch') {
+      return NextResponse.json(
+        { error: 'validation_error', message: 'Template scope does not match this project type.' },
+        { status: 400 }
+      );
+    }
     return NextResponse.json({ error: 'internal_error', message }, { status: 500 });
   }
 }

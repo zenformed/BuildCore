@@ -2,12 +2,14 @@
 
 import type { ReactElement } from 'react';
 import type { BuildCoreProjectTemplate } from '@/domain/crm/projectTemplate';
-import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
+import type { BuildCoreProjectTemplateScope } from '@/domain/crm/projectTemplateScope';
+import { getProjectTemplateScopeCopy } from '@/presentation/features/projectTemplates/projectTemplateCopy';
 import { CenterConfirmDialog } from '@/presentation/components/CenterConfirmDialog';
 import { ProjectTemplateListItem } from './ProjectTemplateListItem';
 import styles from './ProjectTemplates.module.css';
 
 export type ProjectTemplateListModalProps = {
+  readonly templateScope: BuildCoreProjectTemplateScope;
   readonly isOpen: boolean;
   readonly templates: readonly BuildCoreProjectTemplate[];
   readonly loading: boolean;
@@ -21,6 +23,7 @@ export type ProjectTemplateListModalProps = {
 };
 
 export function ProjectTemplateListModal({
+  templateScope,
   isOpen,
   templates,
   loading,
@@ -32,7 +35,7 @@ export function ProjectTemplateListModal({
   onDelete,
   onToggleDefault,
 }: ProjectTemplateListModalProps): ReactElement {
-  const copy = content.projectDetail.loadTemplate;
+  const copy = getProjectTemplateScopeCopy(templateScope).load;
 
   let body: ReactElement;
   if (loading) {
@@ -47,6 +50,7 @@ export function ProjectTemplateListModal({
         {templates.map((template) => (
           <ProjectTemplateListItem
             key={template.id}
+            templateScope={templateScope}
             template={template}
             busy={busy}
             defaultBusy={settingDefaultId === template.id}

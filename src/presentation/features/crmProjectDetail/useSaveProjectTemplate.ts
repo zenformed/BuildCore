@@ -1,22 +1,25 @@
 'use client';
 
 import { useCallback, useState } from 'react';
+import type { BuildCoreProjectTemplateScope } from '@/domain/crm/projectTemplateScope';
 import { CrmApiError } from '@/infrastructure/crm/api/crmApiClient';
 import { createBuildCoreProjectTemplate } from '@/infrastructure/crm/api/crmProjectTemplateClient';
-import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
+import { getProjectTemplateScopeCopy } from '@/presentation/features/projectTemplates/projectTemplateCopy';
 
 export type UseSaveProjectTemplateArgs = {
   readonly projectSlug: string;
+  readonly templateScope: BuildCoreProjectTemplateScope;
   readonly onSuccess: (message: string) => void;
   readonly onError: (message: string) => void;
 };
 
 export function useSaveProjectTemplate({
   projectSlug,
+  templateScope,
   onSuccess,
   onError,
 }: UseSaveProjectTemplateArgs) {
-  const copy = content.projectDetail.saveTemplate;
+  const copy = getProjectTemplateScopeCopy(templateScope).save;
   const [open, setOpen] = useState(false);
   const [templateName, setTemplateName] = useState('');
   const [setAsDefault, setSetAsDefault] = useState(false);
@@ -47,6 +50,7 @@ export function useSaveProjectTemplate({
       await createBuildCoreProjectTemplate({
         name: trimmed,
         projectSlug,
+        templateScope,
         setAsDefault,
       });
       setOpen(false);
@@ -64,7 +68,7 @@ export function useSaveProjectTemplate({
     } finally {
       setSaving(false);
     }
-  }, [copy.failed, copy.nameRequired, copy.success, onError, onSuccess, projectSlug, setAsDefault, templateName]);
+  }, [copy.failed, copy.nameRequired, copy.success, onError, onSuccess, projectSlug, setAsDefault, templateName, templateScope]);
 
   return {
     open,

@@ -3,11 +3,14 @@ import type {
   BuildCoreProjectTemplate,
   BuildCoreProjectTemplateBlueprints,
 } from '@/domain/crm/projectTemplate';
+import {
+  templateScopeMatchesProject,
+  type BuildCoreProjectTemplateScope,
+} from '@/domain/crm/projectTemplateScope';
 import { snapshotProjectTemplateBlueprintsFromWorkflowTasks } from '@/domain/crm/projectTemplate';
 import { buildWorkflowTaskInputsFromBlueprints } from '@/domain/crm/applyProjectTemplate';
 import { getCrmProjectDetailBySlugForOrg } from './crmReadService';
 import { createCrmWorkflowTaskForOrg } from './crmWorkflowTaskService';
-import { resolveCrmProjectIdBySlug } from './resolveCrmProjectIdBySlug';
 import {
   mapDbBuildCoreProjectTemplate,
   serializeProjectTemplateBlueprintsForDb,
@@ -15,17 +18,19 @@ import {
 } from '@/infrastructure/crm/mappers/mapProjectTemplateFromDb';
 
 const TEMPLATE_LIST_SELECT =
-  'id, organization_id, name, workflow_tasks_payload, payments_payload, is_default, created_by_user_id, created_at, updated_at';
+  'id, organization_id, name, template_scope, workflow_tasks_payload, payments_payload, is_default, created_by_user_id, created_at, updated_at';
 
 async function clearOrgDefaultTemplates(
   supabase: SupabaseClient,
   organizationId: string,
+  templateScope: BuildCoreProjectTemplateScope,
   exceptTemplateId?: string
 ): Promise<void> {
   let query = supabase
     .from('buildcore_project_templates')
     .update({ is_default: false })
     .eq('organization_id', organizationId)
+    .eq('template_scope', templateScope)
     .eq('is_default', true);
 
   if (exceptTemplateId != null) {
@@ -40,12 +45,19 @@ async function clearOrgDefaultTemplates(
 
 export async function listBuildCoreProjectTemplatesForOrg(
   supabase: SupabaseClient,
-  organizationId: string
+  organizationId: string,
+  options?: { readonly templateScope?: BuildCoreProjectTemplateScope }
 ): Promise<readonly BuildCoreProjectTemplate[]> {
-  const { data, error } = await supabase
+  let query = supabase
     .from('buildcore_project_templates')
     .select(TEMPLATE_LIST_SELECT)
-    .eq('organization_id', organizationId)
+    .eq('organization_id', organizationId);
+
+  if (options?.templateScope != null) {
+    query = query.eq('template_scope', options.templateScope);
+  }
+
+  const { data, error } = await query
     .order('is_default', { ascending: false })
     .order('created_at', { ascending: false });
 
@@ -64,6 +76,7 @@ export async function createBuildCoreProjectTemplateFromProject(
   userId: string,
   projectSlug: string,
   templateName: string,
+  templateScope: BuildCoreProjectTemplateScope,
   setAsDefault = false
 ): Promise<BuildCoreProjectTemplate> {
   const project = await getCrmProjectDetailBySlugForOrg(supabase, organizationId, projectSlug);
@@ -71,11 +84,20 @@ export async function createBuildCoreProjectTemplateFromProject(
     throw new Error('project_not_found');
   }
 
+  if (
+    !templateScopeMatchesProject({
+      templateScope,
+      parentProjectId: project.summary.parentProjectId,
+    })
+  ) {
+    throw new Error('template_scope_mismatch');
+  }
+
   const blueprints = snapshotProjectTemplateBlueprintsFromWorkflowTasks(project.workflowTasks);
   const serialized = serializeProjectTemplateBlueprintsForDb(blueprints);
 
   if (setAsDefault) {
-    await clearOrgDefaultTemplates(supabase, organizationId);
+    await clearOrgDefaultTemplates(supabase, organizationId, templateScope);
   }
 
   const { data, error } = await supabase
@@ -83,6 +105,7 @@ export async function createBuildCoreProjectTemplateFromProject(
     .insert({
       organization_id: organizationId,
       name: templateName.trim(),
+      template_scope: templateScope,
       workflow_tasks_payload: serialized.workflow_tasks_payload,
       payments_payload: serialized.payments_payload,
       created_by_user_id: userId,
@@ -152,7 +175,7 @@ export async function setBuildCoreProjectTemplateDefaultForOrg(
   }
 
   if (isDefault) {
-    await clearOrgDefaultTemplates(supabase, organizationId, templateId);
+    await clearOrgDefaultTemplates(supabase, organizationId, existing.templateScope, templateId);
   }
 
   const { data, error } = await supabase
@@ -218,10 +241,21 @@ export async function applyBuildCoreProjectTemplateToProject(
     throw new Error('template_not_found');
   }
 
-  const projectId = await resolveCrmProjectIdBySlug(supabase, organizationId, projectSlug);
-  if (projectId == null) {
+  const project = await getCrmProjectDetailBySlugForOrg(supabase, organizationId, projectSlug);
+  if (project == null) {
     throw new Error('project_not_found');
   }
+
+  if (
+    !templateScopeMatchesProject({
+      templateScope: template.templateScope,
+      parentProjectId: project.summary.parentProjectId,
+    })
+  ) {
+    throw new Error('template_scope_mismatch');
+  }
+
+  const projectId = project.summary.id;
 
   return applyProjectTemplateBlueprintsToProject(
     supabase,

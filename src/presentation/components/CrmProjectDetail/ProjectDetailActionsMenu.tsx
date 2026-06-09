@@ -14,6 +14,8 @@ export type ProjectDetailActionsMenuProps = {
   projectSummary: CrmProjectSummary;
   canDelete: boolean;
   canSaveTemplate: boolean;
+  loadTemplateLabel: string;
+  saveTemplateLabel: string;
   deleting: boolean;
   onRequestDelete: (project: CrmProjectSummary) => void;
   onSaveTemplate: () => void;
@@ -25,6 +27,8 @@ export function ProjectDetailActionsMenu({
   projectSummary,
   canDelete,
   canSaveTemplate,
+  loadTemplateLabel,
+  saveTemplateLabel,
   deleting,
   onRequestDelete,
   onSaveTemplate,
@@ -145,7 +149,7 @@ export function ProjectDetailActionsMenu({
                 className={`${styles.actionsMenuIcon} ${styles.actionsMenuLoadTemplateIcon}`}
                 aria-hidden
               />
-              {detail.actions.loadTemplate}
+              {loadTemplateLabel}
             </button>
             <button
               type="button"
@@ -158,7 +162,7 @@ export function ProjectDetailActionsMenu({
                 className={`${styles.actionsMenuIcon} ${styles.actionsMenuSaveTemplateIcon}`}
                 aria-hidden
               />
-              {detail.actions.saveTemplate}
+              {saveTemplateLabel}
             </button>
           </>
         ) : null}

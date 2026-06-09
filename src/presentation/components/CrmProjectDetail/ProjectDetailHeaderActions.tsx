@@ -12,6 +12,8 @@ export type ProjectDetailHeaderActionsProps = {
   projectSummary: CrmProjectSummary;
   canDelete: boolean;
   canSaveTemplate: boolean;
+  loadTemplateLabel: string;
+  saveTemplateLabel: string;
   deleting: boolean;
   onRequestDelete: (project: CrmProjectSummary) => void;
   onSaveTemplate: () => void;
@@ -29,6 +31,8 @@ export function ProjectDetailHeaderActions({
   projectSummary,
   canDelete,
   canSaveTemplate,
+  loadTemplateLabel,
+  saveTemplateLabel,
   deleting,
   onRequestDelete,
   onSaveTemplate,
@@ -55,6 +59,8 @@ export function ProjectDetailHeaderActions({
         projectSummary={projectSummary}
         canDelete={canDelete}
         canSaveTemplate={canSaveTemplate}
+        loadTemplateLabel={loadTemplateLabel}
+        saveTemplateLabel={saveTemplateLabel}
         deleting={deleting}
         onRequestDelete={onRequestDelete}
         onSaveTemplate={onSaveTemplate}

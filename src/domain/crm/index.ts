@@ -80,6 +80,12 @@ export type {
   BuildCoreProjectTemplateWorkflowTaskBlueprint,
 } from './projectTemplate';
 export { snapshotProjectTemplateBlueprintsFromWorkflowTasks } from './projectTemplate';
+export type { BuildCoreProjectTemplateScope } from './projectTemplateScope';
+export {
+  isBuildCoreProjectTemplateScope,
+  resolveProjectTemplateScopeForProject,
+  templateScopeMatchesProject,
+} from './projectTemplateScope';
 export {
   buildWorkflowTaskInputsFromBlueprints,
   buildWorkflowTaskInputsFromProjectTemplate,

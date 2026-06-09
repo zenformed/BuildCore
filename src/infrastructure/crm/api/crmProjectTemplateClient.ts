@@ -1,4 +1,5 @@
 import type { BuildCoreProjectTemplate } from '@/domain/crm/projectTemplate';
+import type { BuildCoreProjectTemplateScope } from '@/domain/crm/projectTemplateScope';
 import { crmApiDeleteJson, crmApiGetJson, crmApiPatchJson, crmApiPostJson } from './crmApiClient';
 
 export type ListBuildCoreProjectTemplatesResponse = {
@@ -9,11 +10,15 @@ export type CreateBuildCoreProjectTemplateResponse = {
   readonly template: BuildCoreProjectTemplate;
 };
 
-export async function listBuildCoreProjectTemplates(): Promise<
-  readonly BuildCoreProjectTemplate[]
-> {
+export async function listBuildCoreProjectTemplates(options?: {
+  readonly templateScope?: BuildCoreProjectTemplateScope;
+}): Promise<readonly BuildCoreProjectTemplate[]> {
+  const query =
+    options?.templateScope != null
+      ? `?scope=${encodeURIComponent(options.templateScope)}`
+      : '';
   const body = await crmApiGetJson<ListBuildCoreProjectTemplatesResponse>(
-    '/api/crm/project-templates'
+    `/api/crm/project-templates${query}`
   );
   return body.templates;
 }
@@ -21,6 +26,7 @@ export async function listBuildCoreProjectTemplates(): Promise<
 export async function createBuildCoreProjectTemplate(input: {
   readonly name: string;
   readonly projectSlug: string;
+  readonly templateScope: BuildCoreProjectTemplateScope;
   readonly setAsDefault?: boolean;
 }): Promise<BuildCoreProjectTemplate> {
   const body = await crmApiPostJson<CreateBuildCoreProjectTemplateResponse>(

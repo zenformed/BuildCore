@@ -3,12 +3,17 @@ import type {
   BuildCoreProjectTemplatePaymentBlueprint,
   BuildCoreProjectTemplateWorkflowTaskBlueprint,
 } from '@/domain/crm/projectTemplate';
+import {
+  isBuildCoreProjectTemplateScope,
+  type BuildCoreProjectTemplateScope,
+} from '@/domain/crm/projectTemplateScope';
 import type { PipelineStageSlug } from '@/domain/crm/pipelineStage';
 
 export type DbBuildCoreProjectTemplateRow = {
   id: string;
   organization_id: string;
   name: string;
+  template_scope: string;
   workflow_tasks_payload: unknown;
   payments_payload: unknown;
   is_default: boolean;
@@ -87,10 +92,17 @@ function parseBlueprintArray<T>(
 export function mapDbBuildCoreProjectTemplate(
   row: DbBuildCoreProjectTemplateRow
 ): BuildCoreProjectTemplate {
+  const templateScope: BuildCoreProjectTemplateScope = isBuildCoreProjectTemplateScope(
+    row.template_scope
+  )
+    ? row.template_scope
+    : 'project';
+
   return {
     id: row.id,
     organizationId: row.organization_id,
     name: row.name.trim(),
+    templateScope,
     workflowTasksPayload: parseBlueprintArray(
       row.workflow_tasks_payload,
       parseWorkflowTaskBlueprint

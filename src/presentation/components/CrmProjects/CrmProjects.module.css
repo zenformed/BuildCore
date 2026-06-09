@@ -399,6 +399,21 @@
   color: var(--color-text-muted, #64748b);
 }
 
+.draftTemplateSelectRow {
+  padding: 0.35rem 1rem 0.5rem;
+  max-width: 20rem;
+}
+
+.draftTemplateSelectRow label {
+  font-size: 0.75rem;
+}
+
+.draftTemplateSelectRow select {
+  width: 100%;
+  margin-top: 0.25rem;
+  font-size: 0.8125rem;
+}
+
 .emptyState {
   grid-column: 1 / -1;
   padding: 2rem 1rem;
