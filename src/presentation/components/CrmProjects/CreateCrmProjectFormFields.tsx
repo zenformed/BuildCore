@@ -94,20 +94,6 @@ export function CreateCrmProjectFormFields({
             ))}
           </select>
         </div>
-        <div className={formStyles.field}>
-          <label className={formStyles.label} htmlFor="crm-create-deal">
-            {create.fields.dealValue}
-          </label>
-          <input
-            id="crm-create-deal"
-            className={formStyles.input}
-            inputMode="decimal"
-            placeholder="0.00"
-            value={form.dealValueUsd}
-            disabled={saving}
-            onChange={(e) => updateField('dealValueUsd', e.target.value)}
-          />
-        </div>
       </div>
 
       <div className={formStyles.field}>

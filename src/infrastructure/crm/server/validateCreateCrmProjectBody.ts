@@ -108,14 +108,17 @@ export function validateCreateCrmProjectBody(body: CreateCrmProjectBody): Valida
     return { ok: false, message: 'Current stage is invalid.' };
   }
 
-  const dealValueCents = asCents(body.dealValueCents, 'dealValueCents');
+  const dealValueCents =
+    body.dealValueCents === undefined || body.dealValueCents === null
+      ? 0
+      : asCents(body.dealValueCents, 'dealValueCents');
   if (dealValueCents == null) {
     return { ok: false, message: 'Deal value must be a non-negative amount in cents.' };
   }
 
   const balanceRemainingCents =
     body.balanceRemainingCents === undefined || body.balanceRemainingCents === null
-      ? dealValueCents
+      ? 0
       : asCents(body.balanceRemainingCents, 'balanceRemainingCents');
   if (balanceRemainingCents == null) {
     return { ok: false, message: 'Balance must be a non-negative amount in cents.' };

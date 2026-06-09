@@ -12,6 +12,7 @@ import {
   filterSubprojects,
 } from '@/presentation/features/crmProjectDetail/useCrmProjectChildSummaries';
 import { useCrmProjectDeleteConfirmation } from '@/presentation/features/crmProjects/useCrmProjectDeleteConfirmation';
+import { useCrmProjectPaymentTasksIndex } from '@/presentation/features/crmProjects/useCrmProjectPaymentTasksIndex';
 import { useProjectDetailShell } from '@/presentation/features/crmProjectDetail/ProjectDetailShellContext';
 import { useSaaSProfile } from '@/presentation/hooks/useSaaSProfile';
 import { DetailPanelHeaderButton } from './DetailPanelHeaderButton';
@@ -38,6 +39,7 @@ export function SubprojectsSection(): ReactElement | null {
   const [toast, setToast] = useState<SubprojectsToast | null>(null);
   const refetch = childSummaries?.refetch ?? (async () => undefined);
   const isLoading = childSummaries?.isLoading ?? false;
+  const { paymentTasksIndex } = useCrmProjectPaymentTasksIndex();
   const rows = useMemo(
     () => filterSubprojects(childSummaries?.allRows ?? [], searchQuery),
     [childSummaries?.allRows, searchQuery]
@@ -127,6 +129,7 @@ export function SubprojectsSection(): ReactElement | null {
           <div className={`${tableStyles.pipeline} ${tableStyles.pipelineFitContent}`}>
             <CrmProjectsTable
               rows={rows}
+              paymentTasksIndex={paymentTasksIndex}
               isLoading={isLoading}
               isMemberRole={isMemberRole}
               canDelete={canDelete && !isMemberRole}

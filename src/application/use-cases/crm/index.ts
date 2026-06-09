@@ -16,6 +16,10 @@ export {
   listCrmProjectSummariesSync,
 } from './listCrmProjectSummaries';
 export {
+  loadCrmProjectPaymentTasksIndex,
+  loadCrmProjectPaymentTasksIndexSync,
+} from './loadCrmProjectPaymentTasksIndex';
+export {
   listCrmProjectChildSummaries,
   listCrmProjectChildSummariesSync,
 } from './listCrmProjectChildSummaries';

@@ -14,8 +14,18 @@ export {
   computeProjectBalanceCents,
   isPaymentWorkflowTask,
   projectHasPaymentMilestones,
+  type PaymentBalanceTask,
   type WorkflowStageCollapseKey,
 } from './paymentWorkflow';
+export {
+  computeBalanceDueFromPayments,
+  computeBalanceDueWithChildren,
+  computeProjectValueFromPayments,
+  computeProjectValueWithChildren,
+  getPaymentTasksForProject,
+  type CrmProjectPaymentTasksIndex,
+  type ProjectPaymentFinancials,
+} from './projectPaymentValue';
 export type { CrmTeamMemberRef } from './teamMember';
 export type { CrmContact } from './contact';
 export type { CrmClient } from './client';

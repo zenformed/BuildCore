@@ -45,6 +45,7 @@ export function CrmProjectsPipeline({
     rootRows,
     allChildrenByParentId,
     visibleChildrenByParentId,
+    paymentTasksIndex,
     isLoading,
     refetch,
     removeProject,
@@ -134,6 +135,7 @@ export function CrmProjectsPipeline({
           rootRows={rootRows}
           allChildrenByParentId={allChildrenByParentId}
           visibleChildrenByParentId={visibleChildrenByParentId}
+          paymentTasksIndex={paymentTasksIndex}
           isLoading={isLoading}
           onRowClick={onProjectRowClick}
           onSubprojectRowClick={handleSubprojectRowClick}

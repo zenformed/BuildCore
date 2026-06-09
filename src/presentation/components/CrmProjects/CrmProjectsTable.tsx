@@ -2,7 +2,12 @@
 
 import { useState, type ReactElement } from 'react';
 import type { CrmProjectSummary } from '@/domain/crm';
+import type { CrmProjectPaymentTasksIndex } from '@/domain/crm/projectPaymentValue';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
+import {
+  resolveDashboardChildRowFinancials,
+  resolveDashboardRootRowFinancials,
+} from '@/presentation/features/crmProjects/projectPaymentFinancials';
 import { CrmProjectTableRow } from './CrmProjectTableRow';
 import styles from './CrmProjects.module.css';
 
@@ -18,6 +23,7 @@ export type CrmProjectsTableProps = {
   rootRows?: readonly CrmProjectSummary[];
   allChildrenByParentId?: ReadonlyMap<string, readonly CrmProjectSummary[]>;
   visibleChildrenByParentId?: ReadonlyMap<string, readonly CrmProjectSummary[]>;
+  paymentTasksIndex?: CrmProjectPaymentTasksIndex;
   enableSubprojectExpansion?: boolean;
   isLoading?: boolean;
   onRowClick: (project: CrmProjectSummary) => void;
@@ -37,6 +43,7 @@ export function CrmProjectsTable({
   rootRows,
   allChildrenByParentId,
   visibleChildrenByParentId,
+  paymentTasksIndex,
   enableSubprojectExpansion = false,
   isLoading = false,
   onRowClick,
@@ -63,6 +70,9 @@ export function CrmProjectsTable({
 
   const displayRoots = enableSubprojectExpansion ? (rootRows ?? []) : (rows ?? []);
   const showTable = displayRoots.length > 0 || isLoading;
+  const resolvedPaymentTasksIndex = paymentTasksIndex ?? new Map<string, never>();
+  const tableCopy = content.crm.table;
+  const valueLabels = tableCopy.columns;
   const tableInnerClass = isMemberRole
     ? `${styles.tableInner} ${styles.tableInnerMember}`
     : styles.tableInner;
@@ -104,12 +114,27 @@ export function CrmProjectsTable({
                   const hasChildren = enableSubprojectExpansion && childCount > 0;
                   const isExpanded = expandedParentIds.has(project.id);
                   const visibleChildren = visibleChildrenByParentId?.get(project.id) ?? [];
+                  const isStandaloneChild =
+                    !enableSubprojectExpansion && project.parentProjectId != null;
+                  const rowFinancials = isStandaloneChild
+                    ? resolveDashboardChildRowFinancials(project, resolvedPaymentTasksIndex)
+                    : resolveDashboardRootRowFinancials(
+                        project,
+                        visibleChildren,
+                        resolvedPaymentTasksIndex
+                      );
+                  const rowVariant = isStandaloneChild ? 'child' : 'root';
+                  const rowValueLabel = isStandaloneChild
+                    ? valueLabels.subValueLabel
+                    : valueLabels.projectValueLabel;
 
                   const rootRow = (
                     <CrmProjectTableRow
                       key={project.id}
                       project={project}
-                      variant="root"
+                      variant={rowVariant}
+                      valueCents={rowFinancials.valueCents}
+                      valueLabel={rowValueLabel}
                       onRowClick={() => onRowClick(project)}
                       isMemberRole={isMemberRole}
                       canDelete={canDelete && showActions}
@@ -127,11 +152,18 @@ export function CrmProjectsTable({
                     return [rootRow];
                   }
 
-                  const childRows = visibleChildren.map((child) => (
+                  const childRows = visibleChildren.map((child) => {
+                    const childFinancials = resolveDashboardChildRowFinancials(
+                      child,
+                      resolvedPaymentTasksIndex
+                    );
+                    return (
                     <CrmProjectTableRow
                       key={child.id}
                       project={child}
                       variant="child"
+                      valueCents={childFinancials.valueCents}
+                      valueLabel={valueLabels.subValueLabel}
                       onRowClick={() =>
                         onSubprojectRowClick
                           ? onSubprojectRowClick(project, child)
@@ -144,7 +176,8 @@ export function CrmProjectsTable({
                       onRequestDelete={onRequestDelete}
                       deleteLabels={deleteLabels}
                     />
-                  ));
+                    );
+                  });
 
                   return [rootRow, ...childRows];
                 })

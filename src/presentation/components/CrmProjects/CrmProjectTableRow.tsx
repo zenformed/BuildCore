@@ -25,6 +25,8 @@ export type CrmProjectTableRowDeleteLabels = {
 export type CrmProjectTableRowProps = {
   project: CrmProjectSummary;
   variant?: 'root' | 'child';
+  valueCents?: number;
+  valueLabel?: string;
   onRowClick: () => void;
   isMemberRole?: boolean;
   canDelete?: boolean;
@@ -44,6 +46,8 @@ function priorityClassName(priority: CrmPriority): string {
 export function CrmProjectTableRow({
   project,
   variant = 'root',
+  valueCents,
+  valueLabel,
   onRowClick,
   isMemberRole = false,
   canDelete = false,
@@ -62,6 +66,10 @@ export function CrmProjectTableRow({
   const tradeSubtitle = getProjectTradeSubtitle(project.tradeType);
   const progress = resolveProjectSummaryProgressDisplay(project);
   const isChild = variant === 'child';
+  const displayValueCents = valueCents ?? 0;
+  const valueLabels = tableCopy.columns;
+  const displayValueLabel =
+    valueLabel ?? (isChild ? valueLabels.subValueLabel : valueLabels.projectValueLabel);
   const rowAriaLabel = isChild
     ? tableCopy.subprojectRowAriaLabel(project.name)
     : tableCopy.rowAriaLabel(project.name);
@@ -151,8 +159,9 @@ export function CrmProjectTableRow({
         <span
           className={`${styles.gridCell} ${styles.gridCellDealValue} ${styles.gridCellAlignCenter}`}
           role="cell"
+          title={displayValueLabel}
         >
-          {formatCentsAsUsd(project.dealValueCents)}
+          {formatCentsAsUsd(displayValueCents)}
         </span>
       ) : null}
       <span className={styles.gridCellAssignee} role="cell">

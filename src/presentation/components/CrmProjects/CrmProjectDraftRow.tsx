@@ -214,23 +214,13 @@ export function CrmProjectDraftRow({
         <span className={`${draftFieldCell} ${styles.gridCellAlignCenter}`} role="cell">
           <span className={shared.stagePill}>{formatStageLabel('new-lead')}</span>
         </span>
-        <span className={`${draftFieldCell} ${styles.draftFieldCellWrap}`} role="cell">
+        <span className={`${draftFieldCell} ${styles.gridFieldCellWrap}`} role="cell">
           <input
             className={styles.draftInput}
             value={form.notes}
             disabled={saving}
             placeholder={create.fields.notes}
             onChange={(e) => updateField('notes', e.target.value)}
-          />
-        </span>
-        <span className={`${draftFieldCell} ${styles.gridCellDealValue}`} role="cell">
-          <input
-            className={styles.draftInput}
-            inputMode="decimal"
-            value={form.dealValueUsd}
-            disabled={saving}
-            placeholder="0"
-            onChange={(e) => updateField('dealValueUsd', e.target.value)}
           />
         </span>
         <span className={`${styles.gridCellAssignee} ${styles.draftFieldCell}`} role="cell" ref={assigneeRef}>

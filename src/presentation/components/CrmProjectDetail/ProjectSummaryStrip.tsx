@@ -13,8 +13,9 @@ import {
   formatPhoneDisplay,
   formatStageLabel,
 } from '@/presentation/features/crmProjects/crmProjectFormatters';
-import { centsToUsdInput } from '@/presentation/features/crmProjectDetail/workflowTaskFormModel';
 import type { SummaryEditableField } from '@/presentation/features/crmProjectDetail/projectDetailFormModel';
+import { useProjectDetailShell } from '@/presentation/features/crmProjectDetail/ProjectDetailShellContext';
+import { useProjectDetailPaymentFinancials } from '@/presentation/features/crmProjectDetail/useProjectDetailPaymentFinancials';
 import { ProjectSummaryAddress } from './ProjectSummaryAddress';
 import shared from '@/presentation/components/crmShared/crmShared.module.css';
 import styles from './ProjectDetail.module.css';
@@ -258,9 +259,16 @@ export function ProjectSummaryStrip({
   onEditClick,
 }: ProjectSummaryStripProps): ReactElement {
   const { summary } = project;
+  const { childSummaries } = useProjectDetailShell();
+  const paymentFinancials = useProjectDetailPaymentFinancials({
+    project,
+    childSummaries: childSummaries?.allRows ?? null,
+  });
   const fields = content.projectDetail.fields;
   const edit = content.projectDetail.edit;
   const hasPaymentMilestones = projectHasPaymentMilestones(project);
+  const isSubproject = summary.parentProjectId != null;
+  const valueLabel = isSubproject ? fields.subValue : fields.projectValue;
 
   const priorityOptions = PRIORITY_OPTIONS.map((p) => ({
     value: p,
@@ -334,20 +342,17 @@ export function ProjectSummaryStrip({
       />
       {memberView ? null : (
         <>
-          <SummaryInlineText
-            fieldKey="dealValueUsd"
-            label={fields.dealValue}
-            value={centsToUsdInput(summary.dealValueCents)}
-            displayValue={formatCentsAsUsd(summary.dealValueCents)}
-            savingField={savingField}
-            onPatch={patchField}
-          />
+          <SummaryMetric label={valueLabel} savingField={savingField}>
+            <span className={styles.summaryText}>
+              {formatCentsAsUsd(paymentFinancials.valueCents)}
+            </span>
+          </SummaryMetric>
           <SummaryMetric label={fields.balance} savingField={savingField}>
             <span
               className={styles.summaryText}
               title={hasPaymentMilestones ? edit.fields.balanceDerivedHint : undefined}
             >
-              {formatCentsAsUsd(summary.balanceRemainingCents)}
+              {formatCentsAsUsd(paymentFinancials.balanceDueCents)}
             </span>
           </SummaryMetric>
         </>

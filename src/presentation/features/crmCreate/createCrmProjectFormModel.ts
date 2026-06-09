@@ -84,10 +84,7 @@ export function validateCreateCrmProjectForm(
     return { ok: false, message: 'Contact name is required.' };
   }
 
-  const dealValueCents = parseUsdInputToCents(form.dealValueUsd);
-  if (dealValueCents == null) {
-    return { ok: false, message: 'Enter a valid deal value.' };
-  }
+  const dealValueCents = 0;
 
   const state = form.state.trim();
   if (state && !US_STATE_CODES.has(state)) {
@@ -111,7 +108,7 @@ export function validateCreateCrmProjectForm(
       currentStageSlug: form.currentStageSlug,
       notes: form.notes.trim() || null,
       dealValueCents,
-      balanceRemainingCents: dealValueCents,
+      balanceRemainingCents: 0,
       assignedMemberId: normalizeAssigneeMemberIdForSave(form.assignedMemberId),
       addressLine1: optionalText(form.addressLine1),
       addressLine2: optionalText(form.addressLine2),

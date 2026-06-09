@@ -38,6 +38,8 @@ import type {
 
   CrmWorkflowTask,
 
+  PaymentBalanceTask,
+
   UpdateCrmProjectInput,
 
   UpdateCrmWorkflowTaskInput,
@@ -106,6 +108,12 @@ export class ApiCrmProjectsRepository implements ICrmProjectsRepository {
     return crmApiGetJson<{ projects: CrmProjectSummary[] }>(
       `/api/crm/projects/${encodeURIComponent(input.parentSlug.trim())}/subprojects`
     ).then((body) => body.projects);
+  }
+
+  listPaymentBalanceTasks() {
+    return crmApiGetJson<{ byProjectId: Record<string, PaymentBalanceTask[]> }>(
+      '/api/crm/projects/payment-balance-tasks'
+    ).then((body) => new Map(Object.entries(body.byProjectId)));
   }
 
 

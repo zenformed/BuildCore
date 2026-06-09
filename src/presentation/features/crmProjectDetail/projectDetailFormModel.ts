@@ -1,5 +1,4 @@
 import {
-  projectHasPaymentMilestones,
   type CrmPriority,
   type CrmProjectDetail,
   type CrmTradeType,
@@ -20,7 +19,6 @@ export type SummaryEditableField =
   | 'phone'
   | 'currentStageSlug'
   | 'priority'
-  | 'dealValueUsd'
   | 'assignedMemberId'
   | 'notes'
   | 'addressLine1'
@@ -57,8 +55,6 @@ export function applySummaryFieldToForm(
       return { ...form, currentStageSlug: value as PipelineStageSlug };
     case 'priority':
       return { ...form, priority: value as CrmPriority };
-    case 'dealValueUsd':
-      return { ...form, dealValueUsd: value };
     case 'assignedMemberId':
       return { ...form, assignedMemberId: value };
     case 'notes':
@@ -101,10 +97,6 @@ export function isSummaryFieldUnchanged(
       return value === summary.currentStageSlug;
     case 'priority':
       return value === summary.priority;
-    case 'dealValueUsd': {
-      const cents = parseUsdInputToCents(value);
-      return cents != null && cents === summary.dealValueCents;
-    }
     case 'assignedMemberId':
       return value === (summary.assignedTo?.id ?? '');
     case 'notes':
@@ -137,8 +129,8 @@ export function projectDetailToFormState(project: CrmProjectDetail): CreateCrmPr
     priority: summary.priority,
     currentStageSlug: summary.currentStageSlug,
     notes: notes ?? '',
-    dealValueUsd: (summary.dealValueCents / 100).toFixed(2),
-    balanceUsd: (summary.balanceRemainingCents / 100).toFixed(2),
+    dealValueUsd: '',
+    balanceUsd: '',
     assignedMemberId: summary.assignedTo?.id ?? '',
     addressLine1: summary.address.addressLine1 ?? '',
     addressLine2: summary.address.addressLine2 ?? '',
@@ -160,17 +152,14 @@ export function validateProjectDetailForm(
     return { ok: false, message: 'Enter a valid email address.' };
   }
 
-  if (projectHasPaymentMilestones(project)) {
-    return {
-      ok: true,
-      input: {
-        ...validated.input,
-        balanceRemainingCents: project.summary.balanceRemainingCents,
-      },
-    };
-  }
-
-  return { ok: true, input: validated.input };
+  return {
+    ok: true,
+    input: {
+      ...validated.input,
+      dealValueCents: project.summary.dealValueCents,
+      balanceRemainingCents: project.summary.balanceRemainingCents,
+    },
+  };
 }
 
 export { parseUsdInputToCents };

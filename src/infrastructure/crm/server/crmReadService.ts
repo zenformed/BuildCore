@@ -1,5 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { CrmProjectDetail, CrmProjectSummary } from '@/domain/crm';
+import type { CrmProjectPaymentTasksIndex } from '@/domain/crm/projectPaymentValue';
+import type { PaymentBalanceTask } from '@/domain/crm/paymentWorkflow';
 import {
   mapDbProjectDetail,
   mapDbProjectSummary,
@@ -94,6 +96,51 @@ function collectMemberIds(rows: {
     if (b.created_by) ids.add(b.created_by);
   }
   return [...ids];
+}
+
+export async function listPaymentBalanceTasksByOrg(
+  supabase: SupabaseClient,
+  organizationId: string
+): Promise<CrmProjectPaymentTasksIndex> {
+  const { data: projectRows, error: projectError } = await supabase
+    .from('crm_projects')
+    .select('id')
+    .eq('organization_id', organizationId)
+    .is('archived_at', null);
+
+  if (projectError) {
+    throw new Error(projectError.message);
+  }
+
+  const projectIds = (projectRows ?? []).map((row) => row.id as string);
+  if (projectIds.length === 0) {
+    return new Map();
+  }
+
+  const { data: taskRows, error: taskError } = await supabase
+    .from('crm_workflow_tasks')
+    .select('project_id, amount_cents, status, paid_at')
+    .in('project_id', projectIds)
+    .not('amount_cents', 'is', null)
+    .is('archived_at', null);
+
+  if (taskError) {
+    throw new Error(taskError.message);
+  }
+
+  const index = new Map<string, PaymentBalanceTask[]>();
+  for (const row of taskRows ?? []) {
+    const projectId = row.project_id as string;
+    const tasks = index.get(projectId) ?? [];
+    tasks.push({
+      amountCents: Number(row.amount_cents),
+      status: row.status as PaymentBalanceTask['status'],
+      paidAt: (row.paid_at as string | null) ?? null,
+    });
+    index.set(projectId, tasks);
+  }
+
+  return index;
 }
 
 export async function listCrmProjectSummariesForOrg(

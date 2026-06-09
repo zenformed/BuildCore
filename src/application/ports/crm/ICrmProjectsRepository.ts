@@ -1,4 +1,9 @@
-import type { CreateCrmProjectInput, CreateCrmProjectResult, CrmProjectSummary } from '@/domain/crm';
+import type {
+  CreateCrmProjectInput,
+  CreateCrmProjectResult,
+  CrmProjectPaymentTasksIndex,
+  CrmProjectSummary,
+} from '@/domain/crm';
 import type { CrmRepositoryResult } from '@/infrastructure/crm/types';
 
 export type ListCrmProjectSummariesOptions = {
@@ -19,6 +24,7 @@ export interface ICrmProjectsRepository {
   listChildSummaries(
     input: ListCrmProjectChildSummariesInput
   ): CrmRepositoryResult<readonly CrmProjectSummary[]>;
+  listPaymentBalanceTasks(): CrmRepositoryResult<CrmProjectPaymentTasksIndex>;
   create(input: CreateCrmProjectInput): CrmRepositoryResult<CreateCrmProjectResult>;
   archive(slug: string): CrmRepositoryResult<boolean>;
 }

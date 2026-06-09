@@ -60,6 +60,7 @@ import { getMockCrmTeamMember } from '@/platform/mock/crm';
 import { resolveMockWorkflowTaskAssigneeFromDetail } from '@/infrastructure/crm/mock/resolveMockWorkflowTaskAssignee';
 
 import { MOCK_CRM_PROJECT_DETAILS, MOCK_CRM_PROJECT_SUMMARIES } from '@/platform/mock/crm';
+import { buildMockProjectPaymentTasksIndex } from '@/infrastructure/crm/mock/buildMockProjectPaymentTasksIndex';
 
 import { CrmWriteNotAvailableError } from '@/infrastructure/crm/errors';
 import { getDocumentStorageProvider } from '@/infrastructure/storage/getDocumentStorageProvider';
@@ -249,6 +250,10 @@ export class MockCrmProjectsRepository implements ICrmProjectsRepository {
       const effective = getEffectiveMockProjectDetailBySlug(seed.summary.slug);
       return effective?.summary ?? seed.summary;
     }).filter((summary) => summary.parentProjectId === input.parentProjectId);
+  }
+
+  listPaymentBalanceTasks() {
+    return buildMockProjectPaymentTasksIndex();
   }
 
 
