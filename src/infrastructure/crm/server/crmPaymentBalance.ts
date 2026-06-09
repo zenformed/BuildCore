@@ -10,7 +10,7 @@ type PaymentTaskRow = {
 
 export function balanceCentsFromPaymentTaskRows(
   tasks: readonly PaymentTaskRow[],
-  fallbackBalanceCents: number
+  dealValueCents: number
 ): number {
   const mapped = tasks
     .filter((row) => row.amount_cents != null)
@@ -18,7 +18,7 @@ export function balanceCentsFromPaymentTaskRows(
       amountCents: Number(row.amount_cents),
       status: row.status as WorkflowTaskStatus,
     }));
-  return computeProjectBalanceCents(mapped, fallbackBalanceCents);
+  return computeProjectBalanceCents(mapped, dealValueCents);
 }
 
 export function hasPaymentWorkflowTasks(tasks: readonly PaymentTaskRow[]): boolean {
@@ -36,7 +36,7 @@ export async function syncProjectBalanceFromPaymentTasks(
     await Promise.all([
       supabase
         .from('crm_projects')
-        .select('balance_cents')
+        .select('balance_cents, deal_value_cents')
         .eq('id', projectId)
         .eq('organization_id', organizationId)
         .maybeSingle(),
@@ -53,10 +53,22 @@ export async function syncProjectBalanceFromPaymentTasks(
   if (projectRow == null) throw new Error('Project not found');
 
   const storedBalance = Number(projectRow.balance_cents);
+  const dealValueCents = Number(projectRow.deal_value_cents);
   const tasks = (taskRows ?? []) as PaymentTaskRow[];
-  if (!hasPaymentWorkflowTasks(tasks)) return storedBalance;
+  if (!hasPaymentWorkflowTasks(tasks)) {
+    if (storedBalance === dealValueCents) return storedBalance;
 
-  const nextBalance = balanceCentsFromPaymentTaskRows(tasks, storedBalance);
+    const { error: updateError } = await supabase
+      .from('crm_projects')
+      .update({ balance_cents: dealValueCents })
+      .eq('id', projectId)
+      .eq('organization_id', organizationId);
+
+    if (updateError) throw new Error(updateError.message);
+    return dealValueCents;
+  }
+
+  const nextBalance = balanceCentsFromPaymentTaskRows(tasks, dealValueCents);
   if (nextBalance === storedBalance) return storedBalance;
 
   const { error: updateError } = await supabase

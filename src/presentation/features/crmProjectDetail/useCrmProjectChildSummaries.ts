@@ -9,7 +9,7 @@ import {
 import { getCrmDataSource } from '@/infrastructure/config/crmDataSource';
 import { crmRepositories } from '@/shared/di/container';
 
-function filterSubprojects(
+export function filterSubprojects(
   rows: readonly CrmProjectSummary[],
   searchQuery: string
 ): CrmProjectSummary[] {

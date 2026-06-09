@@ -1,6 +1,6 @@
 'use client';
 
-import { useId, useState, type ReactElement } from 'react';
+import { useId, useMemo, useState, type ReactElement } from 'react';
 import { useRouter } from 'next/navigation';
 import { isBuildCoreMemberRole } from '@/domain/buildcore/memberRole';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
@@ -8,7 +8,9 @@ import { CrmProjectDeleteConfirmModal } from '@/presentation/components/CrmProje
 import { CreateCrmProjectModal } from '@/presentation/components/CrmProjects/CreateCrmProjectModal';
 import { CrmProjectsTable } from '@/presentation/components/CrmProjects/CrmProjectsTable';
 import { DetailToast } from '@/presentation/components/CrmProjectDetail/DetailToast';
-import { useCrmProjectChildSummaries } from '@/presentation/features/crmProjectDetail/useCrmProjectChildSummaries';
+import {
+  filterSubprojects,
+} from '@/presentation/features/crmProjectDetail/useCrmProjectChildSummaries';
 import { useCrmProjectDeleteConfirmation } from '@/presentation/features/crmProjects/useCrmProjectDeleteConfirmation';
 import { useProjectDetailShell } from '@/presentation/features/crmProjectDetail/ProjectDetailShellContext';
 import { useSaaSProfile } from '@/presentation/hooks/useSaaSProfile';
@@ -24,7 +26,8 @@ export function SubprojectsSection(): ReactElement | null {
   const panelId = useId();
   const copy = content.projectDetail.subprojects;
   const deleteCopy = copy.delete;
-  const { project, routes, parentRouteSlug, subSlug, isMemberRole } = useProjectDetailShell();
+  const { project, routes, parentRouteSlug, subSlug, isMemberRole, childSummaries } =
+    useProjectDetailShell();
   const { organizationMembershipContext } = useSaaSProfile();
   const hidden = subSlug != null || project.summary.parentProjectId != null;
   const canManage = !isMemberRole && !isBuildCoreMemberRole(organizationMembershipContext?.role);
@@ -32,7 +35,12 @@ export function SubprojectsSection(): ReactElement | null {
   const [searchQuery, setSearchQuery] = useState('');
   const [createOpen, setCreateOpen] = useState(false);
   const [toast, setToast] = useState<SubprojectsToast | null>(null);
-  const { rows, isLoading, refetch } = useCrmProjectChildSummaries(project.summary, searchQuery);
+  const refetch = childSummaries?.refetch ?? (() => undefined);
+  const isLoading = childSummaries?.isLoading ?? false;
+  const rows = useMemo(
+    () => filterSubprojects(childSummaries?.allRows ?? [], searchQuery),
+    [childSummaries?.allRows, searchQuery]
+  );
 
   const {
     pendingDeleteProject,
@@ -123,6 +131,7 @@ export function SubprojectsSection(): ReactElement | null {
               emptyMessage={copy.empty}
               deleteLabels={deleteCopy}
               onRowClick={(child) => router.push(routes.subproject(child.slug))}
+              showStageProgressPercent
             />
           </div>
         </div>

@@ -652,6 +652,35 @@
   color: var(--color-success, #16a34a);
 }
 
+.projectProgressPercent_compact {
+  gap: 0.4375rem;
+  width: fit-content;
+  max-width: 100%;
+}
+
+.projectProgressPercent_compact .projectProgressSegments {
+  gap: 0.09375rem;
+  flex: 0 0 auto;
+  width: 4.75rem;
+  min-width: 0;
+}
+
+.projectProgressPercent_compact .projectProgressSegment {
+  height: 0.3125rem;
+  min-width: 0.15rem;
+  border-radius: 0.0625rem;
+}
+
+.projectProgressPercent_compact .projectProgressLabel {
+  flex-shrink: 0;
+  font-size: 0.625rem;
+  padding-left: 0.0625rem;
+}
+
+:global([data-theme='dark']) .projectProgressPercent_compact .projectProgressLabel {
+  color: var(--color-success, #4ade80);
+}
+
 .breadcrumb {
   display: flex;
   flex-wrap: wrap;

@@ -1,7 +1,7 @@
 'use client';
 
 import type { ReactElement, ReactNode } from 'react';
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import type { CrmProjectDetail, CrmProjectSummary } from '@/domain/crm';
 import { isBuildCoreMemberRole } from '@/domain/buildcore/memberRole';
@@ -11,6 +11,7 @@ import { buildCoreDashboardNavigation as nav } from '@/platform/navigation/build
 import type { ProjectDetailRoutes } from '@/platform/navigation/projectDetailRoutes';
 import { useProjectCompletionToggle } from '@/presentation/features/crmProjectDetail/useProjectCompletionToggle';
 import { useProjectDetailWorkspace } from '@/presentation/features/crmProjectDetail/useProjectDetailWorkspace';
+import { useCrmProjectChildSummaries } from '@/presentation/features/crmProjectDetail/useCrmProjectChildSummaries';
 import { useBuildCoreMemberScopedProject } from '@/presentation/features/crmProjectDetail/useBuildCoreMemberScopedProject';
 import type { ProjectDetailPageContext } from '@/presentation/features/crmProjectDetail/projectDetailPageContext';
 import {
@@ -80,11 +81,31 @@ function ProjectDetailShellBody({
     () => canManageBuildCoreProjectTemplates(organizationMembershipContext?.role),
     [organizationMembershipContext?.role]
   );
-  const completion = useProjectCompletionToggle(scopedProject, onRefresh);
+  const isParentOverview =
+    subSlug == null && scopedProject.summary.parentProjectId == null;
+  const {
+    rows: childSummaryRows,
+    isLoading: childSummariesLoading,
+    refetch: refetchChildSummaries,
+  } = useCrmProjectChildSummaries(isParentOverview ? scopedProject.summary : null, '');
+  const refreshProjectDetail = useCallback(async () => {
+    await onRefresh();
+    if (isParentOverview) {
+      refetchChildSummaries();
+    }
+  }, [isParentOverview, onRefresh, refetchChildSummaries]);
+  const completion = useProjectCompletionToggle(scopedProject, refreshProjectDetail);
   const projectForWorkspace = showCompletionActions ? completion.project : scopedProject;
   const workspace = useProjectDetailWorkspace(projectForWorkspace);
   const detail = content.projectDetail;
   const projectSummary = workspace.project.summary;
+  const childSummaries = isParentOverview
+    ? {
+        allRows: childSummaryRows,
+        isLoading: childSummariesLoading,
+        refetch: refetchChildSummaries,
+      }
+    : null;
 
   const {
     pendingDeleteProject,
@@ -109,7 +130,7 @@ function ProjectDetailShellBody({
   });
   const loadTemplate = useLoadProjectTemplate({
     projectSlug: projectSummary.slug,
-    onRefresh,
+    onRefresh: refreshProjectDetail,
     onSuccess: (message) => workspace.setToast({ kind: 'success', message }),
     onError: (message) => workspace.setToast({ kind: 'error', message }),
   });
@@ -148,7 +169,7 @@ function ProjectDetailShellBody({
   const shellValue: ProjectDetailShellContextValue = {
     pageContext,
     isApiSource,
-    onRefresh,
+    onRefresh: refreshProjectDetail,
     showCompletionActions,
     isMemberRole,
     completion: showCompletionActions ? completion : null,
@@ -156,6 +177,7 @@ function ProjectDetailShellBody({
     subSlug,
     parentProject,
     routes,
+    childSummaries,
     ...workspace,
   };
 

@@ -500,7 +500,7 @@ export function mapDbProjectDetail(input: {
   );
   const balanceRemainingCents = computeProjectBalanceCents(
     workflowTasks,
-    baseSummary.balanceRemainingCents
+    baseSummary.dealValueCents
   );
   const summary =
     balanceRemainingCents === baseSummary.balanceRemainingCents

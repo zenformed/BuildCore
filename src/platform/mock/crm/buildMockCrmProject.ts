@@ -319,8 +319,7 @@ export function buildMockCrmProjectDetail(input: BuildMockCrmProjectInput): CrmP
     ? defaultPaymentMilestoneTasks(assignedTo, input.dealValueCents, paidCents)
     : [];
   const workflowTasks = [...opsTasks, ...paymentTasks];
-  const fallbackBalance = Math.max(0, input.dealValueCents - paidCents);
-  const balanceRemainingCents = computeProjectBalanceCents(workflowTasks, fallbackBalance);
+  const balanceRemainingCents = computeProjectBalanceCents(workflowTasks, input.dealValueCents);
 
   const summary: CrmProjectSummary = {
     id: input.id,

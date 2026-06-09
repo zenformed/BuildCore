@@ -9,14 +9,22 @@ import styles from './ProjectDetail.module.css';
 
 export type ProjectProgressPercentProps = {
   progress: ProjectProgressDisplay;
+  variant?: 'default' | 'compact';
 };
 
-export function ProjectProgressPercent({ progress }: ProjectProgressPercentProps): ReactElement {
+export function ProjectProgressPercent({
+  progress,
+  variant = 'default',
+}: ProjectProgressPercentProps): ReactElement {
   const { textPercent, litSegmentCount } = progress;
+  const rootClass =
+    variant === 'compact'
+      ? `${styles.projectProgressPercent} ${styles.projectProgressPercent_compact}`
+      : styles.projectProgressPercent;
 
   return (
     <div
-      className={styles.projectProgressPercent}
+      className={rootClass}
       role="progressbar"
       aria-valuenow={textPercent}
       aria-valuemin={0}

@@ -147,9 +147,11 @@ export function useProjectDetailWorkspace(initialProject: CrmProjectDetail) {
 
   const handleConfirmArchiveTask = useCallback(async () => {
     if (!archiveConfirmTask) return;
+    const archivedTask = archiveConfirmTask;
     try {
-      await archiveCrmWorkflowTask(crmRepositories, archiveConfirmTask.id);
-      workflowSection.onWorkflowTaskArchived(archiveConfirmTask.id);
+      await archiveCrmWorkflowTask(crmRepositories, archivedTask.id);
+      workflowSection.onWorkflowTaskArchived(archivedTask.id);
+      setArchiveConfirmTask(null);
       setToast({ kind: 'success', message: wf.archiveTaskSuccess });
     } catch {
       setToast({ kind: 'error', message: wf.archiveTaskFailed });

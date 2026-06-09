@@ -3,6 +3,8 @@
 import type { KeyboardEvent, ReactElement } from 'react';
 import type { CrmPriority, CrmProjectSummary } from '@/domain/crm';
 import { isCrmProjectComplete } from '@/domain/crm';
+import { pipelineStageProgressPercent, progressLitSegmentCount } from '@/domain/buildcore/projectPipelineProgress';
+import { ProjectProgressPercent } from '@/presentation/components/CrmProjectDetail/ProjectProgressPercent';
 import { CrmProjectCompleteIcon } from '@/presentation/components/crmShared/CrmProjectCompleteIcon';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
 import {
@@ -38,6 +40,8 @@ export type CrmProjectsTableProps = {
   projectColumnLabel?: string;
   emptyMessage?: string;
   deleteLabels?: CrmProjectsTableDeleteLabels;
+  /** Show pipeline progress % after the stage pill (subprojects table). */
+  showStageProgressPercent?: boolean;
 };
 
 export function CrmProjectsTable({
@@ -52,6 +56,7 @@ export function CrmProjectsTable({
   projectColumnLabel,
   emptyMessage,
   deleteLabels,
+  showStageProgressPercent = false,
 }: CrmProjectsTableProps): ReactElement {
   const showTable = rows.length > 0 || isLoading;
   const tableInnerClass = isMemberRole
@@ -101,6 +106,7 @@ export function CrmProjectsTable({
                   deleting={deletingProjectId === project.id}
                   onRequestDelete={onRequestDelete}
                   deleteLabels={deleteLabels}
+                  showStageProgressPercent={showStageProgressPercent}
                 />
               ))
             )}
@@ -121,6 +127,7 @@ function ProjectRow({
   deleting,
   onRequestDelete,
   deleteLabels,
+  showStageProgressPercent,
 }: {
   project: CrmProjectSummary;
   onRowClick: (project: CrmProjectSummary) => void;
@@ -130,11 +137,13 @@ function ProjectRow({
   deleting: boolean;
   onRequestDelete?: (project: CrmProjectSummary) => void;
   deleteLabels?: CrmProjectsTableDeleteLabels;
+  showStageProgressPercent: boolean;
 }): ReactElement {
   const deleteCopy = content.crm.delete;
   const deleteAction = deleteLabels?.action ?? deleteCopy.action;
   const deleteAriaLabel = deleteLabels?.actionAriaLabel ?? deleteCopy.actionAriaLabel;
   const tradeSubtitle = getProjectTradeSubtitle(project.tradeType);
+  const stageProgressPercent = pipelineStageProgressPercent(project.currentStageSlug);
 
   const handleKeyDown = (e: KeyboardEvent<HTMLDivElement>): void => {
     if (e.key === 'Enter' || e.key === ' ') {
@@ -160,6 +169,15 @@ function ProjectRow({
           <span className={styles.projectName}>{project.name}</span>
         </span>
         {tradeSubtitle ? <span className={styles.projectMeta}>{tradeSubtitle}</span> : null}
+        {showStageProgressPercent ? (
+          <ProjectProgressPercent
+            variant="compact"
+            progress={{
+              textPercent: stageProgressPercent,
+              litSegmentCount: progressLitSegmentCount(stageProgressPercent),
+            }}
+          />
+        ) : null}
       </span>
       <span className={`${styles.gridCell} ${styles.gridCellAlignCenter}`} role="cell">
         {project.contact.name}

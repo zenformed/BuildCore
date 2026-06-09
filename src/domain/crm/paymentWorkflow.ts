@@ -20,21 +20,30 @@ export const PAYMENTS_WORKFLOW_COLLAPSE_KEY = 'payments' as const;
 
 export type WorkflowStageCollapseKey = PipelineStageSlug | typeof PAYMENTS_WORKFLOW_COLLAPSE_KEY;
 
-export function isPaymentWorkflowTask(
-  task: Pick<CrmWorkflowTask, 'amountCents'>
-): boolean {
+export type PaymentBalanceTask = Pick<CrmWorkflowTask, 'amountCents' | 'status'> & {
+  readonly paidAt?: string | null;
+};
+
+export function isPaymentWorkflowTask(task: Pick<CrmWorkflowTask, 'amountCents'>): boolean {
   return task.amountCents != null;
 }
 
-/** Sum unpaid payment-task amounts; otherwise use stored project balance. */
+export function isUnpaidPaymentTask(task: PaymentBalanceTask): boolean {
+  if (!isPaymentWorkflowTask(task)) return false;
+  if (task.status === 'done') return false;
+  if (task.paidAt != null && task.paidAt.trim() !== '') return false;
+  return true;
+}
+
+/** Sum unpaid payment-task amounts; otherwise use contract value (no milestones yet). */
 export function computeProjectBalanceCents(
-  tasks: readonly Pick<CrmWorkflowTask, 'amountCents' | 'status'>[],
-  fallbackBalanceCents: number
+  tasks: readonly PaymentBalanceTask[],
+  dealValueCents: number
 ): number {
   const paymentTasks = tasks.filter(isPaymentWorkflowTask);
-  if (paymentTasks.length === 0) return fallbackBalanceCents;
+  if (paymentTasks.length === 0) return dealValueCents;
   return paymentTasks
-    .filter((task) => task.status !== 'done')
+    .filter(isUnpaidPaymentTask)
     .reduce((sum, task) => sum + (task.amountCents ?? 0), 0);
 }
 
@@ -47,8 +56,9 @@ export function projectHasPaymentMilestones(
 export function applyPaymentBalanceToProjectDetail(detail: CrmProjectDetail): CrmProjectDetail {
   const balanceRemainingCents = computeProjectBalanceCents(
     detail.workflowTasks,
-    detail.summary.balanceRemainingCents
+    detail.summary.dealValueCents
   );
+
   if (
     balanceRemainingCents === detail.summary.balanceRemainingCents &&
     balanceRemainingCents === detail.milestonePayment.balanceCents
