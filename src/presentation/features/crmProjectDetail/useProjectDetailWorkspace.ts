@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import type { CrmBudgetEntry, CrmProjectDetail, CrmWorkflowTask } from '@/domain/crm';
+import { isPaymentWorkflowTask } from '@/domain/crm/paymentWorkflow';
 import { archiveCrmWorkflowTask } from '@/application/use-cases/crm';
 import { uploadWorkflowTaskDocument } from '@/application/use-cases/crm/uploadWorkflowTaskDocument';
 import {
@@ -17,6 +18,7 @@ import { useWorkflowTasksSection } from '@/presentation/features/crmProjectDetai
 import type { WorkflowTaskDrawerContext } from '@/presentation/components/CrmProjectDetail/WorkflowTaskDrawer';
 import { crmRepositories } from '@/shared/di/container';
 import { useWorkflowTaskCustomerNotifyPrompt } from '@/presentation/features/crmProjectDetail/useWorkflowTaskCustomerNotifyPrompt';
+import { useCrmPaymentTasksIndexContext } from '@/presentation/providers/CrmPaymentTasksIndexProvider';
 
 export type ProjectDetailToast = { kind: 'success' | 'error'; message: string };
 
@@ -43,6 +45,16 @@ export function useProjectDetailWorkspace(initialProject: CrmProjectDetail) {
   const workflowSection = useWorkflowTasksSection(project, setProject);
   const budgetSection = useBudgetSection(project, setProject);
   const customerNotify = useWorkflowTaskCustomerNotifyPrompt(project.summary.contact);
+  const { refetch: refetchPaymentTasksIndex } = useCrmPaymentTasksIndexContext();
+
+  const refreshPaymentTasksIndexIfPayment = useCallback(
+    (task: Pick<CrmWorkflowTask, 'amountCents'>) => {
+      if (isPaymentWorkflowTask(task)) {
+        void refetchPaymentTasksIndex();
+      }
+    },
+    [refetchPaymentTasksIndex]
+  );
 
   const handleProjectSaved = useCallback((next: CrmProjectDetail) => {
     setProject(next);
@@ -56,16 +68,18 @@ export function useProjectDetailWorkspace(initialProject: CrmProjectDetail) {
   const handleWorkflowTaskPatched = useCallback(
     async (task: CrmWorkflowTask) => {
       workflowSection.onWorkflowTaskPatched(task);
+      refreshPaymentTasksIndexIfPayment(task);
     },
-    [workflowSection]
+    [refreshPaymentTasksIndexIfPayment, workflowSection]
   );
 
   const handleWorkflowTaskCreated = useCallback(
     async (task: CrmWorkflowTask) => {
       workflowSection.onWorkflowTaskCreated(task);
+      refreshPaymentTasksIndexIfPayment(task);
       setToast({ kind: 'success', message: content.projectDetail.workflow.taskAddedSuccess });
     },
-    [workflowSection]
+    [refreshPaymentTasksIndexIfPayment, workflowSection]
   );
 
   const handleBudgetEntryPatched = useCallback(
@@ -151,12 +165,19 @@ export function useProjectDetailWorkspace(initialProject: CrmProjectDetail) {
     try {
       await archiveCrmWorkflowTask(crmRepositories, archivedTask.id);
       workflowSection.onWorkflowTaskArchived(archivedTask.id);
+      refreshPaymentTasksIndexIfPayment(archivedTask);
       setArchiveConfirmTask(null);
       setToast({ kind: 'success', message: wf.archiveTaskSuccess });
     } catch {
       setToast({ kind: 'error', message: wf.archiveTaskFailed });
     }
-  }, [archiveConfirmTask, wf.archiveTaskFailed, wf.archiveTaskSuccess, workflowSection]);
+  }, [
+    archiveConfirmTask,
+    refreshPaymentTasksIndexIfPayment,
+    wf.archiveTaskFailed,
+    wf.archiveTaskSuccess,
+    workflowSection,
+  ]);
 
   const openCreateTask = useCallback((context: WorkflowTaskDrawerContext) => {
     setTaskDrawer({ open: true, mode: 'create', context, task: null });

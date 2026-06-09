@@ -34,7 +34,9 @@ export function resolvePaymentTimingFields(input: {
 
   if (input.paidAt !== undefined) {
     paidAt = input.paidAt;
-  } else if (input.nextStatus === 'done' && input.previousStatus !== 'done' && !paidAt) {
+  } else if (input.nextStatus !== 'done' && input.previousStatus === 'done') {
+    paidAt = null;
+  } else if (input.nextStatus === 'done' && !paidAt) {
     paidAt = input.now;
   }
 

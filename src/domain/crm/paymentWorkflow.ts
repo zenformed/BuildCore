@@ -28,11 +28,15 @@ export function isPaymentWorkflowTask(task: Pick<CrmWorkflowTask, 'amountCents'>
   return task.amountCents != null;
 }
 
+/** True when a payment milestone has a non-empty paid_at (accounting source of truth). */
+export function hasPaymentPaidAt(task: PaymentBalanceTask): boolean {
+  return task.paidAt != null && task.paidAt.trim() !== '';
+}
+
+/** Unpaid balance = payment milestones without paid_at (status alone does not count as collected). */
 export function isUnpaidPaymentTask(task: PaymentBalanceTask): boolean {
   if (!isPaymentWorkflowTask(task)) return false;
-  if (task.status === 'done') return false;
-  if (task.paidAt != null && task.paidAt.trim() !== '') return false;
-  return true;
+  return !hasPaymentPaidAt(task);
 }
 
 /** Sum unpaid payment-task amounts; otherwise use contract value (no milestones yet). */

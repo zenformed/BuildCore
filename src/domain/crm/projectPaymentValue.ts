@@ -1,4 +1,5 @@
 import {
+  hasPaymentPaidAt,
   isPaymentWorkflowTask,
   isUnpaidPaymentTask,
   type PaymentBalanceTask,
@@ -23,12 +24,12 @@ export function computeProjectValueFromPayments(
   return milestones.reduce((sum, task) => sum + (task.amountCents ?? 0), 0);
 }
 
-/** Sum of paid payment milestone amounts; $0 when there are no payment milestones. */
+/** Sum of payment milestone amounts with paid_at; $0 when there are no payment milestones. */
 export function computeCollectedFromPayments(tasks: readonly PaymentBalanceTask[]): number {
   const milestones = paymentTasks(tasks);
   if (milestones.length === 0) return 0;
   return milestones
-    .filter((task) => !isUnpaidPaymentTask(task))
+    .filter(hasPaymentPaidAt)
     .reduce((sum, task) => sum + (task.amountCents ?? 0), 0);
 }
 
@@ -43,13 +44,16 @@ export function computeBalanceDueFromPayments(
     .reduce((sum, task) => sum + (task.amountCents ?? 0), 0);
 }
 
-/** Value, collected, and balance for one project's payment milestones. */
+/**
+ * Value / collected / balance for one project's payment milestones.
+ * Uses paid_at as the accounting source of truth (not workflow status).
+ */
 export function computePaymentFinancialsFromTasks(
   tasks: readonly PaymentBalanceTask[]
 ): ProjectPaymentFinancials {
   const valueCents = computeProjectValueFromPayments(tasks);
+  const collectedCents = computeCollectedFromPayments(tasks);
   const balanceCents = computeBalanceDueFromPayments(tasks);
-  const collectedCents = valueCents - balanceCents;
   return { valueCents, collectedCents, balanceCents };
 }
 
@@ -86,14 +90,14 @@ export function computeBalanceDueWithChildren(
   return total;
 }
 
-/** Roll up value, collected, and balance across parent + child payment milestones. */
+/** Roll up value, collected, and balance across parent + visible child payment milestones. */
 export function computePaymentFinancialsWithChildren(
   parentTasks: readonly PaymentBalanceTask[],
   childTasksList: readonly (readonly PaymentBalanceTask[])[]
 ): ProjectPaymentFinancials {
   const valueCents = computeProjectValueWithChildren(parentTasks, childTasksList);
+  const collectedCents = computeCollectedWithChildren(parentTasks, childTasksList);
   const balanceCents = computeBalanceDueWithChildren(parentTasks, childTasksList);
-  const collectedCents = valueCents - balanceCents;
   return { valueCents, collectedCents, balanceCents };
 }
 
