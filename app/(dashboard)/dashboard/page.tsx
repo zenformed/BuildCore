@@ -7,16 +7,5 @@ import { CrmProjectsPipeline } from '@/presentation/components/CrmProjects/CrmPr
 export default function DashboardPage(): ReactElement {
   const dash = useBuildCoreDashboardContext();
 
-  return (
-    <CrmProjectsPipeline
-      searchQuery={dash.projectsSearchQuery}
-      stageFilter={dash.stageFilter}
-      priorityFilter={dash.priorityFilter}
-      createDraftOpen={dash.createProjectDraftOpen}
-      onCreateDraftOpenChange={dash.setCreateProjectDraftOpen}
-      onStageFilterChange={dash.setStageFilter}
-      onPriorityFilterChange={dash.setPriorityFilter}
-      onProjectRowClick={dash.onProjectRowClick}
-    />
-  );
+  return <CrmProjectsPipeline onProjectRowClick={dash.onProjectRowClick} />;
 }

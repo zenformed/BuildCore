@@ -10,7 +10,7 @@ import type { ProjectDetailRoutes } from '@/platform/navigation/projectDetailRou
 export type ProjectDetailChildSummaries = {
   readonly allRows: readonly CrmProjectSummary[];
   readonly isLoading: boolean;
-  readonly refetch: () => void;
+  readonly refetch: () => Promise<void>;
 };
 
 export type ProjectDetailShellContextValue = {

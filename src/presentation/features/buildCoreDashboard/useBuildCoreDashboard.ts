@@ -17,11 +17,9 @@ import { useTenant } from '@/presentation/providers';
 import { computeIsAdmin } from '@/presentation/features/buildCoreDashboard/buildCoreDashboardViewModel';
 import { canAccessBuildCoreTeams } from '@/presentation/features/buildCoreTeams/buildCoreTeamsAccess';
 import { canAccessBuildCoreReports } from '@/presentation/features/crmReports/buildCoreReportsAccess';
-import { isBuildCoreMemberRole } from '@/domain/buildcore/memberRole';
 import { formatOrganizationRoleLabel } from '@zenformed/core/dashboard-shell';
 import type { BuildCoreSettingsSectionId } from '@/platform/navigation/buildCoreDashboardNavigation';
 import type { CrmProjectSummary } from '@/domain/crm';
-import type { CrmPriorityFilter, CrmStageFilter } from '@/presentation/features/crmProjects/crmProjectsPipelineViewModel';
 import type { BuildCoreSidebarNavId } from '@/presentation/components/DashboardShell/BuildCoreSidebar';
 
 export type { BuildCoreSidebarNavId };
@@ -60,16 +58,7 @@ export function useBuildCoreDashboard(): {
   logoUploading: boolean;
   headerLogoFileInputRef: RefObject<HTMLInputElement>;
   handleLogoFileChange: (e: ChangeEvent<HTMLInputElement>) => Promise<void>;
-  projectsSearchQuery: string;
-  setProjectsSearchQuery: (query: string) => void;
-  stageFilter: CrmStageFilter;
-  setStageFilter: (value: CrmStageFilter) => void;
-  priorityFilter: CrmPriorityFilter;
-  setPriorityFilter: (value: CrmPriorityFilter) => void;
   onProjectRowClick: (project: CrmProjectSummary) => void;
-  onNewProjectClick: () => void;
-  createProjectDraftOpen: boolean;
-  setCreateProjectDraftOpen: (open: boolean) => void;
 } {
   const router = useRouter();
   const { user, isLoading: authLoading, signOut } = useAuth();
@@ -100,10 +89,6 @@ export function useBuildCoreDashboard(): {
   const [signOutModalOpen, setSignOutModalOpen] = useState(false);
   const [profilePhotoModalOpen, setProfilePhotoModalOpen] = useState(false);
   const [sidebarNav, setSidebarNav] = useState<BuildCoreSidebarNavId>('projects');
-  const [projectsSearchQuery, setProjectsSearchQuery] = useState('');
-  const [stageFilter, setStageFilter] = useState<CrmStageFilter>('all');
-  const [priorityFilter, setPriorityFilter] = useState<CrmPriorityFilter>('all');
-  const [createProjectDraftOpen, setCreateProjectDraftOpen] = useState(false);
 
   const onProjectRowClick = useCallback(
     (project: CrmProjectSummary) => {
@@ -111,17 +96,6 @@ export function useBuildCoreDashboard(): {
     },
     [router]
   );
-
-  const onNewProjectClick = useCallback(() => {
-    if (isBuildCoreMemberRole(organizationMembershipContext?.role)) return;
-    setCreateProjectDraftOpen(true);
-  }, [organizationMembershipContext?.role]);
-
-  useEffect(() => {
-    if (isBuildCoreMemberRole(organizationMembershipContext?.role) && createProjectDraftOpen) {
-      setCreateProjectDraftOpen(false);
-    }
-  }, [createProjectDraftOpen, organizationMembershipContext?.role]);
 
   useEffect(() => {
     if (user?.tenantId) {
@@ -201,15 +175,6 @@ export function useBuildCoreDashboard(): {
     logoUploading,
     headerLogoFileInputRef,
     handleLogoFileChange,
-    projectsSearchQuery,
-    setProjectsSearchQuery,
-    stageFilter,
-    setStageFilter,
-    priorityFilter,
-    setPriorityFilter,
     onProjectRowClick,
-    onNewProjectClick,
-    createProjectDraftOpen,
-    setCreateProjectDraftOpen,
   };
 }

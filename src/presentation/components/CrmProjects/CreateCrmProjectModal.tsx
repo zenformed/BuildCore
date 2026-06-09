@@ -445,15 +445,11 @@ export function CreateCrmProjectModal({
               {!isApiSource ? <p className={formStyles.notice}>{create.mockDisabledMessage}</p> : null}
 
               <CreateCrmProjectFormFields
-
                 form={form}
-
                 saving={saving}
-
                 assigneeOptions={assigneeOptions}
-
                 updateField={updateField}
-
+                showNotes={isEditMode}
               />
 
               {!isEditMode && canManageTemplates && isApiSource ? (

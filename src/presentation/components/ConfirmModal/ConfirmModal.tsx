@@ -10,8 +10,17 @@ import styles from './ConfirmModal.module.css';
 
 const confirmClassNames = pickConfirmSnackbarClassNames(styles);
 
-export interface ConfirmModalProps extends Omit<ZenformedConfirmSnackbarProps, 'classNames'> {}
+export interface ConfirmModalProps extends Omit<ZenformedConfirmSnackbarProps, 'classNames'> {
+  hideIcon?: boolean;
+}
 
-export function ConfirmModal(props: ConfirmModalProps): ReactElement {
-  return <ZenformedConfirmSnackbar classNames={confirmClassNames} {...props} />;
+export function ConfirmModal({ hideIcon = false, ...props }: ConfirmModalProps): ReactElement {
+  const classNames = hideIcon
+    ? {
+        ...confirmClassNames,
+        snackbarIcon: `${confirmClassNames.snackbarIcon} ${styles.snackbarIconHidden}`,
+      }
+    : confirmClassNames;
+
+  return <ZenformedConfirmSnackbar classNames={classNames} {...props} />;
 }

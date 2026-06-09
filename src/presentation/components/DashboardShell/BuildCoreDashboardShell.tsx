@@ -29,8 +29,6 @@ const pageLoadingClassNames = pickDashboardPageLoadingClassNames(shellStyles);
 export type BuildCoreDashboardShellProps = {
   /** When null, the shell omits the page h1 (detail pages use their own header). */
   title: string | null;
-  showProjectActions: boolean;
-  showNewProjectButton?: boolean;
   sidebarActiveId: BuildCoreSidebarNavId;
   onSidebarSelect: (id: BuildCoreSidebarNavId) => void;
   children: ReactNode;
@@ -38,8 +36,6 @@ export type BuildCoreDashboardShellProps = {
 
 export function BuildCoreDashboardShell({
   title,
-  showProjectActions,
-  showNewProjectButton = showProjectActions,
   sidebarActiveId,
   onSidebarSelect,
   children,
@@ -95,12 +91,6 @@ export function BuildCoreDashboardShell({
           <>
             <CorePlatformDegradedBanner variant="overlay" />
             <BuildCoreDashboardHeader
-              searchQuery={dash.projectsSearchQuery}
-              onSearchQueryChange={dash.setProjectsSearchQuery}
-              showProjectActions={showProjectActions}
-              showNewProjectButton={showNewProjectButton}
-              onNewProjectClick={dash.onNewProjectClick}
-              newProjectDisabled={dash.createProjectDraftOpen}
               user={dash.user ? { email: dash.user.email } : null}
               effectiveLicenseTier={dash.effectiveLicenseTier}
               organizationRoleLabel={dash.organizationRoleLabel}

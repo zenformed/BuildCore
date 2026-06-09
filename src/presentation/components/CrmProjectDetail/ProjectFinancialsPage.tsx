@@ -7,7 +7,7 @@ import { ProjectCostSummary } from './ProjectCostSummary';
 import styles from './ProjectDetail.module.css';
 
 export function ProjectFinancialsContent(): ReactElement {
-  const { project, setToast } = useProjectDetailShell();
+  const { project, onRefresh, setToast } = useProjectDetailShell();
   const { exporting: exportingPl, exportPdf: exportProfitAndLossPdf } = useProjectProfitAndLossPdfExport(
     project,
     (message) => setToast({ kind: 'error', message })
@@ -19,6 +19,8 @@ export function ProjectFinancialsContent(): ReactElement {
         budget={project.budget}
         generatingPl={exportingPl}
         onGeneratePl={() => void exportProfitAndLossPdf()}
+        onRefresh={onRefresh}
+        onRefreshError={(message) => setToast({ kind: 'error', message })}
       />
     </div>
   );

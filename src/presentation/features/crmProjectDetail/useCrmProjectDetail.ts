@@ -58,7 +58,7 @@ export function useCrmProjectDetail(
     isApiSource ? { status: 'loading' } : resolveMockDetailState(slug, parentSlug)
   );
 
-  const load = useCallback(async () => {
+  const load = useCallback(async ({ silent = false }: { silent?: boolean } = {}) => {
     const trimmed = slug.trim();
     if (!trimmed) {
       setState({ status: 'not_found', slug });
@@ -68,7 +68,9 @@ export function useCrmProjectDetail(
       setState(resolveMockDetailState(trimmed, parentSlug));
       return;
     }
-    setState({ status: 'loading' });
+    if (!silent) {
+      setState({ status: 'loading' });
+    }
     const project = await getCrmProjectDetailBySlug(crmRepositories, trimmed);
     if (project == null) {
       setState({ status: 'not_found', slug: trimmed });
@@ -89,8 +91,12 @@ export function useCrmProjectDetail(
   }, [isApiSource, parentSlug, slug]);
 
   useEffect(() => {
-    void load();
+    void load({ silent: false });
   }, [load]);
 
-  return { state, refetch: load, isApiSource };
+  const refetch = useCallback(async () => {
+    await load({ silent: true });
+  }, [load]);
+
+  return { state, refetch, isApiSource };
 }

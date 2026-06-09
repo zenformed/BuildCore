@@ -119,3 +119,7 @@
 .confirmBtnDanger:hover {
   opacity: 0.9;
 }
+
+.snackbarIconHidden {
+  display: none;
+}

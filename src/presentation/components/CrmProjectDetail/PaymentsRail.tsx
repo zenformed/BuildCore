@@ -8,8 +8,11 @@ import { countDocumentsByTaskId } from '@/presentation/features/crmProjectDetail
 import { listPaymentMilestones } from '@/presentation/features/crmProjectDetail/workflowTaskGroups';
 import { useBuildCoreProjectSectionAccess } from '@/presentation/providers/BuildCoreProjectSectionAccessProvider';
 import { PaymentMilestoneDraftRow } from './PaymentMilestoneDraftRow';
+import { useProjectDetailShell } from '@/presentation/features/crmProjectDetail/ProjectDetailShellContext';
 import { DetailPanelHeader } from './DetailPanelHeader';
+import { DetailPanelHeaderActions } from './DetailPanelHeaderActions';
 import { DetailPanelHeaderButton } from './DetailPanelHeaderButton';
+import { DetailPanelSectionRefresh } from './DetailPanelSectionRefresh';
 import { WorkflowTaskInlineRow } from './WorkflowTaskInlineRow';
 import styles from './ProjectDetail.module.css';
 
@@ -33,6 +36,7 @@ export function PaymentsRail({
   const payments = content.projectDetail.payments;
   const paymentPermissionsCopy = content.teams.paymentPermissions;
   const wf = content.projectDetail.workflow;
+  const { refreshWorkflowTasks, setToast } = useProjectDetailShell();
   const { payment } = useBuildCoreProjectSectionAccess();
   const { permissions, isLoading, isReady } = payment;
   const canView = isReady && permissions.canView;
@@ -49,16 +53,23 @@ export function PaymentsRail({
   return (
     <section className={styles.paymentsPanel} aria-labelledby="payments-rail-heading">
       <DetailPanelHeader title={payments.title} titleId="payments-rail-heading">
-        {canCreate ? (
-          <DetailPanelHeaderButton
-            variant="add"
-            disabled={draftOpen}
-            title={payments.addMilestone}
-            onClick={() => setDraftOpen(true)}
+        <DetailPanelHeaderActions>
+          <DetailPanelSectionRefresh
+            sectionLabel={payments.title}
+            onRefresh={refreshWorkflowTasks}
+            onError={(message) => setToast({ kind: 'error', message })}
           />
-        ) : null}
+          {canCreate ? (
+            <DetailPanelHeaderButton
+              variant="add"
+              disabled={draftOpen}
+              title={payments.addMilestone}
+              onClick={() => setDraftOpen(true)}
+            />
+          ) : null}
+        </DetailPanelHeaderActions>
       </DetailPanelHeader>
-      {isLoading ? (
+      {isLoading && !isReady ? (
         <p className={styles.subtitle}>{paymentPermissionsCopy.loading}</p>
       ) : !canView ? (
         <p className={styles.subtitle}>{wf.noViewPermission}</p>

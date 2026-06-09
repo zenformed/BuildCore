@@ -3,11 +3,9 @@
 import type { KeyboardEvent, ReactElement, ReactNode } from 'react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
-  DEFAULT_PIPELINE_STAGES,
   projectHasPaymentMilestones,
   type CrmPriority,
   type CrmProjectDetail,
-  type PipelineStageSlug,
 } from '@/domain/crm';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
 import {
@@ -264,11 +262,6 @@ export function ProjectSummaryStrip({
   const edit = content.projectDetail.edit;
   const hasPaymentMilestones = projectHasPaymentMilestones(project);
 
-  const stageOptions = DEFAULT_PIPELINE_STAGES.map((stage) => ({
-    value: stage.slug,
-    label: stage.label,
-  }));
-
   const priorityOptions = PRIORITY_OPTIONS.map((p) => ({
     value: p,
     label: p,
@@ -316,17 +309,18 @@ export function ProjectSummaryStrip({
       />
       <ProjectSummaryAddress address={summary.address} label={fields.address} />
       {memberView ? null : (
-        <SummaryInlineSelect
-          fieldKey="currentStageSlug"
+        <SummaryMetric
           label={content.projectDetail.currentStage}
-          value={summary.currentStageSlug}
+          fieldKey="currentStageSlug"
           savingField={savingField}
-          options={stageOptions}
-          renderValue={(slug) => (
-            <span className={shared.stagePill}>{formatStageLabel(slug as PipelineStageSlug)}</span>
-          )}
-          onPatch={patchField}
-        />
+        >
+          <span
+            className={shared.stagePill}
+            aria-busy={savingField === 'currentStageSlug' || undefined}
+          >
+            {formatStageLabel(summary.currentStageSlug)}
+          </span>
+        </SummaryMetric>
       )}
       <SummaryInlineSelect
         fieldKey="priority"

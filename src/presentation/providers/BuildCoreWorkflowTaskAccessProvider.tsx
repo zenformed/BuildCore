@@ -6,6 +6,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactElement,
   type ReactNode,
@@ -39,10 +40,11 @@ export type BuildCoreWorkflowTaskAccessProviderProps = {
 export function BuildCoreWorkflowTaskAccessProvider({
   children,
 }: BuildCoreWorkflowTaskAccessProviderProps): ReactElement {
-  const dash = useBuildCoreDashboardContext();
+  const { getAccessToken } = useBuildCoreDashboardContext();
   const [access, setAccess] = useState<BuildCoreWorkflowTaskAccess | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const hasLoadedOnceRef = useRef(false);
 
   const load = useCallback(async () => {
     if (runtimeModes.useMockAuth()) {
@@ -52,15 +54,18 @@ export function BuildCoreWorkflowTaskAccessProvider({
       return;
     }
 
-    const token = dash.getAccessToken();
+    const token = getAccessToken();
     if (!token) {
       setAccess(null);
       setLoadError('Sign in required.');
       setIsLoading(false);
+      hasLoadedOnceRef.current = false;
       return;
     }
 
-    setIsLoading(true);
+    if (!hasLoadedOnceRef.current) {
+      setIsLoading(true);
+    }
     setLoadError(null);
     try {
       const next = await fetchBuildCoreWorkflowTaskAccessBff(token);
@@ -70,8 +75,9 @@ export function BuildCoreWorkflowTaskAccessProvider({
       setLoadError(err instanceof Error ? err.message : 'Could not load workflow task permissions.');
     } finally {
       setIsLoading(false);
+      hasLoadedOnceRef.current = true;
     }
-  }, [dash]);
+  }, [getAccessToken]);
 
   useEffect(() => {
     void load();

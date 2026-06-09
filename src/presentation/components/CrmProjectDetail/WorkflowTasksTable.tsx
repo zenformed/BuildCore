@@ -19,6 +19,8 @@ import {
 import { writeWorkflowStageExpanded } from '@/presentation/features/crmProjectDetail/workflowStageCollapseStorage';
 import { useBuildCoreWorkflowTaskAccess } from '@/presentation/providers/BuildCoreWorkflowTaskAccessProvider';
 import { DetailPanelHeader } from './DetailPanelHeader';
+import { DetailPanelHeaderActions } from './DetailPanelHeaderActions';
+import { DetailPanelSectionRefresh } from './DetailPanelSectionRefresh';
 import { WorkflowOpsTaskDraftRow } from './WorkflowOpsTaskDraftRow';
 import { WorkflowStageTaskGroup } from './WorkflowStageTaskGroup';
 import { WorkflowTaskStageAddButton } from './WorkflowTaskStageAddButton';
@@ -47,7 +49,7 @@ export function WorkflowTasksTable({
   onRequestArchiveTask,
 }: WorkflowTasksTableProps): ReactElement {
   const router = useRouter();
-  const { routes } = useProjectDetailShell();
+  const { routes, refreshWorkflowTasks, setToast } = useProjectDetailShell();
   const wf = content.projectDetail.workflow;
   const { permissions, isLoading, isReady } = useBuildCoreWorkflowTaskAccess();
   const canView = isReady && permissions.canView;
@@ -118,14 +120,21 @@ export function WorkflowTasksTable({
   return (
     <section className={panelClass} aria-labelledby="workflow-tasks-heading">
       <DetailPanelHeader title={content.projectDetail.sections.workflow} titleId="workflow-tasks-heading">
-        {canCreate ? (
-          <WorkflowTaskStageAddButton
-            disabled={draftStageSlug != null}
-            onSelectStage={handleSelectStage}
+        <DetailPanelHeaderActions>
+          <DetailPanelSectionRefresh
+            sectionLabel={content.projectDetail.sections.workflow}
+            onRefresh={refreshWorkflowTasks}
+            onError={(message) => setToast({ kind: 'error', message })}
           />
-        ) : null}
+          {canCreate ? (
+            <WorkflowTaskStageAddButton
+              disabled={draftStageSlug != null}
+              onSelectStage={handleSelectStage}
+            />
+          ) : null}
+        </DetailPanelHeaderActions>
       </DetailPanelHeader>
-      {isLoading ? (
+      {isLoading && !isReady ? (
         <div className={isFullLayout ? undefined : styles.workflowPanelGrow}>
           <p className={styles.subtitle}>{wf.permissionsLoading}</p>
         </div>

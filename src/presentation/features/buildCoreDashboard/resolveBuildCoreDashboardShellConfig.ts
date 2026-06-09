@@ -1,11 +1,9 @@
-import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
 import { buildCoreDashboardNavigation as nav } from '@/platform/navigation/buildCoreDashboardNavigation';
 import type { BuildCoreSidebarNavId } from '@/presentation/components/DashboardShell/BuildCoreSidebar';
 
 export type BuildCoreDashboardShellConfig = {
   readonly sidebarActiveId: BuildCoreSidebarNavId;
   readonly title: string | null;
-  readonly showProjectActions: boolean;
 };
 
 export function resolveBuildCoreDashboardShellConfig(pathname: string): BuildCoreDashboardShellConfig {
@@ -13,7 +11,6 @@ export function resolveBuildCoreDashboardShellConfig(pathname: string): BuildCor
     return {
       sidebarActiveId: 'teams',
       title: null,
-      showProjectActions: false,
     };
   }
 
@@ -21,7 +18,6 @@ export function resolveBuildCoreDashboardShellConfig(pathname: string): BuildCor
     return {
       sidebarActiveId: 'reports',
       title: null,
-      showProjectActions: false,
     };
   }
 
@@ -29,13 +25,11 @@ export function resolveBuildCoreDashboardShellConfig(pathname: string): BuildCor
     return {
       sidebarActiveId: 'projects',
       title: null,
-      showProjectActions: false,
     };
   }
 
   return {
     sidebarActiveId: 'projects',
-    title: content.dashboard.title,
-    showProjectActions: true,
+    title: null,
   };
 }

@@ -3,26 +3,26 @@
 import { useEffect, useState, type ReactElement } from 'react';
 import type { CrmProjectSummary } from '@/domain/crm';
 import { isBuildCoreMemberRole } from '@/domain/buildcore/memberRole';
-import { useCrmProjectsPipeline } from '@/presentation/features/crmProjects/useCrmProjectsPipeline';
+import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
+import { buildCoreDashboardNavigation as nav } from '@/platform/navigation/buildCoreDashboardNavigation';
+import {
+  EMPTY_CRM_PROJECTS_LIST_FILTERS,
+  useCrmProjectsPipeline,
+} from '@/presentation/features/crmProjects/useCrmProjectsPipeline';
+import type { CrmProjectsListFilters } from '@/presentation/features/crmProjects/crmProjectsPipelineViewModel';
 import { useCrmProjectDeleteConfirmation } from '@/presentation/features/crmProjects/useCrmProjectDeleteConfirmation';
 import { consumeCrmProjectDeleteSuccessToast } from '@/presentation/features/crmProjects/crmProjectDeleteFeedback';
-import type { CrmPriorityFilter, CrmStageFilter } from '@/presentation/features/crmProjects/crmProjectsPipelineViewModel';
 import { useSaaSProfile } from '@/presentation/hooks/useSaaSProfile';
+import { DetailPanelHeaderButton } from '@/presentation/components/CrmProjectDetail/DetailPanelHeaderButton';
+import { DetailPanelSectionRefresh } from '@/presentation/components/CrmProjectDetail/DetailPanelSectionRefresh';
 import { CrmProjectDeleteConfirmModal } from '@/presentation/components/CrmProjects/CrmProjectDeleteConfirmModal';
 import { CreateCrmProjectModal } from '@/presentation/components/CrmProjects/CreateCrmProjectModal';
 import { DetailToast } from '@/presentation/components/CrmProjectDetail/DetailToast';
-import { CrmProjectsFilters } from './CrmProjectsFilters';
+import { CrmProjectsFilterMenu } from './CrmProjectsFilterMenu';
 import { CrmProjectsTable } from './CrmProjectsTable';
 import styles from './CrmProjects.module.css';
 
 export type CrmProjectsPipelineProps = {
-  searchQuery: string;
-  stageFilter: CrmStageFilter;
-  priorityFilter: CrmPriorityFilter;
-  createDraftOpen: boolean;
-  onCreateDraftOpenChange: (open: boolean) => void;
-  onStageFilterChange: (value: CrmStageFilter) => void;
-  onPriorityFilterChange: (value: CrmPriorityFilter) => void;
   onProjectRowClick: (project: CrmProjectSummary) => void;
   onProjectCreated?: () => void | Promise<void>;
 };
@@ -30,22 +30,18 @@ export type CrmProjectsPipelineProps = {
 type PipelineToast = { kind: 'success' | 'error'; message: string };
 
 export function CrmProjectsPipeline({
-  searchQuery,
-  stageFilter,
-  priorityFilter,
-  createDraftOpen,
-  onCreateDraftOpenChange,
-  onStageFilterChange,
-  onPriorityFilterChange,
   onProjectRowClick,
   onProjectCreated,
 }: CrmProjectsPipelineProps): ReactElement {
+  const panelCopy = content.crm.panel;
   const { organizationMembershipContext } = useSaaSProfile();
   const isMemberRole = isBuildCoreMemberRole(organizationMembershipContext?.role);
-  const { rows, totalCount, filteredCount, isLoading, refetch, removeProject } = useCrmProjectsPipeline(
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filters, setFilters] = useState<CrmProjectsListFilters>(EMPTY_CRM_PROJECTS_LIST_FILTERS);
+  const [createOpen, setCreateOpen] = useState(false);
+  const { rows, isLoading, refetch, removeProject } = useCrmProjectsPipeline(
     searchQuery,
-    stageFilter,
-    priorityFilter
+    filters
   );
   const [toast, setToast] = useState<PipelineToast | null>(null);
 
@@ -68,14 +64,20 @@ export function CrmProjectsPipeline({
     }
   }, []);
 
+  useEffect(() => {
+    if (isMemberRole && createOpen) {
+      setCreateOpen(false);
+    }
+  }, [createOpen, isMemberRole]);
+
   const handleProjectCreated = async (): Promise<void> => {
-    refetch();
-    onCreateDraftOpenChange(false);
+    await refetch();
+    setCreateOpen(false);
     await onProjectCreated?.();
   };
 
   return (
-    <div className={styles.pipeline}>
+    <section className={styles.projectsPanel} aria-labelledby="crm-projects-heading">
       {toast ? (
         <DetailToast
           kind={toast.kind}
@@ -83,34 +85,58 @@ export function CrmProjectsPipeline({
           onDismiss={() => setToast(null)}
         />
       ) : null}
-      <CrmProjectsFilters
-        stageFilter={stageFilter}
-        priorityFilter={priorityFilter}
-        filteredCount={filteredCount}
-        totalCount={totalCount}
-        onStageFilterChange={onStageFilterChange}
-        onPriorityFilterChange={onPriorityFilterChange}
-      />
-      <CrmProjectsTable
-        rows={rows}
-        isLoading={isLoading}
-        onRowClick={onProjectRowClick}
-        isMemberRole={isMemberRole}
-        canDelete={canDelete && !isMemberRole}
-        deletingProjectId={deletingProjectId}
-        onRequestDelete={setPendingDeleteProject}
-      />
+      <div className={styles.projectsPanelHeader}>
+        <h2 id="crm-projects-heading" className={styles.projectsPanelTitle}>
+          {panelCopy.title}
+        </h2>
+        <div className={styles.projectsPanelHeaderTools}>
+          <CrmProjectsFilterMenu filters={filters} onChange={setFilters} />
+          <input
+            type="search"
+            value={searchQuery}
+            onChange={(event) => setSearchQuery(event.target.value)}
+            placeholder={panelCopy.searchPlaceholder}
+            aria-label={panelCopy.searchAriaLabel}
+            className={styles.projectsSearch}
+          />
+          <DetailPanelSectionRefresh
+            sectionLabel={panelCopy.title}
+            onRefresh={refetch}
+            onError={(message) => setToast({ kind: 'error', message })}
+          />
+          {!isMemberRole ? (
+            <DetailPanelHeaderButton
+              variant="add"
+              disabled={createOpen}
+              title={nav.header.newProject.title}
+              aria-label={nav.header.newProject.ariaLabel}
+              onClick={() => setCreateOpen(true)}
+            />
+          ) : null}
+        </div>
+      </div>
+      <div className={`${styles.pipeline} ${styles.projectsPanelBody}`}>
+        <CrmProjectsTable
+          rows={rows}
+          isLoading={isLoading}
+          onRowClick={onProjectRowClick}
+          isMemberRole={isMemberRole}
+          canDelete={canDelete && !isMemberRole}
+          deletingProjectId={deletingProjectId}
+          onRequestDelete={setPendingDeleteProject}
+        />
+      </div>
       <CreateCrmProjectModal
-        open={createDraftOpen && !isMemberRole}
-        onClose={() => onCreateDraftOpenChange(false)}
+        open={createOpen && !isMemberRole}
+        onClose={() => setCreateOpen(false)}
         onCreated={handleProjectCreated}
-        onTemplateToast={(toast) => setToast(toast)}
+        onTemplateToast={(nextToast) => setToast(nextToast)}
       />
       <CrmProjectDeleteConfirmModal
         pendingProject={pendingDeleteProject}
         onClose={() => setPendingDeleteProject(null)}
         onConfirm={() => void handleConfirmDelete()}
       />
-    </div>
+    </section>
   );
 }

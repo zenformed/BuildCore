@@ -9,6 +9,8 @@ import { useGuardedWorkflowTaskDocumentDrop } from '@/presentation/features/crmP
 import { useBuildCoreProjectSectionAccess } from '@/presentation/providers/BuildCoreProjectSectionAccessProvider';
 import { BudgetTable } from './BudgetTable';
 import { DetailPanelHeader } from './DetailPanelHeader';
+import { DetailPanelHeaderActions } from './DetailPanelHeaderActions';
+import { DetailPanelSectionRefresh } from './DetailPanelSectionRefresh';
 import { PaymentsRail } from './PaymentsRail';
 import { ProjectAccountabilityContent } from './ProjectAccountabilityPage';
 import { ProjectDocumentsPanelContent } from './ProjectDocumentsPanelContent';
@@ -125,7 +127,15 @@ export function ProjectDetailFolderTabs(): ReactElement {
             <DetailPanelHeader
               title={content.projectDetail.sections.documents}
               titleId="project-documents-tab-heading"
-            />
+            >
+              <DetailPanelHeaderActions>
+                <DetailPanelSectionRefresh
+                  sectionLabel={content.projectDetail.sections.documents}
+                  onRefresh={handleDocumentsRefresh}
+                  onError={(message) => setToast({ kind: 'error', message })}
+                />
+              </DetailPanelHeaderActions>
+            </DetailPanelHeader>
             <ProjectDocumentsPanelContent
               project={project}
               onRefresh={handleDocumentsRefresh}

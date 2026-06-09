@@ -27,7 +27,6 @@ export function BuildCorePersistentDashboardShell({
     () => resolveBuildCoreDashboardShellConfig(pathname),
     [pathname]
   );
-  const showNewProjectButton = shellConfig.showProjectActions && !isMemberRole;
 
   const onSidebarSelect = useCallback(
     (id: BuildCoreSidebarNavId) => {
@@ -68,8 +67,6 @@ export function BuildCorePersistentDashboardShell({
   return (
     <BuildCoreDashboardShell
       title={shellConfig.title}
-      showProjectActions={shellConfig.showProjectActions}
-      showNewProjectButton={showNewProjectButton}
       sidebarActiveId={shellConfig.sidebarActiveId}
       onSidebarSelect={onSidebarSelect}
     >

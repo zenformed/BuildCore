@@ -15,6 +15,7 @@ import { useCrmProjectDeleteConfirmation } from '@/presentation/features/crmProj
 import { useProjectDetailShell } from '@/presentation/features/crmProjectDetail/ProjectDetailShellContext';
 import { useSaaSProfile } from '@/presentation/hooks/useSaaSProfile';
 import { DetailPanelHeaderButton } from './DetailPanelHeaderButton';
+import { DetailPanelSectionRefresh } from './DetailPanelSectionRefresh';
 import styles from './ProjectDetail.module.css';
 import tableStyles from '../CrmProjects/CrmProjects.module.css';
 
@@ -35,7 +36,7 @@ export function SubprojectsSection(): ReactElement | null {
   const [searchQuery, setSearchQuery] = useState('');
   const [createOpen, setCreateOpen] = useState(false);
   const [toast, setToast] = useState<SubprojectsToast | null>(null);
-  const refetch = childSummaries?.refetch ?? (() => undefined);
+  const refetch = childSummaries?.refetch ?? (async () => undefined);
   const isLoading = childSummaries?.isLoading ?? false;
   const rows = useMemo(
     () => filterSubprojects(childSummaries?.allRows ?? [], searchQuery),
@@ -105,6 +106,11 @@ export function SubprojectsSection(): ReactElement | null {
               className={styles.subprojectsSearch}
             />
           ) : null}
+          <DetailPanelSectionRefresh
+            sectionLabel={copy.title}
+            onRefresh={refetch}
+            onError={(message) => setToast({ kind: 'error', message })}
+          />
           {canManage ? (
             <DetailPanelHeaderButton
               variant="add"
@@ -131,7 +137,6 @@ export function SubprojectsSection(): ReactElement | null {
               emptyMessage={copy.empty}
               deleteLabels={deleteCopy}
               onRowClick={(child) => router.push(routes.subproject(child.slug))}
-              showStageProgressPercent
             />
           </div>
         </div>
@@ -147,7 +152,7 @@ export function SubprojectsSection(): ReactElement | null {
           parentProjectForDefaults={project}
           redirectOnCreate={false}
           onCreated={async () => {
-            refetch();
+            await refetch();
           }}
         />
       ) : null}

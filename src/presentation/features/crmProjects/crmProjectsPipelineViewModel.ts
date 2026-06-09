@@ -1,8 +1,19 @@
 import type { CrmPriority, CrmProjectSummary, PipelineStageSlug } from '@/domain/crm';
 import { isCrmProjectComplete } from '@/domain/crm';
 
-export type CrmStageFilter = PipelineStageSlug | 'all';
-export type CrmPriorityFilter = CrmPriority | 'all';
+export type CrmProjectsListFilters = {
+  readonly stageSlugs: readonly PipelineStageSlug[];
+  readonly priorities: readonly CrmPriority[];
+};
+
+export const EMPTY_CRM_PROJECTS_LIST_FILTERS: CrmProjectsListFilters = {
+  stageSlugs: [],
+  priorities: [],
+};
+
+export function isCrmProjectsListFiltersActive(filters: CrmProjectsListFilters): boolean {
+  return filters.stageSlugs.length > 0 || filters.priorities.length > 0;
+}
 
 function projectSearchHaystack(project: CrmProjectSummary): string {
   return [
@@ -22,17 +33,17 @@ function projectSearchHaystack(project: CrmProjectSummary): string {
 export function filterCrmProjectSummaries(
   projects: readonly CrmProjectSummary[],
   searchQuery: string,
-  stageFilter: CrmStageFilter,
-  priorityFilter: CrmPriorityFilter
+  filters: CrmProjectsListFilters
 ): CrmProjectSummary[] {
   const q = searchQuery.trim().toLowerCase();
+  const { stageSlugs, priorities } = filters;
 
   return projects
     .filter((project) => {
-      if (stageFilter !== 'all' && project.currentStageSlug !== stageFilter) {
+      if (stageSlugs.length > 0 && !stageSlugs.includes(project.currentStageSlug)) {
         return false;
       }
-      if (priorityFilter !== 'all' && project.priority !== priorityFilter) {
+      if (priorities.length > 0 && !priorities.includes(project.priority)) {
         return false;
       }
       if (!q) return true;

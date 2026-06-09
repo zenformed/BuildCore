@@ -644,10 +644,6 @@ export function SaaSProfileProvider({ children }: { children: React.ReactNode })
           });
           return;
         case 'load_soft':
-          if (shouldResolveMembershipContextForSaas() && newSession?.user) {
-            setOrganizationMembershipContext(null);
-            setMembershipContextStatus('pending');
-          }
           void loadProfile({ soft: true, force: false });
           return;
         default:

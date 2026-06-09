@@ -3,6 +3,9 @@
 import type { ReactElement } from 'react';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
 import { useProjectDetailShell } from '@/presentation/features/crmProjectDetail/ProjectDetailShellContext';
+import { DetailPanelHeader } from './DetailPanelHeader';
+import { DetailPanelHeaderActions } from './DetailPanelHeaderActions';
+import { DetailPanelSectionRefresh } from './DetailPanelSectionRefresh';
 import { ProjectDocumentsPanelContent } from './ProjectDocumentsPanelContent';
 import styles from './ProjectDetail.module.css';
 
@@ -22,11 +25,18 @@ export function ProjectDocumentsContent(): ReactElement {
       className={`${styles.workflowPanel} ${styles.documentsPagePanel}`}
       aria-labelledby="project-documents-heading"
     >
-      <div className={styles.cardTitleRow}>
-        <h3 id="project-documents-heading" className={styles.cardTitle}>
-          {content.projectDetail.sections.documents}
-        </h3>
-      </div>
+      <DetailPanelHeader
+        title={content.projectDetail.sections.documents}
+        titleId="project-documents-heading"
+      >
+        <DetailPanelHeaderActions>
+          <DetailPanelSectionRefresh
+            sectionLabel={content.projectDetail.sections.documents}
+            onRefresh={handleRefresh}
+            onError={(message) => setToast({ kind: 'error', message })}
+          />
+        </DetailPanelHeaderActions>
+      </DetailPanelHeader>
       <ProjectDocumentsPanelContent
         project={project}
         onRefresh={handleRefresh}

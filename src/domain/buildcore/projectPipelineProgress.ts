@@ -1,4 +1,5 @@
 import type { PipelineStageSlug } from '@/domain/crm/pipelineStage';
+import { isCrmProjectComplete, type CrmProjectSummary } from '@/domain/crm';
 
 /** Fixed pipeline stage progress percentages for BuildCore project detail UI. */
 export const PIPELINE_STAGE_PROGRESS_PERCENT: Readonly<Record<PipelineStageSlug, number>> = {
@@ -46,11 +47,35 @@ export function averagePipelineProgressPercents(values: readonly number[]): numb
   return total / values.length;
 }
 
+export function resolveProjectSummaryProgressDisplay(
+  summary: Pick<CrmProjectSummary, 'currentStageSlug' | 'completedAt'>
+): ProjectProgressDisplay {
+  if (isCrmProjectComplete(summary)) {
+    return {
+      textPercent: 100,
+      litSegmentCount: progressLitSegmentCount(100),
+    };
+  }
+  const textPercent = pipelineStageProgressPercent(summary.currentStageSlug);
+  return {
+    textPercent,
+    litSegmentCount: progressLitSegmentCount(textPercent),
+  };
+}
+
 export function resolveProjectDetailProgressDisplay(input: {
   readonly currentStageSlug: PipelineStageSlug;
   /** Null while parent subprojects are still loading; empty when none exist. */
   readonly childStageSlugs: readonly PipelineStageSlug[] | null;
+  readonly isComplete?: boolean;
 }): ProjectProgressDisplay | null {
+  if (input.isComplete) {
+    return {
+      textPercent: 100,
+      litSegmentCount: progressLitSegmentCount(100),
+    };
+  }
+
   if (input.childStageSlugs === null) {
     return null;
   }

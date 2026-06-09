@@ -203,14 +203,17 @@ export const buildCoreDashboardContent = {
     },
   },
   crm: {
-    resultCount: (filtered: number, total: number): string =>
-      `Showing ${filtered} of ${total} projects`,
+    panel: {
+      title: 'Projects',
+      searchPlaceholder: 'Search projects…',
+      searchAriaLabel: 'Search projects',
+    },
     filters: {
-      toolbarAriaLabel: 'Project filters',
+      openMenu: 'Filter projects',
+      menuAriaLabel: 'Project filters',
+      clear: 'Clear filters',
       stageLabel: 'Stage',
-      stageAll: 'All stages',
       priorityLabel: 'Priority',
-      priorityAll: 'All priorities',
     },
     assignee: {
       customer: 'Assign to Customer',
@@ -242,6 +245,7 @@ export const buildCoreDashboardContent = {
         dealValue: 'Contract value (USD)',
         balance: 'Balance remaining (USD)',
         assigned: 'Assigned to',
+        assignedShort: 'Assigned',
         addressLine1: 'Address line 1',
         addressLine2: 'Address line 2 (optional)',
         city: 'City',
@@ -361,7 +365,9 @@ export const buildCoreDashboardContent = {
     markComplete: 'Mark as complete',
     markIncomplete: 'Mark incomplete',
     markCompleteConfirmTitle: 'Mark this project as complete?',
+    markCompleteConfirmMessage: 'This will set the project at 100%.',
     markIncompleteConfirmTitle: 'Mark this project as incomplete?',
+    markIncompleteConfirmMessage: 'Progress will reflect the current pipeline stage again.',
     markCompleteSuccess: 'Project marked as complete.',
     markIncompleteSuccess: 'Project marked as incomplete.',
     markCompleteFailed: 'Could not update project completion.',
@@ -370,6 +376,11 @@ export const buildCoreDashboardContent = {
       workflowTasks: 'Workflow Tasks',
       accountability: 'Accountability',
       financials: 'Financials',
+      refreshSection: 'Refresh',
+      refreshSectionAria: (section: string): string => `Refresh ${section}`,
+      refreshingSection: 'Refreshing…',
+      refreshingSectionAria: (section: string): string => `Refreshing ${section}`,
+      refreshFailed: 'Could not refresh. Try again.',
     },
     templates: {
       project: {

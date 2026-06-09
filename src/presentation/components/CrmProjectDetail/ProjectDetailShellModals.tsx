@@ -90,9 +90,11 @@ export function ProjectDetailShellModals({
                 .catch(() => setToast({ kind: 'error', message: detail.markCompleteFailed }));
             }}
             title={detail.markCompleteConfirmTitle}
+            message={detail.markCompleteConfirmMessage}
             confirmLabel={detail.markComplete}
             cancelLabel={wf.archiveTaskCancelLabel}
             variant="primary"
+            hideIcon
           />
           <ConfirmModal
             isOpen={completion.completionConfirm === 'incomplete'}
@@ -104,9 +106,11 @@ export function ProjectDetailShellModals({
                 .catch(() => setToast({ kind: 'error', message: detail.markCompleteFailed }));
             }}
             title={detail.markIncompleteConfirmTitle}
+            message={detail.markIncompleteConfirmMessage}
             confirmLabel={detail.markIncomplete}
             cancelLabel={wf.archiveTaskCancelLabel}
             variant="primary"
+            hideIcon
           />
         </>
       ) : null}

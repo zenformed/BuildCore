@@ -1,4 +1,5 @@
 import type { CreateCrmProjectInput, CrmPriority, CrmTradeType, PipelineStageSlug, CrmProjectDetail } from '@/domain/crm';
+import { titleCasePersonOrEntityName } from '@/domain/crm/titleCaseName';
 import { US_STATE_CODES } from '@/domain/crm/usStates';
 import { normalizeAssigneeMemberIdForSave } from '@/presentation/features/crmAssignment/buildAssigneeOptions';
 
@@ -73,12 +74,12 @@ export function parseUsdInputToCents(value: string): number | null {
 export function validateCreateCrmProjectForm(
   form: CreateCrmProjectFormState
 ): { ok: true; input: CreateCrmProjectInput } | { ok: false; message: string } {
-  const name = form.name.trim();
+  const name = titleCasePersonOrEntityName(form.name);
   if (!name) {
     return { ok: false, message: 'Project / customer name is required.' };
   }
 
-  const contactName = form.contactName.trim();
+  const contactName = titleCasePersonOrEntityName(form.contactName);
   if (!contactName) {
     return { ok: false, message: 'Contact name is required.' };
   }

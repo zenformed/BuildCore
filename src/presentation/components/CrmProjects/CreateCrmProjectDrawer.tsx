@@ -3,8 +3,6 @@
 import type { FormEvent, ReactElement } from 'react';
 import { useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { DEFAULT_PIPELINE_STAGES, type CrmPriority, type CrmTradeType } from '@/domain/crm';
-import { CRM_TRADE_TYPE_OPTIONS } from '@/presentation/features/crmProjects/crmProjectFormatters';
 import { createCrmProject } from '@/application/use-cases/crm';
 import { getCrmDataSource } from '@/infrastructure/config/crmDataSource';
 import { CrmCreateNotAvailableError } from '@/infrastructure/crm/errors';
@@ -20,6 +18,7 @@ import {
 } from '@/presentation/features/crmCreate/createCrmProjectFormModel';
 import { crmRepositories } from '@/shared/di/container';
 import shellStyles from '../../../../app/(dashboard)/dashboard/dashboard.module.css';
+import { CreateCrmProjectFormFields } from './CreateCrmProjectFormFields';
 import styles from './CreateCrmProjectDrawer.module.css';
 
 export type CreateCrmProjectDrawerProps = {
@@ -123,164 +122,12 @@ export function CreateCrmProjectDrawer({ open, onClose }: CreateCrmProjectDrawer
           {!isApiSource ? <p className={styles.notice}>{create.mockDisabledMessage}</p> : null}
 
           <form onSubmit={(e) => void handleSubmit(e)}>
-            <div className={styles.field}>
-              <label className={styles.label} htmlFor="crm-create-name">
-                {create.fields.name} *
-              </label>
-              <input
-                id="crm-create-name"
-                className={styles.input}
-                value={form.name}
-                onChange={(e) => updateField('name', e.target.value)}
-                autoFocus
-              />
-            </div>
-
-            <div className={styles.field}>
-              <label className={styles.label} htmlFor="crm-create-trade">
-                {create.fields.tradeType} *
-              </label>
-              <select
-                id="crm-create-trade"
-                className={styles.select}
-                value={form.tradeType}
-                onChange={(e) => updateField('tradeType', e.target.value as CrmTradeType)}
-              >
-                {CRM_TRADE_TYPE_OPTIONS.map((opt) => (
-                  <option key={opt.value} value={opt.value}>
-                    {opt.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className={styles.field}>
-              <label className={styles.label} htmlFor="crm-create-contact">
-                {create.fields.contactName} *
-              </label>
-              <input
-                id="crm-create-contact"
-                className={styles.input}
-                value={form.contactName}
-                onChange={(e) => updateField('contactName', e.target.value)}
-              />
-            </div>
-
-            <div className={styles.rowTwoCol}>
-              <div className={styles.field}>
-                <label className={styles.label} htmlFor="crm-create-email">
-                  {create.fields.email}
-                </label>
-                <input
-                  id="crm-create-email"
-                  type="email"
-                  className={styles.input}
-                  value={form.email}
-                  onChange={(e) => updateField('email', e.target.value)}
-                />
-              </div>
-              <div className={styles.field}>
-                <label className={styles.label} htmlFor="crm-create-phone">
-                  {create.fields.phone}
-                </label>
-                <input
-                  id="crm-create-phone"
-                  type="tel"
-                  className={styles.input}
-                  value={form.phone}
-                  onChange={(e) => updateField('phone', e.target.value)}
-                />
-              </div>
-            </div>
-
-            <div className={styles.rowTwoCol}>
-              <div className={styles.field}>
-                <label className={styles.label} htmlFor="crm-create-priority">
-                  {create.fields.priority}
-                </label>
-                <select
-                  id="crm-create-priority"
-                  className={styles.select}
-                  value={form.priority}
-                  onChange={(e) => updateField('priority', e.target.value as CrmPriority)}
-                >
-                  {(['low', 'normal', 'high', 'urgent'] as const).map((p) => (
-                    <option key={p} value={p}>
-                      {p}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div className={styles.field}>
-                <label className={styles.label} htmlFor="crm-create-stage">
-                  {create.fields.stage}
-                </label>
-                <select
-                  id="crm-create-stage"
-                  className={styles.select}
-                  value={form.currentStageSlug}
-                  onChange={(e) =>
-                    updateField('currentStageSlug', e.target.value as CreateCrmProjectFormState['currentStageSlug'])
-                  }
-                >
-                  {DEFAULT_PIPELINE_STAGES.map((stage) => (
-                    <option key={stage.slug} value={stage.slug}>
-                      {stage.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
-            <div className={styles.field}>
-              <label className={styles.label} htmlFor="crm-create-notes">
-                {create.fields.notes}
-              </label>
-              <textarea
-                id="crm-create-notes"
-                className={styles.textarea}
-                value={form.notes}
-                onChange={(e) => updateField('notes', e.target.value)}
-              />
-            </div>
-
-            <div className={styles.field}>
-              <label className={styles.label} htmlFor="crm-create-deal">
-                {create.fields.dealValue}
-              </label>
-              <input
-                id="crm-create-deal"
-                className={styles.input}
-                inputMode="decimal"
-                placeholder="0.00"
-                value={form.dealValueUsd}
-                onChange={(e) => updateField('dealValueUsd', e.target.value)}
-              />
-            </div>
-
-            {assigneeOptions.length > 0 ? (
-              <div className={styles.field}>
-                <label className={styles.label} htmlFor="crm-create-assignee">
-                  {create.fields.assigned}
-                </label>
-                <select
-                  id="crm-create-assignee"
-                  className={styles.select}
-                  value={form.assignedMemberId}
-                  onChange={(e) => updateField('assignedMemberId', e.target.value)}
-                >
-                  {assigneeOptions.map((opt) => (
-                    <option
-                      key={opt.id || 'unassigned'}
-                      value={opt.id}
-                      disabled={opt.disabled === true}
-                    >
-                      {opt.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            ) : null}
+            <CreateCrmProjectFormFields
+              form={form}
+              saving={saving}
+              assigneeOptions={assigneeOptions}
+              updateField={updateField}
+            />
 
             {error ? <p className={styles.error}>{error}</p> : null}
 
@@ -298,4 +145,3 @@ export function CreateCrmProjectDrawer({ open, onClose }: CreateCrmProjectDrawer
     </div>
   );
 }
-

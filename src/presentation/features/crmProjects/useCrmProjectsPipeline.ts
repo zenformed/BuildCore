@@ -9,62 +9,54 @@ import {
 import { getCrmDataSource } from '@/infrastructure/config/crmDataSource';
 import { crmRepositories } from '@/shared/di/container';
 import {
+  EMPTY_CRM_PROJECTS_LIST_FILTERS,
   filterCrmProjectSummaries,
-  type CrmPriorityFilter,
-  type CrmStageFilter,
+  type CrmProjectsListFilters,
 } from './crmProjectsPipelineViewModel';
 
 export function useCrmProjectsPipeline(
   searchQuery: string,
-  stageFilter: CrmStageFilter,
-  priorityFilter: CrmPriorityFilter
+  filters: CrmProjectsListFilters
 ): {
   rows: CrmProjectSummary[];
   totalCount: number;
   filteredCount: number;
   isLoading: boolean;
-  refetch: () => void;
+  refetch: () => Promise<void>;
   removeProject: (projectId: string) => void;
 } {
   const isApiSource = getCrmDataSource() === 'api';
   const includeSubprojects = searchQuery.trim().length > 0;
-  const [reloadKey, setReloadKey] = useState(0);
   const [allSummaries, setAllSummaries] = useState<readonly CrmProjectSummary[] | null>(() =>
     isApiSource
       ? null
       : listCrmProjectSummariesSync(crmRepositories, { rootsOnly: !includeSubprojects })
   );
 
-  const refetch = useCallback(() => {
-    if (isApiSource) {
-      setReloadKey((key) => key + 1);
+  const loadSummaries = useCallback(async (): Promise<void> => {
+    if (!isApiSource) {
+      setAllSummaries(
+        listCrmProjectSummariesSync(crmRepositories, { rootsOnly: !includeSubprojects })
+      );
       return;
     }
-    setAllSummaries(
-      listCrmProjectSummariesSync(crmRepositories, { rootsOnly: !includeSubprojects })
-    );
+    const data = await listCrmProjectSummaries(crmRepositories, {
+      rootsOnly: !includeSubprojects,
+    });
+    setAllSummaries(data);
   }, [includeSubprojects, isApiSource]);
 
   useEffect(() => {
     if (!isApiSource) return;
-
-    let cancelled = false;
-    void listCrmProjectSummaries(crmRepositories, { rootsOnly: !includeSubprojects }).then(
-      (data) => {
-        if (!cancelled) setAllSummaries(data);
-      }
-    );
-    return () => {
-      cancelled = true;
-    };
-  }, [includeSubprojects, isApiSource, reloadKey]);
+    void loadSummaries();
+  }, [isApiSource, loadSummaries]);
 
   const summaries = allSummaries ?? [];
   const isLoading = allSummaries === null;
 
   const rows = useMemo(
-    () => filterCrmProjectSummaries(summaries, searchQuery, stageFilter, priorityFilter),
-    [summaries, searchQuery, stageFilter, priorityFilter]
+    () => filterCrmProjectSummaries(summaries, searchQuery, filters),
+    [summaries, searchQuery, filters]
   );
 
   const removeProject = useCallback((projectId: string) => {
@@ -78,7 +70,9 @@ export function useCrmProjectsPipeline(
     totalCount: summaries.length,
     filteredCount: rows.length,
     isLoading,
-    refetch,
+    refetch: loadSummaries,
     removeProject,
   };
 }
+
+export { EMPTY_CRM_PROJECTS_LIST_FILTERS };

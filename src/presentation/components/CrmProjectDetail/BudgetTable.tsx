@@ -17,7 +17,9 @@ import { formatCentsAsUsd } from '@/presentation/features/crmProjects/crmProject
 import { BudgetDraftRow } from './BudgetDraftRow';
 import { BudgetInlineRow } from './BudgetInlineRow';
 import { DetailPanelHeader } from './DetailPanelHeader';
+import { DetailPanelHeaderActions } from './DetailPanelHeaderActions';
 import { DetailPanelHeaderButton } from './DetailPanelHeaderButton';
+import { DetailPanelSectionRefresh } from './DetailPanelSectionRefresh';
 import styles from './ProjectDetail.module.css';
 
 export type BudgetTableProps = {
@@ -30,6 +32,8 @@ export function BudgetTable({ onError }: BudgetTableProps): ReactElement {
     handleBudgetEntryPatched,
     handleBudgetEntryCreated,
     handleBudgetEntryDeleted,
+    refreshBudgetSection,
+    setToast,
   } = useProjectDetailShell();
   const { budget: budgetAccess } = useBuildCoreProjectSectionAccess();
   const { permissions, isReady } = budgetAccess;
@@ -79,14 +83,21 @@ export function BudgetTable({ onError }: BudgetTableProps): ReactElement {
       aria-labelledby="budget-table-heading"
     >
       <DetailPanelHeader title={b.tableTitle} titleId="budget-table-heading">
-        {canCreate ? (
-          <DetailPanelHeaderButton
-            variant="add"
-            disabled={draftOpen}
-            title={b.addItem}
-            onClick={() => setDraftOpen(true)}
+        <DetailPanelHeaderActions>
+          <DetailPanelSectionRefresh
+            sectionLabel={b.tableTitle}
+            onRefresh={refreshBudgetSection}
+            onError={(message) => setToast({ kind: 'error', message })}
           />
-        ) : null}
+          {canCreate ? (
+            <DetailPanelHeaderButton
+              variant="add"
+              disabled={draftOpen}
+              title={b.addItem}
+              onClick={() => setDraftOpen(true)}
+            />
+          ) : null}
+        </DetailPanelHeaderActions>
       </DetailPanelHeader>
 
       <div className={styles.docFilterRow} role="tablist" aria-label={b.filterAriaLabel}>

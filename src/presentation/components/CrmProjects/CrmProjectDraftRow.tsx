@@ -3,7 +3,7 @@
 import type { ReactElement } from 'react';
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { DEFAULT_PIPELINE_STAGES, type CrmPriority, type CrmTradeType } from '@/domain/crm';
+import type { CrmPriority, CrmTradeType } from '@/domain/crm';
 import { canManageBuildCoreProjectTemplates } from '@/domain/buildcore/projectTemplateAccess';
 import {
   createProjectTemplateDraftSummary,
@@ -21,7 +21,7 @@ import {
   type CreateCrmProjectFormState,
 } from '@/presentation/features/crmCreate/createCrmProjectFormModel';
 import { getCrmProjectAssigneeOptions } from '@/presentation/features/crmProjects/crmProjectAssigneeOptions';
-import { CRM_TRADE_TYPE_OPTIONS } from '@/presentation/features/crmProjects/crmProjectFormatters';
+import { CRM_TRADE_TYPE_OPTIONS, formatStageLabel } from '@/presentation/features/crmProjects/crmProjectFormatters';
 import { AssigneeMenuOptionLabel } from '@/presentation/features/crmAssignment/AssigneeMenuOptionLabel';
 import { useAssignmentIdentityCatalog } from '@/presentation/providers/AssignmentIdentityProvider';
 import { useBuildCoreDashboardContext } from '@/presentation/providers/BuildCoreDashboardProvider';
@@ -211,22 +211,8 @@ export function CrmProjectDraftRow({
             ))}
           </select>
         </span>
-        <span className={draftFieldCell} role="cell">
-          <select
-            className={styles.draftSelect}
-            value={form.currentStageSlug}
-            disabled={saving}
-            aria-label={create.fields.stage}
-            onChange={(e) =>
-              updateField('currentStageSlug', e.target.value as CreateCrmProjectFormState['currentStageSlug'])
-            }
-          >
-            {DEFAULT_PIPELINE_STAGES.map((stage) => (
-              <option key={stage.slug} value={stage.slug}>
-                {stage.label}
-              </option>
-            ))}
-          </select>
+        <span className={`${draftFieldCell} ${styles.gridCellAlignCenter}`} role="cell">
+          <span className={shared.stagePill}>{formatStageLabel('new-lead')}</span>
         </span>
         <span className={`${draftFieldCell} ${styles.draftFieldCellWrap}`} role="cell">
           <input

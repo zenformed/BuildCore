@@ -12,19 +12,25 @@ import {
 import { formatCentsAsUsd } from '@/presentation/features/crmProjects/crmProjectFormatters';
 import { BudgetCategoryPieChart } from './BudgetCategoryPieChart';
 import { DetailPanelHeader } from './DetailPanelHeader';
+import { DetailPanelHeaderActions } from './DetailPanelHeaderActions';
 import { DetailPanelHeaderButton } from './DetailPanelHeaderButton';
+import { DetailPanelSectionRefresh } from './DetailPanelSectionRefresh';
 import styles from './ProjectDetail.module.css';
 
 export type ProjectCostSummaryProps = {
   budget: CrmProjectBudgetSummary;
   onGeneratePl?: () => void;
   generatingPl?: boolean;
+  onRefresh?: () => Promise<void>;
+  onRefreshError?: (message: string) => void;
 };
 
 export function ProjectCostSummary({
   budget,
   onGeneratePl,
   generatingPl = false,
+  onRefresh,
+  onRefreshError,
 }: ProjectCostSummaryProps): ReactElement {
   const p = content.projectDetail.budget.pl;
   const { slices } = useMemo(
@@ -36,12 +42,21 @@ export function ProjectCostSummary({
   return (
     <aside className={`${styles.paymentsPanel} ${styles.budgetSummaryPanel}`} aria-labelledby="project-cost-heading">
       <DetailPanelHeader title={p.title} titleId="project-cost-heading">
-        <DetailPanelHeaderButton
-          variant="download"
-          title={p.generatePl}
-          disabled={generatingPl || !onGeneratePl}
-          onClick={onGeneratePl}
-        />
+        <DetailPanelHeaderActions>
+          {onRefresh ? (
+            <DetailPanelSectionRefresh
+              sectionLabel={p.title}
+              onRefresh={onRefresh}
+              onError={onRefreshError}
+            />
+          ) : null}
+          <DetailPanelHeaderButton
+            variant="download"
+            title={p.generatePl}
+            disabled={generatingPl || !onGeneratePl}
+            onClick={onGeneratePl}
+          />
+        </DetailPanelHeaderActions>
       </DetailPanelHeader>
 
       {budget.categoryCosts.length > 0 ? (

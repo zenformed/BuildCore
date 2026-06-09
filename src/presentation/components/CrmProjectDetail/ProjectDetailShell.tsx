@@ -97,7 +97,7 @@ function ProjectDetailShellBody({
   const refreshProjectDetail = useCallback(async () => {
     await onRefresh();
     if (isParentOverview) {
-      refetchChildSummaries();
+      await refetchChildSummaries();
     }
   }, [isParentOverview, onRefresh, refetchChildSummaries]);
   const completion = useProjectCompletionToggle(scopedProject, refreshProjectDetail);

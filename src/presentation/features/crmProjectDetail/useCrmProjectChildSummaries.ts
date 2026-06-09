@@ -37,12 +37,11 @@ export function useCrmProjectChildSummaries(
 ): {
   rows: CrmProjectSummary[];
   isLoading: boolean;
-  refetch: () => void;
+  refetch: () => Promise<void>;
 } {
   const isApiSource = getCrmDataSource() === 'api';
   const parentProjectId = parentProject?.id ?? null;
   const parentSlug = parentProject?.slug ?? null;
-  const [reloadKey, setReloadKey] = useState(0);
   const [summaries, setSummaries] = useState<readonly CrmProjectSummary[] | null>(() => {
     if (parentProjectId == null || parentSlug == null) return [];
     if (isApiSource) return null;
@@ -52,34 +51,31 @@ export function useCrmProjectChildSummaries(
     });
   });
 
-  const refetch = useCallback(() => {
-    if (parentProjectId == null || parentSlug == null) return;
-    if (isApiSource) {
-      setReloadKey((key) => key + 1);
+  const loadSummaries = useCallback(async (): Promise<void> => {
+    if (parentProjectId == null || parentSlug == null) {
+      setSummaries([]);
       return;
     }
-    setSummaries(
-      listCrmProjectChildSummariesSync(crmRepositories, {
-        parentProjectId,
-        parentSlug,
-      })
-    );
+    if (!isApiSource) {
+      setSummaries(
+        listCrmProjectChildSummariesSync(crmRepositories, {
+          parentProjectId,
+          parentSlug,
+        })
+      );
+      return;
+    }
+    const data = await listCrmProjectChildSummaries(crmRepositories, {
+      parentProjectId,
+      parentSlug,
+    });
+    setSummaries(data);
   }, [isApiSource, parentProjectId, parentSlug]);
 
   useEffect(() => {
     if (!isApiSource || parentProjectId == null || parentSlug == null) return;
-
-    let cancelled = false;
-    void listCrmProjectChildSummaries(crmRepositories, {
-      parentProjectId,
-      parentSlug,
-    }).then((data) => {
-      if (!cancelled) setSummaries(data);
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, [isApiSource, parentProjectId, parentSlug, reloadKey]);
+    void loadSummaries();
+  }, [isApiSource, loadSummaries, parentProjectId, parentSlug]);
 
   const rows = useMemo(
     () => filterSubprojects(summaries ?? [], searchQuery),
@@ -89,6 +85,6 @@ export function useCrmProjectChildSummaries(
   return {
     rows,
     isLoading: parentProjectId != null && summaries == null,
-    refetch,
+    refetch: loadSummaries,
   };
 }
