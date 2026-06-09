@@ -4148,56 +4148,79 @@
   }
 }
 
-.subprojectsSection {
-  margin-top: 1rem;
+.subprojectsPanel {
+  composes: detailSurface;
+  flex: 0 0 auto;
+  align-self: flex-start;
+  width: 100%;
+  min-width: 0;
+  padding: 0.75rem 0.875rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
 }
 
-.subprojectsSectionHeader {
+.subprojectsPanelHeader {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 1rem;
+  gap: 0.75rem;
   flex-wrap: wrap;
 }
 
-.subprojectsSectionHeaderBtn {
+.subprojectsPanelHeaderToggle {
   display: inline-flex;
   align-items: center;
+  gap: 0.625rem;
+  min-width: 0;
   border: 0;
-  background: transparent;
   padding: 0;
+  background: transparent;
   cursor: pointer;
-  color: var(--color-text);
+  color: var(--color-text-muted, #64748b);
   text-align: left;
 }
 
-.subprojectsSectionHeaderBtn:focus {
+.subprojectsPanelHeaderToggle:focus {
   outline: none;
 }
 
-.subprojectsSectionHeaderBtn:focus-visible {
+.subprojectsPanelHeaderToggle:focus-visible {
   outline: 2px solid #3b82f6;
   outline-offset: 2px;
   border-radius: 0.25rem;
 }
 
-:global([data-theme='dark']) .subprojectsSectionHeaderBtn:focus-visible {
+:global([data-theme='dark']) .subprojectsPanelHeaderToggle:focus-visible {
   outline-color: #60a5fa;
 }
 
-.subprojectsSectionHeaderBtn .stageGroupName {
+.subprojectsPanelHeaderTitle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  min-width: 0;
+}
+
+.subprojectsPanelTitle {
+  margin: 0;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
   color: inherit;
 }
 
-.subprojectsSectionHeaderBtn .stageGroupChevron,
-.subprojectsSectionHeaderBtn .stageGroupChevron_expanded {
-  border-color: var(--color-text-muted);
+.subprojectsPanelHeaderToggle .stageGroupChevron,
+.subprojectsPanelHeaderToggle .stageGroupChevron_expanded {
+  border-color: currentColor;
 }
 
-.subprojectsSectionToolbar {
+.subprojectsPanelHeaderTools {
   display: flex;
   align-items: center;
   gap: 0.75rem;
+  flex-shrink: 0;
   margin-left: auto;
 }
 
@@ -4213,11 +4236,17 @@
   font: inherit;
 }
 
-.subprojectsSectionBody {
-  margin-top: 0.875rem;
+:global([data-theme='dark']) .subprojectsSearch {
+  background: var(--theme-surface-elevated, #2f3142);
+  border-color: var(--theme-border-main, #3d3e4a);
 }
 
-.subprojectsSection_collapsed .subprojectsSectionBody,
-.subprojectsSection_collapsed .subprojectsSectionToolbar {
+.subprojectsTableBody {
+  width: 100%;
+  min-width: 0;
+}
+
+.subprojectsPanel_collapsed .subprojectsTableBody,
+.subprojectsPanel_collapsed .subprojectsSearch {
   display: none;
 }

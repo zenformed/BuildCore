@@ -26,10 +26,7 @@ export function SubprojectsSection(): ReactElement | null {
   const deleteCopy = copy.delete;
   const { project, routes, parentRouteSlug, subSlug, isMemberRole } = useProjectDetailShell();
   const { organizationMembershipContext } = useSaaSProfile();
-
-  if (subSlug != null || project.summary.parentProjectId != null) {
-    return null;
-  }
+  const hidden = subSlug != null || project.summary.parentProjectId != null;
   const canManage = !isMemberRole && !isBuildCoreMemberRole(organizationMembershipContext?.role);
   const [expanded, setExpanded] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -51,15 +48,19 @@ export function SubprojectsSection(): ReactElement | null {
     onError: (message) => setToast({ kind: 'error', message }),
   });
 
-  const sectionClass = [
-    styles.subprojectsSection,
-    expanded ? '' : styles.subprojectsSection_collapsed,
+  if (hidden) {
+    return null;
+  }
+
+  const panelClass = [
+    styles.subprojectsPanel,
+    expanded ? '' : styles.subprojectsPanel_collapsed,
   ]
     .filter(Boolean)
     .join(' ');
 
   return (
-    <section className={sectionClass} aria-labelledby={sectionId}>
+    <section className={panelClass} aria-labelledby={sectionId}>
       {toast ? (
         <DetailToast
           kind={toast.kind}
@@ -67,17 +68,17 @@ export function SubprojectsSection(): ReactElement | null {
           onDismiss={() => setToast(null)}
         />
       ) : null}
-      <div className={styles.subprojectsSectionHeader}>
+      <div className={styles.subprojectsPanelHeader}>
         <button
           type="button"
-          className={styles.subprojectsSectionHeaderBtn}
+          className={styles.subprojectsPanelHeaderToggle}
           aria-expanded={expanded}
           aria-controls={panelId}
           aria-label={`${expanded ? copy.collapse : copy.expand}: ${copy.title}`}
           onClick={() => setExpanded((open) => !open)}
         >
-          <span className={styles.stageGroupTitle}>
-            <span id={sectionId} className={styles.stageGroupName}>
+          <span className={styles.subprojectsPanelHeaderTitle}>
+            <span id={sectionId} className={styles.subprojectsPanelTitle}>
               {copy.title}
             </span>
             <span className={styles.stageGroupChevronWrap} aria-hidden>
@@ -85,8 +86,8 @@ export function SubprojectsSection(): ReactElement | null {
             </span>
           </span>
         </button>
-        {expanded ? (
-          <div className={styles.subprojectsSectionToolbar}>
+        <div className={styles.subprojectsPanelHeaderTools}>
+          {expanded ? (
             <input
               type="search"
               value={searchQuery}
@@ -95,21 +96,21 @@ export function SubprojectsSection(): ReactElement | null {
               aria-label={copy.searchAriaLabel}
               className={styles.subprojectsSearch}
             />
-            {canManage ? (
-              <DetailPanelHeaderButton
-                variant="add"
-                title={copy.newSubprojectTitle}
-                aria-label={copy.newSubprojectAriaLabel}
-                onClick={() => setCreateOpen(true)}
-              />
-            ) : null}
-          </div>
-        ) : null}
+          ) : null}
+          {canManage ? (
+            <DetailPanelHeaderButton
+              variant="add"
+              title={copy.newSubprojectTitle}
+              aria-label={copy.newSubprojectAriaLabel}
+              onClick={() => setCreateOpen(true)}
+            />
+          ) : null}
+        </div>
       </div>
 
       {expanded ? (
-        <div id={panelId} className={styles.subprojectsSectionBody}>
-          <div className={tableStyles.pipeline}>
+        <div id={panelId} className={styles.subprojectsTableBody}>
+          <div className={`${tableStyles.pipeline} ${tableStyles.pipelineFitContent}`}>
             <CrmProjectsTable
               rows={rows}
               isLoading={isLoading}

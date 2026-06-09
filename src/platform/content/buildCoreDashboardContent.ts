@@ -418,6 +418,8 @@ export const buildCoreDashboardContent = {
     breadcrumbProjects: 'Projects',
     subprojects: {
       title: 'Subprojects',
+      subprojectSingular: 'subproject',
+      subprojectPlural: 'subprojects',
       expand: 'Expand subprojects',
       collapse: 'Collapse subprojects',
       searchPlaceholder: 'Search subprojects…',

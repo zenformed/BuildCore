@@ -12,6 +12,24 @@
   --projects-table-min-width: 76rem;
 }
 
+.pipelineFitContent {
+  flex: none;
+  min-height: 0;
+}
+
+.pipelineFitContent .tableWrap {
+  flex: none;
+  min-height: 0;
+  overflow: visible;
+}
+
+.pipelineFitContent .scrollContainer {
+  flex: none;
+  min-height: 0;
+  overflow-x: auto;
+  overflow-y: visible;
+}
+
 .toolbar {
   display: flex;
   flex-wrap: wrap;
