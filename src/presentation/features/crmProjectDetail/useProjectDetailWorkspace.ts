@@ -49,6 +49,10 @@ export function useProjectDetailWorkspace(initialProject: CrmProjectDetail) {
     setToast({ kind: 'success', message: content.projectDetail.saveSuccess });
   }, []);
 
+  const handlePrimaryPhotoUpdated = useCallback((summary: CrmProjectDetail['summary']) => {
+    setProject((prev) => ({ ...prev, summary: { ...prev.summary, ...summary } }));
+  }, []);
+
   const handleWorkflowTaskPatched = useCallback(
     async (task: CrmWorkflowTask) => {
       workflowSection.onWorkflowTaskPatched(task);
@@ -205,5 +209,6 @@ export function useProjectDetailWorkspace(initialProject: CrmProjectDetail) {
       customerNotify.requestCustomerNotifyAfterAssigneeChange,
     sendCustomerNotifyEmail: customerNotify.sendCustomerNotifyEmail,
     onProjectSaved: handleProjectSaved,
+    onPrimaryPhotoUpdated: handlePrimaryPhotoUpdated,
   };
 }

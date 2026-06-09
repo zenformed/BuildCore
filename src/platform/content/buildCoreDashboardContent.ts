@@ -290,6 +290,18 @@ export const buildCoreDashboardContent = {
     currentStage: 'Current stage',
     unassigned: 'Unassigned',
     projectNotesLabel: 'Notes',
+    primaryPhoto: {
+      placeholderAriaLabel: 'Project photo',
+      changeTitle: 'Change project photo',
+      changeAriaLabel: 'Change project photo',
+      modalTitle: 'Project photo',
+      uploadLabel: 'Upload photo',
+      removeLabel: 'Remove photo',
+      cancelLabel: 'Cancel',
+      uploadHint: 'JPEG, PNG, or WebP up to 2 MB.',
+      uploadError: 'Could not update project photo.',
+      removeError: 'Could not remove project photo.',
+    },
     notFound: {
       title: 'Project not found',
       message: 'This project does not exist or the link is invalid.',

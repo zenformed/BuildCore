@@ -57,6 +57,7 @@ export type DbCrmProjectRow = {
   last_activity_at: string;
   completed_at: string | null;
   completed_by: string | null;
+  primary_photo_path?: string | null;
   address_line_1: string | null;
   address_line_2: string | null;
   city: string | null;
@@ -323,6 +324,7 @@ export function mapDbProjectSummary(
     lastUpdatedAt: row.last_activity_at,
     completedAt: row.completed_at,
     completedBy,
+    primaryPhotoPath: row.primary_photo_path ?? null,
   };
 }
 

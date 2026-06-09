@@ -27,6 +27,8 @@ export type ProjectDetailContextBlockProps = {
   parentProject?: CrmProjectSummary | null;
   actions?: ReactNode;
   progress?: ReactNode;
+  onPrimaryPhotoUpdated?: (summary: CrmProjectSummary) => void;
+  onPrimaryPhotoError?: (message: string) => void;
   savingField: SummaryEditableField | null;
   patchField: (field: SummaryEditableField, value: string) => Promise<boolean>;
   onEditProject?: () => void;
@@ -43,6 +45,8 @@ export function ProjectDetailContextBlock({
   parentProject = null,
   actions,
   progress,
+  onPrimaryPhotoUpdated,
+  onPrimaryPhotoError,
   savingField,
   patchField,
   onEditProject,
@@ -60,6 +64,9 @@ export function ProjectDetailContextBlock({
         onOpenParentProject={onOpenParentProject}
         actions={actions}
         progress={progress}
+        canEditPrimaryPhoto={!isMemberRole}
+        onPrimaryPhotoUpdated={onPrimaryPhotoUpdated}
+        onPrimaryPhotoError={onPrimaryPhotoError}
         assigneeControl={
           isMemberRole ? null : (
             <ProjectHeaderAssignee

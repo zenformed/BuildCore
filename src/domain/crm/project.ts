@@ -49,6 +49,8 @@ export type CrmProjectSummary = {
   /** Set when marked complete; null = incomplete (default). */
   readonly completedAt: string | null;
   readonly completedBy: CrmTeamMemberRef | null;
+  /** Supabase storage key for primary project photo; null when using initials placeholder. */
+  readonly primaryPhotoPath: string | null;
 };
 
 export type CrmStageProgress = {

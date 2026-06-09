@@ -20,6 +20,10 @@ export type CenterConfirmDialogProps = {
   readonly closeAriaLabel: string;
   readonly panelClassName?: string;
   readonly bodyClassName?: string;
+  readonly titleClassName?: string;
+  readonly actionsClassName?: string;
+  /** Renders before cancel/confirm in the footer row (e.g. icon delete). */
+  readonly leadingAction?: ReactNode;
 };
 
 export function CenterConfirmDialog({
@@ -38,6 +42,9 @@ export function CenterConfirmDialog({
   closeAriaLabel,
   panelClassName,
   bodyClassName,
+  titleClassName,
+  actionsClassName,
+  leadingAction,
 }: CenterConfirmDialogProps): ReactElement | null {
   if (!isOpen) return null;
 
@@ -57,7 +64,7 @@ export function CenterConfirmDialog({
         aria-label={closeAriaLabel}
         onClick={(e) => e.stopPropagation()}
       >
-        <h2 id="center-confirm-dialog-title" className={styles.title}>
+        <h2 id="center-confirm-dialog-title" className={[styles.title, titleClassName].filter(Boolean).join(' ')}>
           {title}
         </h2>
         {body != null ? (
@@ -76,7 +83,8 @@ export function CenterConfirmDialog({
           </p>
         ) : null}
         {hideActions ? null : (
-          <div className={styles.actions}>
+          <div className={[styles.actions, actionsClassName].filter(Boolean).join(' ')}>
+            {leadingAction}
             <button
               type="button"
               className={styles.cancelBtn}

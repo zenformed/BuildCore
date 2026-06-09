@@ -39,6 +39,7 @@ export type BuildMockCrmProjectInput = {
   readonly lastUpdatedAt: string;
   readonly completedAt?: string | null;
   readonly completedById?: string | null;
+  readonly primaryPhotoPath?: string | null;
   readonly workflowTasks?: readonly CrmWorkflowTask[];
   readonly documents?: readonly CrmDocumentMetadata[];
   readonly accountabilityLog?: readonly CrmAccountabilityAction[];
@@ -342,6 +343,7 @@ export function buildMockCrmProjectDetail(input: BuildMockCrmProjectInput): CrmP
       input.completedAt != null && input.completedById != null
         ? getMockCrmTeamMember(input.completedById)
         : null,
+    primaryPhotoPath: input.primaryPhotoPath ?? null,
   };
 
   const milestonePayment =

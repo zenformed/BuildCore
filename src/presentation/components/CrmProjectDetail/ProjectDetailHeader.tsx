@@ -6,6 +6,7 @@ import { isCrmProjectComplete } from '@/domain/crm';
 import { CrmProjectCompleteIcon } from '@/presentation/components/crmShared/CrmProjectCompleteIcon';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
 import type { ProjectDetailPageContext } from '@/presentation/features/crmProjectDetail/projectDetailPageContext';
+import { ProjectPrimaryPhoto } from './ProjectPrimaryPhoto';
 import styles from './ProjectDetail.module.css';
 
 export type ProjectDetailHeaderProps = {
@@ -19,6 +20,9 @@ export type ProjectDetailHeaderProps = {
   tradeTypeControl?: ReactNode;
   actions?: ReactNode;
   progress?: ReactNode;
+  onPrimaryPhotoUpdated?: (summary: CrmProjectSummary) => void;
+  onPrimaryPhotoError?: (message: string) => void;
+  canEditPrimaryPhoto?: boolean;
 };
 
 export function ProjectDetailHeader({
@@ -32,6 +36,9 @@ export function ProjectDetailHeader({
   tradeTypeControl,
   actions,
   progress,
+  onPrimaryPhotoUpdated,
+  onPrimaryPhotoError,
+  canEditPrimaryPhoto = false,
 }: ProjectDetailHeaderProps): ReactElement {
   const detail = content.projectDetail;
   const subPageLabel =
@@ -87,15 +94,26 @@ export function ProjectDetailHeader({
               <span className={styles.breadcrumbCurrent}>{project.name}</span>
             )}
           </nav>
-          <div className={styles.titleRow}>
-            {isComplete ? (
-              <CrmProjectCompleteIcon ariaLabel={content.crm.table.completionCheckAriaLabel} />
-            ) : null}
-            <h1 className={styles.title}>{project.client.name}</h1>
-            {assigneeControl}
+          <div className={styles.titleBlockBody}>
+            <ProjectPrimaryPhoto
+              summary={project}
+              parentSummary={parentProject}
+              canEdit={canEditPrimaryPhoto && project.parentProjectId == null}
+              onPhotoUpdated={(summary) => onPrimaryPhotoUpdated?.(summary)}
+              onError={onPrimaryPhotoError}
+            />
+            <div className={styles.titleBlockContent}>
+              <div className={styles.titleRow}>
+                {isComplete ? (
+                  <CrmProjectCompleteIcon ariaLabel={content.crm.table.completionCheckAriaLabel} />
+                ) : null}
+                <h1 className={styles.title}>{project.client.name}</h1>
+                {assigneeControl}
+              </div>
+              {tradeTypeControl}
+              {progress ? <div className={styles.titleBlockProgress}>{progress}</div> : null}
+            </div>
           </div>
-          {tradeTypeControl}
-          {progress ? <div className={styles.titleBlockProgress}>{progress}</div> : null}
         </div>
       </div>
       {actions ? <div className={styles.detailHeaderActions}>{actions}</div> : null}
