@@ -18,6 +18,7 @@ export type ProjectDetailHeaderProps = {
   assigneeControl?: ReactNode;
   tradeTypeControl?: ReactNode;
   actions?: ReactNode;
+  progress?: ReactNode;
 };
 
 export function ProjectDetailHeader({
@@ -30,6 +31,7 @@ export function ProjectDetailHeader({
   assigneeControl,
   tradeTypeControl,
   actions,
+  progress,
 }: ProjectDetailHeaderProps): ReactElement {
   const detail = content.projectDetail;
   const subPageLabel =
@@ -93,6 +95,7 @@ export function ProjectDetailHeader({
             {assigneeControl}
           </div>
           {tradeTypeControl}
+          {progress ? <div className={styles.titleBlockProgress}>{progress}</div> : null}
         </div>
       </div>
       {actions ? <div className={styles.detailHeaderActions}>{actions}</div> : null}

@@ -80,6 +80,7 @@ export function ProjectHeaderAssignee({
         onClose={() => setMenuOpen(false)}
         anchorRef={anchorRef}
         align="end"
+        sizeToContent
         portalClassName={styles.summaryInlineMenu}
       >
         {assigneeOptions.map((option) => (

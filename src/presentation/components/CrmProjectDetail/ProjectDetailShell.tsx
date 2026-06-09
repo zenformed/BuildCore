@@ -30,6 +30,7 @@ import { SaveProjectTemplateDialog } from './SaveProjectTemplateDialog';
 import { ProjectDetailActionsMenu } from './ProjectDetailActionsMenu';
 import { ProjectDetailContextBlock } from './ProjectDetailContextBlock';
 import { ProjectDetailHeaderActions } from './ProjectDetailHeaderActions';
+import { ProjectDetailHeaderProgress } from './ProjectDetailHeaderProgress';
 import { ProjectDetailShellModals } from './ProjectDetailShellModals';
 import { CreateCrmProjectModal } from '@/presentation/components/CrmProjects/CreateCrmProjectModal';
 import styles from './ProjectDetail.module.css';
@@ -123,6 +124,9 @@ function ProjectDetailShellBody({
     onLoadTemplate: loadTemplate.openList,
   };
 
+  const showDetailProgress = pageContext === 'detail';
+  const headerProgress = showDetailProgress ? <ProjectDetailHeaderProgress /> : null;
+
   const headerActions = isMemberRole
     ? undefined
     : showCompletionActions
@@ -176,6 +180,7 @@ function ProjectDetailShellBody({
           onOpenParentProject={onOpenParentProject}
           parentProject={parentProject}
           actions={headerActions}
+          progress={headerProgress}
           savingField={workspace.savingField}
           patchField={workspace.patchField}
           onEditProject={isMemberRole ? undefined : () => setEditProjectOpen(true)}

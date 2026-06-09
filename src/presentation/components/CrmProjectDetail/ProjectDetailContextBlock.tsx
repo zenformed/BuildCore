@@ -5,6 +5,7 @@ import type { CrmProjectDetail, CrmProjectSummary } from '@/domain/crm';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
 import type { ProjectDetailPageContext } from '@/presentation/features/crmProjectDetail/projectDetailPageContext';
 import type { SummaryEditableField } from '@/presentation/features/crmProjectDetail/projectDetailFormModel';
+import { getProjectTradeSubtitle } from '@/presentation/features/crmProjects/crmProjectFormatters';
 import { ProjectDetailHeader } from './ProjectDetailHeader';
 
 export type { ProjectDetailPageContext } from '@/presentation/features/crmProjectDetail/projectDetailPageContext';
@@ -25,6 +26,7 @@ export type ProjectDetailContextBlockProps = {
   onOpenParentProject?: () => void;
   parentProject?: CrmProjectSummary | null;
   actions?: ReactNode;
+  progress?: ReactNode;
   savingField: SummaryEditableField | null;
   patchField: (field: SummaryEditableField, value: string) => Promise<boolean>;
   onEditProject?: () => void;
@@ -40,6 +42,7 @@ export function ProjectDetailContextBlock({
   onOpenParentProject,
   parentProject = null,
   actions,
+  progress,
   savingField,
   patchField,
   onEditProject,
@@ -56,6 +59,7 @@ export function ProjectDetailContextBlock({
         onOpenProject={onOpenProject}
         onOpenParentProject={onOpenParentProject}
         actions={actions}
+        progress={progress}
         assigneeControl={
           isMemberRole ? null : (
             <ProjectHeaderAssignee
@@ -67,7 +71,11 @@ export function ProjectDetailContextBlock({
           )
         }
         tradeTypeControl={
-          isMemberRole ? null : (
+          isMemberRole ? (
+            <p className={`${styles.subtitle} ${styles.headerTradeSubtitle}`}>
+              {getProjectTradeSubtitle(project.summary.tradeType) ?? project.summary.tradeType}
+            </p>
+          ) : (
             <ProjectHeaderTradeType
               tradeType={project.summary.tradeType}
               isSaving={savingField === 'tradeType'}

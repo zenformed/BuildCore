@@ -29,10 +29,59 @@ type MenuPosition = {
   top: number;
   left: number;
   minWidth: number;
+  effectiveAlign: 'start' | 'end';
 };
 
 const MENU_GAP_PX = 4;
 const VIEWPORT_PADDING_PX = 8;
+
+function computeHorizontalMenuPosition(
+  rect: DOMRect,
+  menuWidth: number,
+  preferredAlign: 'start' | 'end'
+): Pick<MenuPosition, 'left' | 'effectiveAlign'> {
+  const maxRight = window.innerWidth - VIEWPORT_PADDING_PX;
+  const minLeft = VIEWPORT_PADDING_PX;
+
+  const endFits =
+    menuWidth <= 0 ||
+    (rect.right - menuWidth >= minLeft && rect.right <= maxRight);
+  const startFits =
+    menuWidth <= 0 ||
+    (rect.left >= minLeft && rect.left + menuWidth <= maxRight);
+
+  let effectiveAlign = preferredAlign;
+
+  if (preferredAlign === 'end') {
+    if (!endFits && startFits) {
+      effectiveAlign = 'start';
+    } else if (!endFits && !startFits) {
+      const roomOpeningEnd = rect.right - minLeft;
+      const roomOpeningStart = maxRight - rect.left;
+      effectiveAlign = roomOpeningStart >= roomOpeningEnd ? 'start' : 'end';
+    }
+  } else if (!startFits && endFits) {
+    effectiveAlign = 'end';
+  } else if (!startFits && !endFits) {
+    const roomOpeningEnd = rect.right - minLeft;
+    const roomOpeningStart = maxRight - rect.left;
+    effectiveAlign = roomOpeningStart >= roomOpeningEnd ? 'start' : 'end';
+  }
+
+  let left = effectiveAlign === 'end' ? rect.right : rect.left;
+
+  if (menuWidth > 0) {
+    if (effectiveAlign === 'end') {
+      left = Math.min(left, maxRight);
+      left = Math.max(left, minLeft + menuWidth);
+    } else {
+      left = Math.max(left, minLeft);
+      left = Math.min(left, maxRight - menuWidth);
+    }
+  }
+
+  return { left, effectiveAlign };
+}
 
 function computeMenuPosition(
   anchor: HTMLElement,
@@ -60,19 +109,9 @@ function computeMenuPosition(
     top = Math.max(VIEWPORT_PADDING_PX, rect.top - 160 - MENU_GAP_PX);
   }
 
-  let left = align === 'end' ? rect.right : rect.left;
+  const { left, effectiveAlign } = computeHorizontalMenuPosition(rect, menuWidth, align);
 
-  if (menuWidth > 0) {
-    if (align === 'end') {
-      if (left - menuWidth < VIEWPORT_PADDING_PX) {
-        left = Math.min(rect.right, window.innerWidth - VIEWPORT_PADDING_PX);
-      }
-    } else if (left + menuWidth > window.innerWidth - VIEWPORT_PADDING_PX) {
-      left = Math.max(VIEWPORT_PADDING_PX, window.innerWidth - menuWidth - VIEWPORT_PADDING_PX);
-    }
-  }
-
-  return { top, left, minWidth };
+  return { top, left, minWidth, effectiveAlign };
 }
 
 export type WorkflowInlineMenuProps = {
@@ -134,7 +173,7 @@ export function WorkflowInlineMenu({
     top: position.top,
     left: position.left,
     ...(sizeToContent ? {} : { minWidth: position.minWidth }),
-    transform: align === 'end' ? 'translateX(-100%)' : undefined,
+    transform: position.effectiveAlign === 'end' ? 'translateX(-100%)' : undefined,
   };
 
   return createPortal(
