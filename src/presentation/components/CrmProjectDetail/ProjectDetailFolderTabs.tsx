@@ -11,6 +11,7 @@ import { BudgetTable } from './BudgetTable';
 import { DetailPanelHeader } from './DetailPanelHeader';
 import { DetailPanelHeaderActions } from './DetailPanelHeaderActions';
 import { DetailPanelSectionRefresh } from './DetailPanelSectionRefresh';
+import { DetailPanelSectionSearch } from './DetailPanelSectionSearch';
 import { PaymentsRail } from './PaymentsRail';
 import { ProjectAccountabilityContent } from './ProjectAccountabilityPage';
 import { ProjectDocumentsPanelContent } from './ProjectDocumentsPanelContent';
@@ -49,6 +50,7 @@ export function ProjectDetailFolderTabs(): ReactElement {
     (message) => setToast({ kind: 'error', message })
   );
   const [selectedTab, setSelectedTab] = useState<ProjectDetailFolderTabId>('workflow');
+  const [documentsSearchQuery, setDocumentsSearchQuery] = useState('');
 
   const tabs = useMemo((): readonly FolderTabDef[] => {
     const detail = content.projectDetail;
@@ -129,6 +131,12 @@ export function ProjectDetailFolderTabs(): ReactElement {
               titleId="project-documents-tab-heading"
             >
               <DetailPanelHeaderActions>
+                <DetailPanelSectionSearch
+                  value={documentsSearchQuery}
+                  onChange={setDocumentsSearchQuery}
+                  placeholder={content.projectDetail.documents.searchPlaceholder}
+                  ariaLabel={content.projectDetail.documents.searchAriaLabel}
+                />
                 <DetailPanelSectionRefresh
                   sectionLabel={content.projectDetail.sections.documents}
                   onRefresh={handleDocumentsRefresh}
@@ -138,6 +146,7 @@ export function ProjectDetailFolderTabs(): ReactElement {
             </DetailPanelHeader>
             <ProjectDocumentsPanelContent
               project={project}
+              searchQuery={documentsSearchQuery}
               onRefresh={handleDocumentsRefresh}
               onError={(message) => setToast({ kind: 'error', message })}
             />

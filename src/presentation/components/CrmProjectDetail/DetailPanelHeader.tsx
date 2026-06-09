@@ -15,8 +15,8 @@ export function DetailPanelHeader({
   children,
 }: DetailPanelHeaderProps): ReactElement {
   return (
-    <div className={styles.cardTitleRow}>
-      <h3 id={titleId} className={styles.cardTitle}>
+    <div className={styles.detailPanelHeader}>
+      <h3 id={titleId} className={styles.detailPanelTitle}>
         {title}
       </h3>
       {children}

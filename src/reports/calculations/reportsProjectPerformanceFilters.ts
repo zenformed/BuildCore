@@ -1,22 +1,23 @@
 import type { ReportsProjectFilterId, ReportsProjectRow } from '../types/crmReportsDashboard';
 
-const PROJECT_FILTER_IDS: readonly ReportsProjectFilterId[] = [
-  'all',
-  'active',
-  'completed',
-  'waiting_approval',
-  'overdue_payments',
-];
+export function reportsProjectRowMatchesFilter(
+  row: ReportsProjectRow,
+  filter: ReportsProjectFilterId
+): boolean {
+  if (filter === 'all') return true;
+  if (filter === 'active') return row.isActive;
+  if (filter === 'completed') return row.isCompleted;
+  if (filter === 'waiting_approval') return row.isWaitingApproval;
+  return row.hasOverduePayments;
+}
 
+/** Flat filter for legacy callers; prefer hierarchical view model for reports UI. */
 export function filterReportsProjectRows(
   rows: readonly ReportsProjectRow[],
   filter: ReportsProjectFilterId
 ): readonly ReportsProjectRow[] {
   if (filter === 'all') return rows;
-  if (filter === 'active') return rows.filter((row) => row.isActive);
-  if (filter === 'completed') return rows.filter((row) => row.isCompleted);
-  if (filter === 'waiting_approval') return rows.filter((row) => row.isWaitingApproval);
-  return rows.filter((row) => row.hasOverduePayments);
+  return rows.filter((row) => reportsProjectRowMatchesFilter(row, filter));
 }
 
 export function countReportsProjectRowsByFilter(
@@ -30,7 +31,14 @@ export function buildReportsProjectFilterCounts(
   rows: readonly ReportsProjectRow[]
 ): Record<ReportsProjectFilterId, number> {
   const counts = {} as Record<ReportsProjectFilterId, number>;
-  for (const id of PROJECT_FILTER_IDS) {
+  const filters: readonly ReportsProjectFilterId[] = [
+    'all',
+    'active',
+    'completed',
+    'waiting_approval',
+    'overdue_payments',
+  ];
+  for (const id of filters) {
     counts[id] = countReportsProjectRowsByFilter(rows, id);
   }
   return counts;

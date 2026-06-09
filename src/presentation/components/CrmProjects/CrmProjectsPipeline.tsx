@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useState, type ReactElement } from 'react';
+import { useCallback, useEffect, useState, type ReactElement } from 'react';
+import { useRouter } from 'next/navigation';
 import type { CrmProjectSummary } from '@/domain/crm';
 import { isBuildCoreMemberRole } from '@/domain/buildcore/memberRole';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
@@ -33,16 +34,21 @@ export function CrmProjectsPipeline({
   onProjectRowClick,
   onProjectCreated,
 }: CrmProjectsPipelineProps): ReactElement {
+  const router = useRouter();
   const panelCopy = content.crm.panel;
   const { organizationMembershipContext } = useSaaSProfile();
   const isMemberRole = isBuildCoreMemberRole(organizationMembershipContext?.role);
   const [searchQuery, setSearchQuery] = useState('');
   const [filters, setFilters] = useState<CrmProjectsListFilters>(EMPTY_CRM_PROJECTS_LIST_FILTERS);
   const [createOpen, setCreateOpen] = useState(false);
-  const { rows, isLoading, refetch, removeProject } = useCrmProjectsPipeline(
-    searchQuery,
-    filters
-  );
+  const {
+    rootRows,
+    allChildrenByParentId,
+    visibleChildrenByParentId,
+    isLoading,
+    refetch,
+    removeProject,
+  } = useCrmProjectsPipeline(searchQuery, filters);
   const [toast, setToast] = useState<PipelineToast | null>(null);
 
   const {
@@ -75,6 +81,13 @@ export function CrmProjectsPipeline({
     setCreateOpen(false);
     await onProjectCreated?.();
   };
+
+  const handleSubprojectRowClick = useCallback(
+    (parent: CrmProjectSummary, child: CrmProjectSummary) => {
+      router.push(nav.routes.projectSubDetail(parent.slug, child.slug));
+    },
+    [router]
+  );
 
   return (
     <section className={styles.projectsPanel} aria-labelledby="crm-projects-heading">
@@ -117,9 +130,13 @@ export function CrmProjectsPipeline({
       </div>
       <div className={`${styles.pipeline} ${styles.projectsPanelBody}`}>
         <CrmProjectsTable
-          rows={rows}
+          enableSubprojectExpansion
+          rootRows={rootRows}
+          allChildrenByParentId={allChildrenByParentId}
+          visibleChildrenByParentId={visibleChildrenByParentId}
           isLoading={isLoading}
           onRowClick={onProjectRowClick}
+          onSubprojectRowClick={handleSubprojectRowClick}
           isMemberRole={isMemberRole}
           canDelete={canDelete && !isMemberRole}
           deletingProjectId={deletingProjectId}

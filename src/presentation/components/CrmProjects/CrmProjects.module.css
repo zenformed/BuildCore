@@ -502,11 +502,85 @@
   min-width: 0;
 }
 
+.expandToggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 1.125rem;
+  height: 1.125rem;
+  margin: 0;
+  padding: 0;
+  border: none;
+  border-radius: 0.25rem;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+
+.expandToggle:focus {
+  outline: none;
+}
+
+.expandToggle:focus-visible {
+  outline: 2px solid var(--color-primary, #2563eb);
+  outline-offset: 1px;
+}
+
+.expandChevronWrap {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 1rem;
+  height: 1rem;
+}
+
+.expandChevron,
+.expandChevron_expanded {
+  display: block;
+  width: 0.4375rem;
+  height: 0.4375rem;
+  border-right: 2px solid var(--color-text-muted, #64748b);
+  border-bottom: 2px solid var(--color-text-muted, #64748b);
+  transform: rotate(45deg) translateY(-1px);
+  transition: transform 0.15s ease;
+}
+
+.expandChevron_expanded {
+  transform: rotate(-135deg) translateY(1px);
+}
+
+:global([data-theme='dark']) .expandChevron,
+:global([data-theme='dark']) .expandChevron_expanded {
+  border-color: var(--theme-text-muted, #94a3b8);
+}
+
+.gridRowChild {
+  background-color: var(--color-muted, #f8fafc);
+}
+
+:global([data-theme='dark']) .gridRowChild {
+  background-color: rgba(255, 255, 255, 0.02);
+}
+
+.gridRowChild:hover {
+  background-color: var(--color-muted, #f1f5f9);
+}
+
+:global([data-theme='dark']) .gridRowChild:hover {
+  background-color: #1e212b;
+}
+
 .gridCellProject {
   min-width: 0;
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
+}
+
+.gridCellProject_child {
+  padding-left: 2.25rem;
 }
 
 .projectMeta {

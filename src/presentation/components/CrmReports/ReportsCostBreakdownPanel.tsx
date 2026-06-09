@@ -27,35 +27,37 @@ export function ReportsCostBreakdownPanel({
       {rows.length === 0 ? (
         <p className={styles.chartEmpty}>{content.reports.costEmpty}</p>
       ) : (
-        <div className={styles.costTableWrap}>
-          <div
-            className={`${projectStyles.tableHeader} ${styles.costBreakdownGrid}`}
-            role="row"
-          >
-            <span role="columnheader">{table.category}</span>
-            <span role="columnheader">{table.cost}</span>
-            <span role="columnheader">{table.costPercent}</span>
-          </div>
-          <ul className={styles.costList}>
-            {rows.map((row) => (
-              <li key={row.category}>
-                <div
-                  className={`${projectStyles.tableRow} ${styles.costBreakdownGrid}`}
-                  role="row"
-                >
-                  <span>{reportBudgetCategoryLabel(row.category)}</span>
-                  <span>{formatCentsAsUsd(row.costCents)}</span>
-                  <span>{formatReportPercent(row.costPercent)}</span>
-                </div>
-                <div className={styles.costBarTrack}>
+        <div className={projectStyles.detailPanelTableCard}>
+          <div className={styles.costTableWrap}>
+            <div
+              className={`${projectStyles.tableHeader} ${styles.costBreakdownGrid}`}
+              role="row"
+            >
+              <span role="columnheader">{table.category}</span>
+              <span role="columnheader">{table.cost}</span>
+              <span role="columnheader">{table.costPercent}</span>
+            </div>
+            <ul className={styles.costList}>
+              {rows.map((row) => (
+                <li key={row.category}>
                   <div
-                    className={styles.costBarFill}
-                    style={{ width: `${(row.costCents / maxCost) * 100}%` }}
-                  />
-                </div>
-              </li>
-            ))}
-          </ul>
+                    className={`${projectStyles.tableRow} ${styles.costBreakdownGrid}`}
+                    role="row"
+                  >
+                    <span>{reportBudgetCategoryLabel(row.category)}</span>
+                    <span>{formatCentsAsUsd(row.costCents)}</span>
+                    <span>{formatReportPercent(row.costPercent)}</span>
+                  </div>
+                  <div className={styles.costBarTrack}>
+                    <div
+                      className={styles.costBarFill}
+                      style={{ width: `${(row.costCents / maxCost) * 100}%` }}
+                    />
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </div>
         </div>
       )}
       {costsIncludeUndatedEntries ? (

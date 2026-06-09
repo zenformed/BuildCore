@@ -1,16 +1,19 @@
 'use client';
 
-import type { ReactElement } from 'react';
+import { useState, type ReactElement } from 'react';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
 import { useProjectDetailShell } from '@/presentation/features/crmProjectDetail/ProjectDetailShellContext';
 import { DetailPanelHeader } from './DetailPanelHeader';
 import { DetailPanelHeaderActions } from './DetailPanelHeaderActions';
 import { DetailPanelSectionRefresh } from './DetailPanelSectionRefresh';
+import { DetailPanelSectionSearch } from './DetailPanelSectionSearch';
 import { ProjectDocumentsPanelContent } from './ProjectDocumentsPanelContent';
 import styles from './ProjectDetail.module.css';
 
 export function ProjectDocumentsContent(): ReactElement {
   const { project, onRefresh, setToast } = useProjectDetailShell();
+  const docs = content.projectDetail.documents;
+  const [searchQuery, setSearchQuery] = useState('');
 
   const handleRefresh = async (): Promise<void> => {
     try {
@@ -30,6 +33,12 @@ export function ProjectDocumentsContent(): ReactElement {
         titleId="project-documents-heading"
       >
         <DetailPanelHeaderActions>
+          <DetailPanelSectionSearch
+            value={searchQuery}
+            onChange={setSearchQuery}
+            placeholder={docs.searchPlaceholder}
+            ariaLabel={docs.searchAriaLabel}
+          />
           <DetailPanelSectionRefresh
             sectionLabel={content.projectDetail.sections.documents}
             onRefresh={handleRefresh}
@@ -39,6 +48,7 @@ export function ProjectDocumentsContent(): ReactElement {
       </DetailPanelHeader>
       <ProjectDocumentsPanelContent
         project={project}
+        searchQuery={searchQuery}
         onRefresh={handleRefresh}
         onError={(message) => setToast({ kind: 'error', message })}
       />

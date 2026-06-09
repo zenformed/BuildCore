@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import type { CrmProjectDetail, CrmWorkflowTask, PipelineStageSlug } from '@/domain/crm';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
 import { countDocumentsByTaskId } from '@/presentation/features/crmProjectDetail/workflowDocumentCounts';
+import { filterWorkflowTasksBySearch } from '@/presentation/features/crmProjectDetail/projectSectionSearchModel';
 import { useProjectDetailShell } from '@/presentation/features/crmProjectDetail/ProjectDetailShellContext';
 import {
   countWorkflowTasksInGroups,
@@ -21,6 +22,7 @@ import { useBuildCoreWorkflowTaskAccess } from '@/presentation/providers/BuildCo
 import { DetailPanelHeader } from './DetailPanelHeader';
 import { DetailPanelHeaderActions } from './DetailPanelHeaderActions';
 import { DetailPanelSectionRefresh } from './DetailPanelSectionRefresh';
+import { DetailPanelSectionSearch } from './DetailPanelSectionSearch';
 import { WorkflowOpsTaskDraftRow } from './WorkflowOpsTaskDraftRow';
 import { WorkflowStageTaskGroup } from './WorkflowStageTaskGroup';
 import { WorkflowTaskStageAddButton } from './WorkflowTaskStageAddButton';
@@ -58,10 +60,16 @@ export function WorkflowTasksTable({
   const isFullLayout = layout === 'full';
   const currentStage = project.summary.currentStageSlug;
   const [draftStageSlug, setDraftStageSlug] = useState<PipelineStageSlug | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const filteredTasks = useMemo(
+    () => filterWorkflowTasksBySearch(project.workflowTasks, searchQuery),
+    [project.workflowTasks, searchQuery]
+  );
 
   const groups = useMemo(
-    () => groupOpsWorkflowTasksByStage(project.workflowTasks, currentStage),
-    [project.workflowTasks, currentStage]
+    () => groupOpsWorkflowTasksByStage(filteredTasks, currentStage),
+    [filteredTasks, currentStage]
   );
 
   const orderedGroups = useMemo(() => {
@@ -121,6 +129,12 @@ export function WorkflowTasksTable({
     <section className={panelClass} aria-labelledby="workflow-tasks-heading">
       <DetailPanelHeader title={content.projectDetail.sections.workflow} titleId="workflow-tasks-heading">
         <DetailPanelHeaderActions>
+          <DetailPanelSectionSearch
+            value={searchQuery}
+            onChange={setSearchQuery}
+            placeholder={wf.searchPlaceholder}
+            ariaLabel={wf.searchAriaLabel}
+          />
           <DetailPanelSectionRefresh
             sectionLabel={content.projectDetail.sections.workflow}
             onRefresh={refreshWorkflowTasks}

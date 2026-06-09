@@ -9,6 +9,7 @@ import {
   filterDocumentPanelItems,
   type DocumentPanelFilter,
 } from '@/presentation/features/crmProjectDetail/documentPanelModel';
+import { filterDocumentPanelItemsBySearch } from '@/presentation/features/crmProjectDetail/projectSectionSearchModel';
 import {
   formatDocumentKind,
   formatFileSize,
@@ -26,12 +27,14 @@ const FILTERS: readonly { id: DocumentPanelFilter; label: string }[] = [
 
 export type ProjectDocumentsPanelContentProps = {
   project: CrmProjectDetail;
+  searchQuery?: string;
   onRefresh: () => Promise<void>;
   onError?: (message: string) => void;
 };
 
 export function ProjectDocumentsPanelContent({
   project,
+  searchQuery = '',
   onRefresh,
   onError,
 }: ProjectDocumentsPanelContentProps): ReactElement {
@@ -51,10 +54,10 @@ export function ProjectDocumentsPanelContent({
     [project.workflowTasks]
   );
 
-  const items = useMemo(
-    () => filterDocumentPanelItems(project.documents, project.workflowTasks, filter),
-    [filter, project.documents, project.workflowTasks]
-  );
+  const items = useMemo(() => {
+    const byFilter = filterDocumentPanelItems(project.documents, project.workflowTasks, filter);
+    return filterDocumentPanelItemsBySearch(byFilter, searchQuery);
+  }, [filter, project.documents, project.workflowTasks, searchQuery]);
 
   const formatDocStageLabel = (workflowTaskId: string, stageSlug: PipelineStageSlug | null) => {
     const task = taskById.get(workflowTaskId);

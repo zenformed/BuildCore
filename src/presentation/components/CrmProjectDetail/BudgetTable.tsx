@@ -10,6 +10,7 @@ import {
   filterBudgetEntries,
   type BudgetTableFilter,
 } from '@/presentation/features/crmProjectDetail/budgetFilterModel';
+import { filterBudgetEntriesBySearch } from '@/presentation/features/crmProjectDetail/projectSectionSearchModel';
 import { useBudgetEntryActions } from '@/presentation/features/crmProjectDetail/useBudgetEntryActions';
 import { useProjectDetailShell } from '@/presentation/features/crmProjectDetail/ProjectDetailShellContext';
 import { useBuildCoreProjectSectionAccess } from '@/presentation/providers/BuildCoreProjectSectionAccessProvider';
@@ -20,6 +21,7 @@ import { DetailPanelHeader } from './DetailPanelHeader';
 import { DetailPanelHeaderActions } from './DetailPanelHeaderActions';
 import { DetailPanelHeaderButton } from './DetailPanelHeaderButton';
 import { DetailPanelSectionRefresh } from './DetailPanelSectionRefresh';
+import { DetailPanelSectionSearch } from './DetailPanelSectionSearch';
 import styles from './ProjectDetail.module.css';
 
 export type BudgetTableProps = {
@@ -41,6 +43,7 @@ export function BudgetTable({ onError }: BudgetTableProps): ReactElement {
   const canDelete = isReady && permissions.canDelete;
   const b = content.projectDetail.budget;
   const [filter, setFilter] = useState<BudgetTableFilter>('all');
+  const [searchQuery, setSearchQuery] = useState('');
   const [draftOpen, setDraftOpen] = useState(false);
   const [deleteConfirmEntry, setDeleteConfirmEntry] = useState<CrmBudgetEntry | null>(null);
 
@@ -53,10 +56,10 @@ export function BudgetTable({ onError }: BudgetTableProps): ReactElement {
     onError,
   });
 
-  const filtered = useMemo(
-    () => filterBudgetEntries(project.budget.entries, filter),
-    [filter, project.budget.entries]
-  );
+  const filtered = useMemo(() => {
+    const byCategory = filterBudgetEntries(project.budget.entries, filter);
+    return filterBudgetEntriesBySearch(byCategory, searchQuery);
+  }, [filter, project.budget.entries, searchQuery]);
 
   const totals = useMemo(() => {
     let cost = 0;
@@ -84,6 +87,12 @@ export function BudgetTable({ onError }: BudgetTableProps): ReactElement {
     >
       <DetailPanelHeader title={b.tableTitle} titleId="budget-table-heading">
         <DetailPanelHeaderActions>
+          <DetailPanelSectionSearch
+            value={searchQuery}
+            onChange={setSearchQuery}
+            placeholder={b.searchPlaceholder}
+            ariaLabel={b.searchAriaLabel}
+          />
           <DetailPanelSectionRefresh
             sectionLabel={b.tableTitle}
             onRefresh={refreshBudgetSection}
@@ -118,7 +127,8 @@ export function BudgetTable({ onError }: BudgetTableProps): ReactElement {
       {!showTable ? (
         <p className={styles.subtitle}>{b.empty}</p>
       ) : (
-        <div className={styles.paymentsList}>
+        <div className={styles.detailPanelTableCard}>
+          <div className={styles.paymentsList}>
           <div
             className={`${styles.tableHeader} ${styles.budgetGrid} ${styles.budgetTableHeader}`}
             role="row"
@@ -171,6 +181,7 @@ export function BudgetTable({ onError }: BudgetTableProps): ReactElement {
             <span aria-hidden />
             <span className={styles.taskDeleteCell} aria-hidden />
           </div>
+        </div>
         </div>
       )}
 

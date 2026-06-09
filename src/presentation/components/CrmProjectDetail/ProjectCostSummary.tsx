@@ -61,7 +61,8 @@ export function ProjectCostSummary({
 
       {budget.categoryCosts.length > 0 ? (
         <div className={styles.budgetPlSplit}>
-          <div className={styles.budgetCategoryTableWrap}>
+          <div className={styles.detailPanelTableCard}>
+            <div className={styles.budgetCategoryTableWrap}>
             <div className={`${styles.tableHeader} ${styles.budgetCategoryGrid}`} role="row">
               <span role="columnheader">{p.categoryName}</span>
               <span role="columnheader">{p.categoryCost}</span>
@@ -82,6 +83,7 @@ export function ProjectCostSummary({
                 </div>
               );
             })}
+            </div>
           </div>
           <BudgetCategoryPieChart categoryCosts={budget.categoryCosts} />
         </div>

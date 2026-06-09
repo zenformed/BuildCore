@@ -34,6 +34,8 @@ export type ReportsProjectFilterId =
 export type ReportsProjectRow = {
   readonly projectId: string;
   readonly slug: string;
+  readonly parentProjectId: string | null;
+  readonly parentSlug: string | null;
   readonly label: string;
   readonly collectedCents: number;
   readonly costsCents: number;

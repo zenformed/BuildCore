@@ -258,7 +258,10 @@ export const buildCoreDashboardContent = {
       completionCheckAriaLabel: 'Project complete',
       empty: 'No projects match your search or filters.',
       unassigned: 'Unassigned',
+      expandSubprojects: 'Show subprojects',
+      collapseSubprojects: 'Hide subprojects',
       rowAriaLabel: (name: string): string => `Open project ${name}`,
+      subprojectRowAriaLabel: (name: string): string => `Open subproject ${name}`,
       columns: {
         project: 'Project / customer',
         contact: 'Contact',
@@ -529,6 +532,8 @@ export const buildCoreDashboardContent = {
     saveError: 'Could not save changes.',
     workflow: {
       empty: 'No workflow tasks for this project.',
+      searchPlaceholder: 'Search workflow tasks…',
+      searchAriaLabel: 'Search workflow tasks',
       permissionsLoading: 'Loading workflow task permissions…',
       noViewPermission: 'You do not have permission to view workflow tasks.',
       noUploadPermission: 'You do not have permission to upload workflow task documents.',
@@ -619,6 +624,8 @@ export const buildCoreDashboardContent = {
     },
     payments: {
       title: 'Payments',
+      searchPlaceholder: 'Search payments…',
+      searchAriaLabel: 'Search payments',
       addMilestone: 'Add payment milestone',
       empty: 'No payment milestones yet.',
       columns: {
@@ -632,6 +639,8 @@ export const buildCoreDashboardContent = {
     },
     documents: {
       empty: 'No documents yet.',
+      searchPlaceholder: 'Search documents…',
+      searchAriaLabel: 'Search documents',
       uploadHint: 'Uploads coming in a later phase.',
       filterAriaLabel: 'Filter documents',
       filters: {
@@ -656,6 +665,8 @@ export const buildCoreDashboardContent = {
     },
     accountability: {
       empty: 'No activity logged yet.',
+      searchPlaceholder: 'Search accountability…',
+      searchAriaLabel: 'Search accountability',
       viewAll: 'View all Accountability',
       columns: {
         dateTime: 'Date / Time',
@@ -667,6 +678,8 @@ export const buildCoreDashboardContent = {
     },
     budget: {
       tableTitle: 'Budget',
+      searchPlaceholder: 'Search budget…',
+      searchAriaLabel: 'Search budget',
       addItem: 'Add budget item',
       empty: 'No budget items yet.',
       filterAriaLabel: 'Filter budget by category',

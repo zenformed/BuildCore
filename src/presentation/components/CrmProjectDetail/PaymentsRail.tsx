@@ -1,11 +1,12 @@
 'use client';
 
 import type { ReactElement } from 'react';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import type { CrmProjectDetail, CrmWorkflowTask } from '@/domain/crm';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
 import { countDocumentsByTaskId } from '@/presentation/features/crmProjectDetail/workflowDocumentCounts';
 import { listPaymentMilestones } from '@/presentation/features/crmProjectDetail/workflowTaskGroups';
+import { filterPaymentMilestonesBySearch } from '@/presentation/features/crmProjectDetail/projectSectionSearchModel';
 import { useBuildCoreProjectSectionAccess } from '@/presentation/providers/BuildCoreProjectSectionAccessProvider';
 import { PaymentMilestoneDraftRow } from './PaymentMilestoneDraftRow';
 import { useProjectDetailShell } from '@/presentation/features/crmProjectDetail/ProjectDetailShellContext';
@@ -13,6 +14,7 @@ import { DetailPanelHeader } from './DetailPanelHeader';
 import { DetailPanelHeaderActions } from './DetailPanelHeaderActions';
 import { DetailPanelHeaderButton } from './DetailPanelHeaderButton';
 import { DetailPanelSectionRefresh } from './DetailPanelSectionRefresh';
+import { DetailPanelSectionSearch } from './DetailPanelSectionSearch';
 import { WorkflowTaskInlineRow } from './WorkflowTaskInlineRow';
 import styles from './ProjectDetail.module.css';
 
@@ -43,17 +45,31 @@ export function PaymentsRail({
   const canCreate = isReady && permissions.canCreate;
   const canDelete = isReady && permissions.canDelete;
   const cols = content.projectDetail.workflow.columns;
-  const milestones = listPaymentMilestones(project.workflowTasks);
+  const milestones = useMemo(
+    () => listPaymentMilestones(project.workflowTasks),
+    [project.workflowTasks]
+  );
+  const [searchQuery, setSearchQuery] = useState('');
+  const filteredMilestones = useMemo(
+    () => filterPaymentMilestonesBySearch(milestones, searchQuery),
+    [milestones, searchQuery]
+  );
   const docCounts = countDocumentsByTaskId(project.documents);
   const payCols = content.projectDetail.payments.columns;
   const [draftOpen, setDraftOpen] = useState(false);
 
-  const showTable = canView && (milestones.length > 0 || draftOpen);
+  const showTable = canView && (filteredMilestones.length > 0 || draftOpen);
 
   return (
     <section className={styles.paymentsPanel} aria-labelledby="payments-rail-heading">
       <DetailPanelHeader title={payments.title} titleId="payments-rail-heading">
         <DetailPanelHeaderActions>
+          <DetailPanelSectionSearch
+            value={searchQuery}
+            onChange={setSearchQuery}
+            placeholder={payments.searchPlaceholder}
+            ariaLabel={payments.searchAriaLabel}
+          />
           <DetailPanelSectionRefresh
             sectionLabel={payments.title}
             onRefresh={refreshWorkflowTasks}
@@ -76,8 +92,9 @@ export function PaymentsRail({
       ) : !showTable ? (
         <p className={styles.subtitle}>{payments.empty}</p>
       ) : (
-        <div className={styles.paymentsTableScroll}>
-          <div className={styles.paymentsTableGridShell}>
+        <div className={styles.detailPanelTableCard}>
+          <div className={styles.paymentsTableScroll}>
+            <div className={styles.paymentsTableGridShell}>
             <div className={`${styles.tableHeader} ${styles.paymentsTableHeader}`} role="row">
               <span role="columnheader">{cols.status}</span>
               <span role="columnheader">{cols.task}</span>
@@ -89,7 +106,7 @@ export function PaymentsRail({
               <span role="columnheader">{payCols.paid}</span>
               <span role="columnheader" className={styles.taskDeleteHeader} aria-hidden />
             </div>
-            {milestones.map((task) => (
+            {filteredMilestones.map((task) => (
               <WorkflowTaskInlineRow
                 key={task.id}
                 projectSlug={project.summary.slug}
@@ -113,6 +130,7 @@ export function PaymentsRail({
               />
             ) : null}
           </div>
+        </div>
         </div>
       )}
     </section>

@@ -74,7 +74,14 @@
   overflow: hidden;
 }
 
-.reportsFolderTabPanelInner[data-reports-tab='costBreakdown'] .costTableWrap {
+.reportsFolderTabPanelInner[data-reports-tab='costBreakdown'] .detailPanelTableCard {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.reportsFolderTabPanelInner[data-reports-tab='costBreakdown'] .detailPanelTableCard .costTableWrap {
   flex: 1;
   min-height: 0;
   overflow: hidden;
@@ -87,7 +94,15 @@
   overflow-y: auto;
 }
 
-.reportsFolderTabPanelInner[data-reports-tab='projectPerformance'] .tableWrap,
+.reportsFolderTabPanelInner[data-reports-tab='projectPerformance'] .detailPanelTableCard {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.reportsFolderTabPanelInner[data-reports-tab='projectPerformance'] .detailPanelTableCard .tableWrap,
 .reportsFolderTabPanelInner[data-reports-tab='recentActivity'] .activityFeed {
   flex: 1 1 auto;
   min-height: 0;
@@ -635,6 +650,74 @@
 .projectLink:hover {
   color: var(--color-link-hover);
   text-decoration: underline;
+}
+
+.projectPerformanceNameCell {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  min-width: 0;
+}
+
+.projectPerformanceNameCell_child {
+  padding-left: 2.25rem;
+}
+
+.projectPerformanceLink {
+  background: none;
+  border: none;
+  padding: 0.125rem 0.25rem;
+  margin: -0.125rem -0.25rem;
+  font: inherit;
+  font-weight: 600;
+  font-size: 0.8125rem;
+  color: var(--color-text, #0f172a);
+  cursor: pointer;
+  text-align: left;
+  border-radius: 0.25rem;
+  transition:
+    color 0.12s ease,
+    background-color 0.12s ease;
+}
+
+.projectPerformanceLink:hover {
+  color: var(--color-text, #0f172a);
+  background: var(--color-muted, #f1f5f9);
+  text-decoration: none;
+}
+
+.projectPerformanceLink:focus {
+  outline: none;
+}
+
+.projectPerformanceLink:focus-visible {
+  outline: 2px solid var(--color-primary, #2563eb);
+  outline-offset: 1px;
+}
+
+:global([data-theme='dark']) .projectPerformanceLink {
+  color: #e2e8f0;
+}
+
+:global([data-theme='dark']) .projectPerformanceLink:hover {
+  color: #f8fafc;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.projectPerformanceRow_child {
+  background: var(--color-muted, #f8fafc);
+}
+
+:global([data-theme='dark']) .projectPerformanceRow_child {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.projectPerformanceRow_child:hover {
+  background: var(--color-muted, #f1f5f9);
+}
+
+:global([data-theme='dark']) .projectPerformanceRow_child:hover {
+  background: #1e212b;
 }
 
 .costTableWrap {

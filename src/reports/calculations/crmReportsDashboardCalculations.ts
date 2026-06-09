@@ -158,6 +158,7 @@ export function computeCrmReportsDashboard(
 
   const avgDaysToPay = computeAvgDaysToPay(payments);
   const now = Date.now();
+  const slugByProjectId = new Map(projects.map((project) => [project.summary.id, project.summary.slug]));
 
   const projectRows = projects.map((project) => {
     const projectPayments = project.workflowTasks.filter(isPaymentWorkflowTask);
@@ -182,6 +183,11 @@ export function computeCrmReportsDashboard(
     return {
       projectId: project.summary.id,
       slug: project.summary.slug,
+      parentProjectId: project.summary.parentProjectId,
+      parentSlug:
+        project.summary.parentProjectId != null
+          ? (slugByProjectId.get(project.summary.parentProjectId) ?? null)
+          : null,
       label: project.summary.name,
       collectedCents: rowCollected,
       costsCents: rowCosts,
@@ -210,14 +216,16 @@ export function computeCrmReportsDashboard(
   const totalCostCents = [...costByCategory.values()].reduce((sum, cents) => sum + cents, 0);
   const costBreakdown = CRM_BUDGET_CATEGORIES.filter(
     (cat) => (costByCategory.get(cat) ?? 0) > 0
-  ).map((category) => {
-    const costCents = costByCategory.get(category) ?? 0;
-    return {
-      category,
-      costCents,
-      costPercent: computeCategoryPercentOfTotal(costCents, totalCostCents),
-    };
-  });
+  )
+    .map((category) => {
+      const costCents = costByCategory.get(category) ?? 0;
+      return {
+        category,
+        costCents,
+        costPercent: computeCategoryPercentOfTotal(costCents, totalCostCents),
+      };
+    })
+    .sort((a, b) => b.costPercent - a.costPercent || b.costCents - a.costCents);
 
   return {
     period,
@@ -259,7 +267,7 @@ export function computeCrmReportsDashboard(
       tooltipLabels: chartBuckets.map((b) => b.tooltipLabel),
       valuesCents: chartValues,
     },
-    projectRows: [...projectRows].sort((a, b) => b.collectedCents - a.collectedCents),
+    projectRows,
     costBreakdown,
     costsIncludeUndatedEntries: usedLegacyCreatedAtFallback,
     recentActivity: buildReportsFinancialActivity(projects, range.start, range.end),
