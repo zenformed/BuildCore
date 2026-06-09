@@ -25,6 +25,7 @@ export interface ICrmProjectsRepository {
     input: ListCrmProjectChildSummariesInput
   ): CrmRepositoryResult<readonly CrmProjectSummary[]>;
   listPaymentBalanceTasks(): CrmRepositoryResult<CrmProjectPaymentTasksIndex>;
+  getSummaryBySlug(slug: string): CrmRepositoryResult<CrmProjectSummary | null>;
   create(input: CreateCrmProjectInput): CrmRepositoryResult<CreateCrmProjectResult>;
   archive(slug: string): CrmRepositoryResult<boolean>;
 }

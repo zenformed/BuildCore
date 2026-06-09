@@ -18,6 +18,7 @@ import {
   type BuildCoreWorkflowTaskAccess,
 } from '@/domain/buildcore/rolePermissions';
 import { fetchBuildCoreWorkflowTaskAccessBff } from '@/infrastructure/coreApi/buildCoreWorkflowTaskAccessBff';
+import { runSessionCached } from '@/infrastructure/coreApi/clientRequestDedupe';
 import { runtimeModes } from '@/infrastructure/config/runtimeModes';
 import { useBuildCoreDashboardContext } from '@/presentation/providers/BuildCoreDashboardProvider';
 
@@ -68,7 +69,9 @@ export function BuildCoreWorkflowTaskAccessProvider({
     }
     setLoadError(null);
     try {
-      const next = await fetchBuildCoreWorkflowTaskAccessBff(token);
+      const next = await runSessionCached(`workflow-task-access:${token}`, () =>
+        fetchBuildCoreWorkflowTaskAccessBff(token)
+      );
       setAccess(next);
     } catch (err) {
       setAccess(null);

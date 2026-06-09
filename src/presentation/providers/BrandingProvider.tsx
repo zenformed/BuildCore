@@ -5,12 +5,19 @@ import { env } from '@/infrastructure/config/env';
 import { usesCoreOrganizationBranding } from '@/infrastructure/branding/organizationBrandingAuthority';
 import { CORE_PLATFORM_REFETCH_COOLDOWN_MS } from '@/infrastructure/coreApi/corePlatformHealth';
 import { createCooldownGate } from '@/infrastructure/coreApi/fetchWithCooldown';
+import { invalidateSessionCache, runSessionCached } from '@/infrastructure/coreApi/clientRequestDedupe';
 import {
   isCoreRelayUnreachable,
   parseCoreRelayBody,
 } from '@/infrastructure/coreApi/coreRelayStatus';
 import { buildcoreAppDefinition } from '@/platform/appDefinitions/buildcore';
 import { useSaaSProfile } from '@/presentation/hooks/useSaaSProfile';
+import { deferNonCriticalWork } from '@/presentation/utils/deferNonCriticalWork';
+import {
+  brandingLogoCacheKey,
+  loadSessionBlob,
+  peekSessionBlobUrl,
+} from '@/presentation/utils/sessionBlobCache';
 
 const defaultName = buildcoreAppDefinition.displayName;
 
@@ -26,7 +33,7 @@ const BrandingContext = createContext<BrandingState>({
   shopName: defaultName,
   logoUrl: null,
   hasLogo: false,
-  isLoading: true,
+  isLoading: false,
   refetch: async () => {},
 });
 
@@ -45,9 +52,8 @@ export function BrandingProvider({ children }: { children: React.ReactNode }): R
   const [shopName, setShopName] = useState<string>(defaultName);
   const [hasLogo, setHasLogo] = useState(false);
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const [logoVersion, setLogoVersion] = useState(0);
-  const blobUrlRef = useRef<string | null>(null);
   const hasFetchedRef = useRef(false);
   const coreUnreachableRef = useRef(false);
   const refetchCooldownRef = useRef(createCooldownGate(CORE_PLATFORM_REFETCH_COOLDOWN_MS));
@@ -63,107 +69,89 @@ export function BrandingProvider({ children }: { children: React.ReactNode }): R
     setHasLogo(false);
   }, []);
 
-  const revokeBlobUrl = useCallback(() => {
-    if (blobUrlRef.current != null) {
-      URL.revokeObjectURL(blobUrlRef.current);
-      blobUrlRef.current = null;
-    }
-  }, []);
-
   const fetchBrandingMeta = useCallback(async (options?: { force?: boolean }) => {
     if (coreUnreachableRef.current) {
       if (!options?.force || !refetchCooldownRef.current.canRun) {
         applyCachedBranding();
-        setIsLoading(false);
         return;
       }
       refetchCooldownRef.current.markRan();
     }
 
     const token = accessTokenRef.current;
+    const cacheKey = `branding:meta:${sessionUserId ?? 'anonymous'}`;
+    if (options?.force) {
+      invalidateSessionCache(cacheKey);
+    }
     try {
-      const res = await fetch('/api/branding', {
-        cache: 'no-store',
-        headers: brandingAuthHeaders(token),
+      await runSessionCached(cacheKey, async () => {
+        const res = await fetch('/api/branding', {
+          cache: 'no-store',
+          headers: brandingAuthHeaders(token),
+        });
+        let body: Record<string, unknown> = {};
+        try {
+          body = (await res.json()) as Record<string, unknown>;
+        } catch {
+          body = {};
+        }
+        const relay = parseCoreRelayBody(body);
+        if (isCoreRelayUnreachable(res, relay)) {
+          coreUnreachableRef.current = true;
+          applyCachedBranding();
+          return null;
+        }
+        coreUnreachableRef.current = false;
+        const data = res.ok ? body : {};
+        const nextShopName = typeof data.shopName === 'string' ? data.shopName : defaultName;
+        const nextHasLogo = Boolean(data.hasLogo);
+        cachedBrandingRef.current = { shopName: nextShopName, hasLogo: nextHasLogo };
+        setShopName(nextShopName);
+        setHasLogo(nextHasLogo);
+        return { shopName: nextShopName, hasLogo: nextHasLogo };
       });
-      let body: Record<string, unknown> = {};
-      try {
-        body = (await res.json()) as Record<string, unknown>;
-      } catch {
-        body = {};
-      }
-      const relay = parseCoreRelayBody(body);
-      if (isCoreRelayUnreachable(res, relay)) {
-        coreUnreachableRef.current = true;
-        applyCachedBranding();
-        return;
-      }
-      coreUnreachableRef.current = false;
-      const data = res.ok ? body : {};
-      const nextShopName = typeof data.shopName === 'string' ? data.shopName : defaultName;
-      const nextHasLogo = Boolean(data.hasLogo);
-      cachedBrandingRef.current = { shopName: nextShopName, hasLogo: nextHasLogo };
-      setShopName(nextShopName);
-      setHasLogo(nextHasLogo);
     } catch {
       applyCachedBranding();
     }
-  }, [applyCachedBranding]);
+  }, [applyCachedBranding, sessionUserId]);
 
   useEffect(() => {
-    let cancelled = false;
+    if (coreUnreachableRef.current || !hasLogo) {
+      setLogoUrl(null);
+      return;
+    }
+    if (coreBranding && accessTokenRef.current == null) {
+      setLogoUrl(null);
+      return;
+    }
 
-    const loadLogo = async () => {
-      if (coreUnreachableRef.current) {
-        return;
-      }
+    const cacheKey = brandingLogoCacheKey(sessionUserId, logoVersion);
+    const cached = peekSessionBlobUrl(cacheKey);
+    if (cached !== undefined) {
+      setLogoUrl(cached);
+      return;
+    }
+
+    let cancelled = false;
+    const cancelDefer = deferNonCriticalWork(() => {
       const token = accessTokenRef.current;
-      if (!hasLogo) {
-        revokeBlobUrl();
-        setLogoUrl(null);
-        return;
-      }
-      if (coreBranding && token == null) {
-        revokeBlobUrl();
-        setLogoUrl(null);
-        return;
-      }
-      try {
+      void loadSessionBlob(cacheKey, async () => {
         const res = await fetch(`/api/branding/logo?t=${logoVersion}`, {
           cache: 'no-store',
           headers: brandingAuthHeaders(token),
         });
-        if (cancelled) return;
-        if (!res.ok) {
-          revokeBlobUrl();
-          setLogoUrl(null);
-          return;
-        }
-        const blob = await res.blob();
-        if (cancelled) return;
-        revokeBlobUrl();
-        const url = URL.createObjectURL(blob);
-        blobUrlRef.current = url;
-        setLogoUrl(url);
-      } catch {
-        if (!cancelled) {
-          revokeBlobUrl();
-          setLogoUrl(null);
-        }
-      }
-    };
+        if (!res.ok) return null;
+        return res.blob();
+      }).then((url) => {
+        if (!cancelled) setLogoUrl(url);
+      });
+    });
 
-    void loadLogo();
     return () => {
       cancelled = true;
+      cancelDefer();
     };
-  }, [hasLogo, logoVersion, sessionUserId, coreBranding, revokeBlobUrl]);
-
-  useEffect(() => {
-    return () => {
-      revokeBlobUrl();
-    };
-  }, [revokeBlobUrl]);
+  }, [coreBranding, hasLogo, logoVersion, sessionUserId]);
 
   const refetch = useCallback(async () => {
     setIsLoading(true);
@@ -183,22 +171,18 @@ export function BrandingProvider({ children }: { children: React.ReactNode }): R
       hasFetchedRef.current = false;
       coreUnreachableRef.current = false;
       cachedBrandingRef.current = null;
-      setIsLoading(false);
       return;
     }
     if (coreUnreachableRef.current && !refetchCooldownRef.current.canRun) {
       applyCachedBranding();
-      setIsLoading(false);
       return;
     }
-    if (!hasFetchedRef.current) {
-      setIsLoading(true);
-    }
-    void fetchBrandingMeta().finally(() => {
-      hasFetchedRef.current = true;
-      setIsLoading(false);
+    return deferNonCriticalWork(() => {
+      void fetchBrandingMeta().finally(() => {
+        hasFetchedRef.current = true;
+      });
     });
-  }, [fetchBrandingMeta, sessionUserId, corePlatformStatus, applyCachedBranding]);
+  }, [applyCachedBranding, fetchBrandingMeta, sessionUserId, corePlatformStatus]);
 
   const value: BrandingState = {
     shopName,

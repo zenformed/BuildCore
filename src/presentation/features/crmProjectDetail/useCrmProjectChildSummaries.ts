@@ -9,6 +9,7 @@ import {
 } from '@/application/use-cases/crm/listCrmProjectChildSummaries';
 import { getCrmDataSource } from '@/infrastructure/config/crmDataSource';
 import { crmRepositories } from '@/shared/di/container';
+import { deferNonCriticalWork } from '@/presentation/utils/deferNonCriticalWork';
 
 export function filterSubprojects(
   rows: readonly CrmProjectSummary[],
@@ -41,6 +42,7 @@ export function useCrmProjectChildSummaries(
   rows: CrmProjectSummary[];
   isLoading: boolean;
   refetch: () => Promise<void>;
+  patchProjectSummary: (summary: CrmProjectSummary) => void;
 } {
   const isApiSource = getCrmDataSource() === 'api';
   const parentProjectId = parentProject?.id ?? null;
@@ -77,7 +79,9 @@ export function useCrmProjectChildSummaries(
 
   useEffect(() => {
     if (!isApiSource || parentProjectId == null || parentSlug == null) return;
-    void loadSummaries();
+    return deferNonCriticalWork(() => {
+      void loadSummaries();
+    });
   }, [isApiSource, loadSummaries, parentProjectId, parentSlug]);
 
   const rows = useMemo(
@@ -85,9 +89,18 @@ export function useCrmProjectChildSummaries(
     [summaries, searchQuery]
   );
 
+  const patchProjectSummary = useCallback((summary: CrmProjectSummary) => {
+    setSummaries((current) =>
+      current == null
+        ? current
+        : current.map((project) => (project.id === summary.id ? summary : project))
+    );
+  }, []);
+
   return {
     rows,
     isLoading: parentProjectId != null && summaries == null,
     refetch: loadSummaries,
+    patchProjectSummary,
   };
 }

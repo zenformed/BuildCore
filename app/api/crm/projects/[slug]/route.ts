@@ -4,6 +4,7 @@
  * DELETE /api/crm/projects/[slug] — archive a project (soft delete).
  */
 
+import { performance } from 'node:perf_hooks';
 import { NextRequest, NextResponse } from 'next/server';
 import { requireCrmApiAuth } from '@/infrastructure/crm/server/crmApiRouteAuth';
 import { requireBuildCoreProjectManagementAccess } from '@/infrastructure/crm/server/buildCoreProjectManagementAccess';
@@ -24,7 +25,9 @@ export async function GET(
   request: NextRequest,
   context: RouteContext
 ): Promise<NextResponse> {
+  const routeStarted = performance.now();
   const auth = await requireCrmApiAuth(request.headers.get('Authorization'));
+  const authMs = Math.round(performance.now() - routeStarted);
   if (!auth.ok) return auth.response;
 
   const slug = context.params.slug?.trim();
@@ -33,20 +36,33 @@ export async function GET(
   }
 
   try {
+    const projectStarted = performance.now();
     const project = await getCrmProjectDetailBySlugForOrg(
       auth.context.supabase,
       auth.context.organizationId,
       slug
     );
+    const projectMs = Math.round(performance.now() - projectStarted);
     if (project == null) {
       return NextResponse.json({ error: 'not_found', message: 'Project not found' }, { status: 404 });
     }
+    const scopeStarted = performance.now();
     const scoped = await scopeCrmProjectDetailForViewer(
       auth.context.supabase,
       auth.context.organizationId,
       auth.context.user.id,
       project
     );
+    const scopeMs = Math.round(performance.now() - scopeStarted);
+    if (process.env.NODE_ENV === 'development') {
+      console.info('[PERF] GET /api/crm/projects/[slug]', {
+        slug,
+        authMs,
+        projectMs,
+        scopeMs,
+        totalMs: Math.round(performance.now() - routeStarted),
+      });
+    }
     return NextResponse.json(scoped);
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Failed to load CRM project';

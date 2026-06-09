@@ -31,6 +31,7 @@ export type CrmProjectTableRowProps = {
   variant?: 'root' | 'child';
   financials?: ProjectPaymentFinancials;
   valueLabel?: string;
+  financialsLoading?: boolean;
   onRowClick: () => void;
   isMemberRole?: boolean;
   canDelete?: boolean;
@@ -50,6 +51,7 @@ export function CrmProjectTableRow({
   variant = 'root',
   financials,
   valueLabel,
+  financialsLoading = false,
   onRowClick,
   isMemberRole = false,
   canDelete = false,
@@ -68,6 +70,8 @@ export function CrmProjectTableRow({
   const progress = resolveProjectSummaryProgressDisplay(project);
   const isChild = variant === 'child';
   const displayFinancials = financials ?? { valueCents: 0, collectedCents: 0, balanceCents: 0 };
+  const financialDisplay = (cents: number): string =>
+    financialsLoading ? '…' : formatCentsAsUsd(cents);
   const valueLabels = tableCopy.columns;
   const displayValueLabel =
     valueLabel ?? (isChild ? valueLabels.subValueLabel : valueLabels.projectValueLabel);
@@ -164,22 +168,25 @@ export function CrmProjectTableRow({
             className={`${styles.gridCell} ${styles.gridCellFinancial} ${styles.gridCellAlignCenter}`}
             role="cell"
             title={displayValueLabel}
+            aria-busy={financialsLoading || undefined}
           >
-            {formatCentsAsUsd(displayFinancials.valueCents)}
+            {financialDisplay(displayFinancials.valueCents)}
           </span>
           <span
             className={`${styles.gridCell} ${styles.gridCellFinancial} ${styles.gridCellAlignCenter}`}
             role="cell"
             title={valueLabels.collected}
+            aria-busy={financialsLoading || undefined}
           >
-            {formatCentsAsUsd(displayFinancials.collectedCents)}
+            {financialDisplay(displayFinancials.collectedCents)}
           </span>
           <span
             className={`${styles.gridCell} ${styles.gridCellFinancial} ${styles.gridCellAlignCenter}`}
             role="cell"
             title={valueLabels.balance}
+            aria-busy={financialsLoading || undefined}
           >
-            {formatCentsAsUsd(displayFinancials.balanceCents)}
+            {financialDisplay(displayFinancials.balanceCents)}
           </span>
         </>
       ) : null}

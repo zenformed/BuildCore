@@ -26,6 +26,7 @@ export type CrmProjectsTableProps = {
   paymentTasksIndex?: CrmProjectPaymentTasksIndex;
   enableSubprojectExpansion?: boolean;
   isLoading?: boolean;
+  isPaymentFinancialsLoading?: boolean;
   onRowClick: (project: CrmProjectSummary) => void;
   onSubprojectRowClick?: (parent: CrmProjectSummary, child: CrmProjectSummary) => void;
   isMemberRole?: boolean;
@@ -49,6 +50,7 @@ export function CrmProjectsTable({
   paymentTasksIndex,
   enableSubprojectExpansion = false,
   isLoading = false,
+  isPaymentFinancialsLoading = false,
   onRowClick,
   onSubprojectRowClick,
   isMemberRole = false,
@@ -147,6 +149,7 @@ export function CrmProjectsTable({
                       variant={rowVariant}
                       financials={rowFinancials}
                       valueLabel={rowValueLabel}
+                      financialsLoading={isPaymentFinancialsLoading}
                       onRowClick={() => onRowClick(project)}
                       isMemberRole={isMemberRole}
                       canDelete={canDelete && showActions}
@@ -178,6 +181,7 @@ export function CrmProjectsTable({
                       variant="child"
                       financials={childFinancials}
                       valueLabel={valueLabels.subValueLabel}
+                      financialsLoading={isPaymentFinancialsLoading}
                       onRowClick={() =>
                         onSubprojectRowClick
                           ? onSubprojectRowClick(project, child)

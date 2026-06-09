@@ -5,6 +5,8 @@ import type { CrmProjectDetail, CrmProjectSummary } from '@/domain/crm';
 import {
   getCrmProjectDetailBySlug,
   getCrmProjectDetailBySlugSync,
+  getCrmProjectSummaryBySlug,
+  getCrmProjectSummaryBySlugSync,
 } from '@/application/use-cases/crm';
 import { getCrmDataSource } from '@/infrastructure/config/crmDataSource';
 import { crmRepositories } from '@/shared/di/container';
@@ -33,11 +35,11 @@ function resolveMockDetailState(
   }
 
   if (parentSlug) {
-    const parent = getCrmProjectDetailBySlugSync(crmRepositories, parentSlug.trim());
-    if (parent == null || project.summary.parentProjectId !== parent.summary.id) {
+    const parentSummary = getCrmProjectSummaryBySlugSync(crmRepositories, parentSlug.trim());
+    if (parentSummary == null || project.summary.parentProjectId !== parentSummary.id) {
       return { status: 'not_found', slug: trimmed };
     }
-    return { status: 'ready', project, parentProject: parent.summary };
+    return { status: 'ready', project, parentProject: parentSummary };
   }
 
   return { status: 'ready', project, parentProject: null };
@@ -71,19 +73,27 @@ export function useCrmProjectDetail(
     if (!silent) {
       setState({ status: 'loading' });
     }
-    const project = await getCrmProjectDetailBySlug(crmRepositories, trimmed);
-    if (project == null) {
-      setState({ status: 'not_found', slug: trimmed });
-      return;
-    }
 
     if (parentSlug) {
-      const parent = await getCrmProjectDetailBySlug(crmRepositories, parentSlug);
-      if (parent == null || project.summary.parentProjectId !== parent.summary.id) {
+      const [project, parentSummary] = await Promise.all([
+        getCrmProjectDetailBySlug(crmRepositories, trimmed),
+        getCrmProjectSummaryBySlug(crmRepositories, parentSlug),
+      ]);
+      if (project == null) {
         setState({ status: 'not_found', slug: trimmed });
         return;
       }
-      setState({ status: 'ready', project, parentProject: parent.summary });
+      if (parentSummary == null || project.summary.parentProjectId !== parentSummary.id) {
+        setState({ status: 'not_found', slug: trimmed });
+        return;
+      }
+      setState({ status: 'ready', project, parentProject: parentSummary });
+      return;
+    }
+
+    const project = await getCrmProjectDetailBySlug(crmRepositories, trimmed);
+    if (project == null) {
+      setState({ status: 'not_found', slug: trimmed });
       return;
     }
 

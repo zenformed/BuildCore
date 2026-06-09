@@ -41,8 +41,11 @@ export function SubprojectsSection(): ReactElement | null {
   const [createOpen, setCreateOpen] = useState(false);
   const [toast, setToast] = useState<SubprojectsToast | null>(null);
   const refetch = childSummaries?.refetch ?? (async () => undefined);
+  const patchChildProjectSummary =
+    childSummaries?.patchProjectSummary ?? (() => undefined);
   const isLoading = childSummaries?.isLoading ?? false;
-  const { paymentTasksIndex } = useCrmProjectPaymentTasksIndex();
+  const { paymentTasksIndex, isLoading: isPaymentFinancialsLoading } =
+    useCrmProjectPaymentTasksIndex();
   const rows = useMemo(
     () => filterSubprojects(childSummaries?.allRows ?? [], searchQuery),
     [childSummaries?.allRows, searchQuery]
@@ -70,7 +73,7 @@ export function SubprojectsSection(): ReactElement | null {
     requestCompletionChange,
     confirmCompletionChange,
   } = useCrmProjectTableRowActions({
-    onRefresh: refetch,
+    onProjectUpdated: patchChildProjectSummary,
     onSuccess: (message) => setToast({ kind: 'success', message }),
     onError: (message) => setToast({ kind: 'error', message }),
   });
@@ -147,6 +150,7 @@ export function SubprojectsSection(): ReactElement | null {
               rows={rows}
               paymentTasksIndex={paymentTasksIndex}
               isLoading={isLoading}
+              isPaymentFinancialsLoading={isPaymentFinancialsLoading}
               isMemberRole={isMemberRole}
               canDelete={canDelete && !isMemberRole}
               deletingProjectId={deletingProjectId}

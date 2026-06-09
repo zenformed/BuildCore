@@ -6,11 +6,10 @@ import type { CrmProjectPaymentTasksIndex } from '@/domain/crm/projectPaymentVal
 import {
   listCrmProjectSummaries,
   listCrmProjectSummariesSync,
-  loadCrmProjectPaymentTasksIndex,
-  loadCrmProjectPaymentTasksIndexSync,
 } from '@/application/use-cases/crm';
 import { getCrmDataSource } from '@/infrastructure/config/crmDataSource';
 import { crmRepositories } from '@/shared/di/container';
+import { useCrmPaymentTasksIndexContext } from '@/presentation/providers/CrmPaymentTasksIndexProvider';
 import {
   EMPTY_CRM_PROJECTS_LIST_FILTERS,
   filterDashboardProjectSummaries,
@@ -30,39 +29,38 @@ export function useCrmProjectsPipeline(
   totalCount: number;
   filteredCount: number;
   isLoading: boolean;
+  isPaymentFinancialsLoading: boolean;
   refetch: () => Promise<void>;
   removeProject: (projectId: string) => void;
+  patchProjectSummary: (summary: CrmProjectSummary) => void;
 } {
   const isApiSource = getCrmDataSource() === 'api';
+  const { paymentTasksIndex, isLoading: isPaymentFinancialsLoading, refetch: refetchPaymentIndex } =
+    useCrmPaymentTasksIndexContext();
   const [allSummaries, setAllSummaries] = useState<readonly CrmProjectSummary[] | null>(() =>
     isApiSource ? null : listCrmProjectSummariesSync(crmRepositories, { rootsOnly: false })
   );
-  const [paymentTasksIndex, setPaymentTasksIndex] = useState<CrmProjectPaymentTasksIndex | null>(
-    () => (isApiSource ? null : loadCrmProjectPaymentTasksIndexSync(crmRepositories))
-  );
 
-  const loadPipelineData = useCallback(async (): Promise<void> => {
+  const loadSummaries = useCallback(async (): Promise<void> => {
     if (!isApiSource) {
       setAllSummaries(listCrmProjectSummariesSync(crmRepositories, { rootsOnly: false }));
-      setPaymentTasksIndex(loadCrmProjectPaymentTasksIndexSync(crmRepositories));
       return;
     }
-    const [summaries, paymentIndex] = await Promise.all([
-      listCrmProjectSummaries(crmRepositories, { rootsOnly: false }),
-      loadCrmProjectPaymentTasksIndex(crmRepositories),
-    ]);
+    const summaries = await listCrmProjectSummaries(crmRepositories, { rootsOnly: false });
     setAllSummaries(summaries);
-    setPaymentTasksIndex(paymentIndex);
   }, [isApiSource]);
+
+  const refetch = useCallback(async (): Promise<void> => {
+    await Promise.all([loadSummaries(), refetchPaymentIndex()]);
+  }, [loadSummaries, refetchPaymentIndex]);
 
   useEffect(() => {
     if (!isApiSource) return;
-    void loadPipelineData();
-  }, [isApiSource, loadPipelineData]);
+    void loadSummaries();
+  }, [isApiSource, loadSummaries]);
 
   const summaries = allSummaries ?? [];
-  const isLoading = allSummaries === null || paymentTasksIndex === null;
-  const resolvedPaymentTasksIndex = paymentTasksIndex ?? new Map<string, never>();
+  const isLoading = allSummaries === null;
 
   const dashboardView = useMemo(
     () => filterDashboardProjectSummaries(summaries, searchQuery, filters),
@@ -78,12 +76,14 @@ export function useCrmProjectsPipeline(
     setAllSummaries((current) =>
       current == null ? current : current.filter((project) => project.id !== projectId)
     );
-    setPaymentTasksIndex((current) => {
-      if (current == null) return current;
-      const next = new Map(current);
-      next.delete(projectId);
-      return next;
-    });
+  }, []);
+
+  const patchProjectSummary = useCallback((summary: CrmProjectSummary) => {
+    setAllSummaries((current) =>
+      current == null
+        ? current
+        : current.map((project) => (project.id === summary.id ? summary : project))
+    );
   }, []);
 
   return {
@@ -91,12 +91,14 @@ export function useCrmProjectsPipeline(
     allChildrenByParentId: dashboardView.allChildrenByParentId,
     visibleChildrenByParentId: dashboardView.visibleChildrenByParentId,
     parentsWithMatchingChildren: dashboardView.parentsWithMatchingChildren,
-    paymentTasksIndex: resolvedPaymentTasksIndex,
+    paymentTasksIndex,
     totalCount: allRoots.length,
     filteredCount: dashboardView.rootRows.length,
     isLoading,
-    refetch: loadPipelineData,
+    isPaymentFinancialsLoading,
+    refetch,
     removeProject,
+    patchProjectSummary,
   };
 }
 

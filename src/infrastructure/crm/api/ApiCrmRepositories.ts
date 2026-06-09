@@ -75,8 +75,11 @@ import {
 import {
   clearApiCrmDetailCache,
   getApiCrmDetailCacheByProjectId,
+  getApiCrmDetailCacheBySlug,
+  isApiCrmDetailCacheResolvedForSlug,
   setApiCrmDetailCache,
 } from './apiCrmDetailCache';
+import { runInFlight } from '@/infrastructure/coreApi/clientRequestDedupe';
 
 
 
@@ -105,15 +108,29 @@ export class ApiCrmProjectsRepository implements ICrmProjectsRepository {
     parentSlug: string;
   }): Promise<readonly CrmProjectSummary[]> {
     void input.parentProjectId;
-    return crmApiGetJson<{ projects: CrmProjectSummary[] }>(
-      `/api/crm/projects/${encodeURIComponent(input.parentSlug.trim())}/subprojects`
-    ).then((body) => body.projects);
+    const parentSlug = input.parentSlug.trim();
+    return runInFlight(`crm:subprojects:${parentSlug}`, () =>
+      crmApiGetJson<{ projects: CrmProjectSummary[] }>(
+        `/api/crm/projects/${encodeURIComponent(parentSlug)}/subprojects`
+      ).then((body) => body.projects)
+    );
   }
 
   listPaymentBalanceTasks() {
     return crmApiGetJson<{ byProjectId: Record<string, PaymentBalanceTask[]> }>(
       '/api/crm/projects/payment-balance-tasks'
     ).then((body) => new Map(Object.entries(body.byProjectId)));
+  }
+
+  getSummaryBySlug(slug: string): Promise<CrmProjectSummary | null> {
+    const trimmed = slug.trim();
+    if (!trimmed) return Promise.resolve(null);
+    return crmApiGetJson<CrmProjectSummary>(
+      `/api/crm/projects/${encodeURIComponent(trimmed)}/summary`
+    ).catch((err) => {
+      if (err instanceof CrmApiError && err.status === 404) return null;
+      throw err;
+    });
   }
 
 
@@ -148,33 +165,41 @@ export class ApiCrmProjectDetailRepository implements ICrmProjectDetailRepositor
 
     if (!trimmed) return null;
 
+    if (isApiCrmDetailCacheResolvedForSlug(trimmed)) {
+      return getApiCrmDetailCacheBySlug(trimmed);
+    }
 
-
-    try {
-
-      const detail = await crmApiGetJson<CrmProjectDetail>(
-
-        `/api/crm/projects/${encodeURIComponent(trimmed)}`
-
-      );
-
-      setApiCrmDetailCache(trimmed, detail);
-
-      return detail;
-
-    } catch (err) {
-
-      if (err instanceof CrmApiError && err.status === 404) {
-
-        setApiCrmDetailCache(trimmed, null);
-
-        return null;
-
+    return runInFlight(`crm:project-detail:${trimmed}`, async () => {
+      if (isApiCrmDetailCacheResolvedForSlug(trimmed)) {
+        return getApiCrmDetailCacheBySlug(trimmed);
       }
 
-      throw err;
+      try {
 
-    }
+        const detail = await crmApiGetJson<CrmProjectDetail>(
+
+          `/api/crm/projects/${encodeURIComponent(trimmed)}`
+
+        );
+
+        setApiCrmDetailCache(trimmed, detail);
+
+        return detail;
+
+      } catch (err) {
+
+        if (err instanceof CrmApiError && err.status === 404) {
+
+          setApiCrmDetailCache(trimmed, null);
+
+          return null;
+
+        }
+
+        throw err;
+
+      }
+    });
 
   }
 

@@ -9,7 +9,7 @@ import { crmRepositories } from '@/shared/di/container';
 
 export function useProjectCompletionToggle(
   initialProject: CrmProjectDetail,
-  onRefresh: () => Promise<void>
+  onRefresh?: () => Promise<void>
 ): {
   project: CrmProjectDetail;
   setProject: (project: CrmProjectDetail) => void;
@@ -49,7 +49,9 @@ export function useProjectCompletionToggle(
         throw new Error(c.markCompleteFailed);
       }
       setProject(updated);
-      await onRefresh();
+      if (onRefresh) {
+        await onRefresh();
+      }
     } finally {
       setCompletionBusy(false);
     }

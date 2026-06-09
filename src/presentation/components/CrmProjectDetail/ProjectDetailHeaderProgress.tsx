@@ -14,9 +14,9 @@ export function ProjectDetailHeaderProgress(): ReactElement | null {
 
   const progress = useMemo(() => {
     const childStageSlugs = isParentOverview
-      ? childSummaries == null || childSummaries.isLoading
-        ? null
-        : childSummaries.allRows.map((child) => child.currentStageSlug)
+      ? childSummaries?.isLoading
+        ? []
+        : (childSummaries?.allRows ?? []).map((child) => child.currentStageSlug)
       : [];
 
     return resolveProjectDetailProgressDisplay({

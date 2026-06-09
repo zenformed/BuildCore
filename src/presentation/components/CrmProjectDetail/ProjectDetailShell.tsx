@@ -19,8 +19,6 @@ import {
   ProjectDetailShellProvider,
   type ProjectDetailShellContextValue,
 } from '@/presentation/features/crmProjectDetail/ProjectDetailShellContext';
-import { BuildCoreWorkflowTaskAccessProvider } from '@/presentation/providers/BuildCoreWorkflowTaskAccessProvider';
-import { BuildCoreProjectSectionAccessProvider } from '@/presentation/providers/BuildCoreProjectSectionAccessProvider';
 import { useCrmProjectDeleteConfirmation } from '@/presentation/features/crmProjects/useCrmProjectDeleteConfirmation';
 import { queueCrmProjectDeleteSuccessToast } from '@/presentation/features/crmProjects/crmProjectDeleteFeedback';
 import { useLoadProjectTemplate } from '@/presentation/features/crmProjectDetail/useLoadProjectTemplate';
@@ -94,6 +92,7 @@ function ProjectDetailShellBody({
     rows: childSummaryRows,
     isLoading: childSummariesLoading,
     refetch: refetchChildSummaries,
+    patchProjectSummary: patchChildProjectSummary,
   } = useCrmProjectChildSummaries(isParentOverview ? scopedProject.summary : null, '');
   const refreshProjectDetail = useCallback(async () => {
     await onRefresh();
@@ -101,7 +100,7 @@ function ProjectDetailShellBody({
       await refetchChildSummaries();
     }
   }, [isParentOverview, onRefresh, refetchChildSummaries]);
-  const completion = useProjectCompletionToggle(scopedProject, refreshProjectDetail);
+  const completion = useProjectCompletionToggle(scopedProject);
   const projectForWorkspace = showCompletionActions ? completion.project : scopedProject;
   const workspace = useProjectDetailWorkspace(projectForWorkspace);
   const detail = content.projectDetail;
@@ -111,6 +110,7 @@ function ProjectDetailShellBody({
         allRows: childSummaryRows,
         isLoading: childSummariesLoading,
         refetch: refetchChildSummaries,
+        patchProjectSummary: patchChildProjectSummary,
       }
     : null;
 
@@ -285,11 +285,5 @@ export function ProjectDetailShell(props: ProjectDetailShellProps): ReactElement
   const { organizationMembershipContext } = useSaaSProfile();
   const isMemberRole = isBuildCoreMemberRole(organizationMembershipContext?.role);
 
-  return (
-    <BuildCoreWorkflowTaskAccessProvider>
-      <BuildCoreProjectSectionAccessProvider>
-        <ProjectDetailShellBody {...props} isMemberRole={isMemberRole} />
-      </BuildCoreProjectSectionAccessProvider>
-    </BuildCoreWorkflowTaskAccessProvider>
-  );
+  return <ProjectDetailShellBody {...props} isMemberRole={isMemberRole} />;
 }

@@ -7,7 +7,7 @@ import { buildCoreDashboardContent as content } from '@/platform/content/buildCo
 import { getCrmProjectAssigneeOptions } from '@/presentation/features/crmProjects/crmProjectAssigneeOptions';
 import { normalizeAssigneeMemberIdForSave } from '@/presentation/features/crmAssignment/buildAssigneeOptions';
 import { AssigneeMenuOptionLabel } from '@/presentation/features/crmAssignment/AssigneeMenuOptionLabel';
-import { useAssignmentIdentityCatalog } from '@/presentation/providers/AssignmentIdentityProvider';
+import { useAssignmentIdentityCatalog, useAssignmentIdentityState } from '@/presentation/providers/AssignmentIdentityProvider';
 import { useBuildCoreDashboardContext } from '@/presentation/providers/BuildCoreDashboardProvider';
 import shared from '@/presentation/components/crmShared/crmShared.module.css';
 import { TeamMemberAvatar } from './TeamMemberAvatar';
@@ -31,6 +31,7 @@ export function ProjectHeaderAssignee({
   const wf = content.projectDetail.workflow;
   const dash = useBuildCoreDashboardContext();
   const assignmentCatalog = useAssignmentIdentityCatalog();
+  const { isLoading: identitiesLoading } = useAssignmentIdentityState();
   const anchorRef = useRef<HTMLDivElement>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const assigneeOptions = getCrmProjectAssigneeOptions(
@@ -58,11 +59,14 @@ export function ProjectHeaderAssignee({
       <button
         type="button"
         className={styles.headerAssigneeBtn}
-        disabled={isSaving}
+        disabled={isSaving || identitiesLoading}
         aria-expanded={menuOpen}
         aria-label={fields.assigned}
         title={assignedTo?.displayName ?? wf.unassigned}
-        onClick={() => setMenuOpen((open) => !open)}
+        onClick={() => {
+          if (identitiesLoading) return;
+          setMenuOpen((open) => !open);
+        }}
       >
         {assignedTo ? (
           <TeamMemberAvatar member={assignedTo} />

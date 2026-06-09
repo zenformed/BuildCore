@@ -18,6 +18,7 @@ import {
   type BuildCoreRolePermissionFlags,
 } from '@/domain/buildcore/rolePermissions';
 import { fetchBuildCoreRoleAccessBff } from '@/infrastructure/coreApi/buildCoreRoleAccessBff';
+import { runSessionCached } from '@/infrastructure/coreApi/clientRequestDedupe';
 import { runtimeModes } from '@/infrastructure/config/runtimeModes';
 import { useBuildCoreDashboardContext } from '@/presentation/providers/BuildCoreDashboardProvider';
 
@@ -92,9 +93,10 @@ export function BuildCoreProjectSectionAccessProvider({
     }
     setLoadError(null);
     try {
+      const cacheKey = `role-access:${token}`;
       const [payment, budget] = await Promise.all([
-        fetchBuildCoreRoleAccessBff(token, 'payments'),
-        fetchBuildCoreRoleAccessBff(token, 'budget'),
+        runSessionCached(`${cacheKey}:payments`, () => fetchBuildCoreRoleAccessBff(token, 'payments')),
+        runSessionCached(`${cacheKey}:budget`, () => fetchBuildCoreRoleAccessBff(token, 'budget')),
       ]);
       setPaymentAccess(payment);
       setBudgetAccess(budget);

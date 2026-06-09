@@ -1,13 +1,10 @@
 /**
- * GET /api/crm/projects/[slug]/subprojects — child project summaries for a parent project.
+ * GET /api/crm/projects/[slug]/summary — lightweight project summary for breadcrumbs and parent context.
  */
 
 import { NextRequest, NextResponse } from 'next/server';
 import { requireCrmApiAuth } from '@/infrastructure/crm/server/crmApiRouteAuth';
-import {
-  listCrmProjectChildSummariesForOrg,
-} from '@/infrastructure/crm/server/crmReadService';
-import { resolveCrmProjectIdBySlug } from '@/infrastructure/crm/server/resolveCrmProjectIdBySlug';
+import { getCrmProjectSummaryBySlugForOrg } from '@/infrastructure/crm/server/crmReadService';
 
 export const dynamic = 'force-dynamic';
 
@@ -20,29 +17,23 @@ export async function GET(
   const auth = await requireCrmApiAuth(request.headers.get('Authorization'));
   if (!auth.ok) return auth.response;
 
-  const parentSlug = context.params.slug?.trim();
-  if (!parentSlug) {
+  const slug = context.params.slug?.trim();
+  if (!slug) {
     return NextResponse.json({ error: 'not_found', message: 'Project not found' }, { status: 404 });
   }
 
   try {
-    const parentProjectId = await resolveCrmProjectIdBySlug(
+    const summary = await getCrmProjectSummaryBySlugForOrg(
       auth.context.supabase,
       auth.context.organizationId,
-      parentSlug
+      slug
     );
-    if (parentProjectId == null) {
+    if (summary == null) {
       return NextResponse.json({ error: 'not_found', message: 'Project not found' }, { status: 404 });
     }
-
-    const projects = await listCrmProjectChildSummariesForOrg(
-      auth.context.supabase,
-      auth.context.organizationId,
-      parentProjectId
-    );
-    return NextResponse.json({ projects, total: projects.length });
+    return NextResponse.json(summary);
   } catch (err) {
-    const message = err instanceof Error ? err.message : 'Failed to load subprojects';
+    const message = err instanceof Error ? err.message : 'Failed to load CRM project summary';
     return NextResponse.json({ error: 'internal_error', message }, { status: 500 });
   }
 }

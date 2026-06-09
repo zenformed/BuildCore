@@ -13,6 +13,7 @@ import {
   type DbCrmWorkflowTaskRow,
 } from '@/infrastructure/crm/mappers/mapCrmFromDb';
 import { loadCrmMemberMap } from './crmMemberMap';
+import { logCrmProjectDetailPerf, startCrmReadPerfTimer } from './crmReadPerf';
 
 const PROJECT_LIST_SELECT = `
   id,
@@ -171,11 +172,38 @@ export async function listCrmProjectSummariesForOrg(
   return projects.map((row) => mapDbProjectSummary(row, memberById));
 }
 
+export async function getCrmProjectSummaryBySlugForOrg(
+  supabase: SupabaseClient,
+  organizationId: string,
+  slug: string
+): Promise<CrmProjectSummary | null> {
+  const { data, error } = await supabase
+    .from('crm_projects')
+    .select(PROJECT_LIST_SELECT)
+    .eq('organization_id', organizationId)
+    .eq('slug', slug)
+    .is('archived_at', null)
+    .maybeSingle();
+
+  if (error) {
+    throw new Error(error.message);
+  }
+  if (!data) return null;
+
+  const project = data as DbCrmProjectRow;
+  const memberById = await loadCrmMemberMap(supabase, collectMemberIds({ projects: [project] }), {
+    organizationId,
+  });
+  return mapDbProjectSummary(project, memberById);
+}
+
 export async function getCrmProjectDetailBySlugForOrg(
   supabase: SupabaseClient,
   organizationId: string,
   slug: string
 ): Promise<CrmProjectDetail | null> {
+  const timings: Record<string, number> = {};
+  let endTimer = startCrmReadPerfTimer();
   const { data: projectData, error: projectError } = await supabase
     .from('crm_projects')
     .select(PROJECT_DETAIL_SELECT)
@@ -188,6 +216,9 @@ export async function getCrmProjectDetailBySlugForOrg(
     throw new Error(projectError.message);
   }
   if (!projectData) return null;
+
+  timings.projectRowMs = endTimer();
+  endTimer = startCrmReadPerfTimer();
 
   const project = projectData as DbCrmProjectRow;
 
@@ -236,6 +267,9 @@ export async function getCrmProjectDetailBySlugForOrg(
   if (accountabilityResult.error) throw new Error(accountabilityResult.error.message);
   if (budgetResult.error) throw new Error(budgetResult.error.message);
 
+  timings.parallelCollectionsMs = endTimer();
+  endTimer = startCrmReadPerfTimer();
+
   const workflowTasks = (tasksResult.data ?? []) as DbCrmWorkflowTaskRow[];
   const documents = (documentsResult.data ?? []) as DbCrmDocumentRow[];
   const milestones = (milestonesResult.data ?? []) as DbCrmMilestoneRow[];
@@ -247,6 +281,9 @@ export async function getCrmProjectDetailBySlugForOrg(
     collectMemberIds({ projects: [project], workflowTasks, documents, accountability, budgetEntries }),
     { organizationId }
   );
+
+  timings.memberMapMs = endTimer();
+  logCrmProjectDetailPerf(slug, timings);
 
   return mapDbProjectDetail({
     project,

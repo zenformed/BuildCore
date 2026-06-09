@@ -2,6 +2,11 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { User } from '@/domain/entities/User';
+import { deferNonCriticalWork } from '@/presentation/utils/deferNonCriticalWork';
+import {
+  loadSessionBlob,
+  peekSessionBlobUrl,
+} from '@/presentation/utils/sessionBlobCache';
 
 export interface UseUserAvatarState {
   avatarUrl: string | null;
@@ -10,24 +15,20 @@ export interface UseUserAvatarState {
   refetch: () => Promise<void>;
 }
 
+function selfAvatarCacheKey(version: number): string {
+  return `auth-avatar:self:${version}`;
+}
+
 /**
  * Hook to get current user avatar URL and photo status.
  * Fetches /api/auth/me for hasPhoto; loads image via authenticated GET /api/auth/avatar.
- * In SaaS mode pass getAccessToken so the BFF can reach ZenformedCore.
+ * Non-blocking: shows initials until deferred blob load completes.
  */
 export function useUserAvatar(user: User | null, getAccessToken?: () => string | null): UseUserAvatarState {
   const [hasPhoto, setHasPhoto] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const [version, setVersion] = useState(0);
-  const blobUrlRef = useRef<string | null>(null);
-
-  const revokeBlobUrl = useCallback(() => {
-    if (blobUrlRef.current != null) {
-      URL.revokeObjectURL(blobUrlRef.current);
-      blobUrlRef.current = null;
-    }
-  }, []);
 
   const getAccessTokenRef = useRef(getAccessToken);
   getAccessTokenRef.current = getAccessToken;
@@ -35,7 +36,6 @@ export function useUserAvatar(user: User | null, getAccessToken?: () => string |
   const fetchPhotoStatus = useCallback(async () => {
     if (!user?.email) {
       setHasPhoto(false);
-      setIsLoading(false);
       return;
     }
     try {
@@ -46,71 +46,63 @@ export function useUserAvatar(user: User | null, getAccessToken?: () => string |
       setHasPhoto(Boolean(data.hasPhoto));
     } catch {
       setHasPhoto(false);
-    } finally {
-      setIsLoading(false);
     }
   }, [user?.email]);
 
   useEffect(() => {
     if (!user?.email) {
       setHasPhoto(false);
-      setIsLoading(false);
+      setAvatarUrl(null);
       return;
     }
-    setIsLoading(true);
-    fetchPhotoStatus();
+    return deferNonCriticalWork(() => {
+      void fetchPhotoStatus();
+    });
   }, [user?.email, fetchPhotoStatus]);
 
   useEffect(() => {
     if (!user?.email || !hasPhoto) {
-      revokeBlobUrl();
       setAvatarUrl(null);
       return;
     }
 
+    const cacheKey = selfAvatarCacheKey(version);
+    const cached = peekSessionBlobUrl(cacheKey);
+    if (cached !== undefined) {
+      setAvatarUrl(cached);
+      return;
+    }
+
     let cancelled = false;
-    const loadImage = async () => {
-      try {
+    const cancelDefer = deferNonCriticalWork(() => {
+      void loadSessionBlob(cacheKey, async () => {
         const token = getAccessTokenRef.current?.() ?? null;
         const headers: HeadersInit = token ? { Authorization: `Bearer ${token}` } : {};
         const res = await fetch(`/api/auth/avatar?t=${version}`, {
           credentials: 'include',
           headers,
         });
-        if (cancelled) return;
-        if (!res.ok) {
-          revokeBlobUrl();
-          setAvatarUrl(null);
-          return;
-        }
-        const blob = await res.blob();
-        if (cancelled) return;
-        revokeBlobUrl();
-        const url = URL.createObjectURL(blob);
-        blobUrlRef.current = url;
-        setAvatarUrl(url);
-      } catch {
-        if (!cancelled) {
-          revokeBlobUrl();
-          setAvatarUrl(null);
-        }
-      }
-    };
-    void loadImage();
+        if (!res.ok) return null;
+        return res.blob();
+      }).then((url) => {
+        if (!cancelled) setAvatarUrl(url);
+      });
+    });
+
     return () => {
       cancelled = true;
+      cancelDefer();
     };
-  }, [user?.email, hasPhoto, version, revokeBlobUrl]);
-
-  useEffect(() => {
-    return () => {
-      revokeBlobUrl();
-    };
-  }, [revokeBlobUrl]);
+  }, [user?.email, hasPhoto, version]);
 
   const refetch = useCallback(async () => {
     setVersion((v) => v + 1);
-    await fetchPhotoStatus();
+    setIsLoading(true);
+    try {
+      await fetchPhotoStatus();
+    } finally {
+      setIsLoading(false);
+    }
   }, [fetchPhotoStatus]);
 
   return { avatarUrl, hasPhoto, isLoading, refetch };

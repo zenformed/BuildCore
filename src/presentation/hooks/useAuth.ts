@@ -39,6 +39,12 @@ export function useAuth(): UseAuthState {
   const [isLoading, setIsLoading] = useState(() => saasProfile == null);
 
   useEffect(() => {
+    if (saasProfile != null) {
+      setIsLoading(false);
+    }
+  }, [saasProfile]);
+
+  useEffect(() => {
     let cancelled = false;
     getCurrentUserUseCase.execute().then((u) => {
       if (!cancelled) {

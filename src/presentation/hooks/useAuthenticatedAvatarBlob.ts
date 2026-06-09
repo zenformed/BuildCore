@@ -3,9 +3,12 @@
 import { useEffect, useState } from 'react';
 import { env } from '@/infrastructure/config/env';
 import { useSaaSProfile } from '@/presentation/hooks/useSaaSProfile';
-
-const blobCache = new Map<string, string>();
-const absentCache = new Set<string>();
+import { deferNonCriticalWork } from '@/presentation/utils/deferNonCriticalWork';
+import {
+  avatarApiPathCacheKey,
+  loadSessionBlob,
+  peekSessionBlobUrl,
+} from '@/presentation/utils/sessionBlobCache';
 
 function isUserAvatarApiPath(url: string): boolean {
   return url.startsWith('/api/auth/user-avatar') || url.startsWith('/api/auth/avatar');
@@ -25,63 +28,49 @@ function shouldFetchAvatarApiPath(url: string): boolean {
 
 /**
  * Loads `/api/auth/user-avatar` (or `/api/auth/avatar`) with Bearer token and returns a blob URL.
+ * Fetch is deferred and cached for the session by user/avatar token.
  */
 export function useAuthenticatedAvatarBlob(
   apiPath: string | null | undefined,
   getAccessToken?: () => string | null
 ): string | null {
   const { session } = useSaaSProfile();
-  const [blobUrl, setBlobUrl] = useState<string | null>(() => {
-    if (apiPath && blobCache.has(apiPath)) return blobCache.get(apiPath) ?? null;
-    return null;
-  });
+  const cacheKey = apiPath ? avatarApiPathCacheKey(apiPath) : null;
+  const [blobUrl, setBlobUrl] = useState<string | null>(() =>
+    cacheKey ? (peekSessionBlobUrl(cacheKey) ?? null) : null
+  );
 
   useEffect(() => {
-    if (!apiPath || !shouldFetchAvatarApiPath(apiPath)) {
+    if (!apiPath || !cacheKey || !shouldFetchAvatarApiPath(apiPath)) {
       setBlobUrl(null);
       return;
     }
 
-    if (absentCache.has(apiPath)) {
-      setBlobUrl(null);
-      return;
-    }
-
-    const cached = blobCache.get(apiPath);
-    if (cached) {
+    const cached = peekSessionBlobUrl(cacheKey);
+    if (cached !== undefined) {
       setBlobUrl(cached);
       return;
     }
 
     let cancelled = false;
-    const load = async () => {
-      try {
-        const token = env.isSaasMode
-          ? (getAccessToken?.() ?? session?.access_token ?? null)
-          : null;
+    const cancelDefer = deferNonCriticalWork(() => {
+      const token = env.isSaasMode
+        ? (getAccessToken?.() ?? session?.access_token ?? null)
+        : null;
+      void loadSessionBlob(cacheKey, async () => {
         const headers: HeadersInit = token ? { Authorization: `Bearer ${token}` } : {};
         const res = await fetch(apiPath, { credentials: 'include', headers });
-        if (cancelled) return;
-        if (!res.ok) {
-          absentCache.add(apiPath);
-          setBlobUrl(null);
-          return;
-        }
-        const blob = await res.blob();
-        if (cancelled) return;
-        const url = URL.createObjectURL(blob);
-        blobCache.set(apiPath, url);
-        setBlobUrl(url);
-      } catch {
-        if (!cancelled) setBlobUrl(null);
-      }
-    };
-
-    void load();
+        if (!res.ok) return null;
+        return res.blob();
+      }).then((url) => {
+        if (!cancelled) setBlobUrl(url);
+      });
+    });
     return () => {
       cancelled = true;
+      cancelDefer();
     };
-  }, [apiPath, getAccessToken, session?.access_token]);
+  }, [apiPath, cacheKey, getAccessToken, session?.access_token]);
 
   return blobUrl;
 }

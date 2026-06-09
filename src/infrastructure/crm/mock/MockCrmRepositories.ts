@@ -259,6 +259,13 @@ export class MockCrmProjectsRepository implements ICrmProjectsRepository {
     return buildMockProjectPaymentTasksIndex();
   }
 
+  getSummaryBySlug(slug: string): CrmProjectSummary | null {
+    const trimmed = slug.trim();
+    if (!trimmed) return null;
+    const effective = getEffectiveMockProjectDetailBySlug(trimmed);
+    return effective?.summary ?? null;
+  }
+
 
 
   create(_input: CreateCrmProjectInput): Promise<CreateCrmProjectResult> {

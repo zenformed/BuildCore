@@ -1,20 +1,14 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import type { CrmProjectDetail, CrmProjectSummary } from '@/domain/crm';
 import {
   computePaymentFinancialsFromTasks,
   computePaymentFinancialsWithChildren,
   getPaymentTasksForProject,
-  type CrmProjectPaymentTasksIndex,
   type ProjectPaymentFinancials,
 } from '@/domain/crm/projectPaymentValue';
-import {
-  loadCrmProjectPaymentTasksIndex,
-  loadCrmProjectPaymentTasksIndexSync,
-} from '@/application/use-cases/crm/loadCrmProjectPaymentTasksIndex';
-import { getCrmDataSource } from '@/infrastructure/config/crmDataSource';
-import { crmRepositories } from '@/shared/di/container';
+import { useCrmPaymentTasksIndexContext } from '@/presentation/providers/CrmPaymentTasksIndexProvider';
 
 export type UseProjectDetailPaymentFinancialsInput = {
   readonly project: CrmProjectDetail;
@@ -25,27 +19,9 @@ export function useProjectDetailPaymentFinancials({
   project,
   childSummaries,
 }: UseProjectDetailPaymentFinancialsInput): ProjectPaymentFinancials {
-  const isApiSource = getCrmDataSource() === 'api';
-  const [paymentTasksIndex, setPaymentTasksIndex] = useState<CrmProjectPaymentTasksIndex | null>(
-    () => (isApiSource ? null : loadCrmProjectPaymentTasksIndexSync(crmRepositories))
-  );
-
-  useEffect(() => {
-    if (!isApiSource) {
-      setPaymentTasksIndex(loadCrmProjectPaymentTasksIndexSync(crmRepositories));
-      return;
-    }
-    let cancelled = false;
-    void loadCrmProjectPaymentTasksIndex(crmRepositories).then((index) => {
-      if (!cancelled) setPaymentTasksIndex(index);
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, [isApiSource, project.summary.id, project.workflowTasks]);
+  const { paymentTasksIndex } = useCrmPaymentTasksIndexContext();
 
   return useMemo(() => {
-    const index = paymentTasksIndex ?? new Map<string, never>();
     const ownTasks = project.workflowTasks.map((task) => ({
       amountCents: task.amountCents,
       status: task.status,
@@ -56,7 +32,7 @@ export function useProjectDetailPaymentFinancials({
 
     if (isParentOverview) {
       const childTasksList = childSummaries.map((child) =>
-        getPaymentTasksForProject(index, child.id)
+        getPaymentTasksForProject(paymentTasksIndex, child.id)
       );
       return computePaymentFinancialsWithChildren(ownTasks, childTasksList);
     }

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, type ReactElement } from 'react';
+import { useState, type ReactElement } from 'react';
 import type { CrmProjectSummary } from '@/domain/crm';
 import {
   projectPrimaryPhotoCircleColor,
@@ -64,12 +64,6 @@ export function ProjectPrimaryPhoto({
   const { uploading, removing, uploadPhoto, removePhoto } = useProjectPrimaryPhotoMutation(
     summary.slug
   );
-
-  useEffect(() => {
-    return () => {
-      invalidateProjectPrimaryPhotoBlobCache(apiPath);
-    };
-  }, [apiPath]);
 
   const initials = projectPrimaryPhotoInitials({
     parentProjectId: isSubproject ? null : summary.parentProjectId,

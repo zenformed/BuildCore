@@ -12,6 +12,10 @@ export {
   getCrmProjectDetailBySlugSync,
 } from './getCrmProjectDetailBySlug';
 export {
+  getCrmProjectSummaryBySlug,
+  getCrmProjectSummaryBySlugSync,
+} from './getCrmProjectSummaryBySlug';
+export {
   listCrmProjectSummaries,
   listCrmProjectSummariesSync,
 } from './listCrmProjectSummaries';

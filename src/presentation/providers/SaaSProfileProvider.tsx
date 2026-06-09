@@ -27,6 +27,7 @@ import {
 import { isZenformedCorePlatformRequired } from '@/infrastructure/coreApi/corePlatformRequirement';
 import {
   clearCachedSaaSProfile,
+  loadCachedSaaSProfile,
   mapSupabaseProfilesRowToSaaSProfile,
   resolveProfileWhenCoreDegraded,
   saveCachedSaaSProfile,
@@ -322,6 +323,15 @@ export function SaaSProfileProvider({ children }: { children: React.ReactNode })
         activeSession = s;
         setSession(s);
         setUser(s.user ?? null);
+
+        const cachedProfile = loadCachedSaaSProfile(s.user.id);
+        if (cachedProfile != null && !isStale()) {
+          setProfile(cachedProfile);
+          if (!soft) {
+            setLoading(false);
+          }
+        }
+
         if (shouldResolveMembershipContextForSaas()) {
           setOrganizationMembershipContext(null);
           setMembershipContextStatus('pending');
@@ -465,9 +475,13 @@ export function SaaSProfileProvider({ children }: { children: React.ReactNode })
               setProfile(coreProfile);
               bootstrappedUserIdRef.current = activeSession.user.id;
               setError(null);
-              await finalizeCoreEntitlement(activeSession.access_token);
-              if (isStale()) return;
-              await syncMembershipContext(activeSession.access_token);
+              if (!isStale()) {
+                setLoading(false);
+              }
+              await Promise.all([
+                finalizeCoreEntitlement(activeSession.access_token),
+                syncMembershipContext(activeSession.access_token),
+              ]);
               if (isStale()) return;
               return;
             } else if (isCoreRelayUnconfigured(parsedRelay)) {
@@ -498,22 +512,29 @@ export function SaaSProfileProvider({ children }: { children: React.ReactNode })
           } else {
             bootstrappedUserIdRef.current = null;
           }
+          if (!isStale()) {
+            setLoading(false);
+          }
           if (resolved && hasUsableAccessToken(bootSession)) {
-            if (!coreUnavailableRef.current) {
-              await finalizeCoreEntitlement(bootSession.access_token);
-            } else {
-              setCoreEntitlementResolution({ status: 'from_profile_fallback' });
-            }
+            const token = bootSession.access_token;
+            await Promise.all([
+              !coreUnavailableRef.current
+                ? finalizeCoreEntitlement(token)
+                : Promise.resolve().then(() => {
+                    if (!isStale()) {
+                      setCoreEntitlementResolution({ status: 'from_profile_fallback' });
+                    }
+                  }),
+              syncMembershipContext(token),
+            ]);
           } else {
             setCoreEntitlementResolution({ status: 'unused' });
+            await syncMembershipContext(null);
           }
+          if (isStale()) return;
           if (!coreRuntimeEnabled) {
             setCorePlatformStatus('not_required');
           }
-          await syncMembershipContext(
-            resolved && hasUsableAccessToken(bootSession) ? bootSession.access_token : null
-          );
-          if (isStale()) return;
         };
 
         if (e) {
@@ -681,8 +702,10 @@ export function SaaSProfileProvider({ children }: { children: React.ReactNode })
         return { ok: false, reason: 'App access refresh was superseded.' };
       }
 
-      const ent = await fetchEntitlementSnapshotFromInternalRelay(token);
-      const mem = await fetchMembershipContextFromRelay(token);
+      const [ent, mem] = await Promise.all([
+        fetchEntitlementSnapshotFromInternalRelay(token),
+        fetchMembershipContextFromRelay(token),
+      ]);
       const entitlementActive = ent.status === 'from_core' && ent.snapshot.subscriptionActive;
 
       if (entitlementActive && mem != null) {

@@ -26,7 +26,7 @@ export type PendingCrmProjectCompletionChange = {
 };
 
 export function useCrmProjectTableRowActions(input: {
-  onRefresh: () => Promise<void>;
+  onProjectUpdated: (summary: CrmProjectSummary) => void;
   onSuccess: (message: string) => void;
   onError: (message: string) => void;
 }): {
@@ -73,7 +73,7 @@ export function useCrmProjectTableRowActions(input: {
         if (updated == null) {
           throw new Error(tableCopy.makePriorityFailed);
         }
-        await input.onRefresh();
+        input.onProjectUpdated(updated.summary);
         input.onSuccess(
           removingPriority ? tableCopy.removePrioritySuccess : tableCopy.makePrioritySuccess
         );
@@ -116,7 +116,7 @@ export function useCrmProjectTableRowActions(input: {
       if (updated == null) {
         throw new Error(detailCopy.markCompleteFailed);
       }
-      await input.onRefresh();
+      input.onProjectUpdated(updated.summary);
       input.onSuccess(
         complete ? detailCopy.markCompleteSuccess : detailCopy.markIncompleteSuccess
       );

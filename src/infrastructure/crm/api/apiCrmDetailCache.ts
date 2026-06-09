@@ -3,13 +3,17 @@ import type { CrmProjectDetail } from '@/domain/crm';
 let cachedSlug: string | null = null;
 let cachedDetail: CrmProjectDetail | null = null;
 
+export function isApiCrmDetailCacheResolvedForSlug(slug: string): boolean {
+  return cachedSlug === slug.trim();
+}
+
 export function setApiCrmDetailCache(slug: string, detail: CrmProjectDetail | null): void {
   cachedSlug = slug;
   cachedDetail = detail;
 }
 
 export function getApiCrmDetailCacheBySlug(slug: string): CrmProjectDetail | null {
-  if (cachedSlug !== slug || cachedDetail == null) return null;
+  if (cachedSlug !== slug.trim()) return null;
   return cachedDetail;
 }
 

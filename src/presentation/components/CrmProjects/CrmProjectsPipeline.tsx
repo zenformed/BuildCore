@@ -50,8 +50,10 @@ export function CrmProjectsPipeline({
     visibleChildrenByParentId,
     paymentTasksIndex,
     isLoading,
+    isPaymentFinancialsLoading,
     refetch,
     removeProject,
+    patchProjectSummary,
   } = useCrmProjectsPipeline(searchQuery, filters);
   const [toast, setToast] = useState<PipelineToast | null>(null);
 
@@ -75,7 +77,7 @@ export function CrmProjectsPipeline({
     requestCompletionChange,
     confirmCompletionChange,
   } = useCrmProjectTableRowActions({
-    onRefresh: refetch,
+    onProjectUpdated: patchProjectSummary,
     onSuccess: (message) => setToast({ kind: 'success', message }),
     onError: (message) => setToast({ kind: 'error', message }),
   });
@@ -153,6 +155,7 @@ export function CrmProjectsPipeline({
           visibleChildrenByParentId={visibleChildrenByParentId}
           paymentTasksIndex={paymentTasksIndex}
           isLoading={isLoading}
+          isPaymentFinancialsLoading={isPaymentFinancialsLoading}
           onRowClick={onProjectRowClick}
           onSubprojectRowClick={handleSubprojectRowClick}
           isMemberRole={isMemberRole}
