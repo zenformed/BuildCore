@@ -33,12 +33,28 @@ export type ReportPieSlice = {
   readonly fraction: number;
 };
 
+export type {
+  ProjectFinancialReportContext,
+  ProjectFinancialReportCostRow,
+  ProjectFinancialReportData,
+  ProjectFinancialReportPaymentRow,
+  ProjectFinancialSummary,
+} from './types/projectFinancialReport';
+
+/** @deprecated Use ProjectFinancialReportContext */
+export type ProjectProfitAndLossReportContext = import('./types/projectFinancialReport').ProjectFinancialReportContext;
+
+/** @deprecated Use ProjectFinancialReportData */
+export type ProjectProfitAndLossReportData = import('./types/projectFinancialReport').ProjectFinancialReportData;
+
+/** @deprecated Legacy P&L revenue block; project financial reports use ProjectFinancialSummary. */
 export type ProfitAndLossRevenueSummary = {
   readonly totalInvoicedCents: number;
   readonly totalPaidCents: number;
   readonly remainingReceivablesCents: number;
 };
 
+/** @deprecated Legacy P&L performance block; project financial reports use ProjectFinancialSummary. */
 export type ProfitAndLossPerformanceSummary = {
   readonly totalBudgetCents: number;
   readonly totalCostCents: number;
@@ -47,32 +63,8 @@ export type ProfitAndLossPerformanceSummary = {
   readonly marginPercent: number | null;
 };
 
+/** @deprecated Legacy P&L financial block; project financial reports use ProjectFinancialSummary. */
 export type ProfitAndLossFinancialSummary = {
   readonly revenue: ProfitAndLossRevenueSummary;
   readonly performance: ProfitAndLossPerformanceSummary;
-};
-
-export type ProjectProfitAndLossReportContext = {
-  /** Organization display name (Core branding / avatar menu shop name). */
-  readonly organizationName: string;
-};
-
-export type ProjectProfitAndLossReportData = {
-  readonly scope: ReportScope;
-  readonly organizationName: string;
-  readonly reportTitle: string;
-  readonly projectName: string;
-  readonly projectSlug: string;
-  readonly generatedAtIso: string;
-  readonly generatedAtLabel: string;
-
-  readonly customerName: string;
-  readonly contactName: string;
-  readonly contactEmail: string;
-  readonly contactPhone: string;
-
-  readonly financial: ProfitAndLossFinancialSummary;
-  readonly lineItems: readonly ReportLineItemRow[];
-  readonly categoryTotals: readonly ReportCategoryTotalRow[];
-  readonly pieSlices: readonly ReportPieSlice[];
 };

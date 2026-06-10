@@ -1,11 +1,12 @@
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import {
+  formatProjectFinancialPaymentHierarchyLabel,
   formatReportCurrency,
   formatReportPercent,
   formatReportText,
 } from '../formatReportValues';
-import type { ProjectProfitAndLossReportData } from '../types';
+import type { ProjectFinancialReportData } from '../types/projectFinancialReport';
 
 const MARGIN = 40;
 const PAGE_WIDTH = 612;
@@ -16,18 +17,38 @@ const MUTED_COLOR: [number, number, number] = [100, 116, 139];
 
 type JsPdfWithAutoTable = jsPDF & { lastAutoTable?: { finalY: number } };
 
-/** Uniform space: end of block → next title, and title → first row beneath it. */
 const SECTION_GAP = 12;
-/** Extra space before a major block (Revenue, table sections). */
 const SECTION_GAP_LOOSE = SECTION_GAP * 2;
-/** Title → first row for Customer grid (tighter than summary sections). */
 const CUSTOMER_TITLE_TO_GRID = 4;
 const SUMMARY_ROW_HEIGHT = 12;
 const CUSTOMER_GRID_ROW_HEIGHT = 10;
 
 const TABLE_MARGIN = { left: MARGIN, right: MARGIN, top: 0, bottom: 0 } as const;
-
 const NUMERIC_TABLE_HEAD_FILL: [number, number, number] = [51, 65, 85];
+
+function buildFullWidthColumnStyles(
+  widths: readonly number[],
+  rightAlignIndexes: readonly number[] = []
+): Record<number, { cellWidth: number; halign?: 'right' }> {
+  const styles: Record<number, { cellWidth: number; halign?: 'right' }> = {};
+  const widthSum = widths.reduce((total, width) => total + width, 0);
+  const scale = widthSum > 0 ? CONTENT_WIDTH / widthSum : 1;
+  let allocated = 0;
+
+  widths.forEach((width, index) => {
+    const isLast = index === widths.length - 1;
+    const cellWidth = isLast
+      ? CONTENT_WIDTH - allocated
+      : Math.round(width * scale);
+    allocated += cellWidth;
+    styles[index] = { cellWidth };
+    if (rightAlignIndexes.includes(index)) {
+      styles[index].halign = 'right';
+    }
+  });
+
+  return styles;
+}
 
 function applyRightAlignForColumns(columnIndexes: readonly number[]) {
   return (data: { section: string; column: { index: number }; cell: { styles: { halign?: string } } }) => {
@@ -96,21 +117,29 @@ function writeKeyValueGrid(
   return (doc as JsPdfWithAutoTable).lastAutoTable?.finalY ?? startY + 8;
 }
 
-function writeVerticalSummaryRows(
+function writeFinancialSummaryTable(
   doc: jsPDF,
   rows: readonly { label: string; value: string }[],
   startY: number
 ): number {
-  let y = startY;
-  for (const row of rows) {
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(9);
-    doc.setTextColor(...HEADING_COLOR);
-    doc.text(row.label, MARGIN, y);
-    doc.text(row.value, PAGE_WIDTH - MARGIN, y, { align: 'right' });
-    y += SUMMARY_ROW_HEIGHT;
-  }
-  return y;
+  autoTable(doc, {
+    startY,
+    margin: TABLE_MARGIN,
+    tableWidth: CONTENT_WIDTH,
+    body: rows.map((row) => [row.label, row.value]),
+    theme: 'plain',
+    styles: {
+      fontSize: 9,
+      cellPadding: { top: 2, bottom: 2, left: 0, right: 0 },
+      overflow: 'linebreak',
+      textColor: HEADING_COLOR,
+      lineWidth: 0,
+      minCellHeight: SUMMARY_ROW_HEIGHT,
+    },
+    columnStyles: buildFullWidthColumnStyles([200, 332], [1]),
+  });
+
+  return (doc as JsPdfWithAutoTable).lastAutoTable?.finalY ?? startY + 8;
 }
 
 function writeSummarySection(
@@ -121,14 +150,24 @@ function writeSummarySection(
   gapBefore: number = SECTION_GAP
 ): number {
   y = writeSectionTitle(doc, title, y, gapBefore, SECTION_GAP);
-  return writeVerticalSummaryRows(doc, rows, y);
+  return writeFinancialSummaryTable(doc, rows, y);
+}
+
+function writeMutedNote(doc: jsPDF, text: string, y: number): number {
+  doc.setFont('helvetica', 'italic');
+  doc.setFontSize(8);
+  doc.setTextColor(...MUTED_COLOR);
+  const lines = doc.splitTextToSize(text, CONTENT_WIDTH) as string[];
+  doc.text(lines, MARGIN, y);
+  return y + lines.length * 10 + 4;
 }
 
 export async function renderProjectProfitAndLossPdf(
-  data: ProjectProfitAndLossReportData
+  data: ProjectFinancialReportData
 ): Promise<Blob> {
   const doc = new jsPDF({ unit: 'pt', format: 'letter' });
   let y = MARGIN;
+  const summary = data.financialSummary;
 
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(16);
@@ -147,116 +186,133 @@ export async function renderProjectProfitAndLossPdf(
   y += SECTION_GAP;
 
   y = writeSectionTitle(doc, 'Customer & project', y, SECTION_GAP, CUSTOMER_TITLE_TO_GRID);
-  y = writeKeyValueGrid(doc, [
-    { label: 'Customer', value: data.customerName },
-    { label: 'Email', value: data.contactEmail },
-    { label: 'Contact', value: data.contactName },
-    { label: 'Phone', value: data.contactPhone },
-  ], y);
-
-  const marginLabel =
-    data.financial.performance.marginPercent === null
-      ? '—'
-      : formatReportPercent(data.financial.performance.marginPercent);
+  y = writeKeyValueGrid(
+    doc,
+    [
+      { label: 'Customer', value: data.customerName },
+      { label: 'Email', value: data.contactEmail },
+      { label: 'Contact', value: data.contactName },
+      { label: 'Phone', value: data.contactPhone },
+    ],
+    y
+  );
 
   y = writeSummarySection(
     doc,
-    'Revenue',
+    'Financial Summary',
     [
-      {
-        label: 'Total Invoiced',
-        value: formatReportCurrency(data.financial.revenue.totalInvoicedCents),
-      },
-      { label: 'Total Paid', value: formatReportCurrency(data.financial.revenue.totalPaidCents) },
-      {
-        label: 'Remaining Receivables',
-        value: formatReportCurrency(data.financial.revenue.remainingReceivablesCents),
-      },
+      { label: 'Value', value: formatReportCurrency(summary.valueCents) },
+      { label: 'Collected', value: formatReportCurrency(summary.collectedCents) },
+      { label: 'Balance', value: formatReportCurrency(summary.balanceCents) },
+      { label: 'Costs', value: formatReportCurrency(summary.costsCents) },
+      { label: 'Actual Profit', value: formatReportCurrency(summary.actualProfitCents) },
+      { label: 'Projected Profit', value: formatReportCurrency(summary.projectedProfitCents) },
     ],
     y,
     SECTION_GAP_LOOSE
   );
 
-  y = writeSummarySection(doc, 'Cost', [
-    { label: 'Total Budget', value: formatReportCurrency(data.financial.performance.totalBudgetCents) },
-    { label: 'Total Cost', value: formatReportCurrency(data.financial.performance.totalCostCents) },
-  ], y);
+  y = writeSectionTitle(doc, 'Payments', y, SECTION_GAP_LOOSE, SECTION_GAP);
 
-  y = writeSummarySection(doc, 'Profit', [
-    { label: 'Actual Profit', value: formatReportCurrency(data.financial.performance.actualProfitCents) },
-    { label: 'Margin', value: marginLabel },
-  ], y);
-
-  if (data.lineItems.length > 0) {
-    y = writeSectionTitle(doc, 'Budget & cost line items', y, SECTION_GAP_LOOSE, SECTION_GAP);
-
+  if (data.payments.length > 0) {
+    const showProjectColumn = data.isParentRollup;
     autoTable(doc, {
       startY: y,
       margin: TABLE_MARGIN,
       tableWidth: CONTENT_WIDTH,
-      head: [['Item name', 'Category', 'Cost', 'Budget', 'Remaining']],
-      body: data.lineItems.map((row) => [
-        row.itemName,
-        row.categoryLabel,
-        formatReportCurrency(row.costCents),
-        formatReportCurrency(row.budgetCents),
-        formatReportCurrency(row.remainingCents),
-      ]),
+      head: [
+        showProjectColumn
+          ? ['Project', 'Payment', 'Amount', 'Status', 'Paid Date', 'Paid']
+          : ['Payment', 'Amount', 'Status', 'Paid Date', 'Paid'],
+      ],
+      body: data.payments.map((row) =>
+        showProjectColumn
+          ? [
+              formatProjectFinancialPaymentHierarchyLabel(row.projectLabel, data.projectName),
+              row.title,
+              formatReportCurrency(row.amountCents),
+              row.statusLabel,
+              row.paidAtLabel,
+              row.paidIndicator === 'paid' ? 'Paid' : 'Unpaid',
+            ]
+          : [
+              row.title,
+              formatReportCurrency(row.amountCents),
+              row.statusLabel,
+              row.paidAtLabel,
+              row.paidIndicator === 'paid' ? 'Paid' : 'Unpaid',
+            ]
+      ),
       styles: { fontSize: 8, cellPadding: 4 },
       headStyles: { fillColor: NUMERIC_TABLE_HEAD_FILL, textColor: 255, halign: 'left' },
-      columnStyles: {
-        0: { cellWidth: 200 },
-        1: { cellWidth: 100 },
-        2: { cellWidth: 77, halign: 'right' },
-        3: { cellWidth: 77, halign: 'right' },
-        4: { cellWidth: 78, halign: 'right' },
-      },
-      didParseCell: applyRightAlignForColumns([2, 3, 4]),
+      columnStyles: showProjectColumn
+        ? buildFullWidthColumnStyles([108, 184, 80, 72, 76, 52], [2])
+        : buildFullWidthColumnStyles([236, 88, 88, 88, 68], [1]),
+      didParseCell: applyRightAlignForColumns(showProjectColumn ? [2] : [1]),
     });
-
     y = (doc as JsPdfWithAutoTable).lastAutoTable?.finalY ?? y;
+  } else {
+    y = writeMutedNote(doc, 'No payment milestones recorded.', y);
   }
 
-  if (data.categoryTotals.length > 0) {
-    if (y > 640) {
-      doc.addPage();
-      y = MARGIN;
-    }
+  if (y > 620) {
+    doc.addPage();
+    y = MARGIN;
+  }
 
-    y = writeSectionTitle(
-      doc,
-      'Category breakdown',
-      y,
-      y === MARGIN ? 0 : SECTION_GAP_LOOSE,
-      SECTION_GAP
-    );
+  y = writeSectionTitle(
+    doc,
+    'Costs',
+    y,
+    y === MARGIN ? 0 : SECTION_GAP_LOOSE,
+    SECTION_GAP
+  );
 
+  if (data.costRows.length > 0) {
     autoTable(doc, {
       startY: y,
       margin: TABLE_MARGIN,
       tableWidth: CONTENT_WIDTH,
-      head: [['Category', 'Total cost', '% of total cost']],
-      body: data.categoryTotals.map((row) => [
+      head: [['Category', 'Amount', '% of total costs', 'Items']],
+      body: data.costRows.map((row) => [
         row.categoryLabel,
         formatReportCurrency(row.costCents),
         formatReportPercent(row.percentOfTotalCost),
+        String(row.itemCount),
       ]),
       styles: { fontSize: 8, cellPadding: 4 },
       headStyles: { fillColor: NUMERIC_TABLE_HEAD_FILL, textColor: 255, halign: 'left' },
-      columnStyles: {
-        0: { cellWidth: 260 },
-        1: { cellWidth: 136, halign: 'right' },
-        2: { cellWidth: 136, halign: 'right' },
-      },
-      didParseCell: applyRightAlignForColumns([1, 2]),
+      columnStyles: buildFullWidthColumnStyles([244, 116, 116, 92], [1, 2, 3]),
+      didParseCell: applyRightAlignForColumns([1, 2, 3]),
     });
 
     y = (doc as JsPdfWithAutoTable).lastAutoTable?.finalY ?? y;
-  } else if (data.lineItems.length === 0) {
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(9);
-    doc.setTextColor(...MUTED_COLOR);
-    doc.text('No budget line items recorded.', MARGIN, y);
+
+    if (data.categoryTotals.length > 0) {
+      if (y > 640) {
+        doc.addPage();
+        y = MARGIN;
+      }
+
+      y = writeSectionTitle(doc, 'Cost breakdown', y, SECTION_GAP_LOOSE, SECTION_GAP);
+      autoTable(doc, {
+        startY: y,
+        margin: TABLE_MARGIN,
+        tableWidth: CONTENT_WIDTH,
+        head: [['Category', 'Total cost', '% of total cost']],
+        body: data.categoryTotals.map((row) => [
+          row.categoryLabel,
+          formatReportCurrency(row.costCents),
+          formatReportPercent(row.percentOfTotalCost),
+        ]),
+        styles: { fontSize: 8, cellPadding: 4 },
+        headStyles: { fillColor: NUMERIC_TABLE_HEAD_FILL, textColor: 255, halign: 'left' },
+        columnStyles: buildFullWidthColumnStyles([260, 136, 136], [1, 2]),
+        didParseCell: applyRightAlignForColumns([1, 2]),
+      });
+    }
+  } else {
+    y = writeMutedNote(doc, 'No costs recorded yet.', y);
   }
 
   const pageCount = doc.getNumberOfPages();

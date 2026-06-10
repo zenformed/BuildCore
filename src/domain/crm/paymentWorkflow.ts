@@ -21,6 +21,8 @@ export const PAYMENTS_WORKFLOW_COLLAPSE_KEY = 'payments' as const;
 export type WorkflowStageCollapseKey = PipelineStageSlug | typeof PAYMENTS_WORKFLOW_COLLAPSE_KEY;
 
 export type PaymentBalanceTask = Pick<CrmWorkflowTask, 'amountCents' | 'status'> & {
+  readonly id?: string;
+  readonly title?: string;
   readonly paidAt?: string | null;
 };
 

@@ -122,6 +122,12 @@ export class ApiCrmProjectsRepository implements ICrmProjectsRepository {
     ).then((body) => new Map(Object.entries(body.byProjectId)));
   }
 
+  listBudgetEntries() {
+    return crmApiGetJson<{ byProjectId: Record<string, CrmBudgetEntry[]> }>(
+      '/api/crm/projects/budget-entries'
+    ).then((body) => new Map(Object.entries(body.byProjectId)));
+  }
+
   getSummaryBySlug(slug: string): Promise<CrmProjectSummary | null> {
     const trimmed = slug.trim();
     if (!trimmed) return Promise.resolve(null);

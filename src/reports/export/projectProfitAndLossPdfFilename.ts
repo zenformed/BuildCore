@@ -1,4 +1,4 @@
-/** Safe download name: `{slug}_P-and-L.pdf` (no raw `&`). */
+/** Safe download name: `{slug}_Financial-Report.pdf` */
 export function projectProfitAndLossPdfFilename(projectSlug: string): string {
   const safe =
     projectSlug
@@ -6,5 +6,5 @@ export function projectProfitAndLossPdfFilename(projectSlug: string): string {
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, '-')
       .replace(/^-+|-+$/g, '') || 'project';
-  return `${safe}_P-and-L.pdf`;
+  return `${safe}_Financial-Report.pdf`;
 }

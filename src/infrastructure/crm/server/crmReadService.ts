@@ -1,8 +1,10 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
-import type { CrmProjectDetail, CrmProjectSummary } from '@/domain/crm';
+import type { CrmBudgetEntry, CrmProjectDetail, CrmProjectSummary } from '@/domain/crm';
+import type { CrmProjectBudgetEntriesIndex } from '@/domain/crm/projectBudgetRollup';
 import type { CrmProjectPaymentTasksIndex } from '@/domain/crm/projectPaymentValue';
 import type { PaymentBalanceTask } from '@/domain/crm/paymentWorkflow';
 import {
+  mapDbBudgetEntry,
   mapDbProjectDetail,
   mapDbProjectSummary,
   type DbCrmAccountabilityRow,
@@ -120,7 +122,7 @@ export async function listPaymentBalanceTasksByOrg(
 
   const { data: taskRows, error: taskError } = await supabase
     .from('crm_workflow_tasks')
-    .select('project_id, amount_cents, status, paid_at')
+    .select('project_id, id, title, amount_cents, status, paid_at')
     .in('project_id', projectIds)
     .not('amount_cents', 'is', null)
     .is('archived_at', null);
@@ -134,11 +136,56 @@ export async function listPaymentBalanceTasksByOrg(
     const projectId = row.project_id as string;
     const tasks = index.get(projectId) ?? [];
     tasks.push({
+      id: row.id as string,
+      title: (row.title as string) ?? undefined,
       amountCents: Number(row.amount_cents),
       status: row.status as PaymentBalanceTask['status'],
       paidAt: (row.paid_at as string | null) ?? null,
     });
     index.set(projectId, tasks);
+  }
+
+  return index;
+}
+
+export async function listBudgetEntriesByOrg(
+  supabase: SupabaseClient,
+  organizationId: string
+): Promise<CrmProjectBudgetEntriesIndex> {
+  const { data: projectRows, error: projectError } = await supabase
+    .from('crm_projects')
+    .select('id')
+    .eq('organization_id', organizationId)
+    .is('archived_at', null);
+
+  if (projectError) {
+    throw new Error(projectError.message);
+  }
+
+  const projectIds = (projectRows ?? []).map((row) => row.id as string);
+  if (projectIds.length === 0) {
+    return new Map();
+  }
+
+  const { data: entryRows, error: entryError } = await supabase
+    .from('crm_project_budget_entries')
+    .select(
+      'id, project_id, item_name, category, cost_cents, budget_cents, notes, assigned_to, cost_incurred_at, created_at, updated_at, created_by, documents_required'
+    )
+    .in('project_id', projectIds)
+    .is('deleted_at', null);
+
+  if (entryError) {
+    throw new Error(entryError.message);
+  }
+
+  const memberById = new Map<string, never>();
+  const index = new Map<string, CrmBudgetEntry[]>();
+  for (const row of (entryRows ?? []) as DbCrmBudgetEntryRow[]) {
+    const projectId = row.project_id;
+    const entries = index.get(projectId) ?? [];
+    entries.push(mapDbBudgetEntry(row, memberById, 0));
+    index.set(projectId, entries);
   }
 
   return index;

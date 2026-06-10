@@ -10,7 +10,12 @@ import {
   type ReactElement,
   type ReactNode,
 } from 'react';
+import type { CrmProjectBudgetEntriesIndex } from '@/domain/crm/projectBudgetRollup';
 import type { CrmProjectPaymentTasksIndex } from '@/domain/crm/projectPaymentValue';
+import {
+  loadCrmProjectBudgetEntriesIndex,
+  loadCrmProjectBudgetEntriesIndexSync,
+} from '@/application/use-cases/crm/loadCrmProjectBudgetEntriesIndex';
 import {
   loadCrmProjectPaymentTasksIndex,
   loadCrmProjectPaymentTasksIndexSync,
@@ -20,28 +25,43 @@ import { crmRepositories } from '@/shared/di/container';
 
 export type CrmPaymentTasksIndexContextValue = {
   readonly paymentTasksIndex: CrmProjectPaymentTasksIndex;
+  readonly budgetEntriesIndex: CrmProjectBudgetEntriesIndex;
   readonly isLoading: boolean;
   readonly refetch: () => Promise<void>;
 };
 
 const CrmPaymentTasksIndexContext = createContext<CrmPaymentTasksIndexContextValue | null>(null);
 
-let inFlightPaymentIndexLoad: Promise<CrmProjectPaymentTasksIndex> | null = null;
+type FinancialRollupIndexes = {
+  readonly paymentTasksIndex: CrmProjectPaymentTasksIndex;
+  readonly budgetEntriesIndex: CrmProjectBudgetEntriesIndex;
+};
 
-async function loadSharedPaymentTasksIndex(
+let inFlightFinancialRollupIndexLoad: Promise<FinancialRollupIndexes> | null = null;
+
+async function loadSharedFinancialRollupIndexes(
   isApiSource: boolean
-): Promise<CrmProjectPaymentTasksIndex> {
+): Promise<FinancialRollupIndexes> {
   if (!isApiSource) {
-    return loadCrmProjectPaymentTasksIndexSync(crmRepositories);
+    return {
+      paymentTasksIndex: loadCrmProjectPaymentTasksIndexSync(crmRepositories),
+      budgetEntriesIndex: loadCrmProjectBudgetEntriesIndexSync(crmRepositories),
+    };
   }
-  if (inFlightPaymentIndexLoad) {
-    return inFlightPaymentIndexLoad;
+  if (inFlightFinancialRollupIndexLoad) {
+    return inFlightFinancialRollupIndexLoad;
   }
-  inFlightPaymentIndexLoad = loadCrmProjectPaymentTasksIndex(crmRepositories);
+  inFlightFinancialRollupIndexLoad = Promise.all([
+    loadCrmProjectPaymentTasksIndex(crmRepositories),
+    loadCrmProjectBudgetEntriesIndex(crmRepositories),
+  ]).then(([paymentTasksIndex, budgetEntriesIndex]) => ({
+    paymentTasksIndex,
+    budgetEntriesIndex,
+  }));
   try {
-    return await inFlightPaymentIndexLoad;
+    return await inFlightFinancialRollupIndexLoad;
   } finally {
-    inFlightPaymentIndexLoad = null;
+    inFlightFinancialRollupIndexLoad = null;
   }
 }
 
@@ -53,15 +73,20 @@ export function CrmPaymentTasksIndexProvider({
   children,
 }: CrmPaymentTasksIndexProviderProps): ReactElement {
   const isApiSource = getCrmDataSource() === 'api';
-  const [paymentTasksIndex, setPaymentTasksIndex] = useState<CrmProjectPaymentTasksIndex | null>(
-    () => (isApiSource ? null : loadCrmProjectPaymentTasksIndexSync(crmRepositories))
+  const [rollupIndexes, setRollupIndexes] = useState<FinancialRollupIndexes | null>(() =>
+    isApiSource
+      ? null
+      : {
+          paymentTasksIndex: loadCrmProjectPaymentTasksIndexSync(crmRepositories),
+          budgetEntriesIndex: loadCrmProjectBudgetEntriesIndexSync(crmRepositories),
+        }
   );
   const mountedRef = useRef(true);
 
   const refetch = useCallback(async (): Promise<void> => {
-    const index = await loadSharedPaymentTasksIndex(isApiSource);
+    const indexes = await loadSharedFinancialRollupIndexes(isApiSource);
     if (mountedRef.current) {
-      setPaymentTasksIndex(index);
+      setRollupIndexes(indexes);
     }
   }, [isApiSource]);
 
@@ -77,8 +102,9 @@ export function CrmPaymentTasksIndexProvider({
   return (
     <CrmPaymentTasksIndexContext.Provider
       value={{
-        paymentTasksIndex: paymentTasksIndex ?? new Map<string, never>(),
-        isLoading: paymentTasksIndex === null,
+        paymentTasksIndex: rollupIndexes?.paymentTasksIndex ?? new Map<string, never>(),
+        budgetEntriesIndex: rollupIndexes?.budgetEntriesIndex ?? new Map<string, never>(),
+        isLoading: rollupIndexes === null,
         refetch,
       }}
     >

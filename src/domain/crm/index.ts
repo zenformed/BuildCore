@@ -32,6 +32,11 @@ export {
   type CrmProjectPaymentTasksIndex,
   type ProjectPaymentFinancials,
 } from './projectPaymentValue';
+export {
+  collectRollupBudgetSummary,
+  getBudgetEntriesForProject,
+  type CrmProjectBudgetEntriesIndex,
+} from './projectBudgetRollup';
 export type { CrmTeamMemberRef } from './teamMember';
 export type { CrmContact } from './contact';
 export type { CrmClient } from './client';

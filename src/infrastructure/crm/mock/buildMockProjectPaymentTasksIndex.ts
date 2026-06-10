@@ -4,11 +4,19 @@ import { MOCK_CRM_PROJECT_DETAILS } from '@/platform/mock/crm';
 import { getEffectiveMockProjectDetailBySlug } from './mockCrmMutationStore';
 
 function toPaymentBalanceTasks(
-  workflowTasks: readonly { amountCents: number | null; status: string; paidAt?: string | null }[]
+  workflowTasks: readonly {
+    id: string;
+    title: string;
+    amountCents: number | null;
+    status: string;
+    paidAt?: string | null;
+  }[]
 ): readonly PaymentBalanceTask[] {
   return workflowTasks
     .filter((task) => task.amountCents != null)
     .map((task) => ({
+      id: task.id,
+      title: task.title,
       amountCents: task.amountCents,
       status: task.status as PaymentBalanceTask['status'],
       paidAt: task.paidAt ?? null,

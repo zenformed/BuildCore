@@ -15,9 +15,13 @@ ensureChartJsRegistered();
 
 type BudgetCategoryPieChartProps = {
   categoryCosts: readonly CrmBudgetCategoryCost[];
+  layout?: 'compact' | 'fill';
 };
 
-export function BudgetCategoryPieChart({ categoryCosts }: BudgetCategoryPieChartProps): ReactElement {
+export function BudgetCategoryPieChart({
+  categoryCosts,
+  layout = 'compact',
+}: BudgetCategoryPieChartProps): ReactElement {
   const theme = useChartTheme();
   const { total, slices } = buildBudgetCategoryPieSlices(categoryCosts);
 
@@ -65,9 +69,14 @@ export function BudgetCategoryPieChart({ categoryCosts }: BudgetCategoryPieChart
     return <p className={styles.budgetPieEmpty}>No cost data yet.</p>;
   }
 
+  const wrapClass =
+    layout === 'fill' ? styles.projectFinancialGraphChartWrap : styles.budgetPieChartSplitWrap;
+  const canvasClass =
+    layout === 'fill' ? styles.projectFinancialGraphChartCanvas : styles.budgetPieChartCanvas;
+
   return (
-    <div className={styles.budgetPieChartSplitWrap}>
-      <div className={styles.budgetPieChartCanvas}>
+    <div className={wrapClass}>
+      <div className={canvasClass}>
         <Pie data={chartData} options={options} className={styles.chartCanvas} />
       </div>
     </div>

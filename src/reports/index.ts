@@ -1,4 +1,8 @@
 export type {
+  ProjectFinancialReportContext,
+  ProjectFinancialReportData,
+  ProjectFinancialReportPaymentRow,
+  ProjectFinancialSummary,
   ProjectProfitAndLossReportContext,
   ProjectProfitAndLossReportData,
   ProfitAndLossFinancialSummary,
@@ -17,6 +21,7 @@ export {
   computePaymentRevenueFromWorkflowTasks,
   isPaidPaymentWorkflowTask,
 } from './calculations/paymentRevenueCalculations';
+export { buildProjectFinancialReportData } from './builders/buildProjectFinancialReportData';
 export { buildProjectProfitAndLossReportData } from './builders/buildProjectProfitAndLossReportData';
 export { buildProjectProfitAndLossReportTitle } from './builders/buildProjectProfitAndLossReportTitle';
 export { exportProjectProfitAndLossPdf } from './export/exportProjectProfitAndLossPdf';
