@@ -51,6 +51,7 @@ export function ProjectDetailFolderTabs(): ReactElement {
   );
   const [selectedTab, setSelectedTab] = useState<ProjectDetailFolderTabId>('workflow');
   const [documentsSearchQuery, setDocumentsSearchQuery] = useState('');
+  const isReportsTabActive = selectedTab === 'financials';
 
   const tabs = useMemo((): readonly FolderTabDef[] => {
     const detail = content.projectDetail;
@@ -165,7 +166,13 @@ export function ProjectDetailFolderTabs(): ReactElement {
 
   return (
     <WorkflowTaskFileDragProvider onTaskDocumentDrop={guardedTaskDocumentDrop}>
-      <div className={styles.folderTabsRoot}>
+      <div
+        className={
+          isReportsTabActive
+            ? `${styles.folderTabsRoot} ${styles.folderTabsRootReportsActive}`
+            : styles.folderTabsRoot
+        }
+      >
         <div className={styles.folderTabList} role="tablist" aria-label="Project sections">
           {tabs.map((tab) => {
             const isActive = tab.id === selectedTab;
@@ -190,9 +197,21 @@ export function ProjectDetailFolderTabs(): ReactElement {
           id="project-folder-tabpanel"
           role="tabpanel"
           aria-labelledby={`project-folder-tab-${selectedTab}`}
-          className={styles.folderTabPanel}
+          className={
+            isReportsTabActive
+              ? `${styles.folderTabPanel} ${styles.folderTabPanelReportsActive}`
+              : styles.folderTabPanel
+          }
         >
-          <div className={styles.folderTabPanelInner}>{renderTabPanel()}</div>
+          <div
+            className={
+              isReportsTabActive
+                ? `${styles.folderTabPanelInner} ${styles.folderTabPanelInnerReportsActive}`
+                : styles.folderTabPanelInner
+            }
+          >
+            {renderTabPanel()}
+          </div>
         </div>
       </div>
     </WorkflowTaskFileDragProvider>

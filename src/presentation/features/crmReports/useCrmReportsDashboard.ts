@@ -9,7 +9,13 @@ import {
 import { computeCrmReportsDashboard } from '@/reports/calculations/crmReportsDashboardCalculations';
 import type { CrmReportsDashboardData, ReportChartTabId, ReportPeriodId } from '@/reports/types/crmReportsDashboard';
 import { getCrmDataSource } from '@/infrastructure/config/crmDataSource';
+import {
+  invalidateSessionCache,
+  runSessionCached,
+} from '@/infrastructure/coreApi/clientRequestDedupe';
 import { crmRepositories } from '@/shared/di/container';
+
+const CRM_REPORTS_PROJECTS_CACHE_KEY = 'crm-reports-projects';
 
 export function useCrmReportsDashboard(): {
   dashboard: CrmReportsDashboardData | null;
@@ -33,6 +39,7 @@ export function useCrmReportsDashboard(): {
 
   const reload = useCallback(() => {
     if (isApiSource) {
+      invalidateSessionCache(CRM_REPORTS_PROJECTS_CACHE_KEY);
       setReloadKey((key) => key + 1);
       return;
     }
@@ -45,7 +52,9 @@ export function useCrmReportsDashboard(): {
 
     let cancelled = false;
     setError(null);
-    void listCrmProjectsForReporting(crmRepositories)
+    void runSessionCached(CRM_REPORTS_PROJECTS_CACHE_KEY, () =>
+      listCrmProjectsForReporting(crmRepositories)
+    )
       .then((data) => {
         if (!cancelled) setProjects(data);
       })

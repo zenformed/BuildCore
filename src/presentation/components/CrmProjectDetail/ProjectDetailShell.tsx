@@ -105,14 +105,24 @@ function ProjectDetailShellBody({
   const workspace = useProjectDetailWorkspace(projectForWorkspace);
   const detail = content.projectDetail;
   const projectSummary = workspace.project.summary;
-  const childSummaries = isParentOverview
-    ? {
-        allRows: childSummaryRows,
-        isLoading: childSummariesLoading,
-        refetch: refetchChildSummaries,
-        patchProjectSummary: patchChildProjectSummary,
-      }
-    : null;
+  const childSummaries = useMemo(
+    () =>
+      isParentOverview
+        ? {
+            allRows: childSummaryRows,
+            isLoading: childSummariesLoading,
+            refetch: refetchChildSummaries,
+            patchProjectSummary: patchChildProjectSummary,
+          }
+        : null,
+    [
+      childSummariesLoading,
+      childSummaryRows,
+      isParentOverview,
+      patchChildProjectSummary,
+      refetchChildSummaries,
+    ]
+  );
 
   const {
     pendingDeleteProject,
@@ -199,20 +209,36 @@ function ProjectDetailShellBody({
           </div>
         );
 
-  const shellValue: ProjectDetailShellContextValue = {
-    pageContext,
-    isApiSource,
-    onRefresh: refreshProjectDetail,
-    showCompletionActions,
-    isMemberRole,
-    completion: showCompletionActions ? completion : null,
-    parentRouteSlug,
-    subSlug,
-    parentProject,
-    routes,
-    childSummaries,
-    ...workspace,
-  };
+  const shellValue: ProjectDetailShellContextValue = useMemo(
+    () => ({
+      pageContext,
+      isApiSource,
+      onRefresh: refreshProjectDetail,
+      showCompletionActions,
+      isMemberRole,
+      completion: showCompletionActions ? completion : null,
+      parentRouteSlug,
+      subSlug,
+      parentProject,
+      routes,
+      childSummaries,
+      ...workspace,
+    }),
+    [
+      childSummaries,
+      completion,
+      isApiSource,
+      isMemberRole,
+      pageContext,
+      parentProject,
+      parentRouteSlug,
+      refreshProjectDetail,
+      routes,
+      showCompletionActions,
+      subSlug,
+      workspace,
+    ]
+  );
 
   return (
     <ProjectDetailShellProvider value={shellValue}>
@@ -255,18 +281,22 @@ function ProjectDetailShellBody({
               onCloseDelete={() => setPendingDeleteProject(null)}
               onConfirmDelete={() => void handleConfirmDelete()}
             />
-            <SaveProjectTemplateDialog
-              templateScope={templateScope}
-              isOpen={saveTemplate.open}
-              templateName={saveTemplate.templateName}
-              setAsDefault={saveTemplate.setAsDefault}
-              saving={saveTemplate.saving}
-              onTemplateNameChange={saveTemplate.setTemplateName}
-              onSetAsDefaultChange={saveTemplate.setSetAsDefault}
-              onClose={saveTemplate.closeDialog}
-              onSave={() => void saveTemplate.saveTemplate()}
-            />
-            <LoadProjectTemplateDialogs controller={loadTemplate} />
+            {saveTemplate.open ? (
+              <SaveProjectTemplateDialog
+                templateScope={templateScope}
+                isOpen={saveTemplate.open}
+                templateName={saveTemplate.templateName}
+                setAsDefault={saveTemplate.setAsDefault}
+                saving={saveTemplate.saving}
+                onTemplateNameChange={saveTemplate.setTemplateName}
+                onSetAsDefaultChange={saveTemplate.setSetAsDefault}
+                onClose={saveTemplate.closeDialog}
+                onSave={() => void saveTemplate.saveTemplate()}
+              />
+            ) : null}
+            {loadTemplate.listOpen || loadTemplate.pendingApply || loadTemplate.pendingDelete ? (
+              <LoadProjectTemplateDialogs controller={loadTemplate} />
+            ) : null}
             <CreateCrmProjectModal
               open={editProjectOpen}
               mode="edit"

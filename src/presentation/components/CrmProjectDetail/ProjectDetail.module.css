@@ -251,6 +251,7 @@
   min-height: 0;
   display: grid;
   grid-template-columns: minmax(0, 1.25fr) minmax(0, 0.75fr);
+  grid-template-rows: minmax(0, 1fr);
   gap: 0.625rem;
   align-items: stretch;
   overflow: hidden;
@@ -262,6 +263,7 @@
   gap: 0.75rem;
   min-width: 0;
   min-height: 0;
+  max-height: 100%;
   overflow-y: auto;
   overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
@@ -270,10 +272,12 @@
 .projectFinancialReportGraph {
   min-width: 0;
   min-height: 0;
+  max-height: 100%;
   display: flex;
   flex-direction: column;
   gap: 0.375rem;
   height: 100%;
+  overflow: hidden;
 }
 
 .projectFinancialReportGraphCard {
@@ -307,8 +311,8 @@
 
 .projectFinancialGraphChartCanvas {
   position: relative;
-  width: min(100cqw, 100cqh);
-  height: min(100cqw, 100cqh);
+  width: min(100cqw, 100cqh, 22rem);
+  height: min(100cqw, 100cqh, 22rem);
   max-width: 100%;
   max-height: 100%;
   flex-shrink: 0;
@@ -710,26 +714,6 @@
   min-width: 0;
 }
 
-.folderTabsRoot:has(.projectFinancialReport) {
-  flex: 1;
-  min-height: 0;
-  align-self: stretch;
-}
-
-.folderTabPanel:has(.projectFinancialReport) {
-  flex: 1;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
-}
-
-.folderTabPanelInner:has(.projectFinancialReport) {
-  flex: 1;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
-}
-
 .folderTabList {
   display: flex;
   flex-wrap: wrap;
@@ -845,22 +829,6 @@
   overflow: visible;
 }
 
-.folderTabPanelInner .paymentsPanel.projectFinancialReport {
-  overflow: hidden;
-}
-
-@media (min-width: 1101px) {
-  .folderTabPanelInner .detailFinancialsRowSingle:has(.projectFinancialReport) {
-    flex: 1;
-    min-height: 0;
-  }
-
-  .folderTabPanelInner .paymentsPanel.projectFinancialReport {
-    flex: 1;
-    min-height: 0;
-  }
-}
-
 .folderTabPanelInner .workflowPanel.workflowPanelFull > .detailPanelHeader {
   padding: 0;
 }
@@ -876,6 +844,45 @@
 .folderTabPanelInner .paymentsPanel > .subtitle {
   flex: none;
   min-height: unset;
+}
+
+/* Reports tab: compound selectors must follow generic .folderTab* rules above */
+.folderTabsRoot.folderTabsRootReportsActive {
+  flex: 1;
+  min-height: 0;
+  align-self: stretch;
+}
+
+.folderTabPanel.folderTabPanelReportsActive {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.folderTabPanelInner.folderTabPanelInnerReportsActive {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  --project-financial-report-height: clamp(22rem, calc(100dvh - 22rem), 42rem);
+}
+
+@media (min-width: 1101px) {
+  .folderTabPanelInner.folderTabPanelInnerReportsActive .detailFinancialsRowSingle {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .folderTabPanelInner.folderTabPanelInnerReportsActive .paymentsPanel.projectFinancialReport {
+    flex: 1 1 auto;
+    min-height: 0;
+    height: min(var(--project-financial-report-height), 100%);
+    max-height: min(var(--project-financial-report-height), 100%);
+    overflow: hidden;
+  }
 }
 
 .detailHeader {
@@ -3447,13 +3454,6 @@
   align-items: stretch;
   flex-shrink: 0;
   min-width: 0;
-}
-
-.detailFinancialsRowSingle:has(.projectFinancialReport) {
-  flex: 1;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
 }
 
 .detailMiddleMember {

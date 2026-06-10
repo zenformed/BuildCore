@@ -5,6 +5,7 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useMemo,
   useRef,
   useState,
   type ReactElement,
@@ -21,6 +22,7 @@ import {
   loadCrmProjectPaymentTasksIndexSync,
 } from '@/application/use-cases/crm/loadCrmProjectPaymentTasksIndex';
 import { getCrmDataSource } from '@/infrastructure/config/crmDataSource';
+import { deferNonCriticalWork } from '@/presentation/utils/deferNonCriticalWork';
 import { crmRepositories } from '@/shared/di/container';
 
 export type CrmPaymentTasksIndexContextValue = {
@@ -36,6 +38,9 @@ type FinancialRollupIndexes = {
   readonly paymentTasksIndex: CrmProjectPaymentTasksIndex;
   readonly budgetEntriesIndex: CrmProjectBudgetEntriesIndex;
 };
+
+const EMPTY_PAYMENT_TASKS_INDEX: CrmProjectPaymentTasksIndex = new Map<string, never>();
+const EMPTY_BUDGET_ENTRIES_INDEX: CrmProjectBudgetEntriesIndex = new Map<string, never>();
 
 let inFlightFinancialRollupIndexLoad: Promise<FinancialRollupIndexes> | null = null;
 
@@ -93,21 +98,27 @@ export function CrmPaymentTasksIndexProvider({
   useEffect(() => {
     mountedRef.current = true;
     if (!isApiSource) return;
-    void refetch();
+    const cancelDefer = deferNonCriticalWork(() => {
+      void refetch();
+    });
     return () => {
       mountedRef.current = false;
+      cancelDefer();
     };
   }, [isApiSource, refetch]);
 
+  const contextValue = useMemo(
+    (): CrmPaymentTasksIndexContextValue => ({
+      paymentTasksIndex: rollupIndexes?.paymentTasksIndex ?? EMPTY_PAYMENT_TASKS_INDEX,
+      budgetEntriesIndex: rollupIndexes?.budgetEntriesIndex ?? EMPTY_BUDGET_ENTRIES_INDEX,
+      isLoading: rollupIndexes === null,
+      refetch,
+    }),
+    [refetch, rollupIndexes]
+  );
+
   return (
-    <CrmPaymentTasksIndexContext.Provider
-      value={{
-        paymentTasksIndex: rollupIndexes?.paymentTasksIndex ?? new Map<string, never>(),
-        budgetEntriesIndex: rollupIndexes?.budgetEntriesIndex ?? new Map<string, never>(),
-        isLoading: rollupIndexes === null,
-        refetch,
-      }}
-    >
+    <CrmPaymentTasksIndexContext.Provider value={contextValue}>
       {children}
     </CrmPaymentTasksIndexContext.Provider>
   );

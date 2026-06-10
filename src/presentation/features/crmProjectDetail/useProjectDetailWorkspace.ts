@@ -42,19 +42,38 @@ export function useProjectDetailWorkspace(initialProject: CrmProjectDetail) {
     setProject(initialProject);
   }, [initialProject]);
 
-  const workflowSection = useWorkflowTasksSection(project, setProject);
-  const budgetSection = useBudgetSection(project, setProject);
+  const {
+    refreshWorkflowTasks,
+    onWorkflowTaskPatched,
+    onWorkflowTaskCreated,
+    onWorkflowTaskArchived,
+    onWorkflowTaskDocumentUploaded,
+    onWorkflowTaskDocumentDeleted,
+    syncWorkflowTaskDocuments,
+  } = useWorkflowTasksSection(project, setProject);
+  const {
+    refreshBudgetSection,
+    onBudgetEntryPatched,
+    onBudgetEntryCreated,
+    onBudgetEntryDeleted,
+    onBudgetEntryDocumentUploaded,
+    onBudgetEntryDocumentDeleted,
+  } = useBudgetSection(project, setProject);
   const customerNotify = useWorkflowTaskCustomerNotifyPrompt(project.summary.contact);
-  const { refetch: refetchPaymentTasksIndex } = useCrmPaymentTasksIndexContext();
+  const { refetch: refetchFinancialRollupIndexes } = useCrmPaymentTasksIndexContext();
 
   const refreshPaymentTasksIndexIfPayment = useCallback(
     (task: Pick<CrmWorkflowTask, 'amountCents'>) => {
       if (isPaymentWorkflowTask(task)) {
-        void refetchPaymentTasksIndex();
+        void refetchFinancialRollupIndexes();
       }
     },
-    [refetchPaymentTasksIndex]
+    [refetchFinancialRollupIndexes]
   );
+
+  const refreshBudgetEntriesIndex = useCallback(() => {
+    void refetchFinancialRollupIndexes();
+  }, [refetchFinancialRollupIndexes]);
 
   const handleProjectSaved = useCallback((next: CrmProjectDetail) => {
     setProject(next);
@@ -67,40 +86,43 @@ export function useProjectDetailWorkspace(initialProject: CrmProjectDetail) {
 
   const handleWorkflowTaskPatched = useCallback(
     async (task: CrmWorkflowTask) => {
-      workflowSection.onWorkflowTaskPatched(task);
+      onWorkflowTaskPatched(task);
       refreshPaymentTasksIndexIfPayment(task);
     },
-    [refreshPaymentTasksIndexIfPayment, workflowSection]
+    [onWorkflowTaskPatched, refreshPaymentTasksIndexIfPayment]
   );
 
   const handleWorkflowTaskCreated = useCallback(
     async (task: CrmWorkflowTask) => {
-      workflowSection.onWorkflowTaskCreated(task);
+      onWorkflowTaskCreated(task);
       refreshPaymentTasksIndexIfPayment(task);
       setToast({ kind: 'success', message: content.projectDetail.workflow.taskAddedSuccess });
     },
-    [refreshPaymentTasksIndexIfPayment, workflowSection]
+    [onWorkflowTaskCreated, refreshPaymentTasksIndexIfPayment]
   );
 
   const handleBudgetEntryPatched = useCallback(
     async (entry: CrmBudgetEntry) => {
-      budgetSection.onBudgetEntryPatched(entry);
+      onBudgetEntryPatched(entry);
+      refreshBudgetEntriesIndex();
     },
-    [budgetSection]
+    [onBudgetEntryPatched, refreshBudgetEntriesIndex]
   );
 
   const handleBudgetEntryCreated = useCallback(
     async (entry: CrmBudgetEntry) => {
-      budgetSection.onBudgetEntryCreated(entry);
+      onBudgetEntryCreated(entry);
+      refreshBudgetEntriesIndex();
     },
-    [budgetSection]
+    [onBudgetEntryCreated, refreshBudgetEntriesIndex]
   );
 
   const handleBudgetEntryDeleted = useCallback(
     async (entryId: string) => {
-      budgetSection.onBudgetEntryDeleted(entryId);
+      onBudgetEntryDeleted(entryId);
+      refreshBudgetEntriesIndex();
     },
-    [budgetSection]
+    [onBudgetEntryDeleted, refreshBudgetEntriesIndex]
   );
 
   const wf = content.projectDetail.workflow;
@@ -146,7 +168,7 @@ export function useProjectDetailWorkspace(initialProject: CrmProjectDetail) {
         sizeBytes: file.size,
         body: buffer,
       });
-      workflowSection.onWorkflowTaskDocumentUploaded(result.document);
+      onWorkflowTaskDocumentUploaded(result.document);
       setToast({ kind: 'success', message: wf.documentUploadSuccess });
     } catch (err) {
       setToast({ kind: 'error', message: mapDocumentUploadError(err) });
@@ -154,9 +176,9 @@ export function useProjectDetailWorkspace(initialProject: CrmProjectDetail) {
   }, [
     documentUploadConfirm,
     mapDocumentUploadError,
+    onWorkflowTaskDocumentUploaded,
     project.summary.slug,
     wf.documentUploadSuccess,
-    workflowSection,
   ]);
 
   const handleConfirmArchiveTask = useCallback(async () => {
@@ -164,7 +186,7 @@ export function useProjectDetailWorkspace(initialProject: CrmProjectDetail) {
     const archivedTask = archiveConfirmTask;
     try {
       await archiveCrmWorkflowTask(crmRepositories, archivedTask.id);
-      workflowSection.onWorkflowTaskArchived(archivedTask.id);
+      onWorkflowTaskArchived(archivedTask.id);
       refreshPaymentTasksIndexIfPayment(archivedTask);
       setArchiveConfirmTask(null);
       setToast({ kind: 'success', message: wf.archiveTaskSuccess });
@@ -173,10 +195,10 @@ export function useProjectDetailWorkspace(initialProject: CrmProjectDetail) {
     }
   }, [
     archiveConfirmTask,
+    onWorkflowTaskArchived,
     refreshPaymentTasksIndexIfPayment,
     wf.archiveTaskFailed,
     wf.archiveTaskSuccess,
-    workflowSection,
   ]);
 
   const openCreateTask = useCallback((context: WorkflowTaskDrawerContext) => {
@@ -208,16 +230,16 @@ export function useProjectDetailWorkspace(initialProject: CrmProjectDetail) {
     patchField,
     handleWorkflowTaskPatched,
     handleWorkflowTaskCreated,
-    refreshWorkflowTasks: workflowSection.refreshWorkflowTasks,
-    onWorkflowTaskDocumentUploaded: workflowSection.onWorkflowTaskDocumentUploaded,
-    onWorkflowTaskDocumentDeleted: workflowSection.onWorkflowTaskDocumentDeleted,
-    syncWorkflowTaskDocuments: workflowSection.syncWorkflowTaskDocuments,
+    refreshWorkflowTasks,
+    onWorkflowTaskDocumentUploaded,
+    onWorkflowTaskDocumentDeleted,
+    syncWorkflowTaskDocuments,
     handleBudgetEntryPatched,
     handleBudgetEntryCreated,
     handleBudgetEntryDeleted,
-    refreshBudgetSection: budgetSection.refreshBudgetSection,
-    onBudgetEntryDocumentUploaded: budgetSection.onBudgetEntryDocumentUploaded,
-    onBudgetEntryDocumentDeleted: budgetSection.onBudgetEntryDocumentDeleted,
+    refreshBudgetSection,
+    onBudgetEntryDocumentUploaded,
+    onBudgetEntryDocumentDeleted,
     handleTaskDocumentDrop,
     handleConfirmDocumentUpload,
     handleConfirmArchiveTask,

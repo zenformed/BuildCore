@@ -17,6 +17,8 @@ import {
   type CrmProjectsListFilters,
 } from './crmProjectsPipelineViewModel';
 
+const EMPTY_PROJECT_SUMMARIES: readonly CrmProjectSummary[] = [];
+
 export function useCrmProjectsPipeline(
   searchQuery: string,
   filters: CrmProjectsListFilters
@@ -59,7 +61,7 @@ export function useCrmProjectsPipeline(
     void loadSummaries();
   }, [isApiSource, loadSummaries]);
 
-  const summaries = allSummaries ?? [];
+  const summaries = allSummaries ?? EMPTY_PROJECT_SUMMARIES;
   const isLoading = allSummaries === null;
 
   const dashboardView = useMemo(

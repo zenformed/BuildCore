@@ -13,10 +13,12 @@ export function ProjectDetailHeaderProgress(): ReactElement | null {
   const isComplete = isCrmProjectComplete(project.summary);
 
   const progress = useMemo(() => {
+    if (isParentOverview && childSummaries?.isLoading) {
+      return null;
+    }
+
     const childStageSlugs = isParentOverview
-      ? childSummaries?.isLoading
-        ? []
-        : (childSummaries?.allRows ?? []).map((child) => child.currentStageSlug)
+      ? (childSummaries?.allRows ?? []).map((child) => child.currentStageSlug)
       : [];
 
     return resolveProjectDetailProgressDisplay({
@@ -25,7 +27,8 @@ export function ProjectDetailHeaderProgress(): ReactElement | null {
       isComplete,
     });
   }, [
-    childSummaries,
+    childSummaries?.allRows,
+    childSummaries?.isLoading,
     isComplete,
     isParentOverview,
     project.summary.currentStageSlug,
