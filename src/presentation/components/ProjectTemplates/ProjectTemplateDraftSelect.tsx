@@ -57,8 +57,7 @@ export function ProjectTemplateDraftSelect({
         applyTemplateSelection(preferredTemplateId, list);
         return;
       }
-      const defaultTemplate = list.find((item) => item.isDefault);
-      applyTemplateSelection(defaultTemplate?.id ?? '', list);
+      applyTemplateSelection('', list);
     },
     [applyTemplateSelection]
   );

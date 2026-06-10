@@ -243,3 +243,50 @@
 .stackedOverlayConfirm {
   z-index: 10003;
 }
+
+.noneDefaultOption {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.2rem;
+  width: 100%;
+  padding: 0;
+  border: none;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+}
+
+.noneDefaultOption:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.noneDefaultOptionLabel {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--color-text, #0f172a);
+}
+
+.noneDefaultOptionDescription {
+  font-size: 0.8125rem;
+  line-height: 1.4;
+  color: var(--color-text-muted, #64748b);
+}
+
+.noneDefaultOption_active {
+  cursor: default;
+}
+
+.noneDefaultOption_active .noneDefaultOptionLabel {
+  color: var(--color-primary, #2563eb);
+}
+
+.item:has(.noneDefaultOption_active) {
+  border-color: var(--color-primary, #2563eb);
+  background: color-mix(in srgb, var(--color-primary, #2563eb) 8%, var(--theme-surface-main, var(--color-surface, #fff)));
+}
+
+:global([data-theme='dark']) .noneDefaultOptionLabel {
+  color: #f1f5f9;
+}

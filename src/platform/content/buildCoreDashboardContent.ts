@@ -430,7 +430,7 @@ export const buildCoreDashboardContent = {
         actionsLoad: 'Load Project Template',
         actionsSave: 'Save Project Template',
         createSelectLabel: 'Project Template',
-        createSelectPlaceholder: 'Select project template',
+        createSelectPlaceholder: 'None',
         manageTemplatesAction: 'Manage Templates',
         save: {
           title: 'Save project template',
@@ -449,6 +449,8 @@ export const buildCoreDashboardContent = {
         load: {
           title: 'Load project template',
           manageTitle: 'Manage project templates',
+          manageNoneOption: 'None',
+          manageNoneDescription: 'No template loads by default when creating a project.',
           back: 'Back',
           backAriaLabel: 'Back to new project',
           loading: 'Loading project templates…',
@@ -494,7 +496,7 @@ export const buildCoreDashboardContent = {
         actionsLoad: 'Load Subproject Template',
         actionsSave: 'Save Subproject Template',
         createSelectLabel: 'Subproject Template',
-        createSelectPlaceholder: 'Select subproject template',
+        createSelectPlaceholder: 'None',
         manageTemplatesAction: 'Manage Templates',
         save: {
           title: 'Save subproject template',
@@ -513,6 +515,8 @@ export const buildCoreDashboardContent = {
         load: {
           title: 'Load subproject template',
           manageTitle: 'Manage subproject templates',
+          manageNoneOption: 'None',
+          manageNoneDescription: 'No template loads by default when creating a subproject.',
           back: 'Back',
           backAriaLabel: 'Back to new subproject',
           loading: 'Loading subproject templates…',

@@ -9,7 +9,6 @@ import type { CreateCrmProjectFormState } from '@/presentation/features/crmCreat
 import type { CrmProjectAssigneeOption } from '@/presentation/features/crmProjects/crmProjectAssigneeOptions';
 import { CreateFormAssigneePicker } from '@/presentation/components/crmShared/CreateFormAssigneePicker';
 import { CreateFormSelectPicker } from '@/presentation/components/crmShared/CreateFormSelectPicker';
-import { PriorityPillPicker } from '@/presentation/components/crmShared/PriorityPillPicker';
 import formStyles from './CreateCrmProjectDrawer.module.css';
 
 export type CreateCrmProjectFormFieldsProps = {
@@ -35,32 +34,18 @@ export function CreateCrmProjectFormFields({
 
   return (
     <>
-      <div className={formStyles.rowTopFields}>
-        <div className={formStyles.field}>
-          <label className={formStyles.label} htmlFor="crm-create-name">
-            {create.fields.name} *
-          </label>
-          <input
-            id="crm-create-name"
-            className={formStyles.input}
-            value={form.name}
-            disabled={saving}
-            onChange={(e) => updateField('name', e.target.value)}
-            autoFocus
-          />
-        </div>
-        <div className={formStyles.field}>
-          <label className={formStyles.label} htmlFor="crm-create-priority">
-            {create.fields.priority}
-          </label>
-          <PriorityPillPicker
-            id="crm-create-priority"
-            value={form.priority}
-            disabled={saving}
-            ariaLabel={create.fields.priority}
-            onChange={(priority) => updateField('priority', priority)}
-          />
-        </div>
+      <div className={formStyles.field}>
+        <label className={formStyles.label} htmlFor="crm-create-name">
+          {create.fields.name} *
+        </label>
+        <input
+          id="crm-create-name"
+          className={formStyles.input}
+          value={form.name}
+          disabled={saving}
+          onChange={(e) => updateField('name', e.target.value)}
+          autoFocus
+        />
       </div>
 
       <div className={formStyles.rowTradeDeal}>

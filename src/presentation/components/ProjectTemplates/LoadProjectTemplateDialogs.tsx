@@ -42,6 +42,7 @@ export function LoadProjectTemplateDialogs({
         onLoad={controller.requestApply}
         onDelete={controller.requestDelete}
         onToggleDefault={controller.toggleDefault}
+        onClearDefault={controller.clearDefault}
         overlayClassName={overlayClassName}
       />
 

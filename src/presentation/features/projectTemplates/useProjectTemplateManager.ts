@@ -156,6 +156,32 @@ export function useProjectTemplateManager({
     }
   }, [copy.deleteFailed, copy.deleteSuccess, onError, onSuccess, pendingDelete]);
 
+  const clearDefault = useCallback(async () => {
+    const currentDefault = templates.find((item) => item.isDefault);
+    if (currentDefault == null) {
+      onSuccess(copy.unsetDefaultSuccess);
+      return;
+    }
+    setSettingDefaultId(currentDefault.id);
+    try {
+      const updated = await setBuildCoreProjectTemplateDefault(currentDefault.id, false);
+      setTemplates((current) =>
+        current.map((item) => (item.id === updated.id ? updated : item))
+      );
+      onSuccess(copy.unsetDefaultSuccess);
+    } catch (err) {
+      const message =
+        err instanceof CrmApiError && err.message
+          ? err.message
+          : err instanceof Error
+            ? err.message
+            : copy.setDefaultFailed;
+      onError(message);
+    } finally {
+      setSettingDefaultId(null);
+    }
+  }, [copy.setDefaultFailed, copy.unsetDefaultSuccess, onError, onSuccess, templates]);
+
   const toggleDefault = useCallback(
     async (template: BuildCoreProjectTemplate) => {
       const nextDefault = !template.isDefault;
@@ -210,6 +236,7 @@ export function useProjectTemplateManager({
     cancelDelete,
     confirmDelete,
     toggleDefault,
+    clearDefault,
     fetchTemplates,
     applyConfirmMessage,
   };
