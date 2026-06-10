@@ -12,6 +12,7 @@ import { CrmProjectPriorityIcon } from '@/presentation/components/crmShared/CrmP
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
 import {
   formatCentsAsUsd,
+  formatContactEmailDisplay,
   formatPhoneDisplay,
   formatStageLabel,
   getProjectTradeSubtitle,
@@ -75,6 +76,7 @@ export function CrmProjectTableRow({
   const valueLabels = tableCopy.columns;
   const displayValueLabel =
     valueLabel ?? (isChild ? valueLabels.subValueLabel : valueLabels.projectValueLabel);
+  const displayEmail = formatContactEmailDisplay(project.contact.email, { maskForMember: isMemberRole });
   const rowAriaLabel = isChild
     ? tableCopy.subprojectRowAriaLabel(project.name)
     : tableCopy.rowAriaLabel(project.name);
@@ -133,14 +135,14 @@ export function CrmProjectTableRow({
           ) : null}
         </span>
         {tradeSubtitle ? <span className={styles.projectMeta}>{tradeSubtitle}</span> : null}
-        <span className={styles.projectProgressRow}>
-          <ProjectProgressPercent variant="compact" progress={progress} />
-          {!isMemberRole ? (
+        {!isMemberRole ? (
+          <span className={styles.projectProgressRow}>
+            <ProjectProgressPercent variant="compact" progress={progress} />
             <span className={`${shared.stagePill} ${styles.projectMetaStagePill}`}>
               {formatStageLabel(project.currentStageSlug)}
             </span>
-          ) : null}
-        </span>
+          </span>
+        ) : null}
       </span>
       <span className={`${styles.gridCell} ${styles.gridCellAlignCenter}`} role="cell">
         {project.contact.name}
@@ -148,9 +150,9 @@ export function CrmProjectTableRow({
       <span
         className={`${styles.gridCell} ${styles.gridCellAlignCenter}`}
         role="cell"
-        title={project.contact.email}
+        title={displayEmail}
       >
-        {project.contact.email || '—'}
+        {displayEmail || '—'}
       </span>
       <span className={`${styles.gridCell} ${styles.gridCellAlignCenter}`} role="cell">
         {formatPhoneDisplay(project.contact.phone) || '—'}

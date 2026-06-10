@@ -15,6 +15,18 @@ export function isCrmProjectsListFiltersActive(filters: CrmProjectsListFilters):
   return filters.stageSlugs.length > 0 || filters.priorities.length > 0;
 }
 
+export function resolveCrmProjectsTableEmptyMessage(options: {
+  readonly isMemberRole: boolean;
+  readonly totalProjectCount: number;
+  readonly memberNoAssignmentsMessage: string;
+  readonly searchOrFiltersMessage: string;
+}): string {
+  if (options.isMemberRole && options.totalProjectCount === 0) {
+    return options.memberNoAssignmentsMessage;
+  }
+  return options.searchOrFiltersMessage;
+}
+
 function projectSearchHaystack(project: CrmProjectSummary): string {
   return [
     project.name,

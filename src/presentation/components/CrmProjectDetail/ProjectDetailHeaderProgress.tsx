@@ -7,12 +7,16 @@ import { useProjectDetailShell } from '@/presentation/features/crmProjectDetail/
 import { ProjectProgressPercent } from './ProjectProgressPercent';
 
 export function ProjectDetailHeaderProgress(): ReactElement | null {
-  const { project, subSlug, childSummaries } = useProjectDetailShell();
+  const { project, subSlug, childSummaries, isMemberRole } = useProjectDetailShell();
   const isParentOverview =
     subSlug == null && project.summary.parentProjectId == null;
   const isComplete = isCrmProjectComplete(project.summary);
 
   const progress = useMemo(() => {
+    if (isMemberRole) {
+      return null;
+    }
+
     if (isParentOverview && childSummaries?.isLoading) {
       return null;
     }
@@ -30,6 +34,7 @@ export function ProjectDetailHeaderProgress(): ReactElement | null {
     childSummaries?.allRows,
     childSummaries?.isLoading,
     isComplete,
+    isMemberRole,
     isParentOverview,
     project.summary.currentStageSlug,
   ]);

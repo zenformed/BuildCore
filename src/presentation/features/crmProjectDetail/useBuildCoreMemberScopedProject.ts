@@ -8,6 +8,7 @@ import {
   filterBudgetEntriesForBuildCoreMember,
   filterWorkflowTasksForBuildCoreMember,
 } from '@/domain/buildcore/workflowTaskMemberVisibility';
+import { maskProjectDetailContactEmailForMember } from '@/domain/buildcore/buildCoreMemberProjectVisibility';
 import { useBuildCoreWorkflowTaskAccess } from '@/presentation/providers/BuildCoreWorkflowTaskAccessProvider';
 import { useBuildCoreProjectSectionAccess } from '@/presentation/providers/BuildCoreProjectSectionAccessProvider';
 import { useAuth } from '@/presentation/hooks/useAuth';
@@ -95,7 +96,9 @@ export function useBuildCoreMemberScopedProject(
       scopeInput
     );
 
-    return applyBuildCoreMemberProjectDetailView(project, visibleTasks, visibleBudgetEntries);
+    return maskProjectDetailContactEmailForMember(
+      applyBuildCoreMemberProjectDetailView(project, visibleTasks, visibleBudgetEntries)
+    );
   }, [
     access,
     fallbackLoaded,

@@ -54,6 +54,9 @@ export async function GET(
       project
     );
     const scopeMs = Math.round(performance.now() - scopeStarted);
+    if (scoped == null) {
+      return NextResponse.json({ error: 'not_found', message: 'Project not found' }, { status: 404 });
+    }
     if (process.env.NODE_ENV === 'development') {
       console.info('[PERF] GET /api/crm/projects/[slug]', {
         slug,
@@ -119,6 +122,9 @@ export async function PATCH(
       auth.context.user.id,
       project
     );
+    if (scoped == null) {
+      return NextResponse.json({ error: 'not_found', message: 'Project not found' }, { status: 404 });
+    }
     return NextResponse.json(scoped);
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Failed to update CRM project';

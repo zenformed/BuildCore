@@ -4,9 +4,11 @@ import type { ReactElement } from 'react';
 import type { CrmProjectDetail } from '@/domain/crm';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
 import {
+  formatContactEmailDisplay,
   formatPhoneDisplay,
   formatRelativeUpdatedAt,
 } from '@/presentation/features/crmProjects/crmProjectFormatters';
+import { useProjectDetailShell } from '@/presentation/features/crmProjectDetail/ProjectDetailShellContext';
 import styles from './ProjectDetail.module.css';
 
 export type ProjectContactCardProps = {
@@ -15,6 +17,8 @@ export type ProjectContactCardProps = {
 
 export function ProjectContactCard({ project }: ProjectContactCardProps): ReactElement {
   const { summary, notes } = project;
+  const { isMemberRole } = useProjectDetailShell();
+  const displayEmail = formatContactEmailDisplay(summary.contact.email, { maskForMember: isMemberRole });
 
   return (
     <section className={styles.card} aria-labelledby="project-contact-heading">
@@ -29,7 +33,7 @@ export function ProjectContactCard({ project }: ProjectContactCardProps): ReactE
         </div>
         <div className={styles.dlRow}>
           <dt>{content.projectDetail.fields.email}</dt>
-          <dd>{summary.contact.email}</dd>
+          <dd>{displayEmail || '—'}</dd>
         </div>
         <div className={styles.dlRow}>
           <dt>{content.projectDetail.fields.phone}</dt>

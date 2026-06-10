@@ -10,7 +10,10 @@ import {
   EMPTY_CRM_PROJECTS_LIST_FILTERS,
   useCrmProjectsPipeline,
 } from '@/presentation/features/crmProjects/useCrmProjectsPipeline';
-import type { CrmProjectsListFilters } from '@/presentation/features/crmProjects/crmProjectsPipelineViewModel';
+import {
+  resolveCrmProjectsTableEmptyMessage,
+  type CrmProjectsListFilters,
+} from '@/presentation/features/crmProjects/crmProjectsPipelineViewModel';
 import { useCrmProjectDeleteConfirmation } from '@/presentation/features/crmProjects/useCrmProjectDeleteConfirmation';
 import { consumeCrmProjectDeleteSuccessToast } from '@/presentation/features/crmProjects/crmProjectDeleteFeedback';
 import { useSaaSProfile } from '@/presentation/hooks/useSaaSProfile';
@@ -49,6 +52,7 @@ export function CrmProjectsPipeline({
     allChildrenByParentId,
     visibleChildrenByParentId,
     paymentTasksIndex,
+    totalCount,
     isLoading,
     isPaymentFinancialsLoading,
     refetch,
@@ -108,6 +112,13 @@ export function CrmProjectsPipeline({
     [router]
   );
 
+  const tableEmptyMessage = resolveCrmProjectsTableEmptyMessage({
+    isMemberRole,
+    totalProjectCount: totalCount,
+    memberNoAssignmentsMessage: content.crm.table.emptyMemberNoAssignments,
+    searchOrFiltersMessage: content.crm.table.empty,
+  });
+
   return (
     <section className={styles.projectsPanel} aria-labelledby="crm-projects-heading">
       {toast ? (
@@ -165,6 +176,7 @@ export function CrmProjectsPipeline({
           onRequestDelete={setPendingDeleteProject}
           onTogglePriority={togglePriority}
           onRequestCompletionChange={requestCompletionChange}
+          emptyMessage={tableEmptyMessage}
         />
       </div>
       <CreateCrmProjectModal

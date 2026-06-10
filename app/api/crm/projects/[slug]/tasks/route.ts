@@ -6,6 +6,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireCrmApiAuth } from '@/infrastructure/crm/server/crmApiRouteAuth';
 import { resolveCrmProjectIdBySlug } from '@/infrastructure/crm/server/resolveCrmProjectIdBySlug';
+import { memberCanAccessProjectIdForViewer } from '@/infrastructure/crm/server/crmMemberProjectVisibilityService';
 import {
   createCrmWorkflowTaskForOrg,
   listCrmWorkflowTasksForOrg,
@@ -47,6 +48,24 @@ export async function GET(
       return workflowTaskPermissionForbiddenResponse(
         'You do not have permission to view workflow tasks.'
       );
+    }
+
+    const projectId = await resolveCrmProjectIdBySlug(
+      auth.context.supabase,
+      auth.context.organizationId,
+      slug
+    );
+    if (projectId == null) {
+      return NextResponse.json({ error: 'not_found', message: 'Project not found' }, { status: 404 });
+    }
+    const canAccessProject = await memberCanAccessProjectIdForViewer(
+      auth.context.supabase,
+      auth.context.organizationId,
+      auth.context.user.id,
+      projectId
+    );
+    if (!canAccessProject) {
+      return NextResponse.json({ error: 'not_found', message: 'Project not found' }, { status: 404 });
     }
 
     const tasks = await listCrmWorkflowTasksForOrg(

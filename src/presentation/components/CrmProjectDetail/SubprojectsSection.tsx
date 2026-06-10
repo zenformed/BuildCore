@@ -50,6 +50,13 @@ export function SubprojectsSection(): ReactElement | null {
     () => filterSubprojects(childSummaries?.allRows ?? [], searchQuery),
     [childSummaries?.allRows, searchQuery]
   );
+  const allSubprojectCount = childSummaries?.allRows.length ?? 0;
+  const subprojectsEmptyMessage =
+    isMemberRole && allSubprojectCount === 0
+      ? copy.emptyMemberNoAssignments
+      : allSubprojectCount > 0 && rows.length === 0 && searchQuery.trim().length > 0
+        ? content.crm.table.empty
+        : copy.empty;
 
   const {
     pendingDeleteProject,
@@ -160,7 +167,7 @@ export function SubprojectsSection(): ReactElement | null {
               onRequestCompletionChange={requestCompletionChange}
               showActions={!isMemberRole}
               projectColumnLabel={copy.projectColumn}
-              emptyMessage={copy.empty}
+              emptyMessage={subprojectsEmptyMessage}
               onRowClick={(child) => router.push(routes.subproject(child.slug))}
             />
           </div>

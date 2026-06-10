@@ -1,3 +1,4 @@
+import { maskEmailForMemberDisplay } from '@/domain/buildcore/maskEmailForMemberDisplay';
 import { CRM_TRADE_TYPES, getPipelineStage, type CrmTradeType, type PipelineStageSlug } from '@/domain/crm';
 
 /** Display labels for `CrmProjectSummary.tradeType` (not client industry/type). */
@@ -32,6 +33,18 @@ export function formatPhoneDisplay(phone: string): string {
   }
   if (digits.length === 11 && digits.startsWith('1')) {
     return `${digits.slice(1, 4)}-${digits.slice(4, 7)}-${digits.slice(7)}`;
+  }
+  return trimmed;
+}
+
+export function formatContactEmailDisplay(
+  email: string,
+  options?: { maskForMember?: boolean }
+): string {
+  const trimmed = email.trim();
+  if (!trimmed) return '';
+  if (options?.maskForMember) {
+    return maskEmailForMemberDisplay(trimmed);
   }
   return trimmed;
 }

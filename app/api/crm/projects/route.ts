@@ -8,6 +8,7 @@ import { requireCrmApiAuth } from '@/infrastructure/crm/server/crmApiRouteAuth';
 import { requireBuildCoreProjectManagementAccess } from '@/infrastructure/crm/server/buildCoreProjectManagementAccess';
 import { createCrmProjectForOrg } from '@/infrastructure/crm/server/crmCreateService';
 import { listCrmProjectSummariesForOrg } from '@/infrastructure/crm/server/crmReadService';
+import { scopeCrmProjectSummariesForViewer } from '@/infrastructure/crm/server/crmMemberProjectVisibilityService';
 import {
   validateCreateCrmProjectBody,
   type CreateCrmProjectBody,
@@ -22,10 +23,15 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   const includeSubprojects = request.nextUrl.searchParams.get('includeSubprojects') === '1';
 
   try {
-    const projects = await listCrmProjectSummariesForOrg(
+    const projects = await scopeCrmProjectSummariesForViewer(
       auth.context.supabase,
       auth.context.organizationId,
-      { rootsOnly: !includeSubprojects }
+      auth.context.user.id,
+      await listCrmProjectSummariesForOrg(
+        auth.context.supabase,
+        auth.context.organizationId,
+        { rootsOnly: !includeSubprojects }
+      )
     );
     return NextResponse.json({
       projects,

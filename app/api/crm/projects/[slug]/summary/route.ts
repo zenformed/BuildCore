@@ -5,6 +5,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireCrmApiAuth } from '@/infrastructure/crm/server/crmApiRouteAuth';
 import { getCrmProjectSummaryBySlugForOrg } from '@/infrastructure/crm/server/crmReadService';
+import { scopeCrmProjectSummaryForViewer } from '@/infrastructure/crm/server/crmMemberProjectVisibilityService';
 
 export const dynamic = 'force-dynamic';
 
@@ -23,10 +24,19 @@ export async function GET(
   }
 
   try {
-    const summary = await getCrmProjectSummaryBySlugForOrg(
+    const loaded = await getCrmProjectSummaryBySlugForOrg(
       auth.context.supabase,
       auth.context.organizationId,
       slug
+    );
+    if (loaded == null) {
+      return NextResponse.json({ error: 'not_found', message: 'Project not found' }, { status: 404 });
+    }
+    const summary = await scopeCrmProjectSummaryForViewer(
+      auth.context.supabase,
+      auth.context.organizationId,
+      auth.context.user.id,
+      loaded
     );
     if (summary == null) {
       return NextResponse.json({ error: 'not_found', message: 'Project not found' }, { status: 404 });

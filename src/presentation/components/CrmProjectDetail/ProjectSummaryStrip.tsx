@@ -6,6 +6,7 @@ import { projectHasPaymentMilestones, type CrmProjectDetail } from '@/domain/crm
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
 import {
   formatCentsAsUsd,
+  formatContactEmailDisplay,
   formatPhoneDisplay,
 } from '@/presentation/features/crmProjects/crmProjectFormatters';
 import type { SummaryEditableField } from '@/presentation/features/crmProjectDetail/projectDetailFormModel';
@@ -178,6 +179,7 @@ export function ProjectSummaryStrip({
   const hasPaymentMilestones = projectHasPaymentMilestones(project);
   const isSubproject = summary.parentProjectId != null;
   const valueLabel = isSubproject ? fields.subValue : fields.value;
+  const displayEmail = formatContactEmailDisplay(summary.contact.email, { maskForMember: memberView });
 
   return (
     <section className={styles.summaryStrip} aria-label="Project summary">
@@ -202,6 +204,7 @@ export function ProjectSummaryStrip({
           fieldKey="email"
           label={fields.email}
           value={summary.contact.email}
+          displayValue={displayEmail}
           savingField={savingField}
           disabled={readOnly}
           inputType="email"

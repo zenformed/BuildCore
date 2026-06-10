@@ -256,6 +256,7 @@ export const buildCoreDashboardContent = {
       completionCheckAriaLabel: 'Project complete',
       priorityMarkAriaLabel: 'Priority project',
       empty: 'No projects match your search or filters.',
+      emptyMemberNoAssignments: "You don't have any tasks assigned to you yet.",
       unassigned: 'Unassigned',
       expandSubprojects: 'Show subprojects',
       collapseSubprojects: 'Hide subprojects',
@@ -544,6 +545,7 @@ export const buildCoreDashboardContent = {
       newSubprojectAriaLabel: 'New subproject',
       projectColumn: 'Subproject',
       empty: 'No subprojects yet.',
+      emptyMemberNoAssignments: "You don't have any subprojects assigned to you yet.",
       delete: {
         action: 'Delete subproject',
         actionAriaLabel: (name: string): string => `Delete subproject ${name}`,

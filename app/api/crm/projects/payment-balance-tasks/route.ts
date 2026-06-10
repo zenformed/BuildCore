@@ -5,6 +5,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireCrmApiAuth } from '@/infrastructure/crm/server/crmApiRouteAuth';
 import { listPaymentBalanceTasksByOrg } from '@/infrastructure/crm/server/crmReadService';
+import { scopeProjectKeyedMapForViewer } from '@/infrastructure/crm/server/crmMemberProjectVisibilityService';
 
 export const dynamic = 'force-dynamic';
 
@@ -13,9 +14,14 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   if (!auth.ok) return auth.response;
 
   try {
-    const byProjectId = await listPaymentBalanceTasksByOrg(
+    const byProjectId = await scopeProjectKeyedMapForViewer(
       auth.context.supabase,
-      auth.context.organizationId
+      auth.context.organizationId,
+      auth.context.user.id,
+      await listPaymentBalanceTasksByOrg(
+        auth.context.supabase,
+        auth.context.organizationId
+      )
     );
     const serialized = Object.fromEntries(byProjectId.entries());
     return NextResponse.json({ byProjectId: serialized });
