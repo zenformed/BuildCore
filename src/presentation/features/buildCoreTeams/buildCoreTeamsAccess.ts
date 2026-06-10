@@ -17,11 +17,9 @@ export function organizationRoleCanAccessBuildCoreTeams(
 
 /**
  * Whether the signed-in user may open BuildCore Teams (nav + /teams).
- * Prefer Core `canViewTeamMembers`; fall back to org role when permissions are absent.
+ * Uses org membership role only — not `canViewTeamMembers`, which also allows
+ * read-only access to the organization settings team list.
  */
 export function canAccessBuildCoreTeams(input: BuildCoreTeamsAccessInput): boolean {
-  if (input.permissions != null) {
-    return input.permissions.canViewTeamMembers;
-  }
   return organizationRoleCanAccessBuildCoreTeams(input.role);
 }

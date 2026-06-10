@@ -6,6 +6,7 @@ import {
   deleteOrganizationLogo,
   getOrganizationLogoBytes,
 } from '@/infrastructure/coreApi/organizationBrandingClient';
+import { requireOrganizationPermission } from '@/infrastructure/organization/organizationPermissionEnforcement';
 
 /**
  * GET /api/branding/logo
@@ -47,6 +48,13 @@ export async function DELETE(request: NextRequest): Promise<NextResponse> {
     const token = readRequestBearerToken(request);
     if (token == null) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    const permission = await requireOrganizationPermission(token, 'canEditOrganizationProfile');
+    if (!permission.ok) {
+      return NextResponse.json(
+        { error: 'forbidden', message: 'You do not have permission to edit organization settings.' },
+        { status: 403 }
+      );
     }
     const result = await deleteOrganizationLogo(token);
     if (!result.ok) {

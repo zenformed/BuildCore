@@ -28,7 +28,7 @@ export async function PATCH(
   return relayOrganizationMutate(
     request,
     (token) => patchOrganizationMemberProfile(token, memberId, payload),
-    { rejectedError: 'member_profile_update_rejected' }
+    { rejectedError: 'member_profile_update_rejected', requiredPermission: 'canManageMemberProfiles' }
   );
 }
 
@@ -40,6 +40,6 @@ export async function DELETE(
   return relayOrganizationMutate(
     request,
     (token) => deleteOrganizationMember(token, memberId),
-    { rejectedError: 'member_remove_rejected' }
+    { rejectedError: 'member_remove_rejected', requiredPermission: 'canRemoveMembers' }
   );
 }

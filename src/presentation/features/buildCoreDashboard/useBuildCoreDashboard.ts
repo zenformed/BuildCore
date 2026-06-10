@@ -14,7 +14,7 @@ import { buildCoreDashboardContent as content } from '@/platform/content/buildCo
 import { useSaaSProfile } from '@/presentation/hooks/useSaaSProfile';
 import { useUserAvatar } from '@/presentation/hooks/useUserAvatar';
 import { useTenant } from '@/presentation/providers';
-import { computeIsAdmin } from '@/presentation/features/buildCoreDashboard/buildCoreDashboardViewModel';
+import { EMPTY_ORGANIZATION_PERMISSIONS } from '@zenformed/core/organization-settings';
 import { canAccessBuildCoreTeams } from '@/presentation/features/buildCoreTeams/buildCoreTeamsAccess';
 import { canAccessBuildCoreReports } from '@/presentation/features/crmReports/buildCoreReportsAccess';
 import { formatOrganizationRoleLabel } from '@zenformed/core/dashboard-shell';
@@ -38,6 +38,7 @@ export function useBuildCoreDashboard(): {
   canAccessBuildCoreTeams: boolean;
   canAccessBuildCoreReports: boolean;
   isAdmin: boolean;
+  canEditOrganizationProfile: boolean;
   avatarUrl: string | null;
   avatarLoading: boolean;
   refetchAvatar: () => Promise<void>;
@@ -105,7 +106,10 @@ export function useBuildCoreDashboard(): {
 
   const effectiveLicenseTier = entitlementSnapshot?.licenseTier ?? saasProfile?.license_tier;
   const organizationRoleLabel = formatOrganizationRoleLabel(organizationMembershipContext?.role);
-  const isAdmin = computeIsAdmin(env.isSaasMode, user);
+  const organizationPermissions =
+    organizationMembershipContext?.permissions ?? EMPTY_ORGANIZATION_PERMISSIONS;
+  const canEditOrganizationProfile = organizationPermissions.canEditOrganizationProfile;
+  const isAdmin = env.isSaasMode ? Boolean(user) : false;
 
   const canAccessBuildCoreTeamsNav = useMemo(() => {
     if (!env.isSaasMode || runtimeModes.useMockAuth()) {
@@ -156,6 +160,7 @@ export function useBuildCoreDashboard(): {
       canAccessBuildCoreTeams: canAccessBuildCoreTeamsNav,
       canAccessBuildCoreReports: canAccessBuildCoreReportsNav,
       isAdmin,
+      canEditOrganizationProfile,
       avatarUrl,
       avatarLoading,
       refetchAvatar,
@@ -193,6 +198,7 @@ export function useBuildCoreDashboard(): {
       hasLogo,
       headerLogoFileInputRef,
       isAdmin,
+      canEditOrganizationProfile,
       logoUploading,
       logoUrl,
       onProjectRowClick,

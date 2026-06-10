@@ -54,8 +54,11 @@ export async function POST(request: NextRequest) {
 
     (token) => postOrganizationInvite(token, payload),
 
-    { rejectedError: 'invite_create_rejected', successStatus: 201 }
-
+    {
+      rejectedError: 'invite_create_rejected',
+      successStatus: 201,
+      requiredPermission: 'canInviteMembers',
+    }
   );
 
 }

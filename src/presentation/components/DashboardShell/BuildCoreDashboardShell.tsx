@@ -76,7 +76,7 @@ export function BuildCoreDashboardShell({
               logoUrl={dash.logoUrl}
               brandingLoading={dash.brandingLoading}
               logoUploading={dash.logoUploading}
-              showCameraButton={dash.isAdmin}
+              showCameraButton={dash.canEditOrganizationProfile}
               fileInputRef={dash.headerLogoFileInputRef}
               onLogoFileChange={(e) => {
                 void dash.handleLogoFileChange(e);

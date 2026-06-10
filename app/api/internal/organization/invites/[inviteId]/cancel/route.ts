@@ -10,7 +10,7 @@ export async function PATCH(
   return relayOrganizationMutate(
     request,
     (token) => cancelOrganizationInvite(token, inviteId),
-    { rejectedError: 'invite_cancel_rejected' }
+    { rejectedError: 'invite_cancel_rejected', requiredPermission: 'canCancelInvites' }
   );
 }
 

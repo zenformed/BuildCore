@@ -4,6 +4,8 @@ import { coreUpstreamHttpResponsePayload } from '@/infrastructure/coreApi/zenfor
 import type { CoreApiResult } from '@/infrastructure/coreApi/types';
 import { runtimeModes } from '@/infrastructure/config/runtimeModes';
 import { getSupabaseUserFromToken } from '@/infrastructure/supabase/supabaseServer';
+import type { OrganizationPermissions } from '@zenformed/core/organization-settings';
+import { requireOrganizationPermission } from '@/infrastructure/organization/organizationPermissionEnforcement';
 
 export function readBearer(request: NextRequest): string | null {
   const authHeader = request.headers.get('Authorization');
@@ -130,7 +132,11 @@ export async function relayOrganizationGet<T extends Record<string, unknown>>(
 export async function relayOrganizationMutate<T extends Record<string, unknown>>(
   request: NextRequest,
   mutateCore: (token: string) => Promise<CoreApiResult<T>>,
-  options?: { rejectedError?: string; successStatus?: number }
+  options?: {
+    rejectedError?: string;
+    successStatus?: number;
+    requiredPermission?: keyof OrganizationPermissions;
+  }
 ): Promise<NextResponse> {
   if (!runtimeModes.isSaasMode() || runtimeModes.useMockAuth()) {
     return NextResponse.json(
@@ -153,6 +159,16 @@ export async function relayOrganizationMutate<T extends Record<string, unknown>>
       relay: 'client_supabase_deprecated',
       reason: 'core_unconfigured',
     });
+  }
+
+  if (options?.requiredPermission != null) {
+    const permission = await requireOrganizationPermission(raw, options.requiredPermission);
+    if (!permission.ok) {
+      return NextResponse.json(
+        { error: 'forbidden', message: 'You do not have permission to perform this action.' },
+        { status: 403 }
+      );
+    }
   }
 
   const result = await mutateCore(raw);

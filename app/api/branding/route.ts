@@ -10,6 +10,10 @@ import {
   patchOrganizationBrandingDisplayName,
   putOrganizationLogoRaw,
 } from '@/infrastructure/coreApi/organizationBrandingClient';
+import {
+  fetchAuthoritativeMembershipContext,
+  requireOrganizationPermission,
+} from '@/infrastructure/organization/organizationPermissionEnforcement';
 
 const MANIFEST_DEFAULT_NAME = buildcoreAppDefinition.displayName;
 
@@ -39,7 +43,14 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       }
       return NextResponse.json({ error: 'branding_unavailable' }, { status: 502 });
     }
-    return NextResponse.json(mapCoreBrandingToAppApi(result.data));
+    const membership = await fetchAuthoritativeMembershipContext(token);
+    const canEditOrganizationProfile = membership.ok
+      ? membership.data.permissions.canEditOrganizationProfile
+      : false;
+    return NextResponse.json({
+      ...mapCoreBrandingToAppApi(result.data),
+      canEditOrganizationProfile,
+    });
   }
 
   return NextResponse.json(manifestBrandingFallback());
@@ -55,6 +66,13 @@ export async function PATCH(request: NextRequest): Promise<NextResponse> {
   const token = readRequestBearerToken(request);
   if (token == null) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+  const permission = await requireOrganizationPermission(token, 'canEditOrganizationProfile');
+  if (!permission.ok) {
+    return NextResponse.json(
+      { error: 'forbidden', message: 'You do not have permission to edit organization settings.' },
+      { status: 403 }
+    );
   }
   let body: Record<string, unknown>;
   try {
@@ -137,6 +155,13 @@ export async function POST(request: Request): Promise<NextResponse> {
       const logo = formData.get('logo') as File | null;
 
       if (coreBranding && token != null) {
+        const permission = await requireOrganizationPermission(token, 'canEditOrganizationProfile');
+        if (!permission.ok) {
+          return NextResponse.json(
+            { error: 'forbidden', message: 'You do not have permission to edit organization settings.' },
+            { status: 403 }
+          );
+        }
         if (typeof shopName === 'string' && shopName.trim()) {
           const patch = await patchOrganizationBrandingDisplayName(token, shopName.trim());
           if (!patch.ok) {
@@ -173,6 +198,13 @@ export async function POST(request: Request): Promise<NextResponse> {
     const body = await request.json().catch(() => ({}));
     const shopName = body.shopName;
     if (typeof shopName === 'string' && coreBranding && token != null) {
+      const permission = await requireOrganizationPermission(token, 'canEditOrganizationProfile');
+      if (!permission.ok) {
+        return NextResponse.json(
+          { error: 'forbidden', message: 'You do not have permission to edit organization settings.' },
+          { status: 403 }
+        );
+      }
       const patch = await patchOrganizationBrandingDisplayName(
         token,
         shopName.trim() || MANIFEST_DEFAULT_NAME

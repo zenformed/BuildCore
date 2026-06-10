@@ -90,6 +90,8 @@ export function BuildCoreSettingsDrawer({
     [userSettings.settings, orgBranding.profile, orgWorkspace.snapshot]
   );
 
+  const canEditOrganizationProfile = orgBranding.profile?.canEditOrganizationProfile === true;
+
   const persistence = useMemo((): OrganizationSettingsPersistence => ({
     permissions: workspacePermissions,
     isLoading: userSettings.isLoading || orgWorkspace.isLoading,
@@ -105,14 +107,18 @@ export function BuildCoreSettingsDrawer({
       isLoading: orgBranding.isLoading,
       loadError: orgBranding.loadError,
       hasLiveData: orgBranding.hasLiveData,
-      canEditOrganizationProfile: orgBranding.profile?.canEditOrganizationProfile ?? false,
+      canEditOrganizationProfile,
       profileSaveStatus: orgBranding.profileSaveStatus,
       saveErrorMessage: orgBranding.saveErrorMessage,
       logoUploading: logoUpload.logoUploading,
-      onSaveOrganizationProfile: orgBranding.saveOrganizationProfile,
-      onUploadLogoClick: () => logoUpload.headerLogoFileInputRef.current?.click(),
-      logoInputRef: logoUpload.headerLogoFileInputRef,
-      onLogoFileChange: logoUpload.handleLogoFileChange,
+      onSaveOrganizationProfile: canEditOrganizationProfile
+        ? orgBranding.saveOrganizationProfile
+        : undefined,
+      onUploadLogoClick: canEditOrganizationProfile
+        ? () => logoUpload.headerLogoFileInputRef.current?.click()
+        : undefined,
+      logoInputRef: canEditOrganizationProfile ? logoUpload.headerLogoFileInputRef : undefined,
+      onLogoFileChange: canEditOrganizationProfile ? logoUpload.handleLogoFileChange : undefined,
     },
     workspace: {
       isLoading: orgWorkspace.isLoading,
@@ -157,7 +163,7 @@ export function BuildCoreSettingsDrawer({
     orgBranding.isLoading,
     orgBranding.loadError,
     orgBranding.hasLiveData,
-    orgBranding.profile?.canEditOrganizationProfile,
+    canEditOrganizationProfile,
     orgBranding.profileSaveStatus,
     orgBranding.saveErrorMessage,
     orgBranding.saveOrganizationProfile,

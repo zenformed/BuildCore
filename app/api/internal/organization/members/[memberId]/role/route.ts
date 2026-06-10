@@ -25,6 +25,6 @@ export async function PATCH(
   return relayOrganizationMutate(
     request,
     (token) => patchOrganizationMemberRole(token, memberId, payload),
-    { rejectedError: 'member_role_update_rejected' }
+    { rejectedError: 'member_role_update_rejected', requiredPermission: 'canManageMemberRoles' }
   );
 }
