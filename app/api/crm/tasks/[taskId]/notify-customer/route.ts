@@ -1,5 +1,5 @@
 /**
- * POST /api/crm/tasks/[taskId]/notify-customer — email the project customer about a workflow task assignment.
+ * POST /api/crm/tasks/[taskId]/notify-customer — relay to ZenformedCore (token + email on Core).
  */
 
 import { NextRequest, NextResponse } from 'next/server';
@@ -38,7 +38,9 @@ export async function POST(
   }
 
   const token = auth.context.authHeader.slice('Bearer '.length).trim();
-  const result = await postBuildCoreWorkflowTaskNotifyCustomer(token, taskId);
+  const result = await postBuildCoreWorkflowTaskNotifyCustomer(token, taskId, {
+    portalBaseUrl: env.appUrl || undefined,
+  });
 
   if (!result.ok) {
     if (result.error.kind === 'http_error') {

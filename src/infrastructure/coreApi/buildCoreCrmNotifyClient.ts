@@ -33,7 +33,8 @@ function parseNotifyCustomerJson(body: unknown): BuildCoreWorkflowTaskNotifyCust
 /** `POST /apps/buildcore/crm/workflow-tasks/:taskId/notify-customer` on ZenformedCore */
 export async function postBuildCoreWorkflowTaskNotifyCustomer(
   accessToken: string,
-  taskId: string
+  taskId: string,
+  body?: { readonly portalBaseUrl?: string }
 ): Promise<CoreApiResult<BuildCoreWorkflowTaskNotifyCustomerResponse>> {
   const encoded = encodeURIComponent(taskId);
   const path = `/apps/buildcore/crm/workflow-tasks/${encoded}/notify-customer`;
@@ -51,7 +52,7 @@ export async function postBuildCoreWorkflowTaskNotifyCustomer(
         Authorization: `Bearer ${accessToken}`,
         'Content-Type': 'application/json',
       },
-      body: '{}',
+      body: JSON.stringify(body ?? {}),
     });
     let json: unknown;
     try {
