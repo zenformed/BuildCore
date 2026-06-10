@@ -19,7 +19,7 @@ export async function GET(
         taskTitle: '',
         taskInstructions: null,
         canSubmit: false,
-        uploadedFileNames: [],
+        uploadedFiles: [],
       },
     });
   }

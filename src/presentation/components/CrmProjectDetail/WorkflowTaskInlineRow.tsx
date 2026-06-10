@@ -75,6 +75,7 @@ export function WorkflowTaskInlineRow({
     onWorkflowTaskDocumentUploaded,
     onWorkflowTaskDocumentDeleted,
     requestCustomerNotifyAfterAssigneeChange,
+    syncWorkflowTaskDocuments,
   } = useProjectDetailShell();
   const dash = useBuildCoreDashboardContext();
   const assignmentCatalog = useAssignmentIdentityCatalog();
@@ -129,6 +130,11 @@ export function WorkflowTaskInlineRow({
   useEffect(() => {
     if (!editingAmount) setAmountDraft(centsToUsdInput(task.amountCents));
   }, [editingAmount, task.amountCents]);
+
+  useEffect(() => {
+    if (!isApiSource || task.status !== 'request_review' || taskDocuments.length > 0) return;
+    void syncWorkflowTaskDocuments(task.id);
+  }, [isApiSource, syncWorkflowTaskDocuments, task.id, task.status, taskDocuments.length]);
 
   const closeMenus = useCallback(() => {
     setStatusMenuOpen(false);
@@ -323,12 +329,17 @@ export function WorkflowTaskInlineRow({
 
   const effectiveDocCount = Math.max(docCount, taskDocuments.length);
   const hasDocuments = effectiveDocCount > 0;
+  const awaitingCustomerReview = task.status === 'request_review';
   const documentsLabel = hasDocuments
     ? `${effectiveDocCount} ${wf.documentsCountSuffix}`
-    : !task.documentsRequired
-      ? wf.documentsNotRequired
-      : wf.documentsNone;
-  const showDocumentsIcon = hasDocuments || task.documentsRequired;
+    : awaitingCustomerReview
+      ? wf.documentsReview
+      : !task.documentsRequired
+        ? wf.documentsNotRequired
+        : wf.documentsNone;
+  const showDocumentsIcon = hasDocuments || task.documentsRequired || awaitingCustomerReview;
+  const canOpenDocumentsMenu =
+    canView && (hasDocuments || awaitingCustomerReview || canUpload || canEdit);
 
   return (
     <div
@@ -464,11 +475,14 @@ export function WorkflowTaskInlineRow({
         <button
           type="button"
           className={`${styles.inlineCellBtn} ${styles.documentsCell}`}
-          disabled={saving || (!canUpload && !canEdit && taskDocuments.length === 0)}
+          disabled={saving || !canOpenDocumentsMenu}
           aria-expanded={documentsMenuOpen}
           onClick={() => {
             setStatusMenuOpen(false);
             setAssigneeMenuOpen(false);
+            if (isApiSource && awaitingCustomerReview && taskDocuments.length === 0) {
+              void syncWorkflowTaskDocuments(task.id);
+            }
             setDocumentsMenuOpen((open) => !open);
           }}
         >

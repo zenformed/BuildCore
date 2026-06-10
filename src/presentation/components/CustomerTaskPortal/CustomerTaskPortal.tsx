@@ -10,6 +10,11 @@ type CustomerTaskPortalProps = {
   readonly token: string;
 };
 
+type PendingFile = {
+  readonly id: string;
+  readonly file: File;
+};
+
 type PortalResponse = {
   readonly portal: CustomerTaskPortalView;
 };
@@ -18,14 +23,15 @@ export function CustomerTaskPortal({ token }: CustomerTaskPortalProps): ReactEle
   const copy = content.customerTaskPortal;
   const [portal, setPortal] = useState<CustomerTaskPortalView | null>(null);
   const [loading, setLoading] = useState(true);
-  const [responseText, setResponseText] = useState('');
-  const [uploading, setUploading] = useState(false);
+  const [pendingFiles, setPendingFiles] = useState<readonly PendingFile[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [dragOver, setDragOver] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const loadPortal = useCallback(async (): Promise<void> => {
-    setLoading(true);
+  const loadPortal = useCallback(async (options?: { silent?: boolean }): Promise<void> => {
+    if (!options?.silent) {
+      setLoading(true);
+    }
     setError(null);
     try {
       const response = await fetch(`/api/customer-task/${encodeURIComponent(token)}`, {
@@ -34,9 +40,11 @@ export function CustomerTaskPortal({ token }: CustomerTaskPortalProps): ReactEle
       const data = (await response.json()) as PortalResponse;
       setPortal(data.portal);
     } catch {
-      setPortal({ state: 'invalid', organizationName: '', projectName: '', taskTitle: '', taskInstructions: null, canSubmit: false, uploadedFileNames: [] });
+      setPortal({ state: 'invalid', organizationName: '', projectName: '', taskTitle: '', taskInstructions: null, canSubmit: false, uploadedFiles: [] });
     } finally {
-      setLoading(false);
+      if (!options?.silent) {
+        setLoading(false);
+      }
     }
   }, [token]);
 
@@ -44,36 +52,20 @@ export function CustomerTaskPortal({ token }: CustomerTaskPortalProps): ReactEle
     void loadPortal();
   }, [loadPortal]);
 
-  const uploadFiles = async (files: FileList | File[]): Promise<void> => {
+  const addFiles = (files: FileList | File[]): void => {
     const list = Array.from(files);
-    if (list.length === 0 || !portal?.canSubmit) return;
+    if (list.length === 0 || !portal?.canSubmit || submitting) return;
 
-    setUploading(true);
     setError(null);
-    try {
-      for (const file of list) {
-        const formData = new FormData();
-        formData.append('file', file);
-        const response = await fetch(`/api/customer-task/${encodeURIComponent(token)}/documents`, {
-          method: 'POST',
-          body: formData,
-        });
-        if (!response.ok) {
-          const body = (await response.json()) as { message?: string };
-          throw new Error(body.message ?? copy.uploadError);
-        }
-      }
-      await loadPortal();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : copy.uploadError);
-    } finally {
-      setUploading(false);
-    }
+    setPendingFiles((current) => [
+      ...current,
+      ...list.map((file) => ({ id: crypto.randomUUID(), file })),
+    ]);
   };
 
   const handleFileInput = (event: ChangeEvent<HTMLInputElement>): void => {
     if (event.target.files != null) {
-      void uploadFiles(event.target.files);
+      addFiles(event.target.files);
       event.target.value = '';
     }
   };
@@ -82,7 +74,25 @@ export function CustomerTaskPortal({ token }: CustomerTaskPortalProps): ReactEle
     event.preventDefault();
     setDragOver(false);
     if (event.dataTransfer.files.length > 0) {
-      void uploadFiles(event.dataTransfer.files);
+      addFiles(event.dataTransfer.files);
+    }
+  };
+
+  const handleRemovePendingFile = (pendingFileId: string): void => {
+    if (submitting) return;
+    setPendingFiles((current) => current.filter((item) => item.id !== pendingFileId));
+  };
+
+  const uploadPendingFile = async (file: File): Promise<void> => {
+    const formData = new FormData();
+    formData.append('file', file);
+    const response = await fetch(`/api/customer-task/${encodeURIComponent(token)}/documents`, {
+      method: 'POST',
+      body: formData,
+    });
+    if (!response.ok) {
+      const body = (await response.json()) as { message?: string };
+      throw new Error(body.message ?? copy.uploadError);
     }
   };
 
@@ -90,16 +100,24 @@ export function CustomerTaskPortal({ token }: CustomerTaskPortalProps): ReactEle
     if (!portal?.canSubmit || submitting) return;
     setSubmitting(true);
     setError(null);
+    const queue = [...pendingFiles];
     try {
+      for (const item of queue) {
+        await uploadPendingFile(item.file);
+        setPendingFiles((current) => current.filter((pending) => pending.id !== item.id));
+      }
+
       const response = await fetch(`/api/customer-task/${encodeURIComponent(token)}/submit`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ responseText }),
+        body: JSON.stringify({ responseText: null }),
       });
       if (!response.ok) {
         const body = (await response.json()) as { message?: string };
         throw new Error(body.message ?? copy.submitError);
       }
+
+      setPendingFiles([]);
       await loadPortal();
     } catch (err) {
       setError(err instanceof Error ? err.message : copy.submitError);
@@ -187,39 +205,39 @@ export function CustomerTaskPortal({ token }: CustomerTaskPortalProps): ReactEle
               className={styles.fileInput}
               type="file"
               multiple
-              disabled={uploading || submitting}
+              disabled={submitting}
               onChange={handleFileInput}
             />
-            <span className={styles.uploadButton}>{uploading ? copy.submitting : copy.chooseFiles}</span>
+            <span className={styles.uploadButton}>{copy.chooseFiles}</span>
           </label>
         </div>
 
-        {portal.uploadedFileNames.length > 0 ? (
+        {pendingFiles.length > 0 ? (
           <div>
-            <span className={styles.metaLabel}>{copy.uploadedFiles}</span>
+            <span className={styles.metaLabel}>{copy.selectedFiles}</span>
             <ul className={styles.uploadedList}>
-              {portal.uploadedFileNames.map((fileName) => (
-                <li key={fileName}>{fileName}</li>
+              {pendingFiles.map((item) => (
+                <li key={item.id} className={styles.uploadedItem}>
+                  <span className={styles.uploadedFileName}>{item.file.name}</span>
+                  <button
+                    type="button"
+                    className={styles.removeFileButton}
+                    aria-label={`${copy.removeFile}: ${item.file.name}`}
+                    disabled={submitting}
+                    onClick={() => handleRemovePendingFile(item.id)}
+                  >
+                    ×
+                  </button>
+                </li>
               ))}
             </ul>
           </div>
         ) : null}
 
-        <label className={styles.field}>
-          <span className={styles.metaLabel}>{copy.responseLabel}</span>
-          <textarea
-            className={styles.textarea}
-            value={responseText}
-            disabled={submitting}
-            placeholder={copy.responsePlaceholder}
-            onChange={(event) => setResponseText(event.target.value)}
-          />
-        </label>
-
         <button
           type="button"
           className={styles.submitButton}
-          disabled={submitting || uploading}
+          disabled={submitting}
           onClick={() => void handleSubmit()}
         >
           {submitting ? copy.submitting : copy.submit}

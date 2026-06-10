@@ -3,6 +3,7 @@
 import { useCallback, type Dispatch, type SetStateAction } from 'react';
 import type { CrmDocumentMetadata, CrmProjectDetail, CrmWorkflowTask } from '@/domain/crm';
 import { listCrmWorkflowTasksByProject } from '@/application/use-cases/crm/listCrmWorkflowTasksByProject';
+import { getCrmProjectDetailBySlug } from '@/application/use-cases/crm/getCrmProjectDetailBySlug';
 import { listWorkflowTaskDocuments } from '@/application/use-cases/crm/listWorkflowTaskDocuments';
 import { crmRepositories } from '@/shared/di/container';
 import {
@@ -27,11 +28,17 @@ export function useWorkflowTasksSection(
   syncWorkflowTaskDocuments: (taskId: string) => Promise<void>;
 } {
   const refreshWorkflowTasks = useCallback(async () => {
-    const workflowTasks = await listCrmWorkflowTasksByProject(crmRepositories, {
-      projectId: project.summary.id,
-      projectSlug: project.summary.slug,
-    });
-    setProject((prev) => applyWorkflowTasksToProject(prev, workflowTasks));
+    const [workflowTasks, detail] = await Promise.all([
+      listCrmWorkflowTasksByProject(crmRepositories, {
+        projectId: project.summary.id,
+        projectSlug: project.summary.slug,
+      }),
+      getCrmProjectDetailBySlug(crmRepositories, project.summary.slug),
+    ]);
+    setProject((prev) => ({
+      ...applyWorkflowTasksToProject(prev, workflowTasks),
+      documents: detail?.documents ?? prev.documents,
+    }));
   }, [project.summary.id, project.summary.slug, setProject]);
 
   const onWorkflowTaskPatched = useCallback(

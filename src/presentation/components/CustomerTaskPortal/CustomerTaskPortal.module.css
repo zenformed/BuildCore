@@ -58,15 +58,20 @@
 .uploadZone {
   margin-bottom: 1rem;
   padding: 1.25rem;
-  border: 1px dashed var(--theme-border-main, #cbd5e1);
+  border: 1px dashed var(--theme-form-input-border, var(--theme-border-main, #cbd5e1));
   border-radius: 0.625rem;
-  background: color-mix(in srgb, var(--color-primary, #2563eb) 4%, #ffffff);
+  background: var(--theme-form-input-bg, var(--theme-surface-elevated, #ffffff));
+  color: var(--theme-form-input-text, var(--color-text));
   text-align: center;
 }
 
 .uploadZone_dragOver {
   border-color: var(--color-primary, #2563eb);
-  background: color-mix(in srgb, var(--color-primary, #2563eb) 8%, #ffffff);
+  background: color-mix(
+    in srgb,
+    var(--color-primary, #2563eb) 12%,
+    var(--theme-form-input-bg, var(--theme-surface-elevated, #ffffff))
+  );
 }
 
 .uploadHint {
@@ -99,8 +104,47 @@
 
 .uploadedList {
   margin: 0 0 1rem;
-  padding-left: 1.125rem;
+  padding: 0;
+  list-style: none;
   color: var(--color-text, #0f172a);
+}
+
+.uploadedItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.375rem 0;
+}
+
+.uploadedFileName {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.removeFileButton {
+  flex-shrink: 0;
+  width: 1.75rem;
+  height: 1.75rem;
+  border: 1px solid var(--theme-form-input-border, var(--theme-border-main, #cbd5e1));
+  border-radius: 999px;
+  background: transparent;
+  color: var(--color-text-muted, #64748b);
+  font-size: 1.125rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.removeFileButton:hover:not(:disabled) {
+  color: var(--color-danger, #dc2626);
+  border-color: var(--color-danger, #dc2626);
+}
+
+.removeFileButton:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
 }
 
 .field {

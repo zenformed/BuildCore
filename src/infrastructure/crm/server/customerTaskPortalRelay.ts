@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import {
   customerTaskPortalCoreErrorMessage,
+  deleteBuildCoreCustomerTaskPortalDocumentFromCore,
   getBuildCoreCustomerTaskPortalFromCore,
   submitBuildCoreCustomerTaskPortalToCore,
   uploadBuildCoreCustomerTaskPortalDocumentToCore,
@@ -59,7 +60,7 @@ export async function relayCustomerTaskPortalView(token: string): Promise<NextRe
               taskTitle: '',
               taskInstructions: null,
               canSubmit: false,
-              uploadedFileNames: [],
+              uploadedFiles: [],
             }
           : {
               state: 'invalid',
@@ -68,7 +69,7 @@ export async function relayCustomerTaskPortalView(token: string): Promise<NextRe
               taskTitle: '',
               taskInstructions: null,
               canSubmit: false,
-              uploadedFileNames: [],
+              uploadedFiles: [],
             };
       if (mapped.status === 404) {
         return NextResponse.json({ portal });
@@ -97,6 +98,25 @@ export async function relayCustomerTaskPortalUpload(token: string, file: File): 
     );
   }
   return NextResponse.json(result.data, { status: 201 });
+}
+
+export async function relayCustomerTaskPortalDocumentDelete(
+  token: string,
+  documentId: string
+): Promise<NextResponse> {
+  const result = await deleteBuildCoreCustomerTaskPortalDocumentFromCore(token, documentId);
+  if (!result.ok) {
+    if (result.error.kind === 'unconfigured') return coreUnavailable();
+    if (result.error.kind === 'http_error') {
+      const mapped = extractCoreErrorBody(result.error);
+      return NextResponse.json({ error: mapped.code, message: mapped.message }, { status: mapped.status });
+    }
+    return NextResponse.json(
+      { error: 'server_error', message: customerTaskPortalCoreErrorMessage(result.error) },
+      { status: 502 }
+    );
+  }
+  return NextResponse.json({ ok: true });
 }
 
 export async function relayCustomerTaskPortalSubmit(

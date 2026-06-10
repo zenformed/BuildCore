@@ -85,6 +85,35 @@ export async function uploadBuildCoreCustomerTaskPortalDocumentToCore(
   }
 }
 
+export async function deleteBuildCoreCustomerTaskPortalDocumentFromCore(
+  token: string,
+  documentId: string
+): Promise<CoreApiResult<{ ok: true }>> {
+  const url = coreUrl(
+    `/apps/${encodeURIComponent(APP_SLUG)}/customer-task/${encodeURIComponent(token)}/documents/${encodeURIComponent(documentId)}`
+  );
+  if (url == null) return { ok: false, error: { kind: 'unconfigured' } };
+
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), DEFAULT_TIMEOUT_MS);
+  try {
+    const res = await fetch(url, {
+      method: 'DELETE',
+      signal: controller.signal,
+      headers: { Accept: 'application/json' },
+    });
+    const json = (await res.json()) as { ok?: boolean; message?: string };
+    if (!res.ok) return { ok: false, error: mapHttpError(res, json) };
+    return { ok: true, data: { ok: true } };
+  } catch (e) {
+    const aborted = e instanceof Error && e.name === 'AbortError';
+    if (aborted) return { ok: false, error: { kind: 'timeout' } };
+    return { ok: false, error: { kind: 'network', message: e instanceof Error ? e.message : String(e) } };
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 export async function submitBuildCoreCustomerTaskPortalToCore(
   token: string,
   responseText: string | null

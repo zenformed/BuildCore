@@ -1,0 +1,22 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { relayCustomerTaskPortalDocumentDelete } from '@/infrastructure/crm/server/customerTaskPortalRelay';
+
+export const dynamic = 'force-dynamic';
+
+type RouteContext = { params: { token: string; documentId: string } };
+
+export async function DELETE(
+  _request: NextRequest,
+  context: RouteContext
+): Promise<NextResponse> {
+  const token = context.params.token?.trim();
+  const documentId = context.params.documentId?.trim();
+  if (!token || !documentId) {
+    return NextResponse.json(
+      { error: 'validation_error', message: 'Document not found.' },
+      { status: 400 }
+    );
+  }
+
+  return relayCustomerTaskPortalDocumentDelete(token, documentId);
+}
