@@ -4,10 +4,12 @@ import { useMemo, type ReactElement } from 'react';
 import { isCrmProjectComplete } from '@/domain/crm';
 import { resolveProjectDetailProgressDisplay } from '@/domain/buildcore/projectPipelineProgress';
 import { useProjectDetailShell } from '@/presentation/features/crmProjectDetail/ProjectDetailShellContext';
+import { useBuildCorePipelineStages } from '@/presentation/providers/BuildCorePipelineStagesProvider';
 import { ProjectProgressPercent } from './ProjectProgressPercent';
 
 export function ProjectDetailHeaderProgress(): ReactElement | null {
   const { project, subSlug, childSummaries, isMemberRole } = useProjectDetailShell();
+  const { catalog } = useBuildCorePipelineStages();
   const isParentOverview =
     subSlug == null && project.summary.parentProjectId == null;
   const isComplete = isCrmProjectComplete(project.summary);
@@ -29,8 +31,10 @@ export function ProjectDetailHeaderProgress(): ReactElement | null {
       currentStageSlug: project.summary.currentStageSlug,
       childStageSlugs,
       isComplete,
+      stages: catalog,
     });
   }, [
+    catalog,
     childSummaries?.allRows,
     childSummaries?.isLoading,
     isComplete,

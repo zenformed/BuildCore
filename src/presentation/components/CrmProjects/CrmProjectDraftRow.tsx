@@ -22,6 +22,7 @@ import {
 } from '@/presentation/features/crmCreate/createCrmProjectFormModel';
 import { getCrmProjectAssigneeOptions } from '@/presentation/features/crmProjects/crmProjectAssigneeOptions';
 import { CRM_TRADE_TYPE_OPTIONS, formatStageLabel } from '@/presentation/features/crmProjects/crmProjectFormatters';
+import { useBuildCorePipelineStages } from '@/presentation/providers/BuildCorePipelineStagesProvider';
 import { AssigneeMenuOptionLabel } from '@/presentation/features/crmAssignment/AssigneeMenuOptionLabel';
 import { useAssignmentIdentityCatalog } from '@/presentation/providers/AssignmentIdentityProvider';
 import { useBuildCoreDashboardContext } from '@/presentation/providers/BuildCoreDashboardProvider';
@@ -51,6 +52,7 @@ export function CrmProjectDraftRow({
   const { organizationMembershipContext } = useSaaSProfile();
   const assignmentCatalog = useAssignmentIdentityCatalog();
   const create = content.crm.create;
+  const { catalog } = useBuildCorePipelineStages();
   const templateCopy = getProjectTemplateScopeCopy('project').load;
   const isApiSource = getCrmDataSource() === 'api';
   const canManageTemplates = useMemo(
@@ -167,7 +169,7 @@ export function CrmProjectDraftRow({
             ))}
           </select>
           <span className={`${shared.stagePill} ${styles.projectMetaStagePill}`}>
-            {formatStageLabel('new-lead')}
+            {formatStageLabel(form.currentStageSlug, catalog)}
           </span>
         </span>
         <span className={draftFieldCell} role="cell">

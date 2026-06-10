@@ -12,10 +12,12 @@ import { archiveCrmProjectBySlugForOrg } from '@/infrastructure/crm/server/crmAr
 import { getCrmProjectDetailBySlugForOrg } from '@/infrastructure/crm/server/crmReadService';
 import { scopeCrmProjectDetailForViewer } from '@/infrastructure/crm/server/crmMemberProjectDetailService';
 import { updateCrmProjectBySlugForOrg } from '@/infrastructure/crm/server/crmUpdateProjectService';
+import { pipelineStageSlugSet } from '@/domain/crm';
 import {
   validateCreateCrmProjectBody,
   type CreateCrmProjectBody,
 } from '@/infrastructure/crm/server/validateCreateCrmProjectBody';
+import { loadOrganizationPipelineStageCatalog } from '@/infrastructure/crm/server/pipelineStageService';
 
 export const dynamic = 'force-dynamic';
 
@@ -92,7 +94,13 @@ export async function PATCH(
     return NextResponse.json({ error: 'invalid_body', message: 'JSON body required' }, { status: 400 });
   }
 
-  const validated = validateCreateCrmProjectBody(body);
+  const stageCatalog = await loadOrganizationPipelineStageCatalog(
+    auth.context.supabase,
+    auth.context.organizationId
+  );
+  const validated = validateCreateCrmProjectBody(body, {
+    allowedStageSlugs: pipelineStageSlugSet(stageCatalog),
+  });
   if (!validated.ok) {
     return NextResponse.json({ error: 'validation_error', message: validated.message }, { status: 400 });
   }

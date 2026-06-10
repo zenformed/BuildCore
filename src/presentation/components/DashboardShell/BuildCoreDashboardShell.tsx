@@ -68,6 +68,7 @@ export function BuildCoreDashboardShell({
             onSelect={onSidebarSelect}
             canAccessTeams={dash.canAccessBuildCoreTeams}
             canAccessReports={dash.canAccessBuildCoreReports}
+            canAccessWorkflowStages={dash.canAccessBuildCoreWorkflowStages}
           >
             <ZenformedSidebarBranding
               classNames={sidebarBrandingClassNames}

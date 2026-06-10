@@ -3,8 +3,8 @@
 import type { ReactElement } from 'react';
 import { useRef, useState } from 'react';
 import type { CrmPriority, PipelineStageSlug } from '@/domain/crm';
-import { DEFAULT_PIPELINE_STAGES } from '@/domain/crm';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
+import { useBuildCorePipelineStages } from '@/presentation/providers/BuildCorePipelineStagesProvider';
 import { FilterIcon } from '@/platform/icons/buildCoreDashboardShellIcons';
 import { WorkflowInlineMenu } from '@/presentation/components/CrmProjectDetail/WorkflowInlineMenu';
 import {
@@ -33,6 +33,7 @@ export function CrmProjectsFilterMenu({
   onChange,
 }: CrmProjectsFilterMenuProps): ReactElement {
   const copy = content.crm.filters;
+  const { catalog } = useBuildCorePipelineStages();
   const [open, setOpen] = useState(false);
   const anchorRef = useRef<HTMLDivElement>(null);
   const active = isCrmProjectsListFiltersActive(filters);
@@ -80,7 +81,7 @@ export function CrmProjectsFilterMenu({
           <fieldset className={styles.projectsFilterFieldset}>
             <legend className={styles.projectsFilterLegend}>{copy.stageLabel}</legend>
             <div className={styles.projectsFilterOptions}>
-              {DEFAULT_PIPELINE_STAGES.map((stage) => (
+              {catalog.map((stage) => (
                 <label key={stage.slug} className={styles.projectsFilterOption}>
                   <input
                     type="checkbox"

@@ -10,10 +10,12 @@ import {
   archiveCrmWorkflowTaskForOrg,
   updateCrmWorkflowTaskForOrg,
 } from '@/infrastructure/crm/server/crmWorkflowTaskService';
+import { pipelineStageSlugSet } from '@/domain/crm';
 import {
   validateUpdateWorkflowTaskBody,
   type WorkflowTaskBody,
 } from '@/infrastructure/crm/server/validateWorkflowTaskBody';
+import { loadOrganizationPipelineStageCatalog } from '@/infrastructure/crm/server/pipelineStageService';
 import {
   requireBuildCoreWorkflowTaskPermission,
   resolveBuildCoreWorkflowTaskAccessForUser,
@@ -45,7 +47,13 @@ export async function PATCH(
     return NextResponse.json({ error: 'invalid_body', message: 'JSON body required' }, { status: 400 });
   }
 
-  const validated = validateUpdateWorkflowTaskBody(body);
+  const stageCatalog = await loadOrganizationPipelineStageCatalog(
+    auth.context.supabase,
+    auth.context.organizationId
+  );
+  const validated = validateUpdateWorkflowTaskBody(body, {
+    allowedStageSlugs: pipelineStageSlugSet(stageCatalog),
+  });
   if (!validated.ok) {
     return NextResponse.json({ error: 'validation_error', message: validated.message }, { status: 400 });
   }

@@ -1,4 +1,5 @@
 import type { CreateCrmProjectInput, CrmPriority, CrmTradeType, PipelineStageSlug, CrmProjectDetail } from '@/domain/crm';
+import { getFirstPipelineStageSlug } from '@/domain/crm/pipelineStage';
 import { titleCasePersonOrEntityName } from '@/domain/crm/titleCaseName';
 import { US_STATE_CODES } from '@/domain/crm/usStates';
 import { normalizeAssigneeMemberIdForSave } from '@/presentation/features/crmAssignment/buildAssigneeOptions';
@@ -29,7 +30,7 @@ export const defaultCreateCrmProjectFormState = (): CreateCrmProjectFormState =>
   email: '',
   phone: '',
   priority: 'normal',
-  currentStageSlug: 'new-lead',
+  currentStageSlug: getFirstPipelineStageSlug(),
   notes: '',
   dealValueUsd: '',
   balanceUsd: '',

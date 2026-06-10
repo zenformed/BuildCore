@@ -19,6 +19,7 @@ import {
 } from '@/presentation/features/crmProjectDetail/workflowTaskGroups';
 import { writeWorkflowStageExpanded } from '@/presentation/features/crmProjectDetail/workflowStageCollapseStorage';
 import { useBuildCoreWorkflowTaskAccess } from '@/presentation/providers/BuildCoreWorkflowTaskAccessProvider';
+import { useBuildCorePipelineStages } from '@/presentation/providers/BuildCorePipelineStagesProvider';
 import { DetailPanelHeader } from './DetailPanelHeader';
 import { DetailPanelHeaderActions } from './DetailPanelHeaderActions';
 import { DetailPanelSectionRefresh } from './DetailPanelSectionRefresh';
@@ -54,6 +55,7 @@ export function WorkflowTasksTable({
   const { routes, refreshWorkflowTasks, setToast } = useProjectDetailShell();
   const wf = content.projectDetail.workflow;
   const { permissions, isLoading, isReady } = useBuildCoreWorkflowTaskAccess();
+  const { catalog } = useBuildCorePipelineStages();
   const canView = isReady && permissions.canView;
   const canCreate = isReady && permissions.canCreate;
   const canDelete = isReady && permissions.canDelete;
@@ -68,14 +70,14 @@ export function WorkflowTasksTable({
   );
 
   const groups = useMemo(
-    () => groupOpsWorkflowTasksByStage(filteredTasks, currentStage),
-    [filteredTasks, currentStage]
+    () => groupOpsWorkflowTasksByStage(filteredTasks, currentStage, catalog),
+    [catalog, filteredTasks, currentStage]
   );
 
   const orderedGroups = useMemo(() => {
     if (draftStageSlug == null) return groups;
-    return promoteWorkflowStageGroup(groups, draftStageSlug);
-  }, [draftStageSlug, groups]);
+    return promoteWorkflowStageGroup(groups, draftStageSlug, catalog);
+  }, [catalog, draftStageSlug, groups]);
 
   const totalTasks = countWorkflowTasksInGroups(groups);
   const previewStageGroups = isFullLayout

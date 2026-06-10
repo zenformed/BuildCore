@@ -7,6 +7,7 @@ import { AssignmentIdentityProvider } from '@/presentation/providers/AssignmentI
 import { BuildCoreProjectSectionAccessProvider } from '@/presentation/providers/BuildCoreProjectSectionAccessProvider';
 import { BuildCoreWorkflowTaskAccessProvider } from '@/presentation/providers/BuildCoreWorkflowTaskAccessProvider';
 import { CrmPaymentTasksIndexProvider } from '@/presentation/providers/CrmPaymentTasksIndexProvider';
+import { BuildCorePipelineStagesProvider } from '@/presentation/providers/BuildCorePipelineStagesProvider';
 
 export default function DashboardGroupLayout({
   children,
@@ -19,7 +20,9 @@ export default function DashboardGroupLayout({
         <BuildCoreWorkflowTaskAccessProvider>
           <BuildCoreProjectSectionAccessProvider>
             <CrmPaymentTasksIndexProvider>
-              <BuildCorePersistentDashboardShell>{children}</BuildCorePersistentDashboardShell>
+              <BuildCorePipelineStagesProvider>
+                <BuildCorePersistentDashboardShell>{children}</BuildCorePersistentDashboardShell>
+              </BuildCorePipelineStagesProvider>
             </CrmPaymentTasksIndexProvider>
           </BuildCoreProjectSectionAccessProvider>
         </BuildCoreWorkflowTaskAccessProvider>

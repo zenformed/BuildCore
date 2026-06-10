@@ -1,11 +1,14 @@
 import type { CreateCrmProjectInput } from '@/domain/crm/createProject';
 import type { CrmPriority, CrmTradeType } from '@/domain/crm';
-import { CRM_TRADE_TYPES, DEFAULT_PIPELINE_STAGES, type PipelineStageSlug } from '@/domain/crm';
+import {
+  CRM_TRADE_TYPES,
+  pipelineStageSlugSet,
+  type PipelineStageSlug,
+} from '@/domain/crm';
 import { US_STATE_CODES } from '@/domain/crm/usStates';
 import { parseProjectTemplateBlueprintsFromUnknown } from '@/infrastructure/crm/mappers/mapProjectTemplateFromDb';
 
 const PRIORITIES: readonly CrmPriority[] = ['low', 'normal', 'high', 'urgent'];
-const STAGE_SLUGS = new Set(DEFAULT_PIPELINE_STAGES.map((s) => s.slug));
 
 export type CreateCrmProjectBody = {
   name?: unknown;
@@ -62,9 +65,12 @@ function asTradeType(value: unknown): CrmTradeType | null {
   return (CRM_TRADE_TYPES as readonly string[]).includes(value) ? (value as CrmTradeType) : null;
 }
 
-function asStageSlug(value: unknown): PipelineStageSlug | null {
+function asStageSlug(
+  value: unknown,
+  allowedStageSlugs: ReadonlySet<string>
+): PipelineStageSlug | null {
   if (typeof value !== 'string') return null;
-  return STAGE_SLUGS.has(value as PipelineStageSlug) ? (value as PipelineStageSlug) : null;
+  return allowedStageSlugs.has(value) ? value : null;
 }
 
 function asOptionalUserId(value: unknown): string | null {
@@ -82,7 +88,11 @@ function asOptionalParentProjectId(value: unknown): string | null | undefined {
   return trimmed.length > 0 ? trimmed : null;
 }
 
-export function validateCreateCrmProjectBody(body: CreateCrmProjectBody): ValidateCreateCrmProjectResult {
+export function validateCreateCrmProjectBody(
+  body: CreateCrmProjectBody,
+  options?: { allowedStageSlugs?: ReadonlySet<string> }
+): ValidateCreateCrmProjectResult {
+  const allowedStageSlugs = options?.allowedStageSlugs ?? pipelineStageSlugSet();
   const name = asNonEmptyString(body.name, 'name');
   if (!name) {
     return { ok: false, message: 'Project / customer name is required.' };
@@ -103,7 +113,7 @@ export function validateCreateCrmProjectBody(body: CreateCrmProjectBody): Valida
     return { ok: false, message: 'Trade type is invalid.' };
   }
 
-  const currentStageSlug = asStageSlug(body.currentStageSlug);
+  const currentStageSlug = asStageSlug(body.currentStageSlug, allowedStageSlugs);
   if (!currentStageSlug) {
     return { ok: false, message: 'Current stage is invalid.' };
   }

@@ -1,9 +1,10 @@
 import {
-  DEFAULT_PIPELINE_STAGES,
   isPaymentWorkflowTask,
   PAYMENT_WORKFLOW_STAGE_SLUG,
   PAYMENTS_WORKFLOW_COLLAPSE_KEY,
+  resolvePipelineStageCatalog,
   type CrmWorkflowTask,
+  type PipelineStage,
   type PipelineStageSlug,
   type WorkflowStageCollapseKey,
 } from '@/domain/crm';
@@ -23,9 +24,13 @@ export type WorkflowTaskStageGroup = {
 };
 
 /** Operational pipeline stages available for workflow task creation (excludes payment milestone stage). */
-export const OPS_PIPELINE_STAGES = DEFAULT_PIPELINE_STAGES.filter(
-  (stage) => stage.slug !== PAYMENT_WORKFLOW_STAGE_SLUG
-);
+export function resolveOpsPipelineStages(
+  stages?: readonly PipelineStage[] | null
+): readonly PipelineStage[] {
+  return resolvePipelineStageCatalog(stages).filter(
+    (stage) => stage.slug !== PAYMENT_WORKFLOW_STAGE_SLUG
+  );
+}
 
 /** Max workflow task rows on the project detail preview (full page has no cap). */
 export const WORKFLOW_TASKS_PREVIEW_LIMIT = 4;
@@ -42,12 +47,13 @@ export function limitWorkflowTaskStageGroups(
 }
 
 export function createEmptyWorkflowTaskStageGroup(
-  stageSlug: PipelineStageSlug
+  stageSlug: PipelineStageSlug,
+  stages?: readonly PipelineStage[] | null
 ): WorkflowTaskStageGroup {
   return {
     collapseKey: stageSlug,
     stageSlug,
-    stageLabel: formatWorkflowStageLabel(stageSlug),
+    stageLabel: formatWorkflowStageLabel(stageSlug, stages),
     isPaymentsGroup: false,
     tasks: [],
   };
@@ -56,13 +62,14 @@ export function createEmptyWorkflowTaskStageGroup(
 /** Include an empty stage section when adding a task to a stage with no rows yet. */
 export function ensureWorkflowStageGroup(
   groups: readonly WorkflowTaskStageGroup[],
-  stageSlug: PipelineStageSlug
+  stageSlug: PipelineStageSlug,
+  stages?: readonly PipelineStage[] | null
 ): WorkflowTaskStageGroup[] {
   if (groups.some((group) => group.stageSlug === stageSlug)) {
     return [...groups];
   }
-  const empty = createEmptyWorkflowTaskStageGroup(stageSlug);
-  const order = OPS_PIPELINE_STAGES.map((stage) => stage.slug);
+  const empty = createEmptyWorkflowTaskStageGroup(stageSlug, stages);
+  const order = resolveOpsPipelineStages(stages).map((stage) => stage.slug);
   return [...groups, empty].sort(
     (a, b) => order.indexOf(a.stageSlug) - order.indexOf(b.stageSlug)
   );
@@ -71,9 +78,10 @@ export function ensureWorkflowStageGroup(
 /** Move a stage to the top of the list (e.g. while composing an inline draft on the detail preview). */
 export function promoteWorkflowStageGroup(
   groups: readonly WorkflowTaskStageGroup[],
-  stageSlug: PipelineStageSlug
+  stageSlug: PipelineStageSlug,
+  stages?: readonly PipelineStage[] | null
 ): WorkflowTaskStageGroup[] {
-  const ensured = ensureWorkflowStageGroup(groups, stageSlug);
+  const ensured = ensureWorkflowStageGroup(groups, stageSlug, stages);
   const promoted = ensured.find((group) => group.stageSlug === stageSlug);
   if (promoted == null) return [...ensured];
   return [promoted, ...ensured.filter((group) => group.stageSlug !== stageSlug)];
@@ -117,10 +125,11 @@ export function listPaymentMilestones(tasks: readonly CrmWorkflowTask[]): CrmWor
 /** Group operational workflow tasks by pipeline stage (excludes payment milestones). */
 export function groupOpsWorkflowTasksByStage(
   tasks: readonly CrmWorkflowTask[],
-  currentStageSlug: PipelineStageSlug
+  currentStageSlug: PipelineStageSlug,
+  stages?: readonly PipelineStage[] | null
 ): WorkflowTaskStageGroup[] {
   const opsTasks = tasks.filter((task) => !isPaymentWorkflowTask(task));
-  const sortedOps = sortWorkflowTasksForDisplay(opsTasks, currentStageSlug);
+  const sortedOps = sortWorkflowTasksForDisplay(opsTasks, currentStageSlug, stages);
   const byStage = new Map<PipelineStageSlug, CrmWorkflowTask[]>();
 
   for (const task of sortedOps) {
@@ -129,19 +138,22 @@ export function groupOpsWorkflowTasksByStage(
     byStage.set(task.stageSlug, list);
   }
 
-  return DEFAULT_PIPELINE_STAGES.filter((stage) => byStage.has(stage.slug)).map((stage) => ({
-    collapseKey: stage.slug,
-    stageSlug: stage.slug,
-    stageLabel: formatWorkflowStageLabel(stage.slug),
-    isPaymentsGroup: false,
-    tasks: byStage.get(stage.slug) ?? [],
-  }));
+  return resolvePipelineStageCatalog(stages)
+    .filter((stage) => byStage.has(stage.slug))
+    .map((stage) => ({
+      collapseKey: stage.slug,
+      stageSlug: stage.slug,
+      stageLabel: formatWorkflowStageLabel(stage.slug, stages),
+      isPaymentsGroup: false,
+      tasks: byStage.get(stage.slug) ?? [],
+    }));
 }
 
 /** @deprecated Use {@link groupOpsWorkflowTasksByStage} for workflow UI. */
 export function groupWorkflowTasksByStage(
   tasks: readonly CrmWorkflowTask[],
-  currentStageSlug: PipelineStageSlug
+  currentStageSlug: PipelineStageSlug,
+  stages?: readonly PipelineStage[] | null
 ): WorkflowTaskStageGroup[] {
-  return groupOpsWorkflowTasksByStage(tasks, currentStageSlug);
+  return groupOpsWorkflowTasksByStage(tasks, currentStageSlug, stages);
 }

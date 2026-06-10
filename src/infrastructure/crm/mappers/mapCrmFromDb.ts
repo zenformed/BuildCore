@@ -18,6 +18,7 @@ import {
   type CrmTeamMemberRef,
   type CrmTradeType,
   type CrmWorkflowTask,
+  type PipelineStage,
   type PipelineStageSlug,
   type WorkflowTaskStatus,
 } from '@/domain/crm';
@@ -492,6 +493,7 @@ export function mapDbProjectDetail(input: {
   accountability: readonly DbCrmAccountabilityRow[];
   budgetEntries: readonly DbCrmBudgetEntryRow[];
   memberById: ReadonlyMap<string, CrmTeamMemberRef>;
+  pipelineStages?: readonly PipelineStage[];
 }): CrmProjectDetail {
   const baseSummary = mapDbProjectSummary(input.project, input.memberById);
   const contactById = new Map<string, CrmContact>([[baseSummary.contact.id, baseSummary.contact]]);
@@ -530,7 +532,7 @@ export function mapDbProjectDetail(input: {
     notes: input.project.notes,
     stageProgress: {
       currentStageSlug: summary.currentStageSlug,
-      completedStageSlugs: completedStagesThrough(summary.currentStageSlug),
+      completedStageSlugs: completedStagesThrough(summary.currentStageSlug, input.pipelineStages),
     },
     workflowTasks,
     documents: input.documents.map((row) =>

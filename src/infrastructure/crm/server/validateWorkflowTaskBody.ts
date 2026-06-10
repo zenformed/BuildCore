@@ -1,9 +1,11 @@
 import type { CreateCrmWorkflowTaskInput, UpdateCrmWorkflowTaskInput } from '@/domain/crm';
-import { DEFAULT_PIPELINE_STAGES, PAYMENT_WORKFLOW_STAGE_SLUG, type PipelineStageSlug } from '@/domain/crm';
+import {
+  PAYMENT_WORKFLOW_STAGE_SLUG,
+  pipelineStageSlugSet,
+  type PipelineStageSlug,
+} from '@/domain/crm';
 import type { WorkflowTaskStatus } from '@/domain/crm';
 import { isWorkflowTaskStatus } from '@/domain/crm/workflowTaskStatuses';
-
-const STAGE_SLUGS = new Set(DEFAULT_PIPELINE_STAGES.map((s) => s.slug));
 
 export type WorkflowTaskBody = Record<string, unknown>;
 
@@ -20,9 +22,12 @@ function asOptionalString(value: unknown): string | null {
   return trimmed.length > 0 ? trimmed : null;
 }
 
-function asStageSlug(value: unknown): PipelineStageSlug | null {
+function asStageSlug(
+  value: unknown,
+  allowedStageSlugs: ReadonlySet<string>
+): PipelineStageSlug | null {
   if (typeof value !== 'string') return null;
-  return STAGE_SLUGS.has(value as PipelineStageSlug) ? (value as PipelineStageSlug) : null;
+  return allowedStageSlugs.has(value) ? value : null;
 }
 
 function asStatus(value: unknown): WorkflowTaskStatus | null {
@@ -63,12 +68,14 @@ function parseAmountCents(body: WorkflowTaskBody): ParsedAmountCents {
 }
 
 export function validateCreateWorkflowTaskBody(
-  body: WorkflowTaskBody
+  body: WorkflowTaskBody,
+  options?: { allowedStageSlugs?: ReadonlySet<string> }
 ): { ok: true; input: Omit<CreateCrmWorkflowTaskInput, 'projectId'> } | { ok: false; message: string } {
+  const allowedStageSlugs = options?.allowedStageSlugs ?? pipelineStageSlugSet();
   const title = asNonEmptyString(body.title);
   if (!title) return { ok: false, message: 'Task title is required.' };
 
-  const stageSlug = asStageSlug(body.stageSlug);
+  const stageSlug = asStageSlug(body.stageSlug, allowedStageSlugs);
   if (!stageSlug) return { ok: false, message: 'Stage is invalid.' };
 
   const status = asStatus(body.status);
@@ -110,8 +117,10 @@ export function validateCreateWorkflowTaskBody(
 }
 
 export function validateUpdateWorkflowTaskBody(
-  body: WorkflowTaskBody
+  body: WorkflowTaskBody,
+  options?: { allowedStageSlugs?: ReadonlySet<string> }
 ): { ok: true; patch: Omit<UpdateCrmWorkflowTaskInput, 'taskId'> } | { ok: false; message: string } {
+  const allowedStageSlugs = options?.allowedStageSlugs ?? pipelineStageSlugSet();
   const patch: {
     title?: string;
     stageSlug?: PipelineStageSlug;
@@ -131,7 +140,7 @@ export function validateUpdateWorkflowTaskBody(
     patch.title = title;
   }
   if ('stageSlug' in body) {
-    const stageSlug = asStageSlug(body.stageSlug);
+    const stageSlug = asStageSlug(body.stageSlug, allowedStageSlugs);
     if (!stageSlug) return { ok: false, message: 'Stage is invalid.' };
     patch.stageSlug = stageSlug;
   }

@@ -18,6 +18,7 @@ import {
   getProjectTradeSubtitle,
 } from '@/presentation/features/crmProjects/crmProjectFormatters';
 import { TeamMemberAvatar } from '@/presentation/components/CrmProjectDetail/TeamMemberAvatar';
+import { useBuildCorePipelineStages } from '@/presentation/providers/BuildCorePipelineStagesProvider';
 import { CrmProjectTableRowActionsMenu } from './CrmProjectTableRowActionsMenu';
 import shared from '@/presentation/components/crmShared/crmShared.module.css';
 import styles from './CrmProjects.module.css';
@@ -67,8 +68,9 @@ export function CrmProjectTableRow({
   onToggleExpand,
 }: CrmProjectTableRowProps): ReactElement {
   const tableCopy = content.crm.table;
+  const { catalog } = useBuildCorePipelineStages();
   const tradeSubtitle = getProjectTradeSubtitle(project.tradeType);
-  const progress = resolveProjectSummaryProgressDisplay(project);
+  const progress = resolveProjectSummaryProgressDisplay(project, catalog);
   const isChild = variant === 'child';
   const displayFinancials = financials ?? { valueCents: 0, collectedCents: 0, balanceCents: 0 };
   const financialDisplay = (cents: number): string =>
@@ -139,7 +141,7 @@ export function CrmProjectTableRow({
           <span className={styles.projectProgressRow}>
             <ProjectProgressPercent variant="compact" progress={progress} />
             <span className={`${shared.stagePill} ${styles.projectMetaStagePill}`}>
-              {formatStageLabel(project.currentStageSlug)}
+              {formatStageLabel(project.currentStageSlug, catalog)}
             </span>
           </span>
         ) : null}

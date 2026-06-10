@@ -2,15 +2,21 @@
 
 import type { ReactElement } from 'react';
 import { buildCoreDashboardNavigation as nav } from '@/platform/navigation/buildCoreDashboardNavigation';
-import { ListIcon, ReportsIcon, TeamsIcon } from '@/platform/icons/buildCoreDashboardShellIcons';
+import {
+  ListIcon,
+  ReportsIcon,
+  TeamsIcon,
+  WorkflowStagesIcon,
+} from '@/platform/icons/buildCoreDashboardShellIcons';
 import styles from './BuildCoreSidebar.module.css';
 
-export type BuildCoreSidebarNavId = 'projects' | 'reports' | 'teams';
+export type BuildCoreSidebarNavId = 'projects' | 'reports' | 'teams' | 'workflowStages';
 
 const SIDEBAR_ICONS: Record<BuildCoreSidebarNavId, () => ReactElement> = {
   projects: ListIcon,
   reports: ReportsIcon,
   teams: TeamsIcon,
+  workflowStages: WorkflowStagesIcon,
 };
 
 export type BuildCoreSidebarProps = {
@@ -20,6 +26,8 @@ export type BuildCoreSidebarProps = {
   canAccessTeams?: boolean;
   /** When false, the Reports nav control is omitted (org members). */
   canAccessReports?: boolean;
+  /** When false, the Workflow Stages nav control is omitted. */
+  canAccessWorkflowStages?: boolean;
   children?: React.ReactNode;
 };
 
@@ -28,12 +36,14 @@ export function BuildCoreSidebar({
   onSelect,
   canAccessTeams = true,
   canAccessReports = true,
+  canAccessWorkflowStages = true,
   children,
 }: BuildCoreSidebarProps): ReactElement {
   const { ariaLabel, items } = nav.sidebar;
   const visibleItems = items.filter((item) => {
     if (item.id === 'teams' && !canAccessTeams) return false;
     if (item.id === 'reports' && !canAccessReports) return false;
+    if (item.id === 'workflowStages' && !canAccessWorkflowStages) return false;
     return true;
   });
   return (

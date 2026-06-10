@@ -33,6 +33,7 @@ export const buildCoreDashboardNavigation = {
     resetPassword: '/reset-password',
     reports: '/reports',
     teams: '/teams',
+    workflowStages: '/workflow-stages',
     home: '/',
     projectDetail: (slug: string): string => `/projects/${slug}`,
     projectSubDetail: (parentSlug: string, subSlug: string): string =>
@@ -49,6 +50,7 @@ export const buildCoreDashboardNavigation = {
       { id: 'projects' as const, label: 'Projects', title: 'All projects' },
       { id: 'reports' as const, label: 'Reports', title: 'CRM reports' },
       { id: 'teams' as const, label: 'Teams', title: 'Teams' },
+      { id: 'workflowStages' as const, label: 'Workflow Stages', title: 'Workflow stages' },
     ],
   },
   header: {

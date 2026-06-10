@@ -1,19 +1,8 @@
 /**
- * Default sales/ops pipeline for construction and trades CRM (mock + future UI).
+ * Organization-configurable sales/ops pipeline for construction and trades CRM.
+ * `DEFAULT_PIPELINE_STAGES` remains the mock/offline fallback catalog.
  */
-export type PipelineStageSlug =
-  | 'new-lead'
-  | 'contacted'
-  | 'inspection-scheduled'
-  | 'inspection-complete'
-  | 'estimate-sent'
-  | 'waiting-on-approval'
-  | 'approved'
-  | 'scheduled'
-  | 'in-progress'
-  | 'completed'
-  | 'invoiced'
-  | 'paid';
+export type PipelineStageSlug = string;
 
 export type PipelineStage = {
   readonly slug: PipelineStageSlug;
@@ -37,22 +26,77 @@ export const DEFAULT_PIPELINE_STAGES: readonly PipelineStage[] = [
   { slug: 'paid', label: 'Paid', sortOrder: 12 },
 ] as const;
 
-export function getPipelineStage(slug: PipelineStageSlug): PipelineStage {
-  const stage = DEFAULT_PIPELINE_STAGES.find((s) => s.slug === slug);
-  if (stage == null) {
-    throw new Error(`Unknown pipeline stage: ${slug}`);
-  }
-  return stage;
+export function resolvePipelineStageCatalog(
+  stages?: readonly PipelineStage[] | null
+): readonly PipelineStage[] {
+  return stages != null && stages.length > 0 ? stages : DEFAULT_PIPELINE_STAGES;
+}
+
+export function findPipelineStage(
+  slug: PipelineStageSlug,
+  stages?: readonly PipelineStage[] | null
+): PipelineStage | null {
+  const catalog = resolvePipelineStageCatalog(stages);
+  return catalog.find((stage) => stage.slug === slug) ?? null;
+}
+
+export function getPipelineStage(
+  slug: PipelineStageSlug,
+  stages?: readonly PipelineStage[] | null
+): PipelineStage {
+  const stage = findPipelineStage(slug, stages);
+  if (stage != null) return stage;
+  return {
+    slug,
+    label: slug
+      .split('-')
+      .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+      .join(' '),
+    sortOrder: Number.MAX_SAFE_INTEGER,
+  };
+}
+
+export function getFirstPipelineStageSlug(
+  stages?: readonly PipelineStage[] | null
+): PipelineStageSlug {
+  const catalog = resolvePipelineStageCatalog(stages);
+  const sorted = [...catalog].sort((a, b) => a.sortOrder - b.sortOrder);
+  return sorted[0]?.slug ?? DEFAULT_PIPELINE_STAGES[0].slug;
 }
 
 /** Stages strictly before `slug` (excludes the current stage). */
-export function completedStagesBefore(slug: PipelineStageSlug): PipelineStageSlug[] {
-  const current = getPipelineStage(slug).sortOrder;
-  return DEFAULT_PIPELINE_STAGES.filter((s) => s.sortOrder < current).map((s) => s.slug);
+export function completedStagesBefore(
+  slug: PipelineStageSlug,
+  stages?: readonly PipelineStage[] | null
+): PipelineStageSlug[] {
+  const current = getPipelineStage(slug, stages).sortOrder;
+  return resolvePipelineStageCatalog(stages)
+    .filter((stage) => stage.sortOrder < current)
+    .sort((a, b) => a.sortOrder - b.sortOrder)
+    .map((stage) => stage.slug);
 }
 
 /** Stages reached when the project is on `slug` (includes the current stage). */
-export function completedStagesThrough(slug: PipelineStageSlug): PipelineStageSlug[] {
-  const current = getPipelineStage(slug).sortOrder;
-  return DEFAULT_PIPELINE_STAGES.filter((s) => s.sortOrder <= current).map((s) => s.slug);
+export function completedStagesThrough(
+  slug: PipelineStageSlug,
+  stages?: readonly PipelineStage[] | null
+): PipelineStageSlug[] {
+  const current = getPipelineStage(slug, stages).sortOrder;
+  return resolvePipelineStageCatalog(stages)
+    .filter((stage) => stage.sortOrder <= current)
+    .sort((a, b) => a.sortOrder - b.sortOrder)
+    .map((stage) => stage.slug);
+}
+
+export function isKnownPipelineStageSlug(
+  slug: PipelineStageSlug,
+  stages?: readonly PipelineStage[] | null
+): boolean {
+  return findPipelineStage(slug, stages) != null;
+}
+
+export function pipelineStageSlugSet(
+  stages?: readonly PipelineStage[] | null
+): ReadonlySet<string> {
+  return new Set(resolvePipelineStageCatalog(stages).map((stage) => stage.slug));
 }

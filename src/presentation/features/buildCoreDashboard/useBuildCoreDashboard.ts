@@ -17,6 +17,7 @@ import { useTenant } from '@/presentation/providers';
 import { EMPTY_ORGANIZATION_PERMISSIONS } from '@zenformed/core/organization-settings';
 import { canAccessBuildCoreTeams } from '@/presentation/features/buildCoreTeams/buildCoreTeamsAccess';
 import { canAccessBuildCoreReports } from '@/presentation/features/crmReports/buildCoreReportsAccess';
+import { canAccessBuildCoreWorkflowStages } from '@/presentation/features/buildCoreWorkflowStages/buildCoreWorkflowStagesAccess';
 import { formatOrganizationRoleLabel } from '@zenformed/core/dashboard-shell';
 import type { BuildCoreSettingsSectionId } from '@/platform/navigation/buildCoreDashboardNavigation';
 import type { CrmProjectSummary } from '@/domain/crm';
@@ -37,6 +38,7 @@ export function useBuildCoreDashboard(): {
   organizationRoleLabel: string | null;
   canAccessBuildCoreTeams: boolean;
   canAccessBuildCoreReports: boolean;
+  canAccessBuildCoreWorkflowStages: boolean;
   isAdmin: boolean;
   canEditOrganizationProfile: boolean;
   avatarUrl: string | null;
@@ -138,6 +140,16 @@ export function useBuildCoreDashboard(): {
     return canAccessBuildCoreReports(organizationMembershipContext?.role);
   }, [membershipContextStatus, organizationMembershipContext?.role]);
 
+  const canAccessBuildCoreWorkflowStagesNav = useMemo(() => {
+    if (!env.isSaasMode || runtimeModes.useMockAuth()) {
+      return true;
+    }
+    if (membershipContextStatus !== 'ready') {
+      return false;
+    }
+    return canAccessBuildCoreWorkflowStages(organizationMembershipContext?.role);
+  }, [membershipContextStatus, organizationMembershipContext?.role]);
+
   const { logoUploading, headerLogoFileInputRef, handleLogoFileChange } = useOrganizationLogoUpload({
     brandingApiUrl: nav.apis.branding,
     getAccessToken,
@@ -159,6 +171,7 @@ export function useBuildCoreDashboard(): {
       organizationRoleLabel,
       canAccessBuildCoreTeams: canAccessBuildCoreTeamsNav,
       canAccessBuildCoreReports: canAccessBuildCoreReportsNav,
+      canAccessBuildCoreWorkflowStages: canAccessBuildCoreWorkflowStagesNav,
       isAdmin,
       canEditOrganizationProfile,
       avatarUrl,
@@ -190,6 +203,7 @@ export function useBuildCoreDashboard(): {
       brandingLoading,
       canAccessBuildCoreReportsNav,
       canAccessBuildCoreTeamsNav,
+      canAccessBuildCoreWorkflowStagesNav,
       effectiveLicenseTier,
       entitlementSnapshot,
       getAccessToken,

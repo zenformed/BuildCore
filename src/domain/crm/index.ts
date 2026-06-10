@@ -2,7 +2,12 @@ export {
   DEFAULT_PIPELINE_STAGES,
   completedStagesBefore,
   completedStagesThrough,
+  findPipelineStage,
+  getFirstPipelineStageSlug,
   getPipelineStage,
+  isKnownPipelineStageSlug,
+  pipelineStageSlugSet,
+  resolvePipelineStageCatalog,
   type PipelineStage,
   type PipelineStageSlug,
 } from './pipelineStage';

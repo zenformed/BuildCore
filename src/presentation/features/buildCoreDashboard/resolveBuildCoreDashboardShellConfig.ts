@@ -14,6 +14,16 @@ export function resolveBuildCoreDashboardShellConfig(pathname: string): BuildCor
     };
   }
 
+  if (
+    pathname === nav.routes.workflowStages ||
+    pathname.startsWith(`${nav.routes.workflowStages}/`)
+  ) {
+    return {
+      sidebarActiveId: 'workflowStages',
+      title: null,
+    };
+  }
+
   if (pathname === nav.routes.reports || pathname.startsWith(`${nav.routes.reports}/`)) {
     return {
       sidebarActiveId: 'reports',

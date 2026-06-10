@@ -43,6 +43,12 @@ export function BuildCorePersistentDashboardShell({
         }
         return;
       }
+      if (id === 'workflowStages') {
+        if (dash.canAccessBuildCoreWorkflowStages) {
+          router.push(nav.routes.workflowStages);
+        }
+        return;
+      }
       router.push(nav.routes.dashboard);
     },
     [dash, router]
@@ -63,6 +69,15 @@ export function BuildCorePersistentDashboardShell({
       router.replace(nav.routes.dashboard);
     }
   }, [isMemberRole, pathname, router]);
+
+  useEffect(() => {
+    const onWorkflowStagesRoute =
+      pathname === nav.routes.workflowStages ||
+      pathname.startsWith(`${nav.routes.workflowStages}/`);
+    if (onWorkflowStagesRoute && !dash.canAccessBuildCoreWorkflowStages) {
+      router.replace(nav.routes.dashboard);
+    }
+  }, [dash.canAccessBuildCoreWorkflowStages, pathname, router]);
 
   return (
     <BuildCoreDashboardShell

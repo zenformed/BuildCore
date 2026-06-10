@@ -1,4 +1,4 @@
-import type { CrmWorkflowTask, PipelineStageSlug, WorkflowTaskStatus } from '@/domain/crm';
+import type { CrmWorkflowTask, PipelineStage, PipelineStageSlug, WorkflowTaskStatus } from '@/domain/crm';
 
 const STATUS_ORDER: Record<WorkflowTaskStatus, number> = {
   in_progress: 0,
@@ -11,7 +11,8 @@ const STATUS_ORDER: Record<WorkflowTaskStatus, number> = {
 
 export function sortWorkflowTasksForDisplay(
   tasks: readonly CrmWorkflowTask[],
-  currentStageSlug: PipelineStageSlug
+  currentStageSlug: PipelineStageSlug,
+  _stages?: readonly PipelineStage[] | null
 ): CrmWorkflowTask[] {
   return [...tasks].sort((a, b) => {
     const stageA = a.stageSlug === currentStageSlug ? 0 : 1;

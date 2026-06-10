@@ -2,9 +2,10 @@
 
 import type { CSSProperties, ReactElement } from 'react';
 import { useCallback, useSyncExternalStore } from 'react';
-import { DEFAULT_PIPELINE_STAGES, type CrmStageProgress, type PipelineStageSlug } from '@/domain/crm';
+import type { CrmStageProgress, PipelineStageSlug } from '@/domain/crm';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
 import { shortStageLabel } from '@/presentation/features/crmProjectDetail/crmProjectDetailFormatters';
+import { useBuildCorePipelineStages } from '@/presentation/providers/BuildCorePipelineStagesProvider';
 import { PROJECT_DETAIL_STACK_BREAKPOINT_PX } from '@/presentation/features/crmProjectDetail/useProjectDetailStackedLayout';
 import styles from './ProjectDetail.module.css';
 
@@ -54,12 +55,13 @@ export function StageProgressBar({
   onStageSelect,
 }: StageProgressBarProps): ReactElement {
   const useShortLabels = useCompactPipelineLabels();
+  const { catalog } = useBuildCorePipelineStages();
   const completed = new Set(stageProgress.completedStageSlugs);
-  const currentIndex = DEFAULT_PIPELINE_STAGES.findIndex((s) => s.slug === stageProgress.currentStageSlug);
+  const currentIndex = catalog.findIndex((stage) => stage.slug === stageProgress.currentStageSlug);
   const progressPct =
-    DEFAULT_PIPELINE_STAGES.length <= 1
+    catalog.length <= 1
       ? 0
-      : (Math.max(0, currentIndex) / (DEFAULT_PIPELINE_STAGES.length - 1)) * 100;
+      : (Math.max(0, currentIndex) / (catalog.length - 1)) * 100;
 
   const handleStageClick = useCallback(
     (slug: PipelineStageSlug) => {
@@ -79,7 +81,7 @@ export function StageProgressBar({
         className={styles.pipelineTimeline}
         style={{ '--pipeline-progress': `${progressPct}%` } as CSSProperties}
       >
-        {DEFAULT_PIPELINE_STAGES.map((stage) => {
+        {catalog.map((stage) => {
           const state = resolveStageState(stage.slug, stageProgress.currentStageSlug, completed);
           const isReached = state !== 'upcoming';
           const nodeClass = isReached

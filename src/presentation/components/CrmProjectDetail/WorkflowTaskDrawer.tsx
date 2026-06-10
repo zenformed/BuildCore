@@ -3,7 +3,6 @@
 import type { FormEvent, ReactElement } from 'react';
 import { useCallback, useEffect, useState } from 'react';
 import {
-  DEFAULT_PIPELINE_STAGES,
   PAYMENT_WORKFLOW_STAGE_SLUG,
   type CrmProjectDetail,
   type CrmWorkflowTask,
@@ -19,6 +18,7 @@ import { buildCoreDashboardContent as content } from '@/platform/content/buildCo
 import { getWorkflowTaskAssigneeOptions } from '@/presentation/features/crmProjectDetail/workflowTaskAssigneeOptions';
 import { useAssignmentIdentityCatalog } from '@/presentation/providers/AssignmentIdentityProvider';
 import { useBuildCoreDashboardContext } from '@/presentation/providers/BuildCoreDashboardProvider';
+import { useBuildCorePipelineStages } from '@/presentation/providers/BuildCorePipelineStagesProvider';
 import { formatWorkflowStageLabel } from '@/presentation/features/crmProjectDetail/crmProjectDetailFormatters';
 import {
   defaultWorkflowTaskFormState,
@@ -73,6 +73,7 @@ export function WorkflowTaskDrawer({
 }: WorkflowTaskDrawerProps): ReactElement | null {
   const assignmentCatalog = useAssignmentIdentityCatalog();
   const dash = useBuildCoreDashboardContext();
+  const { catalog } = useBuildCorePipelineStages();
   const wf = content.projectDetail.workflow;
   const [form, setForm] = useState<WorkflowTaskFormState>(() =>
     defaultFormForContext(drawerContext, project.summary.currentStageSlug, task, mode)
@@ -233,9 +234,9 @@ export function WorkflowTaskDrawer({
                       updateField('stageSlug', e.target.value as WorkflowTaskFormState['stageSlug'])
                     }
                   >
-                    {DEFAULT_PIPELINE_STAGES.map((s) => (
-                      <option key={s.slug} value={s.slug}>
-                        {formatWorkflowStageLabel(s.slug)}
+                    {catalog.map((stage) => (
+                      <option key={stage.slug} value={stage.slug}>
+                        {formatWorkflowStageLabel(stage.slug, catalog)}
                       </option>
                     ))}
                   </select>

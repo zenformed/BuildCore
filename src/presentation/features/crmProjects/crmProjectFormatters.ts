@@ -1,5 +1,11 @@
 import { maskEmailForMemberDisplay } from '@/domain/buildcore/maskEmailForMemberDisplay';
-import { CRM_TRADE_TYPES, getPipelineStage, type CrmTradeType, type PipelineStageSlug } from '@/domain/crm';
+import {
+  CRM_TRADE_TYPES,
+  getPipelineStage,
+  type CrmTradeType,
+  type PipelineStage,
+  type PipelineStageSlug,
+} from '@/domain/crm';
 
 /** Display labels for `CrmProjectSummary.tradeType` (not client industry/type). */
 export const TRADE_LABELS: Record<CrmTradeType, string> = {
@@ -19,8 +25,11 @@ export function formatCentsAsUsd(cents: number): string {
   }).format(cents / 100);
 }
 
-export function formatStageLabel(slug: PipelineStageSlug): string {
-  return getPipelineStage(slug).label;
+export function formatStageLabel(
+  slug: PipelineStageSlug,
+  stages?: readonly PipelineStage[] | null
+): string {
+  return getPipelineStage(slug, stages).label;
 }
 
 /** US-style display: 9186713407 → 918-671-3407; leaves non-10-digit values unchanged. */

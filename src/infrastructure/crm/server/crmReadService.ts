@@ -15,6 +15,7 @@ import {
   type DbCrmWorkflowTaskRow,
 } from '@/infrastructure/crm/mappers/mapCrmFromDb';
 import { loadCrmMemberMap } from './crmMemberMap';
+import { loadOrganizationPipelineStageCatalog } from './pipelineStageService';
 import { logCrmProjectDetailPerf, startCrmReadPerfTimer } from './crmReadPerf';
 
 const PROJECT_LIST_SELECT = `
@@ -269,7 +270,7 @@ export async function getCrmProjectDetailBySlugForOrg(
 
   const project = projectData as DbCrmProjectRow;
 
-  const [tasksResult, documentsResult, milestonesResult, accountabilityResult, budgetResult] =
+  const [tasksResult, documentsResult, milestonesResult, accountabilityResult, budgetResult, pipelineStages] =
     await Promise.all([
     supabase
       .from('crm_workflow_tasks')
@@ -306,6 +307,7 @@ export async function getCrmProjectDetailBySlugForOrg(
       .eq('project_id', project.id)
       .is('deleted_at', null)
       .order('created_at', { ascending: true }),
+    loadOrganizationPipelineStageCatalog(supabase, organizationId),
   ]);
 
   if (tasksResult.error) throw new Error(tasksResult.error.message);
@@ -340,6 +342,7 @@ export async function getCrmProjectDetailBySlugForOrg(
     accountability,
     budgetEntries,
     memberById,
+    pipelineStages,
   });
 }
 

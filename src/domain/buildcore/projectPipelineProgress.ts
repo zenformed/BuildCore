@@ -1,21 +1,6 @@
-import type { PipelineStageSlug } from '@/domain/crm/pipelineStage';
+import type { PipelineStage, PipelineStageSlug } from '@/domain/crm/pipelineStage';
+import { resolvePipelineStageCatalog } from '@/domain/crm/pipelineStage';
 import { isCrmProjectComplete, type CrmProjectSummary } from '@/domain/crm';
-
-/** Fixed pipeline stage progress percentages for BuildCore project detail UI. */
-export const PIPELINE_STAGE_PROGRESS_PERCENT: Readonly<Record<PipelineStageSlug, number>> = {
-  'new-lead': 0,
-  contacted: 10,
-  'inspection-scheduled': 20,
-  'inspection-complete': 30,
-  'estimate-sent': 40,
-  'waiting-on-approval': 50,
-  approved: 60,
-  scheduled: 70,
-  'in-progress': 85,
-  completed: 95,
-  invoiced: 98,
-  paid: 100,
-};
 
 export const PROJECT_PROGRESS_SEGMENT_COUNT = 20;
 export const PROJECT_PROGRESS_SEGMENT_STEP = 5;
@@ -25,8 +10,16 @@ export type ProjectProgressDisplay = {
   readonly litSegmentCount: number;
 };
 
-export function pipelineStageProgressPercent(stageSlug: PipelineStageSlug): number {
-  return PIPELINE_STAGE_PROGRESS_PERCENT[stageSlug];
+export function pipelineStageProgressPercent(
+  stageSlug: PipelineStageSlug,
+  stages?: readonly PipelineStage[] | null
+): number {
+  const catalog = resolvePipelineStageCatalog(stages);
+  const sorted = [...catalog].sort((a, b) => a.sortOrder - b.sortOrder);
+  const index = sorted.findIndex((stage) => stage.slug === stageSlug);
+  if (index < 0) return 0;
+  if (sorted.length <= 1) return 100;
+  return Math.round((index / (sorted.length - 1)) * 100);
 }
 
 export function roundProgressToNearestFive(percent: number): number {
@@ -48,7 +41,8 @@ export function averagePipelineProgressPercents(values: readonly number[]): numb
 }
 
 export function resolveProjectSummaryProgressDisplay(
-  summary: Pick<CrmProjectSummary, 'currentStageSlug' | 'completedAt'>
+  summary: Pick<CrmProjectSummary, 'currentStageSlug' | 'completedAt'>,
+  stages?: readonly PipelineStage[] | null
 ): ProjectProgressDisplay {
   if (isCrmProjectComplete(summary)) {
     return {
@@ -56,7 +50,7 @@ export function resolveProjectSummaryProgressDisplay(
       litSegmentCount: progressLitSegmentCount(100),
     };
   }
-  const textPercent = pipelineStageProgressPercent(summary.currentStageSlug);
+  const textPercent = pipelineStageProgressPercent(summary.currentStageSlug, stages);
   return {
     textPercent,
     litSegmentCount: progressLitSegmentCount(textPercent),
@@ -68,6 +62,7 @@ export function resolveProjectDetailProgressDisplay(input: {
   /** Null while parent subprojects are still loading; empty when none exist. */
   readonly childStageSlugs: readonly PipelineStageSlug[] | null;
   readonly isComplete?: boolean;
+  readonly stages?: readonly PipelineStage[] | null;
 }): ProjectProgressDisplay | null {
   if (input.isComplete) {
     return {
@@ -81,7 +76,9 @@ export function resolveProjectDetailProgressDisplay(input: {
   }
 
   if (input.childStageSlugs.length > 0) {
-    const childPercents = input.childStageSlugs.map(pipelineStageProgressPercent);
+    const childPercents = input.childStageSlugs.map((slug) =>
+      pipelineStageProgressPercent(slug, input.stages)
+    );
     const rawAverage = averagePipelineProgressPercents(childPercents);
     const textPercent = Math.round(rawAverage);
     return {
@@ -90,7 +87,7 @@ export function resolveProjectDetailProgressDisplay(input: {
     };
   }
 
-  const stagePercent = pipelineStageProgressPercent(input.currentStageSlug);
+  const stagePercent = pipelineStageProgressPercent(input.currentStageSlug, input.stages);
   return {
     textPercent: stagePercent,
     litSegmentCount: progressLitSegmentCount(stagePercent),

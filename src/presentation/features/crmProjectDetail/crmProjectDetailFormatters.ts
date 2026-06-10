@@ -3,6 +3,7 @@ import {
   isPaymentWorkflowTask,
   PAYMENT_WORKFLOW_STAGE_SLUG,
   type CrmWorkflowTask,
+  type PipelineStage,
   type PipelineStageSlug,
   type WorkflowTaskStatus,
 } from '@/domain/crm';
@@ -51,19 +52,23 @@ export function shortStageLabel(label: string): string {
 }
 
 /** Workflow-task UI label for a pipeline stage slug (`paid` → Payments). */
-export function formatWorkflowStageLabel(slug: PipelineStageSlug): string {
+export function formatWorkflowStageLabel(
+  slug: PipelineStageSlug,
+  stages?: readonly PipelineStage[] | null
+): string {
   if (slug === PAYMENT_WORKFLOW_STAGE_SLUG) {
     return content.projectDetail.workflow.paymentsGroupLabel;
   }
-  return getPipelineStage(slug).label;
+  return getPipelineStage(slug, stages).label;
 }
 
 /** Workflow-task UI label for a task row (payment milestones → Payments). */
 export function formatWorkflowTaskStageLabel(
-  task: Pick<CrmWorkflowTask, 'stageSlug' | 'amountCents'>
+  task: Pick<CrmWorkflowTask, 'stageSlug' | 'amountCents'>,
+  stages?: readonly PipelineStage[] | null
 ): string {
   if (isPaymentWorkflowTask(task)) {
     return content.projectDetail.workflow.paymentsGroupLabel;
   }
-  return formatWorkflowStageLabel(task.stageSlug);
+  return formatWorkflowStageLabel(task.stageSlug, stages);
 }
