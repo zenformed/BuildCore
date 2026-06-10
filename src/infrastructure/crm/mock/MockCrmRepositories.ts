@@ -120,7 +120,8 @@ function applyProjectUpdate(detail: CrmProjectDetail, input: UpdateCrmProjectInp
 
     name: input.name,
 
-    tradeType: input.tradeType,
+    industry: input.industry,
+    customIndustry: input.customIndustry,
 
     contact: {
 

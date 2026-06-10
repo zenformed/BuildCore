@@ -2,16 +2,16 @@
 
 import type { ReactElement, ReactNode } from 'react';
 import { useCallback } from 'react';
-import type { CrmProjectDetail, CrmProjectSummary, PipelineStageSlug } from '@/domain/crm';
+import type { CrmIndustry, CrmProjectDetail, CrmProjectSummary, PipelineStageSlug } from '@/domain/crm';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
 import type { ProjectDetailPageContext } from '@/presentation/features/crmProjectDetail/projectDetailPageContext';
 import type { SummaryEditableField } from '@/presentation/features/crmProjectDetail/projectDetailFormModel';
-import { getProjectTradeSubtitle } from '@/presentation/features/crmProjects/crmProjectFormatters';
+import { getProjectIndustryDisplayLabel } from '@/presentation/features/crmProjects/crmProjectFormatters';
 import { ProjectDetailHeader } from './ProjectDetailHeader';
 
 export type { ProjectDetailPageContext } from '@/presentation/features/crmProjectDetail/projectDetailPageContext';
 import { ProjectHeaderAssignee } from './ProjectHeaderAssignee';
-import { ProjectHeaderTradeType } from './ProjectHeaderTradeType';
+import { ProjectHeaderIndustry } from './ProjectHeaderIndustry';
 import { ProjectNotesInline } from './ProjectNotesInline';
 import { ProjectSummaryStrip } from './ProjectSummaryStrip';
 import { StageProgressBar } from './StageProgressBar';
@@ -32,6 +32,7 @@ export type ProjectDetailContextBlockProps = {
   onPrimaryPhotoError?: (message: string) => void;
   savingField: SummaryEditableField | null;
   patchField: (field: SummaryEditableField, value: string) => Promise<boolean>;
+  patchIndustry: (industry: CrmIndustry, customIndustry: string) => Promise<boolean>;
   onEditProject?: () => void;
 };
 
@@ -50,6 +51,7 @@ export function ProjectDetailContextBlock({
   onPrimaryPhotoError,
   savingField,
   patchField,
+  patchIndustry,
   onEditProject,
 }: ProjectDetailContextBlockProps): ReactElement {
   const readOnly = isMemberRole;
@@ -87,16 +89,20 @@ export function ProjectDetailContextBlock({
             />
           )
         }
-        tradeTypeControl={
+        industryControl={
           isMemberRole ? (
             <p className={`${styles.subtitle} ${styles.headerTradeSubtitle}`}>
-              {getProjectTradeSubtitle(project.summary.tradeType) ?? project.summary.tradeType}
+              {getProjectIndustryDisplayLabel(
+                project.summary.industry,
+                project.summary.customIndustry
+              )}
             </p>
           ) : (
-            <ProjectHeaderTradeType
-              tradeType={project.summary.tradeType}
-              isSaving={savingField === 'tradeType'}
-              onTradeTypeChange={(value) => patchField('tradeType', value)}
+            <ProjectHeaderIndustry
+              industry={project.summary.industry}
+              customIndustry={project.summary.customIndustry}
+              isSaving={savingField === 'industry' || savingField === 'customIndustry'}
+              onIndustryChange={patchIndustry}
             />
           )
         }

@@ -8,6 +8,7 @@ import {
   type PipelineStageSlug,
   type WorkflowStageCollapseKey,
 } from '@/domain/crm';
+import { isReservedPipelineStageSlug } from '@/domain/buildcore/orgPipelineStages';
 import { formatWorkflowStageLabel } from '@/presentation/features/crmProjectDetail/crmProjectDetailFormatters';
 import { sortWorkflowTasksForDisplay } from './workflowTaskSort';
 
@@ -28,7 +29,8 @@ export function resolveOpsPipelineStages(
   stages?: readonly PipelineStage[] | null
 ): readonly PipelineStage[] {
   return resolvePipelineStageCatalog(stages).filter(
-    (stage) => stage.slug !== PAYMENT_WORKFLOW_STAGE_SLUG
+    (stage) =>
+      stage.slug !== PAYMENT_WORKFLOW_STAGE_SLUG && !isReservedPipelineStageSlug(stage.slug)
   );
 }
 

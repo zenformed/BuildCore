@@ -270,6 +270,7 @@ function ProjectDetailShellBody({
           onPrimaryPhotoError={(message) => workspace.setToast({ kind: 'error', message })}
           savingField={workspace.savingField}
           patchField={workspace.patchField}
+          patchIndustry={workspace.patchIndustry}
           onEditProject={isMemberRole ? undefined : () => setEditProjectOpen(true)}
         />
 

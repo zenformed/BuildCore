@@ -1,4 +1,5 @@
 import type { CrmPriority, CrmProjectSummary, PipelineStageSlug } from '@/domain/crm';
+import { getProjectIndustryDisplayLabel } from '@/domain/crm';
 import { sortCrmProjectsForList } from '@/domain/crm/projectPriorityToggle';
 
 export type CrmProjectsListFilters = {
@@ -36,6 +37,7 @@ function projectSearchHaystack(project: CrmProjectSummary): string {
     project.contact.phone,
     project.notesPreview,
     project.assignedTo?.displayName,
+    getProjectIndustryDisplayLabel(project.industry, project.customIndustry),
   ]
     .filter((v): v is string => typeof v === 'string' && v.length > 0)
     .join(' ')

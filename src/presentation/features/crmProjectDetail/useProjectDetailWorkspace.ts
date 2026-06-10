@@ -209,7 +209,7 @@ export function useProjectDetailWorkspace(initialProject: CrmProjectDetail) {
     setTaskDrawer({ open: false, mode: 'create', context: 'workflow', task: null });
   }, []);
 
-  const { savingField, patchField } = useProjectSummaryPatch(
+  const { savingField, patchField, patchIndustry } = useProjectSummaryPatch(
     project,
     handleProjectSaved,
     (message) => setToast({ kind: 'error', message })
@@ -228,6 +228,7 @@ export function useProjectDetailWorkspace(initialProject: CrmProjectDetail) {
     setDocumentUploadConfirm,
     savingField,
     patchField,
+    patchIndustry,
     handleWorkflowTaskPatched,
     handleWorkflowTaskCreated,
     refreshWorkflowTasks,

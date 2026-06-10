@@ -1,9 +1,10 @@
 import type { CreateCrmProjectInput } from '@/domain/crm/createProject';
-import type { CrmPriority, CrmTradeType } from '@/domain/crm';
+import type { CrmPriority, CrmIndustry } from '@/domain/crm';
 import {
-  CRM_TRADE_TYPES,
   pipelineStageSlugSet,
   type PipelineStageSlug,
+  validateCrmIndustryFields,
+  isCrmIndustry,
 } from '@/domain/crm';
 import { US_STATE_CODES } from '@/domain/crm/usStates';
 import { parseProjectTemplateBlueprintsFromUnknown } from '@/infrastructure/crm/mappers/mapProjectTemplateFromDb';
@@ -16,7 +17,8 @@ export type CreateCrmProjectBody = {
   email?: unknown;
   phone?: unknown;
   priority?: unknown;
-  tradeType?: unknown;
+  industry?: unknown;
+  customIndustry?: unknown;
   currentStageSlug?: unknown;
   notes?: unknown;
   dealValueCents?: unknown;
@@ -60,9 +62,9 @@ function asPriority(value: unknown): CrmPriority | null {
   return (PRIORITIES as readonly string[]).includes(value) ? (value as CrmPriority) : null;
 }
 
-function asTradeType(value: unknown): CrmTradeType | null {
+function asIndustry(value: unknown): CrmIndustry | null {
   if (typeof value !== 'string') return null;
-  return (CRM_TRADE_TYPES as readonly string[]).includes(value) ? (value as CrmTradeType) : null;
+  return isCrmIndustry(value) ? value : null;
 }
 
 function asStageSlug(
@@ -108,9 +110,12 @@ export function validateCreateCrmProjectBody(
     return { ok: false, message: 'Priority is invalid.' };
   }
 
-  const tradeType = asTradeType(body.tradeType);
-  if (!tradeType) {
-    return { ok: false, message: 'Trade type is invalid.' };
+  const industryValidated = validateCrmIndustryFields(
+    asIndustry(body.industry),
+    asOptionalString(body.customIndustry)
+  );
+  if (!industryValidated.ok) {
+    return industryValidated;
   }
 
   const currentStageSlug = asStageSlug(body.currentStageSlug, allowedStageSlugs);
@@ -161,7 +166,8 @@ export function validateCreateCrmProjectBody(
     ok: true,
     input: {
       name,
-      tradeType,
+      industry: industryValidated.industry,
+      customIndustry: industryValidated.customIndustry,
       contactName,
       email: typeof body.email === 'string' ? body.email.trim() : '',
       phone: typeof body.phone === 'string' ? body.phone.trim() : '',

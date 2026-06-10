@@ -1,14 +1,13 @@
 'use client';
 
 import type { ReactElement } from 'react';
-import type { CrmTradeType } from '@/domain/crm';
 import { US_STATE_OPTIONS } from '@/domain/crm/usStates';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
-import { CRM_TRADE_TYPE_OPTIONS } from '@/presentation/features/crmProjects/crmProjectFormatters';
 import type { CreateCrmProjectFormState } from '@/presentation/features/crmCreate/createCrmProjectFormModel';
 import type { CrmProjectAssigneeOption } from '@/presentation/features/crmProjects/crmProjectAssigneeOptions';
 import { CreateFormAssigneePicker } from '@/presentation/components/crmShared/CreateFormAssigneePicker';
 import { CreateFormSelectPicker } from '@/presentation/components/crmShared/CreateFormSelectPicker';
+import { IndustrySelectFields } from '@/presentation/components/crmShared/IndustrySelectFields';
 import formStyles from './CreateCrmProjectDrawer.module.css';
 
 export type CreateCrmProjectFormFieldsProps = {
@@ -49,23 +48,19 @@ export function CreateCrmProjectFormFields({
       </div>
 
       <div className={formStyles.rowTradeDeal}>
-        <div className={formStyles.field}>
-          <label className={formStyles.label} htmlFor="crm-create-trade">
-            {create.fields.tradeType} *
-          </label>
-          <select
-            id="crm-create-trade"
-            className={formStyles.select}
-            value={form.tradeType}
+        <div className={formStyles.fieldStack}>
+          <IndustrySelectFields
+            industry={form.industry}
+            customIndustry={form.customIndustry}
+            industryLabel={create.fields.industry}
+            customIndustryLabel={create.fields.customIndustry}
             disabled={saving}
-            onChange={(e) => updateField('tradeType', e.target.value as CrmTradeType)}
-          >
-            {CRM_TRADE_TYPE_OPTIONS.map((opt) => (
-              <option key={opt.value} value={opt.value}>
-                {opt.label}
-              </option>
-            ))}
-          </select>
+            required
+            industryId="crm-create-industry"
+            customIndustryId="crm-create-custom-industry"
+            onIndustryChange={(industry) => updateField('industry', industry)}
+            onCustomIndustryChange={(value) => updateField('customIndustry', value)}
+          />
         </div>
         {assigneeOptions.length > 0 ? (
           <div className={formStyles.fieldAssigneeCompact}>

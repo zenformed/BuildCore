@@ -23,7 +23,7 @@ export const DEFAULT_PIPELINE_STAGES: readonly PipelineStage[] = [
   { slug: 'in-progress', label: 'In Progress', sortOrder: 9 },
   { slug: 'completed', label: 'Completed', sortOrder: 10 },
   { slug: 'invoiced', label: 'Invoiced', sortOrder: 11 },
-  { slug: 'paid', label: 'Paid', sortOrder: 12 },
+  { slug: 'complete', label: 'Complete', sortOrder: 12 },
 ] as const;
 
 export function resolvePipelineStageCatalog(

@@ -1,11 +1,12 @@
-import type { CrmPriority, CrmTradeType } from './project';
+import type { CrmIndustry, CrmPriority } from './project';
 import type { PipelineStageSlug } from './pipelineStage';
 import type { BuildCoreProjectTemplateBlueprints } from './projectTemplate';
 
 /** Input for creating a CRM project + linked client/contact. */
 export type CreateCrmProjectInput = {
   readonly name: string;
-  readonly tradeType: CrmTradeType;
+  readonly industry: CrmIndustry;
+  readonly customIndustry: string | null;
   readonly contactName: string;
   readonly email: string;
   readonly phone: string;

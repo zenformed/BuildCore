@@ -2,6 +2,10 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import type { CrmProjectDetail } from '@/domain/crm';
 import type { UpdateCrmProjectInput } from '@/domain/crm/updateProject';
 import { appendCrmAccountabilityEvent } from './crmAccountability';
+import {
+  buildCrmProjectIndustryWritePayload,
+  getCrmProjectIndustrySchemaMode,
+} from './crmProjectIndustrySchema';
 import { getCrmProjectDetailBySlugForOrg } from './crmReadService';
 
 export async function updateCrmProjectBySlugForOrg(
@@ -37,11 +41,13 @@ export async function updateCrmProjectBySlugForOrg(
 
   if (contactError) throw new Error(contactError.message);
 
+  const industrySchemaMode = await getCrmProjectIndustrySchemaMode(supabase);
+
   const { error: projectError } = await supabase
     .from('crm_projects')
     .update({
       name: input.name,
-      trade_type: input.tradeType,
+      ...buildCrmProjectIndustryWritePayload(industrySchemaMode, input),
       priority: input.priority,
       current_stage_slug: input.currentStageSlug,
       notes: input.notes,

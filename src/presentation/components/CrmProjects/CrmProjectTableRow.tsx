@@ -15,7 +15,7 @@ import {
   formatContactEmailDisplay,
   formatPhoneDisplay,
   formatStageLabel,
-  getProjectTradeSubtitle,
+  getProjectIndustrySubtitle,
 } from '@/presentation/features/crmProjects/crmProjectFormatters';
 import { TeamMemberAvatar } from '@/presentation/components/CrmProjectDetail/TeamMemberAvatar';
 import { useBuildCorePipelineStages } from '@/presentation/providers/BuildCorePipelineStagesProvider';
@@ -69,7 +69,10 @@ export function CrmProjectTableRow({
 }: CrmProjectTableRowProps): ReactElement {
   const tableCopy = content.crm.table;
   const { catalog } = useBuildCorePipelineStages();
-  const tradeSubtitle = getProjectTradeSubtitle(project.tradeType);
+  const industrySubtitle = getProjectIndustrySubtitle(
+    project.industry,
+    project.customIndustry
+  );
   const progress = resolveProjectSummaryProgressDisplay(project, catalog);
   const isChild = variant === 'child';
   const displayFinancials = financials ?? { valueCents: 0, collectedCents: 0, balanceCents: 0 };
@@ -136,7 +139,7 @@ export function CrmProjectTableRow({
             </button>
           ) : null}
         </span>
-        {tradeSubtitle ? <span className={styles.projectMeta}>{tradeSubtitle}</span> : null}
+        {industrySubtitle ? <span className={styles.projectMeta}>{industrySubtitle}</span> : null}
         {!isMemberRole ? (
           <span className={styles.projectProgressRow}>
             <ProjectProgressPercent variant="compact" progress={progress} />

@@ -1,7 +1,7 @@
 import {
   type CrmPriority,
   type CrmProjectDetail,
-  type CrmTradeType,
+  type CrmIndustry,
   type PipelineStageSlug,
   type UpdateCrmProjectInput,
 } from '@/domain/crm';
@@ -13,7 +13,8 @@ import {
 
 export type SummaryEditableField =
   | 'name'
-  | 'tradeType'
+  | 'industry'
+  | 'customIndustry'
   | 'contactName'
   | 'email'
   | 'phone'
@@ -43,8 +44,14 @@ export function applySummaryFieldToForm(
   switch (field) {
     case 'name':
       return { ...form, name: value };
-    case 'tradeType':
-      return { ...form, tradeType: value as CrmTradeType };
+    case 'industry':
+      return {
+        ...form,
+        industry: value as CrmIndustry,
+        customIndustry: value === 'other' ? form.customIndustry : '',
+      };
+    case 'customIndustry':
+      return { ...form, customIndustry: value };
     case 'contactName':
       return { ...form, contactName: value };
     case 'email':
@@ -85,8 +92,10 @@ export function isSummaryFieldUnchanged(
   switch (field) {
     case 'name':
       return value.trim() === summary.name;
-    case 'tradeType':
-      return value === summary.tradeType;
+    case 'industry':
+      return value === summary.industry;
+    case 'customIndustry':
+      return value.trim() === (summary.customIndustry ?? '').trim();
     case 'contactName':
       return value.trim() === summary.contact.name;
     case 'email':
@@ -122,7 +131,8 @@ export function projectDetailToFormState(project: CrmProjectDetail): CreateCrmPr
   const { summary, notes } = project;
   return {
     name: summary.name,
-    tradeType: summary.tradeType,
+    industry: summary.industry,
+    customIndustry: summary.customIndustry ?? '',
     contactName: summary.contact.name,
     email: summary.contact.email,
     phone: summary.contact.phone,

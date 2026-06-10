@@ -1,4 +1,5 @@
-import type { CreateCrmProjectInput, CrmPriority, CrmTradeType, PipelineStageSlug, CrmProjectDetail } from '@/domain/crm';
+import type { CreateCrmProjectInput, CrmPriority, CrmIndustry, PipelineStageSlug, CrmProjectDetail } from '@/domain/crm';
+import { validateCrmIndustryFields } from '@/domain/crm';
 import { getFirstPipelineStageSlug } from '@/domain/crm/pipelineStage';
 import { titleCasePersonOrEntityName } from '@/domain/crm/titleCaseName';
 import { US_STATE_CODES } from '@/domain/crm/usStates';
@@ -6,7 +7,8 @@ import { normalizeAssigneeMemberIdForSave } from '@/presentation/features/crmAss
 
 export type CreateCrmProjectFormState = {
   name: string;
-  tradeType: CrmTradeType;
+  industry: CrmIndustry;
+  customIndustry: string;
   contactName: string;
   email: string;
   phone: string;
@@ -25,7 +27,8 @@ export type CreateCrmProjectFormState = {
 
 export const defaultCreateCrmProjectFormState = (): CreateCrmProjectFormState => ({
   name: '',
-  tradeType: 'hvac',
+  industry: 'hvac',
+  customIndustry: '',
   contactName: '',
   email: '',
   phone: '',
@@ -85,6 +88,11 @@ export function validateCreateCrmProjectForm(
     return { ok: false, message: 'Contact name is required.' };
   }
 
+  const industryValidated = validateCrmIndustryFields(form.industry, form.customIndustry);
+  if (!industryValidated.ok) {
+    return industryValidated;
+  }
+
   const dealValueCents = 0;
 
   const state = form.state.trim();
@@ -101,7 +109,8 @@ export function validateCreateCrmProjectForm(
     ok: true,
     input: {
       name,
-      tradeType: form.tradeType,
+      industry: industryValidated.industry,
+      customIndustry: industryValidated.customIndustry,
       contactName,
       email: form.email.trim(),
       phone: form.phone.trim(),

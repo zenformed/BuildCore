@@ -13,13 +13,31 @@ export type OrgPipelineStageRecord = {
   readonly isActive: boolean;
 };
 
-/** Reserved slugs that power payment/completion semantics and cannot be deleted. */
+/** Terminal pipeline stage — always last, undeletable, marks 100% progress. */
+export const BUILDCORE_TERMINAL_PIPELINE_STAGE_SLUG = 'complete' as const;
+
+export const BUILDCORE_TERMINAL_PIPELINE_STAGE_LABEL = 'Complete';
+
+/** Reserved slugs that power completion semantics and cannot be deleted. */
 export const BUILDCORE_RESERVED_PIPELINE_STAGE_SLUGS: ReadonlySet<string> = new Set([
+  BUILDCORE_TERMINAL_PIPELINE_STAGE_SLUG,
+]);
+
+/** Internal workflow task buckets — not part of the user-facing pipeline catalog. */
+export const BUILDCORE_INTERNAL_WORKFLOW_STAGE_SLUGS: ReadonlySet<string> = new Set([
   PAYMENT_WORKFLOW_STAGE_SLUG,
 ]);
 
 export function isReservedPipelineStageSlug(slug: string): boolean {
   return BUILDCORE_RESERVED_PIPELINE_STAGE_SLUGS.has(slug.trim());
+}
+
+export function isInternalWorkflowStageSlug(slug: string): boolean {
+  return BUILDCORE_INTERNAL_WORKFLOW_STAGE_SLUGS.has(slug.trim());
+}
+
+export function isUserFacingPipelineStageSlug(slug: string): boolean {
+  return !isInternalWorkflowStageSlug(slug);
 }
 
 export function slugifyPipelineStageLabel(label: string): string {
@@ -49,13 +67,34 @@ export function orgPipelineStageRecordsToPipelineStages(
   records: readonly OrgPipelineStageRecord[]
 ): readonly PipelineStage[] {
   return [...records]
-    .filter((record) => record.isActive)
+    .filter((record) => record.isActive && isUserFacingPipelineStageSlug(record.slug))
     .sort((a, b) => a.sortOrder - b.sortOrder)
     .map((record) => ({
       slug: record.slug,
       label: record.label,
       sortOrder: record.sortOrder,
     }));
+}
+
+export function findTerminalPipelineStageRecord(
+  records: readonly OrgPipelineStageRecord[]
+): OrgPipelineStageRecord | null {
+  return records.find((record) => record.slug === BUILDCORE_TERMINAL_PIPELINE_STAGE_SLUG) ?? null;
+}
+
+/** Keep the terminal Complete stage last in sort order. */
+export function orderPipelineStageIdsWithTerminalLast(
+  stages: readonly OrgPipelineStageRecord[],
+  orderedStageIds: readonly string[]
+): string[] {
+  const terminal = findTerminalPipelineStageRecord(stages);
+  if (terminal == null) return [...orderedStageIds];
+
+  const withoutTerminal = orderedStageIds.filter((id) => id !== terminal.id);
+  if (!orderedStageIds.includes(terminal.id)) {
+    return [...withoutTerminal, terminal.id];
+  }
+  return [...withoutTerminal, terminal.id];
 }
 
 export function defaultOrgPipelineStageRecords(organizationId: string): OrgPipelineStageRecord[] {

@@ -5,7 +5,9 @@ import type { OrgPipelineStageRecord } from '@/domain/buildcore/orgPipelineStage
 import { isReservedPipelineStageSlug } from '@/domain/buildcore/orgPipelineStages';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
 import { ConfirmModal } from '@/presentation/components/ConfirmModal';
+import { DetailPanelHeaderButton } from '@/presentation/components/CrmProjectDetail/DetailPanelHeaderButton';
 import { DetailToast } from '@/presentation/components/CrmProjectDetail/DetailToast';
+import detailStyles from '@/presentation/components/CrmProjectDetail/ProjectDetail.module.css';
 import { useBuildCorePipelineStages } from '@/presentation/providers/BuildCorePipelineStagesProvider';
 import { useBuildCoreWorkflowStagesPage } from '@/presentation/features/buildCoreWorkflowStages/useBuildCoreWorkflowStagesPage';
 import styles from './BuildCoreWorkflowStages.module.css';
@@ -40,6 +42,19 @@ export function BuildCoreWorkflowStagesList(): ReactElement {
     [stages]
   );
 
+  const reorderableStages = useMemo(
+    () => sortedStages.filter((stage) => !isReservedPipelineStageSlug(stage.slug)),
+    [sortedStages]
+  );
+
+  const terminalStage = useMemo(
+    () => sortedStages.find((stage) => isReservedPipelineStageSlug(stage.slug)) ?? null,
+    [sortedStages]
+  );
+
+  const isStageReorderable = (stage: OrgPipelineStageRecord): boolean =>
+    !isReservedPipelineStageSlug(stage.slug);
+
   const openAdd = (): void => {
     setDraftLabel('');
     setEditor({ mode: 'add' });
@@ -54,34 +69,42 @@ export function BuildCoreWorkflowStagesList(): ReactElement {
     setEditor({ mode: 'delete', stage });
   };
 
-  const handleDragStart = (stageId: string) => (event: DragEvent<HTMLDivElement>): void => {
-    if (!canManage || busyStageId != null) return;
+  const handleDragStart = (stage: OrgPipelineStageRecord) => (event: DragEvent<HTMLDivElement>): void => {
+    if (!canManage || busyStageId != null || !isStageReorderable(stage)) return;
     event.dataTransfer.effectAllowed = 'move';
-    event.dataTransfer.setData('text/plain', stageId);
-    setDraggingStageId(stageId);
+    event.dataTransfer.setData('text/plain', stage.id);
+    setDraggingStageId(stage.id);
   };
 
-  const handleDragOver = (stageId: string) => (event: DragEvent<HTMLDivElement>): void => {
-    if (!canManage || draggingStageId == null) return;
+  const handleDragOver = (stage: OrgPipelineStageRecord) => (event: DragEvent<HTMLDivElement>): void => {
+    if (!canManage || draggingStageId == null || !isStageReorderable(stage)) return;
     event.preventDefault();
-    setDragOverStageId(stageId);
+    setDragOverStageId(stage.id);
   };
 
-  const handleDrop = (targetStageId: string) => async (event: DragEvent<HTMLDivElement>): Promise<void> => {
+  const handleDrop = (targetStage: OrgPipelineStageRecord) => async (event: DragEvent<HTMLDivElement>): Promise<void> => {
     event.preventDefault();
+    if (!isStageReorderable(targetStage)) return;
     const sourceStageId = event.dataTransfer.getData('text/plain') || draggingStageId;
     setDraggingStageId(null);
     setDragOverStageId(null);
-    if (!sourceStageId || sourceStageId === targetStageId) return;
+    if (!sourceStageId || sourceStageId === targetStage.id) return;
 
-    const currentIds = sortedStages.map((stage) => stage.id);
+    const sourceStage = reorderableStages.find((stage) => stage.id === sourceStageId);
+    if (sourceStage == null || !isStageReorderable(sourceStage)) return;
+
+    const currentIds = reorderableStages.map((stage) => stage.id);
     const fromIndex = currentIds.indexOf(sourceStageId);
-    const toIndex = currentIds.indexOf(targetStageId);
+    const toIndex = currentIds.indexOf(targetStage.id);
     if (fromIndex < 0 || toIndex < 0) return;
 
-    const nextIds = [...currentIds];
-    nextIds.splice(fromIndex, 1);
-    nextIds.splice(toIndex, 0, sourceStageId);
+    const nextReorderableIds = [...currentIds];
+    nextReorderableIds.splice(fromIndex, 1);
+    nextReorderableIds.splice(toIndex, 0, sourceStageId);
+
+    const nextIds = terminalStage
+      ? [...nextReorderableIds, terminalStage.id]
+      : nextReorderableIds;
     await reorderStages(nextIds);
   };
 
@@ -107,6 +130,76 @@ export function BuildCoreWorkflowStagesList(): ReactElement {
     if (ok) setEditor(null);
   };
 
+  const renderStageRow = (stage: OrgPipelineStageRecord): ReactElement => {
+    const reorderable = isStageReorderable(stage);
+    const reserved = isReservedPipelineStageSlug(stage.slug);
+    const rowClass = [
+      styles.row,
+      reorderable && draggingStageId === stage.id ? styles.row_dragging : '',
+      reorderable && dragOverStageId === stage.id ? styles.row_dragOver : '',
+    ]
+      .filter(Boolean)
+      .join(' ');
+
+    return (
+      <div
+        key={stage.id}
+        role="listitem"
+        className={rowClass}
+        draggable={reorderable && canManage && busyStageId == null}
+        onDragStart={reorderable ? handleDragStart(stage) : undefined}
+        onDragOver={reorderable ? handleDragOver(stage) : undefined}
+        onDrop={reorderable ? (event) => void handleDrop(stage)(event) : undefined}
+        onDragEnd={
+          reorderable
+            ? () => {
+                setDraggingStageId(null);
+                setDragOverStageId(null);
+              }
+            : undefined
+        }
+      >
+        {reorderable ? (
+          <span className={styles.dragHandle} aria-hidden>
+            ☰
+          </span>
+        ) : (
+          <span className={styles.leadingSpacer} aria-hidden />
+        )}
+        <p className={styles.stageName}>{stage.label}</p>
+        {canManage && !reserved ? (
+          <span className={styles.rowActions}>
+            <button
+              type="button"
+              className={styles.rowIconBtn}
+              aria-label={copy.editStageAriaLabel(stage.label)}
+              title={copy.edit}
+              disabled={busyStageId === stage.id}
+              onClick={() => openEdit(stage)}
+            >
+              <span className={detailStyles.summaryStripEditIcon} aria-hidden />
+            </button>
+            <button
+              type="button"
+              className={`${styles.rowIconBtn} ${styles.rowIconBtnDanger}`}
+              aria-label={copy.deleteStageAriaLabel(stage.label)}
+              title={copy.delete}
+              disabled={busyStageId === stage.id}
+              onClick={() => openDelete(stage)}
+            >
+              <span
+                className={`${detailStyles.actionsMenuIcon} ${detailStyles.actionsMenuDeleteIcon}`}
+                aria-hidden
+              />
+            </button>
+          </span>
+        ) : canManage ? (
+          <span className={styles.rowActions} aria-hidden />
+        ) : null}
+      </div>
+    );
+  };
+
   return (
     <section className={styles.panel} aria-labelledby="workflow-stages-heading">
       {statusMessage ? (
@@ -121,9 +214,13 @@ export function BuildCoreWorkflowStagesList(): ReactElement {
           {copy.listTitle}
         </h2>
         {canManage ? (
-          <button type="button" className={styles.addButton} onClick={openAdd} disabled={busyStageId != null}>
-            {copy.addStage}
-          </button>
+          <DetailPanelHeaderButton
+            variant="add"
+            title={copy.addStageTitle}
+            aria-label={copy.addStageTitle}
+            disabled={busyStageId != null}
+            onClick={openAdd}
+          />
         ) : null}
       </div>
       {!canManage ? <p className={styles.readOnlyNote}>{copy.readOnlyNote}</p> : null}
@@ -162,60 +259,8 @@ export function BuildCoreWorkflowStagesList(): ReactElement {
         <p className={styles.empty}>{copy.empty}</p>
       ) : (
         <div className={styles.list} role="list">
-          {sortedStages.map((stage) => {
-            const rowClass = [
-              styles.row,
-              draggingStageId === stage.id ? styles.row_dragging : '',
-              dragOverStageId === stage.id ? styles.row_dragOver : '',
-            ]
-              .filter(Boolean)
-              .join(' ');
-            return (
-              <div
-                key={stage.id}
-                role="listitem"
-                className={rowClass}
-                draggable={canManage && busyStageId == null}
-                onDragStart={handleDragStart(stage.id)}
-                onDragOver={handleDragOver(stage.id)}
-                onDrop={(event) => void handleDrop(stage.id)(event)}
-                onDragEnd={() => {
-                  setDraggingStageId(null);
-                  setDragOverStageId(null);
-                }}
-              >
-                <span className={styles.dragHandle} aria-hidden>
-                  ☰
-                </span>
-                <p className={styles.stageName}>{stage.label}</p>
-                {canManage ? (
-                  <span className={styles.rowActions}>
-                    <button
-                      type="button"
-                      className={styles.iconButton}
-                      aria-label={copy.editStageAriaLabel(stage.label)}
-                      disabled={busyStageId === stage.id}
-                      onClick={() => openEdit(stage)}
-                    >
-                      ✏ {copy.edit}
-                    </button>
-                    <button
-                      type="button"
-                      className={`${styles.iconButton} ${styles.iconButtonDanger}`}
-                      aria-label={copy.deleteStageAriaLabel(stage.label)}
-                      disabled={busyStageId === stage.id || isReservedPipelineStageSlug(stage.slug)}
-                      title={
-                        isReservedPipelineStageSlug(stage.slug) ? copy.reservedStageDeleteHint : undefined
-                      }
-                      onClick={() => openDelete(stage)}
-                    >
-                      🗑 {copy.delete}
-                    </button>
-                  </span>
-                ) : null}
-              </div>
-            );
-          })}
+          {reorderableStages.map((stage) => renderStageRow(stage))}
+          {terminalStage != null ? renderStageRow(terminalStage) : null}
         </div>
       )}
 

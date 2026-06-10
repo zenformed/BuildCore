@@ -2098,6 +2098,33 @@
   margin-top: 0;
 }
 
+.headerIndustryEdit {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.35rem;
+}
+
+.headerIndustryCustomInput {
+  display: block;
+  width: min(100%, 16rem);
+  margin: 0;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.8125rem;
+  line-height: 1.25;
+  color: var(--color-text, #0f172a);
+  border: 1px solid var(--theme-border-main, var(--color-border, #e2e8f0));
+  border-radius: 0.25rem;
+  background: var(--theme-surface-main, var(--color-surface, #fff));
+  box-sizing: border-box;
+}
+
+:global([data-theme='dark']) .headerIndustryCustomInput {
+  background: #1d2029;
+  border-color: #3d3e4a;
+  color: #f1f5f9;
+}
+
 .headerTradeBtn,
 .headerTradeSelect {
   display: inline-block;

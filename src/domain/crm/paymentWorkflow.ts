@@ -6,14 +6,12 @@ import type { CrmWorkflowTask } from './workflowTask';
  * Payment milestone model (BuildCore CRM)
  *
  * - Payment milestones are normal `crm_workflow_tasks` rows with non-null `amount_cents`.
- * - Storage uses `stage_slug = 'paid'` as the canonical bucket (pipeline stage "Paid" on the
- *   project summary is unchanged — it still means the deal reached the Paid pipeline step).
- * - Workflow UI groups all payment tasks under the label **Payments**, not **Paid**.
- * - Receipts/documents will attach to these tasks in a later phase (no uploads in this slice).
+ * - Storage uses `stage_slug = 'payments'` — an internal bucket, not a user pipeline stage.
+ * - Workflow UI groups all payment tasks under the label **Payments**.
  */
 
-/** Canonical `stage_slug` stored on payment milestone tasks. */
-export const PAYMENT_WORKFLOW_STAGE_SLUG: PipelineStageSlug = 'paid';
+/** Internal `stage_slug` stored on payment milestone tasks (not in the pipeline catalog). */
+export const PAYMENT_WORKFLOW_STAGE_SLUG: PipelineStageSlug = 'payments';
 
 /** UI collapse key for the Payments group (distinct from pipeline stage slug). */
 export const PAYMENTS_WORKFLOW_COLLAPSE_KEY = 'payments' as const;

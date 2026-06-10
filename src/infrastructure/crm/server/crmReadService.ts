@@ -15,15 +15,20 @@ import {
   type DbCrmWorkflowTaskRow,
 } from '@/infrastructure/crm/mappers/mapCrmFromDb';
 import { loadCrmMemberMap } from './crmMemberMap';
+import {
+  crmProjectIndustrySelectLines,
+  getCrmProjectIndustrySchemaMode,
+} from './crmProjectIndustrySchema';
 import { loadOrganizationPipelineStageCatalog } from './pipelineStageService';
 import { logCrmProjectDetailPerf, startCrmReadPerfTimer } from './crmReadPerf';
 
-const PROJECT_LIST_SELECT = `
+function buildProjectSummarySelect(mode: Awaited<ReturnType<typeof getCrmProjectIndustrySchemaMode>>): string {
+  return `
   id,
   slug,
   parent_project_id,
   name,
-  trade_type,
+${crmProjectIndustrySelectLines(mode)}
   priority,
   current_stage_slug,
   notes,
@@ -44,33 +49,7 @@ const PROJECT_LIST_SELECT = `
   crm_clients ( id, company_name ),
   crm_contacts:primary_contact_id ( id, full_name, email, phone, role_title )
 `;
-
-const PROJECT_DETAIL_SELECT = `
-  id,
-  slug,
-  parent_project_id,
-  name,
-  trade_type,
-  priority,
-  current_stage_slug,
-  notes,
-  deal_value_cents,
-  balance_cents,
-  assigned_member_id,
-  last_activity_at,
-  completed_at,
-  completed_by,
-  primary_photo_path,
-  address_line_1,
-  address_line_2,
-  city,
-  state,
-  postal_code,
-  client_id,
-  primary_contact_id,
-  crm_clients ( id, company_name ),
-  crm_contacts:primary_contact_id ( id, full_name, email, phone, role_title )
-`;
+}
 
 function collectMemberIds(rows: {
   projects?: readonly DbCrmProjectRow[];
@@ -197,9 +176,11 @@ export async function listCrmProjectSummariesForOrg(
   organizationId: string,
   options?: { rootsOnly?: boolean }
 ): Promise<readonly CrmProjectSummary[]> {
+  const industrySchemaMode = await getCrmProjectIndustrySchemaMode(supabase);
+  const projectSelect = buildProjectSummarySelect(industrySchemaMode);
   let query = supabase
     .from('crm_projects')
-    .select(PROJECT_LIST_SELECT)
+    .select(projectSelect)
     .eq('organization_id', organizationId)
     .is('archived_at', null);
 
@@ -213,7 +194,7 @@ export async function listCrmProjectSummariesForOrg(
     throw new Error(error.message);
   }
 
-  const projects = (data ?? []) as DbCrmProjectRow[];
+  const projects = (data ?? []) as unknown as DbCrmProjectRow[];
   const memberById = await loadCrmMemberMap(supabase, collectMemberIds({ projects }), {
     organizationId,
   });
@@ -225,9 +206,11 @@ export async function getCrmProjectSummaryBySlugForOrg(
   organizationId: string,
   slug: string
 ): Promise<CrmProjectSummary | null> {
+  const industrySchemaMode = await getCrmProjectIndustrySchemaMode(supabase);
+  const projectSelect = buildProjectSummarySelect(industrySchemaMode);
   const { data, error } = await supabase
     .from('crm_projects')
-    .select(PROJECT_LIST_SELECT)
+    .select(projectSelect)
     .eq('organization_id', organizationId)
     .eq('slug', slug)
     .is('archived_at', null)
@@ -238,7 +221,7 @@ export async function getCrmProjectSummaryBySlugForOrg(
   }
   if (!data) return null;
 
-  const project = data as DbCrmProjectRow;
+  const project = data as unknown as DbCrmProjectRow;
   const memberById = await loadCrmMemberMap(supabase, collectMemberIds({ projects: [project] }), {
     organizationId,
   });
@@ -252,9 +235,11 @@ export async function getCrmProjectDetailBySlugForOrg(
 ): Promise<CrmProjectDetail | null> {
   const timings: Record<string, number> = {};
   let endTimer = startCrmReadPerfTimer();
+  const industrySchemaMode = await getCrmProjectIndustrySchemaMode(supabase);
+  const projectSelect = buildProjectSummarySelect(industrySchemaMode);
   const { data: projectData, error: projectError } = await supabase
     .from('crm_projects')
-    .select(PROJECT_DETAIL_SELECT)
+    .select(projectSelect)
     .eq('organization_id', organizationId)
     .eq('slug', slug)
     .is('archived_at', null)
@@ -268,7 +253,7 @@ export async function getCrmProjectDetailBySlugForOrg(
   timings.projectRowMs = endTimer();
   endTimer = startCrmReadPerfTimer();
 
-  const project = projectData as DbCrmProjectRow;
+  const project = projectData as unknown as DbCrmProjectRow;
 
   const [tasksResult, documentsResult, milestonesResult, accountabilityResult, budgetResult, pipelineStages] =
     await Promise.all([
@@ -351,9 +336,11 @@ export async function listCrmProjectChildSummariesForOrg(
   organizationId: string,
   parentProjectId: string
 ): Promise<readonly CrmProjectSummary[]> {
+  const industrySchemaMode = await getCrmProjectIndustrySchemaMode(supabase);
+  const projectSelect = buildProjectSummarySelect(industrySchemaMode);
   const { data, error } = await supabase
     .from('crm_projects')
-    .select(PROJECT_LIST_SELECT)
+    .select(projectSelect)
     .eq('organization_id', organizationId)
     .eq('parent_project_id', parentProjectId)
     .is('archived_at', null)
@@ -363,7 +350,7 @@ export async function listCrmProjectChildSummariesForOrg(
     throw new Error(error.message);
   }
 
-  const projects = (data ?? []) as DbCrmProjectRow[];
+  const projects = (data ?? []) as unknown as DbCrmProjectRow[];
   const memberById = await loadCrmMemberMap(supabase, collectMemberIds({ projects }), {
     organizationId,
   });

@@ -1,21 +1,15 @@
 import { maskEmailForMemberDisplay } from '@/domain/buildcore/maskEmailForMemberDisplay';
 import {
-  CRM_TRADE_TYPES,
+  CRM_INDUSTRIES,
   getPipelineStage,
-  type CrmTradeType,
+  INDUSTRY_LABELS,
+  getProjectIndustryDisplayLabel,
+  type CrmIndustry,
   type PipelineStage,
   type PipelineStageSlug,
 } from '@/domain/crm';
 
-/** Display labels for `CrmProjectSummary.tradeType` (not client industry/type). */
-export const TRADE_LABELS: Record<CrmTradeType, string> = {
-  hvac: 'HVAC',
-  roofing: 'Roofing',
-  restoration: 'Restoration',
-  inspections: 'Inspections',
-  'make-ready': 'Make Ready',
-  'general-contractor': 'General Contractor',
-};
+export { getProjectIndustryDisplayLabel, INDUSTRY_LABELS };
 
 export function formatCentsAsUsd(cents: number): string {
   return new Intl.NumberFormat('en-US', {
@@ -68,26 +62,29 @@ export function formatRelativeUpdatedAt(iso: string): string {
   }).format(date);
 }
 
-export function formatTradeLabel(trade: CrmTradeType | string): string {
-  if (trade in TRADE_LABELS) {
-    return TRADE_LABELS[trade as CrmTradeType];
+export function formatIndustryLabel(industry: CrmIndustry | string): string {
+  if (industry in INDUSTRY_LABELS) {
+    return INDUSTRY_LABELS[industry as CrmIndustry];
   }
-  return trade
+  return industry
     .split('-')
     .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
     .join(' ');
 }
 
-/** Trade subtitle under project title — only when trade_type is set on the project row. */
-export function getProjectTradeSubtitle(tradeType: CrmTradeType): string | null {
-  return TRADE_LABELS[tradeType] ?? null;
+/** Industry subtitle under project title in list/dashboard views. */
+export function getProjectIndustrySubtitle(
+  industry: CrmIndustry,
+  customIndustry: string | null | undefined
+): string {
+  return getProjectIndustryDisplayLabel(industry, customIndustry);
 }
 
-export const CRM_TRADE_TYPE_OPTIONS = CRM_TRADE_TYPES.map((value) => ({
+export const CRM_INDUSTRY_OPTIONS = CRM_INDUSTRIES.map((value) => ({
   value,
-  label: TRADE_LABELS[value],
+  label: INDUSTRY_LABELS[value],
 }));
 
-export function isCrmTradeType(value: string): value is CrmTradeType {
-  return (CRM_TRADE_TYPES as readonly string[]).includes(value);
+export function isCrmIndustry(value: string): value is CrmIndustry {
+  return (CRM_INDUSTRIES as readonly string[]).includes(value);
 }

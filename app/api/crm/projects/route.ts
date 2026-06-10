@@ -15,6 +15,7 @@ import {
   type CreateCrmProjectBody,
 } from '@/infrastructure/crm/server/validateCreateCrmProjectBody';
 import { loadOrganizationPipelineStageCatalog } from '@/infrastructure/crm/server/pipelineStageService';
+import { mapCrmRouteError } from '@/infrastructure/crm/server/crmApiRouteErrors';
 
 export const dynamic = 'force-dynamic';
 
@@ -40,8 +41,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       total: projects.length,
     });
   } catch (err) {
-    const message = err instanceof Error ? err.message : 'Failed to load CRM projects';
-    return NextResponse.json({ error: 'internal_error', message }, { status: 500 });
+    return mapCrmRouteError(err, 'Failed to load CRM projects');
   }
 }
 
@@ -84,7 +84,6 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     );
     return NextResponse.json(created, { status: 201 });
   } catch (err) {
-    const message = err instanceof Error ? err.message : 'Failed to create CRM project';
-    return NextResponse.json({ error: 'internal_error', message }, { status: 500 });
+    return mapCrmRouteError(err, 'Failed to create CRM project');
   }
 }

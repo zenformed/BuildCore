@@ -7,26 +7,13 @@ import type { CrmMilestonePaymentSummary } from './milestonePayment';
 import type { CrmProjectAddress } from './projectAddress';
 import type { PipelineStageSlug } from './pipelineStage';
 import type { CrmTeamMemberRef } from './teamMember';
+import type { CrmIndustry } from './industry';
 import type { CrmWorkflowTask } from './workflowTask';
 
 export type CrmPriority = 'low' | 'normal' | 'high' | 'urgent';
 
-export type CrmTradeType =
-  | 'hvac'
-  | 'roofing'
-  | 'restoration'
-  | 'inspections'
-  | 'make-ready'
-  | 'general-contractor';
-
-export const CRM_TRADE_TYPES: readonly CrmTradeType[] = [
-  'hvac',
-  'roofing',
-  'restoration',
-  'inspections',
-  'make-ready',
-  'general-contractor',
-] as const;
+export type { CrmIndustry } from './industry';
+export { CRM_INDUSTRIES, INDUSTRY_LABELS } from './industry';
 
 /** Row shape for the future all-projects pipeline table. */
 export type CrmProjectSummary = {
@@ -35,7 +22,9 @@ export type CrmProjectSummary = {
   /** Null for root/parent projects; set when this project is a subproject. */
   readonly parentProjectId: string | null;
   readonly name: string;
-  readonly tradeType: CrmTradeType;
+  readonly industry: CrmIndustry;
+  /** Set when industry is other; null otherwise. */
+  readonly customIndustry: string | null;
   readonly contact: CrmContact;
   readonly client: CrmClient;
   readonly address: CrmProjectAddress;

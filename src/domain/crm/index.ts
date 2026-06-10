@@ -82,9 +82,16 @@ export {
   type CrmProjectDetail,
   type CrmProjectSummary,
   type CrmStageProgress,
-  CRM_TRADE_TYPES,
-  type CrmTradeType,
+  CRM_INDUSTRIES,
+  INDUSTRY_LABELS,
+  type CrmIndustry,
 } from './project';
+export {
+  asCrmIndustry,
+  getProjectIndustryDisplayLabel,
+  isCrmIndustry,
+  validateCrmIndustryFields,
+} from './industry';
 export { isCrmProjectComplete, CRM_PROJECT_COMPLETE_STAGE_SLUG, type SetCrmProjectCompletionInput } from './projectCompletion';
 export {
   isProjectPriorityActive,

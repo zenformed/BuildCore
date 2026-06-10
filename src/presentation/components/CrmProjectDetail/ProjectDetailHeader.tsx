@@ -18,6 +18,8 @@ export type ProjectDetailHeaderProps = {
   onOpenParentProject?: () => void;
   assigneeControl?: ReactNode;
   tradeTypeControl?: ReactNode;
+  /** @deprecated Use industryControl */
+  industryControl?: ReactNode;
   actions?: ReactNode;
   progress?: ReactNode;
   onPrimaryPhotoUpdated?: (summary: CrmProjectSummary) => void;
@@ -34,6 +36,7 @@ export function ProjectDetailHeader({
   onOpenParentProject,
   assigneeControl,
   tradeTypeControl,
+  industryControl,
   actions,
   progress,
   onPrimaryPhotoUpdated,
@@ -110,7 +113,7 @@ export function ProjectDetailHeader({
                 <h1 className={styles.title}>{project.client.name}</h1>
                 {assigneeControl}
               </div>
-              {tradeTypeControl}
+              {industryControl ?? tradeTypeControl}
               {progress ? <div className={styles.titleBlockProgress}>{progress}</div> : null}
             </div>
           </div>

@@ -1,4 +1,5 @@
 import type { CreateCrmWorkflowTaskInput, UpdateCrmWorkflowTaskInput } from '@/domain/crm';
+import { isInternalWorkflowStageSlug } from '@/domain/buildcore/orgPipelineStages';
 import {
   PAYMENT_WORKFLOW_STAGE_SLUG,
   pipelineStageSlugSet,
@@ -77,6 +78,9 @@ export function validateCreateWorkflowTaskBody(
 
   const stageSlug = asStageSlug(body.stageSlug, allowedStageSlugs);
   if (!stageSlug) return { ok: false, message: 'Stage is invalid.' };
+  if (isInternalWorkflowStageSlug(stageSlug)) {
+    return { ok: false, message: 'Stage is invalid.' };
+  }
 
   const status = asStatus(body.status);
   if (!status) return { ok: false, message: 'Status is invalid.' };
@@ -91,9 +95,6 @@ export function validateCreateWorkflowTaskBody(
     return { ok: false, message: 'Enter a valid payment amount.' };
   }
   const amountCents = parsedAmount.kind === 'value' ? parsedAmount.value : null;
-  if (amountCents != null && amountCents > 0 && stageSlug !== PAYMENT_WORKFLOW_STAGE_SLUG) {
-    return { ok: false, message: 'Payment milestones must use the Paid stage bucket.' };
-  }
 
   return {
     ok: true,
@@ -142,6 +143,9 @@ export function validateUpdateWorkflowTaskBody(
   if ('stageSlug' in body) {
     const stageSlug = asStageSlug(body.stageSlug, allowedStageSlugs);
     if (!stageSlug) return { ok: false, message: 'Stage is invalid.' };
+    if (isInternalWorkflowStageSlug(stageSlug)) {
+      return { ok: false, message: 'Stage is invalid.' };
+    }
     patch.stageSlug = stageSlug;
   }
   if ('status' in body) {

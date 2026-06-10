@@ -3,7 +3,7 @@
 import type { ReactElement } from 'react';
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import type { CrmTradeType } from '@/domain/crm';
+import type { CrmIndustry } from '@/domain/crm';
 import { canManageBuildCoreProjectTemplates } from '@/domain/buildcore/projectTemplateAccess';
 import {
   createProjectTemplateDraftSummary,
@@ -21,7 +21,7 @@ import {
   type CreateCrmProjectFormState,
 } from '@/presentation/features/crmCreate/createCrmProjectFormModel';
 import { getCrmProjectAssigneeOptions } from '@/presentation/features/crmProjects/crmProjectAssigneeOptions';
-import { CRM_TRADE_TYPE_OPTIONS, formatStageLabel } from '@/presentation/features/crmProjects/crmProjectFormatters';
+import { CRM_INDUSTRY_OPTIONS, formatStageLabel } from '@/presentation/features/crmProjects/crmProjectFormatters';
 import { useBuildCorePipelineStages } from '@/presentation/providers/BuildCorePipelineStagesProvider';
 import { AssigneeMenuOptionLabel } from '@/presentation/features/crmAssignment/AssigneeMenuOptionLabel';
 import { useAssignmentIdentityCatalog } from '@/presentation/providers/AssignmentIdentityProvider';
@@ -157,17 +157,33 @@ export function CrmProjectDraftRow({
           />
           <select
             className={`${styles.draftSelect} ${styles.draftSelectTrade}`}
-            value={form.tradeType}
+            value={form.industry}
             disabled={saving}
-            aria-label={create.fields.tradeType}
-            onChange={(e) => updateField('tradeType', e.target.value as CrmTradeType)}
+            aria-label={create.fields.industry}
+            onChange={(e) => {
+              const next = e.target.value as CrmIndustry;
+              updateField('industry', next);
+              if (next !== 'other') {
+                updateField('customIndustry', '');
+              }
+            }}
           >
-            {CRM_TRADE_TYPE_OPTIONS.map((opt) => (
+            {CRM_INDUSTRY_OPTIONS.map((opt) => (
               <option key={opt.value} value={opt.value}>
                 {opt.label}
               </option>
             ))}
           </select>
+          {form.industry === 'other' ? (
+            <input
+              className={styles.draftInput}
+              value={form.customIndustry}
+              disabled={saving}
+              placeholder={create.fields.customIndustry}
+              aria-label={create.fields.customIndustry}
+              onChange={(e) => updateField('customIndustry', e.target.value)}
+            />
+          ) : null}
           <span className={`${shared.stagePill} ${styles.projectMetaStagePill}`}>
             {formatStageLabel(form.currentStageSlug, catalog)}
           </span>

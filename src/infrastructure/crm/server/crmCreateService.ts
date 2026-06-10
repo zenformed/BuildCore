@@ -1,6 +1,10 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { CreateCrmProjectInput, CreateCrmProjectResult } from '@/domain/crm/createProject';
 import { applyProjectTemplateBlueprintsToProject } from './crmProjectTemplateService';
+import {
+  buildCrmProjectIndustryWritePayload,
+  getCrmProjectIndustrySchemaMode,
+} from './crmProjectIndustrySchema';
 import { ensureUniqueProjectSlug, slugifyProjectName } from './crmSlug';
 
 export async function createCrmProjectForOrg(
@@ -60,6 +64,8 @@ export async function createCrmProjectForOrg(
     }
   }
 
+  const industrySchemaMode = await getCrmProjectIndustrySchemaMode(supabase);
+
   const { data: projectRow, error: projectError } = await supabase
     .from('crm_projects')
     .insert({
@@ -69,7 +75,7 @@ export async function createCrmProjectForOrg(
       parent_project_id: input.parentProjectId ?? null,
       client_id: clientRow.id,
       primary_contact_id: contactRow.id,
-      trade_type: input.tradeType,
+      ...buildCrmProjectIndustryWritePayload(industrySchemaMode, input),
       priority: input.priority,
       current_stage_slug: input.currentStageSlug,
       notes: input.notes,

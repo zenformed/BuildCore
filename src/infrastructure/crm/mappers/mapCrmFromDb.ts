@@ -16,12 +16,13 @@ import {
   type CrmProjectDetail,
   type CrmProjectSummary,
   type CrmTeamMemberRef,
-  type CrmTradeType,
+  type CrmIndustry,
   type CrmWorkflowTask,
   type PipelineStage,
   type PipelineStageSlug,
   type WorkflowTaskStatus,
 } from '@/domain/crm';
+import { asCrmIndustry } from '@/domain/crm/industry';
 import {
   displayNameFromProfileParts,
   initialsFromPersonName,
@@ -48,7 +49,9 @@ export type DbCrmProjectRow = {
   slug: string;
   name: string;
   parent_project_id?: string | null;
-  trade_type: string;
+  industry?: string;
+  custom_industry?: string | null;
+  trade_type?: string;
   priority: string;
   current_stage_slug: string;
   notes: string | null;
@@ -152,15 +155,6 @@ export type DbProfileRow = {
   last_name?: string | null;
 };
 
-const TRADE_TYPES: readonly CrmTradeType[] = [
-  'hvac',
-  'roofing',
-  'restoration',
-  'inspections',
-  'make-ready',
-  'general-contractor',
-];
-
 const PRIORITIES: readonly CrmPriority[] = ['low', 'normal', 'high', 'urgent'];
 
 function unwrapJoin<T>(value: T | T[] | null | undefined): T | null {
@@ -170,13 +164,6 @@ function unwrapJoin<T>(value: T | T[] | null | undefined): T | null {
 
 function asPipelineStageSlug(slug: string): PipelineStageSlug {
   return slug as PipelineStageSlug;
-}
-
-function asTradeType(value: string): CrmTradeType {
-  if ((TRADE_TYPES as readonly string[]).includes(value)) {
-    return value as CrmTradeType;
-  }
-  return 'general-contractor';
 }
 
 function asPriority(value: string): CrmPriority {
@@ -279,6 +266,27 @@ export function mapDbContact(
   };
 }
 
+function mapDbProjectIndustryFields(
+  row: DbCrmProjectRow
+): Pick<CrmProjectSummary, 'industry' | 'customIndustry'> {
+  if (row.industry != null) {
+    return {
+      industry: asCrmIndustry(row.industry),
+      customIndustry: row.custom_industry ?? null,
+    };
+  }
+
+  const legacyTradeType = row.trade_type ?? 'general-contractor';
+  if (legacyTradeType === 'make-ready') {
+    return { industry: 'other', customIndustry: 'Make Ready' };
+  }
+
+  return {
+    industry: asCrmIndustry(legacyTradeType),
+    customIndustry: null,
+  };
+}
+
 export function mapDbProjectAddress(row: DbCrmProjectRow): CrmProjectAddress {
   return {
     addressLine1: row.address_line_1,
@@ -312,7 +320,7 @@ export function mapDbProjectSummary(
     slug: row.slug,
     parentProjectId: row.parent_project_id ?? null,
     name: row.name,
-    tradeType: asTradeType(row.trade_type),
+    ...mapDbProjectIndustryFields(row),
     contact,
     client,
     address: mapDbProjectAddress(row),

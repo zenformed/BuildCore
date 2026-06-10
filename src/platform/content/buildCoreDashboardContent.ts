@@ -147,7 +147,7 @@ export const buildCoreDashboardContent = {
     empty: 'No workflow stages yet.',
     editStageAriaLabel: (name: string) => `Edit ${name}`,
     deleteStageAriaLabel: (name: string) => `Delete ${name}`,
-    reservedStageDeleteHint: 'This stage is required by BuildCore and cannot be deleted.',
+    reservedStageDeleteHint: 'Complete is the terminal stage and cannot be deleted.',
   },
   teams: {
     breadcrumb: 'Organization / Teams',
@@ -259,7 +259,8 @@ export const buildCoreDashboardContent = {
       assigneeSelf: 'Assign to myself',
       fields: {
         name: 'Project / customer name',
-        tradeType: 'Trade type',
+        industry: 'Industry',
+        customIndustry: 'Custom industry',
         contactName: 'Contact name',
         email: 'Email',
         phone: 'Phone',
@@ -391,7 +392,8 @@ export const buildCoreDashboardContent = {
       assigneeSelf: 'Assign to myself',
       fields: {
         name: 'Project / customer name',
-        tradeType: 'Trade type',
+        industry: 'Industry',
+        customIndustry: 'Custom industry',
         contactName: 'Contact name',
         email: 'Email',
         phone: 'Phone',

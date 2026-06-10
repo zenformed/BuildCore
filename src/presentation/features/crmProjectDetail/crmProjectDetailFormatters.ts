@@ -51,7 +51,7 @@ export function shortStageLabel(label: string): string {
   return first ?? label;
 }
 
-/** Workflow-task UI label for a pipeline stage slug (`paid` → Payments). */
+/** Workflow-task UI label for a pipeline stage slug (`payments` → Payments). */
 export function formatWorkflowStageLabel(
   slug: PipelineStageSlug,
   stages?: readonly PipelineStage[] | null

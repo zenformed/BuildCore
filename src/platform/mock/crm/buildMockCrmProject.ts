@@ -10,7 +10,7 @@ import {
   type CrmPriority,
   type CrmProjectDetail,
   type CrmProjectSummary,
-  type CrmTradeType,
+  type CrmIndustry,
   type CrmWorkflowTask,
   type PipelineStageSlug,
   type WorkflowTaskStatus,
@@ -26,7 +26,8 @@ export type BuildMockCrmProjectInput = {
   readonly slug: string;
   readonly name: string;
   readonly parentProjectId?: string | null;
-  readonly tradeType: CrmTradeType;
+  readonly industry: CrmIndustry
+  readonly customIndustry?: string | null;
   readonly contact: CrmContact;
   readonly client: CrmClient;
   readonly priority: CrmPriority;
@@ -62,8 +63,8 @@ function defaultMilestones(
   const deposit = Math.round(dealValueCents * 0.3);
   const progress = Math.round(dealValueCents * 0.4);
   const final = dealValueCents - deposit - progress;
-  const paidStage = stageSlug === 'paid';
-  const invoicedStage = stageSlug === 'invoiced' || paidStage;
+  const completeStage = stageSlug === 'complete';
+  const invoicedStage = stageSlug === 'invoiced' || completeStage;
 
   return {
     contractValueCents: dealValueCents,
@@ -93,8 +94,8 @@ function defaultMilestones(
         label: 'Final payment',
         amountCents: final,
         dueAt: '2026-06-01T00:00:00.000Z',
-        completedAt: paidStage ? '2026-05-14T12:00:00.000Z' : null,
-        status: paidStage ? 'paid' : invoicedStage ? 'due' : 'pending',
+        completedAt: completeStage ? '2026-05-14T12:00:00.000Z' : null,
+        status: completeStage ? 'paid' : invoicedStage ? 'due' : 'pending',
       },
     ],
   };
@@ -314,7 +315,7 @@ export function buildMockCrmProjectDetail(input: BuildMockCrmProjectInput): CrmP
     input.workflowTasks ??
     defaultWorkflowTasks(input.currentStageSlug, assignedTo, input.name);
   const includePaymentMilestones =
-    input.currentStageSlug === 'invoiced' || input.currentStageSlug === 'paid';
+    input.currentStageSlug === 'invoiced' || input.currentStageSlug === 'complete';
   const paymentTasks = includePaymentMilestones
     ? defaultPaymentMilestoneTasks(assignedTo, input.dealValueCents, paidCents)
     : [];
@@ -326,7 +327,8 @@ export function buildMockCrmProjectDetail(input: BuildMockCrmProjectInput): CrmP
     slug: input.slug,
     parentProjectId: input.parentProjectId ?? null,
     name: input.name,
-    tradeType: input.tradeType,
+    industry: input.industry,
+    customIndustry: input.customIndustry ?? null,
     contact: input.contact,
     client: input.client,
     address: emptyCrmProjectAddress(),
