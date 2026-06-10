@@ -2,12 +2,13 @@
 
 import type { ReactElement } from 'react';
 import { getProjectTemplateScopeCopy } from '@/presentation/features/projectTemplates/projectTemplateCopy';
-import { ConfirmModal } from '@/presentation/components/ConfirmModal';
+import { CenterConfirmDialog } from '@/presentation/components/CenterConfirmDialog';
 import type { useProjectTemplateManager } from '@/presentation/features/projectTemplates/useProjectTemplateManager';
 import {
   ProjectTemplateListModal,
   type ProjectTemplateListModalMode,
 } from './ProjectTemplateListModal';
+import styles from './ProjectTemplates.module.css';
 
 export type LoadProjectTemplateDialogsProps = {
   readonly controller: ReturnType<typeof useProjectTemplateManager>;
@@ -45,7 +46,7 @@ export function LoadProjectTemplateDialogs({
       />
 
       {isManageMode ? null : (
-        <ConfirmModal
+        <CenterConfirmDialog
           isOpen={controller.pendingApply != null}
           onClose={controller.cancelApply}
           onConfirm={() => void controller.confirmApply()}
@@ -53,11 +54,14 @@ export function LoadProjectTemplateDialogs({
           message={controller.applyConfirmMessage}
           confirmLabel={controller.applying ? 'Applying…' : copy.applyConfirmLabel}
           cancelLabel={saveCancel}
-          variant="primary"
+          confirmDisabled={controller.applying}
+          cancelDisabled={controller.applying}
+          closeAriaLabel={copy.applyConfirmTitle}
+          overlayClassName={styles.stackedOverlayConfirm}
         />
       )}
 
-      <ConfirmModal
+      <CenterConfirmDialog
         isOpen={controller.pendingDelete != null}
         onClose={controller.cancelDelete}
         onConfirm={() => void controller.confirmDelete()}
@@ -69,7 +73,10 @@ export function LoadProjectTemplateDialogs({
         }
         confirmLabel={copy.deleteConfirmLabel}
         cancelLabel={saveCancel}
-        variant="danger"
+        confirmDisabled={controller.busy}
+        cancelDisabled={controller.busy}
+        closeAriaLabel={copy.deleteConfirmTitle}
+        overlayClassName={styles.stackedOverlayConfirm}
       />
     </>
   );

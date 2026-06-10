@@ -30,10 +30,12 @@ type MenuPosition = {
   left: number;
   minWidth: number;
   effectiveAlign: 'start' | 'end';
+  maxHeight: number;
 };
 
 const MENU_GAP_PX = 4;
 const VIEWPORT_PADDING_PX = 8;
+const MENU_MAX_HEIGHT_PX = 320;
 
 function computeHorizontalMenuPosition(
   rect: DOMRect,
@@ -111,7 +113,12 @@ function computeMenuPosition(
 
   const { left, effectiveAlign } = computeHorizontalMenuPosition(rect, menuWidth, align);
 
-  return { top, left, minWidth, effectiveAlign };
+  const maxHeight = Math.max(
+    96,
+    Math.min(MENU_MAX_HEIGHT_PX, window.innerHeight - top - VIEWPORT_PADDING_PX)
+  );
+
+  return { top, left, minWidth, effectiveAlign, maxHeight };
 }
 
 export type WorkflowInlineMenuProps = {
@@ -172,6 +179,8 @@ export function WorkflowInlineMenu({
   const menuStyle: CSSProperties = {
     top: position.top,
     left: position.left,
+    maxHeight: position.maxHeight,
+    overflowY: 'auto',
     ...(sizeToContent ? {} : { minWidth: position.minWidth }),
     transform: position.effectiveAlign === 'end' ? 'translateX(-100%)' : undefined,
   };

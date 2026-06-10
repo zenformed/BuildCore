@@ -103,6 +103,10 @@ function ProjectDetailShellBody({
   const completion = useProjectCompletionToggle(scopedProject);
   const projectForWorkspace = showCompletionActions ? completion.project : scopedProject;
   const workspace = useProjectDetailWorkspace(projectForWorkspace);
+  const { refreshWorkflowTasks } = workspace;
+  const refreshAfterTemplateApply = useCallback(async () => {
+    await refreshWorkflowTasks();
+  }, [refreshWorkflowTasks]);
   const detail = content.projectDetail;
   const projectSummary = workspace.project.summary;
   const childSummaries = useMemo(
@@ -149,7 +153,7 @@ function ProjectDetailShellBody({
   const loadTemplate = useLoadProjectTemplate({
     projectSlug: projectSummary.slug,
     templateScope,
-    onRefresh: refreshProjectDetail,
+    onRefresh: refreshAfterTemplateApply,
     onSuccess: (message) => workspace.setToast({ kind: 'success', message }),
     onError: (message) => workspace.setToast({ kind: 'error', message }),
   });

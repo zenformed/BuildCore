@@ -239,3 +239,7 @@
 .stackedOverlay {
   z-index: 10002;
 }
+
+.stackedOverlayConfirm {
+  z-index: 10003;
+}

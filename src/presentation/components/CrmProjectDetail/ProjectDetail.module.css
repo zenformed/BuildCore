@@ -4428,7 +4428,8 @@
 
 .workflowStagePickerMenu {
   min-width: 12.5rem;
-  overflow: visible;
+  max-height: min(20rem, calc(100vh - 1rem));
+  overflow-y: auto;
 }
 
 .detailPanelHeaderBtn {
