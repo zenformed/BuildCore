@@ -96,6 +96,7 @@ export function CrmProjectsTable({
               <span role="columnheader">{COLUMNS.contact}</span>
               <span role="columnheader">{COLUMNS.email}</span>
               <span role="columnheader">{COLUMNS.phone}</span>
+              <span role="columnheader">{COLUMNS.address}</span>
               <span role="columnheader">{COLUMNS.notes}</span>
               {!isMemberRole ? (
                 <>

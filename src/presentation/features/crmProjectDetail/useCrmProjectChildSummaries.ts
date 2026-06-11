@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { CrmProjectSummary } from '@/domain/crm';
+import { buildCrmProjectSummarySearchHaystack } from '@/domain/crm';
 import { sortCrmProjectsForList } from '@/domain/crm/projectPriorityToggle';
 import {
   listCrmProjectChildSummaries,
@@ -18,20 +19,7 @@ export function filterSubprojects(
   const query = searchQuery.trim().toLowerCase();
   const filtered = !query
     ? [...rows]
-    : rows.filter((project) => {
-        const haystack = [
-          project.name,
-          project.client.name,
-          project.contact.name,
-          project.contact.email,
-          project.contact.phone,
-          project.notesPreview ?? '',
-          project.slug,
-        ]
-          .join(' ')
-          .toLowerCase();
-        return haystack.includes(query);
-      });
+    : rows.filter((project) => buildCrmProjectSummarySearchHaystack(project).includes(query));
   return sortCrmProjectsForList(filtered);
 }
 

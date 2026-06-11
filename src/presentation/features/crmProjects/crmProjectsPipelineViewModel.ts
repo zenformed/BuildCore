@@ -1,5 +1,5 @@
 import type { CrmPriority, CrmProjectSummary, PipelineStageSlug } from '@/domain/crm';
-import { getProjectIndustryDisplayLabel } from '@/domain/crm';
+import { buildCrmProjectSummarySearchHaystack } from '@/domain/crm';
 import { sortCrmProjectsForList } from '@/domain/crm/projectPriorityToggle';
 
 export type CrmProjectsListFilters = {
@@ -28,26 +28,6 @@ export function resolveCrmProjectsTableEmptyMessage(options: {
   return options.searchOrFiltersMessage;
 }
 
-function projectSearchHaystack(project: CrmProjectSummary): string {
-  return [
-    project.name,
-    project.client.name,
-    project.contact.name,
-    project.contact.email,
-    project.contact.phone,
-    project.notesPreview,
-    project.assignedTo?.displayName,
-    getProjectIndustryDisplayLabel(project.industry, project.customIndustry),
-  ]
-    .filter((v): v is string => typeof v === 'string' && v.length > 0)
-    .join(' ')
-    .toLowerCase();
-}
-
-function sortCrmProjectSummaries(projects: readonly CrmProjectSummary[]): CrmProjectSummary[] {
-  return sortCrmProjectsForList(projects);
-}
-
 function projectMatchesListFilters(
   project: CrmProjectSummary,
   searchQuery: string,
@@ -63,7 +43,11 @@ function projectMatchesListFilters(
     return false;
   }
   if (!q) return true;
-  return projectSearchHaystack(project).includes(q);
+  return buildCrmProjectSummarySearchHaystack(project).includes(q);
+}
+
+function sortCrmProjectSummaries(projects: readonly CrmProjectSummary[]): CrmProjectSummary[] {
+  return sortCrmProjectsForList(projects);
 }
 
 export function partitionCrmProjectSummaries(summaries: readonly CrmProjectSummary[]): {

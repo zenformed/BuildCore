@@ -217,6 +217,9 @@ export function CrmProjectDraftRow({
             onChange={(e) => updateField('phone', e.target.value)}
           />
         </span>
+        <span className={`${draftFieldCell} ${styles.gridCellAlignCenter}`} role="cell">
+          —
+        </span>
         <span className={`${draftFieldCell} ${styles.gridFieldCellWrap}`} role="cell">
           <input
             className={styles.draftInput}

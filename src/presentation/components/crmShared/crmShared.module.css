@@ -393,3 +393,16 @@
 :global([data-theme='dark']) .rowDeleteBtn:hover:not(:disabled) {
   background: rgba(248, 113, 113, 0.12);
 }
+
+.addressEnvelope {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  width: 100%;
+  line-height: 1.35;
+  white-space: normal;
+}
+
+.addressEnvelopeLine {
+  display: block;
+}

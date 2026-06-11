@@ -4,10 +4,12 @@ import type { KeyboardEvent, ReactElement } from 'react';
 import type { CrmProjectSummary } from '@/domain/crm';
 import type { ProjectPaymentFinancials } from '@/domain/crm/projectPaymentValue';
 import { isCrmProjectComplete } from '@/domain/crm';
+import { formatCrmProjectAddressLine } from '@/domain/crm/projectAddress';
 import { isProjectPriorityUrgent } from '@/domain/crm/projectPriorityToggle';
 import { resolveProjectSummaryProgressDisplay } from '@/domain/buildcore/projectPipelineProgress';
 import { ProjectProgressPercent } from '@/presentation/components/CrmProjectDetail/ProjectProgressPercent';
 import { CrmProjectCompleteIcon } from '@/presentation/components/crmShared/CrmProjectCompleteIcon';
+import { CrmProjectAddressEnvelope } from '@/presentation/components/crmShared/CrmProjectAddressEnvelope';
 import { CrmProjectPriorityIcon } from '@/presentation/components/crmShared/CrmProjectPriorityIcon';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
 import {
@@ -82,6 +84,7 @@ export function CrmProjectTableRow({
   const displayValueLabel =
     valueLabel ?? (isChild ? valueLabels.subValueLabel : valueLabels.projectValueLabel);
   const displayEmail = formatContactEmailDisplay(project.contact.email, { maskForMember: isMemberRole });
+  const formattedAddress = formatCrmProjectAddressLine(project.address);
   const rowAriaLabel = isChild
     ? tableCopy.subprojectRowAriaLabel(project.name)
     : tableCopy.rowAriaLabel(project.name);
@@ -161,6 +164,13 @@ export function CrmProjectTableRow({
       </span>
       <span className={`${styles.gridCell} ${styles.gridCellAlignCenter}`} role="cell">
         {formatPhoneDisplay(project.contact.phone) || '—'}
+      </span>
+      <span
+        className={`${styles.gridCell} ${styles.gridCellAlignCenter}`}
+        role="cell"
+        title={formattedAddress ?? undefined}
+      >
+        <CrmProjectAddressEnvelope address={project.address} />
       </span>
       <span
         className={`${styles.gridCell} ${styles.gridCellAlignCenter}`}

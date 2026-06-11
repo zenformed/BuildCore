@@ -297,6 +297,7 @@ export const buildCoreDashboardContent = {
         contact: 'Contact',
         email: 'Email',
         phone: 'Phone',
+        address: 'Address',
         priority: 'Priority',
         stage: 'Stage',
         notes: 'Notes',

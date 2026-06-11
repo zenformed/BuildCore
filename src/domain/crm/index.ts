@@ -112,9 +112,13 @@ export type { UpdateCrmProjectInput } from './updateProject';
 export type { CrmProjectAddress } from './projectAddress';
 export {
   buildCrmProjectMapsSearchUrl,
+  crmProjectAddressSearchText,
   emptyCrmProjectAddress,
+  formatCrmProjectAddressEnvelopeLines,
   formatCrmProjectAddressLine,
+  type CrmProjectAddressEnvelopeLines,
 } from './projectAddress';
+export { buildCrmProjectSummarySearchHaystack } from './projectSummarySearch';
 export { US_STATE_OPTIONS, type UsStateOption } from './usStates';
 export type {
   CreateCrmWorkflowTaskInput,
