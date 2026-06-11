@@ -1,9 +1,8 @@
 import { NextResponse } from 'next/server';
-import type { User } from '@supabase/supabase-js';
-import { getSupabaseUserFromToken } from '@/infrastructure/supabase/supabaseServer';
+import { createClient, type SupabaseClient, type User } from '@supabase/supabase-js';
+import { crmSupabaseNoStoreFetch } from '@/infrastructure/crm/server/crmSupabaseFetch';
 import { createCrmSupabaseClient } from './createCrmSupabaseClient';
 import { resolveCrmOrganizationId } from './resolveCrmOrganizationId';
-import type { SupabaseClient } from '@supabase/supabase-js';
 
 export type CrmApiAuthContext = {
   readonly authHeader: string;
@@ -15,6 +14,31 @@ export type CrmApiAuthContext = {
 export type CrmApiAuthResult =
   | { ok: true; context: CrmApiAuthContext }
   | { ok: false; response: NextResponse };
+
+function getEnv(): { url: string; key: string } | null {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  if (!url || !key) return null;
+  return { url, key };
+}
+
+async function getCrmApiUserFromToken(bearerToken: string | null): Promise<User | null> {
+  const env = getEnv();
+  if (!env) return null;
+  if (!bearerToken?.startsWith('Bearer ')) return null;
+  const token = bearerToken.slice(7).trim();
+  if (!token) return null;
+
+  const supabase = createClient(env.url, env.key, {
+    global: { fetch: crmSupabaseNoStoreFetch },
+  });
+  const {
+    data: { user },
+    error,
+  } = await supabase.auth.getUser(token);
+  if (error || !user) return null;
+  return user;
+}
 
 function unauthenticated(): NextResponse {
   return NextResponse.json({ error: 'unauthenticated' }, { status: 401 });
@@ -39,7 +63,7 @@ export async function requireCrmApiAuth(authHeader: string | null): Promise<CrmA
     return { ok: false, response: unauthenticated() };
   }
 
-  const user = await getSupabaseUserFromToken(authHeader);
+  const user = await getCrmApiUserFromToken(authHeader);
   if (!user) {
     return { ok: false, response: unauthenticated() };
   }
