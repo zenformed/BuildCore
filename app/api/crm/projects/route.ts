@@ -16,7 +16,6 @@ import {
 } from '@/infrastructure/crm/server/validateCreateCrmProjectBody';
 import { loadOrganizationPipelineStageCatalog } from '@/infrastructure/crm/server/pipelineStageService';
 import { mapCrmRouteError } from '@/infrastructure/crm/server/crmApiRouteErrors';
-import { logCrmProjectListT2Debug } from '@/infrastructure/crm/server/crmProjectListRouteDebug';
 
 export const dynamic = 'force-dynamic';
 
@@ -27,26 +26,16 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   const includeSubprojects = request.nextUrl.searchParams.get('includeSubprojects') === '1';
 
   try {
-    const allSummaries = await listCrmProjectSummariesForOrg(
-      auth.context.supabase,
-      auth.context.organizationId,
-      { rootsOnly: !includeSubprojects }
-    );
     const projects = await scopeCrmProjectSummariesForViewer(
       auth.context.supabase,
       auth.context.organizationId,
       auth.context.user.id,
-      allSummaries
+      await listCrmProjectSummariesForOrg(
+        auth.context.supabase,
+        auth.context.organizationId,
+        { rootsOnly: !includeSubprojects }
+      )
     );
-
-    if (includeSubprojects) {
-      logCrmProjectListT2Debug({
-        route: 'dashboard-projects',
-        allSummaries,
-        childSummariesAfterScope: projects,
-      });
-    }
-
     return NextResponse.json({
       projects,
       total: projects.length,

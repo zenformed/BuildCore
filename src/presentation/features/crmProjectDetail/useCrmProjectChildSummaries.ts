@@ -35,6 +35,22 @@ export function filterSubprojects(
   return sortCrmProjectsForList(filtered);
 }
 
+function mergeProjectSummaryIntoList(
+  current: readonly CrmProjectSummary[] | null,
+  summary: CrmProjectSummary
+): readonly CrmProjectSummary[] {
+  if (current == null) {
+    return sortCrmProjectsForList([summary]);
+  }
+  const existingIndex = current.findIndex((project) => project.id === summary.id);
+  if (existingIndex >= 0) {
+    return sortCrmProjectsForList(
+      current.map((project) => (project.id === summary.id ? summary : project))
+    );
+  }
+  return sortCrmProjectsForList([...current, summary]);
+}
+
 export function useCrmProjectChildSummaries(
   parentProject: CrmProjectSummary | null | undefined,
   searchQuery: string
@@ -42,6 +58,7 @@ export function useCrmProjectChildSummaries(
   rows: CrmProjectSummary[];
   isLoading: boolean;
   refetch: () => Promise<void>;
+  appendProjectSummary: (summary: CrmProjectSummary) => void;
   patchProjectSummary: (summary: CrmProjectSummary) => void;
 } {
   const isApiSource = getCrmDataSource() === 'api';
@@ -89,18 +106,19 @@ export function useCrmProjectChildSummaries(
     [summaries, searchQuery]
   );
 
+  const appendProjectSummary = useCallback((summary: CrmProjectSummary) => {
+    setSummaries((current) => mergeProjectSummaryIntoList(current, summary));
+  }, []);
+
   const patchProjectSummary = useCallback((summary: CrmProjectSummary) => {
-    setSummaries((current) =>
-      current == null
-        ? current
-        : current.map((project) => (project.id === summary.id ? summary : project))
-    );
+    setSummaries((current) => mergeProjectSummaryIntoList(current, summary));
   }, []);
 
   return {
     rows,
     isLoading: parentProjectId != null && summaries == null,
     refetch: loadSummaries,
+    appendProjectSummary,
     patchProjectSummary,
   };
 }

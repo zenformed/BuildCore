@@ -1,4 +1,4 @@
-import type { CrmIndustry, CrmPriority } from './project';
+import type { CrmIndustry, CrmPriority, CrmProjectSummary } from './project';
 import type { PipelineStageSlug } from './pipelineStage';
 import type { BuildCoreProjectTemplateBlueprints } from './projectTemplate';
 
@@ -30,4 +30,5 @@ export type CreateCrmProjectInput = {
 export type CreateCrmProjectResult = {
   readonly id: string;
   readonly slug: string;
+  readonly summary: CrmProjectSummary;
 };

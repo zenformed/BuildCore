@@ -11,6 +11,7 @@ export type ProjectDetailChildSummaries = {
   readonly allRows: readonly CrmProjectSummary[];
   readonly isLoading: boolean;
   readonly refetch: () => Promise<void>;
+  readonly appendProjectSummary: (summary: CrmProjectSummary) => void;
   readonly patchProjectSummary: (summary: CrmProjectSummary) => void;
 };
 

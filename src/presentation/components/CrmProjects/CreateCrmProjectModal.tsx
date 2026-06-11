@@ -8,7 +8,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { useRouter } from 'next/navigation';
 
-import type { CrmProjectDetail } from '@/domain/crm';
+import type { CrmProjectDetail, CreateCrmProjectResult } from '@/domain/crm';
 
 import { canManageBuildCoreProjectTemplates } from '@/domain/buildcore/projectTemplateAccess';
 
@@ -78,7 +78,7 @@ export type CreateCrmProjectModalProps = {
 
   readonly project?: CrmProjectDetail;
 
-  readonly onCreated?: () => void | Promise<void>;
+  readonly onCreated?: (created: CreateCrmProjectResult) => void | Promise<void>;
 
   readonly onUpdated?: (project: CrmProjectDetail) => void | Promise<void>;
 
@@ -365,9 +365,8 @@ export function CreateCrmProjectModal({
 
         });
 
+        await onCreated?.(created);
         onClose();
-
-        await onCreated?.();
 
         if (redirectOnCreate) {
 

@@ -41,6 +41,8 @@ export function SubprojectsSection(): ReactElement | null {
   const [createOpen, setCreateOpen] = useState(false);
   const [toast, setToast] = useState<SubprojectsToast | null>(null);
   const refetch = childSummaries?.refetch ?? (async () => undefined);
+  const appendChildProjectSummary =
+    childSummaries?.appendProjectSummary ?? (() => undefined);
   const patchChildProjectSummary =
     childSummaries?.patchProjectSummary ?? (() => undefined);
   const isLoading = childSummaries?.isLoading ?? false;
@@ -183,8 +185,9 @@ export function SubprojectsSection(): ReactElement | null {
           parentProjectSlug={parentRouteSlug}
           parentProjectForDefaults={project}
           redirectOnCreate={false}
-          onCreated={async () => {
-            await refetch();
+          onCreated={(created) => {
+            appendChildProjectSummary(created.summary);
+            void refetch();
           }}
         />
       ) : null}

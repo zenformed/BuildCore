@@ -92,6 +92,7 @@ function ProjectDetailShellBody({
     rows: childSummaryRows,
     isLoading: childSummariesLoading,
     refetch: refetchChildSummaries,
+    appendProjectSummary: appendChildProjectSummary,
     patchProjectSummary: patchChildProjectSummary,
   } = useCrmProjectChildSummaries(isParentOverview ? scopedProject.summary : null, '');
   const refreshProjectDetail = useCallback(async () => {
@@ -116,10 +117,12 @@ function ProjectDetailShellBody({
             allRows: childSummaryRows,
             isLoading: childSummariesLoading,
             refetch: refetchChildSummaries,
+            appendProjectSummary: appendChildProjectSummary,
             patchProjectSummary: patchChildProjectSummary,
           }
         : null,
     [
+      appendChildProjectSummary,
       childSummariesLoading,
       childSummaryRows,
       isParentOverview,
