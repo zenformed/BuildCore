@@ -12,8 +12,33 @@ import { isReservedPipelineStageSlug } from '@/domain/buildcore/orgPipelineStage
 import { formatWorkflowStageLabel } from '@/presentation/features/crmProjectDetail/crmProjectDetailFormatters';
 import { sortWorkflowTasksForDisplay } from './workflowTaskSort';
 
+export type WorkflowStageTaskCompletionSummary = {
+  readonly totalCount: number;
+  readonly doneCount: number;
+  readonly percentComplete: number;
+};
+
+export function summarizeWorkflowStageTaskCompletion(
+  tasks: readonly CrmWorkflowTask[]
+): WorkflowStageTaskCompletionSummary {
+  const totalCount = tasks.length;
+  const doneCount = tasks.filter((task) => task.status === 'done').length;
+  const percentComplete = totalCount === 0 ? 0 : (doneCount / totalCount) * 100;
+
+  return { totalCount, doneCount, percentComplete };
+}
+
+export function formatWorkflowStageTaskCompletionPercent(percentComplete: number): string {
+  if (percentComplete === 0) return '0%';
+  if (percentComplete === 100) return '100%';
+
+  const rounded = Math.round(percentComplete * 10) / 10;
+  return `${Number.isInteger(rounded) ? rounded.toFixed(0) : rounded.toFixed(1)}%`;
+}
+
 export function areAllStageTasksDone(tasks: readonly CrmWorkflowTask[]): boolean {
-  return tasks.length > 0 && tasks.every((task) => task.status === 'done');
+  const { totalCount, doneCount } = summarizeWorkflowStageTaskCompletion(tasks);
+  return totalCount > 0 && doneCount === totalCount;
 }
 
 export type WorkflowTaskStageGroup = {

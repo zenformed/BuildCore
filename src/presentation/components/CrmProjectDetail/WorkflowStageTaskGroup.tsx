@@ -5,6 +5,8 @@ import type { CrmWorkflowTask } from '@/domain/crm';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
 import {
   areAllStageTasksDone,
+  formatWorkflowStageTaskCompletionPercent,
+  summarizeWorkflowStageTaskCompletion,
   type WorkflowTaskStageGroup,
 } from '@/presentation/features/crmProjectDetail/workflowTaskGroups';
 import { useWorkflowStageExpanded } from '@/presentation/features/crmProjectDetail/useWorkflowStageExpanded';
@@ -55,7 +57,10 @@ export function WorkflowStageTaskGroup({
     ? `${styles.workflowGrid} ${styles.workflowGridPayments}`
     : styles.workflowGrid;
   const allTasksDone = areAllStageTasksDone(group.tasks);
-  const taskCountLabel = group.tasks.length + (draftRow ? 1 : 0);
+  const { totalCount, percentComplete } = summarizeWorkflowStageTaskCompletion(group.tasks);
+  const completionPercentLabel = formatWorkflowStageTaskCompletionPercent(percentComplete);
+  const taskCountText =
+    totalCount === 1 ? `1 ${wf.taskSingular}` : `${totalCount} ${wf.taskPlural}`;
 
   const stageTitle = (
     <span className={styles.stageGroupTitle}>
@@ -75,7 +80,7 @@ export function WorkflowStageTaskGroup({
 
   const taskCount = (
     <span className={styles.stageGroupCount}>
-      {taskCountLabel} {taskCountLabel === 1 ? wf.taskSingular : wf.taskPlural}
+      {taskCountText} · {completionPercentLabel}
     </span>
   );
 
