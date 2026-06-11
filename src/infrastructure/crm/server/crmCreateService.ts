@@ -7,6 +7,52 @@ import {
 } from './crmProjectIndustrySchema';
 import { ensureUniqueProjectSlug, slugifyProjectName } from './crmSlug';
 
+type InsertedProjectDebugRow = {
+  id: string;
+  slug: string;
+  parent_project_id: string | null;
+  organization_id: string;
+  archived_at: string | null;
+  last_activity_at: string;
+  created_at: string;
+};
+
+function logInsertedProjectForListQueryDebug(
+  organizationId: string,
+  inputParentProjectId: string | undefined,
+  row: InsertedProjectDebugRow,
+  listWhereProbe: {
+    visibleWithListWhereClause: boolean;
+    probeError: string | null;
+  }
+): void {
+  const organizationIdMatches = row.organization_id === organizationId;
+  const archivedAtIsNull = row.archived_at == null;
+
+  console.info('[crm-create] project inserted', {
+    isSubproject: inputParentProjectId != null,
+    inputParentProjectId: inputParentProjectId ?? null,
+    insertedRow: {
+      id: row.id,
+      slug: row.slug,
+      parent_project_id: row.parent_project_id,
+      organization_id: row.organization_id,
+      archived_at: row.archived_at,
+      last_activity_at: row.last_activity_at,
+      created_at: row.created_at,
+    },
+    listCrmProjectSummariesForOrgFilters: {
+      organizationIdMatches,
+      archivedAtIsNull,
+      parentProjectIdWritten: row.parent_project_id,
+      matchesWhereClause: organizationIdMatches && archivedAtIsNull,
+      rootsOnlyFalseIncludesSubprojects: true,
+      orderByLastActivityAtDescExcludesRows: false,
+    },
+    sameClientListWhereProbe: listWhereProbe,
+  });
+}
+
 export async function createCrmProjectForOrg(
   supabase: SupabaseClient,
   organizationId: string,
@@ -89,12 +135,32 @@ export async function createCrmProjectForOrg(
       postal_code: input.postalCode,
       last_activity_at: now,
     })
-    .select('id, slug')
+    .select(
+      'id, slug, parent_project_id, organization_id, archived_at, last_activity_at, created_at'
+    )
     .single();
 
   if (projectError || !projectRow) {
     throw new Error(projectError?.message ?? 'Failed to create project');
   }
+
+  const insertedRow = projectRow as InsertedProjectDebugRow;
+  const { data: listWhereProbeRow, error: listWhereProbeError } = await supabase
+    .from('crm_projects')
+    .select('id')
+    .eq('organization_id', organizationId)
+    .is('archived_at', null)
+    .eq('id', insertedRow.id)
+    .maybeSingle();
+
+  logInsertedProjectForListQueryDebug(
+    organizationId,
+    input.parentProjectId ?? undefined,
+    insertedRow,
+    {
+    visibleWithListWhereClause: listWhereProbeRow != null,
+    probeError: listWhereProbeError?.message ?? null,
+  });
 
   const { error: accountabilityError } = await supabase.from('crm_accountability_events').insert({
     organization_id: organizationId,
