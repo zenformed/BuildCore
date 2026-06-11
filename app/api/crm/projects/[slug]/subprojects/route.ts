@@ -49,15 +49,26 @@ export async function GET(
       return NextResponse.json({ error: 'not_found', message: 'Project not found' }, { status: 404 });
     }
 
+    const projectsBeforeScope = await listCrmProjectChildSummariesForOrg(
+      auth.context.supabase,
+      auth.context.organizationId,
+      parentProjectId
+    );
+    console.info('[subprojects] pre-scope debug', {
+      incomingSlug: parentSlug,
+      resolvedParentProjectId: parentProjectId,
+      countBeforeScope: projectsBeforeScope.length,
+      projectsBeforeScope: projectsBeforeScope.map((project) => ({
+        name: project.name,
+        slug: project.slug,
+      })),
+    });
+
     const projects = await scopeCrmProjectSummariesForViewer(
       auth.context.supabase,
       auth.context.organizationId,
       auth.context.user.id,
-      await listCrmProjectChildSummariesForOrg(
-        auth.context.supabase,
-        auth.context.organizationId,
-        parentProjectId
-      )
+      projectsBeforeScope
     );
     return NextResponse.json(
       { projects, total: projects.length },
