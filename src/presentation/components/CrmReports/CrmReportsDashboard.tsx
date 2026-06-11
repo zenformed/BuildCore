@@ -5,6 +5,8 @@ import { buildCoreDashboardContent as content } from '@/platform/content/buildCo
 import { formatCentsAsUsd } from '@/presentation/features/crmProjects/crmProjectFormatters';
 import { useCrmReportsDashboard } from '@/presentation/features/crmReports/useCrmReportsDashboard';
 import { useCrmReportsPdfExport } from '@/presentation/features/crmReports/useCrmReportsPdfExport';
+import { useOrganizationExport } from '@/presentation/features/crmReports/useOrganizationExport';
+import { OrganizationExportButton } from './OrganizationExportButton';
 import { ReportsPdfExportControls } from './ReportsPdfExportControls';
 import type { ReportPeriodId } from '@/reports/types/crmReportsDashboard';
 import projectStyles from '../CrmProjectDetail/ProjectDetail.module.css';
@@ -18,6 +20,7 @@ export function CrmReportsDashboard(): ReactElement {
   const { dashboard, projects, isLoading, error, period, setPeriod, chartTab, setChartTab } =
     useCrmReportsDashboard();
   const pdfExport = useCrmReportsPdfExport(projects, period);
+  const organizationExport = useOrganizationExport(projects);
 
   if (isLoading) {
     return <p className={styles.loading}>{content.reports.loading}</p>;
@@ -62,6 +65,7 @@ export function CrmReportsDashboard(): ReactElement {
                 {content.reports.periods[id]}
               </button>
             ))}
+            <OrganizationExportButton exportState={organizationExport} />
             <ReportsPdfExportControls exportState={pdfExport} />
           </div>
         </div>

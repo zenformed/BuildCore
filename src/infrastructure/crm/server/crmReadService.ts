@@ -398,3 +398,8 @@ export async function listCrmProjectsForReportingForOrg(
   );
   return details.filter((detail): detail is CrmProjectDetail => detail != null);
 }
+
+export type CrmProjectTimestampIndex = ReadonlyMap<
+  string,
+  { readonly createdAt: string; readonly updatedAt: string }
+>;

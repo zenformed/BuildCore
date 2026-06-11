@@ -100,6 +100,11 @@ export const buildCoreDashboardContent = {
       downloadCurrent: 'Download Current',
       reportPeriod: 'Report Period',
     },
+    organizationExport: {
+      buttonLabel: 'Export Data',
+      exporting: 'Exporting…',
+      error: 'Could not export organization data. Please try again.',
+    },
     yearlyPdf: {
       reportTitle: 'BuildCore Financial Report',
     },
