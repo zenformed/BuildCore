@@ -5,7 +5,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireCrmApiAuth } from '@/infrastructure/crm/server/crmApiRouteAuth';
 import { crmDocumentErrorResponse } from '@/infrastructure/crm/server/crmDocumentRouteErrors';
-import { createBudgetEntryDocumentDownloadForOrg } from '@/infrastructure/crm/server/crmBudgetEntryDocumentService';
+import { resolveBudgetEntryDocumentAttachmentForOrg } from '@/infrastructure/crm/server/crmBudgetEntryDocumentService';
+import { crmDocumentAttachmentNextResponse } from '@/infrastructure/crm/server/crmDocumentDownloadResponse';
 import { getDocumentStorageProviderForCrmAuth } from '@/infrastructure/crm/server/documentStorageProviderForCrmAuth';
 
 export const dynamic = 'force-dynamic';
@@ -27,13 +28,13 @@ export async function GET(
   }
 
   try {
-    const download = await createBudgetEntryDocumentDownloadForOrg(
+    const attachment = await resolveBudgetEntryDocumentAttachmentForOrg(
       auth.context.supabase,
       getDocumentStorageProviderForCrmAuth(auth.context),
       auth.context.organizationId,
       { projectSlug: slug, budgetEntryId: entryId, documentId }
     );
-    return NextResponse.json(download);
+    return crmDocumentAttachmentNextResponse(attachment);
   } catch (err) {
     return crmDocumentErrorResponse(err);
   }

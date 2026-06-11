@@ -3,8 +3,8 @@
 import type { ReactElement } from 'react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
-  BUILDCORE_DOCUMENT_ALLOWED_EXTENSIONS,
-} from '@/domain/crm/documentUpload';
+  BUILDCORE_UPLOAD_ALLOWED_EXTENSIONS,
+} from '@/domain/crm/buildCoreUploadPolicy';
 import { CRM_BUDGET_CATEGORIES, type CrmBudgetEntry, type CrmDocumentMetadata } from '@/domain/crm';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
 import { formatBudgetCategory } from '@/presentation/features/crmProjectDetail/budgetCategoryLabels';
@@ -75,7 +75,7 @@ export function BudgetInlineRow({
     onDocumentDeleted: onBudgetEntryDocumentDeleted,
     onError: (message) => onError?.(message),
   });
-  const documentAccept = BUILDCORE_DOCUMENT_ALLOWED_EXTENSIONS.join(',');
+  const documentAccept = BUILDCORE_UPLOAD_ALLOWED_EXTENSIONS.join(',');
 
   useEffect(() => {
     if (!editingName) setNameDraft(entry.itemName);
@@ -450,7 +450,7 @@ export function BudgetInlineRow({
                 aria-label={`${wf.documentDownload} ${doc.name}`}
                 onClick={() => {
                   setDocumentsMenuOpen(false);
-                  void documentActions.downloadDocument(doc.id);
+                  void documentActions.downloadDocument(doc.id, doc.name);
                 }}
               >
                 <span className={styles.inlineMenuDownloadIcon} aria-hidden />

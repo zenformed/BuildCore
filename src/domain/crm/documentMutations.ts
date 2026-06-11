@@ -71,3 +71,19 @@ export type BudgetEntryDocumentDownload = {
 export type UploadBudgetEntryDocumentResult = {
   readonly document: CrmDocumentMetadata;
 };
+
+export type DeleteProjectMediaDocumentInput = {
+  readonly projectSlug: string;
+  readonly documentId: string;
+};
+
+export type CreateProjectMediaDocumentDownloadInput = {
+  readonly projectSlug: string;
+  readonly documentId: string;
+};
+
+export type ProjectMediaDocumentDownload = {
+  readonly url: string;
+  readonly fileName: string;
+  readonly mimeType: string;
+};

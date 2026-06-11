@@ -2,14 +2,14 @@
 
 import { useCallback, useRef, useState } from 'react';
 import type { CrmDocumentMetadata } from '@/domain/crm';
-import { validateWorkflowTaskDocumentUpload } from '@/domain/crm/documentUpload';
-import { uploadBudgetEntryDocument } from '@/application/use-cases/crm/uploadBudgetEntryDocument';
 import { deleteBudgetEntryDocument } from '@/application/use-cases/crm/deleteBudgetEntryDocument';
-import { createBudgetEntryDocumentDownload } from '@/application/use-cases/crm/createBudgetEntryDocumentDownload';
+import { listBudgetEntryDocuments } from '@/application/use-cases/crm/listBudgetEntryDocuments';
+import { downloadCrmProjectDocument } from '@/presentation/features/crmProjectDetail/downloadCrmProjectDocument';
 import { crmRepositories } from '@/shared/di/container';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
 import { mapCrmDocumentActionError } from '@/presentation/features/crmProjectDetail/crmDocumentActionErrors';
 import { useCorePlatformDegraded } from '@/presentation/hooks/useCorePlatformDegraded';
+import { performCrmDirectUpload } from '@/presentation/features/crmDirectUpload/performBuildCoreDirectUpload';
 
 export type BudgetEntryDocumentChangeHandlers = {
   onDocumentUploaded: (document: CrmDocumentMetadata) => void | Promise<void>;
@@ -28,7 +28,7 @@ export function useBudgetEntryDocumentActions(
   openFilePicker: () => void;
   uploadFile: (file: File) => Promise<void>;
   handleFileSelected: (e: React.ChangeEvent<HTMLInputElement>) => Promise<void>;
-  downloadDocument: (documentId: string) => Promise<void>;
+  downloadDocument: (documentId: string, fileName: string) => Promise<void>;
   deleteDocument: (documentId: string) => Promise<void>;
 } {
   const [uploading, setUploading] = useState(false);
@@ -51,35 +51,30 @@ export function useBudgetEntryDocumentActions(
         input.onError(wf.coreServicesUnavailable);
         return;
       }
-      const validation = validateWorkflowTaskDocumentUpload({
-        fileName: file.name,
-        mimeType: file.type || 'application/octet-stream',
-        sizeBytes: file.size,
-      });
-      if (!validation.ok) {
-        input.onError(validation.message);
-        return;
-      }
 
       setUploading(true);
       try {
-        const buffer = await file.arrayBuffer();
-        const result = await uploadBudgetEntryDocument(crmRepositories, {
+        const prepared = await performCrmDirectUpload(file, {
+          scope: 'budget_entry',
           projectSlug: input.projectSlug,
           budgetEntryId: input.budgetEntryId,
-          fileName: file.name,
-          mimeType: file.type || 'application/octet-stream',
-          sizeBytes: file.size,
-          body: buffer,
         });
-        await input.onDocumentUploaded(result.document);
+        const documents = await listBudgetEntryDocuments(crmRepositories, {
+          projectSlug: input.projectSlug,
+          budgetEntryId: input.budgetEntryId,
+        });
+        const document = documents.find((doc) => doc.id === prepared.documentId);
+        if (document == null) {
+          throw new Error(wf.documentUploadFailed);
+        }
+        await input.onDocumentUploaded(document);
       } catch (err) {
-        input.onError(mapError(err));
+        input.onError(err instanceof Error ? err.message : mapError(err));
       } finally {
         setUploading(false);
       }
     },
-    [coreDegraded, input, mapError, wf.coreServicesUnavailable]
+    [coreDegraded, input, mapError, wf.coreServicesUnavailable, wf.documentUploadFailed]
   );
 
   const handleFileSelected = useCallback(
@@ -93,25 +88,19 @@ export function useBudgetEntryDocumentActions(
   );
 
   const downloadDocument = useCallback(
-    async (documentId: string) => {
+    async (documentId: string, fileName: string) => {
       if (coreDegraded) {
         input.onError(wf.coreServicesUnavailable);
         return;
       }
       try {
-        const download = await createBudgetEntryDocumentDownload(crmRepositories, {
+        await downloadCrmProjectDocument(crmRepositories, {
+          kind: 'budget_entry',
           projectSlug: input.projectSlug,
           budgetEntryId: input.budgetEntryId,
           documentId,
+          fileName,
         });
-        const anchor = document.createElement('a');
-        anchor.href = download.url;
-        anchor.download = download.fileName;
-        anchor.rel = 'noopener';
-        anchor.click();
-        if (download.url.startsWith('blob:')) {
-          URL.revokeObjectURL(download.url);
-        }
       } catch (err) {
         input.onError(mapError(err));
       }

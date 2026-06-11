@@ -1,5 +1,12 @@
-/** Maximum workflow task document upload size (10 MiB). */
-export const BUILDCORE_MAX_DOCUMENT_UPLOAD_BYTES = 10 * 1024 * 1024;
+/** Legacy document upload constants — prefer buildCoreUploadPolicy for validation. */
+
+import {
+  BUILDCORE_UPLOAD_ALLOWED_EXTENSIONS,
+  BUILDCORE_UPLOAD_MAX_DOCUMENT_BYTES,
+  validateBuildCoreUpload,
+} from './buildCoreUploadPolicy';
+
+export const BUILDCORE_MAX_DOCUMENT_UPLOAD_BYTES = BUILDCORE_UPLOAD_MAX_DOCUMENT_BYTES;
 
 export const BUILDCORE_DOCUMENT_STORAGE_BUCKET = 'buildcore-documents';
 
@@ -7,39 +14,8 @@ export const BUILDCORE_DOCUMENT_STORAGE_PROVIDER = 'supabase' as const;
 
 export type BuildcoreDocumentStorageProviderId = typeof BUILDCORE_DOCUMENT_STORAGE_PROVIDER;
 
-export const BUILDCORE_DOCUMENT_ALLOWED_EXTENSIONS = [
-  '.pdf',
-  '.doc',
-  '.docx',
-  '.xls',
-  '.xlsx',
-  '.csv',
-  '.txt',
-  '.rtf',
-  '.odt',
-  '.ods',
-  '.ppt',
-  '.pptx',
-] as const;
-
-const BLOCKED_MIME_PREFIXES = ['image/'] as const;
-
-const ALLOWED_MIME_TYPES = new Set([
-  'application/pdf',
-  'application/msword',
-  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-  'application/vnd.ms-excel',
-  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-  'text/csv',
-  'text/plain',
-  'application/rtf',
-  'text/rtf',
-  'application/vnd.oasis.opendocument.text',
-  'application/vnd.oasis.opendocument.spreadsheet',
-  'application/vnd.ms-powerpoint',
-  'application/vnd.openxmlformats-officedocument.presentationml.presentation',
-  'application/octet-stream',
-]);
+/** @deprecated Use BUILDCORE_UPLOAD_ALLOWED_EXTENSIONS from buildCoreUploadPolicy. */
+export const BUILDCORE_DOCUMENT_ALLOWED_EXTENSIONS = BUILDCORE_UPLOAD_ALLOWED_EXTENSIONS;
 
 export type DocumentUploadValidationCode =
   | 'INVALID_FILE_TYPE'
@@ -58,22 +34,9 @@ export function extensionFromFileName(fileName: string): string {
 
 export function isAllowedDocumentExtension(fileName: string): boolean {
   const ext = extensionFromFileName(fileName);
-  return BUILDCORE_DOCUMENT_ALLOWED_EXTENSIONS.includes(
-    ext as (typeof BUILDCORE_DOCUMENT_ALLOWED_EXTENSIONS)[number]
+  return BUILDCORE_UPLOAD_ALLOWED_EXTENSIONS.includes(
+    ext as (typeof BUILDCORE_UPLOAD_ALLOWED_EXTENSIONS)[number]
   );
-}
-
-export function isBlockedDocumentMimeType(mimeType: string): boolean {
-  const normalized = mimeType.trim().toLowerCase();
-  return BLOCKED_MIME_PREFIXES.some((prefix) => normalized.startsWith(prefix));
-}
-
-export function isAllowedDocumentMimeType(mimeType: string, fileName: string): boolean {
-  const normalized = mimeType.trim().toLowerCase();
-  if (!normalized) return isAllowedDocumentExtension(fileName);
-  if (isBlockedDocumentMimeType(normalized)) return false;
-  if (ALLOWED_MIME_TYPES.has(normalized)) return true;
-  return isAllowedDocumentExtension(fileName);
 }
 
 export function validateWorkflowTaskDocumentUpload(input: {
@@ -88,19 +51,13 @@ export function validateWorkflowTaskDocumentUpload(input: {
   if (input.sizeBytes <= 0) {
     return { ok: false, code: 'EMPTY_FILE', message: 'File is empty.' };
   }
-  if (input.sizeBytes > BUILDCORE_MAX_DOCUMENT_UPLOAD_BYTES) {
-    return {
-      ok: false,
-      code: 'FILE_TOO_LARGE',
-      message: `File must be ${Math.floor(BUILDCORE_MAX_DOCUMENT_UPLOAD_BYTES / (1024 * 1024))} MB or smaller.`,
-    };
-  }
-  if (!isAllowedDocumentMimeType(input.mimeType, fileName)) {
-    return {
-      ok: false,
-      code: 'INVALID_FILE_TYPE',
-      message: 'Images are not allowed. Upload office or document files only.',
-    };
+
+  const result = validateBuildCoreUpload(input);
+  if (!result.ok) {
+    const code: DocumentUploadValidationCode = result.message.includes('MB or smaller')
+      ? 'FILE_TOO_LARGE'
+      : 'INVALID_FILE_TYPE';
+    return { ok: false, code, message: result.message };
   }
   return { ok: true };
 }
@@ -151,7 +108,8 @@ export function buildBudgetEntryDocumentStorageKey(input: {
   ].join('/');
 }
 
+/** Internal analytics/billing code — launch mode uses track-only storage enforcement. */
 export const STORAGE_LIMIT_EXCEEDED_CODE = 'STORAGE_LIMIT_EXCEEDED';
 
 export const STORAGE_LIMIT_EXCEEDED_MESSAGE =
-  'You have run out of document storage. Upgrade for more storage.';
+  'Storage limit reached. Contact support if you need assistance.';

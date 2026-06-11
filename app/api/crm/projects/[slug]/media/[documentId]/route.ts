@@ -1,19 +1,18 @@
 /**
- * GET /api/crm/projects/[slug]/tasks/[taskId]/documents/[documentId]/download
+ * DELETE /api/crm/projects/[slug]/media/[documentId]
  */
 
 import { NextRequest, NextResponse } from 'next/server';
 import { requireCrmApiAuth } from '@/infrastructure/crm/server/crmApiRouteAuth';
 import { crmDocumentErrorResponse } from '@/infrastructure/crm/server/crmDocumentRouteErrors';
-import { resolveWorkflowTaskDocumentAttachmentForOrg } from '@/infrastructure/crm/server/crmDocumentService';
-import { crmDocumentAttachmentNextResponse } from '@/infrastructure/crm/server/crmDocumentDownloadResponse';
+import { deleteProjectMediaDocumentForOrg } from '@/infrastructure/crm/server/crmDocumentService';
 import { getDocumentStorageProviderForCrmAuth } from '@/infrastructure/crm/server/documentStorageProviderForCrmAuth';
 
 export const dynamic = 'force-dynamic';
 
-type RouteContext = { params: { slug: string; taskId: string; documentId: string } };
+type RouteContext = { params: { slug: string; documentId: string } };
 
-export async function GET(
+export async function DELETE(
   request: NextRequest,
   context: RouteContext
 ): Promise<NextResponse> {
@@ -21,20 +20,20 @@ export async function GET(
   if (!auth.ok) return auth.response;
 
   const slug = context.params.slug?.trim();
-  const taskId = context.params.taskId?.trim();
   const documentId = context.params.documentId?.trim();
-  if (!slug || !taskId || !documentId) {
+  if (!slug || !documentId) {
     return NextResponse.json({ error: 'not_found', message: 'Not found' }, { status: 404 });
   }
 
   try {
-    const attachment = await resolveWorkflowTaskDocumentAttachmentForOrg(
+    await deleteProjectMediaDocumentForOrg(
       auth.context.supabase,
       getDocumentStorageProviderForCrmAuth(auth.context),
       auth.context.organizationId,
-      { projectSlug: slug, workflowTaskId: taskId, documentId }
+      auth.context.user.id,
+      { projectSlug: slug, documentId }
     );
-    return crmDocumentAttachmentNextResponse(attachment);
+    return NextResponse.json({ ok: true });
   } catch (err) {
     return crmDocumentErrorResponse(err);
   }

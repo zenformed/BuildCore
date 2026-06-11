@@ -3,8 +3,8 @@
 import type { ReactElement } from 'react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
-  BUILDCORE_DOCUMENT_ALLOWED_EXTENSIONS,
-} from '@/domain/crm/documentUpload';
+  BUILDCORE_UPLOAD_ALLOWED_EXTENSIONS,
+} from '@/domain/crm/buildCoreUploadPolicy';
 import { isPaymentWorkflowTask, type CrmDocumentMetadata, type CrmWorkflowTask, type WorkflowTaskStatus } from '@/domain/crm';
 import { WORKFLOW_TASK_STATUSES } from '@/domain/crm/workflowTaskStatuses';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
@@ -97,7 +97,7 @@ export function WorkflowTaskInlineRow({
   const canUpload = isReady && permissions.canUpload;
   const canApprove = isReady && permissions.canApprove;
   const canChangeStatus = canView;
-  const documentAccept = BUILDCORE_DOCUMENT_ALLOWED_EXTENSIONS.join(',');
+  const documentAccept = BUILDCORE_UPLOAD_ALLOWED_EXTENSIONS.join(',');
   const { rowDragOver, rowDropHandlers: rawRowDropHandlers } = useWorkflowTaskRowFileDrop(task);
   const rowDropHandlers = canUpload ? rawRowDropHandlers : {};
 
@@ -535,7 +535,7 @@ export function WorkflowTaskInlineRow({
                 aria-label={`${wf.documentDownload} ${doc.name}`}
                 onClick={() => {
                   setDocumentsMenuOpen(false);
-                  void documentActions.downloadDocument(doc.id);
+                  void documentActions.downloadDocument(doc.id, doc.name);
                 }}
               >
                 <span className={styles.inlineMenuDownloadIcon} aria-hidden />

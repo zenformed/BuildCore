@@ -1,8 +1,9 @@
 'use client';
 
-import type { ReactElement } from 'react';
-import { useMemo, useState } from 'react';
+import type { ChangeEvent, ReactElement } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import type { CrmProjectDetail, PipelineStageSlug } from '@/domain/crm';
+import { BUILDCORE_UPLOAD_ALLOWED_EXTENSIONS } from '@/domain/crm/buildCoreUploadPolicy';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
 import { formatWorkflowTaskStageLabel } from '@/presentation/features/crmProjectDetail/crmProjectDetailFormatters';
 import {
@@ -15,6 +16,7 @@ import {
   formatFileSize,
   formatShortDate,
 } from '@/presentation/features/crmProjectDetail/crmProjectDetailFormatters';
+import { performCrmDirectUpload } from '@/presentation/features/crmDirectUpload/performBuildCoreDirectUpload';
 import { useProjectDocumentModalActions } from '@/presentation/features/crmProjectDetail/useProjectDocumentModalActions';
 import { WorkflowDocumentFileIcon } from './WorkflowDocumentFileIcon';
 import styles from './ProjectDetail.module.css';
@@ -42,6 +44,8 @@ export function ProjectDocumentsPanelContent({
   const wf = content.projectDetail.workflow;
   const [filter, setFilter] = useState<DocumentPanelFilter>('all');
   const [busyDocId, setBusyDocId] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { downloadDocument, deleteDocument } = useProjectDocumentModalActions({
     projectSlug: project.summary.slug,
@@ -74,6 +78,25 @@ export function ProjectDocumentsPanelContent({
     }
   };
 
+  const handleUploadSelected = async (event: ChangeEvent<HTMLInputElement>): Promise<void> => {
+    const file = event.target.files?.[0];
+    event.target.value = '';
+    if (!file) return;
+
+    setUploading(true);
+    try {
+      await performCrmDirectUpload(file, {
+        scope: 'project_media',
+        projectSlug: project.summary.slug,
+      });
+      await onRefresh();
+    } catch (err) {
+      onError?.(err instanceof Error ? err.message : wf.documentUploadFailed);
+    } finally {
+      setUploading(false);
+    }
+  };
+
   return (
     <div className={styles.documentsPanelContent}>
       <div className={styles.docFilterRow} role="tablist" aria-label={docsContent.filterAriaLabel}>
@@ -89,7 +112,23 @@ export function ProjectDocumentsPanelContent({
             {tab.label}
           </button>
         ))}
+        <button
+          type="button"
+          className={styles.docFilterTab}
+          disabled={uploading}
+          onClick={() => fileInputRef.current?.click()}
+        >
+          {uploading ? wf.taskSubmitting : wf.documentsUpload}
+        </button>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept={BUILDCORE_UPLOAD_ALLOWED_EXTENSIONS.join(',')}
+          hidden
+          onChange={(event) => void handleUploadSelected(event)}
+        />
       </div>
+      <p className={styles.subtitle}>{docsContent.uploadHint}</p>
       <div className={styles.documentsPanelScroll}>
       {items.length === 0 ? (
         <div className={styles.docEmptyState}>
@@ -115,6 +154,7 @@ export function ProjectDocumentsPanelContent({
 
             const doc = item.document;
             const isBusy = busyDocId === doc.id;
+            const isProjectMedia = doc.workflowTaskId == null && doc.budgetEntryId == null;
 
             return (
               <li key={doc.id} className={`${styles.docListItem} ${styles.docListItem_hasFile}`}>
@@ -149,11 +189,13 @@ export function ProjectDocumentsPanelContent({
                   </div>
                   <span className={styles.docItemMeta}>
                     {formatDocumentKind(doc.kind)} ·{' '}
-                    {doc.workflowTaskId
-                      ? formatDocStageLabel(doc.workflowTaskId, doc.stageSlug)
-                      : doc.stageSlug
-                        ? formatWorkflowTaskStageLabel({ stageSlug: doc.stageSlug, amountCents: null })
-                        : docsContent.noStage}
+                    {isProjectMedia
+                      ? 'Project file'
+                      : doc.workflowTaskId
+                        ? formatDocStageLabel(doc.workflowTaskId, doc.stageSlug)
+                        : doc.stageSlug
+                          ? formatWorkflowTaskStageLabel({ stageSlug: doc.stageSlug, amountCents: null })
+                          : docsContent.noStage}
                     {doc.uploadedAt ? ` · ${formatShortDate(doc.uploadedAt)}` : null}
                     {` · ${formatFileSize(doc.sizeBytes)}`}
                   </span>

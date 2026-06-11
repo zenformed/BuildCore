@@ -626,7 +626,7 @@ export const buildCoreDashboardContent = {
       documentUploadConfirmLabel: 'Upload',
       documentDownload: 'Download',
       documentDelete: 'Delete',
-      storageLimitExceeded: 'You have run out of document storage. Upgrade for more storage.',
+      storageLimitExceeded: 'Could not upload file. Try again or contact support.',
       documentsCountSuffix: 'files',
       unassigned: 'Unassigned',
       taskDoneIndicator: 'Task complete',
@@ -699,7 +699,7 @@ export const buildCoreDashboardContent = {
       empty: 'No documents yet.',
       searchPlaceholder: 'Search documents…',
       searchAriaLabel: 'Search documents',
-      uploadHint: 'Uploads coming in a later phase.',
+      uploadHint: 'Upload photos, videos, and documents to this project.',
       filterAriaLabel: 'Filter documents',
       filters: {
         all: 'All',

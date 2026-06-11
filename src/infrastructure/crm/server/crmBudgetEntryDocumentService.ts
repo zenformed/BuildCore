@@ -19,6 +19,10 @@ import { mapDbDocument, type DbCrmDocumentRow } from '@/infrastructure/crm/mappe
 import type { IDocumentStorageProvider } from '@/application/ports/storage/IDocumentStorageProvider';
 import { appendCrmAccountabilityEvent } from './crmAccountability';
 import {
+  loadCrmDocumentAttachmentFromRow,
+  type CrmDocumentAttachmentPayload,
+} from './crmDocumentDownloadResponse';
+import {
   releaseOrganizationStorage,
   reserveOrganizationStorage,
 } from './crmOrganizationStorage';
@@ -265,6 +269,25 @@ export async function deleteBudgetEntryDocumentForOrg(
     summary: `Deleted document "${row.file_name}" from budget item "${entry?.item_name ?? 'item'}"`,
     metadata: { document_id: row.id, budget_entry_id: input.budgetEntryId },
   });
+}
+
+export async function resolveBudgetEntryDocumentAttachmentForOrg(
+  supabase: SupabaseClient,
+  storage: IDocumentStorageProvider,
+  organizationId: string,
+  input: CreateBudgetEntryDocumentDownloadInput
+): Promise<CrmDocumentAttachmentPayload> {
+  const projectId = await resolveCrmProjectIdBySlug(supabase, organizationId, input.projectSlug);
+  if (!projectId) {
+    throw new CrmDocumentServiceError('not_found', 'Project not found');
+  }
+
+  const row = await getDocumentForOrg(supabase, organizationId, input.documentId);
+  if (!row || row.project_id !== projectId || row.budget_entry_id !== input.budgetEntryId) {
+    throw new CrmDocumentServiceError('not_found', 'Document not found');
+  }
+
+  return loadCrmDocumentAttachmentFromRow(storage, row);
 }
 
 export async function createBudgetEntryDocumentDownloadForOrg(

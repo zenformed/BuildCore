@@ -2,17 +2,14 @@
 
 import { useCallback, useRef, useState } from 'react';
 import type { CrmDocumentMetadata } from '@/domain/crm';
-import {
-  BUILDCORE_MAX_DOCUMENT_UPLOAD_BYTES,
-  validateWorkflowTaskDocumentUpload,
-} from '@/domain/crm/documentUpload';
-import { uploadWorkflowTaskDocument } from '@/application/use-cases/crm/uploadWorkflowTaskDocument';
 import { deleteWorkflowTaskDocument } from '@/application/use-cases/crm/deleteWorkflowTaskDocument';
-import { createWorkflowTaskDocumentDownload } from '@/application/use-cases/crm/createWorkflowTaskDocumentDownload';
+import { listWorkflowTaskDocuments } from '@/application/use-cases/crm/listWorkflowTaskDocuments';
+import { downloadCrmProjectDocument } from '@/presentation/features/crmProjectDetail/downloadCrmProjectDocument';
 import { crmRepositories } from '@/shared/di/container';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
 import { mapCrmDocumentActionError } from '@/presentation/features/crmProjectDetail/crmDocumentActionErrors';
 import { useCorePlatformDegraded } from '@/presentation/hooks/useCorePlatformDegraded';
+import { performCrmDirectUpload } from '@/presentation/features/crmDirectUpload/performBuildCoreDirectUpload';
 
 export type WorkflowTaskDocumentChangeHandlers = {
   onDocumentUploaded: (document: CrmDocumentMetadata) => void | Promise<void>;
@@ -29,7 +26,7 @@ export function useWorkflowTaskDocumentActions(input: {
   openFilePicker: () => void;
   uploadFile: (file: File) => Promise<void>;
   handleFileSelected: (e: React.ChangeEvent<HTMLInputElement>) => Promise<void>;
-  downloadDocument: (documentId: string) => Promise<void>;
+  downloadDocument: (documentId: string, fileName: string) => Promise<void>;
   deleteDocument: (documentId: string) => Promise<void>;
 } {
   const [uploading, setUploading] = useState(false);
@@ -52,35 +49,30 @@ export function useWorkflowTaskDocumentActions(input: {
         input.onError(wf.coreServicesUnavailable);
         return;
       }
-      const validation = validateWorkflowTaskDocumentUpload({
-        fileName: file.name,
-        mimeType: file.type || 'application/octet-stream',
-        sizeBytes: file.size,
-      });
-      if (!validation.ok) {
-        input.onError(validation.message);
-        return;
-      }
 
       setUploading(true);
       try {
-        const buffer = await file.arrayBuffer();
-        const result = await uploadWorkflowTaskDocument(crmRepositories, {
+        const prepared = await performCrmDirectUpload(file, {
+          scope: 'workflow_task',
           projectSlug: input.projectSlug,
           workflowTaskId: input.workflowTaskId,
-          fileName: file.name,
-          mimeType: file.type || 'application/octet-stream',
-          sizeBytes: file.size,
-          body: buffer,
         });
-        await input.onDocumentUploaded(result.document);
+        const documents = await listWorkflowTaskDocuments(crmRepositories, {
+          projectSlug: input.projectSlug,
+          workflowTaskId: input.workflowTaskId,
+        });
+        const document = documents.find((doc) => doc.id === prepared.documentId);
+        if (document == null) {
+          throw new Error(wf.documentUploadFailed);
+        }
+        await input.onDocumentUploaded(document);
       } catch (err) {
-        input.onError(mapError(err));
+        input.onError(err instanceof Error ? err.message : mapError(err));
       } finally {
         setUploading(false);
       }
     },
-    [coreDegraded, input, mapError, wf.coreServicesUnavailable]
+    [coreDegraded, input, mapError, wf.coreServicesUnavailable, wf.documentUploadFailed]
   );
 
   const handleFileSelected = useCallback(
@@ -94,25 +86,19 @@ export function useWorkflowTaskDocumentActions(input: {
   );
 
   const downloadDocument = useCallback(
-    async (documentId: string) => {
+    async (documentId: string, fileName: string) => {
       if (coreDegraded) {
         input.onError(wf.coreServicesUnavailable);
         return;
       }
       try {
-        const download = await createWorkflowTaskDocumentDownload(crmRepositories, {
+        await downloadCrmProjectDocument(crmRepositories, {
+          kind: 'workflow_task',
           projectSlug: input.projectSlug,
           workflowTaskId: input.workflowTaskId,
           documentId,
+          fileName,
         });
-        const anchor = document.createElement('a');
-        anchor.href = download.url;
-        anchor.download = download.fileName;
-        anchor.rel = 'noopener';
-        anchor.click();
-        if (download.url.startsWith('blob:')) {
-          URL.revokeObjectURL(download.url);
-        }
       } catch (err) {
         input.onError(mapError(err));
       }

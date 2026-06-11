@@ -8,6 +8,7 @@ const KIND_LABEL: Record<CrmDocumentKind, string> = {
   estimate: 'PDF',
   contract: 'DOC',
   photo: 'IMG',
+  video: 'VID',
   invoice: 'XLS',
   permit: 'PDF',
   inspection_report: 'RPT',

@@ -23,6 +23,10 @@ import {
 import type { IDocumentStorageProvider } from '@/application/ports/storage/IDocumentStorageProvider';
 import { appendCrmAccountabilityEvent } from './crmAccountability';
 import {
+  loadCrmDocumentAttachmentFromRow,
+  type CrmDocumentAttachmentPayload,
+} from './crmDocumentDownloadResponse';
+import {
   releaseOrganizationStorage,
   reserveOrganizationStorage,
 } from './crmOrganizationStorage';
@@ -290,6 +294,25 @@ export async function deleteWorkflowTaskDocumentForOrg(
   });
 }
 
+export async function resolveWorkflowTaskDocumentAttachmentForOrg(
+  supabase: SupabaseClient,
+  storage: IDocumentStorageProvider,
+  organizationId: string,
+  input: CreateWorkflowTaskDocumentDownloadInput
+): Promise<CrmDocumentAttachmentPayload> {
+  const projectId = await resolveCrmProjectIdBySlug(supabase, organizationId, input.projectSlug);
+  if (!projectId) {
+    throw new CrmDocumentServiceError('not_found', 'Project not found');
+  }
+
+  const row = await getDocumentForOrg(supabase, organizationId, input.documentId);
+  if (!row || row.project_id !== projectId || row.workflow_task_id !== input.workflowTaskId) {
+    throw new CrmDocumentServiceError('not_found', 'Document not found');
+  }
+
+  return loadCrmDocumentAttachmentFromRow(storage, row);
+}
+
 export async function createWorkflowTaskDocumentDownloadForOrg(
   supabase: SupabaseClient,
   storage: IDocumentStorageProvider,
@@ -303,6 +326,108 @@ export async function createWorkflowTaskDocumentDownloadForOrg(
 
   const row = await getDocumentForOrg(supabase, organizationId, input.documentId);
   if (!row || row.project_id !== projectId || row.workflow_task_id !== input.workflowTaskId) {
+    throw new CrmDocumentServiceError('not_found', 'Document not found');
+  }
+
+  const storageKey = row.storage_key ?? row.storage_path;
+  if (!storageKey) {
+    throw new CrmDocumentServiceError('not_found', 'Document file is unavailable');
+  }
+
+  const bucket = row.storage_bucket ?? BUILDCORE_DOCUMENT_STORAGE_BUCKET;
+  const url = await storage.createSignedDownloadUrl({ bucket, storageKey });
+
+  return {
+    url,
+    fileName: row.file_name,
+    mimeType: row.mime_type,
+  };
+}
+
+function isProjectMediaDocument(row: DbCrmDocumentRow): boolean {
+  return row.workflow_task_id == null && row.budget_entry_id == null;
+}
+
+export async function deleteProjectMediaDocumentForOrg(
+  supabase: SupabaseClient,
+  storage: IDocumentStorageProvider,
+  organizationId: string,
+  actorUserId: string,
+  input: import('@/domain/crm/documentMutations').DeleteProjectMediaDocumentInput
+): Promise<void> {
+  const projectId = await resolveCrmProjectIdBySlug(supabase, organizationId, input.projectSlug);
+  if (!projectId) {
+    throw new CrmDocumentServiceError('not_found', 'Project not found');
+  }
+
+  const row = await getDocumentForOrg(supabase, organizationId, input.documentId);
+  if (!row || row.project_id !== projectId || !isProjectMediaDocument(row)) {
+    throw new CrmDocumentServiceError('not_found', 'Document not found');
+  }
+
+  const storageKey = row.storage_key ?? row.storage_path;
+  const bucket = row.storage_bucket ?? BUILDCORE_DOCUMENT_STORAGE_BUCKET;
+  const now = new Date().toISOString();
+
+  const { error: softDeleteError } = await supabase
+    .from('crm_documents')
+    .update({ deleted_at: now })
+    .eq('id', row.id);
+
+  if (softDeleteError) throw new Error(softDeleteError.message);
+
+  if (storageKey) {
+    try {
+      await storage.deleteObject({ bucket, storageKey });
+    } catch {
+      /* storage object may already be gone */
+    }
+  }
+
+  await releaseOrganizationStorage(supabase, organizationId, Number(row.file_size_bytes));
+
+  await appendCrmAccountabilityEvent(supabase, {
+    organizationId,
+    projectId,
+    actorMemberId: actorUserId,
+    eventType: 'document_deleted',
+    summary: `Deleted project file "${row.file_name}"`,
+    metadata: { document_id: row.id },
+  });
+}
+
+export async function resolveProjectMediaDocumentAttachmentForOrg(
+  supabase: SupabaseClient,
+  storage: IDocumentStorageProvider,
+  organizationId: string,
+  input: import('@/domain/crm/documentMutations').CreateProjectMediaDocumentDownloadInput
+): Promise<CrmDocumentAttachmentPayload> {
+  const projectId = await resolveCrmProjectIdBySlug(supabase, organizationId, input.projectSlug);
+  if (!projectId) {
+    throw new CrmDocumentServiceError('not_found', 'Project not found');
+  }
+
+  const row = await getDocumentForOrg(supabase, organizationId, input.documentId);
+  if (!row || row.project_id !== projectId || !isProjectMediaDocument(row)) {
+    throw new CrmDocumentServiceError('not_found', 'Document not found');
+  }
+
+  return loadCrmDocumentAttachmentFromRow(storage, row);
+}
+
+export async function createProjectMediaDocumentDownloadForOrg(
+  supabase: SupabaseClient,
+  storage: IDocumentStorageProvider,
+  organizationId: string,
+  input: import('@/domain/crm/documentMutations').CreateProjectMediaDocumentDownloadInput
+): Promise<import('@/domain/crm/documentMutations').ProjectMediaDocumentDownload> {
+  const projectId = await resolveCrmProjectIdBySlug(supabase, organizationId, input.projectSlug);
+  if (!projectId) {
+    throw new CrmDocumentServiceError('not_found', 'Project not found');
+  }
+
+  const row = await getDocumentForOrg(supabase, organizationId, input.documentId);
+  if (!row || row.project_id !== projectId || !isProjectMediaDocument(row)) {
     throw new CrmDocumentServiceError('not_found', 'Document not found');
   }
 

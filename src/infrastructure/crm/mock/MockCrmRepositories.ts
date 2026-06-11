@@ -623,6 +623,18 @@ export class MockCrmDocumentsRepository implements ICrmDocumentsRepository {
     );
   }
 
+  deleteProjectMedia(
+    input: import('@/domain/crm/documentMutations').DeleteProjectMediaDocumentInput
+  ): Promise<void> {
+    return Promise.reject(new Error('Project media is not supported in mock mode.'));
+  }
+
+  createProjectMediaDownload(
+    input: import('@/domain/crm/documentMutations').CreateProjectMediaDocumentDownloadInput
+  ): Promise<import('@/domain/crm/documentMutations').ProjectMediaDocumentDownload> {
+    return Promise.reject(new Error('Project media is not supported in mock mode.'));
+  }
+
 }
 
 

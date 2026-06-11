@@ -2,11 +2,14 @@ import type { CrmDocumentMetadata } from '@/domain/crm';
 import type {
   BudgetEntryDocumentDownload,
   CreateBudgetEntryDocumentDownloadInput,
+  CreateProjectMediaDocumentDownloadInput,
   CreateWorkflowTaskDocumentDownloadInput,
   DeleteBudgetEntryDocumentInput,
+  DeleteProjectMediaDocumentInput,
   DeleteWorkflowTaskDocumentInput,
   ListBudgetEntryDocumentsInput,
   ListWorkflowTaskDocumentsInput,
+  ProjectMediaDocumentDownload,
   UploadBudgetEntryDocumentInput,
   UploadBudgetEntryDocumentResult,
   UploadWorkflowTaskDocumentInput,
@@ -43,4 +46,10 @@ export interface ICrmDocumentsRepository {
   createBudgetEntryDownload(
     input: CreateBudgetEntryDocumentDownloadInput
   ): CrmRepositoryResult<BudgetEntryDocumentDownload>;
+
+  deleteProjectMedia(input: DeleteProjectMediaDocumentInput): CrmRepositoryResult<void>;
+
+  createProjectMediaDownload(
+    input: CreateProjectMediaDocumentDownloadInput
+  ): CrmRepositoryResult<ProjectMediaDocumentDownload>;
 }

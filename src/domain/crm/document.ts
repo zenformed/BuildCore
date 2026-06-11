@@ -5,6 +5,7 @@ export type CrmDocumentKind =
   | 'estimate'
   | 'contract'
   | 'photo'
+  | 'video'
   | 'invoice'
   | 'permit'
   | 'inspection_report'

@@ -2,12 +2,15 @@
 
 import { useCallback } from 'react';
 import type { CrmDocumentMetadata } from '@/domain/crm';
-import { createBudgetEntryDocumentDownload } from '@/application/use-cases/crm/createBudgetEntryDocumentDownload';
-import { createWorkflowTaskDocumentDownload } from '@/application/use-cases/crm/createWorkflowTaskDocumentDownload';
 import { deleteBudgetEntryDocument } from '@/application/use-cases/crm/deleteBudgetEntryDocument';
+import { deleteProjectMediaDocument } from '@/application/use-cases/crm/deleteProjectMediaDocument';
 import { deleteWorkflowTaskDocument } from '@/application/use-cases/crm/deleteWorkflowTaskDocument';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
 import { mapCrmDocumentActionError } from '@/presentation/features/crmProjectDetail/crmDocumentActionErrors';
+import {
+  crmProjectDocumentDownloadTargetFromMetadata,
+  downloadCrmProjectDocument,
+} from '@/presentation/features/crmProjectDetail/downloadCrmProjectDocument';
 import { useCorePlatformDegraded } from '@/presentation/hooks/useCorePlatformDegraded';
 import { crmRepositories } from '@/shared/di/container';
 
@@ -33,30 +36,11 @@ export function useProjectDocumentModalActions(input: {
         input.onError(wf.coreServicesUnavailable);
         return;
       }
-      if (!doc.workflowTaskId && !doc.budgetEntryId) {
-        input.onError('Document is not linked to a task or budget item.');
-        return;
-      }
       try {
-        const download = doc.budgetEntryId
-          ? await createBudgetEntryDocumentDownload(crmRepositories, {
-              projectSlug: input.projectSlug,
-              budgetEntryId: doc.budgetEntryId,
-              documentId: doc.id,
-            })
-          : await createWorkflowTaskDocumentDownload(crmRepositories, {
-              projectSlug: input.projectSlug,
-              workflowTaskId: doc.workflowTaskId!,
-              documentId: doc.id,
-            });
-        const anchor = document.createElement('a');
-        anchor.href = download.url;
-        anchor.download = download.fileName;
-        anchor.rel = 'noopener';
-        anchor.click();
-        if (download.url.startsWith('blob:')) {
-          URL.revokeObjectURL(download.url);
-        }
+        await downloadCrmProjectDocument(
+          crmRepositories,
+          crmProjectDocumentDownloadTargetFromMetadata(input.projectSlug, doc)
+        );
       } catch (err) {
         input.onError(mapError(err));
       }
@@ -70,10 +54,6 @@ export function useProjectDocumentModalActions(input: {
         input.onError(wf.coreServicesUnavailable);
         return;
       }
-      if (!doc.workflowTaskId && !doc.budgetEntryId) {
-        input.onError('Document is not linked to a task or budget item.');
-        return;
-      }
       try {
         if (doc.budgetEntryId) {
           await deleteBudgetEntryDocument(crmRepositories, {
@@ -81,10 +61,15 @@ export function useProjectDocumentModalActions(input: {
             budgetEntryId: doc.budgetEntryId,
             documentId: doc.id,
           });
-        } else {
+        } else if (doc.workflowTaskId) {
           await deleteWorkflowTaskDocument(crmRepositories, {
             projectSlug: input.projectSlug,
-            workflowTaskId: doc.workflowTaskId!,
+            workflowTaskId: doc.workflowTaskId,
+            documentId: doc.id,
+          });
+        } else {
+          await deleteProjectMediaDocument(crmRepositories, {
+            projectSlug: input.projectSlug,
             documentId: doc.id,
           });
         }

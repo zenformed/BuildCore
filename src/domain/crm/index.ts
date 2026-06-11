@@ -53,6 +53,13 @@ export {
   STORAGE_LIMIT_EXCEEDED_CODE,
   validateWorkflowTaskDocumentUpload,
 } from './documentUpload';
+export {
+  BUILDCORE_UPLOAD_ALLOWED_EXTENSIONS,
+  BUILDCORE_UPLOAD_MAX_DOCUMENT_BYTES,
+  BUILDCORE_UPLOAD_MAX_IMAGE_BYTES,
+  BUILDCORE_UPLOAD_MAX_VIDEO_BYTES,
+  validateBuildCoreUpload,
+} from './buildCoreUploadPolicy';
 export type {
   DeleteWorkflowTaskDocumentInput,
   ListWorkflowTaskDocumentsInput,

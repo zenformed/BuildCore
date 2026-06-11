@@ -185,6 +185,7 @@ function asDocumentKind(value: string): CrmDocumentKind {
     'estimate',
     'contract',
     'photo',
+    'video',
     'invoice',
     'permit',
     'inspection_report',

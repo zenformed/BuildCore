@@ -4,6 +4,7 @@ import type { ChangeEvent, DragEvent, ReactElement } from 'react';
 import { useCallback, useEffect, useState } from 'react';
 import type { CustomerTaskPortalView } from '@/domain/crm/customerTaskRequest';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
+import { performCustomerPortalDirectUpload } from '@/presentation/features/crmDirectUpload/performBuildCoreDirectUpload';
 import styles from './CustomerTaskPortal.module.css';
 
 type CustomerTaskPortalProps = {
@@ -84,16 +85,7 @@ export function CustomerTaskPortal({ token }: CustomerTaskPortalProps): ReactEle
   };
 
   const uploadPendingFile = async (file: File): Promise<void> => {
-    const formData = new FormData();
-    formData.append('file', file);
-    const response = await fetch(`/api/customer-task/${encodeURIComponent(token)}/documents`, {
-      method: 'POST',
-      body: formData,
-    });
-    if (!response.ok) {
-      const body = (await response.json()) as { message?: string };
-      throw new Error(body.message ?? copy.uploadError);
-    }
+    await performCustomerPortalDirectUpload(token, file);
   };
 
   const handleSubmit = async (): Promise<void> => {

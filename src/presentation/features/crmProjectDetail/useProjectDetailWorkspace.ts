@@ -4,14 +4,10 @@ import { useCallback, useEffect, useState } from 'react';
 import type { CrmBudgetEntry, CrmProjectDetail, CrmWorkflowTask } from '@/domain/crm';
 import { isPaymentWorkflowTask } from '@/domain/crm/paymentWorkflow';
 import { archiveCrmWorkflowTask } from '@/application/use-cases/crm';
-import { uploadWorkflowTaskDocument } from '@/application/use-cases/crm/uploadWorkflowTaskDocument';
-import {
-  STORAGE_LIMIT_EXCEEDED_CODE,
-  validateWorkflowTaskDocumentUpload,
-} from '@/domain/crm/documentUpload';
-import { CrmApiError } from '@/infrastructure/crm/api/crmApiClient';
-import { CrmDocumentServiceError } from '@/infrastructure/crm/errors';
+import { listWorkflowTaskDocuments } from '@/application/use-cases/crm/listWorkflowTaskDocuments';
+import { validateWorkflowTaskDocumentUpload } from '@/domain/crm/documentUpload';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
+import { performCrmDirectUpload } from '@/presentation/features/crmDirectUpload/performBuildCoreDirectUpload';
 import { useProjectSummaryPatch } from '@/presentation/features/crmProjectDetail/useProjectSummaryPatch';
 import { useBudgetSection } from '@/presentation/features/crmProjectDetail/useBudgetSection';
 import { useWorkflowTasksSection } from '@/presentation/features/crmProjectDetail/useWorkflowTasksSection';
@@ -129,17 +125,9 @@ export function useProjectDetailWorkspace(initialProject: CrmProjectDetail) {
 
   const mapDocumentUploadError = useCallback(
     (err: unknown): string => {
-      if (err instanceof CrmDocumentServiceError) {
-        if (err.code === STORAGE_LIMIT_EXCEEDED_CODE) return wf.storageLimitExceeded;
-        return err.message;
-      }
-      if (err instanceof CrmApiError) {
-        if (err.code === STORAGE_LIMIT_EXCEEDED_CODE) return wf.storageLimitExceeded;
-        return err.message;
-      }
       return err instanceof Error ? err.message : wf.documentUploadFailed;
     },
-    [wf.documentUploadFailed, wf.storageLimitExceeded]
+    [wf.documentUploadFailed]
   );
 
   const handleTaskDocumentDrop = useCallback((task: CrmWorkflowTask, file: File) => {
@@ -159,16 +147,20 @@ export function useProjectDetailWorkspace(initialProject: CrmProjectDetail) {
     if (!documentUploadConfirm) return;
     const { task, file } = documentUploadConfirm;
     try {
-      const buffer = await file.arrayBuffer();
-      const result = await uploadWorkflowTaskDocument(crmRepositories, {
+      const prepared = await performCrmDirectUpload(file, {
+        scope: 'workflow_task',
         projectSlug: project.summary.slug,
         workflowTaskId: task.id,
-        fileName: file.name,
-        mimeType: file.type || 'application/octet-stream',
-        sizeBytes: file.size,
-        body: buffer,
       });
-      onWorkflowTaskDocumentUploaded(result.document);
+      const documents = await listWorkflowTaskDocuments(crmRepositories, {
+        projectSlug: project.summary.slug,
+        workflowTaskId: task.id,
+      });
+      const document = documents.find((doc) => doc.id === prepared.documentId);
+      if (document == null) {
+        throw new Error(wf.documentUploadFailed);
+      }
+      onWorkflowTaskDocumentUploaded(document);
       setToast({ kind: 'success', message: wf.documentUploadSuccess });
     } catch (err) {
       setToast({ kind: 'error', message: mapDocumentUploadError(err) });
@@ -178,6 +170,7 @@ export function useProjectDetailWorkspace(initialProject: CrmProjectDetail) {
     mapDocumentUploadError,
     onWorkflowTaskDocumentUploaded,
     project.summary.slug,
+    wf.documentUploadFailed,
     wf.documentUploadSuccess,
   ]);
 

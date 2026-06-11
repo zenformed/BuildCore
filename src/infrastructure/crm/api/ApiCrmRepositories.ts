@@ -520,6 +520,22 @@ export class ApiCrmDocumentsRepository implements ICrmDocumentsRepository {
     );
   }
 
+  deleteProjectMedia(input: { projectSlug: string; documentId: string }): Promise<void> {
+    clearApiCrmDetailCache();
+    return crmApiDeleteJson(
+      `/api/crm/projects/${encodeURIComponent(input.projectSlug)}/media/${encodeURIComponent(input.documentId)}`
+    ).then(() => undefined);
+  }
+
+  createProjectMediaDownload(input: {
+    projectSlug: string;
+    documentId: string;
+  }): Promise<{ url: string; fileName: string; mimeType: string }> {
+    return crmApiGetJson(
+      `/api/crm/projects/${encodeURIComponent(input.projectSlug)}/media/${encodeURIComponent(input.documentId)}/download`
+    );
+  }
+
 }
 
 
