@@ -10,6 +10,7 @@ import {
   memberCanAccessProjectIdForViewer,
   scopeCrmProjectSummariesForViewer,
 } from '@/infrastructure/crm/server/crmMemberProjectVisibilityService';
+import { logCrmProjectListT2Debug } from '@/infrastructure/crm/server/crmProjectListRouteDebug';
 
 export const dynamic = 'force-dynamic';
 
@@ -32,31 +33,6 @@ function summarizeProjectForSubprojects404Debug(project: CrmProjectSummary): {
     parentProjectId: project.parentProjectId,
     name: project.name,
   };
-}
-
-function logSubprojectsAllSummariesDebug(
-  parentSlug: string,
-  allSummaries: readonly CrmProjectSummary[]
-): void {
-  const needle = 'newtest';
-  const summaries = allSummaries.map((project) => ({
-    id: project.id,
-    slug: project.slug,
-    parentProjectId: project.parentProjectId,
-    name: project.name,
-  }));
-
-  console.info('[subprojects] allSummaries debug', {
-    incomingParentSlug: parentSlug,
-    totalCount: summaries.length,
-    anySlugContainsNewtest: summaries.some((project) =>
-      project.slug.toLowerCase().includes(needle)
-    ),
-    anyNameContainsNewtest: summaries.some((project) =>
-      project.name.toLowerCase().includes(needle)
-    ),
-    allSummaries: summaries,
-  });
 }
 
 function logSubprojects404Debug(options: {
@@ -120,11 +96,22 @@ export async function GET(
       auth.context.organizationId,
       { rootsOnly: false }
     );
-    logSubprojectsAllSummariesDebug(parentSlug, allSummaries);
+    const dashboardEquivalentSummaries = await listCrmProjectSummariesForOrg(
+      auth.context.supabase,
+      auth.context.organizationId,
+      { rootsOnly: false }
+    );
     const parent = allSummaries.find(
       (project) => project.slug === parentSlug && project.parentProjectId == null
     );
     if (parent == null) {
+      logCrmProjectListT2Debug({
+        route: 'subprojects',
+        parentSlug,
+        parentFound: parent,
+        allSummaries,
+        dashboardEquivalentSummaries,
+      });
       logSubprojects404Debug({
         reason: 'parent_not_found',
         parentSlug,
@@ -142,6 +129,13 @@ export async function GET(
       parent.id
     );
     if (!canAccessParent) {
+      logCrmProjectListT2Debug({
+        route: 'subprojects',
+        parentSlug,
+        parentFound: parent,
+        allSummaries,
+        dashboardEquivalentSummaries,
+      });
       logSubprojects404Debug({
         reason: 'parent_access_denied',
         parentSlug,
@@ -161,6 +155,17 @@ export async function GET(
       auth.context.user.id,
       childSummaries
     );
+
+    logCrmProjectListT2Debug({
+      route: 'subprojects',
+      parentSlug,
+      parentFound: parent,
+      allSummaries,
+      childSummariesBeforeScope: childSummaries,
+      childSummariesAfterScope: projects,
+      dashboardEquivalentSummaries,
+    });
+
     return NextResponse.json(
       { projects, total: projects.length },
       {
