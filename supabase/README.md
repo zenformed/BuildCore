@@ -14,13 +14,13 @@ Typically applied from `ForgeCore/ForgeCore/supabase/migrations` through `00015_
 
 ## Files
 
-| Migration | Purpose |
-|-----------|---------|
-| `00001_crm_schema_foundation.sql` | Tables, indexes, `updated_at` triggers |
-| `00002_crm_seed_pipeline_stages.sql` | 12 global default pipeline stages |
-| `00003_crm_rls.sql` | Org-scoped RLS via `platform_organization_members` |
+| Migration                                       | Purpose                                                |
+| ----------------------------------------------- | ------------------------------------------------------ |
+| `00001_crm_schema_foundation.sql`               | Tables, indexes, `updated_at` triggers                 |
+| `00002_crm_seed_pipeline_stages.sql`            | 12 global default pipeline stages                      |
+| `00003_crm_rls.sql`                             | Org-scoped RLS via `platform_organization_members`     |
 | `00006_crm_workflow_task_documents_storage.sql` | Document metadata columns + `crm_organization_storage` |
-| `00007_crm_organization_storage_quota_rpc.sql` | Quota reserve/release RPC (no direct JWT quota writes) |
+| `00007_crm_organization_storage_quota_rpc.sql`  | Quota reserve/release RPC (no direct JWT quota writes) |
 
 ## Apply (manual)
 
@@ -61,3 +61,5 @@ drop function if exists public.crm_user_can_read_pipeline_stage(uuid);
 drop function if exists public.crm_user_has_org_access(uuid);
 drop function if exists public.crm_set_updated_at();
 ```
+
+test
