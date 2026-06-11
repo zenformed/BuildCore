@@ -34,6 +34,31 @@ function summarizeProjectForSubprojects404Debug(project: CrmProjectSummary): {
   };
 }
 
+function logSubprojectsAllSummariesDebug(
+  parentSlug: string,
+  allSummaries: readonly CrmProjectSummary[]
+): void {
+  const needle = 'newtest';
+  const summaries = allSummaries.map((project) => ({
+    id: project.id,
+    slug: project.slug,
+    parentProjectId: project.parentProjectId,
+    name: project.name,
+  }));
+
+  console.info('[subprojects] allSummaries debug', {
+    incomingParentSlug: parentSlug,
+    totalCount: summaries.length,
+    anySlugContainsNewtest: summaries.some((project) =>
+      project.slug.toLowerCase().includes(needle)
+    ),
+    anyNameContainsNewtest: summaries.some((project) =>
+      project.name.toLowerCase().includes(needle)
+    ),
+    allSummaries: summaries,
+  });
+}
+
 function logSubprojects404Debug(options: {
   reason: Subprojects404Reason;
   parentSlug: string | null;
@@ -95,6 +120,7 @@ export async function GET(
       auth.context.organizationId,
       { rootsOnly: false }
     );
+    logSubprojectsAllSummariesDebug(parentSlug, allSummaries);
     const parent = allSummaries.find(
       (project) => project.slug === parentSlug && project.parentProjectId == null
     );
