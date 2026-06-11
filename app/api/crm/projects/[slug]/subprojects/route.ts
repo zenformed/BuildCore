@@ -59,7 +59,14 @@ export async function GET(
         parentProjectId
       )
     );
-    return NextResponse.json({ projects, total: projects.length });
+    return NextResponse.json(
+      { projects, total: projects.length },
+      {
+        headers: {
+          'Cache-Control': 'private, no-store, no-cache, must-revalidate',
+        },
+      }
+    );
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Failed to load subprojects';
     return NextResponse.json({ error: 'internal_error', message }, { status: 500 });

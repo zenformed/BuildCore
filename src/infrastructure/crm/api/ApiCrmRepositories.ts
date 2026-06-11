@@ -109,11 +109,9 @@ export class ApiCrmProjectsRepository implements ICrmProjectsRepository {
   }): Promise<readonly CrmProjectSummary[]> {
     void input.parentProjectId;
     const parentSlug = input.parentSlug.trim();
-    return runInFlight(`crm:subprojects:${parentSlug}`, () =>
-      crmApiGetJson<{ projects: CrmProjectSummary[] }>(
-        `/api/crm/projects/${encodeURIComponent(parentSlug)}/subprojects`
-      ).then((body) => body.projects)
-    );
+    return crmApiGetJson<{ projects: CrmProjectSummary[] }>(
+      `/api/crm/projects/${encodeURIComponent(parentSlug)}/subprojects`
+    ).then((body) => body.projects);
   }
 
   listPaymentBalanceTasks() {
