@@ -14,6 +14,7 @@ import {
   EMPTY_CRM_PROJECTS_LIST_FILTERS,
   filterDashboardProjectSummaries,
   partitionCrmProjectSummaries,
+  type CrmProjectListFilterContext,
   type CrmProjectsListFilters,
 } from './crmProjectsPipelineViewModel';
 
@@ -37,7 +38,7 @@ export function useCrmProjectsPipeline(
   patchProjectSummary: (summary: CrmProjectSummary) => void;
 } {
   const isApiSource = getCrmDataSource() === 'api';
-  const { paymentTasksIndex, isLoading: isPaymentFinancialsLoading, refetch: refetchPaymentIndex } =
+  const { paymentTasksIndex, workflowTaskStatusIndex, isLoading: isRollupIndexesLoading, refetch: refetchRollupIndexes } =
     useCrmPaymentTasksIndexContext();
   const [allSummaries, setAllSummaries] = useState<readonly CrmProjectSummary[] | null>(() =>
     isApiSource ? null : listCrmProjectSummariesSync(crmRepositories, { rootsOnly: false })
@@ -53,20 +54,29 @@ export function useCrmProjectsPipeline(
   }, [isApiSource]);
 
   const refetch = useCallback(async (): Promise<void> => {
-    await Promise.all([loadSummaries(), refetchPaymentIndex()]);
-  }, [loadSummaries, refetchPaymentIndex]);
+    await Promise.all([loadSummaries(), refetchRollupIndexes()]);
+  }, [loadSummaries, refetchRollupIndexes]);
 
   useEffect(() => {
-    if (!isApiSource) return;
     void loadSummaries();
-  }, [isApiSource, loadSummaries]);
+    void refetchRollupIndexes();
+  }, [isApiSource, loadSummaries, refetchRollupIndexes]);
 
   const summaries = allSummaries ?? EMPTY_PROJECT_SUMMARIES;
   const isLoading = allSummaries === null;
+  const isPaymentFinancialsLoading = isRollupIndexesLoading;
+
+  const filterContext = useMemo(
+    (): CrmProjectListFilterContext => ({
+      workflowTaskStatusIndex,
+      workflowTaskStatusIndexReady: !isRollupIndexesLoading,
+    }),
+    [isRollupIndexesLoading, workflowTaskStatusIndex]
+  );
 
   const dashboardView = useMemo(
-    () => filterDashboardProjectSummaries(summaries, searchQuery, filters),
-    [summaries, searchQuery, filters]
+    () => filterDashboardProjectSummaries(summaries, searchQuery, filters, filterContext),
+    [summaries, searchQuery, filters, filterContext]
   );
 
   const { roots: allRoots } = useMemo(

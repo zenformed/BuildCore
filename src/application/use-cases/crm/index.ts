@@ -24,6 +24,10 @@ export {
   loadCrmProjectPaymentTasksIndexSync,
 } from './loadCrmProjectPaymentTasksIndex';
 export {
+  loadCrmProjectWorkflowTaskStatusIndex,
+  loadCrmProjectWorkflowTaskStatusIndexSync,
+} from './loadCrmProjectWorkflowTaskStatusIndex';
+export {
   listCrmProjectChildSummaries,
   listCrmProjectChildSummariesSync,
 } from './listCrmProjectChildSummaries';

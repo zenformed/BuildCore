@@ -1,19 +1,36 @@
-import type { CrmPriority, CrmProjectSummary, PipelineStageSlug } from '@/domain/crm';
-import { buildCrmProjectSummarySearchHaystack } from '@/domain/crm';
+import type { CrmPriority, CrmProjectSummary, PipelineStageSlug, WorkflowTaskStatus } from '@/domain/crm';
+import { buildCrmProjectSummarySearchHaystack, projectHasAnyWorkflowTaskStatus } from '@/domain/crm';
+import type { CrmProjectWorkflowTaskStatusIndex } from '@/domain/crm/projectWorkflowTaskStatusIndex';
 import { sortCrmProjectsForList } from '@/domain/crm/projectPriorityToggle';
 
 export type CrmProjectsListFilters = {
   readonly stageSlugs: readonly PipelineStageSlug[];
   readonly priorities: readonly CrmPriority[];
+  readonly workflowTaskStatuses: readonly WorkflowTaskStatus[];
 };
 
 export const EMPTY_CRM_PROJECTS_LIST_FILTERS: CrmProjectsListFilters = {
   stageSlugs: [],
   priorities: [],
+  workflowTaskStatuses: [],
+};
+
+export type CrmProjectListFilterContext = {
+  readonly workflowTaskStatusIndex: CrmProjectWorkflowTaskStatusIndex;
+  readonly workflowTaskStatusIndexReady: boolean;
+};
+
+export const EMPTY_CRM_PROJECT_LIST_FILTER_CONTEXT: CrmProjectListFilterContext = {
+  workflowTaskStatusIndex: new Map(),
+  workflowTaskStatusIndexReady: true,
 };
 
 export function isCrmProjectsListFiltersActive(filters: CrmProjectsListFilters): boolean {
-  return filters.stageSlugs.length > 0 || filters.priorities.length > 0;
+  return (
+    filters.stageSlugs.length > 0 ||
+    filters.priorities.length > 0 ||
+    filters.workflowTaskStatuses.length > 0
+  );
 }
 
 export function resolveCrmProjectsTableEmptyMessage(options: {
@@ -31,15 +48,24 @@ export function resolveCrmProjectsTableEmptyMessage(options: {
 function projectMatchesListFilters(
   project: CrmProjectSummary,
   searchQuery: string,
-  filters: CrmProjectsListFilters
+  filters: CrmProjectsListFilters,
+  filterContext: CrmProjectListFilterContext
 ): boolean {
   const q = searchQuery.trim().toLowerCase();
-  const { stageSlugs, priorities } = filters;
+  const { stageSlugs, priorities, workflowTaskStatuses } = filters;
+  const { workflowTaskStatusIndex, workflowTaskStatusIndexReady } = filterContext;
 
   if (stageSlugs.length > 0 && !stageSlugs.includes(project.currentStageSlug)) {
     return false;
   }
   if (priorities.length > 0 && !priorities.includes(project.priority)) {
+    return false;
+  }
+  if (
+    workflowTaskStatuses.length > 0 &&
+    workflowTaskStatusIndexReady &&
+    !projectHasAnyWorkflowTaskStatus(project.id, workflowTaskStatuses, workflowTaskStatusIndex)
+  ) {
     return false;
   }
   if (!q) return true;
@@ -81,17 +107,21 @@ export function partitionCrmProjectSummaries(summaries: readonly CrmProjectSumma
 export function filterCrmProjectSummaries(
   projects: readonly CrmProjectSummary[],
   searchQuery: string,
-  filters: CrmProjectsListFilters
+  filters: CrmProjectsListFilters,
+  filterContext: CrmProjectListFilterContext = EMPTY_CRM_PROJECT_LIST_FILTER_CONTEXT
 ): CrmProjectSummary[] {
   return sortCrmProjectSummaries(
-    projects.filter((project) => projectMatchesListFilters(project, searchQuery, filters))
+    projects.filter((project) =>
+      projectMatchesListFilters(project, searchQuery, filters, filterContext)
+    )
   );
 }
 
 export function filterDashboardProjectSummaries(
   summaries: readonly CrmProjectSummary[],
   searchQuery: string,
-  filters: CrmProjectsListFilters
+  filters: CrmProjectsListFilters,
+  filterContext: CrmProjectListFilterContext = EMPTY_CRM_PROJECT_LIST_FILTER_CONTEXT
 ): {
   rootRows: CrmProjectSummary[];
   allChildrenByParentId: Map<string, CrmProjectSummary[]>;
@@ -104,7 +134,7 @@ export function filterDashboardProjectSummaries(
 
   for (const [parentId, children] of childrenByParentId) {
     const matchingChildren = children.filter((child) =>
-      projectMatchesListFilters(child, searchQuery, filters)
+      projectMatchesListFilters(child, searchQuery, filters, filterContext)
     );
     if (matchingChildren.length > 0) {
       visibleChildrenByParentId.set(parentId, sortCrmProjectSummaries(matchingChildren));
@@ -114,7 +144,7 @@ export function filterDashboardProjectSummaries(
 
   const rootRows = roots.filter(
     (root) =>
-      projectMatchesListFilters(root, searchQuery, filters) ||
+      projectMatchesListFilters(root, searchQuery, filters, filterContext) ||
       parentsWithMatchingChildren.has(root.id)
   );
 

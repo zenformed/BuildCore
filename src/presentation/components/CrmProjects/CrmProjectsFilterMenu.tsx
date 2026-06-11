@@ -2,7 +2,11 @@
 
 import type { ReactElement } from 'react';
 import { useRef, useState } from 'react';
-import type { CrmPriority, PipelineStageSlug } from '@/domain/crm';
+import type { CrmPriority, PipelineStageSlug, WorkflowTaskStatus } from '@/domain/crm';
+import {
+  WORKFLOW_TASK_STATUSES,
+  WORKFLOW_TASK_STATUS_LABELS,
+} from '@/domain/crm/workflowTaskStatuses';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
 import { useBuildCorePipelineStages } from '@/presentation/providers/BuildCorePipelineStagesProvider';
 import { FilterIcon } from '@/platform/icons/buildCoreDashboardShellIcons';
@@ -50,6 +54,13 @@ export function CrmProjectsFilterMenu({
       ? filters.priorities.filter((value) => value !== priority)
       : [...filters.priorities, priority];
     onChange({ ...filters, priorities: next });
+  };
+
+  const toggleWorkflowTaskStatus = (status: WorkflowTaskStatus): void => {
+    const next = filters.workflowTaskStatuses.includes(status)
+      ? filters.workflowTaskStatuses.filter((value) => value !== status)
+      : [...filters.workflowTaskStatuses, status];
+    onChange({ ...filters, workflowTaskStatuses: next });
   };
 
   return (
@@ -104,6 +115,21 @@ export function CrmProjectsFilterMenu({
                     onChange={() => togglePriority(priority)}
                   />
                   <span>{PRIORITY_LABELS[priority]}</span>
+                </label>
+              ))}
+            </div>
+          </fieldset>
+          <fieldset className={styles.projectsFilterFieldset}>
+            <legend className={styles.projectsFilterLegend}>{copy.statusLabel}</legend>
+            <div className={styles.projectsFilterOptions}>
+              {WORKFLOW_TASK_STATUSES.map((status) => (
+                <label key={status} className={styles.projectsFilterOption}>
+                  <input
+                    type="checkbox"
+                    checked={filters.workflowTaskStatuses.includes(status)}
+                    onChange={() => toggleWorkflowTaskStatus(status)}
+                  />
+                  <span>{WORKFLOW_TASK_STATUS_LABELS[status]}</span>
                 </label>
               ))}
             </div>

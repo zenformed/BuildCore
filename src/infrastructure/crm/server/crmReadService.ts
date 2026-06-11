@@ -1,8 +1,10 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
-import type { CrmBudgetEntry, CrmProjectDetail, CrmProjectSummary } from '@/domain/crm';
+import type { CrmBudgetEntry, CrmProjectDetail, CrmProjectSummary, WorkflowTaskStatus } from '@/domain/crm';
 import type { CrmProjectBudgetEntriesIndex } from '@/domain/crm/projectBudgetRollup';
 import type { CrmProjectPaymentTasksIndex } from '@/domain/crm/projectPaymentValue';
+import type { CrmProjectWorkflowTaskStatusIndex } from '@/domain/crm/projectWorkflowTaskStatusIndex';
 import type { PaymentBalanceTask } from '@/domain/crm/paymentWorkflow';
+import { isWorkflowTaskStatus } from '@/domain/crm/workflowTaskStatuses';
 import {
   mapDbBudgetEntry,
   mapDbProjectDetail,
@@ -123,6 +125,49 @@ export async function listPaymentBalanceTasksByOrg(
       paidAt: (row.paid_at as string | null) ?? null,
     });
     index.set(projectId, tasks);
+  }
+
+  return index;
+}
+
+export async function listWorkflowTaskStatusesByOrg(
+  supabase: SupabaseClient,
+  organizationId: string
+): Promise<CrmProjectWorkflowTaskStatusIndex> {
+  const { data: projectRows, error: projectError } = await supabase
+    .from('crm_projects')
+    .select('id')
+    .eq('organization_id', organizationId)
+    .is('archived_at', null);
+
+  if (projectError) {
+    throw new Error(projectError.message);
+  }
+
+  const projectIds = (projectRows ?? []).map((row) => row.id as string);
+  if (projectIds.length === 0) {
+    return new Map();
+  }
+
+  const { data: taskRows, error: taskError } = await supabase
+    .from('crm_workflow_tasks')
+    .select('project_id, status')
+    .in('project_id', projectIds)
+    .is('archived_at', null);
+
+  if (taskError) {
+    throw new Error(taskError.message);
+  }
+
+  const index = new Map<string, Set<WorkflowTaskStatus>>();
+  for (const row of taskRows ?? []) {
+    const status = row.status as string;
+    if (!isWorkflowTaskStatus(status)) continue;
+
+    const projectId = row.project_id as string;
+    const statuses = index.get(projectId) ?? new Set<WorkflowTaskStatus>();
+    statuses.add(status);
+    index.set(projectId, statuses);
   }
 
   return index;

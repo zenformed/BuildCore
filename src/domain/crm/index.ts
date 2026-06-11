@@ -38,6 +38,14 @@ export {
   type ProjectPaymentFinancials,
 } from './projectPaymentValue';
 export {
+  buildWorkflowTaskStatusIndexFromRows,
+  deserializeWorkflowTaskStatusIndex,
+  getWorkflowTaskStatusesForProject,
+  projectHasAnyWorkflowTaskStatus,
+  serializeWorkflowTaskStatusIndex,
+  type CrmProjectWorkflowTaskStatusIndex,
+} from './projectWorkflowTaskStatusIndex';
+export {
   collectRollupBudgetSummary,
   getBudgetEntriesForProject,
   type CrmProjectBudgetEntriesIndex,
@@ -46,6 +54,11 @@ export type { CrmTeamMemberRef } from './teamMember';
 export type { CrmContact } from './contact';
 export type { CrmClient } from './client';
 export type { CrmWorkflowTask, WorkflowTaskStatus } from './workflowTask';
+export {
+  isWorkflowTaskStatus,
+  WORKFLOW_TASK_STATUSES,
+  WORKFLOW_TASK_STATUS_LABELS,
+} from './workflowTaskStatuses';
 export type { CrmDocumentKind, CrmDocumentMetadata } from './document';
 export {
   BUILDCORE_MAX_DOCUMENT_UPLOAD_BYTES,

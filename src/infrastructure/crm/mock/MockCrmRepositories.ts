@@ -63,6 +63,7 @@ import { resolveMockWorkflowTaskAssigneeFromDetail } from '@/infrastructure/crm/
 import { MOCK_CRM_PROJECT_DETAILS, MOCK_CRM_PROJECT_SUMMARIES } from '@/platform/mock/crm';
 import { buildMockProjectBudgetEntriesIndex } from '@/infrastructure/crm/mock/buildMockProjectBudgetEntriesIndex';
 import { buildMockProjectPaymentTasksIndex } from '@/infrastructure/crm/mock/buildMockProjectPaymentTasksIndex';
+import { buildMockProjectWorkflowTaskStatusIndex } from '@/infrastructure/crm/mock/buildMockProjectWorkflowTaskStatusIndex';
 
 import { CrmWriteNotAvailableError } from '@/infrastructure/crm/errors';
 import { getDocumentStorageProvider } from '@/infrastructure/storage/getDocumentStorageProvider';
@@ -259,6 +260,10 @@ export class MockCrmProjectsRepository implements ICrmProjectsRepository {
 
   listPaymentBalanceTasks() {
     return buildMockProjectPaymentTasksIndex();
+  }
+
+  listWorkflowTaskStatuses() {
+    return buildMockProjectWorkflowTaskStatusIndex();
   }
 
   listBudgetEntries() {

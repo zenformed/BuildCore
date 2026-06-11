@@ -40,6 +40,8 @@ import type {
 
   PaymentBalanceTask,
 
+  WorkflowTaskStatus,
+
   UpdateCrmProjectInput,
 
   UpdateCrmWorkflowTaskInput,
@@ -55,6 +57,8 @@ import type {
   UpdateCrmBudgetEntryInput,
 
 } from '@/domain/crm/budgetMutations';
+
+import { deserializeWorkflowTaskStatusIndex } from '@/domain/crm/projectWorkflowTaskStatusIndex';
 
 import {
 
@@ -118,6 +122,12 @@ export class ApiCrmProjectsRepository implements ICrmProjectsRepository {
     return crmApiGetJson<{ byProjectId: Record<string, PaymentBalanceTask[]> }>(
       '/api/crm/projects/payment-balance-tasks'
     ).then((body) => new Map(Object.entries(body.byProjectId)));
+  }
+
+  listWorkflowTaskStatuses() {
+    return crmApiGetJson<{ byProjectId: Record<string, WorkflowTaskStatus[]> }>(
+      '/api/crm/projects/workflow-task-statuses'
+    ).then((body) => deserializeWorkflowTaskStatusIndex(body.byProjectId));
   }
 
   listBudgetEntries() {

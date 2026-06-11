@@ -13,6 +13,7 @@ import {
 } from 'react';
 import type { CrmProjectBudgetEntriesIndex } from '@/domain/crm/projectBudgetRollup';
 import type { CrmProjectPaymentTasksIndex } from '@/domain/crm/projectPaymentValue';
+import type { CrmProjectWorkflowTaskStatusIndex } from '@/domain/crm/projectWorkflowTaskStatusIndex';
 import {
   loadCrmProjectBudgetEntriesIndex,
   loadCrmProjectBudgetEntriesIndexSync,
@@ -21,6 +22,10 @@ import {
   loadCrmProjectPaymentTasksIndex,
   loadCrmProjectPaymentTasksIndexSync,
 } from '@/application/use-cases/crm/loadCrmProjectPaymentTasksIndex';
+import {
+  loadCrmProjectWorkflowTaskStatusIndex,
+  loadCrmProjectWorkflowTaskStatusIndexSync,
+} from '@/application/use-cases/crm/loadCrmProjectWorkflowTaskStatusIndex';
 import { getCrmDataSource } from '@/infrastructure/config/crmDataSource';
 import { deferNonCriticalWork } from '@/presentation/utils/deferNonCriticalWork';
 import { crmRepositories } from '@/shared/di/container';
@@ -28,6 +33,7 @@ import { crmRepositories } from '@/shared/di/container';
 export type CrmPaymentTasksIndexContextValue = {
   readonly paymentTasksIndex: CrmProjectPaymentTasksIndex;
   readonly budgetEntriesIndex: CrmProjectBudgetEntriesIndex;
+  readonly workflowTaskStatusIndex: CrmProjectWorkflowTaskStatusIndex;
   readonly isLoading: boolean;
   readonly refetch: () => Promise<void>;
 };
@@ -37,10 +43,12 @@ const CrmPaymentTasksIndexContext = createContext<CrmPaymentTasksIndexContextVal
 type FinancialRollupIndexes = {
   readonly paymentTasksIndex: CrmProjectPaymentTasksIndex;
   readonly budgetEntriesIndex: CrmProjectBudgetEntriesIndex;
+  readonly workflowTaskStatusIndex: CrmProjectWorkflowTaskStatusIndex;
 };
 
 const EMPTY_PAYMENT_TASKS_INDEX: CrmProjectPaymentTasksIndex = new Map<string, never>();
 const EMPTY_BUDGET_ENTRIES_INDEX: CrmProjectBudgetEntriesIndex = new Map<string, never>();
+const EMPTY_WORKFLOW_TASK_STATUS_INDEX: CrmProjectWorkflowTaskStatusIndex = new Map<string, never>();
 
 let inFlightFinancialRollupIndexLoad: Promise<FinancialRollupIndexes> | null = null;
 
@@ -51,6 +59,7 @@ async function loadSharedFinancialRollupIndexes(
     return {
       paymentTasksIndex: loadCrmProjectPaymentTasksIndexSync(crmRepositories),
       budgetEntriesIndex: loadCrmProjectBudgetEntriesIndexSync(crmRepositories),
+      workflowTaskStatusIndex: loadCrmProjectWorkflowTaskStatusIndexSync(crmRepositories),
     };
   }
   if (inFlightFinancialRollupIndexLoad) {
@@ -59,9 +68,11 @@ async function loadSharedFinancialRollupIndexes(
   inFlightFinancialRollupIndexLoad = Promise.all([
     loadCrmProjectPaymentTasksIndex(crmRepositories),
     loadCrmProjectBudgetEntriesIndex(crmRepositories),
-  ]).then(([paymentTasksIndex, budgetEntriesIndex]) => ({
+    loadCrmProjectWorkflowTaskStatusIndex(crmRepositories),
+  ]).then(([paymentTasksIndex, budgetEntriesIndex, workflowTaskStatusIndex]) => ({
     paymentTasksIndex,
     budgetEntriesIndex,
+    workflowTaskStatusIndex,
   }));
   try {
     return await inFlightFinancialRollupIndexLoad;
@@ -84,6 +95,7 @@ export function CrmPaymentTasksIndexProvider({
       : {
           paymentTasksIndex: loadCrmProjectPaymentTasksIndexSync(crmRepositories),
           budgetEntriesIndex: loadCrmProjectBudgetEntriesIndexSync(crmRepositories),
+          workflowTaskStatusIndex: loadCrmProjectWorkflowTaskStatusIndexSync(crmRepositories),
         }
   );
   const mountedRef = useRef(true);
@@ -111,6 +123,8 @@ export function CrmPaymentTasksIndexProvider({
     (): CrmPaymentTasksIndexContextValue => ({
       paymentTasksIndex: rollupIndexes?.paymentTasksIndex ?? EMPTY_PAYMENT_TASKS_INDEX,
       budgetEntriesIndex: rollupIndexes?.budgetEntriesIndex ?? EMPTY_BUDGET_ENTRIES_INDEX,
+      workflowTaskStatusIndex:
+        rollupIndexes?.workflowTaskStatusIndex ?? EMPTY_WORKFLOW_TASK_STATUS_INDEX,
       isLoading: rollupIndexes === null,
       refetch,
     }),

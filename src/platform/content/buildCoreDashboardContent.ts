@@ -243,6 +243,7 @@ export const buildCoreDashboardContent = {
       clear: 'Clear filters',
       stageLabel: 'Stage',
       priorityLabel: 'Priority',
+      statusLabel: 'Status',
     },
     assignee: {
       customer: 'Assign to Customer',
