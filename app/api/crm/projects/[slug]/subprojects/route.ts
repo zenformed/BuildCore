@@ -4,14 +4,11 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { requireCrmApiAuth } from '@/infrastructure/crm/server/crmApiRouteAuth';
-import {
-  listCrmProjectChildSummariesForOrg,
-} from '@/infrastructure/crm/server/crmReadService';
+import { listCrmProjectSummariesForOrg } from '@/infrastructure/crm/server/crmReadService';
 import {
   memberCanAccessProjectIdForViewer,
   scopeCrmProjectSummariesForViewer,
 } from '@/infrastructure/crm/server/crmMemberProjectVisibilityService';
-import { resolveCrmProjectIdBySlug } from '@/infrastructure/crm/server/resolveCrmProjectIdBySlug';
 
 export const dynamic = 'force-dynamic';
 
@@ -30,12 +27,15 @@ export async function GET(
   }
 
   try {
-    const parentProjectId = await resolveCrmProjectIdBySlug(
+    const allSummaries = await listCrmProjectSummariesForOrg(
       auth.context.supabase,
       auth.context.organizationId,
-      parentSlug
+      { rootsOnly: false }
     );
-    if (parentProjectId == null) {
+    const parent = allSummaries.find(
+      (project) => project.slug === parentSlug && project.parentProjectId == null
+    );
+    if (parent == null) {
       return NextResponse.json({ error: 'not_found', message: 'Project not found' }, { status: 404 });
     }
 
@@ -43,32 +43,20 @@ export async function GET(
       auth.context.supabase,
       auth.context.organizationId,
       auth.context.user.id,
-      parentProjectId
+      parent.id
     );
     if (!canAccessParent) {
       return NextResponse.json({ error: 'not_found', message: 'Project not found' }, { status: 404 });
     }
 
-    const projectsBeforeScope = await listCrmProjectChildSummariesForOrg(
-      auth.context.supabase,
-      auth.context.organizationId,
-      parentProjectId
+    const childSummaries = allSummaries.filter(
+      (project) => project.parentProjectId === parent.id
     );
-    console.info('[subprojects] pre-scope debug', {
-      incomingSlug: parentSlug,
-      resolvedParentProjectId: parentProjectId,
-      countBeforeScope: projectsBeforeScope.length,
-      projectsBeforeScope: projectsBeforeScope.map((project) => ({
-        name: project.name,
-        slug: project.slug,
-      })),
-    });
-
     const projects = await scopeCrmProjectSummariesForViewer(
       auth.context.supabase,
       auth.context.organizationId,
       auth.context.user.id,
-      projectsBeforeScope
+      childSummaries
     );
     return NextResponse.json(
       { projects, total: projects.length },
