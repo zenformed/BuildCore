@@ -4,7 +4,7 @@ import type { ReactElement } from 'react';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
 import { useBuildCorePipelineStages } from '@/presentation/providers/BuildCorePipelineStagesProvider';
 import { BuildCoreWorkflowSettingsAccessGate } from './BuildCoreWorkflowSettingsAccessGate';
-import { BuildCoreWorkflowSettingsFolderTabs } from './BuildCoreWorkflowSettingsFolderTabs';
+import { BuildCoreWorkflowSettingsSections } from './BuildCoreWorkflowSettingsSections';
 import projectStyles from '../CrmProjectDetail/ProjectDetail.module.css';
 import stageStyles from '../BuildCoreWorkflowStages/BuildCoreWorkflowStages.module.css';
 import styles from './BuildCoreWorkflowSettings.module.css';
@@ -41,8 +41,8 @@ function BuildCoreWorkflowSettingsDashboardContent(): ReactElement {
         </div>
       </header>
 
-      <div className={styles.pageBody}>
-        <BuildCoreWorkflowSettingsFolderTabs />
+      <div className={`${projectStyles.pageBodyOverview} ${styles.pageBody}`}>
+        <BuildCoreWorkflowSettingsSections />
       </div>
     </div>
   );

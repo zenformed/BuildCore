@@ -39,6 +39,7 @@ export function useBuildCoreDashboard(): {
   canAccessBuildCoreTeams: boolean;
   canAccessBuildCoreReports: boolean;
   canAccessBuildCoreWorkflowStages: boolean;
+  isOrganizationPermissionsLoading: boolean;
   isAdmin: boolean;
   canEditOrganizationProfile: boolean;
   avatarUrl: string | null;
@@ -150,6 +151,13 @@ export function useBuildCoreDashboard(): {
     return canAccessBuildCoreWorkflowStages(organizationMembershipContext?.role);
   }, [membershipContextStatus, organizationMembershipContext?.role]);
 
+  const isOrganizationPermissionsLoading = useMemo(() => {
+    if (!env.isSaasMode || runtimeModes.useMockAuth()) {
+      return false;
+    }
+    return membershipContextStatus === 'pending';
+  }, [membershipContextStatus]);
+
   const { logoUploading, headerLogoFileInputRef, handleLogoFileChange } = useOrganizationLogoUpload({
     brandingApiUrl: nav.apis.branding,
     getAccessToken,
@@ -172,6 +180,7 @@ export function useBuildCoreDashboard(): {
       canAccessBuildCoreTeams: canAccessBuildCoreTeamsNav,
       canAccessBuildCoreReports: canAccessBuildCoreReportsNav,
       canAccessBuildCoreWorkflowStages: canAccessBuildCoreWorkflowStagesNav,
+      isOrganizationPermissionsLoading,
       isAdmin,
       canEditOrganizationProfile,
       avatarUrl,
@@ -204,6 +213,7 @@ export function useBuildCoreDashboard(): {
       canAccessBuildCoreReportsNav,
       canAccessBuildCoreTeamsNav,
       canAccessBuildCoreWorkflowStagesNav,
+      isOrganizationPermissionsLoading,
       effectiveLicenseTier,
       entitlementSnapshot,
       getAccessToken,

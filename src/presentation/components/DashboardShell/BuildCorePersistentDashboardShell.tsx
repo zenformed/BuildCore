@@ -57,10 +57,10 @@ export function BuildCorePersistentDashboardShell({
   useEffect(() => {
     const onTeamsRoute =
       pathname === nav.routes.teams || pathname.startsWith(`${nav.routes.teams}/`);
-    if (onTeamsRoute && !dash.canAccessBuildCoreTeams) {
+    if (onTeamsRoute && !dash.isOrganizationPermissionsLoading && !dash.canAccessBuildCoreTeams) {
       router.replace(nav.routes.dashboard);
     }
-  }, [dash.canAccessBuildCoreTeams, pathname, router]);
+  }, [dash.canAccessBuildCoreTeams, dash.isOrganizationPermissionsLoading, pathname, router]);
 
   useEffect(() => {
     const onReportsRoute =
@@ -74,10 +74,19 @@ export function BuildCorePersistentDashboardShell({
     const onWorkflowStagesRoute =
       pathname === nav.routes.workflowStages ||
       pathname.startsWith(`${nav.routes.workflowStages}/`);
-    if (onWorkflowStagesRoute && !dash.canAccessBuildCoreWorkflowStages) {
+    if (
+      onWorkflowStagesRoute &&
+      !dash.isOrganizationPermissionsLoading &&
+      !dash.canAccessBuildCoreWorkflowStages
+    ) {
       router.replace(nav.routes.dashboard);
     }
-  }, [dash.canAccessBuildCoreWorkflowStages, pathname, router]);
+  }, [
+    dash.canAccessBuildCoreWorkflowStages,
+    dash.isOrganizationPermissionsLoading,
+    pathname,
+    router,
+  ]);
 
   return (
     <BuildCoreDashboardShell

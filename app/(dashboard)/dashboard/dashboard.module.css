@@ -182,7 +182,7 @@
   overflow: hidden;
 }
 
-/* Workflow settings: folder tabs fill main column; stage list scrolls internally */
+/* Workflow settings: fixed page shell; stage panel scrolls inside its box */
 .listViewWrap:has([data-buildcore-workflow-settings-page]) {
   flex: 1 1 0;
   min-height: 0;

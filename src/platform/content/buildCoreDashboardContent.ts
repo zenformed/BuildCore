@@ -163,7 +163,7 @@ export const buildCoreDashboardContent = {
     readOnlyNote: 'Workflow settings are managed by organization owners and admins.',
     folderTabs: {
       workflowStages: 'Workflow Stages',
-      alerts: 'Alerts',
+      alerts: 'Customer Task Alerts',
     },
     stageColumns: {
       projectStages: 'Project Stages',
@@ -171,7 +171,6 @@ export const buildCoreDashboardContent = {
     },
     alerts: {
       customerTaskReminders: {
-        sectionTitle: 'Customer Task Reminders',
         enableLabel: 'Enable automatic customer reminders',
         enableHint:
           'Send follow-up emails to customers with open assigned tasks after the selected interval. Initial assignment emails are unchanged.',

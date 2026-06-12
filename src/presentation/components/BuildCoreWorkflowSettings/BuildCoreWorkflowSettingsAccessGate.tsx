@@ -1,8 +1,8 @@
 'use client';
 
 import type { ReactElement, ReactNode } from 'react';
-import { useBuildCoreDashboardContext } from '@/presentation/providers/BuildCoreDashboardProvider';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
+import { useBuildCoreWorkflowSettingsAccess } from '@/presentation/features/buildCoreWorkflowSettings/useBuildCoreWorkflowSettingsAccess';
 import styles from '../BuildCoreWorkflowStages/BuildCoreWorkflowStages.module.css';
 
 export function BuildCoreWorkflowSettingsNoAccess(): ReactElement {
@@ -15,9 +15,16 @@ export function BuildCoreWorkflowSettingsAccessGate({
 }: {
   readonly children: ReactNode;
 }): ReactElement {
-  const dash = useBuildCoreDashboardContext();
-  if (!dash.canAccessBuildCoreWorkflowStages) {
+  const { isLoadingPermissions, canManageWorkflowSettings } = useBuildCoreWorkflowSettingsAccess();
+  const copy = content.workflowSettings;
+
+  if (isLoadingPermissions) {
+    return <p className={styles.loading}>{copy.loading}</p>;
+  }
+
+  if (!canManageWorkflowSettings) {
     return <BuildCoreWorkflowSettingsNoAccess />;
   }
+
   return <>{children}</>;
 }
