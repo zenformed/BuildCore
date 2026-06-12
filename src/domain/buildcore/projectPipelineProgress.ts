@@ -4,6 +4,14 @@ import { isCrmProjectComplete, type CrmProjectSummary } from '@/domain/crm';
 
 import type { CrmProjectStageCompletion } from '@/domain/crm/projectStageCompletion';
 
+import {
+  getWorkflowProgressInputForProject,
+  workflowProgressInputToManualStageCompletions,
+  workflowProgressInputToWorkflowTasks,
+  type CrmProjectWorkflowProgressInput,
+  type CrmProjectWorkflowProgressInputIndex,
+} from '@/domain/crm/projectWorkflowProgressInput';
+
 import { isWorkflowStageComplete, resolveWorkflowStageCompletionState } from '@/domain/crm/projectStageCompletion';
 
 import { isPaymentWorkflowTask, PAYMENT_WORKFLOW_STAGE_SLUG } from '@/domain/crm/paymentWorkflow';
@@ -390,25 +398,9 @@ export function resolveProjectDetailProgressDisplay(input: {
 
   readonly manualStageCompletions?: readonly CrmProjectStageCompletion[] | null;
 
-  readonly isComplete?: boolean;
-
   readonly stages?: readonly PipelineStage[] | null;
 
 }): ProjectProgressDisplay {
-
-  if (input.isComplete) {
-
-    return {
-
-      textPercent: 100,
-
-      litSegmentCount: progressLitSegmentCount(100),
-
-    };
-
-  }
-
-
 
   const rawPercent = computeWorkflowStageBasedProjectProgressPercent({
 
@@ -431,6 +423,140 @@ export function resolveProjectDetailProgressDisplay(input: {
     litSegmentCount: progressLitSegmentCount(textPercent),
 
   };
+
+}
+
+
+
+/** Summary/list rows when workflow task + manual completion rollup data is available. */
+
+export function resolveProjectWorkflowProgressDisplay(input: {
+
+  readonly workflowProgressInput: CrmProjectWorkflowProgressInput;
+
+  readonly stages?: readonly PipelineStage[] | null;
+
+}): ProjectProgressDisplay {
+
+  return resolveProjectDetailProgressDisplay({
+
+    workflowTasks: workflowProgressInputToWorkflowTasks(input.workflowProgressInput),
+
+    manualStageCompletions: workflowProgressInputToManualStageCompletions(
+
+      input.workflowProgressInput
+
+    ),
+
+    stages: input.stages,
+
+  });
+
+}
+
+
+
+export function resolveProjectWorkflowProgressDisplayFromIndex(input: {
+
+  readonly summary: CrmProjectSummary;
+
+  readonly workflowProgressInputIndex: CrmProjectWorkflowProgressInputIndex;
+
+  readonly stages?: readonly PipelineStage[] | null;
+
+}): ProjectProgressDisplay {
+
+  return resolveProjectWorkflowProgressDisplay({
+
+    workflowProgressInput: getWorkflowProgressInputForProject(
+
+      input.workflowProgressInputIndex,
+
+      input.summary.id
+
+    ),
+
+    stages: input.stages,
+
+  });
+
+}
+
+
+
+/** Subprojects section pill — average of each child's workflow-based progress. */
+
+export function computeSubprojectAverageProgressPercent(input: {
+
+  readonly childSummaries: readonly CrmProjectSummary[];
+
+  readonly workflowProgressInputIndex: CrmProjectWorkflowProgressInputIndex;
+
+  readonly stages?: readonly PipelineStage[] | null;
+
+}): number | null {
+
+  if (input.childSummaries.length === 0) {
+
+    return null;
+
+  }
+
+
+
+  const rawPercents = input.childSummaries.map((child) => {
+
+    const workflowProgressInput = getWorkflowProgressInputForProject(
+
+      input.workflowProgressInputIndex,
+
+      child.id
+
+    );
+
+
+
+    return computeWorkflowStageBasedProjectProgressPercent({
+
+      workflowTasks: workflowProgressInputToWorkflowTasks(workflowProgressInput),
+
+      manualStageCompletions: workflowProgressInputToManualStageCompletions(
+
+        workflowProgressInput
+
+      ),
+
+      stages: input.stages,
+
+    });
+
+  });
+
+
+
+  return averagePipelineProgressPercents(rawPercents);
+
+}
+
+
+
+export function formatSubprojectAverageProgressPercent(percent: number): string {
+
+  if (percent === 0) {
+
+    return '0%';
+
+  }
+
+  if (percent === 100) {
+
+    return '100%';
+
+  }
+
+  const rounded = Math.round(percent * 10) / 10;
+
+  return Number.isInteger(rounded) ? `${rounded}%` : `${rounded.toFixed(1)}%`;
 
 }
 

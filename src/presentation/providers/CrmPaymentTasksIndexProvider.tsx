@@ -14,6 +14,7 @@ import {
 import type { CrmProjectBudgetEntriesIndex } from '@/domain/crm/projectBudgetRollup';
 import type { CrmProjectPaymentTasksIndex } from '@/domain/crm/projectPaymentValue';
 import type { CrmProjectWorkflowTaskStatusIndex } from '@/domain/crm/projectWorkflowTaskStatusIndex';
+import type { CrmProjectWorkflowProgressInputIndex } from '@/domain/crm/projectWorkflowProgressInput';
 import {
   loadCrmProjectBudgetEntriesIndex,
   loadCrmProjectBudgetEntriesIndexSync,
@@ -26,6 +27,10 @@ import {
   loadCrmProjectWorkflowTaskStatusIndex,
   loadCrmProjectWorkflowTaskStatusIndexSync,
 } from '@/application/use-cases/crm/loadCrmProjectWorkflowTaskStatusIndex';
+import {
+  loadCrmProjectWorkflowProgressInputIndex,
+  loadCrmProjectWorkflowProgressInputIndexSync,
+} from '@/application/use-cases/crm/loadCrmProjectWorkflowProgressInputIndex';
 import { getCrmDataSource } from '@/infrastructure/config/crmDataSource';
 import { deferNonCriticalWork } from '@/presentation/utils/deferNonCriticalWork';
 import { crmRepositories } from '@/shared/di/container';
@@ -34,6 +39,7 @@ export type CrmPaymentTasksIndexContextValue = {
   readonly paymentTasksIndex: CrmProjectPaymentTasksIndex;
   readonly budgetEntriesIndex: CrmProjectBudgetEntriesIndex;
   readonly workflowTaskStatusIndex: CrmProjectWorkflowTaskStatusIndex;
+  readonly workflowProgressInputIndex: CrmProjectWorkflowProgressInputIndex;
   readonly isLoading: boolean;
   readonly refetch: () => Promise<void>;
 };
@@ -44,11 +50,16 @@ type FinancialRollupIndexes = {
   readonly paymentTasksIndex: CrmProjectPaymentTasksIndex;
   readonly budgetEntriesIndex: CrmProjectBudgetEntriesIndex;
   readonly workflowTaskStatusIndex: CrmProjectWorkflowTaskStatusIndex;
+  readonly workflowProgressInputIndex: CrmProjectWorkflowProgressInputIndex;
 };
 
 const EMPTY_PAYMENT_TASKS_INDEX: CrmProjectPaymentTasksIndex = new Map<string, never>();
 const EMPTY_BUDGET_ENTRIES_INDEX: CrmProjectBudgetEntriesIndex = new Map<string, never>();
 const EMPTY_WORKFLOW_TASK_STATUS_INDEX: CrmProjectWorkflowTaskStatusIndex = new Map<string, never>();
+const EMPTY_WORKFLOW_PROGRESS_INPUT_INDEX: CrmProjectWorkflowProgressInputIndex = new Map<
+  string,
+  never
+>();
 
 let inFlightFinancialRollupIndexLoad: Promise<FinancialRollupIndexes> | null = null;
 
@@ -60,6 +71,7 @@ async function loadSharedFinancialRollupIndexes(
       paymentTasksIndex: loadCrmProjectPaymentTasksIndexSync(crmRepositories),
       budgetEntriesIndex: loadCrmProjectBudgetEntriesIndexSync(crmRepositories),
       workflowTaskStatusIndex: loadCrmProjectWorkflowTaskStatusIndexSync(crmRepositories),
+      workflowProgressInputIndex: loadCrmProjectWorkflowProgressInputIndexSync(crmRepositories),
     };
   }
   if (inFlightFinancialRollupIndexLoad) {
@@ -69,10 +81,12 @@ async function loadSharedFinancialRollupIndexes(
     loadCrmProjectPaymentTasksIndex(crmRepositories),
     loadCrmProjectBudgetEntriesIndex(crmRepositories),
     loadCrmProjectWorkflowTaskStatusIndex(crmRepositories),
-  ]).then(([paymentTasksIndex, budgetEntriesIndex, workflowTaskStatusIndex]) => ({
+    loadCrmProjectWorkflowProgressInputIndex(crmRepositories),
+  ]).then(([paymentTasksIndex, budgetEntriesIndex, workflowTaskStatusIndex, workflowProgressInputIndex]) => ({
     paymentTasksIndex,
     budgetEntriesIndex,
     workflowTaskStatusIndex,
+    workflowProgressInputIndex,
   }));
   try {
     return await inFlightFinancialRollupIndexLoad;
@@ -96,6 +110,7 @@ export function CrmPaymentTasksIndexProvider({
           paymentTasksIndex: loadCrmProjectPaymentTasksIndexSync(crmRepositories),
           budgetEntriesIndex: loadCrmProjectBudgetEntriesIndexSync(crmRepositories),
           workflowTaskStatusIndex: loadCrmProjectWorkflowTaskStatusIndexSync(crmRepositories),
+          workflowProgressInputIndex: loadCrmProjectWorkflowProgressInputIndexSync(crmRepositories),
         }
   );
   const mountedRef = useRef(true);
@@ -125,6 +140,8 @@ export function CrmPaymentTasksIndexProvider({
       budgetEntriesIndex: rollupIndexes?.budgetEntriesIndex ?? EMPTY_BUDGET_ENTRIES_INDEX,
       workflowTaskStatusIndex:
         rollupIndexes?.workflowTaskStatusIndex ?? EMPTY_WORKFLOW_TASK_STATUS_INDEX,
+      workflowProgressInputIndex:
+        rollupIndexes?.workflowProgressInputIndex ?? EMPTY_WORKFLOW_PROGRESS_INPUT_INDEX,
       isLoading: rollupIndexes === null,
       refetch,
     }),

@@ -5103,6 +5103,12 @@
   color: inherit;
 }
 
+.subprojectsAveragePill {
+  flex-shrink: 0;
+  text-transform: none;
+  letter-spacing: normal;
+}
+
 .subprojectsPanelHeaderToggle .stageGroupChevron,
 .subprojectsPanelHeaderToggle .stageGroupChevron_expanded {
   border-color: currentColor;

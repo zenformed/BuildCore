@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { CrmProjectSummary } from '@/domain/crm';
 import type { CrmProjectPaymentTasksIndex } from '@/domain/crm/projectPaymentValue';
+import type { CrmProjectWorkflowProgressInputIndex } from '@/domain/crm/projectWorkflowProgressInput';
 import {
   listCrmProjectSummaries,
   listCrmProjectSummariesSync,
@@ -29,17 +30,24 @@ export function useCrmProjectsPipeline(
   visibleChildrenByParentId: Map<string, CrmProjectSummary[]>;
   parentsWithMatchingChildren: Set<string>;
   paymentTasksIndex: CrmProjectPaymentTasksIndex;
+  workflowProgressInputIndex: CrmProjectWorkflowProgressInputIndex;
   totalCount: number;
   filteredCount: number;
   isLoading: boolean;
   isPaymentFinancialsLoading: boolean;
+  isWorkflowProgressLoading: boolean;
   refetch: () => Promise<void>;
   removeProject: (projectId: string) => void;
   patchProjectSummary: (summary: CrmProjectSummary) => void;
 } {
   const isApiSource = getCrmDataSource() === 'api';
-  const { paymentTasksIndex, workflowTaskStatusIndex, isLoading: isRollupIndexesLoading, refetch: refetchRollupIndexes } =
-    useCrmPaymentTasksIndexContext();
+  const {
+    paymentTasksIndex,
+    workflowTaskStatusIndex,
+    workflowProgressInputIndex,
+    isLoading: isRollupIndexesLoading,
+    refetch: refetchRollupIndexes,
+  } = useCrmPaymentTasksIndexContext();
   const [allSummaries, setAllSummaries] = useState<readonly CrmProjectSummary[] | null>(() =>
     isApiSource ? null : listCrmProjectSummariesSync(crmRepositories, { rootsOnly: false })
   );
@@ -104,10 +112,12 @@ export function useCrmProjectsPipeline(
     visibleChildrenByParentId: dashboardView.visibleChildrenByParentId,
     parentsWithMatchingChildren: dashboardView.parentsWithMatchingChildren,
     paymentTasksIndex,
+    workflowProgressInputIndex,
     totalCount: allRoots.length,
     filteredCount: dashboardView.rootRows.length,
     isLoading,
     isPaymentFinancialsLoading,
+    isWorkflowProgressLoading: isRollupIndexesLoading,
     refetch,
     removeProject,
     patchProjectSummary,

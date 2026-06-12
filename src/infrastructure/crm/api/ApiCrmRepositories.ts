@@ -61,6 +61,7 @@ import type {
 } from '@/domain/crm/budgetMutations';
 
 import { deserializeWorkflowTaskStatusIndex } from '@/domain/crm/projectWorkflowTaskStatusIndex';
+import { deserializeWorkflowProgressInputIndex } from '@/domain/crm/projectWorkflowProgressInput';
 
 import {
 
@@ -130,6 +131,20 @@ export class ApiCrmProjectsRepository implements ICrmProjectsRepository {
     return crmApiGetJson<{ byProjectId: Record<string, WorkflowTaskStatus[]> }>(
       '/api/crm/projects/workflow-task-statuses'
     ).then((body) => deserializeWorkflowTaskStatusIndex(body.byProjectId));
+  }
+
+  listWorkflowProgressInputs() {
+    return crmApiGetJson<{
+      byProjectId: Record<
+        string,
+        {
+          tasks: { stageSlug: string; status: WorkflowTaskStatus; amountCents: number | null }[];
+          manualStageCompletionSlugs: string[];
+        }
+      >;
+    }>('/api/crm/projects/workflow-progress-inputs').then((body) =>
+      deserializeWorkflowProgressInputIndex(body.byProjectId)
+    );
   }
 
   listBudgetEntries() {

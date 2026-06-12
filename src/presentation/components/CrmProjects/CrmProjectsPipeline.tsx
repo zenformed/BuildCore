@@ -54,9 +54,11 @@ export function CrmProjectsPipeline({
     allChildrenByParentId,
     visibleChildrenByParentId,
     paymentTasksIndex,
+    workflowProgressInputIndex,
     totalCount,
     isLoading,
     isPaymentFinancialsLoading,
+    isWorkflowProgressLoading,
     refetch,
     removeProject,
     patchProjectSummary,
@@ -172,6 +174,8 @@ export function CrmProjectsPipeline({
           allChildrenByParentId={allChildrenByParentId}
           visibleChildrenByParentId={visibleChildrenByParentId}
           paymentTasksIndex={paymentTasksIndex}
+          workflowProgressInputIndex={workflowProgressInputIndex}
+          isWorkflowProgressLoading={isWorkflowProgressLoading}
           isLoading={isLoading}
           isPaymentFinancialsLoading={isPaymentFinancialsLoading}
           onRowClick={onProjectRowClick}

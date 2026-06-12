@@ -1,12 +1,13 @@
 'use client';
 
-import type { KeyboardEvent, ReactElement } from 'react';
+import { useMemo, type KeyboardEvent, type ReactElement } from 'react';
 import type { CrmProjectSummary } from '@/domain/crm';
 import type { ProjectPaymentFinancials } from '@/domain/crm/projectPaymentValue';
+import type { CrmProjectWorkflowProgressInputIndex } from '@/domain/crm/projectWorkflowProgressInput';
 import { isCrmProjectComplete } from '@/domain/crm';
 import { formatCrmProjectAddressLine } from '@/domain/crm/projectAddress';
 import { isProjectPriorityUrgent } from '@/domain/crm/projectPriorityToggle';
-import { resolveProjectSummaryProgressDisplay } from '@/domain/buildcore/projectPipelineProgress';
+import { resolveProjectWorkflowProgressDisplayFromIndex } from '@/domain/buildcore/projectPipelineProgress';
 import { ProjectProgressPercent } from '@/presentation/components/CrmProjectDetail/ProjectProgressPercent';
 import { CrmProjectCompleteIcon } from '@/presentation/components/crmShared/CrmProjectCompleteIcon';
 import { CrmProjectAddressEnvelope } from '@/presentation/components/crmShared/CrmProjectAddressEnvelope';
@@ -48,6 +49,8 @@ export type CrmProjectTableRowProps = {
   hasChildren?: boolean;
   isExpanded?: boolean;
   onToggleExpand?: () => void;
+  workflowProgressInputIndex?: CrmProjectWorkflowProgressInputIndex;
+  isWorkflowProgressLoading?: boolean;
 };
 
 export function CrmProjectTableRow({
@@ -68,6 +71,8 @@ export function CrmProjectTableRow({
   hasChildren = false,
   isExpanded = false,
   onToggleExpand,
+  workflowProgressInputIndex,
+  isWorkflowProgressLoading = false,
 }: CrmProjectTableRowProps): ReactElement {
   const tableCopy = content.crm.table;
   const { catalog } = useBuildCorePipelineStages();
@@ -75,7 +80,16 @@ export function CrmProjectTableRow({
     project.industry,
     project.customIndustry
   );
-  const progress = resolveProjectSummaryProgressDisplay(project, catalog);
+  const progress = useMemo(() => {
+    if (workflowProgressInputIndex == null || isWorkflowProgressLoading) {
+      return null;
+    }
+    return resolveProjectWorkflowProgressDisplayFromIndex({
+      summary: project,
+      workflowProgressInputIndex,
+      stages: catalog,
+    });
+  }, [catalog, isWorkflowProgressLoading, project, workflowProgressInputIndex]);
   const isChild = variant === 'child';
   const displayFinancials = financials ?? { valueCents: 0, collectedCents: 0, balanceCents: 0 };
   const financialDisplay = (cents: number): string =>
@@ -145,7 +159,9 @@ export function CrmProjectTableRow({
         {industrySubtitle ? <span className={styles.projectMeta}>{industrySubtitle}</span> : null}
         {!isMemberRole ? (
           <span className={styles.projectProgressRow}>
-            <ProjectProgressPercent variant="compact" progress={progress} />
+            {progress != null ? (
+              <ProjectProgressPercent variant="compact" progress={progress} />
+            ) : null}
             <span className={`${shared.stagePill} ${styles.projectMetaStagePill}`}>
               {formatStageLabel(project.currentStageSlug, catalog)}
             </span>

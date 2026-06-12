@@ -3,6 +3,7 @@
 import { useState, type ReactElement } from 'react';
 import type { CrmProjectSummary } from '@/domain/crm';
 import type { CrmProjectPaymentTasksIndex } from '@/domain/crm/projectPaymentValue';
+import type { CrmProjectWorkflowProgressInputIndex } from '@/domain/crm/projectWorkflowProgressInput';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
 import {
   resolveDashboardChildRowFinancials,
@@ -24,6 +25,8 @@ export type CrmProjectsTableProps = {
   allChildrenByParentId?: ReadonlyMap<string, readonly CrmProjectSummary[]>;
   visibleChildrenByParentId?: ReadonlyMap<string, readonly CrmProjectSummary[]>;
   paymentTasksIndex?: CrmProjectPaymentTasksIndex;
+  workflowProgressInputIndex?: CrmProjectWorkflowProgressInputIndex;
+  isWorkflowProgressLoading?: boolean;
   enableSubprojectExpansion?: boolean;
   isLoading?: boolean;
   isPaymentFinancialsLoading?: boolean;
@@ -48,6 +51,8 @@ export function CrmProjectsTable({
   allChildrenByParentId,
   visibleChildrenByParentId,
   paymentTasksIndex,
+  workflowProgressInputIndex,
+  isWorkflowProgressLoading = false,
   enableSubprojectExpansion = false,
   isLoading = false,
   isPaymentFinancialsLoading = false,
@@ -163,6 +168,8 @@ export function CrmProjectsTable({
                       hasChildren={hasChildren}
                       isExpanded={isExpanded}
                       onToggleExpand={hasChildren ? () => toggleExpanded(project.id) : undefined}
+                      workflowProgressInputIndex={workflowProgressInputIndex}
+                      isWorkflowProgressLoading={isWorkflowProgressLoading}
                     />
                   );
 
@@ -196,6 +203,8 @@ export function CrmProjectsTable({
                       onRequestDelete={onRequestDelete}
                       onTogglePriority={onTogglePriority}
                       onRequestCompletionChange={onRequestCompletionChange}
+                      workflowProgressInputIndex={workflowProgressInputIndex}
+                      isWorkflowProgressLoading={isWorkflowProgressLoading}
                     />
                     );
                   });

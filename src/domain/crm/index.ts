@@ -46,6 +46,18 @@ export {
   type CrmProjectWorkflowTaskStatusIndex,
 } from './projectWorkflowTaskStatusIndex';
 export {
+  deserializeWorkflowProgressInput,
+  deserializeWorkflowProgressInputIndex,
+  getWorkflowProgressInputForProject,
+  serializeWorkflowProgressInputIndex,
+  workflowProgressInputToManualStageCompletions,
+  workflowProgressInputToWorkflowTasks,
+  type CrmProjectWorkflowProgressInput,
+  type CrmProjectWorkflowProgressInputIndex,
+  type CrmProjectWorkflowProgressTask,
+  type SerializedCrmProjectWorkflowProgressInput,
+} from './projectWorkflowProgressInput';
+export {
   collectRollupBudgetSummary,
   getBudgetEntriesForProject,
   type CrmProjectBudgetEntriesIndex,

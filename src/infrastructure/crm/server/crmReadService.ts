@@ -3,6 +3,11 @@ import type { CrmBudgetEntry, CrmProjectDetail, CrmProjectSummary, WorkflowTaskS
 import type { CrmProjectBudgetEntriesIndex } from '@/domain/crm/projectBudgetRollup';
 import type { CrmProjectPaymentTasksIndex } from '@/domain/crm/projectPaymentValue';
 import type { CrmProjectWorkflowTaskStatusIndex } from '@/domain/crm/projectWorkflowTaskStatusIndex';
+import type {
+  CrmProjectWorkflowProgressInput,
+  CrmProjectWorkflowProgressInputIndex,
+} from '@/domain/crm/projectWorkflowProgressInput';
+import type { PipelineStageSlug } from '@/domain/crm/pipelineStage';
 import type { PaymentBalanceTask } from '@/domain/crm/paymentWorkflow';
 import { isWorkflowTaskStatus } from '@/domain/crm/workflowTaskStatuses';
 import {
@@ -173,6 +178,90 @@ export async function listWorkflowTaskStatusesByOrg(
     const statuses = index.get(projectId) ?? new Set<WorkflowTaskStatus>();
     statuses.add(status);
     index.set(projectId, statuses);
+  }
+
+  return index;
+}
+
+export async function listWorkflowProgressInputsByOrg(
+  supabase: SupabaseClient,
+  organizationId: string
+): Promise<CrmProjectWorkflowProgressInputIndex> {
+  const { data: projectRows, error: projectError } = await supabase
+    .from('crm_projects')
+    .select('id')
+    .eq('organization_id', organizationId)
+    .is('archived_at', null);
+
+  if (projectError) {
+    throw new Error(projectError.message);
+  }
+
+  const projectIds = (projectRows ?? []).map((row) => row.id as string);
+  if (projectIds.length === 0) {
+    return new Map();
+  }
+
+  const [taskResult, stageCompletionResult] = await Promise.all([
+    supabase
+      .from('crm_workflow_tasks')
+      .select('project_id, stage_slug, status, amount_cents')
+      .in('project_id', projectIds)
+      .is('archived_at', null),
+    supabase
+      .from('crm_project_stage_completions')
+      .select('project_id, stage_slug')
+      .eq('organization_id', organizationId)
+      .in('project_id', projectIds),
+  ]);
+
+  if (taskResult.error) {
+    throw new Error(taskResult.error.message);
+  }
+  if (stageCompletionResult.error) {
+    throw new Error(stageCompletionResult.error.message);
+  }
+
+  const index = new Map<string, CrmProjectWorkflowProgressInput>();
+
+  for (const projectId of projectIds) {
+    index.set(projectId, { tasks: [], manualStageCompletionSlugs: [] });
+  }
+
+  for (const row of taskResult.data ?? []) {
+    const status = row.status as string;
+    if (!isWorkflowTaskStatus(status)) continue;
+
+    const projectId = row.project_id as string;
+    const current = index.get(projectId);
+    if (current == null) continue;
+
+    index.set(projectId, {
+      ...current,
+      tasks: [
+        ...current.tasks,
+        {
+          stageSlug: row.stage_slug as PipelineStageSlug,
+          status,
+          amountCents:
+            row.amount_cents == null ? null : Number(row.amount_cents),
+        },
+      ],
+    });
+  }
+
+  for (const row of stageCompletionResult.data ?? []) {
+    const projectId = row.project_id as string;
+    const current = index.get(projectId);
+    if (current == null) continue;
+
+    const stageSlug = row.stage_slug as PipelineStageSlug;
+    if (current.manualStageCompletionSlugs.includes(stageSlug)) continue;
+
+    index.set(projectId, {
+      ...current,
+      manualStageCompletionSlugs: [...current.manualStageCompletionSlugs, stageSlug],
+    });
   }
 
   return index;

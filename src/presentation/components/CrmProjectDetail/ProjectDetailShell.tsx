@@ -1,7 +1,7 @@
 'use client';
 
 import type { ReactElement, ReactNode } from 'react';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import type { CrmProjectDetail, CrmProjectSummary, CrmPriority } from '@/domain/crm';
 import { isBuildCoreMemberRole } from '@/domain/buildcore/memberRole';
@@ -27,6 +27,7 @@ import { useSaveProjectTemplate } from '@/presentation/features/crmProjectDetail
 import { getProjectTemplateScopeCopy } from '@/presentation/features/projectTemplates/projectTemplateCopy';
 import { LoadProjectTemplateDialogs } from '@/presentation/components/ProjectTemplates';
 import { useSaaSProfile } from '@/presentation/hooks/useSaaSProfile';
+import { useCrmPaymentTasksIndexContext } from '@/presentation/providers/CrmPaymentTasksIndexProvider';
 import { DetailToast } from './DetailToast';
 import { SaveProjectTemplateDialog } from './SaveProjectTemplateDialog';
 import { ProjectDetailActionsMenu } from './ProjectDetailActionsMenu';
@@ -96,12 +97,20 @@ function ProjectDetailShellBody({
     appendProjectSummary: appendChildProjectSummary,
     patchProjectSummary: patchChildProjectSummary,
   } = useCrmProjectChildSummaries(isParentOverview ? scopedProject.summary : null, '');
+  const { refetch: refetchRollupIndexes } = useCrmPaymentTasksIndexContext();
   const refreshProjectDetail = useCallback(async () => {
     await onRefresh();
+    await refetchRollupIndexes();
     if (isParentOverview) {
       await refetchChildSummaries();
     }
-  }, [isParentOverview, onRefresh, refetchChildSummaries]);
+  }, [isParentOverview, onRefresh, refetchChildSummaries, refetchRollupIndexes]);
+
+  useEffect(() => {
+    if (!isParentOverview) return;
+    void refetchChildSummaries();
+    void refetchRollupIndexes();
+  }, [isParentOverview, parentRouteSlug, refetchChildSummaries, refetchRollupIndexes]);
   const { catalog: pipelineStageCatalog } = useBuildCorePipelineStages();
   const completion = useProjectCompletionToggle(scopedProject, {
     stages: pipelineStageCatalog,

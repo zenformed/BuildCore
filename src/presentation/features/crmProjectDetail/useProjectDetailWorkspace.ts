@@ -243,5 +243,6 @@ export function useProjectDetailWorkspace(initialProject: CrmProjectDetail) {
     sendCustomerNotifyEmail: customerNotify.sendCustomerNotifyEmail,
     onProjectSaved: handleProjectSaved,
     onPrimaryPhotoUpdated: handlePrimaryPhotoUpdated,
+    refreshRollupIndexes,
   };
 }

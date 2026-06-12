@@ -64,6 +64,7 @@ import { MOCK_CRM_PROJECT_DETAILS, MOCK_CRM_PROJECT_SUMMARIES } from '@/platform
 import { buildMockProjectBudgetEntriesIndex } from '@/infrastructure/crm/mock/buildMockProjectBudgetEntriesIndex';
 import { buildMockProjectPaymentTasksIndex } from '@/infrastructure/crm/mock/buildMockProjectPaymentTasksIndex';
 import { buildMockProjectWorkflowTaskStatusIndex } from '@/infrastructure/crm/mock/buildMockProjectWorkflowTaskStatusIndex';
+import { buildMockProjectWorkflowProgressInputIndex } from '@/infrastructure/crm/mock/buildMockProjectWorkflowProgressInputIndex';
 
 import { CrmWriteNotAvailableError } from '@/infrastructure/crm/errors';
 import { getDocumentStorageProvider } from '@/infrastructure/storage/getDocumentStorageProvider';
@@ -264,6 +265,10 @@ export class MockCrmProjectsRepository implements ICrmProjectsRepository {
 
   listWorkflowTaskStatuses() {
     return buildMockProjectWorkflowTaskStatusIndex();
+  }
+
+  listWorkflowProgressInputs() {
+    return buildMockProjectWorkflowProgressInputIndex();
   }
 
   listBudgetEntries() {

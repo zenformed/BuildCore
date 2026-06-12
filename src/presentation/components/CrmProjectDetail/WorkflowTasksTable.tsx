@@ -65,6 +65,7 @@ export function WorkflowTasksTable({
   const {
     routes,
     refreshWorkflowTasks,
+    refreshRollupIndexes,
     setToast,
     onProjectSaved,
     completion,
@@ -188,6 +189,7 @@ export function WorkflowTasksTable({
         );
       }
       onProjectSaved(updated);
+      refreshRollupIndexes();
       if (showCompletionActions && completion != null) {
         completion.setProject(updated);
       }
@@ -216,6 +218,7 @@ export function WorkflowTasksTable({
     pendingStageToggle,
     project.summary.slug,
     projectRouteScope,
+    refreshRollupIndexes,
     setToast,
     showCompletionActions,
     wf.markStageCompleteFailed,
@@ -236,6 +239,7 @@ export function WorkflowTasksTable({
         throw new Error(wf.markAllEmptyStagesCompleteFailed);
       }
       onProjectSaved(updated);
+      refreshRollupIndexes();
       if (showCompletionActions && completion != null) {
         completion.setProject(updated);
       }
@@ -251,6 +255,7 @@ export function WorkflowTasksTable({
     onProjectSaved,
     project.summary.slug,
     projectRouteScope,
+    refreshRollupIndexes,
     setToast,
     showCompletionActions,
     wf.markAllEmptyStagesCompleteFailed,

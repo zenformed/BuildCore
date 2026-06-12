@@ -17,10 +17,16 @@ import {
 import { useCrmProjectDeleteConfirmation } from '@/presentation/features/crmProjects/useCrmProjectDeleteConfirmation';
 import { useCrmProjectTableRowActions } from '@/presentation/features/crmProjects/useCrmProjectTableRowActions';
 import { useCrmProjectPaymentTasksIndex } from '@/presentation/features/crmProjects/useCrmProjectPaymentTasksIndex';
+import { useCrmPaymentTasksIndexContext } from '@/presentation/providers/CrmPaymentTasksIndexProvider';
+import {
+  computeSubprojectAverageProgressPercent,
+  formatSubprojectAverageProgressPercent,
+} from '@/domain/buildcore/projectPipelineProgress';
 import { useProjectDetailShell } from '@/presentation/features/crmProjectDetail/ProjectDetailShellContext';
 import { useSaaSProfile } from '@/presentation/hooks/useSaaSProfile';
 import { DetailPanelHeaderButton } from './DetailPanelHeaderButton';
 import { DetailPanelSectionRefresh } from './DetailPanelSectionRefresh';
+import shared from '@/presentation/components/crmShared/crmShared.module.css';
 import styles from './ProjectDetail.module.css';
 import tableStyles from '../CrmProjects/CrmProjects.module.css';
 
@@ -50,11 +56,39 @@ export function SubprojectsSection(): ReactElement | null {
   const isLoading = childSummaries?.isLoading ?? false;
   const { paymentTasksIndex, isLoading: isPaymentFinancialsLoading } =
     useCrmProjectPaymentTasksIndex();
+  const { workflowProgressInputIndex, isLoading: isWorkflowProgressLoading } =
+    useCrmPaymentTasksIndexContext();
+  const { catalog: pipelineStageCatalog } = useBuildCorePipelineStages();
   const rows = useMemo(
     () => filterSubprojects(childSummaries?.allRows ?? [], searchQuery),
     [childSummaries?.allRows, searchQuery]
   );
   const allSubprojectCount = childSummaries?.allRows.length ?? 0;
+  const subprojectAveragePercent = useMemo(() => {
+    if (isMemberRole || allSubprojectCount === 0 || isLoading || isWorkflowProgressLoading) {
+      return null;
+    }
+
+    const averagePercent = computeSubprojectAverageProgressPercent({
+      childSummaries: childSummaries?.allRows ?? [],
+      workflowProgressInputIndex,
+      stages: pipelineStageCatalog,
+    });
+
+    if (averagePercent == null) {
+      return null;
+    }
+
+    return formatSubprojectAverageProgressPercent(averagePercent);
+  }, [
+    allSubprojectCount,
+    childSummaries?.allRows,
+    isLoading,
+    isMemberRole,
+    isWorkflowProgressLoading,
+    pipelineStageCatalog,
+    workflowProgressInputIndex,
+  ]);
   const subprojectsEmptyMessage =
     isMemberRole && allSubprojectCount === 0
       ? copy.emptyMemberNoAssignments
@@ -75,8 +109,6 @@ export function SubprojectsSection(): ReactElement | null {
     onSuccess: () => setToast({ kind: 'success', message: deleteCopy.success }),
     onError: (message) => setToast({ kind: 'error', message }),
   });
-
-  const { catalog: pipelineStageCatalog } = useBuildCorePipelineStages();
 
   const {
     busyProjectId,
@@ -124,6 +156,14 @@ export function SubprojectsSection(): ReactElement | null {
           onClick={() => setExpanded((open) => !open)}
         >
           <span className={styles.subprojectsPanelHeaderTitle}>
+            {subprojectAveragePercent != null ? (
+              <span
+                className={`${shared.stagePill} ${styles.subprojectsAveragePill}`}
+                title={`Subproject average ${subprojectAveragePercent}`}
+              >
+                {subprojectAveragePercent}
+              </span>
+            ) : null}
             <span id={sectionId} className={styles.subprojectsPanelTitle}>
               {copy.title}
             </span>
@@ -165,6 +205,8 @@ export function SubprojectsSection(): ReactElement | null {
             <CrmProjectsTable
               rows={rows}
               paymentTasksIndex={paymentTasksIndex}
+              workflowProgressInputIndex={workflowProgressInputIndex}
+              isWorkflowProgressLoading={isWorkflowProgressLoading}
               isLoading={isLoading}
               isPaymentFinancialsLoading={isPaymentFinancialsLoading}
               isMemberRole={isMemberRole}

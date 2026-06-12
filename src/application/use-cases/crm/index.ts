@@ -31,6 +31,10 @@ export {
   loadCrmProjectWorkflowTaskStatusIndexSync,
 } from './loadCrmProjectWorkflowTaskStatusIndex';
 export {
+  loadCrmProjectWorkflowProgressInputIndex,
+  loadCrmProjectWorkflowProgressInputIndexSync,
+} from './loadCrmProjectWorkflowProgressInputIndex';
+export {
   listCrmProjectChildSummaries,
   listCrmProjectChildSummariesSync,
 } from './listCrmProjectChildSummaries';
