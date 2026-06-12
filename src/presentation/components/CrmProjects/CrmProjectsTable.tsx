@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState, type ReactElement } from 'react';
+import { useEffect, useMemo, useState, type Dispatch, type ReactElement, type SetStateAction } from 'react';
 import type { CrmProjectSummary } from '@/domain/crm';
 import type { CrmProjectPaymentTasksIndex } from '@/domain/crm/projectPaymentValue';
 import type { CrmProjectWorkflowProgressInputIndex } from '@/domain/crm/projectWorkflowProgressInput';
@@ -30,6 +30,8 @@ export type CrmProjectsTableProps = {
   enableSubprojectExpansion?: boolean;
   /** When true, parents with subprojects are expanded (e.g. priority filter active). */
   autoExpandParentsWithSubprojects?: boolean;
+  expandedParentIds?: ReadonlySet<string>;
+  onExpandedParentIdsChange?: React.Dispatch<React.SetStateAction<ReadonlySet<string>>>;
   isLoading?: boolean;
   isPaymentFinancialsLoading?: boolean;
   onRowClick: (project: CrmProjectSummary) => void;
@@ -57,6 +59,8 @@ export function CrmProjectsTable({
   isWorkflowProgressLoading = false,
   enableSubprojectExpansion = false,
   autoExpandParentsWithSubprojects = false,
+  expandedParentIds: expandedParentIdsProp,
+  onExpandedParentIdsChange,
   isLoading = false,
   isPaymentFinancialsLoading = false,
   onRowClick,
@@ -73,7 +77,12 @@ export function CrmProjectsTable({
   emptyMessage,
   deleteLabels,
 }: CrmProjectsTableProps): ReactElement {
-  const [expandedParentIds, setExpandedParentIds] = useState<ReadonlySet<string>>(() => new Set());
+  const [expandedParentIdsInternal, setExpandedParentIdsInternal] = useState<
+    ReadonlySet<string>
+  >(() => new Set());
+  const expandedParentIds = expandedParentIdsProp ?? expandedParentIdsInternal;
+  const setExpandedParentIds: Dispatch<SetStateAction<ReadonlySet<string>>> =
+    onExpandedParentIdsChange ?? setExpandedParentIdsInternal;
 
   const toggleExpanded = (parentId: string): void => {
     setExpandedParentIds((current) => {
@@ -109,6 +118,7 @@ export function CrmProjectsTable({
     autoExpandParentsWithSubprojects,
     displayRoots,
     enableSubprojectExpansion,
+    setExpandedParentIds,
   ]);
 
   const showTable = displayRoots.length > 0 || isLoading;

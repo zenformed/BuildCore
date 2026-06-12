@@ -236,6 +236,8 @@ export const buildCoreDashboardContent = {
       title: 'Projects',
       searchPlaceholder: 'Search projects…',
       searchAriaLabel: 'Search projects',
+      expandAllSubprojects: 'Expand all subprojects',
+      collapseAllSubprojects: 'Collapse all subprojects',
     },
     filters: {
       openMenu: 'Filter projects',

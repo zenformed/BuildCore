@@ -2,6 +2,8 @@ import type { CrmWorkflowTask } from '@/domain/crm';
 
 import { isCrmProjectComplete, type CrmProjectSummary } from '@/domain/crm';
 
+import { CRM_PROJECT_COMPLETE_STAGE_SLUG } from '@/domain/crm/projectCompletion';
+
 import type { CrmProjectStageCompletion } from '@/domain/crm/projectStageCompletion';
 
 import {
@@ -671,6 +673,66 @@ export function resolveWorkflowPipelineGraphState(
     continuousCompletedStageIndex,
 
   };
+
+}
+
+
+
+/** Dashboard/list stage pill — first incomplete active workflow stage, or Complete when all done. */
+
+export function resolveDerivedWorkflowStageSlugFromProgressInput(input: {
+
+  readonly workflowProgressInput: CrmProjectWorkflowProgressInput;
+
+  readonly stages?: readonly PipelineStage[] | null;
+
+}): PipelineStageSlug {
+
+  const { derivedCurrentStageSlug } = resolveWorkflowPipelineGraphState({
+
+    workflowTasks: workflowProgressInputToWorkflowTasks(input.workflowProgressInput),
+
+    manualStageCompletions: workflowProgressInputToManualStageCompletions(
+
+      input.workflowProgressInput
+
+    ),
+
+    stages: input.stages,
+
+  });
+
+
+
+  return derivedCurrentStageSlug ?? CRM_PROJECT_COMPLETE_STAGE_SLUG;
+
+}
+
+
+
+export function resolveDerivedWorkflowStageSlugFromProgressIndex(input: {
+
+  readonly summary: Pick<CrmProjectSummary, 'id'>;
+
+  readonly workflowProgressInputIndex: CrmProjectWorkflowProgressInputIndex;
+
+  readonly stages?: readonly PipelineStage[] | null;
+
+}): PipelineStageSlug {
+
+  return resolveDerivedWorkflowStageSlugFromProgressInput({
+
+    workflowProgressInput: getWorkflowProgressInputForProject(
+
+      input.workflowProgressInputIndex,
+
+      input.summary.id
+
+    ),
+
+    stages: input.stages,
+
+  });
 
 }
 

@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState, type ReactElement } from 'react';
+import { useCallback, useEffect, useMemo, useState, type ReactElement } from 'react';
 import { useRouter } from 'next/navigation';
 import type { CrmProjectSummary } from '@/domain/crm';
 import { isBuildCoreMemberRole } from '@/domain/buildcore/memberRole';
@@ -27,6 +27,7 @@ import { ProjectCompletionBlockedDialog } from '@/presentation/components/CrmPro
 import { useBuildCorePipelineStages } from '@/presentation/providers/BuildCorePipelineStagesProvider';
 import { useCrmProjectTableRowActions } from '@/presentation/features/crmProjects/useCrmProjectTableRowActions';
 import { CrmProjectsFilterMenu } from './CrmProjectsFilterMenu';
+import { CrmProjectsExpandAllButton } from './CrmProjectsExpandAllButton';
 import { CrmProjectsTable } from './CrmProjectsTable';
 import styles from './CrmProjects.module.css';
 
@@ -48,6 +49,9 @@ export function CrmProjectsPipeline({
   const isMemberRole = isBuildCoreMemberRole(organizationMembershipContext?.role);
   const [searchQuery, setSearchQuery] = useState('');
   const [filters, setFilters] = useState<CrmProjectsListFilters>(EMPTY_CRM_PROJECTS_LIST_FILTERS);
+  const [expandedParentIds, setExpandedParentIds] = useState<ReadonlySet<string>>(
+    () => new Set()
+  );
   const [createOpen, setCreateOpen] = useState(false);
   const {
     rootRows,
@@ -123,6 +127,36 @@ export function CrmProjectsPipeline({
 
   const priorityFilterActive = filters.priorities.length > 0;
 
+  const expandableParentIds = useMemo(() => {
+    const ids = new Set<string>();
+    for (const project of rootRows) {
+      if ((allChildrenByParentId.get(project.id)?.length ?? 0) > 0) {
+        ids.add(project.id);
+      }
+    }
+    return ids;
+  }, [allChildrenByParentId, rootRows]);
+
+  const allSubprojectsExpanded = useMemo(() => {
+    if (expandableParentIds.size === 0) {
+      return false;
+    }
+    for (const parentId of expandableParentIds) {
+      if (!expandedParentIds.has(parentId)) {
+        return false;
+      }
+    }
+    return true;
+  }, [expandableParentIds, expandedParentIds]);
+
+  const handleToggleExpandAllSubprojects = useCallback((): void => {
+    if (allSubprojectsExpanded) {
+      setExpandedParentIds(new Set());
+      return;
+    }
+    setExpandedParentIds(new Set(expandableParentIds));
+  }, [allSubprojectsExpanded, expandableParentIds]);
+
   const tableEmptyMessage = resolveCrmProjectsTableEmptyMessage({
     isMemberRole,
     totalProjectCount: totalCount,
@@ -145,6 +179,11 @@ export function CrmProjectsPipeline({
         </h2>
         <div className={styles.projectsPanelHeaderTools}>
           <CrmProjectsFilterMenu filters={filters} onChange={setFilters} />
+          <CrmProjectsExpandAllButton
+            allExpanded={allSubprojectsExpanded}
+            disabled={expandableParentIds.size === 0}
+            onToggle={handleToggleExpandAllSubprojects}
+          />
           <input
             type="search"
             value={searchQuery}
@@ -173,6 +212,8 @@ export function CrmProjectsPipeline({
         <CrmProjectsTable
           enableSubprojectExpansion
           autoExpandParentsWithSubprojects={priorityFilterActive}
+          expandedParentIds={expandedParentIds}
+          onExpandedParentIdsChange={setExpandedParentIds}
           rootRows={rootRows}
           allChildrenByParentId={allChildrenByParentId}
           visibleChildrenByParentId={visibleChildrenByParentId}

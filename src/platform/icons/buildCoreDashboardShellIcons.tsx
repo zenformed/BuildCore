@@ -48,6 +48,46 @@ export function FilterIcon({ className }: { className?: string }): React.ReactEl
   );
 }
 
+/** Stacked squares with +/- — expand / collapse all rows. */
+function StackedSquaresExpandCollapseIcon({
+  className,
+  mode,
+}: {
+  className?: string;
+  mode: 'expand' | 'collapse';
+}): React.ReactElement {
+  const backSquare = 'M10.2 3H18.8L21 4.2V12.8L18.8 14H13M9 4.2V10';
+  const frontSquare = 'M3.2 10H11.8L13 11.2V19.8L11.8 21H3.2L2 19.8V11.2L3.2 10';
+
+  return (
+    <svg
+      className={className}
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <path d={backSquare} />
+      <path d={frontSquare} />
+      <path d="M4.5 15.5h6" />
+      {mode === 'expand' ? <path d="M7.5 12.5v6" /> : null}
+    </svg>
+  );
+}
+
+export function ExpandAllIcon({ className }: { className?: string }): React.ReactElement {
+  return <StackedSquaresExpandCollapseIcon className={className} mode="expand" />;
+}
+
+export function CollapseAllIcon({ className }: { className?: string }): React.ReactElement {
+  return <StackedSquaresExpandCollapseIcon className={className} mode="collapse" />;
+}
+
 export function RefreshIcon({ className }: { className?: string }): React.ReactElement {
   return (
     <svg className={className} width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>

@@ -7,7 +7,7 @@ import type { CrmProjectWorkflowProgressInputIndex } from '@/domain/crm/projectW
 import { isCrmProjectComplete } from '@/domain/crm';
 import { formatCrmProjectAddressLine } from '@/domain/crm/projectAddress';
 import { isProjectPriorityUrgent } from '@/domain/crm/projectPriorityToggle';
-import { resolveProjectWorkflowProgressDisplayFromIndex } from '@/domain/buildcore/projectPipelineProgress';
+import { resolveDerivedWorkflowStageSlugFromProgressIndex, resolveProjectWorkflowProgressDisplayFromIndex } from '@/domain/buildcore/projectPipelineProgress';
 import { ProjectProgressPercent } from '@/presentation/components/CrmProjectDetail/ProjectProgressPercent';
 import { CrmProjectCompleteIcon } from '@/presentation/components/crmShared/CrmProjectCompleteIcon';
 import { CrmProjectAddressEnvelope } from '@/presentation/components/crmShared/CrmProjectAddressEnvelope';
@@ -90,6 +90,16 @@ export function CrmProjectTableRow({
       stages: catalog,
     });
   }, [catalog, isWorkflowProgressLoading, project, workflowProgressInputIndex]);
+  const derivedStageSlug = useMemo(() => {
+    if (workflowProgressInputIndex == null || isWorkflowProgressLoading) {
+      return null;
+    }
+    return resolveDerivedWorkflowStageSlugFromProgressIndex({
+      summary: project,
+      workflowProgressInputIndex,
+      stages: catalog,
+    });
+  }, [catalog, isWorkflowProgressLoading, project, workflowProgressInputIndex]);
   const isChild = variant === 'child';
   const displayFinancials = financials ?? { valueCents: 0, collectedCents: 0, balanceCents: 0 };
   const financialDisplay = (cents: number): string =>
@@ -162,9 +172,11 @@ export function CrmProjectTableRow({
             {progress != null ? (
               <ProjectProgressPercent variant="compact" progress={progress} />
             ) : null}
-            <span className={`${shared.stagePill} ${styles.projectMetaStagePill}`}>
-              {formatStageLabel(project.currentStageSlug, catalog)}
-            </span>
+            {derivedStageSlug != null ? (
+              <span className={`${shared.stagePill} ${styles.projectMetaStagePill}`}>
+                {formatStageLabel(derivedStageSlug, catalog)}
+              </span>
+            ) : null}
           </span>
         ) : null}
       </span>
