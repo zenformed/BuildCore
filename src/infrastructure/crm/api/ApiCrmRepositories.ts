@@ -187,6 +187,19 @@ function buildManualStageCompletionApiPath(
   return `/api/crm/projects/${encodeURIComponent(trimmedSlug)}${stagePath}`;
 }
 
+function buildBatchEmptyStageCompletionApiPath(
+  slug: string,
+  scope?: CrmProjectRouteScope
+): string {
+  const trimmedSlug = slug.trim();
+  const parentSlug = scope?.parentSlug?.trim();
+  const batchPath = '/stages/complete-empty';
+  if (parentSlug) {
+    return `/api/crm/projects/${encodeURIComponent(parentSlug)}/${encodeURIComponent(trimmedSlug)}${batchPath}`;
+  }
+  return `/api/crm/projects/${encodeURIComponent(trimmedSlug)}${batchPath}`;
+}
+
 
 
 export class ApiCrmProjectDetailRepository implements ICrmProjectDetailRepository {
@@ -335,6 +348,25 @@ export class ApiCrmProjectDetailRepository implements ICrmProjectDetailRepositor
     try {
       const detail = await crmApiDeleteJson<CrmProjectDetail>(
         buildManualStageCompletionApiPath(slug, stageSlug, scope)
+      );
+      setApiCrmDetailCache(slug.trim(), detail);
+      return detail;
+    } catch (err) {
+      if (err instanceof CrmApiError && err.status === 404) return null;
+      throw err;
+    }
+  }
+
+  async markEmptyStagesCompleteBatch(
+    slug: string,
+    scope?: CrmProjectRouteScope
+  ): Promise<CrmProjectDetail | null> {
+    clearApiCrmDetailCache();
+
+    try {
+      const detail = await crmApiPostJson<CrmProjectDetail>(
+        buildBatchEmptyStageCompletionApiPath(slug, scope),
+        {}
       );
       setApiCrmDetailCache(slug.trim(), detail);
       return detail;

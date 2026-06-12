@@ -4,8 +4,10 @@ import { requireCrmApiAuth } from '@/infrastructure/crm/server/crmApiRouteAuth';
 import { scopeCrmProjectDetailForViewer } from '@/infrastructure/crm/server/crmMemberProjectDetailService';
 import {
   CrmProjectStageManualCompletionBlockedError,
+  CrmProjectStageManualCompletionBatchEmptyError,
   CrmProjectStageManualCompletionInvalidStageError,
   clearCrmProjectStageManualCompletionForOrg,
+  markCrmProjectEmptyStagesCompleteBatchForOrg,
   markCrmProjectStageCompleteManualForOrg,
 } from '@/infrastructure/crm/server/crmProjectStageCompletionService';
 import {
@@ -19,6 +21,62 @@ type ManualStageCompletionRouteParams = {
   readonly subSlug?: string;
   readonly stageSlug: string;
 };
+
+type BatchEmptyStageCompletionRouteParams = {
+  readonly slug: string;
+  readonly subSlug?: string;
+};
+
+async function resolveBatchEmptyStageCompletionRequest(
+  request: NextRequest,
+  params: BatchEmptyStageCompletionRouteParams
+): Promise<
+  | { ok: false; response: NextResponse }
+  | {
+      ok: true;
+      slug: string;
+      parentSlug?: string;
+      supabase: import('@supabase/supabase-js').SupabaseClient;
+      organizationId: string;
+      userId: string;
+    }
+> {
+  const auth = await requireCrmApiAuth(request.headers.get('Authorization'));
+  if (!auth.ok) return { ok: false, response: auth.response };
+
+  const parentSlug = params.subSlug != null ? params.slug?.trim() : undefined;
+  const projectSlug = (params.subSlug ?? params.slug)?.trim();
+
+  if (!projectSlug) {
+    return {
+      ok: false,
+      response: NextResponse.json({ error: 'not_found', message: 'Project not found' }, { status: 404 }),
+    };
+  }
+
+  const access = await resolveBuildCoreWorkflowTaskAccessForUser(
+    auth.context.supabase,
+    auth.context.organizationId,
+    auth.context.user.id
+  );
+  if (!access.canCreate) {
+    return {
+      ok: false,
+      response: workflowTaskPermissionForbiddenResponse(
+        'You do not have permission to mark workflow stages complete.'
+      ),
+    };
+  }
+
+  return {
+    ok: true,
+    slug: projectSlug,
+    parentSlug,
+    supabase: auth.context.supabase,
+    organizationId: auth.context.organizationId,
+    userId: auth.context.user.id,
+  };
+}
 
 async function resolveManualStageCompletionRequest(
   request: NextRequest,
@@ -144,6 +202,42 @@ export async function postManualStageCompletionRoute(
       return NextResponse.json({ error: 'validation_error', message: err.message }, { status: 400 });
     }
     const message = err instanceof Error ? err.message : 'Failed to mark stage complete';
+    return NextResponse.json({ error: 'internal_error', message }, { status: 500 });
+  }
+}
+
+export async function postBatchEmptyStageCompletionRoute(
+  request: NextRequest,
+  params: BatchEmptyStageCompletionRouteParams
+): Promise<NextResponse> {
+  const resolved = await resolveBatchEmptyStageCompletionRequest(request, params);
+  if (!resolved.ok) return resolved.response;
+
+  try {
+    const project = await markCrmProjectEmptyStagesCompleteBatchForOrg(
+      resolved.supabase,
+      resolved.organizationId,
+      resolved.userId,
+      resolved.slug,
+      { parentSlug: resolved.parentSlug }
+    );
+    return scopeManualStageCompletionProject(
+      resolved.supabase,
+      resolved.organizationId,
+      resolved.userId,
+      project
+    );
+  } catch (err) {
+    if (err instanceof CrmProjectStageManualCompletionBatchEmptyError) {
+      return NextResponse.json({ error: 'validation_error', message: err.message }, { status: 400 });
+    }
+    if (
+      err instanceof CrmProjectStageManualCompletionBlockedError ||
+      err instanceof CrmProjectStageManualCompletionInvalidStageError
+    ) {
+      return NextResponse.json({ error: 'validation_error', message: err.message }, { status: 400 });
+    }
+    const message = err instanceof Error ? err.message : 'Failed to mark empty stages complete';
     return NextResponse.json({ error: 'internal_error', message }, { status: 500 });
   }
 }

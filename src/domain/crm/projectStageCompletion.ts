@@ -1,6 +1,10 @@
 import type { PipelineStageSlug } from './pipelineStage';
 import type { CrmTeamMemberRef } from './teamMember';
 import type { CrmWorkflowTask } from './workflowTask';
+import {
+  listWorkflowStageCompletionStatuses,
+  type WorkflowStageCompletionInput,
+} from '@/domain/buildcore/projectPipelineProgress';
 import { isWorkflowStageCompleteByTasks } from '@/domain/buildcore/projectPipelineProgress';
 
 export type CrmProjectStageCompletionSource = 'manual';
@@ -52,4 +56,22 @@ export function isWorkflowStageComplete(input: {
   readonly manualCompletions: readonly Pick<CrmProjectStageCompletion, 'stageSlug'>[];
 }): boolean {
   return resolveWorkflowStageCompletionState(input).isComplete;
+}
+
+export type EmptyIncompleteWorkflowStage = {
+  readonly stageSlug: PipelineStageSlug;
+  readonly stageLabel: string;
+};
+
+export function listEmptyIncompleteWorkflowStages(
+  input: WorkflowStageCompletionInput
+): readonly EmptyIncompleteWorkflowStage[] {
+  return listWorkflowStageCompletionStatuses(input)
+    .filter((stage) => !stage.isComplete && stage.taskCount === 0)
+    .map(({ stageSlug, stageLabel }) => ({ stageSlug, stageLabel }));
+}
+
+export function areAllWorkflowStagesComplete(input: WorkflowStageCompletionInput): boolean {
+  const statuses = listWorkflowStageCompletionStatuses(input);
+  return statuses.length > 0 && statuses.every((stage) => stage.isComplete);
 }

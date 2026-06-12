@@ -21,4 +21,8 @@ export interface ICrmProjectDetailRepository {
     stageSlug: PipelineStageSlug,
     scope?: CrmProjectRouteScope
   ): CrmRepositoryResult<CrmProjectDetail | null>;
+  markEmptyStagesCompleteBatch(
+    slug: string,
+    scope?: CrmProjectRouteScope
+  ): CrmRepositoryResult<CrmProjectDetail | null>;
 }

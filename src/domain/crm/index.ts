@@ -114,11 +114,14 @@ export {
 } from './industry';
 export { isCrmProjectComplete, CRM_PROJECT_COMPLETE_STAGE_SLUG, type SetCrmProjectCompletionInput } from './projectCompletion';
 export {
+  areAllWorkflowStagesComplete,
   isStageManuallyCompleted,
   isWorkflowStageComplete,
+  listEmptyIncompleteWorkflowStages,
   resolveWorkflowStageCompletionState,
   type CrmProjectStageCompletion,
   type CrmProjectStageCompletionSource,
+  type EmptyIncompleteWorkflowStage,
 } from './projectStageCompletion';
 export {
   isProjectPriorityActive,

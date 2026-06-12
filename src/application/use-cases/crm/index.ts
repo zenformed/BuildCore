@@ -7,6 +7,7 @@ export { listCrmBudgetEntriesByProject } from './listCrmBudgetEntriesByProject';
 export { updateCrmProject } from './updateCrmProject';
 export { setCrmProjectCompletion } from './setCrmProjectCompletion';
 export { markCrmProjectStageCompleteManual } from './markCrmProjectStageCompleteManual';
+export { markCrmProjectEmptyStagesCompleteBatch } from './markCrmProjectEmptyStagesCompleteBatch';
 export { clearCrmProjectStageManualCompletion } from './clearCrmProjectStageManualCompletion';
 export { updateCrmWorkflowTask } from './updateCrmWorkflowTask';
 export {

@@ -104,7 +104,7 @@ export function WorkflowStageTaskGroup({
   };
 
   const completeIcon = (
-    <CrmProjectStatusCircleIcon kind="complete" active={stageIsComplete} size={18} />
+    <CrmProjectStatusCircleIcon kind="complete" active={stageIsComplete} size={16} />
   );
 
   const stageTitle = (

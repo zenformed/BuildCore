@@ -5,7 +5,11 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import type { CrmProjectDetail, CrmWorkflowTask, PipelineStageSlug } from '@/domain/crm';
 import { markCrmProjectStageCompleteManual } from '@/application/use-cases/crm/markCrmProjectStageCompleteManual';
+import { markCrmProjectEmptyStagesCompleteBatch } from '@/application/use-cases/crm/markCrmProjectEmptyStagesCompleteBatch';
 import { clearCrmProjectStageManualCompletion } from '@/application/use-cases/crm/clearCrmProjectStageManualCompletion';
+import {
+  listEmptyIncompleteWorkflowStages,
+} from '@/domain/crm';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
 import { crmRepositories } from '@/shared/di/container';
 import { ConfirmModal } from '@/presentation/components/ConfirmModal';
@@ -32,6 +36,7 @@ import { DetailPanelSectionSearch } from './DetailPanelSectionSearch';
 import { WorkflowOpsTaskDraftRow } from './WorkflowOpsTaskDraftRow';
 import { WorkflowStageTaskGroup, type ManualStageCompletionToggleAction } from './WorkflowStageTaskGroup';
 import { WorkflowTaskStageAddButton } from './WorkflowTaskStageAddButton';
+import { WorkflowTasksBatchCompleteButton } from './WorkflowTasksBatchCompleteButton';
 import styles from './ProjectDetail.module.css';
 
 export type WorkflowTasksTableLayout = 'preview' | 'full';
@@ -86,6 +91,7 @@ export function WorkflowTasksTable({
     action: ManualStageCompletionToggleAction;
   } | null>(null);
   const [markStageToggleBusy, setMarkStageToggleBusy] = useState(false);
+  const [batchCompleteConfirmOpen, setBatchCompleteConfirmOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const isSearching = searchQuery.trim().length > 0;
 
@@ -119,6 +125,18 @@ export function WorkflowTasksTable({
   const docCounts = countDocumentsByTaskId(project.documents);
   const showViewAllLink = !isFullLayout;
   const showWorkflowContent = groups.length > 0 || draftStageSlug != null;
+  const stageCompletionInput = useMemo(
+    () => ({
+      workflowTasks: project.workflowTasks,
+      manualStageCompletions: project.manualStageCompletions,
+      stages: catalog,
+    }),
+    [catalog, project.manualStageCompletions, project.workflowTasks]
+  );
+  const emptyIncompleteStages = useMemo(
+    () => listEmptyIncompleteWorkflowStages(stageCompletionInput),
+    [stageCompletionInput]
+  );
 
   useEffect(() => {
     if (draftStageSlug == null) return;
@@ -206,6 +224,39 @@ export function WorkflowTasksTable({
     wf.markStageIncompleteSuccess,
   ]);
 
+  const handleConfirmBatchComplete = useCallback(async () => {
+    setMarkStageToggleBusy(true);
+    try {
+      const updated = await markCrmProjectEmptyStagesCompleteBatch(
+        crmRepositories,
+        project.summary.slug,
+        projectRouteScope
+      );
+      if (updated == null) {
+        throw new Error(wf.markAllEmptyStagesCompleteFailed);
+      }
+      onProjectSaved(updated);
+      if (showCompletionActions && completion != null) {
+        completion.setProject(updated);
+      }
+      setToast({ kind: 'success', message: wf.markAllEmptyStagesCompleteSuccess });
+      setBatchCompleteConfirmOpen(false);
+    } catch {
+      setToast({ kind: 'error', message: wf.markAllEmptyStagesCompleteFailed });
+    } finally {
+      setMarkStageToggleBusy(false);
+    }
+  }, [
+    completion,
+    onProjectSaved,
+    project.summary.slug,
+    projectRouteScope,
+    setToast,
+    showCompletionActions,
+    wf.markAllEmptyStagesCompleteFailed,
+    wf.markAllEmptyStagesCompleteSuccess,
+  ]);
+
   const panelClass = [styles.workflowPanel, isFullLayout ? styles.workflowPanelFull : '']
     .filter(Boolean)
     .join(' ');
@@ -220,7 +271,22 @@ export function WorkflowTasksTable({
   return (
     <>
       <section className={panelClass} aria-labelledby="workflow-tasks-heading">
-      <DetailPanelHeader title={content.projectDetail.sections.workflow} titleId="workflow-tasks-heading">
+      <DetailPanelHeader
+        title={content.projectDetail.sections.workflow}
+        titleId="workflow-tasks-heading"
+        leading={
+          canCreate ? (
+            <WorkflowTasksBatchCompleteButton
+              workflowTasks={project.workflowTasks}
+              manualStageCompletions={project.manualStageCompletions}
+              stages={catalog}
+              disabled={draftStageSlug != null}
+              busy={markStageToggleBusy}
+              onClick={() => setBatchCompleteConfirmOpen(true)}
+            />
+          ) : null
+        }
+      >
         <DetailPanelHeaderActions>
           <DetailPanelSectionSearch
             value={searchQuery}
@@ -331,6 +397,26 @@ export function WorkflowTasksTable({
             ? wf.markStageIncomplete
             : wf.markStageComplete
         }
+        cancelLabel={wf.archiveTaskCancelLabel}
+        variant="primary"
+        hideIcon
+      />
+      <ConfirmModal
+        isOpen={batchCompleteConfirmOpen}
+        onClose={() => {
+          if (markStageToggleBusy) return;
+          setBatchCompleteConfirmOpen(false);
+        }}
+        onConfirm={() => {
+          void handleConfirmBatchComplete();
+        }}
+        title={wf.markAllEmptyStagesCompleteConfirmTitle}
+        message={
+          emptyIncompleteStages.length > 0
+            ? emptyIncompleteStages.map((stage) => stage.stageLabel).join(', ')
+            : undefined
+        }
+        confirmLabel={wf.markAllEmptyStagesComplete}
         cancelLabel={wf.archiveTaskCancelLabel}
         variant="primary"
         hideIcon

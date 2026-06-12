@@ -4411,6 +4411,13 @@
   flex-shrink: 0;
 }
 
+.detailPanelHeaderTitleGroup {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  min-width: 0;
+}
+
 .detailPanelTitle {
   margin: 0;
   font-size: 0.6875rem;
@@ -4538,11 +4545,25 @@
   border: 1px solid var(--color-border, #e2e8f0);
 }
 
+.detailPanelHeaderBtn_complete {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: inherit;
+  background: transparent;
+  border: none;
+}
+
 .detailPanelHeaderBtn_download:hover:not(:disabled),
 .detailPanelHeaderBtn_refresh:hover:not(:disabled) {
   background: var(--color-muted, #f8fafc);
   border-color: #cbd5e1;
   color: var(--color-text, #0f172a);
+}
+
+.detailPanelHeaderBtn_complete:hover:not(:disabled) {
+  background: transparent;
+  opacity: 0.82;
 }
 
 .detailPanelHeaderBtnIcon_refresh {
@@ -4605,11 +4626,22 @@
   color: #94a3b8;
 }
 
+:global([data-theme='dark']) .detailPanelHeaderBtn_complete {
+  background: transparent;
+  border: none;
+  color: inherit;
+}
+
 :global([data-theme='dark']) .detailPanelHeaderBtn_download:hover:not(:disabled),
 :global([data-theme='dark']) .detailPanelHeaderBtn_refresh:hover:not(:disabled) {
   background: #2a2b38;
   border-color: #4b4c5c;
   color: #f1f5f9;
+}
+
+:global([data-theme='dark']) .detailPanelHeaderBtn_complete:hover:not(:disabled) {
+  background: transparent;
+  opacity: 0.82;
 }
 
 .primaryBtn {

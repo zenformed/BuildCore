@@ -44,7 +44,7 @@ import type {
 
 } from '@/domain/crm';
 
-import { buildProjectBudgetSummary, resolvePaymentTimingFields } from '@/domain/crm';
+import { buildProjectBudgetSummary, listEmptyIncompleteWorkflowStages, resolvePaymentTimingFields } from '@/domain/crm';
 import { CRM_PROJECT_COMPLETE_STAGE_SLUG } from '@/domain/crm/projectCompletion';
 
 import type {
@@ -390,6 +390,41 @@ export class MockCrmProjectDetailRepository implements ICrmProjectDetailReposito
       manualStageCompletions: detail.manualStageCompletions.filter(
         (completion) => completion.stageSlug !== stageSlug
       ),
+    });
+  }
+
+  markEmptyStagesCompleteBatch(
+    slug: string,
+    _scope?: import('@/application/ports/crm/ICrmProjectDetailRepository').CrmProjectRouteScope
+  ): CrmProjectDetail | null {
+    const detail = getEffectiveMockProjectDetailBySlug(slug);
+    if (detail == null) return null;
+
+    const emptyStages = listEmptyIncompleteWorkflowStages({
+      workflowTasks: detail.workflowTasks,
+      manualStageCompletions: detail.manualStageCompletions,
+    });
+    if (emptyStages.length === 0) {
+      throw new Error('No empty incomplete workflow stages to mark complete');
+    }
+
+    const now = new Date().toISOString();
+    const completedBy = getMockCrmTeamMember('tm-alex');
+    const existingSlugs = new Set(detail.manualStageCompletions.map((c) => c.stageSlug));
+    const additions = emptyStages
+      .filter((stage) => !existingSlugs.has(stage.stageSlug))
+      .map((stage) => ({
+        stageSlug: stage.stageSlug,
+        completedAt: now,
+        completedBy,
+        source: 'manual' as const,
+      }));
+
+    if (additions.length === 0) return detail;
+
+    return saveAndReturn(slug, {
+      ...detail,
+      manualStageCompletions: [...detail.manualStageCompletions, ...additions],
     });
   }
 
