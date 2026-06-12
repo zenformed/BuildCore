@@ -1,8 +1,10 @@
 'use client';
 
-import type { CSSProperties, ReactElement } from 'react';
-import { useCallback, useSyncExternalStore } from 'react';
-import type { CrmStageProgress, PipelineStageSlug } from '@/domain/crm';
+import type { ReactElement } from 'react';
+import { useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { useSyncExternalStore } from 'react';
+import type { CrmProjectStageCompletion, CrmWorkflowTask } from '@/domain/crm';
+import { resolveWorkflowPipelineGraphState } from '@/domain/buildcore/projectPipelineProgress';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
 import { shortStageLabel } from '@/presentation/features/crmProjectDetail/crmProjectDetailFormatters';
 import { useBuildCorePipelineStages } from '@/presentation/providers/BuildCorePipelineStagesProvider';
@@ -29,103 +31,143 @@ function useCompactPipelineLabels(): boolean {
   );
 }
 
-type StageNodeState = 'done' | 'current' | 'upcoming';
+type PipelineProgressLine = {
+  readonly leftPx: number;
+  readonly widthPx: number;
+};
 
-function resolveStageState(
-  slug: PipelineStageSlug,
-  currentSlug: PipelineStageSlug,
-  completed: ReadonlySet<PipelineStageSlug>
-): StageNodeState {
-  if (!completed.has(slug)) return 'upcoming';
-  if (slug === currentSlug) return 'current';
-  return 'done';
+function measurePipelineProgressLine(
+  timeline: HTMLElement,
+  track: HTMLElement,
+  nodeElements: readonly (HTMLSpanElement | null)[],
+  continuousCompletedStageIndex: number
+): PipelineProgressLine | null {
+  if (continuousCompletedStageIndex < 0) return null;
+
+  const endNode = nodeElements[continuousCompletedStageIndex];
+  if (endNode == null) return null;
+
+  const timelineRect = timeline.getBoundingClientRect();
+  const trackRect = track.getBoundingClientRect();
+  const endRect = endNode.getBoundingClientRect();
+
+  const trackLeft = trackRect.left - timelineRect.left;
+  const endCenter = endRect.left + endRect.width / 2 - timelineRect.left;
+  const endRadius = endRect.width / 2;
+
+  return {
+    leftPx: trackLeft,
+    widthPx: Math.max(0, endCenter + endRadius - trackLeft),
+  };
 }
 
 export type StageProgressBarProps = {
-  stageProgress: CrmStageProgress;
-  editable?: boolean;
-  isSaving?: boolean;
-  onStageSelect?: (slug: PipelineStageSlug) => void;
+  workflowTasks: readonly CrmWorkflowTask[];
+  manualStageCompletions: readonly CrmProjectStageCompletion[];
 };
 
 export function StageProgressBar({
-  stageProgress,
-  editable = false,
-  isSaving = false,
-  onStageSelect,
+  workflowTasks,
+  manualStageCompletions,
 }: StageProgressBarProps): ReactElement {
   const useShortLabels = useCompactPipelineLabels();
   const { catalog } = useBuildCorePipelineStages();
-  const completed = new Set(stageProgress.completedStageSlugs);
-  const currentIndex = catalog.findIndex((stage) => stage.slug === stageProgress.currentStageSlug);
-  const progressPct =
-    catalog.length <= 1
-      ? 0
-      : (Math.max(0, currentIndex) / (catalog.length - 1)) * 100;
-
-  const handleStageClick = useCallback(
-    (slug: PipelineStageSlug) => {
-      if (!editable || isSaving || slug === stageProgress.currentStageSlug) return;
-      onStageSelect?.(slug);
-    },
-    [editable, isSaving, onStageSelect, stageProgress.currentStageSlug]
+  const timelineRef = useRef<HTMLDivElement>(null);
+  const trackRef = useRef<HTMLDivElement>(null);
+  const nodeRefs = useRef<(HTMLSpanElement | null)[]>([]);
+  const [progressLine, setProgressLine] = useState<PipelineProgressLine | null>(null);
+  const graphState = useMemo(
+    () =>
+      resolveWorkflowPipelineGraphState({
+        workflowTasks,
+        stages: catalog,
+        manualStageCompletions,
+      }),
+    [catalog, manualStageCompletions, workflowTasks]
   );
+  const continuousCompletedStageIndex = graphState.continuousCompletedStageIndex;
+  const stageCount = graphState.stageStatuses.length;
+
+  useLayoutEffect(() => {
+    const timeline = timelineRef.current;
+    if (timeline == null) {
+      setProgressLine(null);
+      return;
+    }
+
+    const measure = (): void => {
+      const track = trackRef.current;
+      if (track == null) {
+        setProgressLine(null);
+        return;
+      }
+
+      setProgressLine(
+        measurePipelineProgressLine(
+          timeline,
+          track,
+          nodeRefs.current,
+          continuousCompletedStageIndex
+        )
+      );
+    };
+
+    measure();
+
+    const resizeObserver = new ResizeObserver(measure);
+    resizeObserver.observe(timeline);
+    if (trackRef.current != null) resizeObserver.observe(trackRef.current);
+    for (const node of nodeRefs.current) {
+      if (node != null) resizeObserver.observe(node);
+    }
+
+    window.addEventListener('resize', measure);
+    return () => {
+      resizeObserver.disconnect();
+      window.removeEventListener('resize', measure);
+    };
+  }, [continuousCompletedStageIndex, stageCount, useShortLabels]);
 
   return (
     <section
-      className={`${styles.pipelinePanel}${editable ? ` ${styles.pipelinePanel_editable}` : ''}${isSaving ? ` ${styles.pipelinePanel_saving}` : ''}`}
+      className={styles.pipelinePanel}
       aria-label={content.projectDetail.pipelineAriaLabel}
-      aria-busy={isSaving || undefined}
     >
-      <ol
-        className={styles.pipelineTimeline}
-        style={{ '--pipeline-progress': `${progressPct}%` } as CSSProperties}
-      >
-        {catalog.map((stage) => {
-          const state = resolveStageState(stage.slug, stageProgress.currentStageSlug, completed);
-          const isReached = state !== 'upcoming';
-          const nodeClass = isReached
-            ? `${styles.pipelineNode} ${styles.pipelineNode_done}${state === 'current' ? ` ${styles.pipelineNode_current}` : ''}`
-            : styles.pipelineNode;
-          const labelClass =
-            state === 'current'
-              ? `${styles.pipelineLabel} ${styles.pipelineLabel_done} ${styles.pipelineLabel_current}`
-              : state === 'done'
-                ? `${styles.pipelineLabel} ${styles.pipelineLabel_done}`
-                : styles.pipelineLabel;
+      <div ref={timelineRef} className={styles.pipelineTimelineSurface}>
+        <div ref={trackRef} className={styles.pipelineProgressTrack} aria-hidden />
+        {progressLine != null ? (
+          <div
+            className={styles.pipelineProgressActive}
+            aria-hidden
+            style={{ left: `${progressLine.leftPx}px`, width: `${progressLine.widthPx}px` }}
+          />
+        ) : null}
+        <ol className={styles.pipelineTimeline}>
+          {graphState.stageStatuses.map((stage, index) => {
+            const nodeClass = stage.isComplete
+              ? `${styles.pipelineNode} ${styles.pipelineNode_done}`
+              : styles.pipelineNode;
+            const labelClass = stage.isComplete
+              ? `${styles.pipelineLabel} ${styles.pipelineLabel_done}`
+              : styles.pipelineLabel;
 
-          const label = useShortLabels ? shortStageLabel(stage.label) : stage.label;
-          const stepContent = (
-            <>
-              <span className={nodeClass} aria-hidden />
-              <span className={labelClass}>{label}</span>
-            </>
-          );
+            const label = useShortLabels ? shortStageLabel(stage.stageLabel) : stage.stageLabel;
 
-          return (
-            <li
-              key={stage.slug}
-              className={`${styles.pipelineStep}${editable ? ` ${styles.pipelineStep_editable}` : ''}`}
-              title={stage.label}
-            >
-              {editable ? (
-                <button
-                  type="button"
-                  className={styles.pipelineStepButton}
-                  disabled={isSaving}
-                  aria-current={state === 'current' ? 'step' : undefined}
-                  aria-label={`Set stage to ${stage.label}`}
-                  onClick={() => handleStageClick(stage.slug)}
-                >
-                  {stepContent}
-                </button>
-              ) : (
-                stepContent
-              )}
-            </li>
-          );
-        })}
-      </ol>
+            return (
+              <li key={stage.stageSlug} className={styles.pipelineStep} title={stage.stageLabel}>
+                <span
+                  ref={(element) => {
+                    nodeRefs.current[index] = element;
+                  }}
+                  className={nodeClass}
+                  aria-hidden
+                />
+                <span className={labelClass}>{label}</span>
+              </li>
+            );
+          })}
+        </ol>
+      </div>
     </section>
   );
 }

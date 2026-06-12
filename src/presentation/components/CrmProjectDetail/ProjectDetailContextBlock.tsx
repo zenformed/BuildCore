@@ -1,8 +1,7 @@
 'use client';
 
 import type { ReactElement, ReactNode } from 'react';
-import { useCallback } from 'react';
-import type { CrmIndustry, CrmProjectDetail, CrmProjectSummary, PipelineStageSlug } from '@/domain/crm';
+import type { CrmIndustry, CrmProjectDetail, CrmProjectSummary } from '@/domain/crm';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
 import type { ProjectDetailPageContext } from '@/presentation/features/crmProjectDetail/projectDetailPageContext';
 import type { SummaryEditableField } from '@/presentation/features/crmProjectDetail/projectDetailFormModel';
@@ -55,15 +54,6 @@ export function ProjectDetailContextBlock({
   onEditProject,
 }: ProjectDetailContextBlockProps): ReactElement {
   const readOnly = isMemberRole;
-  const canEditStage = !readOnly && isApiSource;
-
-  const handleStageSelect = useCallback(
-    (slug: PipelineStageSlug) => {
-      if (slug === project.stageProgress.currentStageSlug) return;
-      void patchField('currentStageSlug', slug);
-    },
-    [patchField, project.stageProgress.currentStageSlug]
-  );
 
   return (
     <div className={styles.detailTop}>
@@ -124,10 +114,8 @@ export function ProjectDetailContextBlock({
       />
       {isMemberRole ? null : (
         <StageProgressBar
-          stageProgress={project.stageProgress}
-          editable={canEditStage}
-          isSaving={savingField === 'currentStageSlug'}
-          onStageSelect={handleStageSelect}
+          workflowTasks={project.workflowTasks}
+          manualStageCompletions={project.manualStageCompletions}
         />
       )}
     </div>
