@@ -32,6 +32,7 @@ import { countDocumentsByTaskId } from '@/presentation/features/crmProjectDetail
 import { crmRepositories } from '@/shared/di/container';
 import shellStyles from '../../../../app/(dashboard)/dashboard/dashboard.module.css';
 import formStyles from '../CrmProjects/CreateCrmProjectDrawer.module.css';
+import { CreateFormAssigneePicker } from '@/presentation/components/crmShared/CreateFormAssigneePicker';
 import { WorkflowStatusPillPicker } from './WorkflowStatusPillPicker';
 
 export type WorkflowTaskDrawerContext = 'workflow' | 'payment';
@@ -149,13 +150,29 @@ export function WorkflowTaskDrawer({
 
   if (!open) return null;
 
-  const assigneeOptions = getWorkflowTaskAssigneeOptions(
-    isApiSource,
-    assignmentCatalog,
-    project.summary.contact,
-    dash.user?.id,
-    form.assignedMemberId
-  );
+  const assigneeOptions = (() => {
+    const options = getWorkflowTaskAssigneeOptions(
+      isApiSource,
+      assignmentCatalog,
+      project.summary.contact,
+      dash.user?.id,
+      mode === 'edit' ? null : form.assignedMemberId
+    );
+    if (mode !== 'edit' || task?.assignedTo == null || !form.assignedMemberId) {
+      return options;
+    }
+    if (options.some((option) => option.id === form.assignedMemberId)) {
+      return options;
+    }
+    return [
+      ...options,
+      {
+        id: task.assignedTo.id,
+        label: task.assignedTo.displayName,
+        member: task.assignedTo,
+      },
+    ];
+  })();
 
   const payments = content.projectDetail.payments;
   const isPaymentDrawer = drawerContext === 'payment';
@@ -287,18 +304,15 @@ export function WorkflowTaskDrawer({
             {assigneeOptions.length > 0 ? (
               <div className={formStyles.field}>
                 <label className={formStyles.label}>{wf.fields.assigned}</label>
-                <select
-                  className={formStyles.select}
+                <CreateFormAssigneePicker
+                  variant="field"
                   value={form.assignedMemberId}
-                  onChange={(e) => updateField('assignedMemberId', e.target.value)}
-                >
-                  <option value="">{content.projectDetail.edit.assigneeUnassigned}</option>
-                  {assigneeOptions.map((o) => (
-                    <option key={o.id} value={o.id} disabled={o.disabled === true}>
-                      {o.label}
-                    </option>
-                  ))}
-                </select>
+                  options={assigneeOptions}
+                  disabled={saving}
+                  unassignedLabel={content.projectDetail.edit.assigneeUnassigned}
+                  ariaLabel={wf.fields.assigned}
+                  onChange={(memberId) => updateField('assignedMemberId', memberId)}
+                />
               </div>
             ) : null}
             {error ? <p className={formStyles.error}>{error}</p> : null}

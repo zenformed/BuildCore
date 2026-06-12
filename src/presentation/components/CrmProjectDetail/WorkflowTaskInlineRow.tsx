@@ -21,7 +21,7 @@ import { AssigneeMenuOptionLabel } from '@/presentation/features/crmAssignment/A
 import { useAssignmentIdentityCatalog } from '@/presentation/providers/AssignmentIdentityProvider';
 import { useBuildCoreDashboardContext } from '@/presentation/providers/BuildCoreDashboardProvider';
 import { useProjectDetailShell } from '@/presentation/features/crmProjectDetail/ProjectDetailShellContext';
-import { shouldOfferWorkflowTaskCustomerNotify } from '@/presentation/features/crmProjectDetail/workflowTaskCustomerNotify';
+import { shouldOfferWorkflowTaskCustomerNotify, taskSupportsManualWorkflowTaskCustomerNotification } from '@/presentation/features/crmProjectDetail/workflowTaskCustomerNotify';
 import { useWorkflowTaskPatch } from '@/presentation/features/crmProjectDetail/useWorkflowTaskPatch';
 import { validateWorkflowTaskStatusChange } from '@/presentation/features/crmProjectDetail/workflowTaskDocumentsValidation';
 import {
@@ -36,6 +36,7 @@ import shared from '@/presentation/components/crmShared/crmShared.module.css';
 import { TeamMemberAvatar } from './TeamMemberAvatar';
 import { WorkflowDocumentFileIcon } from './WorkflowDocumentFileIcon';
 import { WorkflowInlineMenu } from './WorkflowInlineMenu';
+import { WorkflowTaskRowActionsMenu } from './WorkflowTaskRowActionsMenu';
 import styles from './ProjectDetail.module.css';
 
 function statusBadgeClass(status: WorkflowTaskStatus): string {
@@ -75,6 +76,8 @@ export function WorkflowTaskInlineRow({
     onWorkflowTaskDocumentUploaded,
     onWorkflowTaskDocumentDeleted,
     requestCustomerNotifyAfterAssigneeChange,
+    openCustomerNotifyPromptForTask,
+    openEditWorkflowTask,
     syncWorkflowTaskDocuments,
   } = useProjectDetailShell();
   const dash = useBuildCoreDashboardContext();
@@ -340,6 +343,9 @@ export function WorkflowTaskInlineRow({
   const showDocumentsIcon = hasDocuments || task.documentsRequired || awaitingCustomerReview;
   const canOpenDocumentsMenu =
     canView && (hasDocuments || awaitingCustomerReview || canUpload || canEdit);
+
+  const showCustomerNotification =
+    canEdit && taskSupportsManualWorkflowTaskCustomerNotification(task, isApiSource);
 
   return (
     <div
@@ -705,24 +711,34 @@ export function WorkflowTaskInlineRow({
         </>
       ) : null}
 
-      {canDelete && onRequestArchiveTask ? (
-        <span className={shared.rowDeleteCell}>
-          <button
-            type="button"
-            className={shared.rowDeleteBtn}
+      {canEdit || (canDelete && onRequestArchiveTask) || showCustomerNotification ? (
+        <span className={styles.taskDeleteCell}>
+          <WorkflowTaskRowActionsMenu
+            taskTitle={task.title}
             disabled={saving}
-            title={wf.deleteTask}
-            aria-label={wf.deleteTask}
-            onClick={() => {
+            canEdit={canEdit}
+            canDelete={canDelete}
+            showCustomerNotification={showCustomerNotification}
+            onEdit={() => {
               closeMenus();
-              onRequestArchiveTask(task);
+              openEditWorkflowTask(task);
             }}
-          >
-            <span aria-hidden>🗑️</span>
-          </button>
+            onDelete={
+              onRequestArchiveTask
+                ? () => {
+                    closeMenus();
+                    onRequestArchiveTask(task);
+                  }
+                : undefined
+            }
+            onSendCustomerNotification={() => {
+              closeMenus();
+              openCustomerNotifyPromptForTask(task.id);
+            }}
+          />
         </span>
       ) : (
-        <span className={shared.rowDeleteCell} aria-hidden />
+        <span className={styles.taskDeleteCell} aria-hidden />
       )}
     </div>
   );

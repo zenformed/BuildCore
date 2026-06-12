@@ -3,7 +3,7 @@
 import type { ReactElement } from 'react';
 import { useRef, useState } from 'react';
 import { AssigneeMenuOptionLabel } from '@/presentation/features/crmAssignment/AssigneeMenuOptionLabel';
-import type { CrmProjectAssigneeOption } from '@/presentation/features/crmProjects/crmProjectAssigneeOptions';
+import type { AssigneeOption } from '@/presentation/features/crmAssignment/buildAssigneeOptions';
 import { TeamMemberAvatar } from '@/presentation/components/CrmProjectDetail/TeamMemberAvatar';
 import { WorkflowInlineMenu } from '@/presentation/components/CrmProjectDetail/WorkflowInlineMenu';
 import detailStyles from '@/presentation/components/CrmProjectDetail/ProjectDetail.module.css';
@@ -12,10 +12,11 @@ import formStyles from '@/presentation/components/CrmProjects/CreateCrmProjectDr
 
 export type CreateFormAssigneePickerProps = {
   readonly value: string;
-  readonly options: readonly CrmProjectAssigneeOption[];
+  readonly options: readonly AssigneeOption[];
   readonly disabled?: boolean;
   readonly unassignedLabel: string;
   readonly ariaLabel: string;
+  readonly variant?: 'compact' | 'field';
   readonly onChange: (memberId: string) => void;
 };
 
@@ -25,24 +26,39 @@ export function CreateFormAssigneePicker({
   disabled = false,
   unassignedLabel,
   ariaLabel,
+  variant = 'compact',
   onChange,
 }: CreateFormAssigneePickerProps): ReactElement {
   const [open, setOpen] = useState(false);
   const anchorRef = useRef<HTMLDivElement>(null);
   const selected = options.find((option) => option.id === value);
+  const isFieldVariant = variant === 'field';
 
   return (
-    <div ref={anchorRef} className={formStyles.assigneePickerWrap}>
+    <div
+      ref={anchorRef}
+      className={isFieldVariant ? formStyles.formSelectPicker : formStyles.assigneePickerWrap}
+    >
       <button
         type="button"
-        className={formStyles.assigneePickerBtn}
+        className={
+          isFieldVariant
+            ? `${formStyles.input} ${formStyles.select} ${formStyles.formSelectTrigger} ${formStyles.assigneeFieldTrigger}`
+            : formStyles.assigneePickerBtn
+        }
         disabled={disabled}
         aria-expanded={open}
         aria-label={ariaLabel}
-        title={selected?.member?.displayName ?? unassignedLabel}
+        title={selected?.member?.displayName ?? selected?.label ?? unassignedLabel}
         onClick={() => setOpen((isOpen) => !isOpen)}
       >
-        {selected?.member ? (
+        {isFieldVariant ? (
+          selected ? (
+            <AssigneeMenuOptionLabel option={selected} />
+          ) : (
+            <span className={formStyles.formSelectPlaceholder}>{unassignedLabel}</span>
+          )
+        ) : selected?.member ? (
           <TeamMemberAvatar member={selected.member} />
         ) : (
           <span className={`${shared.avatar} ${shared.avatarUnassigned}`} aria-hidden>

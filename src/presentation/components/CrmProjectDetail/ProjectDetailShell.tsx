@@ -37,6 +37,7 @@ import { ProjectDetailHeaderProgress } from './ProjectDetailHeaderProgress';
 import { ProjectPriorityToggle } from './ProjectPriorityToggle';
 import { ProjectDetailShellModals } from './ProjectDetailShellModals';
 import { CreateCrmProjectModal } from '@/presentation/components/CrmProjects/CreateCrmProjectModal';
+import { WorkflowTaskDrawer } from './WorkflowTaskDrawer';
 import styles from './ProjectDetail.module.css';
 
 export type { ProjectDetailPageContext } from '@/presentation/features/crmProjectDetail/projectDetailPageContext';
@@ -324,6 +325,18 @@ function ProjectDetailShellBody({
               project={workspace.project}
               onClose={() => setEditProjectOpen(false)}
               onUpdated={workspace.onProjectSaved}
+            />
+            <WorkflowTaskDrawer
+              open={workspace.taskDrawer.open}
+              mode={workspace.taskDrawer.mode}
+              drawerContext={workspace.taskDrawer.context}
+              project={workspace.project}
+              task={workspace.taskDrawer.task}
+              isApiSource={isApiSource}
+              onClose={workspace.closeTaskDrawer}
+              onSaved={() => {
+                void workspace.refreshWorkflowTasks();
+              }}
             />
           </>
         ) : null}

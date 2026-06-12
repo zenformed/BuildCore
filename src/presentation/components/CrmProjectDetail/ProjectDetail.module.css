@@ -670,6 +670,16 @@
   -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='3 6 5 6 21 6'/%3E%3Cpath d='M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2'/%3E%3C/svg%3E");
 }
 
+.actionsMenuEditIcon {
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M17 3a2.828 2.828 0 114 4L7.5 20.5 2 22l1.5-5.5L17 3z'/%3E%3C/svg%3E");
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M17 3a2.828 2.828 0 114 4L7.5 20.5 2 22l1.5-5.5L17 3z'/%3E%3C/svg%3E");
+}
+
+.actionsMenuMailIcon {
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect width='20' height='16' x='2' y='4' rx='2'/%3E%3Cpath d='m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7'/%3E%3C/svg%3E");
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect width='20' height='16' x='2' y='4' rx='2'/%3E%3Cpath d='m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7'/%3E%3C/svg%3E");
+}
+
 .actionsMenuItemDanger {
   color: var(--color-error, #dc2626);
 }
@@ -2815,6 +2825,47 @@
   justify-content: center;
 }
 
+.taskActionsBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  padding: 0;
+  border: none;
+  border-radius: 0.25rem;
+  background: transparent;
+  color: var(--theme-text-muted, var(--color-text-muted, #64748b));
+  cursor: pointer;
+}
+
+.taskActionsBtn:hover:not(:disabled) {
+  background: var(--theme-surface-muted, rgba(15, 23, 42, 0.06));
+  color: var(--theme-text-main, var(--color-text, #0f172a));
+}
+
+.taskActionsBtn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.taskActionsBtn:focus-visible {
+  outline: 2px solid var(--color-primary, #2563eb);
+  outline-offset: 2px;
+}
+
+:global([data-theme='dark']) .taskActionsBtn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.taskActionsDots {
+  display: block;
+  font-size: 1.125rem;
+  line-height: 1;
+  font-weight: 700;
+  letter-spacing: -0.04em;
+}
+
 .taskDeleteBtn {
   display: inline-flex;
   align-items: center;
@@ -3372,15 +3423,18 @@
   text-align: left;
   cursor: pointer;
   box-sizing: border-box;
-  color: #0f172a;
-  background-color: #fff;
-  border: 1px solid #e2e8f0;
+  color: var(--theme-form-input-text, var(--color-text, #0f172a));
+  background-color: var(--theme-form-input-bg, var(--theme-surface-card));
+  border: 1px solid var(--theme-form-input-border, var(--color-border, #e2e8f0));
   border-radius: 0.375rem;
-  color-scheme: light;
 }
 
 .formStatusPickerTrigger:hover:not(:disabled) {
   border-color: #cbd5e1;
+}
+
+:global([data-theme='dark']) .formStatusPickerTrigger:hover:not(:disabled) {
+  border-color: #4b5563;
 }
 
 .formStatusPickerTrigger:focus {
@@ -3402,15 +3456,22 @@
   gap: 0.25rem;
   min-width: 8.5rem;
   padding: 0.375rem;
-  background: #fff;
-  border: 1px solid #e2e8f0;
+  background: var(--theme-form-input-bg, var(--theme-surface-card));
+  border: 1px solid var(--theme-form-input-border, var(--color-border, #e2e8f0));
   border-radius: 0.375rem;
   box-shadow: 0 8px 24px rgba(15, 23, 42, 0.12);
-  color-scheme: light;
+}
+
+:global([data-theme='dark']) .formStatusPickerMenuPortal {
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
 }
 
 .formStatusPickerMenuPortal .inlineMenuPillOption:hover:not(:disabled) {
   background: rgba(15, 23, 42, 0.04);
+}
+
+:global([data-theme='dark']) .formStatusPickerMenuPortal .inlineMenuPillOption:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.06);
 }
 
 .formStatusPickerCaret {

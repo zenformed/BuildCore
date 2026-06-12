@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import type { CrmBudgetEntry, CrmProjectDetail, CrmWorkflowTask } from '@/domain/crm';
+import { isPaymentWorkflowTask } from '@/domain/crm';
 import { archiveCrmWorkflowTask } from '@/application/use-cases/crm';
 import { listWorkflowTaskDocuments } from '@/application/use-cases/crm/listWorkflowTaskDocuments';
 import { validateWorkflowTaskDocumentUpload } from '@/domain/crm/documentUpload';
@@ -192,6 +193,15 @@ export function useProjectDetailWorkspace(initialProject: CrmProjectDetail) {
     setTaskDrawer({ open: true, mode: 'create', context, task: null });
   }, []);
 
+  const openEditWorkflowTask = useCallback((task: CrmWorkflowTask) => {
+    setTaskDrawer({
+      open: true,
+      mode: 'edit',
+      context: isPaymentWorkflowTask(task) ? 'payment' : 'workflow',
+      task,
+    });
+  }, []);
+
   const closeTaskDrawer = useCallback(() => {
     setTaskDrawer({ open: false, mode: 'create', context: 'workflow', task: null });
   }, []);
@@ -232,6 +242,7 @@ export function useProjectDetailWorkspace(initialProject: CrmProjectDetail) {
     handleConfirmDocumentUpload,
     handleConfirmArchiveTask,
     openCreateTask,
+    openEditWorkflowTask,
     closeTaskDrawer,
     wf,
     customerNotifyPrompt: customerNotify.customerNotifyPrompt,
@@ -240,6 +251,7 @@ export function useProjectDetailWorkspace(initialProject: CrmProjectDetail) {
     closeCustomerNotifyPrompt: customerNotify.closeCustomerNotifyPrompt,
     requestCustomerNotifyAfterAssigneeChange:
       customerNotify.requestCustomerNotifyAfterAssigneeChange,
+    openCustomerNotifyPromptForTask: customerNotify.openCustomerNotifyPromptForTask,
     sendCustomerNotifyEmail: customerNotify.sendCustomerNotifyEmail,
     onProjectSaved: handleProjectSaved,
     onPrimaryPhotoUpdated: handlePrimaryPhotoUpdated,

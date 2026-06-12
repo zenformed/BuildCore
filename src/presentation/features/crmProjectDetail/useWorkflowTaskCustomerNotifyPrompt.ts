@@ -30,6 +30,14 @@ export function useWorkflowTaskCustomerNotifyPrompt(projectContact: CrmContact) 
     setSending(false);
   }, []);
 
+  const openCustomerNotifyPromptForTask = useCallback(
+    (taskId: string) => {
+      setFeedback(null);
+      setPrompt(workflowTaskCustomerNotifyPromptFromContact(taskId, projectContact));
+    },
+    [projectContact]
+  );
+
   const requestPromptAfterAssigneeChange = useCallback(
     (
       isApiSource: boolean,
@@ -46,10 +54,9 @@ export function useWorkflowTaskCustomerNotifyPrompt(projectContact: CrmContact) 
       ) {
         return;
       }
-      setFeedback(null);
-      setPrompt(workflowTaskCustomerNotifyPromptFromContact(taskId, projectContact));
+      openCustomerNotifyPromptForTask(taskId);
     },
-    [projectContact]
+    [openCustomerNotifyPromptForTask]
   );
 
   const sendCustomerNotifyEmail = useCallback(async () => {
@@ -82,6 +89,7 @@ export function useWorkflowTaskCustomerNotifyPrompt(projectContact: CrmContact) 
     customerNotifyFeedback: feedback,
     closeCustomerNotifyPrompt: closePrompt,
     requestCustomerNotifyAfterAssigneeChange: requestPromptAfterAssigneeChange,
+    openCustomerNotifyPromptForTask,
     sendCustomerNotifyEmail,
   };
 }

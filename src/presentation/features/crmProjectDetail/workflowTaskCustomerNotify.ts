@@ -1,4 +1,4 @@
-import type { CrmContact } from '@/domain/crm';
+import type { CrmContact, CrmWorkflowTask } from '@/domain/crm';
 import { isWorkflowTaskContactAssigneeId } from '@/domain/crm/workflowTaskAssignee';
 
 export type WorkflowTaskCustomerNotifyPrompt = {
@@ -17,6 +17,19 @@ export function shouldOfferWorkflowTaskCustomerNotify(input: {
   if (!isWorkflowTaskContactAssigneeId(next)) return false;
   const previous = input.previousAssigneeId?.trim() ?? '';
   return previous !== next;
+}
+
+/** Whether a task can use the manual “Send customer notification” row action. */
+export function taskSupportsManualWorkflowTaskCustomerNotification(
+  task: Pick<CrmWorkflowTask, 'assignedTo' | 'documentsRequired' | 'status'>,
+  isApiSource: boolean
+): boolean {
+  if (!isApiSource) return false;
+  const assigneeId = task.assignedTo?.id ?? '';
+  if (isWorkflowTaskContactAssigneeId(assigneeId)) return true;
+  if (task.documentsRequired) return true;
+  if (task.status === 'request_review') return true;
+  return false;
 }
 
 export function workflowTaskCustomerNotifyPromptFromContact(
