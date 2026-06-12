@@ -14,7 +14,7 @@ export const WORKFLOW_TASK_STATUS_LABELS: Record<WorkflowTaskStatus, string> = {
   in_progress: 'In Progress',
   blocked: 'Blocked',
   skipped: 'Skipped',
-  request_review: 'Request Review',
+  request_review: 'Needs Approval',
   done: 'Done',
 };
 

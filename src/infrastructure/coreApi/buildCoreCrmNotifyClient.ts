@@ -10,6 +10,7 @@ const DEFAULT_TIMEOUT_MS = 15_000;
 export type BuildCoreWorkflowTaskNotifyCustomerResponse = {
   readonly ok: true;
   readonly emailDeliveryStatus: 'sent';
+  readonly skippedReason?: string;
 };
 
 function normalizeBaseUrl(raw: string): string {
@@ -68,6 +69,66 @@ export async function postBuildCoreWorkflowTaskNotifyAssigned(
       return { ok: false, error: { kind: 'invalid_payload' } };
     }
     return { ok: true, data: parsed };
+  } catch (e) {
+    const aborted = e instanceof Error && e.name === 'AbortError';
+    if (aborted) return { ok: false, error: { kind: 'timeout' } };
+    const message = e instanceof Error ? e.message : String(e);
+    return { ok: false, error: { kind: 'network', message } };
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+/** `POST /apps/buildcore/crm/workflow-tasks/:taskId/notify-needs-approval` on ZenformedCore */
+export async function postBuildCoreWorkflowTaskNotifyNeedsApproval(
+  accessToken: string,
+  taskId: string,
+  body?: { readonly appBaseUrl?: string }
+): Promise<CoreApiResult<BuildCoreWorkflowTaskNotifyCustomerResponse>> {
+  const encoded = encodeURIComponent(taskId);
+  const path = `/apps/buildcore/crm/workflow-tasks/${encoded}/notify-needs-approval`;
+  const url = coreUrl(path);
+  if (url == null) return { ok: false, error: { kind: 'unconfigured' } };
+
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), DEFAULT_TIMEOUT_MS);
+  try {
+    const res = await fetch(url, {
+      method: 'POST',
+      signal: controller.signal,
+      headers: {
+        Accept: 'application/json',
+        Authorization: `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(body ?? {}),
+    });
+    let json: unknown;
+    try {
+      json = await res.json();
+    } catch {
+      return { ok: false, error: { kind: 'invalid_payload' } };
+    }
+    if (!res.ok) {
+      return { ok: false, error: { kind: 'http_error', status: res.status, body: json } };
+    }
+    if (json == null || typeof json !== 'object') {
+      return { ok: false, error: { kind: 'invalid_payload' } };
+    }
+    const o = json as Record<string, unknown>;
+    if (o.ok !== true) {
+      return { ok: false, error: { kind: 'invalid_payload' } };
+    }
+    if (o.emailDeliveryStatus === 'sent') {
+      return { ok: true, data: { ok: true, emailDeliveryStatus: 'sent' } };
+    }
+    if (typeof o.skipped === 'string') {
+      return {
+        ok: true,
+        data: { ok: true, emailDeliveryStatus: 'sent', skippedReason: o.skipped },
+      };
+    }
+    return { ok: false, error: { kind: 'invalid_payload' } };
   } catch (e) {
     const aborted = e instanceof Error && e.name === 'AbortError';
     if (aborted) return { ok: false, error: { kind: 'timeout' } };

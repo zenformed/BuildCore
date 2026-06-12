@@ -79,6 +79,16 @@ async function getTaskForOrg(
   return (data as DbCrmWorkflowTaskRow | null) ?? null;
 }
 
+export async function getCrmWorkflowTaskStatusForOrg(
+  supabase: SupabaseClient,
+  organizationId: string,
+  taskId: string
+): Promise<WorkflowTaskStatus | null> {
+  const row = await getTaskForOrg(supabase, organizationId, taskId);
+  if (row == null) return null;
+  return row.status as WorkflowTaskStatus;
+}
+
 function resolvePaymentStageSlug(amountCents: number | null | undefined): string | undefined {
   return amountCents != null ? PAYMENT_WORKFLOW_STAGE_SLUG : undefined;
 }

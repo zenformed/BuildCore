@@ -8,6 +8,7 @@ import { requireCrmApiAuth } from '@/infrastructure/crm/server/crmApiRouteAuth';
 import { crmDocumentErrorResponse } from '@/infrastructure/crm/server/crmDocumentRouteErrors';
 import {
   archiveCrmWorkflowTaskForOrg,
+  getCrmWorkflowTaskStatusForOrg,
   updateCrmWorkflowTaskForOrg,
 } from '@/infrastructure/crm/server/crmWorkflowTaskService';
 import { pipelineStageSlugSet } from '@/domain/crm';
@@ -23,6 +24,9 @@ import {
   workflowTaskPermissionForbiddenResponse,
 } from '@/infrastructure/crm/server/buildCoreWorkflowTaskPermissionService';
 import { assertWorkflowTaskUpdateAllowed } from '@/domain/buildcore/rolePermissions';
+import { notifyWorkflowTaskNeedsApprovalAfterTransition } from '@/infrastructure/crm/server/notifyWorkflowTaskNeedsApproval';
+import { logNeedsApprovalNotifyDebug } from '@/infrastructure/crm/server/needsApprovalNotifyDebug';
+import { env } from '@/infrastructure/config/env';
 
 export const dynamic = 'force-dynamic';
 
@@ -70,6 +74,15 @@ export async function PATCH(
       return workflowTaskPermissionForbiddenResponse(updateCheck.message);
     }
 
+    const previousStatus =
+      validated.patch.status === 'request_review'
+        ? await getCrmWorkflowTaskStatusForOrg(
+            auth.context.supabase,
+            auth.context.organizationId,
+            taskId
+          )
+        : null;
+
     const task = await updateCrmWorkflowTaskForOrg(
       auth.context.supabase,
       auth.context.organizationId,
@@ -79,6 +92,54 @@ export async function PATCH(
     if (task == null) {
       return NextResponse.json({ error: 'not_found', message: 'Task not found' }, { status: 404 });
     }
+
+    const enteredNeedsApproval =
+      previousStatus != null &&
+      previousStatus !== 'request_review' &&
+      task.status === 'request_review';
+
+    if (validated.patch.status === 'request_review') {
+      logNeedsApprovalNotifyDebug('buildcore_patch_transition_check', {
+        taskId,
+        previousStatus,
+        nextStatus: task.status,
+        actorUserId: auth.context.user.id,
+        enteredNeedsApproval,
+        coreConfigured: env.zenformedCoreApiBaseUrl != null,
+      });
+    }
+
+    if (enteredNeedsApproval) {
+      const token = auth.context.authHeader.slice('Bearer '.length).trim();
+      try {
+        await notifyWorkflowTaskNeedsApprovalAfterTransition(token, {
+          taskId,
+          previousStatus,
+          nextStatus: task.status,
+          actorUserId: auth.context.user.id,
+        });
+      } catch (err: unknown) {
+        logNeedsApprovalNotifyDebug('buildcore_patch_notify_exception', {
+          taskId,
+          previousStatus,
+          nextStatus: task.status,
+          actorUserId: auth.context.user.id,
+          message: err instanceof Error ? err.message : String(err),
+        });
+      }
+    } else if (
+      validated.patch.status === 'request_review' &&
+      previousStatus === 'request_review'
+    ) {
+      logNeedsApprovalNotifyDebug('buildcore_patch_notify_skipped', {
+        taskId,
+        previousStatus,
+        nextStatus: task.status,
+        actorUserId: auth.context.user.id,
+        skippedReason: 'already_request_review',
+      });
+    }
+
     return NextResponse.json(task);
   } catch (err) {
     return crmDocumentErrorResponse(err);
