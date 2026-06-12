@@ -122,7 +122,11 @@ export function useCrmProjectTableRowActions(input: {
           throw new Error(detailCopy.markCompleteFailed);
         }
 
-        const stageStatuses = listWorkflowStageCompletionStatuses(detail.workflowTasks, input.stages);
+        const stageStatuses = listWorkflowStageCompletionStatuses({
+          workflowTasks: detail.workflowTasks,
+          stages: input.stages,
+          manualStageCompletions: detail.manualStageCompletions,
+        });
         if (stageStatuses.some((stage) => !stage.isComplete)) {
           setCompletionBlockedStageStatuses(stageStatuses);
           return;

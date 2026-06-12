@@ -1,5 +1,17 @@
-import type { CrmDocumentMetadata, CrmProjectDetail, CrmWorkflowTask } from '@/domain/crm';
-import { applyPaymentBalanceToProjectDetail } from '@/domain/crm/paymentWorkflow';
+import type { CrmDocumentMetadata, CrmProjectDetail, CrmWorkflowTask, PipelineStageSlug } from '@/domain/crm';
+import { isPaymentWorkflowTask, applyPaymentBalanceToProjectDetail } from '@/domain/crm/paymentWorkflow';
+
+function clearManualStageCompletionInProject(
+  project: CrmProjectDetail,
+  stageSlug: PipelineStageSlug
+): CrmProjectDetail {
+  return {
+    ...project,
+    manualStageCompletions: project.manualStageCompletions.filter(
+      (completion) => completion.stageSlug !== stageSlug
+    ),
+  };
+}
 
 export function applyWorkflowTasksToProject(
   project: CrmProjectDetail,
@@ -19,7 +31,11 @@ export function patchWorkflowTaskInProject(
   const workflowTasks = hasTask
     ? project.workflowTasks.map((t) => (t.id === task.id ? task : t))
     : [...project.workflowTasks, task];
-  return applyWorkflowTasksToProject(project, workflowTasks);
+  let next = applyWorkflowTasksToProject(project, workflowTasks);
+  if (!hasTask && !isPaymentWorkflowTask(task)) {
+    next = clearManualStageCompletionInProject(next, task.stageSlug);
+  }
+  return next;
 }
 
 export function removeWorkflowTaskFromProject(

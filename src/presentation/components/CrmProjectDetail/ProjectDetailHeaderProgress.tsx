@@ -19,10 +19,11 @@ export function ProjectDetailHeaderProgress(): ReactElement | null {
 
     return resolveProjectDetailProgressDisplay({
       workflowTasks: project.workflowTasks,
+      manualStageCompletions: project.manualStageCompletions,
       isComplete,
       stages: catalog,
     });
-  }, [catalog, isComplete, isMemberRole, project.workflowTasks]);
+  }, [catalog, isComplete, isMemberRole, project.manualStageCompletions, project.workflowTasks]);
 
   if (progress == null) {
     return null;

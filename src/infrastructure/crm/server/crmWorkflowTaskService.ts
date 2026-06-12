@@ -1,5 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
-import type { CrmWorkflowTask } from '@/domain/crm';
+import type { CrmWorkflowTask, PipelineStageSlug } from '@/domain/crm';
 import type {
   CreateCrmWorkflowTaskInput,
   UpdateCrmWorkflowTaskInput,
@@ -14,6 +14,7 @@ import { assertWorkflowTaskCanBeMarkedDone } from './crmDocumentService';
 import { CrmDocumentServiceError } from '@/infrastructure/crm/errors';
 import { isPaymentTaskRow, syncProjectBalanceFromPaymentTasks } from './crmPaymentBalance';
 import { resolveCrmProjectIdBySlug } from './resolveCrmProjectIdBySlug';
+import { clearManualStageCompletionForProjectStage } from './crmProjectStageCompletionService';
 import {
   mapDbContact,
   type DbCrmContactRow,
@@ -167,6 +168,15 @@ export async function createCrmWorkflowTaskForOrg(
     .single();
 
   if (error || !data) throw new Error(error?.message ?? 'Failed to create workflow task');
+
+  if (!isPayment) {
+    await clearManualStageCompletionForProjectStage(
+      supabase,
+      organizationId,
+      input.projectId,
+      stageSlug as PipelineStageSlug
+    );
+  }
 
   await appendCrmAccountabilityEvent(supabase, {
     organizationId,

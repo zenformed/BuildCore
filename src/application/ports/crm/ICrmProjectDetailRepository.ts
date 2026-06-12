@@ -1,4 +1,4 @@
-import type { CrmProjectDetail, UpdateCrmProjectInput } from '@/domain/crm';
+import type { CrmProjectDetail, UpdateCrmProjectInput, PipelineStageSlug } from '@/domain/crm';
 import type { CrmRepositoryResult } from '@/infrastructure/crm/types';
 
 /** Project hub aggregate (summary + nested collections). */
@@ -7,4 +7,12 @@ export interface ICrmProjectDetailRepository {
   getById(id: string): CrmRepositoryResult<CrmProjectDetail | null>;
   updateBySlug(slug: string, input: UpdateCrmProjectInput): CrmRepositoryResult<CrmProjectDetail | null>;
   setCompletion(slug: string, complete: boolean): CrmRepositoryResult<CrmProjectDetail | null>;
+  markStageCompleteManual(
+    slug: string,
+    stageSlug: PipelineStageSlug
+  ): CrmRepositoryResult<CrmProjectDetail | null>;
+  clearStageManualCompletion(
+    slug: string,
+    stageSlug: PipelineStageSlug
+  ): CrmRepositoryResult<CrmProjectDetail | null>;
 }

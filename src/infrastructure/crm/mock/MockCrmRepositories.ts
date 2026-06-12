@@ -333,6 +333,64 @@ export class MockCrmProjectDetailRepository implements ICrmProjectDetailReposito
 
   }
 
+  markStageCompleteManual(
+    slug: string,
+    stageSlug: import('@/domain/crm').PipelineStageSlug
+  ): CrmProjectDetail | null {
+    const detail = getEffectiveMockProjectDetailBySlug(slug);
+    if (detail == null) return null;
+
+    const stageTasks = detail.workflowTasks.filter(
+      (task) => task.stageSlug === stageSlug && task.amountCents == null
+    );
+    if (stageTasks.length > 0) {
+      throw new Error('Only empty workflow stages can be marked complete manually');
+    }
+
+    if (detail.manualStageCompletions.some((completion) => completion.stageSlug === stageSlug)) {
+      return detail;
+    }
+
+    return saveAndReturn(slug, {
+      ...detail,
+      manualStageCompletions: [
+        ...detail.manualStageCompletions,
+        {
+          stageSlug,
+          completedAt: new Date().toISOString(),
+          completedBy: getMockCrmTeamMember('tm-alex'),
+          source: 'manual',
+        },
+      ],
+    });
+  }
+
+  clearStageManualCompletion(
+    slug: string,
+    stageSlug: import('@/domain/crm').PipelineStageSlug
+  ): CrmProjectDetail | null {
+    const detail = getEffectiveMockProjectDetailBySlug(slug);
+    if (detail == null) return null;
+
+    const stageTasks = detail.workflowTasks.filter(
+      (task) => task.stageSlug === stageSlug && task.amountCents == null
+    );
+    if (stageTasks.length > 0) {
+      throw new Error('Only empty workflow stages can be marked incomplete manually');
+    }
+
+    if (!detail.manualStageCompletions.some((completion) => completion.stageSlug === stageSlug)) {
+      return detail;
+    }
+
+    return saveAndReturn(slug, {
+      ...detail,
+      manualStageCompletions: detail.manualStageCompletions.filter(
+        (completion) => completion.stageSlug !== stageSlug
+      ),
+    });
+  }
+
 }
 
 
@@ -409,11 +467,13 @@ export class MockCrmWorkflowTasksRepository implements ICrmWorkflowTasksReposito
     };
 
     saveAndReturn(detail.summary.slug, {
-
       ...detail,
-
       workflowTasks: [...detail.workflowTasks, task],
-
+      manualStageCompletions: isPayment
+        ? detail.manualStageCompletions
+        : detail.manualStageCompletions.filter(
+            (completion) => completion.stageSlug !== input.stageSlug
+          ),
     });
 
     return task;

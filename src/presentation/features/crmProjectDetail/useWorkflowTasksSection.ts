@@ -38,6 +38,7 @@ export function useWorkflowTasksSection(
     setProject((prev) => ({
       ...applyWorkflowTasksToProject(prev, workflowTasks),
       documents: detail?.documents ?? prev.documents,
+      manualStageCompletions: detail?.manualStageCompletions ?? prev.manualStageCompletions,
     }));
   }, [project.summary.id, project.summary.slug, setProject]);
 

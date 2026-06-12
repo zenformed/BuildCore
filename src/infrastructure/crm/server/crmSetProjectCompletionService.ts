@@ -25,7 +25,11 @@ export async function setCrmProjectCompletionBySlugForOrg(
 
   if (complete) {
     const pipelineStages = await loadOrganizationPipelineStageCatalog(supabase, organizationId);
-    if (!canMarkProjectCompleteByWorkflowTasks(existing.workflowTasks, pipelineStages)) {
+    if (!canMarkProjectCompleteByWorkflowTasks({
+      workflowTasks: existing.workflowTasks,
+      stages: pipelineStages,
+      manualStageCompletions: existing.manualStageCompletions,
+    })) {
       throw new CrmProjectCompletionBlockedError();
     }
   }

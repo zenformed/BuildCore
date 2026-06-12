@@ -4,7 +4,12 @@ import type { ReactElement } from 'react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import type { CrmProjectDetail, CrmWorkflowTask, PipelineStageSlug } from '@/domain/crm';
+import { markCrmProjectStageCompleteManual } from '@/application/use-cases/crm/markCrmProjectStageCompleteManual';
+import { clearCrmProjectStageManualCompletion } from '@/application/use-cases/crm/clearCrmProjectStageManualCompletion';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
+import { crmRepositories } from '@/shared/di/container';
+import { ConfirmModal } from '@/presentation/components/ConfirmModal';
+import confirmModalStyles from '@/presentation/components/ConfirmModal/ConfirmModal.module.css';
 import { countDocumentsByTaskId } from '@/presentation/features/crmProjectDetail/workflowDocumentCounts';
 import { filterWorkflowTasksBySearch } from '@/presentation/features/crmProjectDetail/projectSectionSearchModel';
 import { useProjectDetailShell } from '@/presentation/features/crmProjectDetail/ProjectDetailShellContext';
@@ -25,7 +30,7 @@ import { DetailPanelHeaderActions } from './DetailPanelHeaderActions';
 import { DetailPanelSectionRefresh } from './DetailPanelSectionRefresh';
 import { DetailPanelSectionSearch } from './DetailPanelSectionSearch';
 import { WorkflowOpsTaskDraftRow } from './WorkflowOpsTaskDraftRow';
-import { WorkflowStageTaskGroup } from './WorkflowStageTaskGroup';
+import { WorkflowStageTaskGroup, type ManualStageCompletionToggleAction } from './WorkflowStageTaskGroup';
 import { WorkflowTaskStageAddButton } from './WorkflowTaskStageAddButton';
 import styles from './ProjectDetail.module.css';
 
@@ -52,7 +57,14 @@ export function WorkflowTasksTable({
   onRequestArchiveTask,
 }: WorkflowTasksTableProps): ReactElement {
   const router = useRouter();
-  const { routes, refreshWorkflowTasks, setToast } = useProjectDetailShell();
+  const {
+    routes,
+    refreshWorkflowTasks,
+    setToast,
+    onProjectSaved,
+    completion,
+    showCompletionActions,
+  } = useProjectDetailShell();
   const wf = content.projectDetail.workflow;
   const { permissions, isLoading, isReady } = useBuildCoreWorkflowTaskAccess();
   const { catalog } = useBuildCorePipelineStages();
@@ -62,6 +74,12 @@ export function WorkflowTasksTable({
   const isFullLayout = layout === 'full';
   const currentStage = project.summary.currentStageSlug;
   const [draftStageSlug, setDraftStageSlug] = useState<PipelineStageSlug | null>(null);
+  const [pendingStageToggle, setPendingStageToggle] = useState<{
+    stageSlug: PipelineStageSlug;
+    stageLabel: string;
+    action: ManualStageCompletionToggleAction;
+  } | null>(null);
+  const [markStageToggleBusy, setMarkStageToggleBusy] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const isSearching = searchQuery.trim().length > 0;
 
@@ -120,6 +138,65 @@ export function WorkflowTasksTable({
     [onTaskAdded, onTaskError]
   );
 
+  const handleConfirmStageToggle = useCallback(async () => {
+    if (pendingStageToggle == null) return;
+    setMarkStageToggleBusy(true);
+    try {
+      const updated =
+        pendingStageToggle.action === 'complete'
+          ? await markCrmProjectStageCompleteManual(
+              crmRepositories,
+              project.summary.slug,
+              pendingStageToggle.stageSlug
+            )
+          : await clearCrmProjectStageManualCompletion(
+              crmRepositories,
+              project.summary.slug,
+              pendingStageToggle.stageSlug
+            );
+      if (updated == null) {
+        throw new Error(
+          pendingStageToggle.action === 'complete'
+            ? wf.markStageCompleteFailed
+            : wf.markStageIncompleteFailed
+        );
+      }
+      onProjectSaved(updated);
+      if (showCompletionActions && completion != null) {
+        completion.setProject(updated);
+      }
+      setToast({
+        kind: 'success',
+        message:
+          pendingStageToggle.action === 'complete'
+            ? wf.markStageCompleteSuccess
+            : wf.markStageIncompleteSuccess,
+      });
+      setPendingStageToggle(null);
+    } catch {
+      setToast({
+        kind: 'error',
+        message:
+          pendingStageToggle.action === 'complete'
+            ? wf.markStageCompleteFailed
+            : wf.markStageIncompleteFailed,
+      });
+    } finally {
+      setMarkStageToggleBusy(false);
+    }
+  }, [
+    completion,
+    onProjectSaved,
+    pendingStageToggle,
+    project.summary.slug,
+    setToast,
+    showCompletionActions,
+    wf.markStageCompleteFailed,
+    wf.markStageCompleteSuccess,
+    wf.markStageIncompleteFailed,
+    wf.markStageIncompleteSuccess,
+  ]);
+
   const panelClass = [styles.workflowPanel, isFullLayout ? styles.workflowPanelFull : '']
     .filter(Boolean)
     .join(' ');
@@ -132,7 +209,8 @@ export function WorkflowTasksTable({
     .join(' ');
 
   return (
-    <section className={panelClass} aria-labelledby="workflow-tasks-heading">
+    <>
+      <section className={panelClass} aria-labelledby="workflow-tasks-heading">
       <DetailPanelHeader title={content.projectDetail.sections.workflow} titleId="workflow-tasks-heading">
         <DetailPanelHeaderActions>
           <DetailPanelSectionSearch
@@ -174,11 +252,19 @@ export function WorkflowTasksTable({
               projectSlug={project.summary.slug}
               projectDocuments={project.documents}
               group={group}
+              manualStageCompletions={project.manualStageCompletions}
               docCounts={docCounts}
               isApiSource={isApiSource}
               onTaskUpdated={onTaskUpdated}
               onTaskError={onTaskError}
               onRequestArchiveTask={canDelete ? onRequestArchiveTask : undefined}
+              onRequestToggleManualStageCompletion={
+                canCreate
+                  ? (stageSlug, action, stageLabel) =>
+                      setPendingStageToggle({ stageSlug, action, stageLabel })
+                  : undefined
+              }
+              markStageCompleteBusy={markStageToggleBusy}
               forceExpanded={draftStageSlug === group.stageSlug}
               draftRow={
                 draftStageSlug === group.stageSlug ? (
@@ -206,6 +292,40 @@ export function WorkflowTasksTable({
           </button>
         </div>
       ) : null}
-    </section>
+      </section>
+      <ConfirmModal
+        isOpen={pendingStageToggle != null}
+        onClose={() => {
+          if (markStageToggleBusy) return;
+          setPendingStageToggle(null);
+        }}
+        onConfirm={() => {
+          void handleConfirmStageToggle();
+        }}
+        title={
+          pendingStageToggle?.action === 'incomplete'
+            ? wf.markStageIncompleteConfirmTitle
+            : pendingStageToggle != null
+              ? (
+                  <>
+                    <strong>{pendingStageToggle.stageLabel}</strong>
+                    {' has no tasks. Are you sure you want to mark this stage complete?'}
+                  </>
+                )
+              : ''
+        }
+        titleClassName={
+          pendingStageToggle?.action === 'complete' ? confirmModalStyles.snackbarTitleMixed : undefined
+        }
+        confirmLabel={
+          pendingStageToggle?.action === 'incomplete'
+            ? wf.markStageIncomplete
+            : wf.markStageComplete
+        }
+        cancelLabel={wf.archiveTaskCancelLabel}
+        variant="primary"
+        hideIcon
+      />
+    </>
   );
 }

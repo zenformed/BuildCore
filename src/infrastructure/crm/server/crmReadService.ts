@@ -14,6 +14,7 @@ import {
   type DbCrmDocumentRow,
   type DbCrmMilestoneRow,
   type DbCrmProjectRow,
+  type DbCrmProjectStageCompletionRow,
   type DbCrmWorkflowTaskRow,
 } from '@/infrastructure/crm/mappers/mapCrmFromDb';
 import { loadCrmMemberMap } from './crmMemberMap';
@@ -59,6 +60,7 @@ function collectMemberIds(rows: {
   documents?: readonly DbCrmDocumentRow[];
   accountability?: readonly DbCrmAccountabilityRow[];
   budgetEntries?: readonly (DbCrmBudgetEntryRow & { created_by?: string | null })[];
+  stageCompletions?: readonly DbCrmProjectStageCompletionRow[];
 }): string[] {
   const ids = new Set<string>();
   for (const p of rows.projects ?? []) {
@@ -79,6 +81,9 @@ function collectMemberIds(rows: {
   for (const b of rows.budgetEntries ?? []) {
     if (b.assigned_to) ids.add(b.assigned_to);
     if (b.created_by) ids.add(b.created_by);
+  }
+  for (const completion of rows.stageCompletions ?? []) {
+    if (completion.completed_by) ids.add(completion.completed_by);
   }
   return [...ids];
 }
@@ -300,7 +305,7 @@ export async function getCrmProjectDetailBySlugForOrg(
 
   const project = projectData as unknown as DbCrmProjectRow;
 
-  const [tasksResult, documentsResult, milestonesResult, accountabilityResult, budgetResult, pipelineStages] =
+  const [tasksResult, documentsResult, milestonesResult, accountabilityResult, budgetResult, stageCompletionsResult, pipelineStages] =
     await Promise.all([
     supabase
       .from('crm_workflow_tasks')
@@ -337,6 +342,11 @@ export async function getCrmProjectDetailBySlugForOrg(
       .eq('project_id', project.id)
       .is('deleted_at', null)
       .order('created_at', { ascending: true }),
+    supabase
+      .from('crm_project_stage_completions')
+      .select('id, organization_id, project_id, stage_slug, completed_at, completed_by, source')
+      .eq('project_id', project.id)
+      .eq('organization_id', organizationId),
     loadOrganizationPipelineStageCatalog(supabase, organizationId),
   ]);
 
@@ -345,6 +355,7 @@ export async function getCrmProjectDetailBySlugForOrg(
   if (milestonesResult.error) throw new Error(milestonesResult.error.message);
   if (accountabilityResult.error) throw new Error(accountabilityResult.error.message);
   if (budgetResult.error) throw new Error(budgetResult.error.message);
+  if (stageCompletionsResult.error) throw new Error(stageCompletionsResult.error.message);
 
   timings.parallelCollectionsMs = endTimer();
   endTimer = startCrmReadPerfTimer();
@@ -354,10 +365,18 @@ export async function getCrmProjectDetailBySlugForOrg(
   const milestones = (milestonesResult.data ?? []) as DbCrmMilestoneRow[];
   const accountability = (accountabilityResult.data ?? []) as DbCrmAccountabilityRow[];
   const budgetEntries = (budgetResult.data ?? []) as DbCrmBudgetEntryRow[];
+  const manualStageCompletions = (stageCompletionsResult.data ?? []) as DbCrmProjectStageCompletionRow[];
 
   const memberById = await loadCrmMemberMap(
     supabase,
-    collectMemberIds({ projects: [project], workflowTasks, documents, accountability, budgetEntries }),
+    collectMemberIds({
+      projects: [project],
+      workflowTasks,
+      documents,
+      accountability,
+      budgetEntries,
+      stageCompletions: manualStageCompletions,
+    }),
     { organizationId }
   );
 
@@ -367,6 +386,7 @@ export async function getCrmProjectDetailBySlugForOrg(
   return mapDbProjectDetail({
     project,
     workflowTasks,
+    manualStageCompletions,
     documents,
     milestones,
     accountability,

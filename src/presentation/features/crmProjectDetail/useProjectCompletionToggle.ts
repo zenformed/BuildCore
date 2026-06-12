@@ -73,13 +73,17 @@ export function useProjectCompletionToggle(
   }, [completionConfirm, onRefresh, project.summary.slug, c.markCompleteFailed]);
 
   const requestMarkComplete = useCallback(() => {
-    const stageStatuses = listWorkflowStageCompletionStatuses(project.workflowTasks, stages);
+    const stageStatuses = listWorkflowStageCompletionStatuses({
+      workflowTasks: project.workflowTasks,
+      stages,
+      manualStageCompletions: project.manualStageCompletions,
+    });
     if (stageStatuses.some((stage) => !stage.isComplete)) {
       setCompletionBlockedStageStatuses(stageStatuses);
       return;
     }
     setCompletionConfirm('complete');
-  }, [project.workflowTasks, stages]);
+  }, [project.workflowTasks, project.manualStageCompletions, stages]);
 
   return {
     project,

@@ -1,11 +1,12 @@
 'use client';
 
-import type { ReactElement } from 'react';
-import type { CrmWorkflowTask } from '@/domain/crm';
+import type { ReactElement, MouseEvent } from 'react';
+import type { CrmProjectStageCompletion, CrmWorkflowTask, PipelineStageSlug } from '@/domain/crm';
+import { isStageManuallyCompleted } from '@/domain/crm/projectStageCompletion';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
 import {
-  areAllStageTasksDone,
   formatWorkflowStageTaskCompletionPercent,
+  isWorkflowStageGroupComplete,
   summarizeWorkflowStageTaskCompletion,
   type WorkflowTaskStageGroup,
 } from '@/presentation/features/crmProjectDetail/workflowTaskGroups';
@@ -14,15 +15,24 @@ import { CrmProjectStatusCircleIcon } from '@/presentation/components/crmShared/
 import { WorkflowTaskInlineRow } from './WorkflowTaskInlineRow';
 import styles from './ProjectDetail.module.css';
 
+export type ManualStageCompletionToggleAction = 'complete' | 'incomplete';
+
 export type WorkflowStageTaskGroupProps = {
   projectSlug: string;
   projectDocuments: readonly import('@/domain/crm').CrmDocumentMetadata[];
   group: WorkflowTaskStageGroup;
+  manualStageCompletions: readonly CrmProjectStageCompletion[];
   docCounts: ReadonlyMap<string, number>;
   isApiSource: boolean;
   onTaskUpdated: (task: CrmWorkflowTask) => Promise<void>;
   onTaskError?: (message: string) => void;
   onRequestArchiveTask?: (task: CrmWorkflowTask) => void;
+  onRequestToggleManualStageCompletion?: (
+    stageSlug: PipelineStageSlug,
+    action: ManualStageCompletionToggleAction,
+    stageLabel: string
+  ) => void;
+  markStageCompleteBusy?: boolean;
   /** When false, stage is always expanded with a static header (e.g. "View all" modal). */
   collapsible?: boolean;
   /** Keep the stage expanded while composing an inline draft row. */
@@ -34,11 +44,14 @@ export function WorkflowStageTaskGroup({
   projectSlug,
   projectDocuments,
   group,
+  manualStageCompletions,
   docCounts,
   isApiSource,
   onTaskUpdated,
   onTaskError,
   onRequestArchiveTask,
+  onRequestToggleManualStageCompletion,
+  markStageCompleteBusy = false,
   collapsible = true,
   forceExpanded = false,
   draftRow = null,
@@ -57,22 +70,65 @@ export function WorkflowStageTaskGroup({
   const gridClass = group.isPaymentsGroup
     ? `${styles.workflowGrid} ${styles.workflowGridPayments}`
     : styles.workflowGrid;
-  const allTasksDone = areAllStageTasksDone(group.tasks);
-  const { totalCount, percentComplete } = summarizeWorkflowStageTaskCompletion(group.tasks);
+  const stageIsComplete = isWorkflowStageGroupComplete(
+    group.stageSlug,
+    group.tasks,
+    manualStageCompletions
+  );
+  const { totalCount, percentComplete } = summarizeWorkflowStageTaskCompletion(
+    group.tasks,
+    manualStageCompletions,
+    group.stageSlug
+  );
   const completionPercentLabel = formatWorkflowStageTaskCompletionPercent(percentComplete);
   const taskCountText =
     totalCount === 1 ? `1 ${wf.taskSingular}` : `${totalCount} ${wf.taskPlural}`;
   const showEmptyRow = group.tasks.length === 0 && draftRow == null;
+  const isEmptyStage = showEmptyRow;
+  const isManuallyCompleted =
+    isEmptyStage && isStageManuallyCompleted(group.stageSlug, manualStageCompletions);
+  const canToggleManualStageCompletion =
+    isEmptyStage && onRequestToggleManualStageCompletion != null;
+  const manualToggleAction: ManualStageCompletionToggleAction = isManuallyCompleted
+    ? 'incomplete'
+    : 'complete';
+  const manualToggleConfirmTitle =
+    manualToggleAction === 'complete'
+      ? wf.markStageCompleteConfirmTitle(group.stageLabel)
+      : wf.markStageIncompleteConfirmTitle;
+
+  const handleToggleManualStageCompletionClick = (event: MouseEvent<HTMLButtonElement>): void => {
+    event.stopPropagation();
+    if (markStageCompleteBusy || !canToggleManualStageCompletion) return;
+    onRequestToggleManualStageCompletion?.(group.stageSlug, manualToggleAction, group.stageLabel);
+  };
+
+  const completeIcon = (
+    <CrmProjectStatusCircleIcon kind="complete" active={stageIsComplete} size={18} />
+  );
 
   const stageTitle = (
     <span className={styles.stageGroupTitle}>
-      <span
-        className={styles.stageGroupCompleteIcon}
-        title={allTasksDone ? wf.stageAllDone : wf.stageNotComplete}
-        aria-label={allTasksDone ? wf.stageAllDone : wf.stageNotComplete}
-      >
-        <CrmProjectStatusCircleIcon kind="complete" active={allTasksDone} size={18} />
-      </span>
+      {canToggleManualStageCompletion ? (
+        <button
+          type="button"
+          className={styles.stageGroupCompleteIconBtn}
+          title={manualToggleConfirmTitle}
+          aria-label={manualToggleConfirmTitle}
+          disabled={markStageCompleteBusy}
+          onClick={handleToggleManualStageCompletionClick}
+        >
+          {completeIcon}
+        </button>
+      ) : (
+        <span
+          className={styles.stageGroupCompleteIcon}
+          title={stageIsComplete ? wf.stageAllDone : wf.stageNotComplete}
+          aria-label={stageIsComplete ? wf.stageAllDone : wf.stageNotComplete}
+        >
+          {completeIcon}
+        </span>
+      )}
       <span className={styles.stageGroupName}>{group.stageLabel}</span>
       {collapsible ? (
         <span className={styles.stageGroupChevronWrap} aria-hidden>

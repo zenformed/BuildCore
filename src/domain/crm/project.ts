@@ -5,6 +5,7 @@ import type { CrmContact } from './contact';
 import type { CrmDocumentMetadata } from './document';
 import type { CrmMilestonePaymentSummary } from './milestonePayment';
 import type { CrmProjectAddress } from './projectAddress';
+import type { CrmProjectStageCompletion } from './projectStageCompletion';
 import type { PipelineStageSlug } from './pipelineStage';
 import type { CrmTeamMemberRef } from './teamMember';
 import type { CrmIndustry } from './industry';
@@ -53,6 +54,7 @@ export type CrmProjectDetail = {
   readonly notes: string | null;
   readonly stageProgress: CrmStageProgress;
   readonly workflowTasks: readonly CrmWorkflowTask[];
+  readonly manualStageCompletions: readonly CrmProjectStageCompletion[];
   readonly documents: readonly CrmDocumentMetadata[];
   readonly accountabilityLog: readonly CrmAccountabilityAction[];
   readonly milestonePayment: CrmMilestonePaymentSummary;

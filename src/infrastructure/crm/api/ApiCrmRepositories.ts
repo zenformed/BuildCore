@@ -287,6 +287,43 @@ export class ApiCrmProjectDetailRepository implements ICrmProjectDetailRepositor
 
   }
 
+  async markStageCompleteManual(
+    slug: string,
+    stageSlug: import('@/domain/crm').PipelineStageSlug
+  ): Promise<CrmProjectDetail | null> {
+    clearApiCrmDetailCache();
+
+    try {
+      const detail = await crmApiPostJson<CrmProjectDetail>(
+        `/api/crm/projects/${encodeURIComponent(slug.trim())}/stages/${encodeURIComponent(stageSlug)}/complete`,
+        {}
+      );
+      setApiCrmDetailCache(slug.trim(), detail);
+      return detail;
+    } catch (err) {
+      if (err instanceof CrmApiError && err.status === 404) return null;
+      throw err;
+    }
+  }
+
+  async clearStageManualCompletion(
+    slug: string,
+    stageSlug: import('@/domain/crm').PipelineStageSlug
+  ): Promise<CrmProjectDetail | null> {
+    clearApiCrmDetailCache();
+
+    try {
+      const detail = await crmApiDeleteJson<CrmProjectDetail>(
+        `/api/crm/projects/${encodeURIComponent(slug.trim())}/stages/${encodeURIComponent(stageSlug)}/complete`
+      );
+      setApiCrmDetailCache(slug.trim(), detail);
+      return detail;
+    } catch (err) {
+      if (err instanceof CrmApiError && err.status === 404) return null;
+      throw err;
+    }
+  }
+
 }
 
 

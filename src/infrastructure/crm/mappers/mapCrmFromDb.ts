@@ -14,6 +14,7 @@ import {
   type CrmMilestoneStatus,
   type CrmPriority,
   type CrmProjectDetail,
+  type CrmProjectStageCompletion,
   type CrmProjectSummary,
   type CrmTeamMemberRef,
   type CrmIndustry,
@@ -146,6 +147,16 @@ export type DbCrmBudgetEntryRow = {
   documents_required?: boolean | null;
   created_at: string;
   updated_at: string;
+};
+
+export type DbCrmProjectStageCompletionRow = {
+  id: string;
+  organization_id: string;
+  project_id: string;
+  stage_slug: string;
+  completed_at: string;
+  completed_by: string | null;
+  source: string;
 };
 
 export type DbProfileRow = {
@@ -494,9 +505,23 @@ export function mapDbAccountability(
   };
 }
 
+export function mapDbProjectStageCompletion(
+  row: DbCrmProjectStageCompletionRow,
+  memberById: ReadonlyMap<string, CrmTeamMemberRef>
+): CrmProjectStageCompletion {
+  return {
+    stageSlug: asPipelineStageSlug(row.stage_slug),
+    completedAt: row.completed_at,
+    completedBy:
+      row.completed_by != null ? (memberById.get(row.completed_by) ?? null) : null,
+    source: row.source === 'manual' ? 'manual' : 'manual',
+  };
+}
+
 export function mapDbProjectDetail(input: {
   project: DbCrmProjectRow;
   workflowTasks: readonly DbCrmWorkflowTaskRow[];
+  manualStageCompletions?: readonly DbCrmProjectStageCompletionRow[];
   documents: readonly DbCrmDocumentRow[];
   milestones: readonly DbCrmMilestoneRow[];
   accountability: readonly DbCrmAccountabilityRow[];
@@ -544,6 +569,9 @@ export function mapDbProjectDetail(input: {
       completedStageSlugs: completedStagesThrough(summary.currentStageSlug, input.pipelineStages),
     },
     workflowTasks,
+    manualStageCompletions: (input.manualStageCompletions ?? []).map((row) =>
+      mapDbProjectStageCompletion(row, input.memberById)
+    ),
     documents: input.documents.map((row) =>
       mapDbDocument(row, stageSlugByTaskId, input.memberById)
     ),

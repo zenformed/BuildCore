@@ -11,6 +11,10 @@ import {
   isWorkflowStageCompleteByTasks,
   resolveActiveWorkflowPipelineStages,
 } from '@/domain/buildcore/projectPipelineProgress';
+import {
+  resolveWorkflowStageCompletionState,
+  type CrmProjectStageCompletion,
+} from '@/domain/crm/projectStageCompletion';
 import { formatWorkflowStageLabel } from '@/presentation/features/crmProjectDetail/crmProjectDetailFormatters';
 import { sortWorkflowTasksForDisplay } from './workflowTaskSort';
 
@@ -21,13 +25,45 @@ export type WorkflowStageTaskCompletionSummary = {
 };
 
 export function summarizeWorkflowStageTaskCompletion(
-  tasks: readonly CrmWorkflowTask[]
+  tasks: readonly CrmWorkflowTask[],
+  manualCompletions: readonly Pick<CrmProjectStageCompletion, 'stageSlug'>[] = [],
+  stageSlug?: PipelineStageSlug
 ): WorkflowStageTaskCompletionSummary {
+  if (stageSlug != null) {
+    const state = resolveWorkflowStageCompletionState({
+      stageSlug,
+      tasks,
+      manualCompletions,
+    });
+    const doneCount = tasks.filter((task) => task.status === 'done').length;
+    return {
+      totalCount: state.taskCount,
+      doneCount,
+      percentComplete: state.percentComplete,
+    };
+  }
+
   const totalCount = tasks.length;
   const doneCount = tasks.filter((task) => task.status === 'done').length;
   const percentComplete = totalCount === 0 ? 0 : (doneCount / totalCount) * 100;
 
   return { totalCount, doneCount, percentComplete };
+}
+
+export function isWorkflowStageGroupComplete(
+  stageSlug: PipelineStageSlug,
+  tasks: readonly CrmWorkflowTask[],
+  manualCompletions: readonly Pick<CrmProjectStageCompletion, 'stageSlug'>[] = []
+): boolean {
+  return resolveWorkflowStageCompletionState({
+    stageSlug,
+    tasks,
+    manualCompletions,
+  }).isComplete;
+}
+
+export function areAllStageTasksDone(tasks: readonly CrmWorkflowTask[]): boolean {
+  return isWorkflowStageCompleteByTasks(tasks);
 }
 
 export function formatWorkflowStageTaskCompletionPercent(percentComplete: number): string {
@@ -36,10 +72,6 @@ export function formatWorkflowStageTaskCompletionPercent(percentComplete: number
 
   const rounded = Math.round(percentComplete * 10) / 10;
   return `${Number.isInteger(rounded) ? rounded.toFixed(0) : rounded.toFixed(1)}%`;
-}
-
-export function areAllStageTasksDone(tasks: readonly CrmWorkflowTask[]): boolean {
-  return isWorkflowStageCompleteByTasks(tasks);
 }
 
 export type WorkflowTaskStageGroup = {

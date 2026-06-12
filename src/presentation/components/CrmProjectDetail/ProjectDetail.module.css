@@ -3858,6 +3858,22 @@
   align-items: center;
 }
 
+.stageGroupCompleteIconBtn {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  line-height: 0;
+}
+
+.stageGroupCompleteIconBtn:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
 .stageGroupName {
   font-size: 0.8125rem;
   font-weight: 600;

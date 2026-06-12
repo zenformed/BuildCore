@@ -9,6 +9,7 @@ import {
   type CrmMilestonePaymentSummary,
   type CrmPriority,
   type CrmProjectDetail,
+  type CrmProjectStageCompletion,
   type CrmProjectSummary,
   type CrmIndustry,
   type CrmWorkflowTask,
@@ -42,6 +43,7 @@ export type BuildMockCrmProjectInput = {
   readonly completedById?: string | null;
   readonly primaryPhotoPath?: string | null;
   readonly workflowTasks?: readonly CrmWorkflowTask[];
+  readonly manualStageCompletions?: readonly CrmProjectStageCompletion[];
   readonly documents?: readonly CrmDocumentMetadata[];
   readonly accountabilityLog?: readonly CrmAccountabilityAction[];
   readonly milestonePayment?: CrmMilestonePaymentSummary;
@@ -359,6 +361,7 @@ export function buildMockCrmProjectDetail(input: BuildMockCrmProjectInput): CrmP
       completedStageSlugs: completedStagesThrough(input.currentStageSlug),
     },
     workflowTasks,
+    manualStageCompletions: input.manualStageCompletions ?? [],
     documents: [...(input.documents ?? defaultDocuments(input.currentStageSlug, assignedTo, reviewer))],
     accountabilityLog: [
       ...(input.accountabilityLog ?? defaultAccountability(assignedTo, input.currentStageSlug, input.name)),
