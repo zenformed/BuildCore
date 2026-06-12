@@ -1,15 +1,52 @@
-import type { BuildCorePipelineStagesResponse } from '@/infrastructure/crm/server/pipelineStageService';
-import { parseBuildCorePipelineStagesJson } from '@/infrastructure/coreApi/parseBuildCorePipelineStagesJson';
+import type {
+  BuildCorePipelineStagesBothScopesResponse,
+  BuildCorePipelineStagesResponse,
+} from '@/infrastructure/crm/server/pipelineStageService';
+import type { PipelineStageScope } from '@/domain/buildcore/orgPipelineStages';
+import {
+  parseBuildCorePipelineStagesBothScopesJson,
+  parseBuildCorePipelineStagesJson,
+} from '@/infrastructure/coreApi/parseBuildCorePipelineStagesJson';
 import {
   buildCoreAdminFetchInit,
   buildCoreAdminFetchUrl,
 } from '@/infrastructure/coreApi/buildCoreAdminFetch';
 
-export async function fetchBuildCorePipelineStagesBff(
+export async function fetchBuildCorePipelineStagesBothScopesBff(
   accessToken: string
-): Promise<BuildCorePipelineStagesResponse> {
+): Promise<BuildCorePipelineStagesBothScopesResponse> {
   const res = await fetch(
     buildCoreAdminFetchUrl('/api/internal/organization/pipeline-stages'),
+    buildCoreAdminFetchInit(accessToken, { method: 'GET' })
+  );
+  let json: unknown;
+  try {
+    json = await res.json();
+  } catch {
+    throw new Error('Invalid workflow stages response.');
+  }
+  if (!res.ok) {
+    const message =
+      json != null && typeof json === 'object' && typeof (json as Record<string, unknown>).message === 'string'
+        ? String((json as Record<string, unknown>).message)
+        : 'Could not load workflow stages.';
+    throw new Error(message);
+  }
+  const parsed = parseBuildCorePipelineStagesBothScopesJson(json);
+  if (parsed == null) {
+    throw new Error('Invalid workflow stages response.');
+  }
+  return parsed;
+}
+
+export async function fetchBuildCorePipelineStagesBff(
+  accessToken: string,
+  scope: PipelineStageScope
+): Promise<BuildCorePipelineStagesResponse> {
+  const res = await fetch(
+    buildCoreAdminFetchUrl(
+      `/api/internal/organization/pipeline-stages?scope=${encodeURIComponent(scope)}`
+    ),
     buildCoreAdminFetchInit(accessToken, { method: 'GET' })
   );
   let json: unknown;
@@ -60,12 +97,13 @@ async function mutateBuildCorePipelineStagesBff(
 
 export async function createBuildCorePipelineStageBff(
   accessToken: string,
-  label: string
+  label: string,
+  scope: PipelineStageScope
 ): Promise<BuildCorePipelineStagesResponse> {
   return mutateBuildCorePipelineStagesBff(accessToken, '/api/internal/organization/pipeline-stages', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ label }),
+    body: JSON.stringify({ label, scope }),
   });
 }
 
@@ -98,7 +136,8 @@ export async function deleteBuildCorePipelineStageBff(
 
 export async function reorderBuildCorePipelineStagesBff(
   accessToken: string,
-  orderedStageIds: readonly string[]
+  orderedStageIds: readonly string[],
+  scope: PipelineStageScope
 ): Promise<BuildCorePipelineStagesResponse> {
   return mutateBuildCorePipelineStagesBff(
     accessToken,
@@ -106,7 +145,7 @@ export async function reorderBuildCorePipelineStagesBff(
     {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ orderedStageIds }),
+      body: JSON.stringify({ orderedStageIds, scope }),
     }
   );
 }

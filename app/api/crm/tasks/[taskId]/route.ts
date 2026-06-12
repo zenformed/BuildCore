@@ -51,9 +51,39 @@ export async function PATCH(
     return NextResponse.json({ error: 'invalid_body', message: 'JSON body required' }, { status: 400 });
   }
 
+  const { data: taskRow, error: taskError } = await auth.context.supabase
+    .from('crm_workflow_tasks')
+    .select('project_id')
+    .eq('organization_id', auth.context.organizationId)
+    .eq('id', taskId)
+    .is('archived_at', null)
+    .maybeSingle();
+
+  if (taskError != null) {
+    return NextResponse.json({ error: 'internal_error', message: taskError.message }, { status: 500 });
+  }
+  if (taskRow == null) {
+    return NextResponse.json({ error: 'not_found', message: 'Task not found' }, { status: 404 });
+  }
+
+  const { data: projectRow, error: projectError } = await auth.context.supabase
+    .from('crm_projects')
+    .select('parent_project_id')
+    .eq('organization_id', auth.context.organizationId)
+    .eq('id', taskRow.project_id)
+    .maybeSingle();
+
+  if (projectError != null) {
+    return NextResponse.json({ error: 'internal_error', message: projectError.message }, { status: 500 });
+  }
+  if (projectRow == null) {
+    return NextResponse.json({ error: 'not_found', message: 'Task not found' }, { status: 404 });
+  }
+
   const stageCatalog = await loadOrganizationPipelineStageCatalog(
     auth.context.supabase,
-    auth.context.organizationId
+    auth.context.organizationId,
+    projectRow.parent_project_id != null ? 'subproject' : 'project'
   );
   const validated = validateUpdateWorkflowTaskBody(body, {
     allowedStageSlugs: pipelineStageSlugSet(stageCatalog),

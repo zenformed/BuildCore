@@ -436,7 +436,11 @@ export async function getCrmProjectDetailBySlugForOrg(
       .select('id, organization_id, project_id, stage_slug, completed_at, completed_by, source')
       .eq('project_id', project.id)
       .eq('organization_id', organizationId),
-    loadOrganizationPipelineStageCatalog(supabase, organizationId),
+    loadOrganizationPipelineStageCatalog(
+      supabase,
+      organizationId,
+      project.parent_project_id != null ? 'subproject' : 'project'
+    ),
   ]);
 
   if (tasksResult.error) throw new Error(tasksResult.error.message);

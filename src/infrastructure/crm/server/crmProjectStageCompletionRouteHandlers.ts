@@ -110,9 +110,11 @@ async function resolveManualStageCompletionRequest(
     };
   }
 
+  const stageScope = params.subSlug != null ? 'subproject' : 'project';
   const stageCatalog = await loadOrganizationPipelineStageCatalog(
     auth.context.supabase,
-    auth.context.organizationId
+    auth.context.organizationId,
+    stageScope
   );
   if (!isKnownPipelineStageSlug(stageSlugRaw, stageCatalog)) {
     return {

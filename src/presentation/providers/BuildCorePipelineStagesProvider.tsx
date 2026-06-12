@@ -12,39 +12,76 @@ import {
   type ReactNode,
 } from 'react';
 import { DEFAULT_PIPELINE_STAGES, type PipelineStage } from '@/domain/crm/pipelineStage';
-import type { OrgPipelineStageRecord } from '@/domain/buildcore/orgPipelineStages';
-import { fetchBuildCorePipelineStagesBff } from '@/infrastructure/coreApi/buildCorePipelineStagesBff';
-import type { BuildCorePipelineStagesResponse } from '@/infrastructure/crm/server/pipelineStageService';
+import {
+  defaultOrgPipelineStageRecords,
+  resolvePipelineStageScopeForProject,
+  type OrgPipelineStageRecord,
+  type PipelineStageScope,
+} from '@/domain/buildcore/orgPipelineStages';
+import { fetchBuildCorePipelineStagesBothScopesBff } from '@/infrastructure/coreApi/buildCorePipelineStagesBff';
+import type {
+  BuildCorePipelineStagesBothScopesResponse,
+  BuildCorePipelineStagesResponse,
+} from '@/infrastructure/crm/server/pipelineStageService';
 import { runtimeModes } from '@/infrastructure/config/runtimeModes';
 import { env } from '@/infrastructure/config/env';
 import { useBuildCoreDashboardContext } from '@/presentation/providers/BuildCoreDashboardProvider';
 
+type ScopedPipelineStagesState = {
+  readonly project: BuildCorePipelineStagesResponse;
+  readonly subproject: BuildCorePipelineStagesResponse;
+  readonly canManage: boolean;
+};
+
 type BuildCorePipelineStagesContextValue = {
-  readonly stages: readonly OrgPipelineStageRecord[];
-  readonly catalog: readonly PipelineStage[];
+  readonly getStages: (scope: PipelineStageScope) => readonly OrgPipelineStageRecord[];
+  readonly getCatalog: (scope: PipelineStageScope) => readonly PipelineStage[];
+  readonly catalogForProject: (input: { readonly parentProjectId: string | null }) => readonly PipelineStage[];
   readonly canManage: boolean;
   readonly isLoading: boolean;
   readonly loadError: string | null;
   readonly refetch: () => Promise<void>;
-  readonly applyServerResponse: (response: BuildCorePipelineStagesResponse) => void;
+  readonly applyServerResponse: (
+    scope: PipelineStageScope,
+    response: BuildCorePipelineStagesResponse
+  ) => void;
 };
 
 const BuildCorePipelineStagesContext = createContext<BuildCorePipelineStagesContextValue | null>(
   null
 );
 
-const DEFAULT_RESPONSE: BuildCorePipelineStagesResponse = {
-  stages: DEFAULT_PIPELINE_STAGES.map((stage, index) => ({
-    id: `mock-stage-${stage.slug}`,
-    organizationId: 'mock-org',
-    slug: stage.slug,
-    label: stage.label,
-    sortOrder: index + 1,
-    isActive: true,
-  })),
-  catalog: DEFAULT_PIPELINE_STAGES,
-  canManage: true,
-};
+function buildDefaultScopedState(): ScopedPipelineStagesState {
+  return {
+    project: {
+      scope: 'project',
+      stages: defaultOrgPipelineStageRecords('mock-org', 'project'),
+      catalog: DEFAULT_PIPELINE_STAGES,
+      canManage: true,
+    },
+    subproject: {
+      scope: 'subproject',
+      stages: defaultOrgPipelineStageRecords('mock-org', 'subproject'),
+      catalog: DEFAULT_PIPELINE_STAGES,
+      canManage: true,
+    },
+    canManage: true,
+  };
+}
+
+const DEFAULT_STATE = buildDefaultScopedState();
+
+function mergeScopedResponse(
+  current: ScopedPipelineStagesState,
+  scope: PipelineStageScope,
+  response: BuildCorePipelineStagesResponse
+): ScopedPipelineStagesState {
+  return {
+    ...current,
+    [scope]: response,
+    canManage: response.canManage,
+  };
+}
 
 export function BuildCorePipelineStagesProvider({
   children,
@@ -52,21 +89,26 @@ export function BuildCorePipelineStagesProvider({
   children: ReactNode;
 }): ReactElement {
   const { getAccessToken } = useBuildCoreDashboardContext();
-  const [response, setResponse] = useState<BuildCorePipelineStagesResponse | null>(() =>
-    !env.isSaasMode || runtimeModes.useMockAuth() ? DEFAULT_RESPONSE : null
+  const [state, setState] = useState<ScopedPipelineStagesState | null>(() =>
+    !env.isSaasMode || runtimeModes.useMockAuth() ? DEFAULT_STATE : null
   );
   const [isLoading, setIsLoading] = useState(() => env.isSaasMode && !runtimeModes.useMockAuth());
   const [loadError, setLoadError] = useState<string | null>(null);
   const loadGenerationRef = useRef(0);
 
-  const applyServerResponse = useCallback((next: BuildCorePipelineStagesResponse) => {
-    setResponse(next);
-    setLoadError(null);
-  }, []);
+  const applyServerResponse = useCallback(
+    (scope: PipelineStageScope, response: BuildCorePipelineStagesResponse) => {
+      setState((current) =>
+        mergeScopedResponse(current ?? DEFAULT_STATE, scope, response)
+      );
+      setLoadError(null);
+    },
+    []
+  );
 
   const refetch = useCallback(async () => {
     if (!env.isSaasMode || runtimeModes.useMockAuth()) {
-      setResponse(DEFAULT_RESPONSE);
+      setState(DEFAULT_STATE);
       setIsLoading(false);
       setLoadError(null);
       return;
@@ -74,7 +116,7 @@ export function BuildCorePipelineStagesProvider({
 
     const token = getAccessToken();
     if (!token) {
-      setResponse(DEFAULT_RESPONSE);
+      setState(DEFAULT_STATE);
       setIsLoading(false);
       return;
     }
@@ -85,13 +127,18 @@ export function BuildCorePipelineStagesProvider({
     setLoadError(null);
 
     try {
-      const next = await fetchBuildCorePipelineStagesBff(token);
+      const next: BuildCorePipelineStagesBothScopesResponse =
+        await fetchBuildCorePipelineStagesBothScopesBff(token);
       if (loadGenerationRef.current !== generation) return;
-      setResponse(next);
+      setState({
+        project: next.project,
+        subproject: next.subproject,
+        canManage: next.canManage,
+      });
     } catch (err) {
       if (loadGenerationRef.current !== generation) return;
       setLoadError(err instanceof Error ? err.message : 'Could not load workflow stages.');
-      setResponse(DEFAULT_RESPONSE);
+      setState(DEFAULT_STATE);
     } finally {
       if (loadGenerationRef.current === generation) {
         setIsLoading(false);
@@ -103,17 +150,21 @@ export function BuildCorePipelineStagesProvider({
     void refetch();
   }, [refetch]);
 
+  const resolvedState = state ?? DEFAULT_STATE;
+
   const value = useMemo<BuildCorePipelineStagesContextValue>(
     () => ({
-      stages: response?.stages ?? DEFAULT_RESPONSE.stages,
-      catalog: response?.catalog ?? DEFAULT_PIPELINE_STAGES,
-      canManage: response?.canManage ?? false,
+      getStages: (scope) => resolvedState[scope].stages,
+      getCatalog: (scope) => resolvedState[scope].catalog,
+      catalogForProject: (input) =>
+        resolvedState[resolvePipelineStageScopeForProject(input)].catalog,
+      canManage: resolvedState.canManage,
       isLoading,
       loadError,
       refetch,
       applyServerResponse,
     }),
-    [applyServerResponse, isLoading, loadError, refetch, response]
+    [applyServerResponse, isLoading, loadError, refetch, resolvedState]
   );
 
   return (

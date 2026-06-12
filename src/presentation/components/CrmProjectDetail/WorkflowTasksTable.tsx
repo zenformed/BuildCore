@@ -88,7 +88,8 @@ export function WorkflowTasksTable({
   );
   const wf = content.projectDetail.workflow;
   const { permissions, isLoading, isReady } = useBuildCoreWorkflowTaskAccess();
-  const { catalog } = useBuildCorePipelineStages();
+  const { catalogForProject } = useBuildCorePipelineStages();
+  const catalog = catalogForProject({ parentProjectId: project.summary.parentProjectId });
   const canView = isReady && permissions.canView;
   const canCreate = isReady && permissions.canCreate;
   const canDelete = isReady && permissions.canDelete;

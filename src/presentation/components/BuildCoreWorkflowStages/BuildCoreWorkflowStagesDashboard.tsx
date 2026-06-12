@@ -9,7 +9,7 @@ import projectStyles from '../CrmProjectDetail/ProjectDetail.module.css';
 import styles from './BuildCoreWorkflowStages.module.css';
 
 function BuildCoreWorkflowStagesDashboardContent(): ReactElement {
-  const { isLoading, loadError } = useBuildCoreWorkflowStagesPage();
+  const { isLoading, loadError } = useBuildCoreWorkflowStagesPage('project');
   const copy = content.workflowStages;
 
   if (isLoading) {
@@ -38,7 +38,7 @@ function BuildCoreWorkflowStagesDashboardContent(): ReactElement {
       </header>
 
       <div className={styles.pageBody}>
-        <BuildCoreWorkflowStagesList />
+        <BuildCoreWorkflowStagesList scope="project" />
       </div>
     </div>
   );

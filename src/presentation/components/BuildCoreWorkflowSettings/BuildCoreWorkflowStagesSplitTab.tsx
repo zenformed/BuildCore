@@ -12,6 +12,7 @@ export function BuildCoreWorkflowStagesSplitTab(): ReactElement {
     <div className={styles.workflowStagesSplitTab}>
       <div className={styles.workflowStagesSplitColumn}>
         <BuildCoreWorkflowStagesList
+          scope="project"
           embeddedInTab
           listTitle={columnCopy.projectStages}
           headingId="workflow-project-stages-heading"
@@ -19,6 +20,7 @@ export function BuildCoreWorkflowStagesSplitTab(): ReactElement {
       </div>
       <div className={styles.workflowStagesSplitColumn}>
         <BuildCoreWorkflowStagesList
+          scope="subproject"
           embeddedInTab
           listTitle={columnCopy.subprojectStages}
           headingId="workflow-subproject-stages-heading"

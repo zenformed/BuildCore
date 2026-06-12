@@ -64,9 +64,17 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     return NextResponse.json({ error: 'invalid_body', message: 'JSON body required' }, { status: 400 });
   }
 
+  const parentProjectId =
+    body != null && typeof body === 'object' && 'parentProjectId' in body
+      ? (body as CreateCrmProjectBody).parentProjectId
+      : undefined;
+  const stageScope =
+    parentProjectId != null && parentProjectId !== '' ? 'subproject' : 'project';
+
   const stageCatalog = await loadOrganizationPipelineStageCatalog(
     auth.context.supabase,
-    auth.context.organizationId
+    auth.context.organizationId,
+    stageScope
   );
   const validated = validateCreateCrmProjectBody(body, {
     allowedStageSlugs: pipelineStageSlugSet(stageCatalog),

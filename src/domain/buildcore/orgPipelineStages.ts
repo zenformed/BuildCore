@@ -3,10 +3,21 @@ import {
   type PipelineStage,
 } from '@/domain/crm/pipelineStage';
 import { PAYMENT_WORKFLOW_STAGE_SLUG } from '@/domain/crm/paymentWorkflow';
+import type { BuildCoreProjectTemplateScope } from '@/domain/crm/projectTemplateScope';
+export {
+  isBuildCoreProjectTemplateScope,
+  resolveProjectTemplateScopeForProject as resolvePipelineStageScopeForProject,
+} from '@/domain/crm/projectTemplateScope';
+
+/** Pipeline stage catalog scope — aligned with project template scope values. */
+export type PipelineStageScope = BuildCoreProjectTemplateScope;
+
+export const PIPELINE_STAGE_SCOPES: readonly PipelineStageScope[] = ['project', 'subproject'];
 
 export type OrgPipelineStageRecord = {
   readonly id: string;
   readonly organizationId: string;
+  readonly stageScope: PipelineStageScope;
   readonly slug: string;
   readonly label: string;
   readonly sortOrder: number;
@@ -97,10 +108,14 @@ export function orderPipelineStageIdsWithTerminalLast(
   return [...withoutTerminal, terminal.id];
 }
 
-export function defaultOrgPipelineStageRecords(organizationId: string): OrgPipelineStageRecord[] {
+export function defaultOrgPipelineStageRecords(
+  organizationId: string,
+  stageScope: PipelineStageScope = 'project'
+): OrgPipelineStageRecord[] {
   return DEFAULT_PIPELINE_STAGES.map((stage, index) => ({
-    id: `mock-stage-${stage.slug}`,
+    id: `mock-stage-${stageScope}-${stage.slug}`,
     organizationId,
+    stageScope,
     slug: stage.slug,
     label: stage.label,
     sortOrder: index + 1,

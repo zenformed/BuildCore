@@ -75,7 +75,8 @@ export function CrmProjectTableRow({
   isWorkflowProgressLoading = false,
 }: CrmProjectTableRowProps): ReactElement {
   const tableCopy = content.crm.table;
-  const { catalog } = useBuildCorePipelineStages();
+  const { getCatalog } = useBuildCorePipelineStages();
+  const catalog = getCatalog(variant === 'child' ? 'subproject' : 'project');
   const industrySubtitle = getProjectIndustrySubtitle(
     project.industry,
     project.customIndustry

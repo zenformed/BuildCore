@@ -4,7 +4,7 @@ import { canMarkProjectCompleteByWorkflowTasks } from '@/domain/buildcore/projec
 import { CRM_PROJECT_COMPLETE_STAGE_SLUG } from '@/domain/crm/projectCompletion';
 import { appendCrmAccountabilityEvent } from './crmAccountability';
 import { getCrmProjectDetailBySlugForOrg } from './crmReadService';
-import { loadOrganizationPipelineStageCatalog } from './pipelineStageService';
+import { loadOrganizationPipelineStageCatalogForProject } from './pipelineStageService';
 
 export class CrmProjectCompletionBlockedError extends Error {
   constructor(message = 'All workflow tasks must be done before marking this project complete') {
@@ -24,7 +24,11 @@ export async function setCrmProjectCompletionBySlugForOrg(
   if (existing == null) return null;
 
   if (complete) {
-    const pipelineStages = await loadOrganizationPipelineStageCatalog(supabase, organizationId);
+    const pipelineStages = await loadOrganizationPipelineStageCatalogForProject(
+      supabase,
+      organizationId,
+      existing.summary
+    );
     if (!canMarkProjectCompleteByWorkflowTasks({
       workflowTasks: existing.workflowTasks,
       stages: pipelineStages,

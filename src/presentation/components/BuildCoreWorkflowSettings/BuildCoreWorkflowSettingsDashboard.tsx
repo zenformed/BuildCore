@@ -2,7 +2,7 @@
 
 import type { ReactElement } from 'react';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
-import { useBuildCoreWorkflowStagesPage } from '@/presentation/features/buildCoreWorkflowStages/useBuildCoreWorkflowStagesPage';
+import { useBuildCorePipelineStages } from '@/presentation/providers/BuildCorePipelineStagesProvider';
 import { BuildCoreWorkflowSettingsAccessGate } from './BuildCoreWorkflowSettingsAccessGate';
 import { BuildCoreWorkflowSettingsFolderTabs } from './BuildCoreWorkflowSettingsFolderTabs';
 import projectStyles from '../CrmProjectDetail/ProjectDetail.module.css';
@@ -10,7 +10,7 @@ import stageStyles from '../BuildCoreWorkflowStages/BuildCoreWorkflowStages.modu
 import styles from './BuildCoreWorkflowSettings.module.css';
 
 function BuildCoreWorkflowSettingsDashboardContent(): ReactElement {
-  const { isLoading, loadError } = useBuildCoreWorkflowStagesPage();
+  const { isLoading, loadError } = useBuildCorePipelineStages();
   const copy = content.workflowSettings;
 
   if (isLoading) {

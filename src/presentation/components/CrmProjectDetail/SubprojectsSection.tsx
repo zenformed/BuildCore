@@ -58,7 +58,8 @@ export function SubprojectsSection(): ReactElement | null {
     useCrmProjectPaymentTasksIndex();
   const { workflowProgressInputIndex, isLoading: isWorkflowProgressLoading } =
     useCrmPaymentTasksIndexContext();
-  const { catalog: pipelineStageCatalog } = useBuildCorePipelineStages();
+  const { getCatalog } = useBuildCorePipelineStages();
+  const pipelineStageCatalog = getCatalog('subproject');
   const rows = useMemo(
     () => filterSubprojects(childSummaries?.allRows ?? [], searchQuery),
     [childSummaries?.allRows, searchQuery]

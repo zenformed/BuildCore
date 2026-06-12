@@ -8,7 +8,8 @@ import { ProjectProgressPercent } from './ProjectProgressPercent';
 
 export function ProjectDetailHeaderProgress(): ReactElement | null {
   const { project, isMemberRole } = useProjectDetailShell();
-  const { catalog } = useBuildCorePipelineStages();
+  const { catalogForProject } = useBuildCorePipelineStages();
+  const catalog = catalogForProject({ parentProjectId: project.summary.parentProjectId });
   const progress = useMemo(() => {
     if (isMemberRole) {
       return null;

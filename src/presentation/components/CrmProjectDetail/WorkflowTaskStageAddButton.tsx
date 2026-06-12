@@ -5,6 +5,7 @@ import { useRef, useState } from 'react';
 import type { PipelineStageSlug } from '@/domain/crm';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
 import { resolveOpsPipelineStages } from '@/presentation/features/crmProjectDetail/workflowTaskGroups';
+import { useProjectDetailShell } from '@/presentation/features/crmProjectDetail/ProjectDetailShellContext';
 import { useBuildCorePipelineStages } from '@/presentation/providers/BuildCorePipelineStagesProvider';
 import { DetailPanelHeaderButton } from './DetailPanelHeaderButton';
 import { WorkflowInlineMenu } from './WorkflowInlineMenu';
@@ -20,7 +21,9 @@ export function WorkflowTaskStageAddButton({
   onSelectStage,
 }: WorkflowTaskStageAddButtonProps): ReactElement {
   const wf = content.projectDetail.workflow;
-  const { catalog } = useBuildCorePipelineStages();
+  const { project } = useProjectDetailShell();
+  const { catalogForProject } = useBuildCorePipelineStages();
+  const catalog = catalogForProject({ parentProjectId: project.summary.parentProjectId });
   const opsStages = resolveOpsPipelineStages(catalog);
   const anchorRef = useRef<HTMLDivElement>(null);
   const [menuOpen, setMenuOpen] = useState(false);

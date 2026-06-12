@@ -5,7 +5,7 @@ import { listEmptyIncompleteWorkflowStages } from '@/domain/crm/projectStageComp
 import { resolveActiveWorkflowPipelineStages } from '@/domain/buildcore/projectPipelineProgress';
 import { appendCrmAccountabilityEvent } from './crmAccountability';
 import { resolveCrmProjectDetailForOrgRoute, type CrmProjectOrgRouteScope } from './resolveCrmProjectDetailForOrgRoute';
-import { loadOrganizationPipelineStageCatalog } from './pipelineStageService';
+import { loadOrganizationPipelineStageCatalogForProject } from './pipelineStageService';
 
 export class CrmProjectStageManualCompletionBlockedError extends Error {
   constructor(message = 'Only empty workflow stages can be marked complete manually') {
@@ -95,7 +95,11 @@ export async function markCrmProjectStageCompleteManualForOrg(
   );
   if (existing == null) return null;
 
-  const pipelineStages = await loadOrganizationPipelineStageCatalog(supabase, organizationId);
+  const pipelineStages = await loadOrganizationPipelineStageCatalogForProject(
+    supabase,
+    organizationId,
+    existing.summary
+  );
   const activeStageSlugs = new Set(
     resolveActiveWorkflowPipelineStages(pipelineStages).map((stage) => stage.slug)
   );
@@ -143,7 +147,11 @@ export async function markCrmProjectEmptyStagesCompleteBatchForOrg(
   );
   if (existing == null) return null;
 
-  const pipelineStages = await loadOrganizationPipelineStageCatalog(supabase, organizationId);
+  const pipelineStages = await loadOrganizationPipelineStageCatalogForProject(
+    supabase,
+    organizationId,
+    existing.summary
+  );
   const activeStageSlugs = new Set(
     resolveActiveWorkflowPipelineStages(pipelineStages).map((stage) => stage.slug)
   );
@@ -204,7 +212,11 @@ export async function clearCrmProjectStageManualCompletionForOrg(
   );
   if (existing == null) return null;
 
-  const pipelineStages = await loadOrganizationPipelineStageCatalog(supabase, organizationId);
+  const pipelineStages = await loadOrganizationPipelineStageCatalogForProject(
+    supabase,
+    organizationId,
+    existing.summary
+  );
   const activeStageSlugs = new Set(
     resolveActiveWorkflowPipelineStages(pipelineStages).map((stage) => stage.slug)
   );

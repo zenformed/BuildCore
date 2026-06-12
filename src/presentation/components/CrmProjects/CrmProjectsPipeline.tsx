@@ -81,7 +81,8 @@ export function CrmProjectsPipeline({
     onError: (message) => setToast({ kind: 'error', message }),
   });
 
-  const { catalog: pipelineStageCatalog } = useBuildCorePipelineStages();
+  const { getCatalog } = useBuildCorePipelineStages();
+  const pipelineStageCatalog = getCatalog('project');
 
   const {
     busyProjectId,

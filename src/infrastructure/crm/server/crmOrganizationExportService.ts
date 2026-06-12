@@ -57,14 +57,19 @@ export async function buildOrganizationExportXlsxForOrg(input: {
   organizationId: string;
   accessToken: string;
 }): Promise<Buffer> {
-  const [projects, projectTimestampsById, pipelineStages, teamMembers] = await Promise.all([
+  const [projects, projectTimestampsById, projectPipelineStages, subprojectPipelineStages, teamMembers] =
+    await Promise.all([
     listCrmProjectsForReportingForOrg(input.supabase, input.organizationId),
     loadCrmProjectTimestampIndexForOrg(input.supabase, input.organizationId),
-    loadOrganizationPipelineStageCatalog(input.supabase, input.organizationId),
+    loadOrganizationPipelineStageCatalog(input.supabase, input.organizationId, 'project'),
+    loadOrganizationPipelineStageCatalog(input.supabase, input.organizationId, 'subproject'),
     loadOrganizationTeamMembersForExport(input.accessToken),
   ]);
 
-  const stageLabelBySlug = new Map(pipelineStages.map((stage) => [stage.slug, stage.label]));
+  const stageLabelBySlug = new Map<string, string>([
+    ...projectPipelineStages.map((stage) => [stage.slug, stage.label] as const),
+    ...subprojectPipelineStages.map((stage) => [stage.slug, stage.label] as const),
+  ]);
   const workbook = buildOrganizationExportWorkbook({
     projects,
     projectTimestampsById,

@@ -7,6 +7,7 @@ import type { CrmProjectStageCompletion, CrmWorkflowTask } from '@/domain/crm';
 import { resolveWorkflowPipelineGraphState } from '@/domain/buildcore/projectPipelineProgress';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
 import { shortStageLabel } from '@/presentation/features/crmProjectDetail/crmProjectDetailFormatters';
+import { useProjectDetailShell } from '@/presentation/features/crmProjectDetail/ProjectDetailShellContext';
 import { useBuildCorePipelineStages } from '@/presentation/providers/BuildCorePipelineStagesProvider';
 import { PROJECT_DETAIL_STACK_BREAKPOINT_PX } from '@/presentation/features/crmProjectDetail/useProjectDetailStackedLayout';
 import styles from './ProjectDetail.module.css';
@@ -71,7 +72,9 @@ export function StageProgressBar({
   manualStageCompletions,
 }: StageProgressBarProps): ReactElement {
   const useShortLabels = useCompactPipelineLabels();
-  const { catalog } = useBuildCorePipelineStages();
+  const { project } = useProjectDetailShell();
+  const { catalogForProject } = useBuildCorePipelineStages();
+  const catalog = catalogForProject({ parentProjectId: project.summary.parentProjectId });
   const timelineRef = useRef<HTMLDivElement>(null);
   const trackRef = useRef<HTMLDivElement>(null);
   const nodeRefs = useRef<(HTMLSpanElement | null)[]>([]);

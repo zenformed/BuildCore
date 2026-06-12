@@ -112,7 +112,10 @@ function ProjectDetailShellBody({
     void refetchChildSummaries();
     void refetchRollupIndexes();
   }, [isParentOverview, parentRouteSlug, refetchChildSummaries, refetchRollupIndexes]);
-  const { catalog: pipelineStageCatalog } = useBuildCorePipelineStages();
+  const { catalogForProject } = useBuildCorePipelineStages();
+  const pipelineStageCatalog = catalogForProject({
+    parentProjectId: scopedProject.summary.parentProjectId,
+  });
   const completion = useProjectCompletionToggle(scopedProject, {
     stages: pipelineStageCatalog,
   });

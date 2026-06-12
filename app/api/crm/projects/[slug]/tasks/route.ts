@@ -17,6 +17,7 @@ import {
   type WorkflowTaskBody,
 } from '@/infrastructure/crm/server/validateWorkflowTaskBody';
 import { loadOrganizationPipelineStageCatalog } from '@/infrastructure/crm/server/pipelineStageService';
+import { getCrmProjectSummaryBySlugForOrg } from '@/infrastructure/crm/server/crmReadService';
 import {
   resolveBuildCoreWorkflowTaskAccessForUser,
   workflowTaskPermissionFlagsFromAccess,
@@ -101,9 +102,19 @@ export async function POST(
     return NextResponse.json({ error: 'invalid_body', message: 'JSON body required' }, { status: 400 });
   }
 
+  const projectSummary = await getCrmProjectSummaryBySlugForOrg(
+    auth.context.supabase,
+    auth.context.organizationId,
+    slug
+  );
+  if (projectSummary == null) {
+    return NextResponse.json({ error: 'not_found', message: 'Project not found' }, { status: 404 });
+  }
+
   const stageCatalog = await loadOrganizationPipelineStageCatalog(
     auth.context.supabase,
-    auth.context.organizationId
+    auth.context.organizationId,
+    projectSummary.parentProjectId != null ? 'subproject' : 'project'
   );
   const validated = validateCreateWorkflowTaskBody(body, {
     allowedStageSlugs: pipelineStageSlugSet(stageCatalog),

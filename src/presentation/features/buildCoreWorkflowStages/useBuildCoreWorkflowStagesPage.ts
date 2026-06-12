@@ -1,17 +1,18 @@
 'use client';
 
 import { useCallback, useState } from 'react';
+import type { PipelineStageScope } from '@/domain/buildcore/orgPipelineStages';
+import type { BuildCorePipelineStagesResponse } from '@/infrastructure/crm/server/pipelineStageService';
 import {
   createBuildCorePipelineStageBff,
   deleteBuildCorePipelineStageBff,
-  fetchBuildCorePipelineStagesBff,
   reorderBuildCorePipelineStagesBff,
   renameBuildCorePipelineStageBff,
 } from '@/infrastructure/coreApi/buildCorePipelineStagesBff';
 import { useBuildCoreDashboardContext } from '@/presentation/providers/BuildCoreDashboardProvider';
 import { useBuildCorePipelineStages } from '@/presentation/providers/BuildCorePipelineStagesProvider';
 
-export function useBuildCoreWorkflowStagesPage(): {
+export function useBuildCoreWorkflowStagesPage(scope: PipelineStageScope): {
   isLoading: boolean;
   loadError: string | null;
   canManage: boolean;
@@ -35,7 +36,7 @@ export function useBuildCoreWorkflowStagesPage(): {
   const runMutation = useCallback(
     async (
       stageId: string | null,
-      action: (token: string) => Promise<Awaited<ReturnType<typeof fetchBuildCorePipelineStagesBff>>>
+      action: (token: string) => Promise<BuildCorePipelineStagesResponse>
     ): Promise<boolean> => {
       const token = getAccessToken();
       if (!token) {
@@ -49,7 +50,7 @@ export function useBuildCoreWorkflowStagesPage(): {
       setStatusKind(null);
       try {
         const response = await action(token);
-        applyServerResponse(response);
+        applyServerResponse(scope, response);
         return true;
       } catch (err) {
         setStatusKind('error');
@@ -59,12 +60,13 @@ export function useBuildCoreWorkflowStagesPage(): {
         setBusyStageId(null);
       }
     },
-    [applyServerResponse, getAccessToken]
+    [applyServerResponse, getAccessToken, scope]
   );
 
   const addStage = useCallback(
-    async (label: string) => runMutation(null, (token) => createBuildCorePipelineStageBff(token, label)),
-    [runMutation]
+    async (label: string) =>
+      runMutation(null, (token) => createBuildCorePipelineStageBff(token, label, scope)),
+    [runMutation, scope]
   );
 
   const renameStage = useCallback(
@@ -81,8 +83,8 @@ export function useBuildCoreWorkflowStagesPage(): {
 
   const reorderStages = useCallback(
     async (orderedStageIds: readonly string[]) =>
-      runMutation(null, (token) => reorderBuildCorePipelineStagesBff(token, orderedStageIds)),
-    [runMutation]
+      runMutation(null, (token) => reorderBuildCorePipelineStagesBff(token, orderedStageIds, scope)),
+    [runMutation, scope]
   );
 
   return {

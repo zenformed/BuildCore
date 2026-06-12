@@ -37,7 +37,8 @@ export function CrmProjectsFilterMenu({
   onChange,
 }: CrmProjectsFilterMenuProps): ReactElement {
   const copy = content.crm.filters;
-  const { catalog } = useBuildCorePipelineStages();
+  const { getCatalog } = useBuildCorePipelineStages();
+  const catalog = getCatalog('project');
   const [open, setOpen] = useState(false);
   const anchorRef = useRef<HTMLDivElement>(null);
   const active = isCrmProjectsListFiltersActive(filters);

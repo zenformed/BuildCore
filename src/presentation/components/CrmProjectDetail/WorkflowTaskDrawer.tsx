@@ -74,7 +74,8 @@ export function WorkflowTaskDrawer({
 }: WorkflowTaskDrawerProps): ReactElement | null {
   const assignmentCatalog = useAssignmentIdentityCatalog();
   const dash = useBuildCoreDashboardContext();
-  const { catalog } = useBuildCorePipelineStages();
+  const { catalogForProject } = useBuildCorePipelineStages();
+  const catalog = catalogForProject({ parentProjectId: project.summary.parentProjectId });
   const wf = content.projectDetail.workflow;
   const [form, setForm] = useState<WorkflowTaskFormState>(() =>
     defaultFormForContext(drawerContext, project.summary.currentStageSlug, task, mode)

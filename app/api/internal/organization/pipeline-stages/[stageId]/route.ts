@@ -21,7 +21,7 @@ type RouteContext = {
 
 export async function PATCH(request: NextRequest, context: RouteContext): Promise<NextResponse> {
   if (runtimeModes.useMockAuth()) {
-    return NextResponse.json(buildDefaultBuildCorePipelineStagesResponse(), {
+    return NextResponse.json(buildDefaultBuildCorePipelineStagesResponse('project'), {
       headers: BUILDCORE_ADMIN_NO_CACHE_HEADERS,
     });
   }
@@ -60,7 +60,7 @@ export async function PATCH(request: NextRequest, context: RouteContext): Promis
 
 export async function DELETE(_request: NextRequest, context: RouteContext): Promise<NextResponse> {
   if (runtimeModes.useMockAuth()) {
-    return NextResponse.json(buildDefaultBuildCorePipelineStagesResponse(), {
+    return NextResponse.json(buildDefaultBuildCorePipelineStagesResponse('project'), {
       headers: BUILDCORE_ADMIN_NO_CACHE_HEADERS,
     });
   }

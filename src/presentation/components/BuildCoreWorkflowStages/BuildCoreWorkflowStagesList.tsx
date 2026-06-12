@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useState, type DragEvent, type ReactElement } from 'react';
-import type { OrgPipelineStageRecord } from '@/domain/buildcore/orgPipelineStages';
+import type { OrgPipelineStageRecord, PipelineStageScope } from '@/domain/buildcore/orgPipelineStages';
 import { isReservedPipelineStageSlug } from '@/domain/buildcore/orgPipelineStages';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
 import { ConfirmModal } from '@/presentation/components/ConfirmModal';
@@ -19,19 +19,22 @@ type StageEditorState =
   | null;
 
 export type BuildCoreWorkflowStagesListProps = {
+  readonly scope: PipelineStageScope;
   readonly embeddedInTab?: boolean;
   readonly listTitle?: string;
   readonly headingId?: string;
 };
 
 export function BuildCoreWorkflowStagesList({
+  scope,
   embeddedInTab = false,
   listTitle,
   headingId = 'workflow-stages-heading',
-}: BuildCoreWorkflowStagesListProps = {}): ReactElement {
+}: BuildCoreWorkflowStagesListProps): ReactElement {
   const copy = content.workflowStages;
   const panelTitle = listTitle ?? copy.listTitle;
-  const { stages } = useBuildCorePipelineStages();
+  const { getStages } = useBuildCorePipelineStages();
+  const stages = getStages(scope);
   const {
     canManage,
     busyStageId,
@@ -42,7 +45,7 @@ export function BuildCoreWorkflowStagesList({
     deleteStage,
     reorderStages,
     clearStatus,
-  } = useBuildCoreWorkflowStagesPage();
+  } = useBuildCoreWorkflowStagesPage(scope);
   const [editor, setEditor] = useState<StageEditorState>(null);
   const [draftLabel, setDraftLabel] = useState('');
   const [draggingStageId, setDraggingStageId] = useState<string | null>(null);

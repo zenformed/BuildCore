@@ -52,7 +52,8 @@ export function CrmProjectDraftRow({
   const { organizationMembershipContext } = useSaaSProfile();
   const assignmentCatalog = useAssignmentIdentityCatalog();
   const create = content.crm.create;
-  const { catalog } = useBuildCorePipelineStages();
+  const { getCatalog } = useBuildCorePipelineStages();
+  const catalog = getCatalog('project');
   const templateCopy = getProjectTemplateScopeCopy('project').load;
   const isApiSource = getCrmDataSource() === 'api';
   const canManageTemplates = useMemo(
