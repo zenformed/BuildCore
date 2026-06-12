@@ -644,6 +644,7 @@ export const buildCoreDashboardContent = {
       taskDoneIndicator: 'Task complete',
       taskOpenIndicator: 'Task not complete',
       stageAllDone: 'All tasks in this stage are complete',
+      stageNotComplete: 'Stage has incomplete tasks',
       taskDrawerCreate: 'New workflow task',
       taskDrawerEdit: 'Edit workflow task',
       taskSubmit: 'Save task',

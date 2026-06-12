@@ -10,6 +10,7 @@ import {
   type WorkflowTaskStageGroup,
 } from '@/presentation/features/crmProjectDetail/workflowTaskGroups';
 import { useWorkflowStageExpanded } from '@/presentation/features/crmProjectDetail/useWorkflowStageExpanded';
+import { CrmProjectStatusCircleIcon } from '@/presentation/components/crmShared/CrmProjectStatusCircleIcon';
 import { WorkflowTaskInlineRow } from './WorkflowTaskInlineRow';
 import styles from './ProjectDetail.module.css';
 
@@ -65,11 +66,13 @@ export function WorkflowStageTaskGroup({
 
   const stageTitle = (
     <span className={styles.stageGroupTitle}>
-      {allTasksDone ? (
-        <span className={styles.stageGroupDoneBadge} title={wf.stageAllDone} aria-label={wf.stageAllDone}>
-          <span className={styles.taskDoneIcon}>✓</span>
-        </span>
-      ) : null}
+      <span
+        className={styles.stageGroupCompleteIcon}
+        title={allTasksDone ? wf.stageAllDone : wf.stageNotComplete}
+        aria-label={allTasksDone ? wf.stageAllDone : wf.stageNotComplete}
+      >
+        <CrmProjectStatusCircleIcon kind="complete" active={allTasksDone} size={18} />
+      </span>
       <span className={styles.stageGroupName}>{group.stageLabel}</span>
       {collapsible ? (
         <span className={styles.stageGroupChevronWrap} aria-hidden>
