@@ -64,7 +64,13 @@ export function WorkflowTasksTable({
     onProjectSaved,
     completion,
     showCompletionActions,
+    parentRouteSlug,
+    subSlug,
   } = useProjectDetailShell();
+  const projectRouteScope = useMemo(
+    () => (subSlug != null ? { parentSlug: parentRouteSlug } : undefined),
+    [parentRouteSlug, subSlug]
+  );
   const wf = content.projectDetail.workflow;
   const { permissions, isLoading, isReady } = useBuildCoreWorkflowTaskAccess();
   const { catalog } = useBuildCorePipelineStages();
@@ -147,12 +153,14 @@ export function WorkflowTasksTable({
           ? await markCrmProjectStageCompleteManual(
               crmRepositories,
               project.summary.slug,
-              pendingStageToggle.stageSlug
+              pendingStageToggle.stageSlug,
+              projectRouteScope
             )
           : await clearCrmProjectStageManualCompletion(
               crmRepositories,
               project.summary.slug,
-              pendingStageToggle.stageSlug
+              pendingStageToggle.stageSlug,
+              projectRouteScope
             );
       if (updated == null) {
         throw new Error(
@@ -189,6 +197,7 @@ export function WorkflowTasksTable({
     onProjectSaved,
     pendingStageToggle,
     project.summary.slug,
+    projectRouteScope,
     setToast,
     showCompletionActions,
     wf.markStageCompleteFailed,

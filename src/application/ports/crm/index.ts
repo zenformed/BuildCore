@@ -3,7 +3,7 @@ export type { ICrmAccountabilityRepository } from './ICrmAccountabilityRepositor
 export type { ICrmBudgetRepository } from './ICrmBudgetRepository';
 export type { ICrmDocumentsRepository } from './ICrmDocumentsRepository';
 export type { ICrmMilestonePaymentsRepository } from './ICrmMilestonePaymentsRepository';
-export type { ICrmProjectDetailRepository } from './ICrmProjectDetailRepository';
+export type { ICrmProjectDetailRepository, CrmProjectRouteScope } from './ICrmProjectDetailRepository';
 export type { ICrmProjectsRepository } from './ICrmProjectsRepository';
 export type { ICrmReportsRepository } from './ICrmReportsRepository';
 export type { ICrmWorkflowTasksRepository } from './ICrmWorkflowTasksRepository';

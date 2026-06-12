@@ -3,7 +3,7 @@ import type { CrmProjectDetail, PipelineStageSlug } from '@/domain/crm';
 import { isPaymentWorkflowTask } from '@/domain/crm/paymentWorkflow';
 import { resolveActiveWorkflowPipelineStages } from '@/domain/buildcore/projectPipelineProgress';
 import { appendCrmAccountabilityEvent } from './crmAccountability';
-import { getCrmProjectDetailBySlugForOrg } from './crmReadService';
+import { resolveCrmProjectDetailForOrgRoute, type CrmProjectOrgRouteScope } from './resolveCrmProjectDetailForOrgRoute';
 import { loadOrganizationPipelineStageCatalog } from './pipelineStageService';
 
 export class CrmProjectStageManualCompletionBlockedError extends Error {
@@ -41,9 +41,15 @@ export async function markCrmProjectStageCompleteManualForOrg(
   organizationId: string,
   actorUserId: string,
   slug: string,
-  stageSlug: PipelineStageSlug
+  stageSlug: PipelineStageSlug,
+  scope?: CrmProjectOrgRouteScope
 ): Promise<CrmProjectDetail | null> {
-  const existing = await getCrmProjectDetailBySlugForOrg(supabase, organizationId, slug);
+  const existing = await resolveCrmProjectDetailForOrgRoute(
+    supabase,
+    organizationId,
+    slug,
+    scope
+  );
   if (existing == null) return null;
 
   const pipelineStages = await loadOrganizationPipelineStageCatalog(supabase, organizationId);
@@ -91,7 +97,7 @@ export async function markCrmProjectStageCompleteManualForOrg(
     .eq('id', existing.summary.id)
     .eq('organization_id', organizationId);
 
-  return getCrmProjectDetailBySlugForOrg(supabase, organizationId, slug);
+  return resolveCrmProjectDetailForOrgRoute(supabase, organizationId, slug, scope);
 }
 
 export async function clearCrmProjectStageManualCompletionForOrg(
@@ -99,9 +105,15 @@ export async function clearCrmProjectStageManualCompletionForOrg(
   organizationId: string,
   actorUserId: string,
   slug: string,
-  stageSlug: PipelineStageSlug
+  stageSlug: PipelineStageSlug,
+  scope?: CrmProjectOrgRouteScope
 ): Promise<CrmProjectDetail | null> {
-  const existing = await getCrmProjectDetailBySlugForOrg(supabase, organizationId, slug);
+  const existing = await resolveCrmProjectDetailForOrgRoute(
+    supabase,
+    organizationId,
+    slug,
+    scope
+  );
   if (existing == null) return null;
 
   const pipelineStages = await loadOrganizationPipelineStageCatalog(supabase, organizationId);
@@ -151,5 +163,5 @@ export async function clearCrmProjectStageManualCompletionForOrg(
     .eq('id', existing.summary.id)
     .eq('organization_id', organizationId);
 
-  return getCrmProjectDetailBySlugForOrg(supabase, organizationId, slug);
+  return resolveCrmProjectDetailForOrgRoute(supabase, organizationId, slug, scope);
 }

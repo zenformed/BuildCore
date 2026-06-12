@@ -1,6 +1,6 @@
 /**
- * POST /api/crm/projects/[slug]/stages/[stageSlug]/complete — manually mark an empty workflow stage complete.
- * DELETE /api/crm/projects/[slug]/stages/[stageSlug]/complete — undo manual completion for an empty stage.
+ * POST /api/crm/projects/[slug]/[subSlug]/stages/[stageSlug]/complete — subproject manual stage completion.
+ * DELETE /api/crm/projects/[slug]/[subSlug]/stages/[stageSlug]/complete — undo subproject manual completion.
  */
 
 import { NextRequest, NextResponse } from 'next/server';
@@ -11,7 +11,7 @@ import {
 
 export const dynamic = 'force-dynamic';
 
-type RouteContext = { params: { slug: string; stageSlug: string } };
+type RouteContext = { params: { slug: string; subSlug: string; stageSlug: string } };
 
 export async function POST(
   request: NextRequest,
@@ -19,6 +19,7 @@ export async function POST(
 ): Promise<NextResponse> {
   return postManualStageCompletionRoute(request, {
     slug: context.params.slug,
+    subSlug: context.params.subSlug,
     stageSlug: context.params.stageSlug,
   });
 }
@@ -29,6 +30,7 @@ export async function DELETE(
 ): Promise<NextResponse> {
   return deleteManualStageCompletionRoute(request, {
     slug: context.params.slug,
+    subSlug: context.params.subSlug,
     stageSlug: context.params.stageSlug,
   });
 }

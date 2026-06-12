@@ -335,7 +335,8 @@ export class MockCrmProjectDetailRepository implements ICrmProjectDetailReposito
 
   markStageCompleteManual(
     slug: string,
-    stageSlug: import('@/domain/crm').PipelineStageSlug
+    stageSlug: import('@/domain/crm').PipelineStageSlug,
+    _scope?: import('@/application/ports/crm/ICrmProjectDetailRepository').CrmProjectRouteScope
   ): CrmProjectDetail | null {
     const detail = getEffectiveMockProjectDetailBySlug(slug);
     if (detail == null) return null;
@@ -367,7 +368,8 @@ export class MockCrmProjectDetailRepository implements ICrmProjectDetailReposito
 
   clearStageManualCompletion(
     slug: string,
-    stageSlug: import('@/domain/crm').PipelineStageSlug
+    stageSlug: import('@/domain/crm').PipelineStageSlug,
+    _scope?: import('@/application/ports/crm/ICrmProjectDetailRepository').CrmProjectRouteScope
   ): CrmProjectDetail | null {
     const detail = getEffectiveMockProjectDetailBySlug(slug);
     if (detail == null) return null;

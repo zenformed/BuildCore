@@ -1,6 +1,10 @@
 import type { CrmProjectDetail, UpdateCrmProjectInput, PipelineStageSlug } from '@/domain/crm';
 import type { CrmRepositoryResult } from '@/infrastructure/crm/types';
 
+export type CrmProjectRouteScope = {
+  readonly parentSlug?: string;
+};
+
 /** Project hub aggregate (summary + nested collections). */
 export interface ICrmProjectDetailRepository {
   getBySlug(slug: string): CrmRepositoryResult<CrmProjectDetail | null>;
@@ -9,10 +13,12 @@ export interface ICrmProjectDetailRepository {
   setCompletion(slug: string, complete: boolean): CrmRepositoryResult<CrmProjectDetail | null>;
   markStageCompleteManual(
     slug: string,
-    stageSlug: PipelineStageSlug
+    stageSlug: PipelineStageSlug,
+    scope?: CrmProjectRouteScope
   ): CrmRepositoryResult<CrmProjectDetail | null>;
   clearStageManualCompletion(
     slug: string,
-    stageSlug: PipelineStageSlug
+    stageSlug: PipelineStageSlug,
+    scope?: CrmProjectRouteScope
   ): CrmRepositoryResult<CrmProjectDetail | null>;
 }

@@ -14,6 +14,8 @@ import type {
 
   ICrmWorkflowTasksRepository,
 
+  CrmProjectRouteScope,
+
 } from '@/application/ports/crm';
 
 import type {
@@ -171,6 +173,22 @@ export class ApiCrmProjectsRepository implements ICrmProjectsRepository {
 
 
 
+function buildManualStageCompletionApiPath(
+  slug: string,
+  stageSlug: import('@/domain/crm').PipelineStageSlug,
+  scope?: CrmProjectRouteScope
+): string {
+  const trimmedSlug = slug.trim();
+  const parentSlug = scope?.parentSlug?.trim();
+  const stagePath = `/stages/${encodeURIComponent(stageSlug)}/complete`;
+  if (parentSlug) {
+    return `/api/crm/projects/${encodeURIComponent(parentSlug)}/${encodeURIComponent(trimmedSlug)}${stagePath}`;
+  }
+  return `/api/crm/projects/${encodeURIComponent(trimmedSlug)}${stagePath}`;
+}
+
+
+
 export class ApiCrmProjectDetailRepository implements ICrmProjectDetailRepository {
 
   async getBySlug(slug: string): Promise<CrmProjectDetail | null> {
@@ -289,13 +307,14 @@ export class ApiCrmProjectDetailRepository implements ICrmProjectDetailRepositor
 
   async markStageCompleteManual(
     slug: string,
-    stageSlug: import('@/domain/crm').PipelineStageSlug
+    stageSlug: import('@/domain/crm').PipelineStageSlug,
+    scope?: CrmProjectRouteScope
   ): Promise<CrmProjectDetail | null> {
     clearApiCrmDetailCache();
 
     try {
       const detail = await crmApiPostJson<CrmProjectDetail>(
-        `/api/crm/projects/${encodeURIComponent(slug.trim())}/stages/${encodeURIComponent(stageSlug)}/complete`,
+        buildManualStageCompletionApiPath(slug, stageSlug, scope),
         {}
       );
       setApiCrmDetailCache(slug.trim(), detail);
@@ -308,13 +327,14 @@ export class ApiCrmProjectDetailRepository implements ICrmProjectDetailRepositor
 
   async clearStageManualCompletion(
     slug: string,
-    stageSlug: import('@/domain/crm').PipelineStageSlug
+    stageSlug: import('@/domain/crm').PipelineStageSlug,
+    scope?: CrmProjectRouteScope
   ): Promise<CrmProjectDetail | null> {
     clearApiCrmDetailCache();
 
     try {
       const detail = await crmApiDeleteJson<CrmProjectDetail>(
-        `/api/crm/projects/${encodeURIComponent(slug.trim())}/stages/${encodeURIComponent(stageSlug)}/complete`
+        buildManualStageCompletionApiPath(slug, stageSlug, scope)
       );
       setApiCrmDetailCache(slug.trim(), detail);
       return detail;
