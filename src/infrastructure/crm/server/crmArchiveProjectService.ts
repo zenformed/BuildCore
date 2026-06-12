@@ -30,6 +30,15 @@ export async function archiveCrmProjectBySlugForOrg(
 
   if (error) throw new Error(error.message);
 
+  const { error: archiveTasksError } = await supabase
+    .from('crm_workflow_tasks')
+    .update({ archived_at: now })
+    .eq('project_id', project.id)
+    .eq('organization_id', organizationId)
+    .is('archived_at', null);
+
+  if (archiveTasksError) throw new Error(archiveTasksError.message);
+
   await appendCrmAccountabilityEvent(supabase, {
     organizationId,
     projectId: project.id,

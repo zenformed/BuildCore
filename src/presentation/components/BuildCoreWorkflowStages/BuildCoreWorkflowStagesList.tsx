@@ -18,8 +18,19 @@ type StageEditorState =
   | { mode: 'delete'; stage: OrgPipelineStageRecord }
   | null;
 
-export function BuildCoreWorkflowStagesList(): ReactElement {
+export type BuildCoreWorkflowStagesListProps = {
+  readonly embeddedInTab?: boolean;
+  readonly listTitle?: string;
+  readonly headingId?: string;
+};
+
+export function BuildCoreWorkflowStagesList({
+  embeddedInTab = false,
+  listTitle,
+  headingId = 'workflow-stages-heading',
+}: BuildCoreWorkflowStagesListProps = {}): ReactElement {
   const copy = content.workflowStages;
+  const panelTitle = listTitle ?? copy.listTitle;
   const { stages } = useBuildCorePipelineStages();
   const {
     canManage,
@@ -201,7 +212,10 @@ export function BuildCoreWorkflowStagesList(): ReactElement {
   };
 
   return (
-    <section className={styles.panel} aria-labelledby="workflow-stages-heading">
+    <section
+      className={`${styles.panel} ${embeddedInTab ? styles.panelInScrollParent : ''}`}
+      aria-labelledby={headingId}
+    >
       {statusMessage ? (
         <DetailToast
           kind={statusKind === 'success' ? 'success' : 'error'}
@@ -210,8 +224,8 @@ export function BuildCoreWorkflowStagesList(): ReactElement {
         />
       ) : null}
       <div className={styles.panelHeader}>
-        <h2 id="workflow-stages-heading" className={styles.panelTitle}>
-          {copy.listTitle}
+        <h2 id={headingId} className={styles.panelTitle}>
+          {panelTitle}
         </h2>
         {canManage ? (
           <DetailPanelHeaderButton
@@ -258,7 +272,10 @@ export function BuildCoreWorkflowStagesList(): ReactElement {
       {sortedStages.length === 0 ? (
         <p className={styles.empty}>{copy.empty}</p>
       ) : (
-        <div className={styles.list} role="list">
+        <div
+          className={`${styles.list} ${embeddedInTab ? styles.listInScrollParent : ''}`}
+          role="list"
+        >
           {reorderableStages.map((stage) => renderStageRow(stage))}
           {terminalStage != null ? renderStageRow(terminalStage) : null}
         </div>

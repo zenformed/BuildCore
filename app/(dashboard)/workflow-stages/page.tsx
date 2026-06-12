@@ -1,8 +1,16 @@
 'use client';
 
 import type { ReactElement } from 'react';
-import { BuildCoreWorkflowStagesDashboard } from '@/presentation/components/BuildCoreWorkflowStages/BuildCoreWorkflowStagesDashboard';
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { buildCoreDashboardNavigation as nav } from '@/platform/navigation/buildCoreDashboardNavigation';
 
-export default function WorkflowStagesPage(): ReactElement {
-  return <BuildCoreWorkflowStagesDashboard />;
+export default function WorkflowStagesRedirectPage(): ReactElement | null {
+  const router = useRouter();
+
+  useEffect(() => {
+    router.replace(nav.routes.workflowStages);
+  }, [router]);
+
+  return null;
 }

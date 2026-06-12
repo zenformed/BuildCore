@@ -154,6 +154,37 @@ export const buildCoreDashboardContent = {
     deleteStageAriaLabel: (name: string) => `Delete ${name}`,
     reservedStageDeleteHint: 'Complete is the terminal stage and cannot be deleted.',
   },
+  workflowSettings: {
+    breadcrumb: 'Organization / Workflow Settings',
+    title: 'Workflow Settings',
+    loading: 'Loading workflow settings…',
+    loadError: 'Could not load workflow settings. Try again.',
+    noAccess: 'You do not have permission to manage workflow settings for this organization.',
+    readOnlyNote: 'Workflow settings are managed by organization owners and admins.',
+    folderTabs: {
+      workflowStages: 'Workflow Stages',
+      alerts: 'Alerts',
+    },
+    stageColumns: {
+      projectStages: 'Project Stages',
+      subprojectStages: 'Subproject Stages',
+    },
+    alerts: {
+      customerTaskReminders: {
+        sectionTitle: 'Customer Task Reminders',
+        enableLabel: 'Enable automatic customer reminders',
+        enableHint:
+          'Send follow-up emails to customers with open assigned tasks after the selected interval. Initial assignment emails are unchanged.',
+        frequencyLabel: 'Frequency',
+        frequencyHint:
+          'Reminders begin after the selected interval from the last assignment or reminder email. Rejected tasks continue receiving reminders until the task is submitted for approval or marked done.',
+        loading: 'Loading reminder settings…',
+        loadError: 'Could not load reminder settings. Try again.',
+        readOnlyNote: 'Only organization owners and admins can change alert settings.',
+        saved: 'Reminder settings saved.',
+      },
+    },
+  },
   teams: {
     breadcrumb: 'Organization / Teams',
     title: 'Teams',

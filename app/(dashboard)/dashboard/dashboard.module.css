@@ -182,6 +182,21 @@
   overflow: hidden;
 }
 
+/* Workflow settings: folder tabs fill main column; stage list scrolls internally */
+.listViewWrap:has([data-buildcore-workflow-settings-page]) {
+  flex: 1 1 0;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.mainContent:has([data-buildcore-workflow-settings-page]) {
+  overflow: hidden;
+  min-height: 0;
+  flex: 1 1 0;
+}
+
 .mainContent:has([data-project-tasks-page]),
 .mainContent:has([data-project-documents-page]),
 .mainContent:has([data-project-financials-page]) {

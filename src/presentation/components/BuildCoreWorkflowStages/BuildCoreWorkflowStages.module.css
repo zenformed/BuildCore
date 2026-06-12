@@ -208,6 +208,22 @@
   color: var(--color-text-muted, #64748b);
 }
 
+.panelInScrollParent {
+  flex: none;
+  min-height: auto;
+  overflow: visible;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  padding: 0;
+}
+
+.listInScrollParent {
+  flex: none;
+  min-height: auto;
+  overflow: visible;
+}
+
 .modalField {
   display: flex;
   flex-direction: column;
