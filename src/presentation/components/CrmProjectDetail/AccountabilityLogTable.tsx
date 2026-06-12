@@ -2,6 +2,7 @@
 
 import type { ReactElement } from 'react';
 import type { CrmAccountabilityAction, CrmTeamMemberRef } from '@/domain/crm';
+import type { PipelineStage } from '@/domain/crm/pipelineStage';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
 import { formatStageLabel } from '@/presentation/features/crmProjects/crmProjectFormatters';
 import { useResolvedTeamMemberRef } from '@/presentation/hooks/useResolvedTeamMemberRef';
@@ -38,11 +39,13 @@ function AccountabilityUserCell({ actor }: { actor: CrmTeamMemberRef }): ReactEl
 export type AccountabilityLogTableProps = {
   entries: readonly CrmAccountabilityAction[];
   layout?: 'panel' | 'modal';
+  stages?: readonly PipelineStage[] | null;
 };
 
 export function AccountabilityLogTable({
   entries,
   layout = 'panel',
+  stages = null,
 }: AccountabilityLogTableProps): ReactElement {
   const cols = content.projectDetail.accountability.columns;
   const gridClass =
@@ -68,7 +71,7 @@ export function AccountabilityLogTable({
           <span className={styles.accountabilityEvent}>
             {entry.action.split('—')[0]?.trim() ?? entry.action}
           </span>
-          <span>{entry.stageSlug ? formatStageLabel(entry.stageSlug) : '—'}</span>
+          <span>{entry.stageSlug ? formatStageLabel(entry.stageSlug, stages) : '—'}</span>
           <span
             className={
               layout === 'modal' ? styles.accountabilityDetails_modal : styles.accountabilityDetails

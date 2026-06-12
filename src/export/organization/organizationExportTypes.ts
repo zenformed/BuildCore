@@ -1,3 +1,5 @@
+import type { OrganizationExportStageLabels } from '@/domain/crm/pipelineStage';
+
 export type OrganizationExportSheet = {
   readonly name: string;
   readonly headers: readonly string[];
@@ -17,6 +19,6 @@ export type OrganizationExportTeamMemberRow = {
 export type OrganizationExportBuildInput = {
   readonly projects: readonly import('@/domain/crm').CrmProjectDetail[];
   readonly projectTimestampsById: ReadonlyMap<string, { readonly createdAt: string; readonly updatedAt: string }>;
-  readonly stageLabelBySlug: ReadonlyMap<string, string>;
+  readonly stageLabels: OrganizationExportStageLabels;
   readonly teamMembers: readonly OrganizationExportTeamMemberRow[];
 };

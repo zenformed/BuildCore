@@ -100,3 +100,42 @@ export function pipelineStageSlugSet(
 ): ReadonlySet<string> {
   return new Set(resolvePipelineStageCatalog(stages).map((stage) => stage.slug));
 }
+
+export type ScopedPipelineStageCatalogs = {
+  readonly project: readonly PipelineStage[];
+  readonly subproject: readonly PipelineStage[];
+};
+
+export type OrganizationExportStageLabels = {
+  readonly project: ReadonlyMap<string, string>;
+  readonly subproject: ReadonlyMap<string, string>;
+};
+
+/** Resolve the workflow catalog for a parent project or subproject row. */
+export function pipelineStageCatalogForProjectSummary(
+  summary: { readonly parentProjectId: string | null },
+  catalogs: ScopedPipelineStageCatalogs
+): readonly PipelineStage[] {
+  return summary.parentProjectId != null ? catalogs.subproject : catalogs.project;
+}
+
+export function pipelineStageLabelForProjectSummary(
+  summary: {
+    readonly parentProjectId: string | null;
+    readonly currentStageSlug: PipelineStageSlug;
+  },
+  stageLabels: OrganizationExportStageLabels
+): string {
+  const labelMap =
+    summary.parentProjectId != null ? stageLabels.subproject : stageLabels.project;
+  return labelMap.get(summary.currentStageSlug) ?? summary.currentStageSlug;
+}
+
+export function organizationExportStageLabelsFromCatalogs(
+  catalogs: ScopedPipelineStageCatalogs
+): OrganizationExportStageLabels {
+  return {
+    project: new Map(catalogs.project.map((stage) => [stage.slug, stage.label])),
+    subproject: new Map(catalogs.subproject.map((stage) => [stage.slug, stage.label])),
+  };
+}

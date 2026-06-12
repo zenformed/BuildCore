@@ -8,6 +8,7 @@ import {
   listCrmProjectsForReportingForOrg,
   type CrmProjectTimestampIndex,
 } from './crmReadService';
+import { organizationExportStageLabelsFromCatalogs } from '@/domain/crm/pipelineStage';
 import { loadOrganizationPipelineStageCatalog } from './pipelineStageService';
 
 async function loadCrmProjectTimestampIndexForOrg(
@@ -66,14 +67,14 @@ export async function buildOrganizationExportXlsxForOrg(input: {
     loadOrganizationTeamMembersForExport(input.accessToken),
   ]);
 
-  const stageLabelBySlug = new Map<string, string>([
-    ...projectPipelineStages.map((stage) => [stage.slug, stage.label] as const),
-    ...subprojectPipelineStages.map((stage) => [stage.slug, stage.label] as const),
-  ]);
+  const stageLabels = organizationExportStageLabelsFromCatalogs({
+    project: projectPipelineStages,
+    subproject: subprojectPipelineStages,
+  });
   const workbook = buildOrganizationExportWorkbook({
     projects,
     projectTimestampsById,
-    stageLabelBySlug,
+    stageLabels,
     teamMembers,
   });
 

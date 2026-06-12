@@ -3,6 +3,7 @@
 import { useMemo, useState, type ReactElement } from 'react';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
 import { useProjectDetailShell } from '@/presentation/features/crmProjectDetail/ProjectDetailShellContext';
+import { useBuildCorePipelineStages } from '@/presentation/providers/BuildCorePipelineStagesProvider';
 import { filterAccountabilityEntriesBySearch } from '@/presentation/features/crmProjectDetail/projectSectionSearchModel';
 import { DetailPanelHeader } from './DetailPanelHeader';
 import { DetailPanelHeaderActions } from './DetailPanelHeaderActions';
@@ -14,11 +15,13 @@ import styles from './ProjectDetail.module.css';
 export function ProjectAccountabilityContent(): ReactElement {
   const { project, onRefresh, setToast } = useProjectDetailShell();
   const acc = content.projectDetail.accountability;
+  const { catalogForProject } = useBuildCorePipelineStages();
+  const stageCatalog = catalogForProject({ parentProjectId: project.summary.parentProjectId });
   const [searchQuery, setSearchQuery] = useState('');
   const entries = useMemo(() => {
     const sorted = sortAccountabilityEntries(project.accountabilityLog);
-    return filterAccountabilityEntriesBySearch(sorted, searchQuery);
-  }, [project.accountabilityLog, searchQuery]);
+    return filterAccountabilityEntriesBySearch(sorted, searchQuery, stageCatalog);
+  }, [project.accountabilityLog, searchQuery, stageCatalog]);
 
   return (
     <section
@@ -48,7 +51,7 @@ export function ProjectAccountabilityContent(): ReactElement {
       ) : (
         <div className={styles.detailPanelTableCard}>
           <div className={styles.accountabilityPageTableScroll}>
-            <AccountabilityLogTable entries={entries} layout="modal" />
+            <AccountabilityLogTable entries={entries} layout="modal" stages={stageCatalog} />
           </div>
         </div>
       )}

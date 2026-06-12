@@ -34,7 +34,7 @@ export function useCrmProjectTableRowActions(input: {
   onProjectUpdated: (summary: CrmProjectSummary) => void;
   onSuccess: (message: string) => void;
   onError: (message: string) => void;
-  stages?: readonly PipelineStage[] | null;
+  resolveStagesForProject: (project: CrmProjectSummary) => readonly PipelineStage[];
 }): {
   busyProjectId: string | null;
   pendingCompletionChange: PendingCrmProjectCompletionChange | null;
@@ -124,7 +124,7 @@ export function useCrmProjectTableRowActions(input: {
 
         const stageStatuses = listWorkflowStageCompletionStatuses({
           workflowTasks: detail.workflowTasks,
-          stages: input.stages,
+          stages: input.resolveStagesForProject(project),
           manualStageCompletions: detail.manualStageCompletions,
         });
         if (stageStatuses.some((stage) => !stage.isComplete)) {

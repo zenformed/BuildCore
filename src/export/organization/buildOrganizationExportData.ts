@@ -5,6 +5,7 @@ import { formatCrmProjectAddressLine } from '@/domain/crm/projectAddress';
 import { reportBudgetCategoryLabel } from '@/reports/labels/reportLabels';
 import { formatReportCurrency, formatReportShortDate, formatReportText } from '@/reports/formatReportValues';
 import { formatWorkflowStatus } from '@/presentation/features/crmProjectDetail/crmProjectDetailFormatters';
+import { pipelineStageLabelForProjectSummary } from '@/domain/crm/pipelineStage';
 import type {
   OrganizationExportBuildInput,
   OrganizationExportSheet,
@@ -29,13 +30,6 @@ function projectStatusLabel(summary: CrmProjectSummary): string {
   return summary.completedAt != null ? 'Complete' : 'Active';
 }
 
-function stageLabelForProject(
-  summary: CrmProjectSummary,
-  stageLabelBySlug: ReadonlyMap<string, string>
-): string {
-  return stageLabelBySlug.get(summary.currentStageSlug) ?? summary.currentStageSlug;
-}
-
 function assigneeLabel(
   assignee: { readonly displayName: string } | null | undefined
 ): string {
@@ -53,7 +47,7 @@ function buildProjectsSheet(input: OrganizationExportBuildInput): OrganizationEx
       subprojectLabel,
       formatReportText(project.summary.client.name),
       getProjectIndustryDisplayLabel(project.summary.industry, project.summary.customIndustry),
-      stageLabelForProject(project.summary, input.stageLabelBySlug),
+      pipelineStageLabelForProjectSummary(project.summary, input.stageLabels),
       assigneeLabel(project.summary.assignedTo),
       projectStatusLabel(project.summary),
       formatReportShortDate(timestamps?.createdAt ?? null),

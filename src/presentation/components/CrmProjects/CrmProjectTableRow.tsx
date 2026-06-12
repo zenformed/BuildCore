@@ -7,6 +7,7 @@ import type { CrmProjectWorkflowProgressInputIndex } from '@/domain/crm/projectW
 import { isCrmProjectComplete } from '@/domain/crm';
 import { formatCrmProjectAddressLine } from '@/domain/crm/projectAddress';
 import { isProjectPriorityUrgent } from '@/domain/crm/projectPriorityToggle';
+import { resolvePipelineStageScopeForProject } from '@/domain/buildcore/orgPipelineStages';
 import { resolveDerivedWorkflowStageSlugFromProgressIndex, resolveProjectWorkflowProgressDisplayFromIndex } from '@/domain/buildcore/projectPipelineProgress';
 import { ProjectProgressPercent } from '@/presentation/components/CrmProjectDetail/ProjectProgressPercent';
 import { CrmProjectCompleteIcon } from '@/presentation/components/crmShared/CrmProjectCompleteIcon';
@@ -76,7 +77,9 @@ export function CrmProjectTableRow({
 }: CrmProjectTableRowProps): ReactElement {
   const tableCopy = content.crm.table;
   const { getCatalog } = useBuildCorePipelineStages();
-  const catalog = getCatalog(variant === 'child' ? 'subproject' : 'project');
+  const catalog = getCatalog(
+    resolvePipelineStageScopeForProject({ parentProjectId: project.parentProjectId })
+  );
   const industrySubtitle = getProjectIndustrySubtitle(
     project.industry,
     project.customIndustry

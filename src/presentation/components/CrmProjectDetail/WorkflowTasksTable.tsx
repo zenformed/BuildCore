@@ -4,12 +4,11 @@ import type { ReactElement } from 'react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import type { CrmProjectDetail, CrmWorkflowTask, PipelineStageSlug } from '@/domain/crm';
+import { listEmptyIncompleteWorkflowStages } from '@/domain/crm';
 import { markCrmProjectStageCompleteManual } from '@/application/use-cases/crm/markCrmProjectStageCompleteManual';
 import { markCrmProjectEmptyStagesCompleteBatch } from '@/application/use-cases/crm/markCrmProjectEmptyStagesCompleteBatch';
 import { clearCrmProjectStageManualCompletion } from '@/application/use-cases/crm/clearCrmProjectStageManualCompletion';
-import {
-  listEmptyIncompleteWorkflowStages,
-} from '@/domain/crm';
+import { resolvePipelineStageScopeForProject } from '@/domain/buildcore/orgPipelineStages';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
 import { crmRepositories } from '@/shared/di/container';
 import { ConfirmModal } from '@/presentation/components/ConfirmModal';
@@ -115,8 +114,8 @@ export function WorkflowTasksTable({
       filters,
       project.summary.priority
     );
-    return filterWorkflowTasksBySearch(byFilters, searchQuery);
-  }, [filters, project.summary.priority, project.workflowTasks, searchQuery]);
+    return filterWorkflowTasksBySearch(byFilters, searchQuery, catalog);
+  }, [catalog, filters, project.summary.priority, project.workflowTasks, searchQuery]);
 
   const groups = useMemo(
     () =>
@@ -310,7 +309,13 @@ export function WorkflowTasksTable({
         }
       >
         <DetailPanelHeaderActions>
-          <CrmProjectsFilterMenu filters={filters} onChange={setFilters} />
+          <CrmProjectsFilterMenu
+            filters={filters}
+            onChange={setFilters}
+            stageScopeMode={resolvePipelineStageScopeForProject({
+              parentProjectId: project.summary.parentProjectId,
+            })}
+          />
           <DetailPanelSectionSearch
             value={searchQuery}
             onChange={setSearchQuery}

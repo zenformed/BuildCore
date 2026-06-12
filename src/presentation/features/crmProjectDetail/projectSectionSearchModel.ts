@@ -5,6 +5,7 @@ import type {
   CrmWorkflowTask,
 } from '@/domain/crm';
 import { isPaymentWorkflowTask } from '@/domain/crm';
+import type { PipelineStage } from '@/domain/crm/pipelineStage';
 import { projectMatchesPriorityListFilter } from '@/domain/crm/projectPriorityToggle';
 import type { CrmProjectsListFilters } from '@/presentation/features/crmProjects/crmProjectsPipelineViewModel';
 import { formatBudgetCategory } from './budgetCategoryLabels';
@@ -66,7 +67,8 @@ export function filterWorkflowTasksByListFilters(
 
 export function filterWorkflowTasksBySearch(
   tasks: readonly CrmWorkflowTask[],
-  searchQuery: string
+  searchQuery: string,
+  stages?: readonly PipelineStage[] | null
 ): CrmWorkflowTask[] {
   const query = normalizeSearchQuery(searchQuery);
   if (!query) return [...tasks];
@@ -77,7 +79,7 @@ export function filterWorkflowTasksBySearch(
       task.title,
       task.notes,
       formatWorkflowStatus(task.status),
-      formatWorkflowStageLabel(task.stageSlug),
+      formatWorkflowStageLabel(task.stageSlug, stages),
       task.assignedTo?.displayName,
       task.dueAt,
       task.completedAt,
@@ -131,7 +133,8 @@ export function filterBudgetEntriesBySearch(
 
 export function filterDocumentPanelItemsBySearch(
   items: readonly DocumentListItem[],
-  searchQuery: string
+  searchQuery: string,
+  stages?: readonly PipelineStage[] | null
 ): DocumentListItem[] {
   const query = normalizeSearchQuery(searchQuery);
   if (!query) return [...items];
@@ -140,7 +143,7 @@ export function filterDocumentPanelItemsBySearch(
     if (item.kind === 'missing') {
       const haystack = joinHaystack([
         item.task.title,
-        formatWorkflowTaskStageLabel(item.task),
+        formatWorkflowTaskStageLabel(item.task, stages),
         'missing',
         'required',
       ]);
@@ -158,7 +161,8 @@ export function filterDocumentPanelItemsBySearch(
 
 export function filterAccountabilityEntriesBySearch(
   entries: readonly CrmAccountabilityAction[],
-  searchQuery: string
+  searchQuery: string,
+  stages?: readonly PipelineStage[] | null
 ): CrmAccountabilityAction[] {
   const query = normalizeSearchQuery(searchQuery);
   if (!query) return [...entries];
@@ -167,7 +171,7 @@ export function filterAccountabilityEntriesBySearch(
     const haystack = joinHaystack([
       entry.action,
       entry.actor.displayName,
-      entry.stageSlug ? formatWorkflowStageLabel(entry.stageSlug) : null,
+      entry.stageSlug ? formatWorkflowStageLabel(entry.stageSlug, stages) : null,
       entry.at,
     ]);
     return haystackIncludes(haystack, query);

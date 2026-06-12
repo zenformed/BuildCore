@@ -1,10 +1,30 @@
 import type { CrmPriority, CrmProjectSummary, PipelineStageSlug, WorkflowTaskStatus } from '@/domain/crm';
 import { buildCrmProjectSummarySearchHaystack, projectHasAnyWorkflowTaskStatus } from '@/domain/crm';
+import type { PipelineStage } from '@/domain/crm/pipelineStage';
+import type { PipelineStageScope } from '@/domain/buildcore/orgPipelineStages';
 import type { CrmProjectWorkflowTaskStatusIndex } from '@/domain/crm/projectWorkflowTaskStatusIndex';
 import {
   projectMatchesPriorityListFilter,
   sortCrmProjectsForList,
 } from '@/domain/crm/projectPriorityToggle';
+
+export type MixedPipelineStageFilterGroup = {
+  readonly scope: PipelineStageScope;
+  readonly title: string;
+  readonly stages: readonly PipelineStage[];
+};
+
+export function buildMixedPipelineStageFilterGroups(input: {
+  readonly projectStages: readonly PipelineStage[];
+  readonly subprojectStages: readonly PipelineStage[];
+  readonly projectTitle: string;
+  readonly subprojectTitle: string;
+}): readonly MixedPipelineStageFilterGroup[] {
+  return [
+    { scope: 'project', title: input.projectTitle, stages: input.projectStages },
+    { scope: 'subproject', title: input.subprojectTitle, stages: input.subprojectStages },
+  ];
+}
 
 export type CrmProjectsListFilters = {
   readonly stageSlugs: readonly PipelineStageSlug[];

@@ -2,7 +2,10 @@
 
 import { useCallback, useMemo, useState } from 'react';
 import type { CrmProjectDetail } from '@/domain/crm';
-import { defaultOrgPipelineStageRecords } from '@/domain/buildcore/orgPipelineStages';
+import {
+  DEFAULT_PIPELINE_STAGES,
+  organizationExportStageLabelsFromCatalogs,
+} from '@/domain/crm/pipelineStage';
 import { buildOrganizationExportWorkbook } from '@/export/organization/buildOrganizationExportData';
 import { renderOrganizationExportBlob } from '@/export/organization/buildOrganizationExportWorkbook';
 import { organizationExportFilename } from '@/export/organization/organizationExportFilename';
@@ -43,13 +46,14 @@ export function useOrganizationExport(
         return;
       }
 
-      const stageLabelBySlug = new Map(
-        defaultOrgPipelineStageRecords('mock-org').map((stage) => [stage.slug, stage.label])
-      );
+      const stageLabels = organizationExportStageLabelsFromCatalogs({
+        project: DEFAULT_PIPELINE_STAGES,
+        subproject: DEFAULT_PIPELINE_STAGES,
+      });
       const workbook = buildOrganizationExportWorkbook({
         projects,
         projectTimestampsById: new Map(),
-        stageLabelBySlug,
+        stageLabels,
         teamMembers: [],
       });
       downloadBlob(renderOrganizationExportBlob(workbook), organizationExportFilename());

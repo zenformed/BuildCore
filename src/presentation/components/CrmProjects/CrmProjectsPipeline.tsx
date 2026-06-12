@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState, type ReactElement } from 'react';
+import { resolvePipelineStageScopeForProject } from '@/domain/buildcore/orgPipelineStages';
 import { useRouter } from 'next/navigation';
 import type { CrmProjectSummary } from '@/domain/crm';
 import { isBuildCoreMemberRole } from '@/domain/buildcore/memberRole';
@@ -82,7 +83,11 @@ export function CrmProjectsPipeline({
   });
 
   const { getCatalog } = useBuildCorePipelineStages();
-  const pipelineStageCatalog = getCatalog('project');
+  const resolveStagesForProject = useCallback(
+    (project: CrmProjectSummary) =>
+      getCatalog(resolvePipelineStageScopeForProject({ parentProjectId: project.parentProjectId })),
+    [getCatalog]
+  );
 
   const {
     busyProjectId,
@@ -97,7 +102,7 @@ export function CrmProjectsPipeline({
     onProjectUpdated: patchProjectSummary,
     onSuccess: (message) => setToast({ kind: 'success', message }),
     onError: (message) => setToast({ kind: 'error', message }),
-    stages: pipelineStageCatalog,
+    resolveStagesForProject,
   });
 
   useEffect(() => {

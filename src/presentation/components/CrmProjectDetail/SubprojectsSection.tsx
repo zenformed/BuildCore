@@ -1,6 +1,7 @@
 'use client';
 
-import { useId, useMemo, useState, type ReactElement } from 'react';
+import { useCallback, useId, useMemo, useState, type ReactElement } from 'react';
+import { resolvePipelineStageScopeForProject } from '@/domain/buildcore/orgPipelineStages';
 import { useRouter } from 'next/navigation';
 import { isBuildCoreMemberRole } from '@/domain/buildcore/memberRole';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
@@ -59,7 +60,12 @@ export function SubprojectsSection(): ReactElement | null {
   const { workflowProgressInputIndex, isLoading: isWorkflowProgressLoading } =
     useCrmPaymentTasksIndexContext();
   const { getCatalog } = useBuildCorePipelineStages();
-  const pipelineStageCatalog = getCatalog('subproject');
+  const subprojectStageCatalog = getCatalog('subproject');
+  const resolveStagesForProject = useCallback(
+    (childProject: { readonly parentProjectId: string | null }) =>
+      getCatalog(resolvePipelineStageScopeForProject({ parentProjectId: childProject.parentProjectId })),
+    [getCatalog]
+  );
   const rows = useMemo(
     () => filterSubprojects(childSummaries?.allRows ?? [], searchQuery),
     [childSummaries?.allRows, searchQuery]
@@ -73,7 +79,7 @@ export function SubprojectsSection(): ReactElement | null {
     const averagePercent = computeSubprojectAverageProgressPercent({
       childSummaries: childSummaries?.allRows ?? [],
       workflowProgressInputIndex,
-      stages: pipelineStageCatalog,
+      stages: subprojectStageCatalog,
     });
 
     if (averagePercent == null) {
@@ -87,7 +93,7 @@ export function SubprojectsSection(): ReactElement | null {
     isLoading,
     isMemberRole,
     isWorkflowProgressLoading,
-    pipelineStageCatalog,
+    subprojectStageCatalog,
     workflowProgressInputIndex,
   ]);
   const subprojectsEmptyMessage =
@@ -124,7 +130,7 @@ export function SubprojectsSection(): ReactElement | null {
     onProjectUpdated: patchChildProjectSummary,
     onSuccess: (message) => setToast({ kind: 'success', message }),
     onError: (message) => setToast({ kind: 'error', message }),
-    stages: pipelineStageCatalog,
+    resolveStagesForProject,
   });
 
   if (hidden) {

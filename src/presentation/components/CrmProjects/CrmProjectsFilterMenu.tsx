@@ -1,12 +1,13 @@
 'use client';
 
 import type { ReactElement } from 'react';
-import { useRef, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import type { PipelineStageSlug, WorkflowTaskStatus } from '@/domain/crm';
 import {
   CRM_PRIORITY_FILTER_VALUES,
   type CrmPriorityFilterValue,
 } from '@/domain/crm/projectPriorityToggle';
+import type { PipelineStageScope } from '@/domain/buildcore/orgPipelineStages';
 import {
   WORKFLOW_TASK_STATUSES,
   WORKFLOW_TASK_STATUS_LABELS,
@@ -16,6 +17,7 @@ import { useBuildCorePipelineStages } from '@/presentation/providers/BuildCorePi
 import { FilterIcon } from '@/platform/icons/buildCoreDashboardShellIcons';
 import { WorkflowInlineMenu } from '@/presentation/components/CrmProjectDetail/WorkflowInlineMenu';
 import {
+  buildMixedPipelineStageFilterGroups,
   EMPTY_CRM_PROJECTS_LIST_FILTERS,
   isCrmProjectsListFiltersActive,
   type CrmProjectsListFilters,
@@ -30,15 +32,36 @@ const PRIORITY_LABELS: Record<CrmPriorityFilterValue, string> = {
 export type CrmProjectsFilterMenuProps = {
   readonly filters: CrmProjectsListFilters;
   readonly onChange: (filters: CrmProjectsListFilters) => void;
+  /** Mixed dashboard lists show both catalogs; single-entity views use one scope. */
+  readonly stageScopeMode?: 'mixed' | PipelineStageScope;
 };
 
 export function CrmProjectsFilterMenu({
   filters,
   onChange,
+  stageScopeMode = 'mixed',
 }: CrmProjectsFilterMenuProps): ReactElement {
   const copy = content.crm.filters;
+  const stageColumnCopy = content.workflowSettings.stageColumns;
   const { getCatalog } = useBuildCorePipelineStages();
-  const catalog = getCatalog('project');
+  const stageFilterGroups = useMemo(() => {
+    if (stageScopeMode === 'mixed') {
+      return buildMixedPipelineStageFilterGroups({
+        projectStages: getCatalog('project'),
+        subprojectStages: getCatalog('subproject'),
+        projectTitle: stageColumnCopy.projectStages,
+        subprojectTitle: stageColumnCopy.subprojectStages,
+      });
+    }
+
+    return [
+      {
+        scope: stageScopeMode,
+        title: copy.stageLabel,
+        stages: getCatalog(stageScopeMode),
+      },
+    ];
+  }, [getCatalog, stageColumnCopy.projectStages, stageColumnCopy.subprojectStages, stageScopeMode, copy.stageLabel]);
   const [open, setOpen] = useState(false);
   const anchorRef = useRef<HTMLDivElement>(null);
   const active = isCrmProjectsListFiltersActive(filters);
@@ -90,21 +113,23 @@ export function CrmProjectsFilterMenu({
         portalClassName={styles.projectsFilterMenuPortal}
       >
         <div className={styles.projectsFilterMenu} role="group" aria-label={copy.menuAriaLabel}>
-          <fieldset className={styles.projectsFilterFieldset}>
-            <legend className={styles.projectsFilterLegend}>{copy.stageLabel}</legend>
-            <div className={styles.projectsFilterOptions}>
-              {catalog.map((stage) => (
-                <label key={stage.slug} className={styles.projectsFilterOption}>
-                  <input
-                    type="checkbox"
-                    checked={filters.stageSlugs.includes(stage.slug)}
-                    onChange={() => toggleStage(stage.slug)}
-                  />
-                  <span>{stage.label}</span>
-                </label>
-              ))}
-            </div>
-          </fieldset>
+          {stageFilterGroups.map((group) => (
+            <fieldset key={group.scope} className={styles.projectsFilterFieldset}>
+              <legend className={styles.projectsFilterLegend}>{group.title}</legend>
+              <div className={styles.projectsFilterOptions}>
+                {group.stages.map((stage) => (
+                  <label key={`${group.scope}-${stage.slug}`} className={styles.projectsFilterOption}>
+                    <input
+                      type="checkbox"
+                      checked={filters.stageSlugs.includes(stage.slug)}
+                      onChange={() => toggleStage(stage.slug)}
+                    />
+                    <span>{stage.label}</span>
+                  </label>
+                ))}
+              </div>
+            </fieldset>
+          ))}
           <fieldset className={styles.projectsFilterFieldset}>
             <legend className={styles.projectsFilterLegend}>{copy.priorityLabel}</legend>
             <div className={styles.projectsFilterOptions}>

@@ -6,6 +6,7 @@ import type { CrmProjectDetail } from '@/domain/crm';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
 import { useAccountabilityPreviewLimit } from '@/presentation/features/crmProjectDetail/useAccountabilityPreviewLimit';
 import { useProjectDetailShell } from '@/presentation/features/crmProjectDetail/ProjectDetailShellContext';
+import { useBuildCorePipelineStages } from '@/presentation/providers/BuildCorePipelineStagesProvider';
 import { AccountabilityLogTable, sortAccountabilityEntries } from './AccountabilityLogTable';
 import styles from './ProjectDetail.module.css';
 
@@ -16,6 +17,8 @@ export type AccountabilityPanelProps = {
 export function AccountabilityPanel({ project }: AccountabilityPanelProps): ReactElement {
   const router = useRouter();
   const { routes } = useProjectDetailShell();
+  const { catalogForProject } = useBuildCorePipelineStages();
+  const stageCatalog = catalogForProject({ parentProjectId: project.summary.parentProjectId });
   const acc = content.projectDetail.accountability;
   const previewLimit = useAccountabilityPreviewLimit();
   const entries = sortAccountabilityEntries(project.accountabilityLog);
@@ -33,7 +36,7 @@ export function AccountabilityPanel({ project }: AccountabilityPanelProps): Reac
       {entries.length === 0 ? (
         <p className={styles.subtitle}>{acc.empty}</p>
       ) : (
-        <AccountabilityLogTable entries={previewEntries} />
+        <AccountabilityLogTable entries={previewEntries} stages={stageCatalog} />
       )}
       {showViewAllLink ? (
         <div className={styles.accountabilityPanelFooter}>

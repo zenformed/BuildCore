@@ -10,6 +10,7 @@ import {
   filterDocumentPanelItems,
   type DocumentPanelFilter,
 } from '@/presentation/features/crmProjectDetail/documentPanelModel';
+import { useBuildCorePipelineStages } from '@/presentation/providers/BuildCorePipelineStagesProvider';
 import { filterDocumentPanelItemsBySearch } from '@/presentation/features/crmProjectDetail/projectSectionSearchModel';
 import {
   formatDocumentKind,
@@ -40,6 +41,8 @@ export function ProjectDocumentsPanelContent({
   onRefresh,
   onError,
 }: ProjectDocumentsPanelContentProps): ReactElement {
+  const { catalogForProject } = useBuildCorePipelineStages();
+  const stageCatalog = catalogForProject({ parentProjectId: project.summary.parentProjectId });
   const docsContent = content.projectDetail.documents;
   const wf = content.projectDetail.workflow;
   const [filter, setFilter] = useState<DocumentPanelFilter>('all');
@@ -60,13 +63,15 @@ export function ProjectDocumentsPanelContent({
 
   const items = useMemo(() => {
     const byFilter = filterDocumentPanelItems(project.documents, project.workflowTasks, filter);
-    return filterDocumentPanelItemsBySearch(byFilter, searchQuery);
-  }, [filter, project.documents, project.workflowTasks, searchQuery]);
+    return filterDocumentPanelItemsBySearch(byFilter, searchQuery, stageCatalog);
+  }, [filter, project.documents, project.workflowTasks, searchQuery, stageCatalog]);
 
   const formatDocStageLabel = (workflowTaskId: string, stageSlug: PipelineStageSlug | null) => {
     const task = taskById.get(workflowTaskId);
-    if (task) return formatWorkflowTaskStageLabel(task);
-    return stageSlug ? formatWorkflowTaskStageLabel({ stageSlug, amountCents: null }) : docsContent.noStage;
+    if (task) return formatWorkflowTaskStageLabel(task, stageCatalog);
+    return stageSlug
+      ? formatWorkflowTaskStageLabel({ stageSlug, amountCents: null }, stageCatalog)
+      : docsContent.noStage;
   };
 
   const runDocAction = async (docId: string, action: () => Promise<void>) => {
@@ -144,7 +149,7 @@ export function ProjectDocumentsPanelContent({
                   <div className={styles.docItemBody}>
                     <span className={styles.docItemName}>{item.task.title}</span>
                     <span className={styles.docItemMeta}>
-                      {docsContent.missingForTask} · {formatWorkflowTaskStageLabel(item.task)}
+                      {docsContent.missingForTask} · {formatWorkflowTaskStageLabel(item.task, stageCatalog)}
                     </span>
                   </div>
                   <span className={styles.docCompletionMissing}>0/1</span>
@@ -194,7 +199,7 @@ export function ProjectDocumentsPanelContent({
                       : doc.workflowTaskId
                         ? formatDocStageLabel(doc.workflowTaskId, doc.stageSlug)
                         : doc.stageSlug
-                          ? formatWorkflowTaskStageLabel({ stageSlug: doc.stageSlug, amountCents: null })
+                          ? formatWorkflowTaskStageLabel({ stageSlug: doc.stageSlug, amountCents: null }, stageCatalog)
                           : docsContent.noStage}
                     {doc.uploadedAt ? ` · ${formatShortDate(doc.uploadedAt)}` : null}
                     {` · ${formatFileSize(doc.sizeBytes)}`}
