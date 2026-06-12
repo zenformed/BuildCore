@@ -63,6 +63,7 @@ export function WorkflowTasksTable({
   const currentStage = project.summary.currentStageSlug;
   const [draftStageSlug, setDraftStageSlug] = useState<PipelineStageSlug | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const isSearching = searchQuery.trim().length > 0;
 
   const filteredTasks = useMemo(
     () => filterWorkflowTasksBySearch(project.workflowTasks, searchQuery),
@@ -70,8 +71,11 @@ export function WorkflowTasksTable({
   );
 
   const groups = useMemo(
-    () => groupOpsWorkflowTasksByStage(filteredTasks, currentStage, catalog),
-    [catalog, filteredTasks, currentStage]
+    () =>
+      groupOpsWorkflowTasksByStage(filteredTasks, currentStage, catalog, {
+        includeEmptyStages: !isSearching,
+      }),
+    [catalog, filteredTasks, currentStage, isSearching]
   );
 
   const orderedGroups = useMemo(() => {

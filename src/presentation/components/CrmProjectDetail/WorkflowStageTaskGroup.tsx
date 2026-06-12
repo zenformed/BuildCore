@@ -61,6 +61,7 @@ export function WorkflowStageTaskGroup({
   const completionPercentLabel = formatWorkflowStageTaskCompletionPercent(percentComplete);
   const taskCountText =
     totalCount === 1 ? `1 ${wf.taskSingular}` : `${totalCount} ${wf.taskPlural}`;
+  const showEmptyRow = group.tasks.length === 0 && draftRow == null;
 
   const stageTitle = (
     <span className={styles.stageGroupTitle}>
@@ -109,6 +110,20 @@ export function WorkflowStageTaskGroup({
           onRequestArchiveTask={onRequestArchiveTask}
         />
       ))}
+      {showEmptyRow ? (
+        <div
+          className={`${styles.tableRow} ${gridClass} ${styles.workflowStageEmptyRow}`}
+          role="row"
+        >
+          <span className={styles.workflowStageEmptyCell} aria-hidden />
+          <span className={styles.workflowStageEmptyMessage}>{wf.stageNoTasks}</span>
+          {group.isPaymentsGroup ? <span className={styles.workflowStageEmptyCell} aria-hidden /> : null}
+          <span className={styles.workflowStageEmptyCell} aria-hidden />
+          <span className={styles.workflowStageEmptyCell} aria-hidden />
+          <span className={styles.workflowStageEmptyCell} aria-hidden />
+          <span aria-hidden />
+        </div>
+      ) : null}
       {draftRow}
     </div>
   );

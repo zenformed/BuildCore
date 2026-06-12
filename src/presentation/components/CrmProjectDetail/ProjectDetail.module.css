@@ -3898,6 +3898,28 @@
   padding-top: 0.25rem;
 }
 
+.workflowStageEmptyRow {
+  pointer-events: none;
+}
+
+.workflowStageEmptyRow:hover {
+  background: transparent;
+}
+
+.workflowStageEmptyCell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 1.75rem;
+  color: var(--color-text-muted, #94a3b8);
+}
+
+.workflowStageEmptyMessage {
+  min-width: 0;
+  color: var(--color-text-muted, #64748b);
+  font-style: italic;
+}
+
 .paymentsList {
   display: flex;
   flex-direction: column;

@@ -2,7 +2,6 @@ import {
   isPaymentWorkflowTask,
   PAYMENT_WORKFLOW_STAGE_SLUG,
   PAYMENTS_WORKFLOW_COLLAPSE_KEY,
-  resolvePipelineStageCatalog,
   type CrmWorkflowTask,
   type PipelineStage,
   type PipelineStageSlug,
@@ -149,11 +148,18 @@ export function listPaymentMilestones(tasks: readonly CrmWorkflowTask[]): CrmWor
 }
 
 /** Group operational workflow tasks by pipeline stage (excludes payment milestones). */
+export type GroupOpsWorkflowTasksByStageOptions = {
+  /** When true (default), include every active ops stage even with zero tasks. */
+  readonly includeEmptyStages?: boolean;
+};
+
 export function groupOpsWorkflowTasksByStage(
   tasks: readonly CrmWorkflowTask[],
   currentStageSlug: PipelineStageSlug,
-  stages?: readonly PipelineStage[] | null
+  stages?: readonly PipelineStage[] | null,
+  options?: GroupOpsWorkflowTasksByStageOptions
 ): WorkflowTaskStageGroup[] {
+  const includeEmptyStages = options?.includeEmptyStages ?? true;
   const opsTasks = tasks.filter((task) => !isPaymentWorkflowTask(task));
   const sortedOps = sortWorkflowTasksForDisplay(opsTasks, currentStageSlug, stages);
   const byStage = new Map<PipelineStageSlug, CrmWorkflowTask[]>();
@@ -164,15 +170,18 @@ export function groupOpsWorkflowTasksByStage(
     byStage.set(task.stageSlug, list);
   }
 
-  return resolvePipelineStageCatalog(stages)
-    .filter((stage) => byStage.has(stage.slug))
-    .map((stage) => ({
-      collapseKey: stage.slug,
-      stageSlug: stage.slug,
-      stageLabel: formatWorkflowStageLabel(stage.slug, stages),
-      isPaymentsGroup: false,
-      tasks: byStage.get(stage.slug) ?? [],
-    }));
+  const opsStages = resolveOpsPipelineStages(stages);
+  const stagesToRender = includeEmptyStages
+    ? opsStages
+    : opsStages.filter((stage) => (byStage.get(stage.slug)?.length ?? 0) > 0);
+
+  return stagesToRender.map((stage) => ({
+    collapseKey: stage.slug,
+    stageSlug: stage.slug,
+    stageLabel: formatWorkflowStageLabel(stage.slug, stages),
+    isPaymentsGroup: false,
+    tasks: byStage.get(stage.slug) ?? [],
+  }));
 }
 
 /** @deprecated Use {@link groupOpsWorkflowTasksByStage} for workflow UI. */

@@ -610,6 +610,7 @@ export const buildCoreDashboardContent = {
       expandStageTasks: 'Expand stage tasks',
       taskSingular: 'task',
       taskPlural: 'tasks',
+      stageNoTasks: 'No tasks in this stage.',
       addTask: 'Add task',
       pickStage: 'Choose pipeline stage',
       taskAddedSuccess: 'Workflow task added.',

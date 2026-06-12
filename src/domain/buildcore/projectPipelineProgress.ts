@@ -34,6 +34,8 @@ export type IncompleteWorkflowStage = {
 
 export type WorkflowStageCompletionStatus = IncompleteWorkflowStage & {
   readonly isComplete: boolean;
+  readonly taskCount: number;
+  readonly percentComplete: number;
 };
 
 export function listWorkflowStageCompletionStatuses(
@@ -50,11 +52,20 @@ export function listWorkflowStageCompletionStatuses(
     tasksByStage.set(task.stageSlug, stageTasks);
   }
 
-  return activeStages.map((stage) => ({
-    stageSlug: stage.slug,
-    stageLabel: stage.label,
-    isComplete: isWorkflowStageCompleteByTasks(tasksByStage.get(stage.slug) ?? []),
-  }));
+  return activeStages.map((stage) => {
+    const stageTasks = tasksByStage.get(stage.slug) ?? [];
+    const taskCount = stageTasks.length;
+    const doneCount = stageTasks.filter((task) => task.status === 'done').length;
+    const percentComplete = taskCount === 0 ? 0 : (doneCount / taskCount) * 100;
+
+    return {
+      stageSlug: stage.slug,
+      stageLabel: stage.label,
+      isComplete: isWorkflowStageCompleteByTasks(stageTasks),
+      taskCount,
+      percentComplete,
+    };
+  });
 }
 
 export function listIncompleteWorkflowStages(
