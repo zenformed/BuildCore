@@ -1,34 +1,49 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import type { CrmContact } from '@/domain/crm';
+import type { CrmContact, CrmWorkflowTask } from '@/domain/crm';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
 import { CrmApiError } from '@/infrastructure/crm/api/crmApiClient';
+import { notifyWorkflowTaskAssigned } from '@/infrastructure/crm/api/notifyWorkflowTaskAssigned';
 import { notifyWorkflowTaskCustomer } from '@/infrastructure/crm/api/notifyWorkflowTaskCustomer';
 import {
   shouldOfferWorkflowTaskCustomerNotify,
+  workflowTaskAssignedNotifyPromptFromTask,
   workflowTaskCustomerNotifyPromptFromContact,
-  type WorkflowTaskCustomerNotifyPrompt,
+  type WorkflowTaskAssignedNotifyPrompt,
 } from '@/presentation/features/crmProjectDetail/workflowTaskCustomerNotify';
 
-export type WorkflowTaskCustomerNotifyFeedback = {
+export type WorkflowTaskAssignedNotifyFeedback = {
   readonly kind: 'success' | 'error';
   readonly message: string;
 };
 
-const CUSTOMER_NOTIFY_SUCCESS_AUTO_CLOSE_MS = 2500;
+/** @deprecated Use WorkflowTaskAssignedNotifyFeedback */
+export type WorkflowTaskCustomerNotifyFeedback = WorkflowTaskAssignedNotifyFeedback;
 
-export function useWorkflowTaskCustomerNotifyPrompt(projectContact: CrmContact) {
-  const copy = content.projectDetail.workflow.customerNotify;
-  const [prompt, setPrompt] = useState<WorkflowTaskCustomerNotifyPrompt | null>(null);
+const ASSIGNED_NOTIFY_SUCCESS_AUTO_CLOSE_MS = 2500;
+
+export function useWorkflowTaskAssignedNotifyPrompt(projectContact: CrmContact) {
+  const copy = content.projectDetail.workflow.assignedNotify;
+  const [prompt, setPrompt] = useState<WorkflowTaskAssignedNotifyPrompt | null>(null);
   const [sending, setSending] = useState(false);
-  const [feedback, setFeedback] = useState<WorkflowTaskCustomerNotifyFeedback | null>(null);
+  const [feedback, setFeedback] = useState<WorkflowTaskAssignedNotifyFeedback | null>(null);
 
   const closePrompt = useCallback(() => {
     setPrompt(null);
     setFeedback(null);
     setSending(false);
   }, []);
+
+  const openAssignedNotifyPromptForTask = useCallback(
+    (task: CrmWorkflowTask) => {
+      const nextPrompt = workflowTaskAssignedNotifyPromptFromTask(task, projectContact);
+      if (nextPrompt == null) return;
+      setFeedback(null);
+      setPrompt(nextPrompt);
+    },
+    [projectContact]
+  );
 
   const openCustomerNotifyPromptForTask = useCallback(
     (taskId: string) => {
@@ -59,18 +74,20 @@ export function useWorkflowTaskCustomerNotifyPrompt(projectContact: CrmContact) 
     [openCustomerNotifyPromptForTask]
   );
 
-  const sendCustomerNotifyEmail = useCallback(async () => {
-    if (prompt == null || prompt.customerEmail == null || sending) return;
+  const sendAssignedNotifyEmail = useCallback(async () => {
+    if (prompt == null || prompt.recipientEmail == null || sending) return;
     setSending(true);
     setFeedback(null);
     try {
-      await notifyWorkflowTaskCustomer(prompt.taskId);
+      if (prompt.kind === 'customer') {
+        await notifyWorkflowTaskCustomer(prompt.taskId);
+      } else {
+        await notifyWorkflowTaskAssigned(prompt.taskId);
+      }
       setFeedback({ kind: 'success', message: copy.success });
     } catch (err) {
       const message =
-        err instanceof CrmApiError && err.message.trim()
-          ? err.message
-          : copy.sendFailed;
+        err instanceof CrmApiError && err.message.trim() ? err.message : copy.sendFailed;
       setFeedback({ kind: 'error', message });
     } finally {
       setSending(false);
@@ -79,17 +96,27 @@ export function useWorkflowTaskCustomerNotifyPrompt(projectContact: CrmContact) 
 
   useEffect(() => {
     if (feedback?.kind !== 'success') return;
-    const timer = setTimeout(() => closePrompt(), CUSTOMER_NOTIFY_SUCCESS_AUTO_CLOSE_MS);
+    const timer = setTimeout(() => closePrompt(), ASSIGNED_NOTIFY_SUCCESS_AUTO_CLOSE_MS);
     return () => clearTimeout(timer);
   }, [closePrompt, feedback]);
 
   return {
+    assignedNotifyPrompt: prompt,
+    assignedNotifySending: sending,
+    assignedNotifyFeedback: feedback,
+    closeAssignedNotifyPrompt: closePrompt,
+    requestAssignedNotifyAfterAssigneeChange: requestPromptAfterAssigneeChange,
+    openAssignedNotifyPromptForTask,
+    sendAssignedNotifyEmail,
     customerNotifyPrompt: prompt,
     customerNotifySending: sending,
     customerNotifyFeedback: feedback,
     closeCustomerNotifyPrompt: closePrompt,
     requestCustomerNotifyAfterAssigneeChange: requestPromptAfterAssigneeChange,
     openCustomerNotifyPromptForTask,
-    sendCustomerNotifyEmail,
+    sendCustomerNotifyEmail: sendAssignedNotifyEmail,
   };
 }
+
+/** @deprecated Use useWorkflowTaskAssignedNotifyPrompt */
+export const useWorkflowTaskCustomerNotifyPrompt = useWorkflowTaskAssignedNotifyPrompt;

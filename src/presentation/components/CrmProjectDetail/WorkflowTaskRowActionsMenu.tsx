@@ -11,10 +11,10 @@ export type WorkflowTaskRowActionsMenuProps = {
   readonly disabled?: boolean;
   readonly canEdit?: boolean;
   readonly canDelete?: boolean;
-  readonly showCustomerNotification?: boolean;
+  readonly showAssignedNotification?: boolean;
   readonly onEdit?: () => void;
   readonly onDelete?: () => void;
-  readonly onSendCustomerNotification?: () => void;
+  readonly onNotifyAssigned?: () => void;
 };
 
 type WorkflowTaskRowMenuItem = {
@@ -30,10 +30,10 @@ export function WorkflowTaskRowActionsMenu({
   disabled = false,
   canEdit = false,
   canDelete = false,
-  showCustomerNotification = false,
+  showAssignedNotification = false,
   onEdit,
   onDelete,
-  onSendCustomerNotification,
+  onNotifyAssigned,
 }: WorkflowTaskRowActionsMenuProps): ReactElement | null {
   const wf = content.projectDetail.workflow;
   const [open, setOpen] = useState(false);
@@ -49,11 +49,11 @@ export function WorkflowTaskRowActionsMenu({
         iconClass: styles.actionsMenuEditIcon,
       });
     }
-    if (showCustomerNotification && onSendCustomerNotification) {
+    if (showAssignedNotification && onNotifyAssigned) {
       items.push({
         key: 'notify',
-        label: wf.sendCustomerNotification,
-        onSelect: onSendCustomerNotification,
+        label: wf.notifyAssigned,
+        onSelect: onNotifyAssigned,
         iconClass: styles.actionsMenuMailIcon,
       });
     }
@@ -72,11 +72,11 @@ export function WorkflowTaskRowActionsMenu({
     canEdit,
     onDelete,
     onEdit,
-    onSendCustomerNotification,
-    showCustomerNotification,
+    onNotifyAssigned,
+    showAssignedNotification,
     wf.deleteTask,
     wf.editTask,
-    wf.sendCustomerNotification,
+    wf.notifyAssigned,
   ]);
 
   useEffect(() => {

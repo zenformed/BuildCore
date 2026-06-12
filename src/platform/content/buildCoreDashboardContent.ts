@@ -619,7 +619,8 @@ export const buildCoreDashboardContent = {
       saveTask: 'Save task',
       cancelTask: 'Cancel',
       editTask: 'Edit task',
-      sendCustomerNotification: 'Notify Customer',
+      sendCustomerNotification: 'Notify Assigned',
+      notifyAssigned: 'Notify Assigned',
       taskActionsMenuAriaLabel: (title: string): string => `Actions for ${title}`,
       archiveTask: 'Archive',
       deleteTask: 'Delete task',
@@ -698,6 +699,20 @@ export const buildCoreDashboardContent = {
         assigned: 'Assigned to',
         taskKind: 'Task type',
         amountUsd: 'Amount (USD)',
+      },
+      assignedNotify: {
+        title: 'Notify assigned?',
+        messageWithEmail: (recipientName: string) =>
+          `Would you like to email ${recipientName} about this task?`,
+        messageNoEmail:
+          'The assigned person does not have an email address on file, so no notification can be sent.',
+        notNow: 'Not now',
+        sendEmail: 'Send email',
+        sending: 'Sending…',
+        sentTitle: 'Sent',
+        success: 'Notification email sent.',
+        sendFailed: 'Could not send the notification email. Try again.',
+        closeAriaLabel: 'Close notify assigned dialog',
       },
       customerNotify: {
         title: 'Notify customer?',

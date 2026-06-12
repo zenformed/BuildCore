@@ -21,7 +21,7 @@ import { AssigneeMenuOptionLabel } from '@/presentation/features/crmAssignment/A
 import { useAssignmentIdentityCatalog } from '@/presentation/providers/AssignmentIdentityProvider';
 import { useBuildCoreDashboardContext } from '@/presentation/providers/BuildCoreDashboardProvider';
 import { useProjectDetailShell } from '@/presentation/features/crmProjectDetail/ProjectDetailShellContext';
-import { shouldOfferWorkflowTaskCustomerNotify, taskSupportsManualWorkflowTaskCustomerNotification } from '@/presentation/features/crmProjectDetail/workflowTaskCustomerNotify';
+import { shouldOfferWorkflowTaskCustomerNotify, taskSupportsManualWorkflowTaskAssignedNotification } from '@/presentation/features/crmProjectDetail/workflowTaskCustomerNotify';
 import { useWorkflowTaskPatch } from '@/presentation/features/crmProjectDetail/useWorkflowTaskPatch';
 import { validateWorkflowTaskStatusChange } from '@/presentation/features/crmProjectDetail/workflowTaskDocumentsValidation';
 import {
@@ -76,7 +76,7 @@ export function WorkflowTaskInlineRow({
     onWorkflowTaskDocumentUploaded,
     onWorkflowTaskDocumentDeleted,
     requestCustomerNotifyAfterAssigneeChange,
-    openCustomerNotifyPromptForTask,
+    openAssignedNotifyPromptForTask,
     openEditWorkflowTask,
     syncWorkflowTaskDocuments,
   } = useProjectDetailShell();
@@ -344,8 +344,8 @@ export function WorkflowTaskInlineRow({
   const canOpenDocumentsMenu =
     canView && (hasDocuments || awaitingCustomerReview || canUpload || canEdit);
 
-  const showCustomerNotification =
-    canEdit && taskSupportsManualWorkflowTaskCustomerNotification(task, isApiSource);
+  const showAssignedNotification =
+    canEdit && taskSupportsManualWorkflowTaskAssignedNotification(task, isApiSource);
 
   return (
     <div
@@ -711,14 +711,14 @@ export function WorkflowTaskInlineRow({
         </>
       ) : null}
 
-      {canEdit || (canDelete && onRequestArchiveTask) || showCustomerNotification ? (
+      {canEdit || (canDelete && onRequestArchiveTask) || showAssignedNotification ? (
         <span className={styles.taskDeleteCell}>
           <WorkflowTaskRowActionsMenu
             taskTitle={task.title}
             disabled={saving}
             canEdit={canEdit}
             canDelete={canDelete}
-            showCustomerNotification={showCustomerNotification}
+            showAssignedNotification={showAssignedNotification}
             onEdit={() => {
               closeMenus();
               openEditWorkflowTask(task);
@@ -731,9 +731,9 @@ export function WorkflowTaskInlineRow({
                   }
                 : undefined
             }
-            onSendCustomerNotification={() => {
+            onNotifyAssigned={() => {
               closeMenus();
-              openCustomerNotifyPromptForTask(task.id);
+              openAssignedNotifyPromptForTask(task);
             }}
           />
         </span>

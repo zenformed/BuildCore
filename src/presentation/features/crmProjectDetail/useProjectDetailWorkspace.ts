@@ -13,7 +13,7 @@ import { useBudgetSection } from '@/presentation/features/crmProjectDetail/useBu
 import { useWorkflowTasksSection } from '@/presentation/features/crmProjectDetail/useWorkflowTasksSection';
 import type { WorkflowTaskDrawerContext } from '@/presentation/components/CrmProjectDetail/WorkflowTaskDrawer';
 import { crmRepositories } from '@/shared/di/container';
-import { useWorkflowTaskCustomerNotifyPrompt } from '@/presentation/features/crmProjectDetail/useWorkflowTaskCustomerNotifyPrompt';
+import { useWorkflowTaskAssignedNotifyPrompt } from '@/presentation/features/crmProjectDetail/useWorkflowTaskCustomerNotifyPrompt';
 import { useCrmPaymentTasksIndexContext } from '@/presentation/providers/CrmPaymentTasksIndexProvider';
 
 export type ProjectDetailToast = { kind: 'success' | 'error'; message: string };
@@ -55,7 +55,7 @@ export function useProjectDetailWorkspace(initialProject: CrmProjectDetail) {
     onBudgetEntryDocumentUploaded,
     onBudgetEntryDocumentDeleted,
   } = useBudgetSection(project, setProject);
-  const customerNotify = useWorkflowTaskCustomerNotifyPrompt(project.summary.contact);
+  const assignedNotify = useWorkflowTaskAssignedNotifyPrompt(project.summary.contact);
   const { refetch: refetchRollupIndexes } = useCrmPaymentTasksIndexContext();
 
   const refreshRollupIndexes = useCallback(() => {
@@ -245,14 +245,22 @@ export function useProjectDetailWorkspace(initialProject: CrmProjectDetail) {
     openEditWorkflowTask,
     closeTaskDrawer,
     wf,
-    customerNotifyPrompt: customerNotify.customerNotifyPrompt,
-    customerNotifySending: customerNotify.customerNotifySending,
-    customerNotifyFeedback: customerNotify.customerNotifyFeedback,
-    closeCustomerNotifyPrompt: customerNotify.closeCustomerNotifyPrompt,
+    assignedNotifyPrompt: assignedNotify.assignedNotifyPrompt,
+    assignedNotifySending: assignedNotify.assignedNotifySending,
+    assignedNotifyFeedback: assignedNotify.assignedNotifyFeedback,
+    closeAssignedNotifyPrompt: assignedNotify.closeAssignedNotifyPrompt,
+    requestAssignedNotifyAfterAssigneeChange:
+      assignedNotify.requestAssignedNotifyAfterAssigneeChange,
+    openAssignedNotifyPromptForTask: assignedNotify.openAssignedNotifyPromptForTask,
+    sendAssignedNotifyEmail: assignedNotify.sendAssignedNotifyEmail,
+    customerNotifyPrompt: assignedNotify.customerNotifyPrompt,
+    customerNotifySending: assignedNotify.customerNotifySending,
+    customerNotifyFeedback: assignedNotify.customerNotifyFeedback,
+    closeCustomerNotifyPrompt: assignedNotify.closeCustomerNotifyPrompt,
     requestCustomerNotifyAfterAssigneeChange:
-      customerNotify.requestCustomerNotifyAfterAssigneeChange,
-    openCustomerNotifyPromptForTask: customerNotify.openCustomerNotifyPromptForTask,
-    sendCustomerNotifyEmail: customerNotify.sendCustomerNotifyEmail,
+      assignedNotify.requestCustomerNotifyAfterAssigneeChange,
+    openCustomerNotifyPromptForTask: assignedNotify.openCustomerNotifyPromptForTask,
+    sendCustomerNotifyEmail: assignedNotify.sendCustomerNotifyEmail,
     onProjectSaved: handleProjectSaved,
     onPrimaryPhotoUpdated: handlePrimaryPhotoUpdated,
     refreshRollupIndexes,
