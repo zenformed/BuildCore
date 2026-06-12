@@ -6,6 +6,7 @@ export const WORKFLOW_TASK_STATUSES: readonly WorkflowTaskStatus[] = [
   'blocked',
   'skipped',
   'request_review',
+  'rejected',
   'done',
 ] as const;
 
@@ -15,6 +16,7 @@ export const WORKFLOW_TASK_STATUS_LABELS: Record<WorkflowTaskStatus, string> = {
   blocked: 'Blocked',
   skipped: 'Skipped',
   request_review: 'Needs Approval',
+  rejected: 'Rejected',
   done: 'Done',
 };
 

@@ -4,9 +4,10 @@ const STATUS_ORDER: Record<WorkflowTaskStatus, number> = {
   in_progress: 0,
   blocked: 1,
   request_review: 2,
-  pending: 3,
-  done: 4,
-  skipped: 5,
+  rejected: 3,
+  pending: 4,
+  done: 5,
+  skipped: 6,
 };
 
 export function sortWorkflowTasksForDisplay(

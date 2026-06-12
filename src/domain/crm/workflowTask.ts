@@ -7,6 +7,7 @@ export type WorkflowTaskStatus =
   | 'blocked'
   | 'skipped'
   | 'request_review'
+  | 'rejected'
   | 'done';
 
 export type CrmWorkflowTask = {
