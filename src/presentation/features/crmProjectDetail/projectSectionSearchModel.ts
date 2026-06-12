@@ -1,9 +1,12 @@
 import type {
   CrmAccountabilityAction,
   CrmBudgetEntry,
+  CrmPriority,
   CrmWorkflowTask,
 } from '@/domain/crm';
 import { isPaymentWorkflowTask } from '@/domain/crm';
+import { projectMatchesPriorityListFilter } from '@/domain/crm/projectPriorityToggle';
+import type { CrmProjectsListFilters } from '@/presentation/features/crmProjects/crmProjectsPipelineViewModel';
 import { formatBudgetCategory } from './budgetCategoryLabels';
 import {
   formatDocumentKind,
@@ -25,6 +28,40 @@ function haystackIncludes(haystack: string, query: string): boolean {
 
 function joinHaystack(values: readonly (string | null | undefined)[]): string {
   return values.filter((value): value is string => typeof value === 'string' && value.length > 0).join(' ');
+}
+
+/** Same stage / priority / status rules as dashboard project list, applied to one project's tasks. */
+export function filterWorkflowTasksByListFilters(
+  tasks: readonly CrmWorkflowTask[],
+  filters: CrmProjectsListFilters,
+  projectPriority: CrmPriority
+): CrmWorkflowTask[] {
+  const { stageSlugs, priorities, workflowTaskStatuses } = filters;
+
+  if (priorities.length > 0 && !projectMatchesPriorityListFilter(projectPriority, priorities)) {
+    return [];
+  }
+
+  if (
+    stageSlugs.length === 0 &&
+    workflowTaskStatuses.length === 0
+  ) {
+    return tasks.filter((task) => !isPaymentWorkflowTask(task));
+  }
+
+  return tasks.filter((task) => {
+    if (isPaymentWorkflowTask(task)) return false;
+    if (stageSlugs.length > 0 && !stageSlugs.includes(task.stageSlug)) {
+      return false;
+    }
+    if (
+      workflowTaskStatuses.length > 0 &&
+      !workflowTaskStatuses.includes(task.status)
+    ) {
+      return false;
+    }
+    return true;
+  });
 }
 
 export function filterWorkflowTasksBySearch(

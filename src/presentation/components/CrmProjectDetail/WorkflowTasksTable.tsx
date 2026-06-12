@@ -15,7 +15,16 @@ import { crmRepositories } from '@/shared/di/container';
 import { ConfirmModal } from '@/presentation/components/ConfirmModal';
 import confirmModalStyles from '@/presentation/components/ConfirmModal/ConfirmModal.module.css';
 import { countDocumentsByTaskId } from '@/presentation/features/crmProjectDetail/workflowDocumentCounts';
-import { filterWorkflowTasksBySearch } from '@/presentation/features/crmProjectDetail/projectSectionSearchModel';
+import {
+  filterWorkflowTasksByListFilters,
+  filterWorkflowTasksBySearch,
+} from '@/presentation/features/crmProjectDetail/projectSectionSearchModel';
+import {
+  EMPTY_CRM_PROJECTS_LIST_FILTERS,
+  isCrmProjectsListFiltersActive,
+  type CrmProjectsListFilters,
+} from '@/presentation/features/crmProjects/crmProjectsPipelineViewModel';
+import { CrmProjectsFilterMenu } from '@/presentation/components/CrmProjects/CrmProjectsFilterMenu';
 import { useProjectDetailShell } from '@/presentation/features/crmProjectDetail/ProjectDetailShellContext';
 import {
   countWorkflowTasksInGroups,
@@ -94,19 +103,26 @@ export function WorkflowTasksTable({
   const [markStageToggleBusy, setMarkStageToggleBusy] = useState(false);
   const [batchCompleteConfirmOpen, setBatchCompleteConfirmOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [filters, setFilters] = useState<CrmProjectsListFilters>(EMPTY_CRM_PROJECTS_LIST_FILTERS);
   const isSearching = searchQuery.trim().length > 0;
+  const filtersActive = isCrmProjectsListFiltersActive(filters);
+  const isNarrowingResults = isSearching || filtersActive;
 
-  const filteredTasks = useMemo(
-    () => filterWorkflowTasksBySearch(project.workflowTasks, searchQuery),
-    [project.workflowTasks, searchQuery]
-  );
+  const filteredTasks = useMemo(() => {
+    const byFilters = filterWorkflowTasksByListFilters(
+      project.workflowTasks,
+      filters,
+      project.summary.priority
+    );
+    return filterWorkflowTasksBySearch(byFilters, searchQuery);
+  }, [filters, project.summary.priority, project.workflowTasks, searchQuery]);
 
   const groups = useMemo(
     () =>
       groupOpsWorkflowTasksByStage(filteredTasks, currentStage, catalog, {
-        includeEmptyStages: !isSearching,
+        includeEmptyStages: !isNarrowingResults,
       }),
-    [catalog, filteredTasks, currentStage, isSearching]
+    [catalog, filteredTasks, currentStage, isNarrowingResults]
   );
 
   const orderedGroups = useMemo(() => {
@@ -293,6 +309,7 @@ export function WorkflowTasksTable({
         }
       >
         <DetailPanelHeaderActions>
+          <CrmProjectsFilterMenu filters={filters} onChange={setFilters} />
           <DetailPanelSectionSearch
             value={searchQuery}
             onChange={setSearchQuery}

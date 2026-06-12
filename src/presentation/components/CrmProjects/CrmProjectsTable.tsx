@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, type ReactElement } from 'react';
+import { useEffect, useMemo, useState, type ReactElement } from 'react';
 import type { CrmProjectSummary } from '@/domain/crm';
 import type { CrmProjectPaymentTasksIndex } from '@/domain/crm/projectPaymentValue';
 import type { CrmProjectWorkflowProgressInputIndex } from '@/domain/crm/projectWorkflowProgressInput';
@@ -28,6 +28,8 @@ export type CrmProjectsTableProps = {
   workflowProgressInputIndex?: CrmProjectWorkflowProgressInputIndex;
   isWorkflowProgressLoading?: boolean;
   enableSubprojectExpansion?: boolean;
+  /** When true, parents with subprojects are expanded (e.g. priority filter active). */
+  autoExpandParentsWithSubprojects?: boolean;
   isLoading?: boolean;
   isPaymentFinancialsLoading?: boolean;
   onRowClick: (project: CrmProjectSummary) => void;
@@ -54,6 +56,7 @@ export function CrmProjectsTable({
   workflowProgressInputIndex,
   isWorkflowProgressLoading = false,
   enableSubprojectExpansion = false,
+  autoExpandParentsWithSubprojects = false,
   isLoading = false,
   isPaymentFinancialsLoading = false,
   onRowClick,
@@ -81,7 +84,33 @@ export function CrmProjectsTable({
     });
   };
 
-  const displayRoots = enableSubprojectExpansion ? (rootRows ?? []) : (rows ?? []);
+  const displayRoots = useMemo(
+    () => (enableSubprojectExpansion ? (rootRows ?? []) : (rows ?? [])),
+    [enableSubprojectExpansion, rootRows, rows]
+  );
+
+  useEffect(() => {
+    if (!enableSubprojectExpansion || !autoExpandParentsWithSubprojects) {
+      return;
+    }
+
+    setExpandedParentIds((current) => {
+      const next = new Set(current);
+      for (const project of displayRoots) {
+        const childCount = allChildrenByParentId?.get(project.id)?.length ?? 0;
+        if (childCount > 0) {
+          next.add(project.id);
+        }
+      }
+      return next;
+    });
+  }, [
+    allChildrenByParentId,
+    autoExpandParentsWithSubprojects,
+    displayRoots,
+    enableSubprojectExpansion,
+  ]);
+
   const showTable = displayRoots.length > 0 || isLoading;
   const resolvedPaymentTasksIndex = paymentTasksIndex ?? new Map<string, never>();
   const tableCopy = content.crm.table;

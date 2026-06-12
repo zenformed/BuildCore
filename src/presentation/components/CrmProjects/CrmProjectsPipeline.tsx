@@ -121,6 +121,8 @@ export function CrmProjectsPipeline({
     [router]
   );
 
+  const priorityFilterActive = filters.priorities.length > 0;
+
   const tableEmptyMessage = resolveCrmProjectsTableEmptyMessage({
     isMemberRole,
     totalProjectCount: totalCount,
@@ -170,6 +172,7 @@ export function CrmProjectsPipeline({
       <div className={`${styles.pipeline} ${styles.projectsPanelBody}`}>
         <CrmProjectsTable
           enableSubprojectExpansion
+          autoExpandParentsWithSubprojects={priorityFilterActive}
           rootRows={rootRows}
           allChildrenByParentId={allChildrenByParentId}
           visibleChildrenByParentId={visibleChildrenByParentId}

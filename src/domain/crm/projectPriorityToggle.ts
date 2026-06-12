@@ -16,6 +16,25 @@ export function toggleProjectPriority(priority: CrmPriority): CrmPriority {
   return isProjectPriorityUrgent(priority) ? 'normal' : 'urgent';
 }
 
+/** Filter UI + list matching — only normal vs urgent matter in practice. */
+export type CrmPriorityFilterValue = 'normal' | 'urgent';
+
+export const CRM_PRIORITY_FILTER_VALUES: readonly CrmPriorityFilterValue[] = [
+  'normal',
+  'urgent',
+];
+
+export function projectMatchesPriorityListFilter(
+  priority: CrmPriority,
+  selected: readonly CrmPriority[]
+): boolean {
+  if (selected.length === 0) return true;
+  const urgent = isProjectPriorityUrgent(priority);
+  if (selected.includes('urgent') && urgent) return true;
+  if (selected.includes('normal') && !urgent) return true;
+  return false;
+}
+
 /** Dashboard / pipeline list order: urgent, then normal, then complete. */
 export function getCrmProjectListSortRank(project: CrmProjectSummary): number {
   if (isCrmProjectComplete(project)) return 2;

@@ -2,7 +2,11 @@
 
 import type { ReactElement } from 'react';
 import { useRef, useState } from 'react';
-import type { CrmPriority, PipelineStageSlug, WorkflowTaskStatus } from '@/domain/crm';
+import type { PipelineStageSlug, WorkflowTaskStatus } from '@/domain/crm';
+import {
+  CRM_PRIORITY_FILTER_VALUES,
+  type CrmPriorityFilterValue,
+} from '@/domain/crm/projectPriorityToggle';
 import {
   WORKFLOW_TASK_STATUSES,
   WORKFLOW_TASK_STATUS_LABELS,
@@ -18,12 +22,8 @@ import {
 } from '@/presentation/features/crmProjects/crmProjectsPipelineViewModel';
 import styles from './CrmProjects.module.css';
 
-const CRM_PRIORITIES: readonly CrmPriority[] = ['low', 'normal', 'high', 'urgent'];
-
-const PRIORITY_LABELS: Record<CrmPriority, string> = {
-  low: 'Low',
+const PRIORITY_LABELS: Record<CrmPriorityFilterValue, string> = {
   normal: 'Normal',
-  high: 'High',
   urgent: 'Urgent',
 };
 
@@ -49,7 +49,7 @@ export function CrmProjectsFilterMenu({
     onChange({ ...filters, stageSlugs: next });
   };
 
-  const togglePriority = (priority: CrmPriority): void => {
+  const togglePriority = (priority: CrmPriorityFilterValue): void => {
     const next = filters.priorities.includes(priority)
       ? filters.priorities.filter((value) => value !== priority)
       : [...filters.priorities, priority];
@@ -107,7 +107,7 @@ export function CrmProjectsFilterMenu({
           <fieldset className={styles.projectsFilterFieldset}>
             <legend className={styles.projectsFilterLegend}>{copy.priorityLabel}</legend>
             <div className={styles.projectsFilterOptions}>
-              {CRM_PRIORITIES.map((priority) => (
+              {CRM_PRIORITY_FILTER_VALUES.map((priority) => (
                 <label key={priority} className={styles.projectsFilterOption}>
                   <input
                     type="checkbox"

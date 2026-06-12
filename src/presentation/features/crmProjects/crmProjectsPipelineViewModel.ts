@@ -1,7 +1,10 @@
 import type { CrmPriority, CrmProjectSummary, PipelineStageSlug, WorkflowTaskStatus } from '@/domain/crm';
 import { buildCrmProjectSummarySearchHaystack, projectHasAnyWorkflowTaskStatus } from '@/domain/crm';
 import type { CrmProjectWorkflowTaskStatusIndex } from '@/domain/crm/projectWorkflowTaskStatusIndex';
-import { sortCrmProjectsForList } from '@/domain/crm/projectPriorityToggle';
+import {
+  projectMatchesPriorityListFilter,
+  sortCrmProjectsForList,
+} from '@/domain/crm/projectPriorityToggle';
 
 export type CrmProjectsListFilters = {
   readonly stageSlugs: readonly PipelineStageSlug[];
@@ -58,7 +61,7 @@ function projectMatchesListFilters(
   if (stageSlugs.length > 0 && !stageSlugs.includes(project.currentStageSlug)) {
     return false;
   }
-  if (priorities.length > 0 && !priorities.includes(project.priority)) {
+  if (priorities.length > 0 && !projectMatchesPriorityListFilter(project.priority, priorities)) {
     return false;
   }
   if (
