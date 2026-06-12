@@ -3,13 +3,21 @@
 import { useCallback, useEffect, useState } from 'react';
 import type { CrmProjectDetail } from '@/domain/crm';
 import { isCrmProjectComplete } from '@/domain/crm';
+import type { PipelineStage } from '@/domain/crm/pipelineStage';
+import {
+  listWorkflowStageCompletionStatuses,
+  type WorkflowStageCompletionStatus,
+} from '@/domain/buildcore/projectPipelineProgress';
 import { setCrmProjectCompletion } from '@/application/use-cases/crm/setCrmProjectCompletion';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
 import { crmRepositories } from '@/shared/di/container';
 
 export function useProjectCompletionToggle(
   initialProject: CrmProjectDetail,
-  onRefresh?: () => Promise<void>
+  options?: {
+    readonly onRefresh?: () => Promise<void>;
+    readonly stages?: readonly PipelineStage[] | null;
+  }
 ): {
   project: CrmProjectDetail;
   setProject: (project: CrmProjectDetail) => void;
@@ -17,6 +25,8 @@ export function useProjectCompletionToggle(
   completionBusy: boolean;
   completionConfirm: 'complete' | 'incomplete' | null;
   setCompletionConfirm: (value: 'complete' | 'incomplete' | null) => void;
+  completionBlockedStageStatuses: readonly WorkflowStageCompletionStatus[] | null;
+  setCompletionBlockedStageStatuses: (value: readonly WorkflowStageCompletionStatus[] | null) => void;
   requestMarkComplete: () => void;
   requestMarkIncomplete: () => void;
   confirmCompletionChange: () => Promise<void>;
@@ -30,9 +40,14 @@ export function useProjectCompletionToggle(
   const [completionConfirm, setCompletionConfirm] = useState<'complete' | 'incomplete' | null>(
     null
   );
+  const [completionBlockedStageStatuses, setCompletionBlockedStageStatuses] = useState<
+    readonly WorkflowStageCompletionStatus[] | null
+  >(null);
 
   const isComplete = isCrmProjectComplete(project.summary);
   const c = content.projectDetail;
+  const stages = options?.stages;
+  const onRefresh = options?.onRefresh;
 
   const confirmCompletionChange = useCallback(async () => {
     if (completionConfirm == null) return;
@@ -57,6 +72,15 @@ export function useProjectCompletionToggle(
     }
   }, [completionConfirm, onRefresh, project.summary.slug, c.markCompleteFailed]);
 
+  const requestMarkComplete = useCallback(() => {
+    const stageStatuses = listWorkflowStageCompletionStatuses(project.workflowTasks, stages);
+    if (stageStatuses.some((stage) => !stage.isComplete)) {
+      setCompletionBlockedStageStatuses(stageStatuses);
+      return;
+    }
+    setCompletionConfirm('complete');
+  }, [project.workflowTasks, stages]);
+
   return {
     project,
     setProject,
@@ -64,7 +88,9 @@ export function useProjectCompletionToggle(
     completionBusy,
     completionConfirm,
     setCompletionConfirm,
-    requestMarkComplete: () => setCompletionConfirm('complete'),
+    completionBlockedStageStatuses,
+    setCompletionBlockedStageStatuses,
+    requestMarkComplete,
     requestMarkIncomplete: () => setCompletionConfirm('incomplete'),
     confirmCompletionChange,
   };

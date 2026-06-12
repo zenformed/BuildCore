@@ -10,6 +10,7 @@ import { resolveProjectTemplateScopeForProject } from '@/domain/crm/projectTempl
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
 import { buildCoreDashboardNavigation as nav } from '@/platform/navigation/buildCoreDashboardNavigation';
 import type { ProjectDetailRoutes } from '@/platform/navigation/projectDetailRoutes';
+import { useBuildCorePipelineStages } from '@/presentation/providers/BuildCorePipelineStagesProvider';
 import { useProjectCompletionToggle } from '@/presentation/features/crmProjectDetail/useProjectCompletionToggle';
 import { useProjectDetailWorkspace } from '@/presentation/features/crmProjectDetail/useProjectDetailWorkspace';
 import { useCrmProjectChildSummaries } from '@/presentation/features/crmProjectDetail/useCrmProjectChildSummaries';
@@ -101,7 +102,10 @@ function ProjectDetailShellBody({
       await refetchChildSummaries();
     }
   }, [isParentOverview, onRefresh, refetchChildSummaries]);
-  const completion = useProjectCompletionToggle(scopedProject);
+  const { catalog: pipelineStageCatalog } = useBuildCorePipelineStages();
+  const completion = useProjectCompletionToggle(scopedProject, {
+    stages: pipelineStageCatalog,
+  });
   const projectForWorkspace = showCompletionActions ? completion.project : scopedProject;
   const workspace = useProjectDetailWorkspace(projectForWorkspace);
   const { refreshWorkflowTasks } = workspace;

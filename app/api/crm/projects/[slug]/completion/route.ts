@@ -4,7 +4,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { requireCrmApiAuth } from '@/infrastructure/crm/server/crmApiRouteAuth';
-import { setCrmProjectCompletionBySlugForOrg } from '@/infrastructure/crm/server/crmSetProjectCompletionService';
+import { setCrmProjectCompletionBySlugForOrg, CrmProjectCompletionBlockedError } from '@/infrastructure/crm/server/crmSetProjectCompletionService';
 
 export const dynamic = 'force-dynamic';
 
@@ -53,6 +53,12 @@ export async function POST(
     }
     return NextResponse.json(project);
   } catch (err) {
+    if (err instanceof CrmProjectCompletionBlockedError) {
+      return NextResponse.json(
+        { error: 'completion_blocked', message: err.message },
+        { status: 400 }
+      );
+    }
     const message = err instanceof Error ? err.message : 'Failed to update project completion';
     return NextResponse.json({ error: 'internal_error', message }, { status: 500 });
   }

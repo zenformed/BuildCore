@@ -23,6 +23,8 @@ import { CrmProjectDeleteConfirmModal } from '@/presentation/components/CrmProje
 import { CreateCrmProjectModal } from '@/presentation/components/CrmProjects/CreateCrmProjectModal';
 import { DetailToast } from '@/presentation/components/CrmProjectDetail/DetailToast';
 import { ConfirmModal } from '@/presentation/components/ConfirmModal';
+import { ProjectCompletionBlockedDialog } from '@/presentation/components/CrmProjectDetail/ProjectCompletionBlockedDialog';
+import { useBuildCorePipelineStages } from '@/presentation/providers/BuildCorePipelineStagesProvider';
 import { useCrmProjectTableRowActions } from '@/presentation/features/crmProjects/useCrmProjectTableRowActions';
 import { CrmProjectsFilterMenu } from './CrmProjectsFilterMenu';
 import { CrmProjectsTable } from './CrmProjectsTable';
@@ -73,10 +75,14 @@ export function CrmProjectsPipeline({
     onError: (message) => setToast({ kind: 'error', message }),
   });
 
+  const { catalog: pipelineStageCatalog } = useBuildCorePipelineStages();
+
   const {
     busyProjectId,
     pendingCompletionChange,
     setPendingCompletionChange,
+    completionBlockedStageStatuses,
+    setCompletionBlockedStageStatuses,
     togglePriority,
     requestCompletionChange,
     confirmCompletionChange,
@@ -84,6 +90,7 @@ export function CrmProjectsPipeline({
     onProjectUpdated: patchProjectSummary,
     onSuccess: (message) => setToast({ kind: 'success', message }),
     onError: (message) => setToast({ kind: 'error', message }),
+    stages: pipelineStageCatalog,
   });
 
   useEffect(() => {
@@ -189,6 +196,11 @@ export function CrmProjectsPipeline({
         pendingProject={pendingDeleteProject}
         onClose={() => setPendingDeleteProject(null)}
         onConfirm={() => void handleConfirmDelete()}
+      />
+      <ProjectCompletionBlockedDialog
+        isOpen={completionBlockedStageStatuses != null}
+        stageStatuses={completionBlockedStageStatuses}
+        onClose={() => setCompletionBlockedStageStatuses(null)}
       />
       <ConfirmModal
         isOpen={pendingCompletionChange != null}

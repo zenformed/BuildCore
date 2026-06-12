@@ -1,8 +1,17 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { CrmProjectDetail } from '@/domain/crm';
+import { canMarkProjectCompleteByWorkflowTasks } from '@/domain/buildcore/projectPipelineProgress';
 import { CRM_PROJECT_COMPLETE_STAGE_SLUG } from '@/domain/crm/projectCompletion';
 import { appendCrmAccountabilityEvent } from './crmAccountability';
 import { getCrmProjectDetailBySlugForOrg } from './crmReadService';
+import { loadOrganizationPipelineStageCatalog } from './pipelineStageService';
+
+export class CrmProjectCompletionBlockedError extends Error {
+  constructor(message = 'All workflow tasks must be done before marking this project complete') {
+    super(message);
+    this.name = 'CrmProjectCompletionBlockedError';
+  }
+}
 
 export async function setCrmProjectCompletionBySlugForOrg(
   supabase: SupabaseClient,
@@ -13,6 +22,13 @@ export async function setCrmProjectCompletionBySlugForOrg(
 ): Promise<CrmProjectDetail | null> {
   const existing = await getCrmProjectDetailBySlugForOrg(supabase, organizationId, slug);
   if (existing == null) return null;
+
+  if (complete) {
+    const pipelineStages = await loadOrganizationPipelineStageCatalog(supabase, organizationId);
+    if (!canMarkProjectCompleteByWorkflowTasks(existing.workflowTasks, pipelineStages)) {
+      throw new CrmProjectCompletionBlockedError();
+    }
+  }
 
   const now = new Date().toISOString();
 

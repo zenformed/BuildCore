@@ -9,6 +9,8 @@ import { CreateCrmProjectModal } from '@/presentation/components/CrmProjects/Cre
 import { CrmProjectsTable } from '@/presentation/components/CrmProjects/CrmProjectsTable';
 import { DetailToast } from '@/presentation/components/CrmProjectDetail/DetailToast';
 import { ConfirmModal } from '@/presentation/components/ConfirmModal';
+import { ProjectCompletionBlockedDialog } from '@/presentation/components/CrmProjectDetail/ProjectCompletionBlockedDialog';
+import { useBuildCorePipelineStages } from '@/presentation/providers/BuildCorePipelineStagesProvider';
 import {
   filterSubprojects,
 } from '@/presentation/features/crmProjectDetail/useCrmProjectChildSummaries';
@@ -74,10 +76,14 @@ export function SubprojectsSection(): ReactElement | null {
     onError: (message) => setToast({ kind: 'error', message }),
   });
 
+  const { catalog: pipelineStageCatalog } = useBuildCorePipelineStages();
+
   const {
     busyProjectId,
     pendingCompletionChange,
     setPendingCompletionChange,
+    completionBlockedStageStatuses,
+    setCompletionBlockedStageStatuses,
     togglePriority,
     requestCompletionChange,
     confirmCompletionChange,
@@ -85,6 +91,7 @@ export function SubprojectsSection(): ReactElement | null {
     onProjectUpdated: patchChildProjectSummary,
     onSuccess: (message) => setToast({ kind: 'success', message }),
     onError: (message) => setToast({ kind: 'error', message }),
+    stages: pipelineStageCatalog,
   });
 
   if (hidden) {
@@ -200,6 +207,11 @@ export function SubprojectsSection(): ReactElement | null {
             onConfirm={() => void handleConfirmDelete()}
             confirmTitle={deleteCopy.confirmTitle}
             confirmMessage={deleteCopy.confirmMessage}
+          />
+          <ProjectCompletionBlockedDialog
+            isOpen={completionBlockedStageStatuses != null}
+            stageStatuses={completionBlockedStageStatuses}
+            onClose={() => setCompletionBlockedStageStatuses(null)}
           />
           <ConfirmModal
             isOpen={pendingCompletionChange != null}

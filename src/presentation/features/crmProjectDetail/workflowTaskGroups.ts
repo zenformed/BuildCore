@@ -8,7 +8,10 @@ import {
   type PipelineStageSlug,
   type WorkflowStageCollapseKey,
 } from '@/domain/crm';
-import { isReservedPipelineStageSlug } from '@/domain/buildcore/orgPipelineStages';
+import {
+  isWorkflowStageCompleteByTasks,
+  resolveActiveWorkflowPipelineStages,
+} from '@/domain/buildcore/projectPipelineProgress';
 import { formatWorkflowStageLabel } from '@/presentation/features/crmProjectDetail/crmProjectDetailFormatters';
 import { sortWorkflowTasksForDisplay } from './workflowTaskSort';
 
@@ -37,8 +40,7 @@ export function formatWorkflowStageTaskCompletionPercent(percentComplete: number
 }
 
 export function areAllStageTasksDone(tasks: readonly CrmWorkflowTask[]): boolean {
-  const { totalCount, doneCount } = summarizeWorkflowStageTaskCompletion(tasks);
-  return totalCount > 0 && doneCount === totalCount;
+  return isWorkflowStageCompleteByTasks(tasks);
 }
 
 export type WorkflowTaskStageGroup = {
@@ -53,10 +55,7 @@ export type WorkflowTaskStageGroup = {
 export function resolveOpsPipelineStages(
   stages?: readonly PipelineStage[] | null
 ): readonly PipelineStage[] {
-  return resolvePipelineStageCatalog(stages).filter(
-    (stage) =>
-      stage.slug !== PAYMENT_WORKFLOW_STAGE_SLUG && !isReservedPipelineStageSlug(stage.slug)
-  );
+  return resolveActiveWorkflowPipelineStages(stages);
 }
 
 /** Max workflow task rows on the project detail preview (full page has no cap). */

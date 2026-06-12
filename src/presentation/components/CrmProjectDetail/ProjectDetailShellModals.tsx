@@ -4,6 +4,7 @@ import type { ReactElement } from 'react';
 import type { CrmProjectSummary } from '@/domain/crm';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
 import { ConfirmModal } from '@/presentation/components/ConfirmModal';
+import { ProjectCompletionBlockedDialog } from '@/presentation/components/CrmProjectDetail/ProjectCompletionBlockedDialog';
 import { CrmProjectDeleteConfirmModal } from '@/presentation/components/CrmProjects/CrmProjectDeleteConfirmModal';
 import { WorkflowTaskCustomerNotifyDialog } from '@/presentation/components/CrmProjectDetail/WorkflowTaskCustomerNotifyDialog';
 import type { useProjectCompletionToggle } from '@/presentation/features/crmProjectDetail/useProjectCompletionToggle';
@@ -80,6 +81,11 @@ export function ProjectDetailShellModals({
       />
       {showCompletion && completion != null ? (
         <>
+          <ProjectCompletionBlockedDialog
+            isOpen={completion.completionBlockedStageStatuses != null}
+            stageStatuses={completion.completionBlockedStageStatuses}
+            onClose={() => completion.setCompletionBlockedStageStatuses(null)}
+          />
           <ConfirmModal
             isOpen={completion.completionConfirm === 'complete'}
             onClose={() => completion.setCompletionConfirm(null)}

@@ -8,10 +8,8 @@ import { useBuildCorePipelineStages } from '@/presentation/providers/BuildCorePi
 import { ProjectProgressPercent } from './ProjectProgressPercent';
 
 export function ProjectDetailHeaderProgress(): ReactElement | null {
-  const { project, subSlug, childSummaries, isMemberRole } = useProjectDetailShell();
+  const { project, isMemberRole } = useProjectDetailShell();
   const { catalog } = useBuildCorePipelineStages();
-  const isParentOverview =
-    subSlug == null && project.summary.parentProjectId == null;
   const isComplete = isCrmProjectComplete(project.summary);
 
   const progress = useMemo(() => {
@@ -19,29 +17,12 @@ export function ProjectDetailHeaderProgress(): ReactElement | null {
       return null;
     }
 
-    if (isParentOverview && childSummaries?.isLoading) {
-      return null;
-    }
-
-    const childStageSlugs = isParentOverview
-      ? (childSummaries?.allRows ?? []).map((child) => child.currentStageSlug)
-      : [];
-
     return resolveProjectDetailProgressDisplay({
-      currentStageSlug: project.summary.currentStageSlug,
-      childStageSlugs,
+      workflowTasks: project.workflowTasks,
       isComplete,
       stages: catalog,
     });
-  }, [
-    catalog,
-    childSummaries?.allRows,
-    childSummaries?.isLoading,
-    isComplete,
-    isMemberRole,
-    isParentOverview,
-    project.summary.currentStageSlug,
-  ]);
+  }, [catalog, isComplete, isMemberRole, project.workflowTasks]);
 
   if (progress == null) {
     return null;

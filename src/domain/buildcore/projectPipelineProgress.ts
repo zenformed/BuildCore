@@ -1,6 +1,9 @@
+import type { CrmWorkflowTask } from '@/domain/crm';
+import { isCrmProjectComplete, type CrmProjectSummary } from '@/domain/crm';
+import { isPaymentWorkflowTask, PAYMENT_WORKFLOW_STAGE_SLUG } from '@/domain/crm/paymentWorkflow';
 import type { PipelineStage, PipelineStageSlug } from '@/domain/crm/pipelineStage';
 import { resolvePipelineStageCatalog } from '@/domain/crm/pipelineStage';
-import { isCrmProjectComplete, type CrmProjectSummary } from '@/domain/crm';
+import { isReservedPipelineStageSlug } from '@/domain/buildcore/orgPipelineStages';
 
 export const PROJECT_PROGRESS_SEGMENT_COUNT = 20;
 export const PROJECT_PROGRESS_SEGMENT_STEP = 5;
@@ -9,6 +12,107 @@ export type ProjectProgressDisplay = {
   readonly textPercent: number;
   readonly litSegmentCount: number;
 };
+
+/** Active org workflow stages used for project progress (excludes payments + reserved terminal). */
+export function resolveActiveWorkflowPipelineStages(
+  stages?: readonly PipelineStage[] | null
+): readonly PipelineStage[] {
+  return resolvePipelineStageCatalog(stages).filter(
+    (stage) =>
+      stage.slug !== PAYMENT_WORKFLOW_STAGE_SLUG && !isReservedPipelineStageSlug(stage.slug)
+  );
+}
+
+export function isWorkflowStageCompleteByTasks(tasks: readonly CrmWorkflowTask[]): boolean {
+  return tasks.length > 0 && tasks.every((task) => task.status === 'done');
+}
+
+export type IncompleteWorkflowStage = {
+  readonly stageSlug: PipelineStageSlug;
+  readonly stageLabel: string;
+};
+
+export type WorkflowStageCompletionStatus = IncompleteWorkflowStage & {
+  readonly isComplete: boolean;
+};
+
+export function listWorkflowStageCompletionStatuses(
+  workflowTasks: readonly CrmWorkflowTask[],
+  stages?: readonly PipelineStage[] | null
+): readonly WorkflowStageCompletionStatus[] {
+  const activeStages = resolveActiveWorkflowPipelineStages(stages);
+  const opsTasks = workflowTasks.filter((task) => !isPaymentWorkflowTask(task));
+  const tasksByStage = new Map<PipelineStageSlug, CrmWorkflowTask[]>();
+
+  for (const task of opsTasks) {
+    const stageTasks = tasksByStage.get(task.stageSlug) ?? [];
+    stageTasks.push(task);
+    tasksByStage.set(task.stageSlug, stageTasks);
+  }
+
+  return activeStages.map((stage) => ({
+    stageSlug: stage.slug,
+    stageLabel: stage.label,
+    isComplete: isWorkflowStageCompleteByTasks(tasksByStage.get(stage.slug) ?? []),
+  }));
+}
+
+export function listIncompleteWorkflowStages(
+  workflowTasks: readonly CrmWorkflowTask[],
+  stages?: readonly PipelineStage[] | null
+): readonly IncompleteWorkflowStage[] {
+  return listWorkflowStageCompletionStatuses(workflowTasks, stages)
+    .filter((stage) => !stage.isComplete)
+    .map(({ stageSlug, stageLabel }) => ({ stageSlug, stageLabel }));
+}
+
+export function canMarkProjectCompleteByWorkflowTasks(
+  workflowTasks: readonly CrmWorkflowTask[],
+  stages?: readonly PipelineStage[] | null
+): boolean {
+  return listIncompleteWorkflowStages(workflowTasks, stages).length === 0;
+}
+
+export function countCompletedWorkflowStages(
+  workflowTasks: readonly CrmWorkflowTask[],
+  stages?: readonly PipelineStage[] | null
+): { readonly completedStageCount: number; readonly totalActiveStageCount: number } {
+  const activeStages = resolveActiveWorkflowPipelineStages(stages);
+  const totalActiveStageCount = activeStages.length;
+  if (totalActiveStageCount === 0) {
+    return { completedStageCount: 0, totalActiveStageCount: 0 };
+  }
+
+  const opsTasks = workflowTasks.filter((task) => !isPaymentWorkflowTask(task));
+  const tasksByStage = new Map<PipelineStageSlug, CrmWorkflowTask[]>();
+
+  for (const task of opsTasks) {
+    const stageTasks = tasksByStage.get(task.stageSlug) ?? [];
+    stageTasks.push(task);
+    tasksByStage.set(task.stageSlug, stageTasks);
+  }
+
+  let completedStageCount = 0;
+  for (const stage of activeStages) {
+    if (isWorkflowStageCompleteByTasks(tasksByStage.get(stage.slug) ?? [])) {
+      completedStageCount += 1;
+    }
+  }
+
+  return { completedStageCount, totalActiveStageCount };
+}
+
+export function computeWorkflowStageBasedProjectProgressPercent(
+  workflowTasks: readonly CrmWorkflowTask[],
+  stages?: readonly PipelineStage[] | null
+): number {
+  const { completedStageCount, totalActiveStageCount } = countCompletedWorkflowStages(
+    workflowTasks,
+    stages
+  );
+  if (totalActiveStageCount === 0) return 0;
+  return (completedStageCount / totalActiveStageCount) * 100;
+}
 
 export function pipelineStageProgressPercent(
   stageSlug: PipelineStageSlug,
@@ -40,6 +144,7 @@ export function averagePipelineProgressPercents(values: readonly number[]): numb
   return total / values.length;
 }
 
+/** Dashboard/list rows — still position-based until summaries include workflow tasks. */
 export function resolveProjectSummaryProgressDisplay(
   summary: Pick<CrmProjectSummary, 'currentStageSlug' | 'completedAt'>,
   stages?: readonly PipelineStage[] | null
@@ -58,12 +163,10 @@ export function resolveProjectSummaryProgressDisplay(
 }
 
 export function resolveProjectDetailProgressDisplay(input: {
-  readonly currentStageSlug: PipelineStageSlug;
-  /** Null while parent subprojects are still loading; empty when none exist. */
-  readonly childStageSlugs: readonly PipelineStageSlug[] | null;
+  readonly workflowTasks: readonly CrmWorkflowTask[];
   readonly isComplete?: boolean;
   readonly stages?: readonly PipelineStage[] | null;
-}): ProjectProgressDisplay | null {
+}): ProjectProgressDisplay {
   if (input.isComplete) {
     return {
       textPercent: 100,
@@ -71,25 +174,14 @@ export function resolveProjectDetailProgressDisplay(input: {
     };
   }
 
-  if (input.childStageSlugs === null) {
-    return null;
-  }
+  const rawPercent = computeWorkflowStageBasedProjectProgressPercent(
+    input.workflowTasks,
+    input.stages
+  );
+  const textPercent = Math.round(rawPercent);
 
-  if (input.childStageSlugs.length > 0) {
-    const childPercents = input.childStageSlugs.map((slug) =>
-      pipelineStageProgressPercent(slug, input.stages)
-    );
-    const rawAverage = averagePipelineProgressPercents(childPercents);
-    const textPercent = Math.round(rawAverage);
-    return {
-      textPercent,
-      litSegmentCount: progressLitSegmentCount(textPercent),
-    };
-  }
-
-  const stagePercent = pipelineStageProgressPercent(input.currentStageSlug, input.stages);
   return {
-    textPercent: stagePercent,
-    litSegmentCount: progressLitSegmentCount(stagePercent),
+    textPercent,
+    litSegmentCount: progressLitSegmentCount(textPercent),
   };
 }

@@ -416,6 +416,10 @@ export const buildCoreDashboardContent = {
     markIncomplete: 'Mark incomplete',
     markCompleteConfirmTitle: 'Mark this project as complete?',
     markCompleteConfirmMessage: 'This will set the project at 100%.',
+    markCompleteBlockedTitle:
+      'All Workflow Tasks Must be done before marking this project Complete',
+    markCompleteBlockedStagesHeading: 'Workflow stages:',
+    markCompleteBlockedDismiss: 'OK',
     markIncompleteConfirmTitle: 'Mark this project as incomplete?',
     markIncompleteConfirmMessage: 'Progress will reflect the current pipeline stage again.',
     markCompleteSuccess: 'Project marked as complete.',

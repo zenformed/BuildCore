@@ -3,6 +3,11 @@
 import { useCallback, useState } from 'react';
 import type { CrmProjectSummary } from '@/domain/crm';
 import { isCrmProjectComplete } from '@/domain/crm';
+import type { PipelineStage } from '@/domain/crm/pipelineStage';
+import {
+  listWorkflowStageCompletionStatuses,
+  type WorkflowStageCompletionStatus,
+} from '@/domain/buildcore/projectPipelineProgress';
 import {
   isProjectPriorityUrgent,
   toggleProjectPriority,
@@ -29,12 +34,15 @@ export function useCrmProjectTableRowActions(input: {
   onProjectUpdated: (summary: CrmProjectSummary) => void;
   onSuccess: (message: string) => void;
   onError: (message: string) => void;
+  stages?: readonly PipelineStage[] | null;
 }): {
   busyProjectId: string | null;
   pendingCompletionChange: PendingCrmProjectCompletionChange | null;
   setPendingCompletionChange: (value: PendingCrmProjectCompletionChange | null) => void;
+  completionBlockedStageStatuses: readonly WorkflowStageCompletionStatus[] | null;
+  setCompletionBlockedStageStatuses: (value: readonly WorkflowStageCompletionStatus[] | null) => void;
   togglePriority: (project: CrmProjectSummary) => Promise<void>;
-  requestCompletionChange: (project: CrmProjectSummary) => void;
+  requestCompletionChange: (project: CrmProjectSummary) => Promise<void>;
   confirmCompletionChange: () => Promise<void>;
 } {
   const tableCopy = content.crm.table;
@@ -42,6 +50,9 @@ export function useCrmProjectTableRowActions(input: {
   const [busyProjectId, setBusyProjectId] = useState<string | null>(null);
   const [pendingCompletionChange, setPendingCompletionChange] =
     useState<PendingCrmProjectCompletionChange | null>(null);
+  const [completionBlockedStageStatuses, setCompletionBlockedStageStatuses] = useState<
+    readonly WorkflowStageCompletionStatus[] | null
+  >(null);
 
   const togglePriority = useCallback(
     async (project: CrmProjectSummary): Promise<void> => {
@@ -93,16 +104,38 @@ export function useCrmProjectTableRowActions(input: {
   );
 
   const requestCompletionChange = useCallback(
-    (project: CrmProjectSummary): void => {
+    async (project: CrmProjectSummary): Promise<void> => {
       if (busyProjectId != null) {
         return;
       }
-      setPendingCompletionChange({
-        project,
-        complete: !isCrmProjectComplete(project),
-      });
+
+      const complete = !isCrmProjectComplete(project);
+      if (!complete) {
+        setPendingCompletionChange({ project, complete: false });
+        return;
+      }
+
+      setBusyProjectId(project.id);
+      try {
+        const detail = await getCrmProjectDetailBySlug(crmRepositories, project.slug);
+        if (detail == null) {
+          throw new Error(detailCopy.markCompleteFailed);
+        }
+
+        const stageStatuses = listWorkflowStageCompletionStatuses(detail.workflowTasks, input.stages);
+        if (stageStatuses.some((stage) => !stage.isComplete)) {
+          setCompletionBlockedStageStatuses(stageStatuses);
+          return;
+        }
+
+        setPendingCompletionChange({ project, complete: true });
+      } catch {
+        input.onError(detailCopy.markCompleteFailed);
+      } finally {
+        setBusyProjectId(null);
+      }
     },
-    [busyProjectId]
+    [busyProjectId, detailCopy.markCompleteFailed, input]
   );
 
   const confirmCompletionChange = useCallback(async (): Promise<void> => {
@@ -131,6 +164,8 @@ export function useCrmProjectTableRowActions(input: {
     busyProjectId,
     pendingCompletionChange,
     setPendingCompletionChange,
+    completionBlockedStageStatuses,
+    setCompletionBlockedStageStatuses,
     togglePriority,
     requestCompletionChange,
     confirmCompletionChange,
