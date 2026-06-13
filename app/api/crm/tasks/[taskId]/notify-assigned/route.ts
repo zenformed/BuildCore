@@ -10,6 +10,7 @@ import {
 import { coreUpstreamHttpResponsePayload } from '@/infrastructure/coreApi/zenformedCoreRelayHttp';
 import { requireCrmApiAuth } from '@/infrastructure/crm/server/crmApiRouteAuth';
 import { env } from '@/infrastructure/config/env';
+import { getBuildCorePublicAppUrl } from '@/infrastructure/config/buildCorePublicAppUrl';
 
 export const dynamic = 'force-dynamic';
 
@@ -39,7 +40,7 @@ export async function POST(
 
   const token = auth.context.authHeader.slice('Bearer '.length).trim();
   const result = await postBuildCoreWorkflowTaskNotifyAssigned(token, taskId, {
-    appBaseUrl: env.appUrl || undefined,
+    appBaseUrl: getBuildCorePublicAppUrl(),
   });
 
   if (!result.ok) {

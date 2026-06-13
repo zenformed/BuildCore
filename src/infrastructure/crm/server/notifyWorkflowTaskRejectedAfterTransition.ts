@@ -3,6 +3,7 @@
  */
 
 import { env } from '@/infrastructure/config/env';
+import { getBuildCorePublicAppUrl } from '@/infrastructure/config/buildCorePublicAppUrl';
 import { postBuildCoreWorkflowTaskNotifyRejected } from '@/infrastructure/coreApi/buildCoreCrmNotifyClient';
 import {
   logNeedsApprovalNotifyDebug,
@@ -42,7 +43,7 @@ export async function notifyWorkflowTaskRejectedAfterTransition(
   });
 
   const result = await postBuildCoreWorkflowTaskNotifyRejected(accessToken, taskId, {
-    appBaseUrl: env.appUrl || undefined,
+    appBaseUrl: getBuildCorePublicAppUrl(),
   });
 
   if (!result.ok) {

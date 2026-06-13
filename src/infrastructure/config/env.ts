@@ -5,6 +5,10 @@
  */
 import { getCrmDataSource, type CrmDataSource } from '@/infrastructure/config/crmDataSource';
 import { getSaasEntitlementSourceMode, type SaasEntitlementSourceMode } from '@/infrastructure/config/entitlementSource';
+import {
+  normalizeBuildCorePublicAppOrigin,
+  resolveBuildCorePublicAppUrl,
+} from '@/infrastructure/config/buildCorePublicAppUrl';
 import { resolveZenformedCoreApiBaseUrl } from '@/infrastructure/config/zenformedCoreUrlPolicy';
 
 export const env = {
@@ -40,10 +44,14 @@ export const env = {
   },
   /** Public app URL for auth redirect callbacks (password recovery). Falls back to browser origin on the client. */
   get appUrl(): string {
-    const configured = process.env.NEXT_PUBLIC_APP_URL?.trim();
-    if (configured) return configured.replace(/\/+$/, '');
-    if (typeof window !== 'undefined') return window.location.origin;
-    return '';
+    if (typeof window !== 'undefined') {
+      const configured = normalizeBuildCorePublicAppOrigin(
+        process.env.NEXT_PUBLIC_BUILDCORE_APP_URL ?? process.env.NEXT_PUBLIC_APP_URL
+      );
+      if (configured) return configured;
+      return window.location.origin;
+    }
+    return resolveBuildCorePublicAppUrl();
   },
   /** Stripe payment/checkout URL for "License Required" screen. */
   get stripePaymentUrl(): string {
