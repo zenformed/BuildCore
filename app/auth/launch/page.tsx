@@ -3,6 +3,7 @@
 import { Suspense, useEffect, useState, type ReactElement } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { waitForAuthSessionSync } from '@/infrastructure/auth/authSessionSync';
+import { buildPlatformLoginUrl } from '@/infrastructure/auth/buildPlatformAuthEntryUrl';
 import { setSession } from '@/infrastructure/supabase/supabaseClient';
 import { AuthPageShell } from '@/presentation/components/SaaSAuth/AuthPageShell';
 import pageStyles from '@/presentation/components/SaaSAuth/authPage.module.css';
@@ -101,7 +102,7 @@ function LaunchHandoffContent(): ReactElement {
       <AuthPageShell cardTitle="Sign-in failed" hideBrand>
         <p className={pageStyles.error}>{error}</p>
         <p>
-          <a href="/login">Return to sign in</a>
+          <a href={buildPlatformLoginUrl()}>Return to sign in</a>
         </p>
       </AuthPageShell>
     );

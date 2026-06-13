@@ -3,6 +3,10 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { hasAuthRecoveryCallback } from '@zenformed/core/auth';
+import {
+  buildBuildCoreReturnTo,
+  redirectToPlatformLogin,
+} from '@/infrastructure/auth/buildPlatformAuthEntryUrl';
 import { remediateStaleSaasSession } from '@/infrastructure/auth/remediateStaleSaasSession';
 import { useSaaSProfile } from '@/presentation/hooks/useSaaSProfile';
 import { useShadowCapabilitySnapshot } from '@/presentation/hooks/useShadowCapabilitySnapshot';
@@ -90,7 +94,10 @@ export function SaaSAuthGate({ children }: SaaSAuthGateProps): React.ReactElemen
   useEffect(() => {
     if (!mounted || loading || error) return;
     if (!session || !user) {
-      if (!isPublicPath) router.replace('/login');
+      if (!isPublicPath) {
+        const search = typeof window !== 'undefined' ? window.location.search : '';
+        redirectToPlatformLogin({ returnTo: buildBuildCoreReturnTo(pathname, search) });
+      }
       return;
     }
     if (isPublicPath && pathname?.startsWith('/login')) {
@@ -103,7 +110,8 @@ export function SaaSAuthGate({ children }: SaaSAuthGateProps): React.ReactElemen
     if (corePlatformStatus === 'unavailable') return;
     if (isAuthRecoveryPath || hasRecoveryCallback || isAuthLaunchPath) return;
     remediateStaleSaasSession().finally(() => {
-      router.replace('/login');
+      const search = typeof window !== 'undefined' ? window.location.search : '';
+      redirectToPlatformLogin({ returnTo: buildBuildCoreReturnTo(pathname, search) });
     });
   }, [
     mounted,
@@ -116,6 +124,7 @@ export function SaaSAuthGate({ children }: SaaSAuthGateProps): React.ReactElemen
     isAuthRecoveryPath,
     hasRecoveryCallback,
     isAuthLaunchPath,
+    pathname,
     router,
   ]);
 

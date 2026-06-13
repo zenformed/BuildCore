@@ -1,11 +1,11 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
 import type { User } from '@/domain/entities/User';
 import { getCurrentUserUseCase } from '@/shared/di/container';
 import type { SignInResult, SignUpResult } from '@/application/ports/IAuthService';
 import { waitForAuthSessionSync } from '@/infrastructure/auth/authSessionSync';
+import { buildPlatformLoginUrl } from '@/infrastructure/auth/buildPlatformAuthEntryUrl';
 import { useSaaSProfile } from '@/presentation/hooks/useSaaSProfile';
 
 /**
@@ -32,7 +32,6 @@ export interface UseAuthState {
  * @expandable Add refresh, tenant switch, or MFA methods.
  */
 export function useAuth(): UseAuthState {
-  const router = useRouter();
   const { profile: saasProfile } = useSaaSProfile();
   const [user, setUser] = useState<User | null>(null);
   /** SaaS gate already bootstrapped profile — do not block dashboard on useAuth remount after tab focus. */
@@ -92,9 +91,13 @@ export function useAuth(): UseAuthState {
       await authService.signOut();
       setUser(null);
       if (options?.redirectTo === null) return;
-      router.push(options?.redirectTo ?? '/login');
+      if (options?.redirectTo) {
+        window.location.assign(options.redirectTo);
+        return;
+      }
+      window.location.assign(buildPlatformLoginUrl());
     },
-    [router]
+    []
   );
 
   return { user, isLoading, signIn, signUp, waitForSessionSync, signOut };

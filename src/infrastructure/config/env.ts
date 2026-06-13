@@ -9,6 +9,10 @@ import {
   normalizeBuildCorePublicAppOrigin,
   resolveBuildCorePublicAppUrl,
 } from '@/infrastructure/config/buildCorePublicAppUrl';
+import {
+  normalizePlatformPublicAppOrigin,
+  resolvePlatformPublicAppUrl,
+} from '@/infrastructure/config/platformPublicAppUrl';
 import { resolveZenformedCoreApiBaseUrl } from '@/infrastructure/config/zenformedCoreUrlPolicy';
 
 export const env = {
@@ -52,6 +56,15 @@ export const env = {
       return window.location.origin;
     }
     return resolveBuildCorePublicAppUrl();
+  },
+  /** ZenformedPlatform public origin for primary login and sign-out redirects. */
+  get platformPublicAppUrl(): string {
+    if (typeof window !== 'undefined') {
+      const configured = normalizePlatformPublicAppOrigin(process.env.NEXT_PUBLIC_PLATFORM_APP_URL);
+      if (configured) return configured;
+      return resolvePlatformPublicAppUrl();
+    }
+    return resolvePlatformPublicAppUrl();
   },
   /** Stripe payment/checkout URL for "License Required" screen. */
   get stripePaymentUrl(): string {
