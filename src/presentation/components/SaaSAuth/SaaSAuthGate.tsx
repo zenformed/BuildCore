@@ -11,7 +11,7 @@ import { LicenseRequiredScreen } from './LicenseRequiredScreen';
 import { UpdatePasswordScreen } from './UpdatePasswordScreen';
 import { WelcomeOnboardingScreen } from './WelcomeOnboardingScreen';
 
-const PUBLIC_PATHS = ['/login', '/register', '/forgot-password', '/reset-password', '/accept-invite'];
+const PUBLIC_PATHS = ['/login', '/register', '/forgot-password', '/reset-password', '/accept-invite', '/auth/launch'];
 
 const LoadingShell = () => (
   <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -67,6 +67,7 @@ export function SaaSAuthGate({ children }: SaaSAuthGateProps): React.ReactElemen
 
   const isPublicPath = PUBLIC_PATHS.some((p) => pathname?.startsWith(p));
   const isAcceptInvitePath = pathname?.startsWith('/accept-invite');
+  const isAuthLaunchPath = pathname?.startsWith('/auth/launch');
   const isResetPasswordPath = pathname?.startsWith('/reset-password');
   const isForgotPasswordPath = pathname?.startsWith('/forgot-password');
   const isAuthRecoveryPath = isResetPasswordPath || isForgotPasswordPath;
@@ -100,7 +101,7 @@ export function SaaSAuthGate({ children }: SaaSAuthGateProps): React.ReactElemen
   useEffect(() => {
     if (!mounted || loading || error || !session || !user || profile) return;
     if (corePlatformStatus === 'unavailable') return;
-    if (isAuthRecoveryPath || hasRecoveryCallback) return;
+    if (isAuthRecoveryPath || hasRecoveryCallback || isAuthLaunchPath) return;
     remediateStaleSaasSession().finally(() => {
       router.replace('/login');
     });
@@ -114,6 +115,7 @@ export function SaaSAuthGate({ children }: SaaSAuthGateProps): React.ReactElemen
     corePlatformStatus,
     isAuthRecoveryPath,
     hasRecoveryCallback,
+    isAuthLaunchPath,
     router,
   ]);
 
@@ -121,11 +123,11 @@ export function SaaSAuthGate({ children }: SaaSAuthGateProps): React.ReactElemen
     return <LoadingShell />;
   }
 
-  if (loading && !profile && !isAuthRecoveryPath) {
+  if (loading && !profile && !isAuthRecoveryPath && !isAuthLaunchPath) {
     return <LoadingShell />;
   }
 
-  if (decision === 'loadingProfile' && !isAuthRecoveryPath) {
+  if (decision === 'loadingProfile' && !isAuthRecoveryPath && !isAuthLaunchPath) {
     return <LoadingShell />;
   }
 
@@ -159,6 +161,10 @@ export function SaaSAuthGate({ children }: SaaSAuthGateProps): React.ReactElemen
   }
 
   if (isAcceptInvitePath && session && user) {
+    return <>{children}</>;
+  }
+
+  if (isAuthLaunchPath) {
     return <>{children}</>;
   }
 
