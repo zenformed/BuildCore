@@ -2,6 +2,7 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
+import { hasAuthRecoveryCallback } from '@/infrastructure/auth/authRecoveryCallback';
 import { remediateStaleSaasSession } from '@/infrastructure/auth/remediateStaleSaasSession';
 import { useSaaSProfile } from '@/presentation/hooks/useSaaSProfile';
 import { useShadowCapabilitySnapshot } from '@/presentation/hooks/useShadowCapabilitySnapshot';
@@ -66,6 +67,10 @@ export function SaaSAuthGate({ children }: SaaSAuthGateProps): React.ReactElemen
 
   const isPublicPath = PUBLIC_PATHS.some((p) => pathname?.startsWith(p));
   const isAcceptInvitePath = pathname?.startsWith('/accept-invite');
+  const isResetPasswordPath = pathname?.startsWith('/reset-password');
+  const isForgotPasswordPath = pathname?.startsWith('/forgot-password');
+  const isAuthRecoveryPath = isResetPasswordPath || isForgotPasswordPath;
+  const hasRecoveryCallback = hasAuthRecoveryCallback();
 
   useEffect(() => {
     setMounted(true);
@@ -95,20 +100,32 @@ export function SaaSAuthGate({ children }: SaaSAuthGateProps): React.ReactElemen
   useEffect(() => {
     if (!mounted || loading || error || !session || !user || profile) return;
     if (corePlatformStatus === 'unavailable') return;
+    if (isAuthRecoveryPath || hasRecoveryCallback) return;
     remediateStaleSaasSession().finally(() => {
       router.replace('/login');
     });
-  }, [mounted, loading, error, session, user, profile, corePlatformStatus, router]);
+  }, [
+    mounted,
+    loading,
+    error,
+    session,
+    user,
+    profile,
+    corePlatformStatus,
+    isAuthRecoveryPath,
+    hasRecoveryCallback,
+    router,
+  ]);
 
   if (!mounted) {
     return <LoadingShell />;
   }
 
-  if (loading && !profile) {
+  if (loading && !profile && !isAuthRecoveryPath) {
     return <LoadingShell />;
   }
 
-  if (decision === 'loadingProfile') {
+  if (decision === 'loadingProfile' && !isAuthRecoveryPath) {
     return <LoadingShell />;
   }
 
@@ -137,6 +154,7 @@ export function SaaSAuthGate({ children }: SaaSAuthGateProps): React.ReactElemen
   }
 
   if (decision === 'passwordResetRequired') {
+    if (isResetPasswordPath) return <>{children}</>;
     return <UpdatePasswordScreen onSuccess={refetch} />;
   }
 

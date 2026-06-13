@@ -11,15 +11,10 @@ import {
 } from '@zenformed/core/auth';
 import { AuthPageShell } from '@/presentation/components/SaaSAuth/AuthPageShell';
 import { buildCoreDashboardNavigation as nav } from '@/platform/navigation/buildCoreDashboardNavigation';
+import { hasAuthRecoveryCallback } from '@/infrastructure/auth/authRecoveryCallback';
 import { getSupabaseClient } from '@/infrastructure/supabase/supabaseClient';
 
 type RecoveryStatus = 'loading' | 'ready' | 'invalid';
-
-function hasRecoveryCallback(): boolean {
-  if (typeof window === 'undefined') return false;
-  const hashParams = new URLSearchParams(window.location.hash.replace(/^#/, ''));
-  return hashParams.get('type') === 'recovery';
-}
 
 export default function ResetPasswordPage(): ReactElement {
   const [status, setStatus] = useState<RecoveryStatus>('loading');
@@ -30,7 +25,7 @@ export default function ResetPasswordPage(): ReactElement {
     const supabase = getSupabaseClient();
 
     async function resolveRecoveryStatus(): Promise<void> {
-      if (hasRecoveryCallback()) {
+      if (hasAuthRecoveryCallback()) {
         await new Promise((resolve) => window.setTimeout(resolve, 250));
       }
 
