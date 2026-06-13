@@ -2,7 +2,7 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
-import { hasAuthRecoveryCallback } from '@/infrastructure/auth/authRecoveryCallback';
+import { hasAuthRecoveryCallback } from '@zenformed/core/auth';
 import { remediateStaleSaasSession } from '@/infrastructure/auth/remediateStaleSaasSession';
 import { useSaaSProfile } from '@/presentation/hooks/useSaaSProfile';
 import { useShadowCapabilitySnapshot } from '@/presentation/hooks/useShadowCapabilitySnapshot';

@@ -15,7 +15,7 @@ export function getSupabaseClient(): SupabaseClient {
     url: env.supabaseUrl,
     anonKey: env.supabaseAnonKey,
     storageKey: 'buildcore-auth',
-  });
+  }) as unknown as SupabaseClient;
 }
 
 /** Minimal session shape for restore (e.g. from Electron safeStorage). Supabase setSession only needs tokens. */

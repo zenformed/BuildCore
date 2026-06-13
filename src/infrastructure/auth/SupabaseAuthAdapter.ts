@@ -3,6 +3,7 @@ import type { TenantId } from '@/domain/value-objects/TenantId';
 import { createTenantId } from '@/domain/value-objects/TenantId';
 import type { IAuthService, SignInResult, SignUpResult } from '@/application/ports/IAuthService';
 import type { User as SupabaseUser } from '@supabase/supabase-js';
+import { signInWithPassword, signUpWithPassword } from '@zenformed/core/auth';
 import { getSupabaseClient } from '@/infrastructure/supabase/supabaseClient';
 
 /**
@@ -58,24 +59,20 @@ export class SupabaseAuthAdapter implements IAuthService {
   }
 
   async signIn(email: string, password: string): Promise<SignInResult> {
-    const { data, error } = await this.client.auth.signInWithPassword({ email, password });
-    if (error) {
-      return { success: false, error: error.message };
+    const result = await signInWithPassword(this.client, email, password);
+    if (!result.ok) {
+      return { success: false, error: result.error };
     }
-    if (!data.session || !data.user) {
-      return { success: false, error: 'No user returned' };
-    }
-    // Persist session to Electron main (safeStorage) so user stays logged in next launch
     if (typeof window !== 'undefined' && window.electronAuth?.saveSession) {
       window.electronAuth.saveSession({
-        access_token: data.session.access_token,
-        refresh_token: data.session.refresh_token ?? null,
-        expires_at: data.session.expires_at ?? undefined,
+        access_token: result.session.access_token,
+        refresh_token: result.session.refresh_token ?? null,
+        expires_at: result.session.expires_at ?? undefined,
       });
     }
     return {
       success: true,
-      user: mapSupabaseUserToDomain(data.user),
+      user: mapSupabaseUserToDomain(result.user),
     };
   }
 
@@ -84,39 +81,20 @@ export class SupabaseAuthAdapter implements IAuthService {
     password: string,
     options?: { firstName?: string | null; lastName?: string | null }
   ): Promise<SignUpResult> {
-    const firstName = options?.firstName?.trim() ?? '';
-    const lastName = options?.lastName?.trim() ?? '';
-    const fullName = `${firstName} ${lastName}`.trim();
-
-    const { data, error } = await this.client.auth.signUp({
-      email,
-      password,
-      options: {
-        data: {
-          ...(firstName ? { first_name: firstName } : {}),
-          ...(lastName ? { last_name: lastName } : {}),
-          ...(fullName ? { full_name: fullName } : {}),
-        },
-      },
-    });
-
-    if (error) {
-      return { success: false, error: error.message };
-    }
-
-    if (data.session && data.user) {
-      persistElectronSession(data.session);
+    const result = await signUpWithPassword(this.client, email, password, options);
+    if (!result.ok) {
       return {
-        success: true,
-        user: mapSupabaseUserToDomain(data.user),
+        success: false,
+        error: result.error,
+        needsEmailConfirmation: result.needsEmailConfirmation,
       };
     }
 
-    if (data.user && !data.session) {
+    if (result.session && result.user) {
+      persistElectronSession(result.session);
       return {
-        success: false,
-        needsEmailConfirmation: true,
-        error: 'Check your email to confirm your account before signing in.',
+        success: true,
+        user: mapSupabaseUserToDomain(result.user),
       };
     }
 

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, type ReactElement } from 'react';
+import { type ReactElement } from 'react';
 import {
   DEFAULT_AUTH_LABELS,
   ZenformedAuthNavLink,
@@ -8,64 +8,15 @@ import {
   ZenformedRecoveryPasswordForm,
   authFormStyles as formStyles,
   updateRecoveredPassword,
+  useZenformedPasswordRecoveryStatus,
 } from '@zenformed/core/auth';
 import { AuthPageShell } from '@/presentation/components/SaaSAuth/AuthPageShell';
 import { buildCoreDashboardNavigation as nav } from '@/platform/navigation/buildCoreDashboardNavigation';
-import { hasAuthRecoveryCallback } from '@/infrastructure/auth/authRecoveryCallback';
 import { getSupabaseClient } from '@/infrastructure/supabase/supabaseClient';
 
-type RecoveryStatus = 'loading' | 'ready' | 'invalid';
-
 export default function ResetPasswordPage(): ReactElement {
-  const [status, setStatus] = useState<RecoveryStatus>('loading');
-
-  useEffect(() => {
-    let cancelled = false;
-    let unsubscribe: (() => void) | undefined;
-    const supabase = getSupabaseClient();
-
-    async function resolveRecoveryStatus(): Promise<void> {
-      if (hasAuthRecoveryCallback()) {
-        await new Promise((resolve) => window.setTimeout(resolve, 250));
-      }
-
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      if (cancelled) return;
-
-      if (session) {
-        setStatus('ready');
-        return;
-      }
-
-      const {
-        data: { subscription },
-      } = supabase.auth.onAuthStateChange((event, newSession) => {
-        if (cancelled) return;
-        if (event === 'PASSWORD_RECOVERY' || newSession) {
-          setStatus('ready');
-        }
-      });
-      unsubscribe = () => subscription.unsubscribe();
-
-      window.setTimeout(async () => {
-        if (cancelled) return;
-        const {
-          data: { session: delayedSession },
-        } = await supabase.auth.getSession();
-        if (cancelled) return;
-        setStatus(delayedSession ? 'ready' : 'invalid');
-      }, 750);
-    }
-
-    void resolveRecoveryStatus();
-
-    return () => {
-      cancelled = true;
-      unsubscribe?.();
-    };
-  }, []);
+  const supabase = getSupabaseClient();
+  const status = useZenformedPasswordRecoveryStatus(supabase);
 
   if (status === 'loading') {
     return (
@@ -103,7 +54,7 @@ export default function ResetPasswordPage(): ReactElement {
         loginHref={nav.routes.login}
         onUpdatePassword={async (password) =>
           updateRecoveredPassword({
-            supabase: getSupabaseClient(),
+            supabase,
             password,
           })
         }

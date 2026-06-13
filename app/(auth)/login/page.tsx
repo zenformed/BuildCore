@@ -7,6 +7,9 @@ import {
   DEFAULT_AUTH_LABELS,
   ZenformedAuthNavLink,
   ZenformedAuthPageLinks,
+  buildAuthEntryHref,
+  parseAuthEntryQueryParams,
+  resolvePostAuthRedirectTarget,
 } from '@zenformed/core/auth';
 import { useAuth } from '@/presentation/hooks/useAuth';
 import { AuthPageShell } from '@/presentation/components/SaaSAuth/AuthPageShell';
@@ -21,7 +24,8 @@ function LoginPageContent(): ReactElement {
   const [loggingIn, setLoggingIn] = useState(false);
   const [loginError, setLoginError] = useState<string | null>(null);
 
-  const redirectTarget = searchParams.get('redirect')?.trim() || '/dashboard';
+  const authEntryParams = parseAuthEntryQueryParams(searchParams);
+  const redirectTarget = resolvePostAuthRedirectTarget(authEntryParams, nav.routes.dashboard);
 
   async function handleSubmit(email: string, password: string): Promise<void> {
     setLoggingIn(true);
@@ -30,7 +34,7 @@ function LoginPageContent(): ReactElement {
       const result = await signIn(email, password);
       if (result.success) {
         await waitForSessionSync();
-        router.replace(redirectTarget.startsWith('/') ? redirectTarget : '/dashboard');
+        router.replace(redirectTarget);
         return;
       }
       const extendedResult = result as { mustResetPassword?: boolean; error?: string };
@@ -56,7 +60,7 @@ function LoginPageContent(): ReactElement {
         <>
           <LoginForm onSubmit={handleSubmit} error={loginError} />
           <ZenformedAuthPageLinks>
-            <ZenformedAuthNavLink href={nav.routes.forgotPassword}>
+            <ZenformedAuthNavLink href={buildAuthEntryHref(nav.routes.forgotPassword, authEntryParams)}>
               {DEFAULT_AUTH_LABELS.forgotPassword}
             </ZenformedAuthNavLink>
           </ZenformedAuthPageLinks>
