@@ -11,6 +11,8 @@ export type AuthPageShellProps = {
   readonly children: ReactNode;
   readonly loading?: boolean;
   readonly loadingMessage?: string;
+  /** Hide the product logo above the card (e.g. cross-app launch handoff). */
+  readonly hideBrand?: boolean;
 };
 
 export function AuthPageShell({
@@ -18,6 +20,7 @@ export function AuthPageShell({
   children,
   loading = false,
   loadingMessage = 'Loading…',
+  hideBrand = false,
 }: AuthPageShellProps): ReactElement {
   const { hasLogo, logoUrl } = useBranding();
 
@@ -26,16 +29,18 @@ export function AuthPageShell({
       <div className={styles.themeSlot}>
         <ThemeToggle />
       </div>
-      {hasLogo && logoUrl ? (
+      {!hideBrand && hasLogo && logoUrl ? (
         <div className={styles.companyLogoSpot}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={logoUrl} alt="Company" />
         </div>
       ) : null}
-      <div className={styles.brandBlock}>
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/logo.png" alt="" width={160} height={40} />
-      </div>
+      {!hideBrand ? (
+        <div className={styles.brandBlock}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/logo.png" alt="" width={160} height={40} />
+        </div>
+      ) : null}
       <Card title={cardTitle} className={styles.card}>
         {loading ? <p className={styles.loading}>{loadingMessage}</p> : children}
       </Card>

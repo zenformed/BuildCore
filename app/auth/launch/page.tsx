@@ -98,7 +98,7 @@ function LaunchHandoffContent(): ReactElement {
 
   if (error) {
     return (
-      <AuthPageShell cardTitle="Sign-in failed">
+      <AuthPageShell cardTitle="Sign-in failed" hideBrand>
         <p className={pageStyles.error}>{error}</p>
         <p>
           <a href="/login">Return to sign in</a>
@@ -108,7 +108,7 @@ function LaunchHandoffContent(): ReactElement {
   }
 
   return (
-    <AuthPageShell cardTitle="Opening BuildCore">
+    <AuthPageShell cardTitle="Opening BuildCore" hideBrand>
       <p>Completing sign-in…</p>
     </AuthPageShell>
   );
@@ -118,7 +118,7 @@ export default function AuthLaunchPage(): ReactElement {
   return (
     <Suspense
       fallback={
-        <AuthPageShell cardTitle="Opening BuildCore">
+        <AuthPageShell cardTitle="Opening BuildCore" hideBrand>
           <p>Completing sign-in…</p>
         </AuthPageShell>
       }
