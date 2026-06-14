@@ -91,13 +91,16 @@ export function BuildCoreDashboardShell({
           <>
             <CorePlatformDegradedBanner variant="overlay" />
             <BuildCoreDashboardHeader
-              user={dash.user ? { email: dash.user.email } : null}
+              user={
+                dash.user
+                  ? { email: dash.user.email, displayName: dash.user.displayName }
+                  : null
+              }
               effectiveLicenseTier={dash.effectiveLicenseTier}
               organizationRoleLabel={dash.organizationRoleLabel}
-              isAdmin={dash.isAdmin}
               avatarUrl={dash.avatarUrl}
               avatarLoading={dash.avatarLoading}
-              shopName={dash.shopName}
+              getAccessToken={dash.getAccessToken}
               onOpenSettings={() => dash.setSettingsOpen(true)}
               onRequestSignOutConfirm={() => dash.setSignOutModalOpen(true)}
               onRequestProfilePhotoModal={() => dash.setProfilePhotoModalOpen(true)}

@@ -3,7 +3,6 @@
 import type { ReactElement } from 'react';
 import { ThemeToggle } from '@/presentation/components/ThemeToggle';
 import {
-  formatOrganizationRoleLabel,
   pickHeaderShellClassNames,
   pickAppsLauncherClassNames,
   ZenformedAppsLauncher,
@@ -12,7 +11,6 @@ import {
   type ZenformedAccountMenuLabels,
 } from '@zenformed/core/dashboard-shell';
 import { buildCoreDashboardNavigation as nav } from '@/platform/navigation/buildCoreDashboardNavigation';
-import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
 import { BUILDCORE_ZENFORMED_APPS } from '@/platform/appDefinitions/zenformedApps';
 import {
   AppsIcon,
@@ -45,13 +43,12 @@ const appsLauncherLabels = {
 };
 
 export type BuildCoreDashboardHeaderProps = {
-  user: { email: string } | null;
+  user: { email: string; displayName?: string | null } | null;
   effectiveLicenseTier: string | null | undefined;
   organizationRoleLabel?: string | null;
-  isAdmin: boolean;
   avatarUrl: string | null | undefined;
   avatarLoading: boolean;
-  shopName: string | null | undefined;
+  getAccessToken: () => string | null;
   onOpenSettings: () => void;
   onRequestSignOutConfirm: () => void;
   onRequestProfilePhotoModal: () => void;
@@ -61,10 +58,9 @@ export function BuildCoreDashboardHeader({
   user,
   effectiveLicenseTier,
   organizationRoleLabel,
-  isAdmin,
   avatarUrl,
   avatarLoading,
-  shopName,
+  getAccessToken,
   onOpenSettings,
   onRequestSignOutConfirm,
   onRequestProfilePhotoModal,
@@ -81,12 +77,12 @@ export function BuildCoreDashboardHeader({
       user={user}
       avatarUrl={avatarUrl}
       avatarLoading={avatarLoading}
-      shopName={shopName}
-      defaultShopNameFallback={content.branding.defaultShopNameFallback}
       effectiveLicenseTier={effectiveLicenseTier}
       organizationRoleLabel={organizationRoleLabel}
-      isAdmin={isAdmin}
       labels={accountMenuLabels}
+      settingsApiUrl={nav.apis.usersMeSettings}
+      getAccessToken={getAccessToken}
+      sessionUserId={session?.user?.id ?? null}
       themeToggle={
         <>
           <ThemeToggle />
