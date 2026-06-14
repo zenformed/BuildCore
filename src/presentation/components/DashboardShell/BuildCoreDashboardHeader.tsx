@@ -5,15 +5,27 @@ import { ThemeToggle } from '@/presentation/components/ThemeToggle';
 import {
   formatOrganizationRoleLabel,
   pickHeaderShellClassNames,
+  pickAppsLauncherClassNames,
+  ZenformedAppsLauncher,
   ZenformedDashboardHeader,
+  useZenformedAppLaunch,
   type ZenformedAccountMenuLabels,
 } from '@zenformed/core/dashboard-shell';
 import { buildCoreDashboardNavigation as nav } from '@/platform/navigation/buildCoreDashboardNavigation';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
-import { CameraIcon, SettingsIcon, SignOutIcon } from '@/platform/icons/buildCoreDashboardShellIcons';
+import { BUILDCORE_ZENFORMED_APPS } from '@/platform/appDefinitions/zenformedApps';
+import {
+  AppsIcon,
+  CameraIcon,
+  SettingsIcon,
+  SignOutIcon,
+} from '@/platform/icons/buildCoreDashboardShellIcons';
+import { useSaaSProfile } from '@/presentation/hooks/useSaaSProfile';
 import styles from '../../../../app/(dashboard)/dashboard/dashboard.module.css';
+import appsStyles from './buildCorePlatformApps.module.css';
 
 const headerShellClassNames = pickHeaderShellClassNames(styles);
+const appsLauncherClassNames = pickAppsLauncherClassNames(appsStyles);
 
 const accountMenuLabels: ZenformedAccountMenuLabels = {
   menuTriggerAriaLabel: nav.header.account.menuTriggerAriaLabel,
@@ -24,6 +36,12 @@ const accountMenuLabels: ZenformedAccountMenuLabels = {
   profilePhotoChangeAriaLabel: nav.header.account.profilePhotoChange.ariaLabel,
   settingsButtonLabel: nav.header.account.settingsButton.label,
   signOutButtonLabel: nav.header.account.signOutButton.label,
+};
+
+const appsLauncherLabels = {
+  triggerAriaLabel: nav.header.appsLauncher.triggerAriaLabel,
+  popoverAriaLabel: nav.header.appsLauncher.popoverAriaLabel,
+  comingSoonLabel: 'Coming soon',
 };
 
 export type BuildCoreDashboardHeaderProps = {
@@ -51,6 +69,12 @@ export function BuildCoreDashboardHeader({
   onRequestSignOutConfirm,
   onRequestProfilePhotoModal,
 }: BuildCoreDashboardHeaderProps): ReactElement {
+  const { session } = useSaaSProfile();
+  const { launchApp, launchingAppId, launchError } = useZenformedAppLaunch({
+    launchApiUrl: '/api/internal/app-launch',
+    getAccessToken: () => session?.access_token ?? null,
+  });
+
   return (
     <ZenformedDashboardHeader
       classNames={headerShellClassNames}
@@ -63,7 +87,20 @@ export function BuildCoreDashboardHeader({
       organizationRoleLabel={organizationRoleLabel}
       isAdmin={isAdmin}
       labels={accountMenuLabels}
-      themeToggle={<ThemeToggle />}
+      themeToggle={
+        <>
+          <ThemeToggle />
+          <ZenformedAppsLauncher
+            apps={BUILDCORE_ZENFORMED_APPS}
+            classNames={appsLauncherClassNames}
+            labels={appsLauncherLabels}
+            launchApp={launchApp}
+            launchingAppId={launchingAppId}
+            launchError={launchError}
+            appsIcon={<AppsIcon />}
+          />
+        </>
+      }
       onOpenSettings={onOpenSettings}
       onRequestSignOutConfirm={onRequestSignOutConfirm}
       onRequestProfilePhotoModal={onRequestProfilePhotoModal}

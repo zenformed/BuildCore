@@ -54,6 +54,10 @@ export const buildCoreDashboardNavigation = {
     ],
   },
   header: {
+    appsLauncher: {
+      triggerAriaLabel: 'Open apps',
+      popoverAriaLabel: 'Zenformed apps',
+    },
     search: {
       placeholder: 'Search projects…',
       ariaLabel: 'Search projects',
