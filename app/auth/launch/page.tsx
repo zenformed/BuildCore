@@ -109,21 +109,13 @@ function LaunchHandoffContent(): ReactElement {
   }
 
   return (
-    <AuthPageShell cardTitle="Completing sign-in" loading loadingMessage="Opening BuildCore…">
-      {null}
-    </AuthPageShell>
+    <AuthPageShell minimal loading loadingMessage="Loading…" />
   );
 }
 
 export default function AuthLaunchPage(): ReactElement {
   return (
-    <Suspense
-      fallback={
-        <AuthPageShell cardTitle="Completing sign-in" loading loadingMessage="Opening BuildCore…">
-          {null}
-        </AuthPageShell>
-      }
-    >
+    <Suspense fallback={<AuthPageShell minimal loading loadingMessage="Loading…" />}>
       <LaunchHandoffContent />
     </Suspense>
   );

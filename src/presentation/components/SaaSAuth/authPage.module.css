@@ -59,6 +59,25 @@
   color: var(--color-text);
 }
 
+.minimalBlock {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 1rem;
+}
+
+.minimalBlock .brandBlock {
+  margin-bottom: 0;
+}
+
+.minimalStatus {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--color-text-muted, #64748b);
+}
+
 .card {
   width: 100%;
   max-width: 24rem;
