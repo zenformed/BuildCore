@@ -863,6 +863,11 @@
   gap: 0.75rem;
 }
 
+.accountMenuDropdown .badgeRow {
+  justify-content: center;
+  width: 100%;
+}
+
 :global([data-theme="dark"]) .accountMenuDropdown {
   background: #1d2029;
   border-color: #3d3e4a;
