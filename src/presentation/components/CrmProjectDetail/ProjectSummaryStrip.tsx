@@ -12,7 +12,9 @@ import {
 import type { SummaryEditableField } from '@/presentation/features/crmProjectDetail/projectDetailFormModel';
 import { useProjectDetailShell } from '@/presentation/features/crmProjectDetail/ProjectDetailShellContext';
 import { useProjectDetailPaymentFinancials } from '@/presentation/features/crmProjectDetail/useProjectDetailPaymentFinancials';
+import { useDashboardMobileLayout } from '@/presentation/features/crmProjects/useDashboardMobileLayout';
 import { ProjectSummaryAddress } from './ProjectSummaryAddress';
+import { ProjectSummaryMobileCard } from './ProjectSummaryMobileCard';
 import styles from './ProjectDetail.module.css';
 
 type SummaryMetricProps = {
@@ -60,10 +62,12 @@ type SummaryInlineTextProps = {
   disabled?: boolean;
   inputType?: 'text' | 'email' | 'tel';
   displayClassName?: string;
+  hideLabel?: boolean;
+  valueClassName?: string;
   onPatch: (field: SummaryEditableField, value: string) => Promise<boolean>;
 };
 
-function SummaryInlineText({
+export function SummaryInlineText({
   fieldKey,
   label,
   value,
@@ -72,6 +76,8 @@ function SummaryInlineText({
   disabled = false,
   inputType = 'text',
   displayClassName = styles.summaryText,
+  hideLabel = false,
+  valueClassName,
   onPatch,
 }: SummaryInlineTextProps): ReactElement {
   const [editing, setEditing] = useState(false);
@@ -117,36 +123,59 @@ function SummaryInlineText({
   );
 
   const displayText = (displayValue ?? value) || '—';
+  const resolvedValueClassName = valueClassName ?? displayClassName;
+
+  const valueSlot = (
+    <div className={styles.summaryValueSlot}>
+      <span className={styles.summaryInlineGhost} aria-hidden>
+        {displayText}
+      </span>
+      {editing ? (
+        <input
+          ref={inputRef}
+          type={inputType}
+          className={styles.summaryInlineInputOverlay}
+          value={draft}
+          disabled={isSaving}
+          aria-label={label}
+          onChange={(e) => setDraft(e.target.value)}
+          onBlur={() => void save()}
+          onKeyDown={onKeyDown}
+        />
+      ) : (
+        <button
+          type="button"
+          className={`${styles.summaryInlineDisplayOverlay} ${resolvedValueClassName}`}
+          disabled={disabled || isSaving}
+          onClick={() => setEditing(true)}
+        >
+          {displayText}
+        </button>
+      )}
+    </div>
+  );
+
+  if (hideLabel) {
+    return (
+      <div
+        className={`${styles.summaryValueOnly}${isSaving ? ` ${styles.summaryMetric_saving}` : ''}`}
+        role="group"
+        aria-label={label}
+        aria-busy={isSaving || undefined}
+      >
+        {valueSlot}
+        {isSaving ? (
+          <span className={styles.summarySavingHint} aria-live="polite">
+            Saving…
+          </span>
+        ) : null}
+      </div>
+    );
+  }
 
   return (
     <SummaryMetric label={label} fieldKey={fieldKey} savingField={savingField}>
-      <div className={styles.summaryValueSlot}>
-        <span className={styles.summaryInlineGhost} aria-hidden>
-          {displayText}
-        </span>
-        {editing ? (
-          <input
-            ref={inputRef}
-            type={inputType}
-            className={styles.summaryInlineInputOverlay}
-            value={draft}
-            disabled={isSaving}
-            aria-label={label}
-            onChange={(e) => setDraft(e.target.value)}
-            onBlur={() => void save()}
-            onKeyDown={onKeyDown}
-          />
-        ) : (
-          <button
-            type="button"
-            className={`${styles.summaryInlineDisplayOverlay} ${displayClassName}`}
-            disabled={disabled || isSaving}
-            onClick={() => setEditing(true)}
-          >
-            {displayText}
-          </button>
-        )}
-      </div>
+      {valueSlot}
     </SummaryMetric>
   );
 }
@@ -180,6 +209,20 @@ export function ProjectSummaryStrip({
   const isSubproject = summary.parentProjectId != null;
   const valueLabel = isSubproject ? fields.subValue : fields.value;
   const displayEmail = formatContactEmailDisplay(summary.contact.email, { maskForMember: memberView });
+  const isMobileLayout = useDashboardMobileLayout();
+
+  if (isMobileLayout) {
+    return (
+      <ProjectSummaryMobileCard
+        project={project}
+        memberView={memberView}
+        readOnly={readOnly}
+        savingField={savingField}
+        patchField={patchField}
+        onEditClick={onEditClick}
+      />
+    );
+  }
 
   return (
     <section className={styles.summaryStrip} aria-label="Project summary">

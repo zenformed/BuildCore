@@ -393,6 +393,7 @@ export const buildCoreDashboardContent = {
     },
     sections: {
       contact: 'Contact & project',
+      projectInformation: 'Project information',
       financials: 'Payments',
       pipeline: 'Pipeline progress',
       workflow: 'Workflow tasks',

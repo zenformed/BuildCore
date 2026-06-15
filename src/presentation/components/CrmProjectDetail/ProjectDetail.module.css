@@ -1357,6 +1357,129 @@
     center / contain no-repeat;
 }
 
+/* Mobile project information card (< 768px) */
+.projectInfoMobileCard {
+  position: relative;
+  padding: 0.75rem 0.875rem;
+}
+
+.projectInfoMobileCard_withEdit {
+  padding-right: 2.25rem;
+}
+
+.projectInfoMobileEditAction {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  z-index: 1;
+}
+
+.projectInfoMobileGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.625rem 0.75rem;
+}
+
+.projectInfoMobileCell,
+.projectInfoMobileCellFull {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  min-width: 0;
+}
+
+.projectInfoMobileCellFull {
+  grid-column: 1 / -1;
+}
+
+.projectInfoMobileLabel {
+  font-size: 0.625rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-text-muted, #64748b);
+  line-height: 1.2;
+}
+
+.projectInfoMobileValueWrap {
+  min-width: 0;
+}
+
+.projectInfoMobileValue,
+.projectInfoMobileCell .summaryInlineDisplayOverlay,
+.projectInfoMobileCell .summaryText,
+.projectInfoMobileCell .summaryLink,
+.projectInfoMobileCellFull .summaryText,
+.projectInfoMobileCellFull .summaryLink {
+  white-space: normal;
+  overflow: visible;
+  text-overflow: unset;
+  word-break: break-word;
+}
+
+.projectInfoMobileCell .summaryValueOnly,
+.projectInfoMobileCell .summaryValueSlot {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.projectInfoMobileCell .summaryInlineGhost {
+  white-space: normal;
+  overflow: visible;
+  text-overflow: unset;
+  word-break: break-word;
+}
+
+.summaryValueOnly {
+  min-width: 0;
+}
+
+.projectInfoMobileFinancials {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  width: 100%;
+  margin-top: 0.625rem;
+  padding-top: 0.625rem;
+  border-top: 1px solid var(--theme-border-main, var(--color-border, #e2e8f0));
+}
+
+.projectInfoMobileFinancialItem {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.125rem;
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: 33.333%;
+  text-align: center;
+}
+
+.projectInfoMobileFinancialLabel {
+  font-size: 0.5625rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-text-muted, #64748b);
+  line-height: 1.2;
+}
+
+.projectInfoMobileFinancialValue {
+  font-size: clamp(0.75rem, 3.5vw, 0.875rem);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text, #0f172a);
+  line-height: 1.25;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+:global([data-theme='dark']) .projectInfoMobileFinancialValue {
+  color: #f1f5f9;
+}
+
 :global([data-theme='dark']) .summaryStripEditBtn:hover:not(:disabled) {
   color: #f1f5f9;
   background: #34384a;
