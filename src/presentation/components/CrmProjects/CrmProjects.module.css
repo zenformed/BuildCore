@@ -1063,7 +1063,8 @@
     box-sizing: border-box;
   }
 
-  .projectsPanelHeader_mobile .projectsFilterBtn {
+  .projectsPanelHeader_mobile .projectsFilterBtn,
+  .projectsFilterBtn {
     width: 2.125rem;
     height: 2.125rem;
   }

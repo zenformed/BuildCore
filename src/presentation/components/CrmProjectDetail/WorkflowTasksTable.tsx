@@ -37,6 +37,7 @@ import {
 import { writeWorkflowStageExpanded } from '@/presentation/features/crmProjectDetail/workflowStageCollapseStorage';
 import { useBuildCoreWorkflowTaskAccess } from '@/presentation/providers/BuildCoreWorkflowTaskAccessProvider';
 import { useBuildCorePipelineStages } from '@/presentation/providers/BuildCorePipelineStagesProvider';
+import { useDashboardMobileLayout } from '@/presentation/features/crmProjects/useDashboardMobileLayout';
 import { DetailPanelHeader } from './DetailPanelHeader';
 import { DetailPanelHeaderActions } from './DetailPanelHeaderActions';
 import { DetailPanelSectionRefresh } from './DetailPanelSectionRefresh';
@@ -93,6 +94,7 @@ export function WorkflowTasksTable({
   const canCreate = isReady && permissions.canCreate;
   const canDelete = isReady && permissions.canDelete;
   const isFullLayout = layout === 'full';
+  const isMobileLayout = useDashboardMobileLayout();
   const currentStage = project.summary.currentStageSlug;
   const [draftStageSlug, setDraftStageSlug] = useState<PipelineStageSlug | null>(null);
   const [pendingStageToggle, setPendingStageToggle] = useState<{
@@ -289,52 +291,92 @@ export function WorkflowTasksTable({
     .filter(Boolean)
     .join(' ');
 
+  const batchCompleteLeading =
+    canCreate ? (
+      <WorkflowTasksBatchCompleteButton
+        workflowTasks={project.workflowTasks}
+        manualStageCompletions={project.manualStageCompletions}
+        stages={catalog}
+        disabled={draftStageSlug != null}
+        busy={markStageToggleBusy}
+        onClick={() => setBatchCompleteConfirmOpen(true)}
+      />
+    ) : null;
+
+  const filterMenu = (
+    <CrmProjectsFilterMenu
+      filters={filters}
+      onChange={setFilters}
+      stageScopeMode={resolvePipelineStageScopeForProject({
+        parentProjectId: project.summary.parentProjectId,
+      })}
+    />
+  );
+
+  const searchInput = (
+    <DetailPanelSectionSearch
+      value={searchQuery}
+      onChange={setSearchQuery}
+      placeholder={wf.searchPlaceholder}
+      ariaLabel={wf.searchAriaLabel}
+    />
+  );
+
+  const refreshButton = (
+    <DetailPanelSectionRefresh
+      sectionLabel={content.projectDetail.sections.workflow}
+      onRefresh={refreshWorkflowTasks}
+      onError={(message) => setToast({ kind: 'error', message })}
+    />
+  );
+
+  const addButton = canCreate ? (
+    <WorkflowTaskStageAddButton
+      disabled={draftStageSlug != null}
+      onSelectStage={handleSelectStage}
+    />
+  ) : null;
+
   return (
     <>
       <section className={panelClass} aria-labelledby="workflow-tasks-heading">
-      <DetailPanelHeader
-        title={content.projectDetail.sections.workflow}
-        titleId="workflow-tasks-heading"
-        leading={
-          canCreate ? (
-            <WorkflowTasksBatchCompleteButton
-              workflowTasks={project.workflowTasks}
-              manualStageCompletions={project.manualStageCompletions}
-              stages={catalog}
-              disabled={draftStageSlug != null}
-              busy={markStageToggleBusy}
-              onClick={() => setBatchCompleteConfirmOpen(true)}
-            />
-          ) : null
-        }
-      >
-        <DetailPanelHeaderActions>
-          <CrmProjectsFilterMenu
-            filters={filters}
-            onChange={setFilters}
-            stageScopeMode={resolvePipelineStageScopeForProject({
-              parentProjectId: project.summary.parentProjectId,
-            })}
-          />
-          <DetailPanelSectionSearch
-            value={searchQuery}
-            onChange={setSearchQuery}
-            placeholder={wf.searchPlaceholder}
-            ariaLabel={wf.searchAriaLabel}
-          />
-          <DetailPanelSectionRefresh
-            sectionLabel={content.projectDetail.sections.workflow}
-            onRefresh={refreshWorkflowTasks}
-            onError={(message) => setToast({ kind: 'error', message })}
-          />
-          {canCreate ? (
-            <WorkflowTaskStageAddButton
-              disabled={draftStageSlug != null}
-              onSelectStage={handleSelectStage}
-            />
-          ) : null}
-        </DetailPanelHeaderActions>
-      </DetailPanelHeader>
+      {isMobileLayout ? (
+        <div
+          className={[styles.detailPanelHeader, styles.detailPanelHeader_mobile]
+            .filter(Boolean)
+            .join(' ')}
+        >
+          <div className={styles.detailPanelHeaderRow}>
+            <div className={styles.detailPanelHeaderTitleGroup}>
+              {batchCompleteLeading}
+              <h3 id="workflow-tasks-heading" className={styles.detailPanelTitle}>
+                {content.projectDetail.sections.workflow}
+              </h3>
+            </div>
+            <div className={styles.detailPanelHeaderRowActions}>{filterMenu}</div>
+          </div>
+          <div className={styles.detailPanelHeaderRow}>
+            <div className={styles.detailPanelSearchWrap}>{searchInput}</div>
+            <div className={styles.detailPanelHeaderRowActions}>
+              {refreshButton}
+              {addButton}
+            </div>
+          </div>
+        </div>
+      ) : (
+        <DetailPanelHeader
+          title={content.projectDetail.sections.workflow}
+          titleId="workflow-tasks-heading"
+          leading={batchCompleteLeading}
+        >
+          <DetailPanelHeaderActions>
+            {filterMenu}
+            {searchInput}
+            {refreshButton}
+            {addButton}
+          </DetailPanelHeaderActions>
+        </DetailPanelHeader>
+      )}
       {isLoading && !isReady ? (
         <div className={isFullLayout ? undefined : styles.workflowPanelGrow}>
           <p className={styles.subtitle}>{wf.permissionsLoading}</p>

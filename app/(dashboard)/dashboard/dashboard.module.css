@@ -149,6 +149,10 @@
   .mainContent:has([data-crm-projects-dashboard]) {
     padding: 0.75rem 0.5rem;
   }
+
+  .mainContent:has([data-project-detail-page]) {
+    padding: 0.75rem 0.5rem;
+  }
 }
 
 /* Sidebar app identity (ZenformedSidebarBranding) */
