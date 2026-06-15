@@ -1,8 +1,10 @@
 import type { ZenformedAppRegistryEntry } from '@zenformed/core/dashboard-shell';
 import { env } from '@/infrastructure/config/env';
+import { buildCoreAppIconSrc } from '@/platform/assets/buildCoreAppIcon';
 import { buildcoreAppDefinition } from '@/platform/appDefinitions/buildcore';
 
 const platformDashboardHref = `${env.platformPublicAppUrl}/dashboard`;
+const buildcoreIconSrc = buildCoreAppIconSrc();
 
 /** Cross-app registry for the shared Zenformed apps launcher (BuildCore shell). */
 export const BUILDCORE_ZENFORMED_APPS: readonly ZenformedAppRegistryEntry[] = [
@@ -19,6 +21,7 @@ export const BUILDCORE_ZENFORMED_APPS: readonly ZenformedAppRegistryEntry[] = [
     description: 'Construction project management and CRM.',
     href: buildcoreAppDefinition.dashboardRoute ?? '/dashboard',
     status: 'live',
+    ...(buildcoreIconSrc ? { iconSrc: buildcoreIconSrc } : {}),
   },
   {
     id: 'forgecore',
