@@ -126,6 +126,7 @@ export function ProjectFinancialReportContent({
                         amount: copy.amount,
                         status: copy.status,
                         paidDate: copy.paidDate,
+                        paidIndicator: copy.paidIndicator,
                       }}
                       paidLabel={row.paidIndicator === 'paid' ? copy.paid : copy.unpaid}
                     />
@@ -263,6 +264,7 @@ function FinancialReportPaymentMobileCard({
     readonly amount: string;
     readonly status: string;
     readonly paidDate: string;
+    readonly paidIndicator: string;
   };
   readonly paidLabel: string;
 }): ReactElement {
@@ -274,36 +276,39 @@ function FinancialReportPaymentMobileCard({
 
   return (
     <article
-      className={`${styles.card} ${styles.workflowTaskMobileCard}`}
+      className={`${styles.card} ${styles.workflowTaskMobileCard} ${styles.projectFinancialPaymentMobileCard}`}
       aria-label={`${labels.payment}: ${row.title}`}
     >
-      <div className={styles.workflowTaskMobileCardGrid2}>
-        <div className={styles.workflowTaskMobileCardCell}>
-          <span className={styles.projectInfoMobileLabel}>{labels.payment}</span>
-          <span className={styles.workflowTaskMobileCardValue}>{row.title}</span>
+      <div className={styles.workflowTaskMobileCardBody}>
+        <div className={styles.workflowTaskMobileCardGrid2}>
+          <div className={styles.workflowTaskMobileCardCell}>
+            <span className={styles.projectInfoMobileLabel}>{labels.payment}</span>
+            <span className={styles.workflowTaskMobileCardValue}>{row.title}</span>
+          </div>
+          <div className={`${styles.workflowTaskMobileCardCell} ${styles.workflowTaskMobileCardCell_right}`}>
+            <span className={styles.projectInfoMobileLabel}>{labels.project}</span>
+            <span className={styles.workflowTaskMobileCardValue}>
+              {formatReportPaymentProjectLabel(row, projectName)}
+            </span>
+          </div>
         </div>
-        <div className={`${styles.workflowTaskMobileCardCell} ${styles.workflowTaskMobileCardCell_right}`}>
-          <span className={styles.projectInfoMobileLabel}>{labels.project}</span>
-          <span className={styles.workflowTaskMobileCardValue}>
-            {formatReportPaymentProjectLabel(row, projectName)}
-          </span>
+        <div className={styles.workflowTaskMobileCardGrid3}>
+          <div className={styles.workflowTaskMobileCardCell}>
+            <span className={styles.projectInfoMobileLabel}>{labels.amount}</span>
+            <span className={styles.workflowTaskMobileCardValue}>{formatCentsAsUsd(row.amountCents)}</span>
+          </div>
+          <div className={`${styles.workflowTaskMobileCardCell} ${styles.workflowTaskMobileCardCell_center}`}>
+            <span className={styles.projectInfoMobileLabel}>{labels.status}</span>
+            <span className={styles.workflowTaskMobileCardValue}>{row.statusLabel}</span>
+          </div>
+          <div className={`${styles.workflowTaskMobileCardCell} ${styles.workflowTaskMobileCardCell_right}`}>
+            <span className={styles.projectInfoMobileLabel}>{labels.paidDate}</span>
+            <span className={styles.workflowTaskMobileCardValue}>{row.paidAtLabel}</span>
+          </div>
         </div>
       </div>
-      <div className={styles.workflowTaskMobileCardGrid3}>
-        <div className={styles.workflowTaskMobileCardCell}>
-          <span className={styles.projectInfoMobileLabel}>{labels.amount}</span>
-          <span className={styles.workflowTaskMobileCardValue}>{formatCentsAsUsd(row.amountCents)}</span>
-        </div>
-        <div className={`${styles.workflowTaskMobileCardCell} ${styles.workflowTaskMobileCardCell_center}`}>
-          <span className={styles.projectInfoMobileLabel}>{labels.status}</span>
-          <span className={styles.workflowTaskMobileCardValue}>{row.statusLabel}</span>
-        </div>
-        <div className={`${styles.workflowTaskMobileCardCell} ${styles.workflowTaskMobileCardCell_right}`}>
-          <span className={styles.projectInfoMobileLabel}>{labels.paidDate}</span>
-          <span className={styles.workflowTaskMobileCardValue}>{row.paidAtLabel}</span>
-        </div>
-      </div>
-      <div className={styles.projectFinancialPaymentStatusRow}>
+      <div className={styles.projectFinancialPaymentStatusStrip} aria-label={labels.paidIndicator}>
+        <span className={styles.projectFinancialPaymentStatusLabel}>{labels.paidIndicator}</span>
         <span className={paidValueClass}>{paidDisplay}</span>
       </div>
     </article>

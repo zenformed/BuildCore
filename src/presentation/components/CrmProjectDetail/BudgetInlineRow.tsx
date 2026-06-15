@@ -263,6 +263,7 @@ export function BudgetInlineRow({
             </div>
           ) : null}
         </div>
+        <div className={styles.workflowTaskMobileCardBody}>
         <div className={styles.workflowTaskMobileCardGrid3}>
           <div className={styles.workflowTaskMobileCardCell}>
             <span className={styles.projectInfoMobileLabel}>{b.columns.category}</span>
@@ -550,6 +551,7 @@ export function BudgetInlineRow({
               {formatCentsAsUsd(remainingCents)}
             </span>
           </div>
+        </div>
         </div>
       </article>
     );

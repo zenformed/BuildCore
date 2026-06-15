@@ -800,6 +800,7 @@ function WorkflowTaskRowPaymentMobileView({
           </div>
         ) : null}
       </div>
+      <div className={styles.workflowTaskMobileCardBody}>
       <div className={styles.workflowTaskMobileCardGrid2}>
         <div className={styles.workflowTaskMobileCardCell}>
           <span className={styles.projectInfoMobileLabel}>{cols.status}</span>
@@ -837,6 +838,7 @@ function WorkflowTaskRowPaymentMobileView({
       <div className={styles.workflowTaskMobileCardNotes}>
         <span className={styles.projectInfoMobileLabel}>{cols.notes}</span>
         <WorkflowTaskRowNotesField model={model} mobile />
+      </div>
       </div>
     </article>
   );

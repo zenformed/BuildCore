@@ -72,68 +72,70 @@ export function SubprojectMobileCard({
       aria-label={tableCopy.subprojectRowAriaLabel(project.name)}
       aria-busy={busy || deleting || undefined}
     >
-      <div
-        role="button"
-        tabIndex={0}
-        className={styles.subprojectMobileCardBody}
-        onClick={onRowClick}
-        onKeyDown={handleKeyDown}
-      >
-        <div className={styles.subprojectMobileCardGrid}>
-          <div className={styles.subprojectMobileCardCol}>
-            <span className={styles.subprojectMobileCardNameRow}>
-              {isProjectPriorityUrgent(project.priority) ? (
-                <CrmProjectPriorityIcon ariaLabel={tableCopy.priorityMarkAriaLabel} />
-              ) : null}
-              {isCrmProjectComplete(project) ? (
-                <CrmProjectCompleteIcon ariaLabel={tableCopy.completionCheckAriaLabel} />
-              ) : null}
-              <span className={styles.subprojectMobileCardName}>{project.name}</span>
-            </span>
-            {industrySubtitle ? (
-              <span className={styles.subprojectMobileCardMeta}>{industrySubtitle}</span>
-            ) : (
-              <span className={styles.subprojectMobileCardMeta}>—</span>
-            )}
-            {derivedStageSlug != null ? (
-              <span
-                className={`${shared.stagePill} ${styles.subprojectMobileCardStagePill}`}
-                title={formatStageLabel(derivedStageSlug, catalog)}
-              >
-                {formatStageLabel(derivedStageSlug, catalog)}
+      <div className={styles.subprojectMobileCardContent}>
+        <div
+          role="button"
+          tabIndex={0}
+          className={styles.subprojectMobileCardBody}
+          onClick={onRowClick}
+          onKeyDown={handleKeyDown}
+        >
+          <div className={styles.subprojectMobileCardGrid}>
+            <div className={styles.subprojectMobileCardCol}>
+              <span className={styles.subprojectMobileCardNameRow}>
+                {isProjectPriorityUrgent(project.priority) ? (
+                  <CrmProjectPriorityIcon ariaLabel={tableCopy.priorityMarkAriaLabel} />
+                ) : null}
+                {isCrmProjectComplete(project) ? (
+                  <CrmProjectCompleteIcon ariaLabel={tableCopy.completionCheckAriaLabel} />
+                ) : null}
+                <span className={styles.subprojectMobileCardName}>{project.name}</span>
               </span>
-            ) : (
-              <span className={styles.subprojectMobileCardMeta}>—</span>
-            )}
-          </div>
-          <div className={`${styles.subprojectMobileCardCol} ${styles.subprojectMobileCardColRight}`}>
-            <span className={styles.subprojectMobileCardValue}>
-              {project.contact.name || '—'}
-            </span>
-            <span className={styles.subprojectMobileCardValue} title={displayEmail}>
-              {displayEmail || '—'}
-            </span>
-            <span className={styles.subprojectMobileCardValue}>{displayPhone || '—'}</span>
+              {industrySubtitle ? (
+                <span className={styles.subprojectMobileCardMeta}>{industrySubtitle}</span>
+              ) : (
+                <span className={styles.subprojectMobileCardMeta}>—</span>
+              )}
+              {derivedStageSlug != null ? (
+                <span
+                  className={`${shared.stagePill} ${styles.subprojectMobileCardStagePill}`}
+                  title={formatStageLabel(derivedStageSlug, catalog)}
+                >
+                  {formatStageLabel(derivedStageSlug, catalog)}
+                </span>
+              ) : (
+                <span className={styles.subprojectMobileCardMeta}>—</span>
+              )}
+            </div>
+            <div className={`${styles.subprojectMobileCardCol} ${styles.subprojectMobileCardColRight}`}>
+              <span className={styles.subprojectMobileCardValue}>
+                {project.contact.name || '—'}
+              </span>
+              <span className={styles.subprojectMobileCardValue} title={displayEmail}>
+                {displayEmail || '—'}
+              </span>
+              <span className={styles.subprojectMobileCardValue}>{displayPhone || '—'}</span>
+            </div>
           </div>
         </div>
       </div>
       {isMemberRole ? null : (
-        <div className={styles.projectInfoMobileFinancials} aria-label={content.projectDetail.sections.financials}>
-          <span className={styles.projectInfoMobileFinancialItem} title={fields.subValue}>
-            <span className={styles.projectInfoMobileFinancialLabel}>{fields.value}</span>
-            <span className={styles.projectInfoMobileFinancialValue} aria-busy={financialsLoading || undefined}>
+        <div className={styles.subprojectMobileCardFinancials} aria-label={content.projectDetail.sections.financials}>
+          <span className={styles.subprojectMobileCardFinancialItem} title={fields.subValue}>
+            <span className={styles.subprojectMobileCardFinancialLabel}>{fields.value}</span>
+            <span className={styles.subprojectMobileCardFinancialValue} aria-busy={financialsLoading || undefined}>
               {financialDisplay(financials.valueCents)}
             </span>
           </span>
-          <span className={styles.projectInfoMobileFinancialItem} title={fields.collected}>
-            <span className={styles.projectInfoMobileFinancialLabel}>{fields.collected}</span>
-            <span className={styles.projectInfoMobileFinancialValue} aria-busy={financialsLoading || undefined}>
+          <span className={styles.subprojectMobileCardFinancialItem} title={fields.collected}>
+            <span className={styles.subprojectMobileCardFinancialLabel}>{fields.collected}</span>
+            <span className={styles.subprojectMobileCardFinancialValue} aria-busy={financialsLoading || undefined}>
               {financialDisplay(financials.collectedCents)}
             </span>
           </span>
-          <span className={styles.projectInfoMobileFinancialItem} title={fields.balance}>
-            <span className={styles.projectInfoMobileFinancialLabel}>{fields.balance}</span>
-            <span className={styles.projectInfoMobileFinancialValue} aria-busy={financialsLoading || undefined}>
+          <span className={styles.subprojectMobileCardFinancialItem} title={fields.balance}>
+            <span className={styles.subprojectMobileCardFinancialLabel}>{fields.balance}</span>
+            <span className={styles.subprojectMobileCardFinancialValue} aria-busy={financialsLoading || undefined}>
               {financialDisplay(financials.balanceCents)}
             </span>
           </span>

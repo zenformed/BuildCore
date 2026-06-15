@@ -213,14 +213,16 @@ export function ProjectSummaryStrip({
 
   if (isMobileLayout) {
     return (
-      <ProjectSummaryMobileCard
-        project={project}
-        memberView={memberView}
-        readOnly={readOnly}
-        savingField={savingField}
-        patchField={patchField}
-        onEditClick={onEditClick}
-      />
+      <div className={styles.projectInfoMobileCardHost}>
+        <ProjectSummaryMobileCard
+          project={project}
+          memberView={memberView}
+          readOnly={readOnly}
+          savingField={savingField}
+          patchField={patchField}
+          onEditClick={onEditClick}
+        />
+      </div>
     );
   }
 

@@ -79,7 +79,7 @@ export function ProjectSummaryMobileCard({
   ) : null;
 
   return (
-    <section
+    <article
       className={`${styles.card} ${styles.projectInfoMobileCard}`}
       aria-label={content.projectDetail.sections.projectInformation}
     >
@@ -174,6 +174,6 @@ export function ProjectSummaryMobileCard({
           </span>
         </div>
       )}
-    </section>
+    </article>
   );
 }

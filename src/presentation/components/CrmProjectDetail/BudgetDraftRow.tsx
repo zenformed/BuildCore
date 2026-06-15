@@ -157,6 +157,7 @@ export function BudgetDraftRow({ onSave, onCancel }: BudgetDraftRowProps): React
               onCancel={onCancel}
             />
           </div>
+          <div className={styles.workflowTaskMobileCardBody}>
           <div className={styles.workflowTaskMobileCardGrid3}>
             <div className={styles.workflowTaskMobileCardCell}>
               <span className={styles.projectInfoMobileLabel}>{b.columns.category}</span>
@@ -254,6 +255,7 @@ export function BudgetDraftRow({ onSave, onCancel }: BudgetDraftRowProps): React
                 —
               </span>
             </div>
+          </div>
           </div>
         </article>
         {error ? <p className={styles.paymentDraftError}>{error}</p> : null}

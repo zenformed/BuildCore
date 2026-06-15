@@ -202,6 +202,7 @@ export function PaymentMilestoneDraftRow({
               onCancel={onCancel}
             />
           </div>
+          <div className={styles.workflowTaskMobileCardBody}>
           <div className={styles.workflowTaskMobileCardGrid2}>
             <div className={styles.workflowTaskMobileCardCell}>
               <span className={styles.projectInfoMobileLabel}>{cols.status}</span>
@@ -359,6 +360,7 @@ export function PaymentMilestoneDraftRow({
                 —
               </span>
             </div>
+          </div>
           </div>
         </article>
         {error ? <p className={styles.paymentDraftError}>{error}</p> : null}
