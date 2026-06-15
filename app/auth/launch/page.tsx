@@ -20,6 +20,7 @@ function readErrorMessage(json: unknown, fallback: string): string {
 function sanitizeReturnPath(raw: string | null | undefined): string {
   if (raw == null || raw.trim() === '') return '/dashboard';
   const trimmed = raw.trim();
+  if (trimmed === '/') return '/dashboard';
   if (!trimmed.startsWith('/') || trimmed.startsWith('//')) return '/dashboard';
   if (trimmed.includes('://') || trimmed.includes('\\')) return '/dashboard';
   return trimmed;

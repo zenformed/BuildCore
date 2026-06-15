@@ -2,6 +2,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { mintAppLaunch } from '@/infrastructure/coreApi/appLaunchClient';
 import { coreUpstreamHttpResponsePayload } from '@/infrastructure/coreApi/zenformedCoreRelayHttp';
 import {
+  resolveLocalLaunchOriginForTarget,
+  rewriteTargetLaunchUrlForLocalDev,
+} from '@/infrastructure/auth/appLaunchUrlDev';
+import {
   isBuildCoreLaunchTargetApp,
 } from '@/platform/appDefinitions/zenformedApps';
 import { env } from '@/infrastructure/config/env';
@@ -58,12 +62,19 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     return NextResponse.json({ error: 'invalid_target_app', message: 'Invalid target app.' }, { status: 400 });
   }
 
-  const returnPath =
+  const returnPathRaw =
     typeof record.returnPath === 'string' && record.returnPath.trim() !== ''
       ? record.returnPath.trim()
       : '/dashboard';
+  const returnPath = returnPathRaw === '/' ? '/dashboard' : returnPathRaw;
 
-  const result = await mintAppLaunch(raw, { targetApp, returnPath });
+  const launchOrigin = resolveLocalLaunchOriginForTarget(targetApp);
+
+  const result = await mintAppLaunch(raw, {
+    targetApp,
+    returnPath,
+    ...(launchOrigin != null ? { launchOrigin } : {}),
+  });
   if (!result.ok) {
     if (result.error.kind === 'http_error') {
       const st = result.error.status;
@@ -95,7 +106,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     {
       relay: 'zenformed_core',
       targetApp: result.data.targetApp,
-      launchUrl: result.data.launchUrl,
+      launchUrl: rewriteTargetLaunchUrlForLocalDev(result.data.launchUrl, result.data.targetApp),
       expiresAt: result.data.expiresAt,
       returnPath: result.data.returnPath,
     },

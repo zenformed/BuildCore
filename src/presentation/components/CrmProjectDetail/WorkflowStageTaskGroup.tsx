@@ -150,12 +150,12 @@ export function WorkflowStageTaskGroup({
         <span role="columnheader">{cols.status}</span>
         <span role="columnheader">{cols.task}</span>
         {group.isPaymentsGroup ? <span role="columnheader">{cols.amount}</span> : null}
-        <span role="columnheader">{cols.assigned}</span>
-        <span role="columnheader">{cols.due}</span>
         <span role="columnheader" className={styles.workflowNotesHeader}>
           {cols.notes}
         </span>
         <span role="columnheader">{cols.documents}</span>
+        <span role="columnheader">{cols.assigned}</span>
+        <span role="columnheader">{cols.due}</span>
         <span role="columnheader" className={styles.taskDeleteHeader} aria-hidden />
       </div>
       {group.tasks.map((task) => (

@@ -14,6 +14,9 @@ export function buildBuildCoreReturnTo(
   search?: string | null
 ): string {
   const path = pathname?.trim() ?? '';
+  if (path === '/' || path === '') {
+    return nav.routes.dashboard;
+  }
   if (!path.startsWith('/') || path.startsWith('//')) {
     return nav.routes.dashboard;
   }
