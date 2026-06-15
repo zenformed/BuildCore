@@ -173,8 +173,49 @@ export function CrmProjectsPipeline({
     searchOrFiltersMessage: content.crm.table.empty,
   });
 
+  const filterMenu = (
+    <CrmProjectsFilterMenu filters={filters} onChange={setFilters} />
+  );
+  const expandAllButton = (
+    <CrmProjectsExpandAllButton
+      allExpanded={allSubprojectsExpanded}
+      disabled={expandableParentIds.size === 0}
+      onToggle={handleToggleExpandAllSubprojects}
+    />
+  );
+  const searchInput = (
+    <input
+      type="search"
+      value={searchQuery}
+      onChange={(event) => setSearchQuery(event.target.value)}
+      placeholder={panelCopy.searchPlaceholder}
+      aria-label={panelCopy.searchAriaLabel}
+      className={styles.projectsSearch}
+    />
+  );
+  const refreshButton = (
+    <DetailPanelSectionRefresh
+      sectionLabel={panelCopy.title}
+      onRefresh={refetch}
+      onError={(message) => setToast({ kind: 'error', message })}
+    />
+  );
+  const addButton = !isMemberRole ? (
+    <DetailPanelHeaderButton
+      variant="add"
+      disabled={createOpen}
+      title={nav.header.newProject.title}
+      aria-label={nav.header.newProject.ariaLabel}
+      onClick={() => setCreateOpen(true)}
+    />
+  ) : null;
+
   return (
-    <section className={styles.projectsPanel} aria-labelledby="crm-projects-heading">
+    <section
+      className={styles.projectsPanel}
+      data-crm-projects-dashboard
+      aria-labelledby="crm-projects-heading"
+    >
       {toast ? (
         <DetailToast
           kind={toast.kind}
@@ -182,40 +223,47 @@ export function CrmProjectsPipeline({
           onDismiss={() => setToast(null)}
         />
       ) : null}
-      <div className={styles.projectsPanelHeader}>
-        <h2 id="crm-projects-heading" className={styles.projectsPanelTitle}>
-          {panelCopy.title}
-        </h2>
-        <div className={styles.projectsPanelHeaderTools}>
-          <CrmProjectsFilterMenu filters={filters} onChange={setFilters} />
-          <CrmProjectsExpandAllButton
-            allExpanded={allSubprojectsExpanded}
-            disabled={expandableParentIds.size === 0}
-            onToggle={handleToggleExpandAllSubprojects}
-          />
-          <input
-            type="search"
-            value={searchQuery}
-            onChange={(event) => setSearchQuery(event.target.value)}
-            placeholder={panelCopy.searchPlaceholder}
-            aria-label={panelCopy.searchAriaLabel}
-            className={styles.projectsSearch}
-          />
-          <DetailPanelSectionRefresh
-            sectionLabel={panelCopy.title}
-            onRefresh={refetch}
-            onError={(message) => setToast({ kind: 'error', message })}
-          />
-          {!isMemberRole ? (
-            <DetailPanelHeaderButton
-              variant="add"
-              disabled={createOpen}
-              title={nav.header.newProject.title}
-              aria-label={nav.header.newProject.ariaLabel}
-              onClick={() => setCreateOpen(true)}
-            />
-          ) : null}
-        </div>
+      <div
+        className={[
+          styles.projectsPanelHeader,
+          isMobileLayout ? styles.projectsPanelHeader_mobile : '',
+        ]
+          .filter(Boolean)
+          .join(' ')}
+      >
+        {isMobileLayout ? (
+          <>
+            <div className={styles.projectsPanelHeaderRow}>
+              <h2 id="crm-projects-heading" className={styles.projectsPanelTitle}>
+                {panelCopy.title}
+              </h2>
+              <div className={styles.projectsPanelHeaderRowActions}>
+                {filterMenu}
+                {expandAllButton}
+              </div>
+            </div>
+            <div className={styles.projectsPanelHeaderRow}>
+              <div className={styles.projectsPanelSearchWrap}>{searchInput}</div>
+              <div className={styles.projectsPanelHeaderRowActions}>
+                {refreshButton}
+                {addButton}
+              </div>
+            </div>
+          </>
+        ) : (
+          <>
+            <h2 id="crm-projects-heading" className={styles.projectsPanelTitle}>
+              {panelCopy.title}
+            </h2>
+            <div className={styles.projectsPanelHeaderTools}>
+              {filterMenu}
+              {expandAllButton}
+              {searchInput}
+              {refreshButton}
+              {addButton}
+            </div>
+          </>
+        )}
       </div>
       <div className={`${styles.pipeline} ${styles.projectsPanelBody}`}>
         {isMobileLayout ? (

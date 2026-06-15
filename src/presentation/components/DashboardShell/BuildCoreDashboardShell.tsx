@@ -61,6 +61,7 @@ export function BuildCoreDashboardShell({
       <ZenformedDashboardSidebarRow
         classNames={{
           dashboardWithSidebar: layoutClassNames.dashboardWithSidebar,
+          sidebarRail: layoutClassNames.sidebarRail,
           mainColumn: layoutClassNames.mainColumn,
         }}
         sidebar={
@@ -96,6 +97,13 @@ export function BuildCoreDashboardShell({
               onOpenSettings={() => dash.setSettingsOpen(true)}
               onRequestSignOutConfirm={() => dash.setSignOutModalOpen(true)}
               onRequestProfilePhotoModal={() => dash.setProfilePhotoModalOpen(true)}
+              sidebarActiveId={sidebarActiveId}
+              onSidebarSelect={onSidebarSelect}
+              sidebarNavAccess={{
+                canAccessTeams: dash.canAccessBuildCoreTeams,
+                canAccessReports: dash.canAccessBuildCoreReports,
+                canAccessWorkflowStages: dash.canAccessBuildCoreWorkflowStages,
+              }}
             />
             <main className={shellStyles.mainContent}>
               {title != null ? <h1 className={shellStyles.headerTitle}>{title}</h1> : null}

@@ -5,13 +5,19 @@ import { ThemeToggle } from '@/presentation/components/ThemeToggle';
 import {
   pickHeaderShellClassNames,
   pickAppsLauncherClassNames,
+  pickAppIconNavMenuClassNames,
+  pickSidebarBrandingClassNames,
   ZenformedAppsLauncher,
+  ZenformedAppIconNavMenu,
   ZenformedDashboardHeader,
   useZenformedAppLaunch,
+  useZenformedMobileShellLayout,
   type ZenformedAccountMenuLabels,
 } from '@zenformed/core/dashboard-shell';
 import { buildCoreDashboardNavigation as nav } from '@/platform/navigation/buildCoreDashboardNavigation';
 import { BUILDCORE_ZENFORMED_APPS } from '@/platform/appDefinitions/zenformedApps';
+import { buildcoreAppDefinition } from '@/platform/appDefinitions/buildcore';
+import { buildCoreAppIconSrc } from '@/platform/assets/buildCoreAppIcon';
 import {
   AppsIcon,
   CameraIcon,
@@ -19,11 +25,18 @@ import {
   SignOutIcon,
 } from '@/platform/icons/buildCoreDashboardShellIcons';
 import { useSaaSProfile } from '@/presentation/hooks/useSaaSProfile';
+import {
+  buildBuildCoreAppIconNavMenuItems,
+  type BuildCoreSidebarNavAccess,
+} from './buildCoreSidebarNavModel';
+import type { BuildCoreSidebarNavId } from './BuildCoreSidebar';
 import styles from '../../../../app/(dashboard)/dashboard/dashboard.module.css';
 import appsStyles from './buildCorePlatformApps.module.css';
 
 const headerShellClassNames = pickHeaderShellClassNames(styles);
 const appsLauncherClassNames = pickAppsLauncherClassNames(appsStyles);
+const appIconNavMenuClassNames = pickAppIconNavMenuClassNames(styles);
+const sidebarBrandingClassNames = pickSidebarBrandingClassNames(styles);
 
 const accountMenuLabels: ZenformedAccountMenuLabels = {
   menuTriggerAriaLabel: nav.header.account.menuTriggerAriaLabel,
@@ -54,6 +67,9 @@ export type BuildCoreDashboardHeaderProps = {
   onOpenSettings: () => void;
   onRequestSignOutConfirm: () => void;
   onRequestProfilePhotoModal: () => void;
+  sidebarActiveId: BuildCoreSidebarNavId;
+  onSidebarSelect: (id: BuildCoreSidebarNavId) => void;
+  sidebarNavAccess: BuildCoreSidebarNavAccess;
 };
 
 export function BuildCoreDashboardHeader({
@@ -66,12 +82,33 @@ export function BuildCoreDashboardHeader({
   onOpenSettings,
   onRequestSignOutConfirm,
   onRequestProfilePhotoModal,
+  sidebarActiveId,
+  onSidebarSelect,
+  sidebarNavAccess,
 }: BuildCoreDashboardHeaderProps): ReactElement {
   const { session } = useSaaSProfile();
+  const isMobileShell = useZenformedMobileShellLayout();
   const { launchApp, launchingAppId, launchError } = useZenformedAppLaunch({
     launchApiUrl: '/api/internal/app-launch',
     getAccessToken: () => session?.access_token ?? null,
   });
+
+  const appIconNavMenu = isMobileShell ? (
+    <ZenformedAppIconNavMenu
+      brandingClassNames={sidebarBrandingClassNames}
+      menuClassNames={appIconNavMenuClassNames}
+      appName={buildcoreAppDefinition.displayName}
+      appIconSrc={buildCoreAppIconSrc()}
+      appAltText={buildcoreAppDefinition.displayName}
+      menuAriaLabel={nav.sidebar.ariaLabel}
+      triggerAriaLabel={`${buildcoreAppDefinition.displayName} navigation`}
+      items={buildBuildCoreAppIconNavMenuItems(
+        sidebarActiveId,
+        onSidebarSelect,
+        sidebarNavAccess
+      )}
+    />
+  ) : null;
 
   return (
     <ZenformedDashboardHeader
@@ -85,6 +122,7 @@ export function BuildCoreDashboardHeader({
       settingsApiUrl={nav.apis.usersMeSettings}
       getAccessToken={getAccessToken}
       sessionUserId={session?.user?.id ?? null}
+      leftSlot={appIconNavMenu}
       themeToggle={
         <>
           <ThemeToggle />
