@@ -1,6 +1,7 @@
 import type { CrmProjectDetail } from '@/domain/crm';
 import { buildcoreAppDefinition } from '@/platform/appDefinitions/buildcore';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
+import { formatBuildCoreDisplayDateTimeFromDate } from '@/platform/formatting/buildCoreDisplayDate';
 import { aggregateReportsMonthlyFinancials } from '../calculations/aggregateReportsMonthlyFinancials';
 import { computeReportsPeriodFinancials } from '../calculations/reportsPeriodFinancials';
 import { resolveReportExportPeriod } from '../periods/resolveReportExportPeriod';
@@ -13,10 +14,7 @@ import type {
 const pdf = content.reports.yearlyPdf;
 
 function formatGeneratedAt(date: Date): string {
-  return new Intl.DateTimeFormat('en-US', {
-    dateStyle: 'medium',
-    timeStyle: 'short',
-  }).format(date);
+  return formatBuildCoreDisplayDateTimeFromDate(date);
 }
 
 export function buildCrmReportsYearlyPdfData(

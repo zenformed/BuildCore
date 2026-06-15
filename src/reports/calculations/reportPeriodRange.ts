@@ -1,4 +1,5 @@
 import type { ReportPeriodId, ReportPeriodRange } from '../types/crmReportsDashboard';
+import { formatBuildCoreDisplayDateFromDate } from '@/platform/formatting/buildCoreDisplayDate';
 
 function startOfDay(date: Date): Date {
   return new Date(date.getFullYear(), date.getMonth(), date.getDate());
@@ -93,7 +94,7 @@ export function buildTimeBuckets(range: ReportPeriodRange): readonly TimeBucket[
     while (cursor <= endMonth) {
       const bucketEnd = new Date(cursor.getFullYear(), cursor.getMonth() + 1, 0, 23, 59, 59, 999);
       buckets.push({
-        label: cursor.toLocaleDateString('en-US', { month: 'short', year: '2-digit' }),
+        label: formatBuildCoreDisplayDateFromDate(cursor),
         start: new Date(cursor),
         end: bucketEnd > end ? end : bucketEnd,
       });
@@ -110,7 +111,7 @@ export function buildTimeBuckets(range: ReportPeriodRange): readonly TimeBucket[
       const dayEnd = new Date(cursor);
       dayEnd.setHours(23, 59, 59, 999);
       buckets.push({
-        label: cursor.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+        label: formatBuildCoreDisplayDateFromDate(cursor),
         start: new Date(cursor),
         end: dayEnd,
       });
@@ -124,7 +125,7 @@ export function buildTimeBuckets(range: ReportPeriodRange): readonly TimeBucket[
   while (cursor <= endMonth) {
     const bucketEnd = new Date(cursor.getFullYear(), cursor.getMonth() + 1, 0, 23, 59, 59, 999);
     buckets.push({
-      label: cursor.toLocaleDateString('en-US', { month: 'short' }),
+      label: formatBuildCoreDisplayDateFromDate(cursor),
       start: new Date(cursor),
       end: bucketEnd > end ? end : bucketEnd,
     });

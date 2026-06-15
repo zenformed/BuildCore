@@ -6,6 +6,10 @@ import {
 import { buildcoreAppDefinition } from '@/platform/appDefinitions/buildcore';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
 import {
+  formatBuildCoreDisplayDateFromDate,
+  formatBuildCoreDisplayDateTimeFromDate,
+} from '@/platform/formatting/buildCoreDisplayDate';
+import {
   collectPaymentTasks,
   computeReportsFinancialColumnTotals,
   sumCollectedInRange,
@@ -191,14 +195,11 @@ function buildBlocks(
 }
 
 function formatGeneratedAt(date: Date): string {
-  return new Intl.DateTimeFormat('en-US', {
-    dateStyle: 'medium',
-    timeStyle: 'short',
-  }).format(date);
+  return formatBuildCoreDisplayDateTimeFromDate(date);
 }
 
 function formatAsOf(date: Date): string {
-  return new Intl.DateTimeFormat('en-US', { dateStyle: 'long' }).format(date);
+  return formatBuildCoreDisplayDateFromDate(date);
 }
 
 export function buildCrmReportsSummaryReportTitle(organizationName: string): string {

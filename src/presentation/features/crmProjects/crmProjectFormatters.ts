@@ -1,4 +1,5 @@
 import { maskEmailForMemberDisplay } from '@/domain/buildcore/maskEmailForMemberDisplay';
+import { formatBuildCoreDisplayDate } from '@/platform/formatting/buildCoreDisplayDate';
 import {
   CRM_INDUSTRIES,
   getPipelineStage,
@@ -53,13 +54,7 @@ export function formatContactEmailDisplay(
 }
 
 export function formatRelativeUpdatedAt(iso: string): string {
-  const date = new Date(iso);
-  if (Number.isNaN(date.getTime())) return '—';
-  return new Intl.DateTimeFormat('en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-  }).format(date);
+  return formatBuildCoreDisplayDate(iso);
 }
 
 export function formatIndustryLabel(industry: CrmIndustry | string): string {

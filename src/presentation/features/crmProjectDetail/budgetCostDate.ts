@@ -1,5 +1,7 @@
 /** Normalize budget Cost Date between date inputs (YYYY-MM-DD) and stored ISO timestamps. */
 
+import { formatBuildCoreDisplayDate } from '@/platform/formatting/buildCoreDisplayDate';
+
 export function dateInputFromCostIncurredAt(iso: string): string {
   const date = new Date(iso);
   if (Number.isNaN(date.getTime())) return '';
@@ -18,13 +20,7 @@ export function costIncurredAtFromDateInput(yyyyMmDd: string): string {
 }
 
 export function formatCostDateDisplay(iso: string): string {
-  const date = new Date(iso);
-  if (Number.isNaN(date.getTime())) return '—';
-  return new Intl.DateTimeFormat('en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-  }).format(date);
+  return formatBuildCoreDisplayDate(iso);
 }
 
 export function defaultCostDateInput(): string {

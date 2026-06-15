@@ -12,6 +12,7 @@ import {
   WORKFLOW_TASK_STATUS_LABELS,
 } from '@/domain/crm/workflowTaskStatuses';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
+import { formatBuildCoreDisplayDate } from '@/platform/formatting/buildCoreDisplayDate';
 
 export function formatFileSize(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
@@ -20,10 +21,7 @@ export function formatFileSize(bytes: number): string {
 }
 
 export function formatShortDate(iso: string | null): string {
-  if (iso == null) return '—';
-  const date = new Date(iso);
-  if (Number.isNaN(date.getTime())) return '—';
-  return new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric' }).format(date);
+  return formatBuildCoreDisplayDate(iso);
 }
 
 export function formatDocumentKind(kind: string): string {

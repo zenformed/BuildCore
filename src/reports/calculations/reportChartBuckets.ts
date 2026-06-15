@@ -1,4 +1,5 @@
 import { isPaymentWorkflowTask, type CrmProjectDetail } from '@/domain/crm';
+import { formatBuildCoreDisplayDateFromDate } from '@/platform/formatting/buildCoreDisplayDate';
 import type { ReportPeriodId, ReportPeriodRange } from '../types/crmReportsDashboard';
 import { daysBetween } from './reportPeriodRange';
 
@@ -55,28 +56,26 @@ function yearsBetween(start: Date, end: Date): number {
 }
 
 function formatDaily(date: Date): { label: string; tooltipLabel: string } {
-  const label = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  const label = formatBuildCoreDisplayDateFromDate(date);
   return { label, tooltipLabel: label };
 }
 
 function formatWeekly(weekStart: Date): { label: string; tooltipLabel: string } {
-  const short = weekStart.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  const short = formatBuildCoreDisplayDateFromDate(weekStart);
   return { label: short, tooltipLabel: `Week of ${short}` };
 }
 
-function formatMonthly(monthStart: Date, spanYears: number): { label: string; tooltipLabel: string } {
-  const tooltipLabel = monthStart.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
-  const label =
-    spanYears > 1
-      ? monthStart.toLocaleDateString('en-US', { month: 'short', year: '2-digit' })
-      : monthStart.toLocaleDateString('en-US', { month: 'short' });
-  return { label, tooltipLabel };
+function formatMonthly(monthStart: Date, _spanYears: number): { label: string; tooltipLabel: string } {
+  const label = formatBuildCoreDisplayDateFromDate(monthStart);
+  return { label, tooltipLabel: label };
 }
 
 function formatQuarterly(quarterStart: Date): { label: string; tooltipLabel: string } {
   const quarter = Math.floor(quarterStart.getMonth() / 3) + 1;
-  const year = quarterStart.getFullYear();
-  return { label: `Q${quarter}`, tooltipLabel: `Q${quarter} ${year}` };
+  return {
+    label: `Q${quarter}`,
+    tooltipLabel: formatBuildCoreDisplayDateFromDate(quarterStart),
+  };
 }
 
 export function resolveChartActivityStart(projects: readonly CrmProjectDetail[]): Date | null {

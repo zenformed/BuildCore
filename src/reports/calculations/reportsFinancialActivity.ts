@@ -5,6 +5,7 @@ import {
   type CrmProjectDetail,
 } from '@/domain/crm';
 import { reportBudgetCategoryLabel } from '../labels/reportLabels';
+import { formatBuildCoreDisplayDateTime } from '@/platform/formatting/buildCoreDisplayDate';
 import type { ReportsFinancialActivityItem } from '../types/crmReportsDashboard';
 import { isTimestampInRange } from './reportPeriodRange';
 
@@ -19,15 +20,7 @@ function formatUsdFromCents(cents: number): string {
 }
 
 function formatActivityTimestamp(iso: string): string {
-  const date = new Date(iso);
-  if (Number.isNaN(date.getTime())) return '—';
-  return new Intl.DateTimeFormat('en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-    hour: 'numeric',
-    minute: '2-digit',
-  }).format(date);
+  return formatBuildCoreDisplayDateTime(iso);
 }
 
 function pushEvent(

@@ -1,3 +1,9 @@
+import {
+  formatBuildCoreDisplayDate,
+  formatBuildCoreDisplayDateTime,
+  formatBuildCoreDisplayDateTimeFromDate,
+} from '@/platform/formatting/buildCoreDisplayDate';
+
 export function formatReportCurrency(cents: number): string {
   return new Intl.NumberFormat('en-US', {
     style: 'currency',
@@ -12,11 +18,7 @@ export function formatReportPercent(value: number, fractionDigits = 1): string {
 }
 
 export function formatReportDateTime(iso: string, date: Date = new Date(iso)): string {
-  if (Number.isNaN(date.getTime())) return '—';
-  return new Intl.DateTimeFormat('en-US', {
-    dateStyle: 'medium',
-    timeStyle: 'short',
-  }).format(date);
+  return formatBuildCoreDisplayDateTimeFromDate(date);
 }
 
 export function formatReportText(value: string | null | undefined, fallback = '—'): string {
@@ -25,12 +27,7 @@ export function formatReportText(value: string | null | undefined, fallback = '�
 }
 
 export function formatReportShortDate(iso: string | null | undefined): string {
-  if (iso == null || iso.trim() === '') return '—';
-  const date = new Date(iso);
-  if (Number.isNaN(date.getTime())) return '—';
-  return new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', year: 'numeric' }).format(
-    date
-  );
+  return formatBuildCoreDisplayDate(iso);
 }
 
 /** Parent rollup payment rows: parent name for own milestones, "- " prefix for child projects. */

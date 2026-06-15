@@ -8,6 +8,7 @@ import {
   ZenformedAuthPageLinks,
 } from '@zenformed/core/auth';
 import { Button } from '@/presentation/components/Button';
+import { formatBuildCoreDisplayDateTime } from '@/platform/formatting/buildCoreDisplayDate';
 import { AuthPageShell } from '@/presentation/components/SaaSAuth/AuthPageShell';
 import { InviteRegistrationForm } from '@/presentation/components/SaaSAuth/InviteRegistrationForm';
 import { LoginForm } from '@/presentation/components/SaaSAuth/LoginForm';
@@ -81,7 +82,7 @@ function InvitePreview({ lookup }: { lookup: InviteLookup }): ReactElement {
       </p>
       {lookup.expiresAt ? (
         <p className={pageStyles.previewDetail}>
-          Expires: {new Date(lookup.expiresAt).toLocaleString()}
+          Expires: {formatBuildCoreDisplayDateTime(lookup.expiresAt)}
         </p>
       ) : null}
     </div>

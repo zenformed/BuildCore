@@ -4,6 +4,7 @@ import type { ReactElement } from 'react';
 import type { CrmAccountabilityAction, CrmTeamMemberRef } from '@/domain/crm';
 import type { PipelineStage } from '@/domain/crm/pipelineStage';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
+import { formatBuildCoreDisplayDateTime } from '@/platform/formatting/buildCoreDisplayDate';
 import { formatStageLabel } from '@/presentation/features/crmProjects/crmProjectFormatters';
 import { useResolvedTeamMemberRef } from '@/presentation/hooks/useResolvedTeamMemberRef';
 import { TeamMemberAvatar } from './TeamMemberAvatar';
@@ -16,14 +17,7 @@ export function sortAccountabilityEntries(
 }
 
 function formatDateTime(iso: string): string {
-  const date = new Date(iso);
-  if (Number.isNaN(date.getTime())) return '—';
-  return new Intl.DateTimeFormat('en-US', {
-    month: 'short',
-    day: 'numeric',
-    hour: 'numeric',
-    minute: '2-digit',
-  }).format(date);
+  return formatBuildCoreDisplayDateTime(iso);
 }
 
 function AccountabilityUserCell({ actor }: { actor: CrmTeamMemberRef }): ReactElement {
