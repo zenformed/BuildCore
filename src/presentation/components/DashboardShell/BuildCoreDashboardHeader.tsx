@@ -39,8 +39,9 @@ const accountMenuLabels: ZenformedAccountMenuLabels = {
 const appsLauncherLabels = {
   triggerAriaLabel: nav.header.appsLauncher.triggerAriaLabel,
   popoverAriaLabel: nav.header.appsLauncher.popoverAriaLabel,
-  sectionTitle: 'Apps',
-  comingSoonLabel: 'Coming soon',
+  appsSectionTitle: 'Apps',
+  accountSectionTitle: 'Account',
+  accountHomeLabel: 'Zenformed Home',
 };
 
 export type BuildCoreDashboardHeaderProps = {

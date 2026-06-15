@@ -8,7 +8,7 @@ const platformDashboardHref = `${env.platformPublicAppUrl}/dashboard`;
 export const BUILDCORE_ZENFORMED_APPS: readonly ZenformedAppRegistryEntry[] = [
   {
     id: 'platform',
-    name: 'Zenformed',
+    name: 'Zenformed Home',
     description: 'Platform home, account, and organization settings.',
     href: platformDashboardHref,
     status: 'live',
