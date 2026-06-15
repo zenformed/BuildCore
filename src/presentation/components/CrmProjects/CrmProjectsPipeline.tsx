@@ -27,9 +27,11 @@ import { ConfirmModal } from '@/presentation/components/ConfirmModal';
 import { ProjectCompletionBlockedDialog } from '@/presentation/components/CrmProjectDetail/ProjectCompletionBlockedDialog';
 import { useBuildCorePipelineStages } from '@/presentation/providers/BuildCorePipelineStagesProvider';
 import { useCrmProjectTableRowActions } from '@/presentation/features/crmProjects/useCrmProjectTableRowActions';
+import { useDashboardMobileLayout } from '@/presentation/features/crmProjects/useDashboardMobileLayout';
 import { CrmProjectsFilterMenu } from './CrmProjectsFilterMenu';
 import { CrmProjectsExpandAllButton } from './CrmProjectsExpandAllButton';
 import { CrmProjectsTable } from './CrmProjectsTable';
+import { CrmProjectsMobileList } from './CrmProjectsMobileList';
 import styles from './CrmProjects.module.css';
 
 export type CrmProjectsPipelineProps = {
@@ -48,6 +50,7 @@ export function CrmProjectsPipeline({
   const detailCopy = content.projectDetail;
   const { organizationMembershipContext } = useSaaSProfile();
   const isMemberRole = isBuildCoreMemberRole(organizationMembershipContext?.role);
+  const isMobileLayout = useDashboardMobileLayout();
   const [searchQuery, setSearchQuery] = useState('');
   const [filters, setFilters] = useState<CrmProjectsListFilters>(EMPTY_CRM_PROJECTS_LIST_FILTERS);
   const [expandedParentIds, setExpandedParentIds] = useState<ReadonlySet<string>>(
@@ -215,30 +218,56 @@ export function CrmProjectsPipeline({
         </div>
       </div>
       <div className={`${styles.pipeline} ${styles.projectsPanelBody}`}>
-        <CrmProjectsTable
-          enableSubprojectExpansion
-          autoExpandParentsWithSubprojects={priorityFilterActive}
-          expandedParentIds={expandedParentIds}
-          onExpandedParentIdsChange={setExpandedParentIds}
-          rootRows={rootRows}
-          allChildrenByParentId={allChildrenByParentId}
-          visibleChildrenByParentId={visibleChildrenByParentId}
-          paymentTasksIndex={paymentTasksIndex}
-          workflowProgressInputIndex={workflowProgressInputIndex}
-          isWorkflowProgressLoading={isWorkflowProgressLoading}
-          isLoading={isLoading}
-          isPaymentFinancialsLoading={isPaymentFinancialsLoading}
-          onRowClick={onProjectRowClick}
-          onSubprojectRowClick={handleSubprojectRowClick}
-          isMemberRole={isMemberRole}
-          canDelete={canDelete && !isMemberRole}
-          deletingProjectId={deletingProjectId}
-          busyProjectId={busyProjectId}
-          onRequestDelete={setPendingDeleteProject}
-          onTogglePriority={togglePriority}
-          onRequestCompletionChange={requestCompletionChange}
-          emptyMessage={tableEmptyMessage}
-        />
+        {isMobileLayout ? (
+          <CrmProjectsMobileList
+            autoExpandParentsWithSubprojects={priorityFilterActive}
+            expandedParentIds={expandedParentIds}
+            onExpandedParentIdsChange={setExpandedParentIds}
+            rootRows={rootRows}
+            allChildrenByParentId={allChildrenByParentId}
+            visibleChildrenByParentId={visibleChildrenByParentId}
+            paymentTasksIndex={paymentTasksIndex}
+            workflowProgressInputIndex={workflowProgressInputIndex}
+            isWorkflowProgressLoading={isWorkflowProgressLoading}
+            isLoading={isLoading}
+            isPaymentFinancialsLoading={isPaymentFinancialsLoading}
+            onRowClick={onProjectRowClick}
+            onSubprojectRowClick={handleSubprojectRowClick}
+            isMemberRole={isMemberRole}
+            canDelete={canDelete && !isMemberRole}
+            deletingProjectId={deletingProjectId}
+            busyProjectId={busyProjectId}
+            onRequestDelete={setPendingDeleteProject}
+            onTogglePriority={togglePriority}
+            onRequestCompletionChange={requestCompletionChange}
+            emptyMessage={tableEmptyMessage}
+          />
+        ) : (
+          <CrmProjectsTable
+            enableSubprojectExpansion
+            autoExpandParentsWithSubprojects={priorityFilterActive}
+            expandedParentIds={expandedParentIds}
+            onExpandedParentIdsChange={setExpandedParentIds}
+            rootRows={rootRows}
+            allChildrenByParentId={allChildrenByParentId}
+            visibleChildrenByParentId={visibleChildrenByParentId}
+            paymentTasksIndex={paymentTasksIndex}
+            workflowProgressInputIndex={workflowProgressInputIndex}
+            isWorkflowProgressLoading={isWorkflowProgressLoading}
+            isLoading={isLoading}
+            isPaymentFinancialsLoading={isPaymentFinancialsLoading}
+            onRowClick={onProjectRowClick}
+            onSubprojectRowClick={handleSubprojectRowClick}
+            isMemberRole={isMemberRole}
+            canDelete={canDelete && !isMemberRole}
+            deletingProjectId={deletingProjectId}
+            busyProjectId={busyProjectId}
+            onRequestDelete={setPendingDeleteProject}
+            onTogglePriority={togglePriority}
+            onRequestCompletionChange={requestCompletionChange}
+            emptyMessage={tableEmptyMessage}
+          />
+        )}
       </div>
       <CreateCrmProjectModal
         open={createOpen && !isMemberRole}

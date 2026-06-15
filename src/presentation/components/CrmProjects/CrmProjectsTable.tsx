@@ -1,14 +1,12 @@
 'use client';
 
-import { useEffect, useMemo, useState, type Dispatch, type ReactElement, type SetStateAction } from 'react';
+import { useMemo, type ReactElement } from 'react';
 import type { CrmProjectSummary } from '@/domain/crm';
 import type { CrmProjectPaymentTasksIndex } from '@/domain/crm/projectPaymentValue';
 import type { CrmProjectWorkflowProgressInputIndex } from '@/domain/crm/projectWorkflowProgressInput';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
-import {
-  resolveDashboardChildRowFinancials,
-  resolveDashboardRootRowFinancials,
-} from '@/presentation/features/crmProjects/projectPaymentFinancials';
+import { buildCrmProjectsDashboardRowModels } from '@/presentation/features/crmProjects/buildCrmProjectsDashboardRowModels';
+import { useDashboardSubprojectExpansion } from '@/presentation/features/crmProjects/useDashboardSubprojectExpansion';
 import { CrmProjectTableRow } from './CrmProjectTableRow';
 import styles from './CrmProjects.module.css';
 
@@ -75,60 +73,57 @@ export function CrmProjectsTable({
   showActions = true,
   projectColumnLabel,
   emptyMessage,
-  deleteLabels,
 }: CrmProjectsTableProps): ReactElement {
-  const [expandedParentIdsInternal, setExpandedParentIdsInternal] = useState<
-    ReadonlySet<string>
-  >(() => new Set());
-  const expandedParentIds = expandedParentIdsProp ?? expandedParentIdsInternal;
-  const setExpandedParentIds: Dispatch<SetStateAction<ReadonlySet<string>>> =
-    onExpandedParentIdsChange ?? setExpandedParentIdsInternal;
-
-  const toggleExpanded = (parentId: string): void => {
-    setExpandedParentIds((current) => {
-      const next = new Set(current);
-      if (next.has(parentId)) next.delete(parentId);
-      else next.add(parentId);
-      return next;
-    });
-  };
-
   const displayRoots = useMemo(
     () => (enableSubprojectExpansion ? (rootRows ?? []) : (rows ?? [])),
     [enableSubprojectExpansion, rootRows, rows]
   );
 
-  useEffect(() => {
-    if (!enableSubprojectExpansion || !autoExpandParentsWithSubprojects) {
-      return;
-    }
-
-    setExpandedParentIds((current) => {
-      const next = new Set(current);
-      for (const project of displayRoots) {
-        const childCount = allChildrenByParentId?.get(project.id)?.length ?? 0;
-        if (childCount > 0) {
-          next.add(project.id);
-        }
-      }
-      return next;
-    });
-  }, [
-    allChildrenByParentId,
-    autoExpandParentsWithSubprojects,
+  const { expandedParentIds, toggleExpanded } = useDashboardSubprojectExpansion({
+    expandedParentIds: expandedParentIdsProp,
+    onExpandedParentIdsChange,
     displayRoots,
+    allChildrenByParentId,
     enableSubprojectExpansion,
-    setExpandedParentIds,
-  ]);
+    autoExpandParentsWithSubprojects,
+  });
 
   const showTable = displayRoots.length > 0 || isLoading;
-  const resolvedPaymentTasksIndex = paymentTasksIndex ?? new Map<string, never>();
   const tableCopy = content.crm.table;
   const valueLabels = tableCopy.columns;
   const tableInnerClass = isMemberRole
     ? `${styles.tableInner} ${styles.tableInnerMember}`
     : styles.tableInner;
   const projectHeader = projectColumnLabel ?? COLUMNS.project;
+
+  const rowModels = useMemo(() => {
+    const resolvedPaymentTasksIndex = paymentTasksIndex ?? new Map<string, never>();
+    return buildCrmProjectsDashboardRowModels({
+      displayRoots,
+      enableSubprojectExpansion,
+      expandedParentIds,
+      allChildrenByParentId,
+      visibleChildrenByParentId,
+      paymentTasksIndex: resolvedPaymentTasksIndex,
+      projectValueLabel: valueLabels.projectValueLabel,
+      subValueLabel: valueLabels.subValueLabel,
+      onRowClick,
+      onSubprojectRowClick,
+      toggleExpanded,
+    });
+  }, [
+    allChildrenByParentId,
+    displayRoots,
+    enableSubprojectExpansion,
+    expandedParentIds,
+    onRowClick,
+    onSubprojectRowClick,
+    paymentTasksIndex,
+    toggleExpanded,
+    valueLabels.projectValueLabel,
+    valueLabels.subValueLabel,
+    visibleChildrenByParentId,
+  ]);
 
   return (
     <div className={styles.tableWrap}>
@@ -168,88 +163,30 @@ export function CrmProjectsTable({
               {!showTable ? (
                 <p className={styles.emptyState}>{emptyMessage ?? content.crm.table.empty}</p>
               ) : (
-                displayRoots.flatMap((project) => {
-                  const childCount = allChildrenByParentId?.get(project.id)?.length ?? 0;
-                  const hasChildren = enableSubprojectExpansion && childCount > 0;
-                  const isExpanded = expandedParentIds.has(project.id);
-                  const visibleChildren = visibleChildrenByParentId?.get(project.id) ?? [];
-                  const isStandaloneChild =
-                    !enableSubprojectExpansion && project.parentProjectId != null;
-                  const rowFinancials = isStandaloneChild
-                    ? resolveDashboardChildRowFinancials(project, resolvedPaymentTasksIndex)
-                    : resolveDashboardRootRowFinancials(
-                        project,
-                        visibleChildren,
-                        resolvedPaymentTasksIndex
-                      );
-                  const rowVariant = isStandaloneChild ? 'child' : 'root';
-                  const rowValueLabel = isStandaloneChild
-                    ? valueLabels.subValueLabel
-                    : valueLabels.projectValueLabel;
-
-                  const rootRow = (
-                    <CrmProjectTableRow
-                      key={project.id}
-                      project={project}
-                      variant={rowVariant}
-                      financials={rowFinancials}
-                      valueLabel={rowValueLabel}
-                      financialsLoading={isPaymentFinancialsLoading}
-                      onRowClick={() => onRowClick(project)}
-                      isMemberRole={isMemberRole}
-                      canDelete={canDelete && showActions}
-                      showActions={showActions}
-                      busy={busyProjectId === project.id}
-                      deleting={deletingProjectId === project.id}
-                      onRequestDelete={onRequestDelete}
-                      onTogglePriority={onTogglePriority}
-                      onRequestCompletionChange={onRequestCompletionChange}
-                      hasChildren={hasChildren}
-                      isExpanded={isExpanded}
-                      onToggleExpand={hasChildren ? () => toggleExpanded(project.id) : undefined}
-                      workflowProgressInputIndex={workflowProgressInputIndex}
-                      isWorkflowProgressLoading={isWorkflowProgressLoading}
-                    />
-                  );
-
-                  if (!enableSubprojectExpansion || !isExpanded || visibleChildren.length === 0) {
-                    return [rootRow];
-                  }
-
-                  const childRows = visibleChildren.map((child) => {
-                    const childFinancials = resolveDashboardChildRowFinancials(
-                      child,
-                      resolvedPaymentTasksIndex
-                    );
-                    return (
-                    <CrmProjectTableRow
-                      key={child.id}
-                      project={child}
-                      variant="child"
-                      financials={childFinancials}
-                      valueLabel={valueLabels.subValueLabel}
-                      financialsLoading={isPaymentFinancialsLoading}
-                      onRowClick={() =>
-                        onSubprojectRowClick
-                          ? onSubprojectRowClick(project, child)
-                          : onRowClick(child)
-                      }
-                      isMemberRole={isMemberRole}
-                      canDelete={canDelete && showActions}
-                      showActions={showActions}
-                      busy={busyProjectId === child.id}
-                      deleting={deletingProjectId === child.id}
-                      onRequestDelete={onRequestDelete}
-                      onTogglePriority={onTogglePriority}
-                      onRequestCompletionChange={onRequestCompletionChange}
-                      workflowProgressInputIndex={workflowProgressInputIndex}
-                      isWorkflowProgressLoading={isWorkflowProgressLoading}
-                    />
-                    );
-                  });
-
-                  return [rootRow, ...childRows];
-                })
+                rowModels.map((row) => (
+                  <CrmProjectTableRow
+                    key={row.key}
+                    project={row.project}
+                    variant={row.variant}
+                    financials={row.financials}
+                    valueLabel={row.valueLabel}
+                    financialsLoading={isPaymentFinancialsLoading}
+                    onRowClick={row.onRowClick}
+                    isMemberRole={isMemberRole}
+                    canDelete={canDelete && showActions}
+                    showActions={showActions}
+                    busy={busyProjectId === row.project.id}
+                    deleting={deletingProjectId === row.project.id}
+                    onRequestDelete={onRequestDelete}
+                    onTogglePriority={onTogglePriority}
+                    onRequestCompletionChange={onRequestCompletionChange}
+                    hasChildren={row.hasChildren}
+                    isExpanded={row.isExpanded}
+                    onToggleExpand={row.onToggleExpand}
+                    workflowProgressInputIndex={workflowProgressInputIndex}
+                    isWorkflowProgressLoading={isWorkflowProgressLoading}
+                  />
+                ))
               )}
             </div>
           </div>

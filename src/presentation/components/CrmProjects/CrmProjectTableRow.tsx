@@ -1,14 +1,12 @@
 'use client';
 
-import { useMemo, type KeyboardEvent, type ReactElement } from 'react';
+import { type KeyboardEvent, type ReactElement } from 'react';
 import type { CrmProjectSummary } from '@/domain/crm';
 import type { ProjectPaymentFinancials } from '@/domain/crm/projectPaymentValue';
 import type { CrmProjectWorkflowProgressInputIndex } from '@/domain/crm/projectWorkflowProgressInput';
 import { isCrmProjectComplete } from '@/domain/crm';
 import { formatCrmProjectAddressLine } from '@/domain/crm/projectAddress';
 import { isProjectPriorityUrgent } from '@/domain/crm/projectPriorityToggle';
-import { resolvePipelineStageScopeForProject } from '@/domain/buildcore/orgPipelineStages';
-import { resolveDerivedWorkflowStageSlugFromProgressIndex, resolveProjectWorkflowProgressDisplayFromIndex } from '@/domain/buildcore/projectPipelineProgress';
 import { ProjectProgressPercent } from '@/presentation/components/CrmProjectDetail/ProjectProgressPercent';
 import { CrmProjectCompleteIcon } from '@/presentation/components/crmShared/CrmProjectCompleteIcon';
 import { CrmProjectAddressEnvelope } from '@/presentation/components/crmShared/CrmProjectAddressEnvelope';
@@ -19,14 +17,12 @@ import {
   formatContactEmailDisplay,
   formatPhoneDisplay,
   formatStageLabel,
-  getProjectIndustrySubtitle,
 } from '@/presentation/features/crmProjects/crmProjectFormatters';
+import { useCrmProjectRowPresentation } from '@/presentation/features/crmProjects/useCrmProjectRowPresentation';
 import { TeamMemberAvatar } from '@/presentation/components/CrmProjectDetail/TeamMemberAvatar';
-import { useBuildCorePipelineStages } from '@/presentation/providers/BuildCorePipelineStagesProvider';
 import { CrmProjectTableRowActionsMenu } from './CrmProjectTableRowActionsMenu';
 import shared from '@/presentation/components/crmShared/crmShared.module.css';
 import styles from './CrmProjects.module.css';
-
 export type CrmProjectTableRowDeleteLabels = {
   readonly action: string;
   readonly actionAriaLabel: (name: string) => string;
@@ -76,36 +72,12 @@ export function CrmProjectTableRow({
   isWorkflowProgressLoading = false,
 }: CrmProjectTableRowProps): ReactElement {
   const tableCopy = content.crm.table;
-  const { getCatalog } = useBuildCorePipelineStages();
-  const catalog = getCatalog(
-    resolvePipelineStageScopeForProject({ parentProjectId: project.parentProjectId })
+  const { catalog, industrySubtitle, progress, derivedStageSlug } = useCrmProjectRowPresentation(
+    project,
+    workflowProgressInputIndex,
+    isWorkflowProgressLoading
   );
-  const industrySubtitle = getProjectIndustrySubtitle(
-    project.industry,
-    project.customIndustry
-  );
-  const progress = useMemo(() => {
-    if (workflowProgressInputIndex == null || isWorkflowProgressLoading) {
-      return null;
-    }
-    return resolveProjectWorkflowProgressDisplayFromIndex({
-      summary: project,
-      workflowProgressInputIndex,
-      stages: catalog,
-    });
-  }, [catalog, isWorkflowProgressLoading, project, workflowProgressInputIndex]);
-  const derivedStageSlug = useMemo(() => {
-    if (workflowProgressInputIndex == null || isWorkflowProgressLoading) {
-      return null;
-    }
-    return resolveDerivedWorkflowStageSlugFromProgressIndex({
-      summary: project,
-      workflowProgressInputIndex,
-      stages: catalog,
-    });
-  }, [catalog, isWorkflowProgressLoading, project, workflowProgressInputIndex]);
-  const isChild = variant === 'child';
-  const displayFinancials = financials ?? { valueCents: 0, collectedCents: 0, balanceCents: 0 };
+  const isChild = variant === 'child';  const displayFinancials = financials ?? { valueCents: 0, collectedCents: 0, balanceCents: 0 };
   const financialDisplay = (cents: number): string =>
     financialsLoading ? '…' : formatCentsAsUsd(cents);
   const valueLabels = tableCopy.columns;
