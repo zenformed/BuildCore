@@ -1,5 +1,7 @@
 'use client';
 
+import '@zenformed/core/dashboard-shell/mobile-shell.css';
+
 import type { ReactElement, ReactNode } from 'react';
 import { BuildCorePersistentDashboardShell } from '@/presentation/components/DashboardShell/BuildCorePersistentDashboardShell';
 import { BuildCoreDashboardProvider } from '@/presentation/providers/BuildCoreDashboardProvider';
