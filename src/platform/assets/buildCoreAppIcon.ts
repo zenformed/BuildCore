@@ -1,13 +1,19 @@
 import {
   zenformedAppIconPublicSrc,
   zenformedAppIconSrc,
+  type ZenformedEcosystemAppIconId,
 } from '@zenformed/core/dashboard-shell';
 
 /**
- * BuildCore product icon for sidebar branding and auth shells.
- * Prefer `public/zenformed-app-icons/buildcore.png` so deploys pick up asset changes
- * without relying on a separate webpack chunk from `@zenformed/core`.
+ * Launcher / branding icon for a Zenformed ecosystem app.
+ * Prefer `public/zenformed-app-icons/{id}.png` so deploys pick up asset changes
+ * without relying on webpack chunks from `@zenformed/core`.
  */
+export function launcherAppIconSrc(id: ZenformedEcosystemAppIconId): string | undefined {
+  return zenformedAppIconPublicSrc(id) ?? zenformedAppIconSrc(id);
+}
+
+/** BuildCore product icon for sidebar branding and auth shells. */
 export function buildCoreAppIconSrc(): string | undefined {
-  return zenformedAppIconPublicSrc('buildcore') ?? zenformedAppIconSrc('buildcore');
+  return launcherAppIconSrc('buildcore');
 }
