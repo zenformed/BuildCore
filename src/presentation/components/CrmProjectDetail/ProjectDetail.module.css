@@ -794,7 +794,6 @@
   gap: 0.5rem;
   min-width: 0;
   width: 100%;
-  padding-bottom: 2rem;
 }
 
 .detailMobileScroll > .projectInfoMobileCardHost {
@@ -6163,9 +6162,21 @@
 
 /* Mobile project detail overview (< 768px) */
 @media (max-width: 767px) {
-  .pageShell:has([data-project-detail-page]) .detailMobileScroll {
-    padding: 0.5rem 0.5rem 2rem;
+  .pageShell {
+    --project-detail-mobile-scroll-buffer: calc(96px + env(safe-area-inset-bottom, 0px));
+  }
+
+  .detailMobileScroll {
+    padding-bottom: var(--project-detail-mobile-scroll-buffer);
     box-sizing: border-box;
+  }
+
+  .pageShell:has([data-project-detail-page]) .detailMobileScroll {
+    padding: 0.5rem 0.5rem var(--project-detail-mobile-scroll-buffer);
+  }
+
+  .pageBodySubpage {
+    padding-bottom: var(--project-detail-mobile-scroll-buffer);
   }
 
   .pageShell:has([data-project-detail-page]) .summaryStripScroll {
@@ -6238,7 +6249,6 @@
     flex: none;
     min-height: unset;
     overflow: visible;
-    padding-bottom: 2rem;
   }
 
   .pageBodySubpage:has(.projectFinancialReport) .detailFinancialsRowSingle {
@@ -6457,7 +6467,6 @@
     overflow: visible;
     flex: none;
     min-height: unset;
-    padding-bottom: 2rem;
   }
 
   .accountabilityMobileList {
