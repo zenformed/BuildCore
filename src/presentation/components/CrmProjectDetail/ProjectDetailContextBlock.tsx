@@ -12,6 +12,8 @@ export type { ProjectDetailPageContext } from '@/presentation/features/crmProjec
 import { ProjectHeaderAssignee } from './ProjectHeaderAssignee';
 import { ProjectHeaderIndustry } from './ProjectHeaderIndustry';
 import { ProjectNotesInline } from './ProjectNotesInline';
+import { useDashboardMobileLayout } from '@/presentation/features/crmProjects/useDashboardMobileLayout';
+import { ProjectDetailMobileStageSummary } from './ProjectDetailMobileStageSummary';
 import { ProjectSummaryStrip } from './ProjectSummaryStrip';
 import { StageProgressBar } from './StageProgressBar';
 import styles from './ProjectDetail.module.css';
@@ -54,6 +56,7 @@ export function ProjectDetailContextBlock({
   onEditProject,
 }: ProjectDetailContextBlockProps): ReactElement {
   const readOnly = isMemberRole;
+  const isMobileLayout = useDashboardMobileLayout();
 
   return (
     <div className={styles.detailTop}>
@@ -97,6 +100,12 @@ export function ProjectDetailContextBlock({
           )
         }
       />
+      {!isMemberRole && isMobileLayout ? (
+        <ProjectDetailMobileStageSummary
+          workflowTasks={project.workflowTasks}
+          manualStageCompletions={project.manualStageCompletions}
+        />
+      ) : null}
       <ProjectSummaryStrip
         project={project}
         memberView={isMemberRole}
@@ -112,7 +121,7 @@ export function ProjectDetailContextBlock({
         savingField={savingField}
         onPatch={patchField}
       />
-      {isMemberRole ? null : (
+      {isMemberRole || isMobileLayout ? null : (
         <StageProgressBar
           workflowTasks={project.workflowTasks}
           manualStageCompletions={project.manualStageCompletions}
