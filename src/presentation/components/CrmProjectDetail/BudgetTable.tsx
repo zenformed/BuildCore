@@ -15,6 +15,7 @@ import { useBudgetEntryActions } from '@/presentation/features/crmProjectDetail/
 import { useProjectDetailShell } from '@/presentation/features/crmProjectDetail/ProjectDetailShellContext';
 import { useBuildCoreProjectSectionAccess } from '@/presentation/providers/BuildCoreProjectSectionAccessProvider';
 import { formatCentsAsUsd } from '@/presentation/features/crmProjects/crmProjectFormatters';
+import { BudgetCategoryFilterMenu } from './BudgetCategoryFilterMenu';
 import { BudgetDraftRow } from './BudgetDraftRow';
 import { BudgetInlineRow } from './BudgetInlineRow';
 import { DetailPanelHeader } from './DetailPanelHeader';
@@ -22,6 +23,7 @@ import { DetailPanelHeaderActions } from './DetailPanelHeaderActions';
 import { DetailPanelHeaderButton } from './DetailPanelHeaderButton';
 import { DetailPanelSectionRefresh } from './DetailPanelSectionRefresh';
 import { DetailPanelSectionSearch } from './DetailPanelSectionSearch';
+import { useDashboardMobileLayout } from '@/presentation/features/crmProjects/useDashboardMobileLayout';
 import styles from './ProjectDetail.module.css';
 
 export type BudgetTableProps = {
@@ -46,6 +48,7 @@ export function BudgetTable({ onError }: BudgetTableProps): ReactElement {
   const [searchQuery, setSearchQuery] = useState('');
   const [draftOpen, setDraftOpen] = useState(false);
   const [deleteConfirmEntry, setDeleteConfirmEntry] = useState<CrmBudgetEntry | null>(null);
+  const isMobileLayout = useDashboardMobileLayout();
 
   const { createEntry, updateEntry, deleteEntry } = useBudgetEntryActions({
     projectId: project.summary.id,
@@ -73,6 +76,36 @@ export function BudgetTable({ onError }: BudgetTableProps): ReactElement {
 
   const showTable = filtered.length > 0 || draftOpen;
 
+  const searchInput = (
+    <DetailPanelSectionSearch
+      value={searchQuery}
+      onChange={setSearchQuery}
+      placeholder={b.searchPlaceholder}
+      ariaLabel={b.searchAriaLabel}
+    />
+  );
+
+  const refreshButton = (
+    <DetailPanelSectionRefresh
+      sectionLabel={b.tableTitle}
+      onRefresh={refreshBudgetSection}
+      onError={(message) => setToast({ kind: 'error', message })}
+    />
+  );
+
+  const addButton = canCreate ? (
+    <DetailPanelHeaderButton
+      variant="add"
+      disabled={draftOpen}
+      title={b.addItem}
+      onClick={() => setDraftOpen(true)}
+    />
+  ) : null;
+
+  const categoryFilterMenu = (
+    <BudgetCategoryFilterMenu filter={filter} onChange={setFilter} />
+  );
+
   const handleConfirmDelete = async () => {
     if (!deleteConfirmEntry) return;
     const entryId = deleteConfirmEntry.id;
@@ -85,47 +118,113 @@ export function BudgetTable({ onError }: BudgetTableProps): ReactElement {
       className={`${styles.paymentsPanel} ${styles.budgetTablePanel}`}
       aria-labelledby="budget-table-heading"
     >
-      <DetailPanelHeader title={b.tableTitle} titleId="budget-table-heading">
-        <DetailPanelHeaderActions>
-          <DetailPanelSectionSearch
-            value={searchQuery}
-            onChange={setSearchQuery}
-            placeholder={b.searchPlaceholder}
-            ariaLabel={b.searchAriaLabel}
-          />
-          <DetailPanelSectionRefresh
-            sectionLabel={b.tableTitle}
-            onRefresh={refreshBudgetSection}
-            onError={(message) => setToast({ kind: 'error', message })}
-          />
-          {canCreate ? (
-            <DetailPanelHeaderButton
-              variant="add"
-              disabled={draftOpen}
-              title={b.addItem}
-              onClick={() => setDraftOpen(true)}
-            />
-          ) : null}
-        </DetailPanelHeaderActions>
-      </DetailPanelHeader>
+      {isMobileLayout ? (
+        <div
+          className={[styles.detailPanelHeader, styles.detailPanelHeader_mobile]
+            .filter(Boolean)
+            .join(' ')}
+        >
+          <div className={styles.detailPanelHeaderRow}>
+            <div className={styles.detailPanelHeaderTitleGroup}>
+              <h3 id="budget-table-heading" className={styles.detailPanelTitle}>
+                {b.tableTitle}
+              </h3>
+            </div>
+            <div className={styles.detailPanelHeaderRowActions}>{categoryFilterMenu}</div>
+          </div>
+          <div className={styles.detailPanelHeaderRow}>
+            <div className={styles.detailPanelSearchWrap}>{searchInput}</div>
+            <div className={styles.detailPanelHeaderRowActions}>
+              {refreshButton}
+              {addButton}
+            </div>
+          </div>
+        </div>
+      ) : (
+        <DetailPanelHeader title={b.tableTitle} titleId="budget-table-heading">
+          <DetailPanelHeaderActions>
+            {searchInput}
+            {refreshButton}
+            {addButton}
+          </DetailPanelHeaderActions>
+        </DetailPanelHeader>
+      )}
 
-      <div className={styles.docFilterRow} role="tablist" aria-label={b.filterAriaLabel}>
-        {BUDGET_TABLE_FILTERS.map((tab) => (
-          <button
-            key={tab.id}
-            type="button"
-            role="tab"
-            aria-selected={filter === tab.id}
-            className={filter === tab.id ? styles.docFilterTab_active : styles.docFilterTab}
-            onClick={() => setFilter(tab.id)}
-          >
-            {tab.label}
-          </button>
-        ))}
-      </div>
+      {!isMobileLayout ? (
+        <div className={styles.docFilterRow} role="tablist" aria-label={b.filterAriaLabel}>
+          {BUDGET_TABLE_FILTERS.map((tab) => (
+            <button
+              key={tab.id}
+              type="button"
+              role="tab"
+              aria-selected={filter === tab.id}
+              className={filter === tab.id ? styles.docFilterTab_active : styles.docFilterTab}
+              onClick={() => setFilter(tab.id)}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+      ) : null}
 
       {!showTable ? (
         <p className={styles.subtitle}>{b.empty}</p>
+      ) : isMobileLayout ? (
+        <div className={styles.budgetMobileList}>
+          {filtered.map((entry) => (
+            <BudgetInlineRow
+              key={entry.id}
+              variant="mobile"
+              projectSlug={project.summary.slug}
+              entry={entry}
+              entryDocuments={project.documents.filter((doc) => doc.budgetEntryId === entry.id)}
+              onSave={updateEntry}
+              onError={onError}
+              onRequestDelete={canDelete ? () => setDeleteConfirmEntry(entry) : undefined}
+            />
+          ))}
+          {draftOpen ? (
+            <BudgetDraftRow
+              onSave={async (draft) => {
+                await createEntry(draft);
+                setDraftOpen(false);
+              }}
+              onCancel={() => setDraftOpen(false)}
+            />
+          ) : null}
+          <article
+            className={`${styles.card} ${styles.workflowTaskMobileCard} ${styles.budgetMobileTotalsCard}`}
+          >
+            <div className={styles.workflowTaskMobileCardGrid3}>
+              <div className={styles.workflowTaskMobileCardCell}>
+                <span className={styles.projectInfoMobileLabel}>{b.totalsLabel}</span>
+                <span className={styles.workflowTaskMobileCardValue}>
+                  {formatCentsAsUsd(totals.cost)}
+                </span>
+              </div>
+              <div
+                className={`${styles.workflowTaskMobileCardCell} ${styles.workflowTaskMobileCardCell_center}`}
+              >
+                <span className={styles.projectInfoMobileLabel}>{b.columns.budget}</span>
+                <span className={styles.workflowTaskMobileCardValue}>
+                  {formatCentsAsUsd(totals.budget)}
+                </span>
+              </div>
+              <div
+                className={`${styles.workflowTaskMobileCardCell} ${styles.workflowTaskMobileCardCell_right}`}
+              >
+                <span className={styles.projectInfoMobileLabel}>{b.columns.remaining}</span>
+                <span
+                  className={`${styles.workflowTaskMobileCardValue} ${
+                    totals.diff >= 0 ? styles.budgetRemainingUnder : styles.budgetRemainingOver
+                  }`}
+                >
+                  {formatCentsAsUsd(totals.diff)}
+                </span>
+              </div>
+            </div>
+          </article>
+        </div>
       ) : (
         <div className={styles.detailPanelTableCard}>
           <div className={styles.paymentsList}>

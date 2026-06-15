@@ -11,9 +11,55 @@ import {
 } from '@/presentation/features/crmProjectDetail/budgetCostDate';
 import { parseUsdInputToCents } from '@/presentation/features/crmCreate/createCrmProjectFormModel';
 import type { BudgetEntryDraft } from '@/presentation/features/crmProjectDetail/useBudgetEntryActions';
+import { useDashboardMobileLayout } from '@/presentation/features/crmProjects/useDashboardMobileLayout';
 import styles from './ProjectDetail.module.css';
 
 type DocumentsRequiredChoice = 'yes' | 'no';
+
+function BudgetDraftActions({
+  b,
+  saving,
+  onSave,
+  onCancel,
+  mobile = false,
+}: {
+  readonly b: (typeof content.projectDetail.budget);
+  readonly saving: boolean;
+  readonly onSave: () => void;
+  readonly onCancel: () => void;
+  readonly mobile?: boolean;
+}): ReactElement {
+  const actionClass = mobile
+    ? styles.workflowTaskMobileDraftActions
+    : `${styles.taskDeleteCell} ${styles.paymentDraftActions}`;
+
+  return (
+    <span className={actionClass}>
+      <button
+        type="button"
+        className={styles.paymentDraftActionBtn}
+        disabled={saving}
+        title={b.saveItem}
+        aria-label={b.saveItem}
+        onClick={onSave}
+      >
+        <span className={styles.taskDoneIcon} aria-hidden>
+          ✓
+        </span>
+      </button>
+      <button
+        type="button"
+        className={styles.paymentDraftActionBtn}
+        disabled={saving}
+        title={b.cancelItem}
+        aria-label={b.cancelItem}
+        onClick={onCancel}
+      >
+        <span className={styles.taskOpenIcon} aria-hidden />
+      </button>
+    </span>
+  );
+}
 
 export type BudgetDraftRowProps = {
   onSave: (draft: BudgetEntryDraft) => Promise<void>;
@@ -23,6 +69,7 @@ export type BudgetDraftRowProps = {
 export function BudgetDraftRow({ onSave, onCancel }: BudgetDraftRowProps): ReactElement {
   const b = content.projectDetail.budget;
   const wf = content.projectDetail.workflow;
+  const isMobileLayout = useDashboardMobileLayout();
   const [itemName, setItemName] = useState('');
   const [category, setCategory] = useState<CrmBudgetCategory>('labor');
   const [costUsd, setCostUsd] = useState('');
@@ -75,6 +122,144 @@ export function BudgetDraftRow({ onSave, onCancel }: BudgetDraftRowProps): React
   ]);
 
   const rowClass = `${styles.tableRow} ${styles.budgetGrid} ${styles.workflowInlineRow} ${styles.paymentDraftRow}`;
+
+  if (isMobileLayout) {
+    return (
+      <div className={styles.paymentDraftBlock}>
+        <article
+          className={`${styles.card} ${styles.workflowTaskMobileCard} ${styles.workflowTaskMobileDraftCard}`}
+          aria-busy={saving}
+        >
+          <div className={styles.workflowTaskMobileCardHeader}>
+            <div className={styles.workflowTaskMobileCardTitleWrap}>
+              <input
+                className={styles.workflowTaskMobileDraftTitleInput}
+                value={itemName}
+                disabled={saving}
+                placeholder={b.itemNamePlaceholder}
+                aria-label={b.columns.itemName}
+                onChange={(e) => {
+                  setItemName(e.target.value);
+                  setError(null);
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') void handleSave();
+                  if (e.key === 'Escape') onCancel();
+                }}
+                autoFocus
+              />
+            </div>
+            <BudgetDraftActions
+              b={b}
+              saving={saving}
+              mobile
+              onSave={() => void handleSave()}
+              onCancel={onCancel}
+            />
+          </div>
+          <div className={styles.workflowTaskMobileCardGrid3}>
+            <div className={styles.workflowTaskMobileCardCell}>
+              <span className={styles.projectInfoMobileLabel}>{b.columns.category}</span>
+              <select
+                className={`${styles.paymentDraftSelect} ${styles.workflowTaskMobileDraftField}`}
+                value={category}
+                disabled={saving}
+                aria-label={b.columns.category}
+                onChange={(e) => setCategory(e.target.value as CrmBudgetCategory)}
+              >
+                {CRM_BUDGET_CATEGORIES.map((cat) => (
+                  <option key={cat} value={cat}>
+                    {formatBudgetCategory(cat)}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div
+              className={`${styles.workflowTaskMobileCardCell} ${styles.workflowTaskMobileCardCell_center}`}
+            >
+              <span className={styles.projectInfoMobileLabel}>{b.columns.documents}</span>
+              <select
+                className={`${styles.paymentDraftSelect} ${styles.workflowTaskMobileDraftField}`}
+                value={documentsRequired}
+                disabled={saving}
+                aria-label={wf.fields.documentsRequired}
+                onChange={(e) => setDocumentsRequired(e.target.value as DocumentsRequiredChoice)}
+              >
+                <option value="yes">{wf.fields.documentsRequiredYes}</option>
+                <option value="no">{wf.fields.documentsRequiredNo}</option>
+              </select>
+            </div>
+            <div
+              className={`${styles.workflowTaskMobileCardCell} ${styles.workflowTaskMobileCardCell_right}`}
+            >
+              <span className={styles.projectInfoMobileLabel}>{b.columns.costDate}</span>
+              <input
+                type="date"
+                className={`${styles.paymentDraftDateInput} ${styles.workflowTaskMobileDraftField}`}
+                value={costDate}
+                disabled={saving}
+                required
+                aria-label={b.columns.costDate}
+                onChange={(e) => {
+                  setCostDate(e.target.value);
+                  setError(null);
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') void handleSave();
+                  if (e.key === 'Escape') onCancel();
+                }}
+              />
+            </div>
+          </div>
+          <div className={styles.workflowTaskMobileCardGrid3}>
+            <div className={styles.workflowTaskMobileCardCell}>
+              <span className={styles.projectInfoMobileLabel}>{b.columns.cost}</span>
+              <input
+                className={`${styles.inlineFieldInput} ${styles.workflowTaskMobileDraftField}`}
+                value={costUsd}
+                disabled={saving}
+                inputMode="decimal"
+                placeholder="0.00"
+                aria-label={b.columns.cost}
+                onChange={(e) => setCostUsd(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') void handleSave();
+                  if (e.key === 'Escape') onCancel();
+                }}
+              />
+            </div>
+            <div
+              className={`${styles.workflowTaskMobileCardCell} ${styles.workflowTaskMobileCardCell_center}`}
+            >
+              <span className={styles.projectInfoMobileLabel}>{b.columns.budget}</span>
+              <input
+                className={`${styles.inlineFieldInput} ${styles.workflowTaskMobileDraftField}`}
+                value={budgetUsd}
+                disabled={saving}
+                inputMode="decimal"
+                placeholder="0.00"
+                aria-label={b.columns.budget}
+                onChange={(e) => setBudgetUsd(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') void handleSave();
+                  if (e.key === 'Escape') onCancel();
+                }}
+              />
+            </div>
+            <div
+              className={`${styles.workflowTaskMobileCardCell} ${styles.workflowTaskMobileCardCell_right}`}
+            >
+              <span className={styles.projectInfoMobileLabel}>{b.columns.remaining}</span>
+              <span className={`${styles.workflowTaskMobileCardValue} ${styles.budgetMutedCell}`}>
+                —
+              </span>
+            </div>
+          </div>
+        </article>
+        {error ? <p className={styles.paymentDraftError}>{error}</p> : null}
+      </div>
+    );
+  }
 
   return (
     <div className={styles.paymentDraftBlock}>
@@ -181,30 +366,12 @@ export function BudgetDraftRow({ onSave, onCancel }: BudgetDraftRowProps): React
           </select>
         </span>
 
-        <span className={`${styles.taskDeleteCell} ${styles.paymentDraftActions}`}>
-          <button
-            type="button"
-            className={styles.paymentDraftActionBtn}
-            disabled={saving}
-            title={b.saveItem}
-            aria-label={b.saveItem}
-            onClick={() => void handleSave()}
-          >
-            <span className={styles.taskDoneIcon} aria-hidden>
-              ✓
-            </span>
-          </button>
-          <button
-            type="button"
-            className={styles.paymentDraftActionBtn}
-            disabled={saving}
-            title={b.cancelItem}
-            aria-label={b.cancelItem}
-            onClick={onCancel}
-          >
-            <span className={styles.taskOpenIcon} aria-hidden />
-          </button>
-        </span>
+        <BudgetDraftActions
+          b={b}
+          saving={saving}
+          onSave={() => void handleSave()}
+          onCancel={onCancel}
+        />
       </div>
       {error ? <p className={styles.paymentDraftError}>{error}</p> : null}
     </div>

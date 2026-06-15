@@ -21,8 +21,8 @@ import { useProjectDetailShell } from '@/presentation/features/crmProjectDetail/
 import { useBuildCoreProjectSectionAccess } from '@/presentation/providers/BuildCoreProjectSectionAccessProvider';
 import { useBudgetEntryDocumentActions } from '@/presentation/features/crmProjectDetail/useBudgetEntryDocumentActions';
 import { WorkflowDocumentFileIcon } from './WorkflowDocumentFileIcon';
+import { BudgetRowActionsMenu } from './BudgetRowActionsMenu';
 import { WorkflowInlineMenu } from './WorkflowInlineMenu';
-import shared from '@/presentation/components/crmShared/crmShared.module.css';
 import styles from './ProjectDetail.module.css';
 
 export type BudgetInlineRowProps = {
@@ -32,6 +32,7 @@ export type BudgetInlineRowProps = {
   onSave: (entryId: string, patch: Partial<BudgetEntryDraft>) => Promise<void>;
   onError?: (message: string) => void;
   onRequestDelete?: () => void;
+  variant?: 'table' | 'mobile';
 };
 
 export function BudgetInlineRow({
@@ -41,6 +42,7 @@ export function BudgetInlineRow({
   onSave,
   onError,
   onRequestDelete,
+  variant = 'table',
 }: BudgetInlineRowProps): ReactElement {
   const b = content.projectDetail.budget;
   const wf = content.projectDetail.workflow;
@@ -189,6 +191,369 @@ export function BudgetInlineRow({
   const showDocumentsIcon = hasDocuments || entry.documentsRequired;
 
   const rowClass = `${styles.tableRow} ${styles.budgetGrid} ${styles.workflowInlineRow}`;
+
+  const remainingClass =
+    remainingCents > 0
+      ? styles.budgetRemainingUnder
+      : remainingCents < 0
+        ? styles.budgetRemainingOver
+        : styles.budgetMutedCell;
+
+  const handleRequestDelete = (): void => {
+    setCategoryMenuOpen(false);
+    setDocumentsMenuOpen(false);
+    onRequestDelete?.();
+  };
+
+  if (variant === 'mobile') {
+    const mobileValueBtn = styles.workflowTaskMobileCardValueBtn;
+    const mobileValue = styles.workflowTaskMobileCardValue;
+    const mobileControl = styles.workflowTaskMobileCardControl;
+
+    return (
+      <article
+        className={`${styles.card} ${styles.workflowTaskMobileCard}`}
+        aria-label={entry.itemName}
+        aria-busy={saving}
+      >
+        <div className={styles.workflowTaskMobileCardHeader}>
+          <div className={styles.workflowTaskMobileCardTitleWrap}>
+            {editingName ? (
+              <input
+                className={styles.workflowTaskMobileDraftTitleInput}
+                value={nameDraft}
+                disabled={saving}
+                aria-label={b.columns.itemName}
+                onChange={(e) => setNameDraft(e.target.value)}
+                onBlur={() => void saveName()}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') void saveName();
+                  if (e.key === 'Escape') {
+                    setNameDraft(entry.itemName);
+                    setEditingName(false);
+                  }
+                }}
+                autoFocus
+              />
+            ) : (
+              <button
+                type="button"
+                className={styles.workflowTaskMobileCardTitleBtn}
+                disabled={saving || !canEdit}
+                title={entry.itemName}
+                onClick={() => {
+                  if (!canEdit) return;
+                  setCategoryMenuOpen(false);
+                  setDocumentsMenuOpen(false);
+                  setNameDraft(entry.itemName);
+                  setEditingName(true);
+                }}
+              >
+                <span className={styles.workflowTaskMobileCardTitle}>{entry.itemName}</span>
+              </button>
+            )}
+          </div>
+          {onRequestDelete ? (
+            <div className={styles.workflowTaskMobileCardActions}>
+              <BudgetRowActionsMenu
+                itemName={entry.itemName}
+                disabled={saving}
+                onDelete={handleRequestDelete}
+              />
+            </div>
+          ) : null}
+        </div>
+        <div className={styles.workflowTaskMobileCardGrid3}>
+          <div className={styles.workflowTaskMobileCardCell}>
+            <span className={styles.projectInfoMobileLabel}>{b.columns.category}</span>
+            <div className={mobileControl} ref={categoryRef}>
+              <button
+                type="button"
+                className={canEdit ? mobileValueBtn : mobileValue}
+                disabled={saving || !canEdit}
+                aria-expanded={categoryMenuOpen}
+                onClick={() => {
+                  if (!canEdit) return;
+                  setDocumentsMenuOpen(false);
+                  setCategoryMenuOpen((open) => !open);
+                }}
+              >
+                <span className={canEdit ? mobileValue : undefined}>
+                  {formatBudgetCategory(entry.category)}
+                </span>
+              </button>
+              <WorkflowInlineMenu
+                open={categoryMenuOpen && canEdit}
+                onClose={() => setCategoryMenuOpen(false)}
+                anchorRef={categoryRef}
+              >
+                {CRM_BUDGET_CATEGORIES.map((cat) => (
+                  <button
+                    key={cat}
+                    type="button"
+                    className={styles.inlineMenuAction}
+                    disabled={saving || cat === entry.category}
+                    onClick={() => {
+                      setCategoryMenuOpen(false);
+                      void commit({ category: cat });
+                    }}
+                  >
+                    {formatBudgetCategory(cat)}
+                  </button>
+                ))}
+              </WorkflowInlineMenu>
+            </div>
+          </div>
+          <div
+            className={`${styles.workflowTaskMobileCardCell} ${styles.workflowTaskMobileCardCell_center}`}
+          >
+            <span className={styles.projectInfoMobileLabel}>{b.columns.documents}</span>
+            <div className={mobileControl} ref={documentsRef}>
+              <button
+                type="button"
+                className={`${mobileValueBtn} ${styles.documentsCell}`}
+                disabled={saving}
+                aria-expanded={documentsMenuOpen}
+                onClick={() => {
+                  setCategoryMenuOpen(false);
+                  setDocumentsMenuOpen((open) => !open);
+                }}
+              >
+                {showDocumentsIcon ? <span className={styles.documentsIcon} aria-hidden /> : null}
+                <span
+                  className={`${mobileValue} ${
+                    !entry.documentsRequired && !hasDocuments ? styles.documentsNotRequired : ''
+                  }`}
+                >
+                  {documentsLabel}
+                </span>
+              </button>
+              <input
+                ref={documentActions.fileInputRef}
+                type="file"
+                accept={documentAccept}
+                className={styles.hiddenFileInput}
+                onChange={(e) => void documentActions.handleFileSelected(e)}
+              />
+              <WorkflowInlineMenu
+                open={documentsMenuOpen}
+                onClose={() => setDocumentsMenuOpen(false)}
+                anchorRef={documentsRef}
+              >
+                {canUpload ? (
+                  <button
+                    type="button"
+                    className={`${styles.inlineMenuAction} ${styles.inlineMenuUploadAction}`}
+                    disabled={saving || documentActions.uploading}
+                    onClick={() => {
+                      setDocumentsMenuOpen(false);
+                      documentActions.openFilePicker();
+                    }}
+                  >
+                    <span className={styles.inlineMenuUploadIcon} aria-hidden />
+                    {wf.documentsUpload}
+                  </button>
+                ) : null}
+                {entryDocuments.map((doc) => (
+                  <div key={doc.id} className={styles.inlineMenuDocRow}>
+                    <WorkflowDocumentFileIcon fileName={doc.name} mimeType={doc.mimeType} compact />
+                    <span className={styles.inlineMenuDocName} title={doc.name}>
+                      {doc.name}
+                    </span>
+                    <button
+                      type="button"
+                      className={styles.inlineMenuIconBtn}
+                      disabled={saving || documentActions.uploading}
+                      title={wf.documentDownload}
+                      aria-label={`${wf.documentDownload} ${doc.name}`}
+                      onClick={() => {
+                        setDocumentsMenuOpen(false);
+                        void documentActions.downloadDocument(doc.id, doc.name);
+                      }}
+                    >
+                      <span className={styles.inlineMenuDownloadIcon} aria-hidden />
+                    </button>
+                    {canDelete ? (
+                      <button
+                        type="button"
+                        className={styles.inlineMenuIconBtn}
+                        disabled={saving || documentActions.uploading}
+                        title={wf.documentDelete}
+                        aria-label={`${wf.documentDelete} ${doc.name}`}
+                        onClick={() => {
+                          setDocumentsMenuOpen(false);
+                          void documentActions.deleteDocument(doc.id);
+                        }}
+                      >
+                        <span className={styles.inlineMenuDeleteIcon} aria-hidden />
+                      </button>
+                    ) : null}
+                  </div>
+                ))}
+                {canEdit && !entry.documentsRequired ? (
+                  <button
+                    type="button"
+                    className={styles.inlineMenuAction}
+                    disabled={saving}
+                    onClick={() => void saveDocumentsRequired(true)}
+                  >
+                    {wf.documentsMarkRequired}
+                  </button>
+                ) : null}
+                {canEdit && entry.documentsRequired && entryDocuments.length === 0 ? (
+                  <button
+                    type="button"
+                    className={styles.inlineMenuAction}
+                    disabled={saving}
+                    onClick={() => void saveDocumentsRequired(false)}
+                  >
+                    {wf.documentsNotRequired}
+                  </button>
+                ) : null}
+              </WorkflowInlineMenu>
+            </div>
+          </div>
+          <div
+            className={`${styles.workflowTaskMobileCardCell} ${styles.workflowTaskMobileCardCell_right}`}
+          >
+            <span className={styles.projectInfoMobileLabel}>{b.columns.costDate}</span>
+            <span className={mobileControl}>
+              {editingCostDate ? (
+                <input
+                  type="date"
+                  className={`${styles.inlineFieldInput} ${styles.workflowTaskMobileDraftField}`}
+                  value={costDateDraft}
+                  disabled={saving}
+                  aria-label={b.columns.costDate}
+                  onChange={(e) => setCostDateDraft(e.target.value)}
+                  onBlur={() => void saveCostDate()}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') void saveCostDate();
+                    if (e.key === 'Escape') {
+                      setCostDateDraft(dateInputFromCostIncurredAt(entry.costIncurredAt));
+                      setEditingCostDate(false);
+                    }
+                  }}
+                  autoFocus
+                />
+              ) : (
+                <button
+                  type="button"
+                  className={canEdit ? mobileValueBtn : mobileValue}
+                  disabled={saving || !canEdit}
+                  onClick={() => {
+                    if (!canEdit) return;
+                    setCategoryMenuOpen(false);
+                    setDocumentsMenuOpen(false);
+                    setCostDateDraft(dateInputFromCostIncurredAt(entry.costIncurredAt));
+                    setEditingCostDate(true);
+                  }}
+                >
+                  <span className={canEdit ? mobileValue : undefined}>
+                    {formatCostDateDisplay(entry.costIncurredAt)}
+                  </span>
+                </button>
+              )}
+            </span>
+          </div>
+        </div>
+        <div className={styles.workflowTaskMobileCardGrid3}>
+          <div className={styles.workflowTaskMobileCardCell}>
+            <span className={styles.projectInfoMobileLabel}>{b.columns.cost}</span>
+            <span className={mobileControl}>
+              {editingCost ? (
+                <input
+                  className={styles.inlineFieldInput}
+                  value={costDraft}
+                  disabled={saving}
+                  inputMode="decimal"
+                  aria-label={b.columns.cost}
+                  onChange={(e) => setCostDraft(e.target.value)}
+                  onBlur={() => void saveCost()}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') void saveCost();
+                    if (e.key === 'Escape') {
+                      setCostDraft(centsToUsdInput(entry.costCents));
+                      setEditingCost(false);
+                    }
+                  }}
+                  autoFocus
+                />
+              ) : (
+                <button
+                  type="button"
+                  className={canEdit ? mobileValueBtn : mobileValue}
+                  disabled={saving || !canEdit}
+                  onClick={() => {
+                    if (!canEdit) return;
+                    setCategoryMenuOpen(false);
+                    setDocumentsMenuOpen(false);
+                    setCostDraft(centsToUsdInput(entry.costCents));
+                    setEditingCost(true);
+                  }}
+                >
+                  <span className={canEdit ? mobileValue : undefined}>
+                    {formatCentsAsUsd(entry.costCents)}
+                  </span>
+                </button>
+              )}
+            </span>
+          </div>
+          <div
+            className={`${styles.workflowTaskMobileCardCell} ${styles.workflowTaskMobileCardCell_center}`}
+          >
+            <span className={styles.projectInfoMobileLabel}>{b.columns.budget}</span>
+            <span className={mobileControl}>
+              {editingBudget ? (
+                <input
+                  className={styles.inlineFieldInput}
+                  value={budgetDraft}
+                  disabled={saving}
+                  inputMode="decimal"
+                  aria-label={b.columns.budget}
+                  onChange={(e) => setBudgetDraft(e.target.value)}
+                  onBlur={() => void saveBudget()}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') void saveBudget();
+                    if (e.key === 'Escape') {
+                      setBudgetDraft(centsToUsdInput(entry.budgetCents));
+                      setEditingBudget(false);
+                    }
+                  }}
+                  autoFocus
+                />
+              ) : (
+                <button
+                  type="button"
+                  className={canEdit ? mobileValueBtn : mobileValue}
+                  disabled={saving || !canEdit}
+                  onClick={() => {
+                    if (!canEdit) return;
+                    setCategoryMenuOpen(false);
+                    setDocumentsMenuOpen(false);
+                    setBudgetDraft(centsToUsdInput(entry.budgetCents));
+                    setEditingBudget(true);
+                  }}
+                >
+                  <span className={canEdit ? mobileValue : undefined}>
+                    {formatCentsAsUsd(entry.budgetCents)}
+                  </span>
+                </button>
+              )}
+            </span>
+          </div>
+          <div
+            className={`${styles.workflowTaskMobileCardCell} ${styles.workflowTaskMobileCardCell_right}`}
+          >
+            <span className={styles.projectInfoMobileLabel}>{b.columns.remaining}</span>
+            <span className={`${mobileValue} ${remainingClass}`}>
+              {formatCentsAsUsd(remainingCents)}
+            </span>
+          </div>
+        </div>
+      </article>
+    );
+  }
 
   return (
     <div className={rowClass} role="row" aria-busy={saving}>
@@ -340,15 +705,7 @@ export function BudgetInlineRow({
       </span>
 
       <span className={`${styles.workflowMetaCell} ${styles.budgetRemainingCell}`}>
-        <span
-          className={
-            remainingCents > 0
-              ? styles.budgetRemainingUnder
-              : remainingCents < 0
-                ? styles.budgetRemainingOver
-                : styles.budgetMutedCell
-          }
-        >
+        <span className={remainingClass}>
           {formatCentsAsUsd(remainingCents)}
         </span>
       </span>
@@ -495,21 +852,14 @@ export function BudgetInlineRow({
         </WorkflowInlineMenu>
       </span>
 
-      <span className={shared.rowDeleteCell}>
-        <button
-          type="button"
-          className={shared.rowDeleteBtn}
-          disabled={saving || !onRequestDelete}
-          title={b.deleteItem}
-          aria-label={b.deleteItem}
-          onClick={() => {
-            setCategoryMenuOpen(false);
-            setDocumentsMenuOpen(false);
-            onRequestDelete?.();
-          }}
-        >
-          <span aria-hidden>🗑️</span>
-        </button>
+      <span className={styles.taskDeleteCell}>
+        {onRequestDelete ? (
+          <BudgetRowActionsMenu
+            itemName={entry.itemName}
+            disabled={saving}
+            onDelete={handleRequestDelete}
+          />
+        ) : null}
       </span>
     </div>
   );
