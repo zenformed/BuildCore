@@ -4,6 +4,7 @@ import type { ReactElement, MouseEvent } from 'react';
 import type { CrmProjectStageCompletion, CrmWorkflowTask, PipelineStageSlug } from '@/domain/crm';
 import { isStageManuallyCompleted } from '@/domain/crm/projectStageCompletion';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
+import { useDashboardMobileLayout } from '@/presentation/features/crmProjects/useDashboardMobileLayout';
 import {
   formatWorkflowStageTaskCompletionPercent,
   isWorkflowStageGroupComplete,
@@ -58,6 +59,7 @@ export function WorkflowStageTaskGroup({
 }: WorkflowStageTaskGroupProps): ReactElement {
   const cols = content.projectDetail.workflow.columns;
   const wf = content.projectDetail.workflow;
+  const isMobileLayout = useDashboardMobileLayout();
   const persisted = useWorkflowStageExpanded(projectSlug, group.collapseKey);
   const expanded = forceExpanded || (collapsible ? persisted.expanded : true);
   const groupClass = [
@@ -144,7 +146,29 @@ export function WorkflowStageTaskGroup({
     </span>
   );
 
-  const table = (
+  const table = isMobileLayout ? (
+    <div id={panelId} className={styles.stageGroupMobileTaskList}>
+      {group.tasks.map((task) => (
+        <WorkflowTaskInlineRow
+          key={task.id}
+          variant="mobile"
+          projectSlug={projectSlug}
+          task={task}
+          docCount={docCounts.get(task.id) ?? 0}
+          taskDocuments={projectDocuments.filter((doc) => doc.workflowTaskId === task.id)}
+          showAmountColumn={group.isPaymentsGroup}
+          isApiSource={isApiSource}
+          onUpdated={onTaskUpdated}
+          onTaskError={onTaskError}
+          onRequestArchiveTask={onRequestArchiveTask}
+        />
+      ))}
+      {showEmptyRow ? (
+        <p className={styles.workflowStageMobileEmpty}>{wf.stageNoTasks}</p>
+      ) : null}
+      {draftRow}
+    </div>
+  ) : (
     <div id={panelId} className={styles.stageGroupTable}>
       <div className={`${styles.tableHeader} ${gridClass}`} role="row">
         <span role="columnheader">{cols.status}</span>

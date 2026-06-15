@@ -35,6 +35,19 @@ export function formatWorkflowTaskNotesPreview(notes: string | null | undefined)
   return `${trimmed.slice(0, WORKFLOW_TASK_NOTES_PREVIEW_MAX - 1)}…`;
 }
 
+/** Full workflow task notes for mobile cards (multi-line, no truncation). */
+export function formatWorkflowTaskNotesDisplay(notes: string | null | undefined): string {
+  if (notes == null) return '—';
+  const trimmed = notes.trim();
+  if (!trimmed) return '—';
+  return trimmed;
+}
+
+export function formatWorkflowTaskDocumentCountLabel(count: number): string {
+  if (count === 1) return '1 Document';
+  return `${count} Documents`;
+}
+
 export function formatDocumentKind(kind: string): string {
   return kind
     .split('_')

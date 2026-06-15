@@ -3,6 +3,11 @@
 import type { ReactElement } from 'react';
 import { useEffect, useMemo, useState } from 'react';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
+import {
+  buildProjectDetailFolderTabs,
+  type ProjectDetailFolderTabId,
+} from '@/presentation/features/crmProjectDetail/projectDetailFolderTabs';
+import { useDashboardMobileLayout } from '@/presentation/features/crmProjects/useDashboardMobileLayout';
 import { useProjectDetailShell } from '@/presentation/features/crmProjectDetail/ProjectDetailShellContext';
 import { WorkflowTaskFileDragProvider } from '@/presentation/features/crmProjectDetail/workflowTaskFileDragContext';
 import { useGuardedWorkflowTaskDocumentDrop } from '@/presentation/features/crmProjectDetail/useGuardedWorkflowTaskDocumentDrop';
@@ -16,21 +21,14 @@ import { PaymentsRail } from './PaymentsRail';
 import { ProjectAccountabilityContent } from './ProjectAccountabilityPage';
 import { ProjectDocumentsPanelContent } from './ProjectDocumentsPanelContent';
 import { ProjectFinancialsContent } from './ProjectFinancialsPage';
+import {
+  PROJECT_FOLDER_TAB_SELECT_LABEL_ID,
+  ProjectDetailFolderTabSelector,
+} from './ProjectDetailFolderTabSelector';
 import { WorkflowTasksTable } from './WorkflowTasksTable';
 import styles from './ProjectDetail.module.css';
 
-export type ProjectDetailFolderTabId =
-  | 'workflow'
-  | 'budget'
-  | 'payments'
-  | 'documents'
-  | 'financials'
-  | 'accountability';
-
-type FolderTabDef = {
-  readonly id: ProjectDetailFolderTabId;
-  readonly label: string;
-};
+export type { ProjectDetailFolderTabId } from '@/presentation/features/crmProjectDetail/projectDetailFolderTabs';
 
 export function ProjectDetailFolderTabs(): ReactElement {
   const {
@@ -49,36 +47,28 @@ export function ProjectDetailFolderTabs(): ReactElement {
     handleTaskDocumentDrop,
     (message) => setToast({ kind: 'error', message })
   );
+  const isMobileLayout = useDashboardMobileLayout();
   const [selectedTab, setSelectedTab] = useState<ProjectDetailFolderTabId>('workflow');
   const [documentsSearchQuery, setDocumentsSearchQuery] = useState('');
   const isReportsTabActive = selectedTab === 'financials';
 
-  const tabs = useMemo((): readonly FolderTabDef[] => {
-    const detail = content.projectDetail;
-    const items: FolderTabDef[] = [
-      { id: 'workflow', label: detail.actions.workflowTasks },
-    ];
-
-    if (payment.isReady && payment.permissions.canView) {
-      items.push({ id: 'payments', label: detail.payments.title });
-    }
-    if (budget.isReady && budget.permissions.canView) {
-      items.push({ id: 'budget', label: detail.budget.tableTitle });
-    }
-    if (!isMemberRole) {
-      items.push({ id: 'financials', label: 'Reports' });
-      items.push({ id: 'documents', label: detail.sections.documents });
-      items.push({ id: 'accountability', label: detail.actions.accountability });
-    }
-
-    return items;
-  }, [
-    budget.isReady,
-    budget.permissions.canView,
-    isMemberRole,
-    payment.isReady,
-    payment.permissions.canView,
-  ]);
+  const tabs = useMemo(
+    () =>
+      buildProjectDetailFolderTabs({
+        isMemberRole,
+        paymentIsReady: payment.isReady,
+        paymentCanView: payment.permissions.canView,
+        budgetIsReady: budget.isReady,
+        budgetCanView: budget.permissions.canView,
+      }),
+    [
+      budget.isReady,
+      budget.permissions.canView,
+      isMemberRole,
+      payment.isReady,
+      payment.permissions.canView,
+    ]
+  );
 
   useEffect(() => {
     if (!tabs.some((tab) => tab.id === selectedTab)) {
@@ -173,30 +163,42 @@ export function ProjectDetailFolderTabs(): ReactElement {
             : styles.folderTabsRoot
         }
       >
-        <div className={styles.folderTabList} role="tablist" aria-label="Project sections">
-          {tabs.map((tab) => {
-            const isActive = tab.id === selectedTab;
-            return (
-              <button
-                key={tab.id}
-                type="button"
-                role="tab"
-                id={`project-folder-tab-${tab.id}`}
-                aria-selected={isActive}
-                aria-controls="project-folder-tabpanel"
-                tabIndex={isActive ? 0 : -1}
-                className={isActive ? styles.folderTabActive : styles.folderTab}
-                onClick={() => setSelectedTab(tab.id)}
-              >
-                {tab.label}
-              </button>
-            );
-          })}
-        </div>
+        {isMobileLayout ? (
+          <ProjectDetailFolderTabSelector
+            tabs={tabs}
+            selectedTab={selectedTab}
+            onSelectTab={setSelectedTab}
+          />
+        ) : (
+          <div className={styles.folderTabList} role="tablist" aria-label="Project sections">
+            {tabs.map((tab) => {
+              const isActive = tab.id === selectedTab;
+              return (
+                <button
+                  key={tab.id}
+                  type="button"
+                  role="tab"
+                  id={`project-folder-tab-${tab.id}`}
+                  aria-selected={isActive}
+                  aria-controls="project-folder-tabpanel"
+                  tabIndex={isActive ? 0 : -1}
+                  className={isActive ? styles.folderTabActive : styles.folderTab}
+                  onClick={() => setSelectedTab(tab.id)}
+                >
+                  {tab.label}
+                </button>
+              );
+            })}
+          </div>
+        )}
         <div
           id="project-folder-tabpanel"
           role="tabpanel"
-          aria-labelledby={`project-folder-tab-${selectedTab}`}
+          aria-labelledby={
+            isMobileLayout
+              ? PROJECT_FOLDER_TAB_SELECT_LABEL_ID
+              : `project-folder-tab-${selectedTab}`
+          }
           className={
             isReportsTabActive
               ? `${styles.folderTabPanel} ${styles.folderTabPanelReportsActive}`

@@ -400,6 +400,10 @@ export const buildCoreDashboardContent = {
       documents: 'Documents',
       accountability: 'Accountability',
     },
+    folderTabs: {
+      sectionsLabel: 'Project Sections',
+      selectAriaLabel: 'Project section',
+    },
     fields: {
       contact: 'Contact',
       email: 'Email',
