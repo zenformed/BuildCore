@@ -184,6 +184,16 @@
 
 
 
+  /* Apps launcher popover (header grid menu) */
+
+  --theme-apps-launcher-bg: #ffffff;
+
+  --theme-apps-launcher-panel-bg: #f2f4f7;
+
+  --theme-apps-launcher-tile-hover: rgba(0, 0, 0, 0.06);
+
+
+
   /* ── Table & workflow stage headers (light) ── */
 
   --theme-table-header-bg: #5a7a9e;
@@ -387,6 +397,16 @@
   --theme-settings-sidebar-border: #3d3e4a;
 
   --theme-settings-sidebar-input-bg: var(--theme-form-input-bg);
+
+
+
+  /* Apps launcher popover */
+
+  --theme-apps-launcher-bg: #1d2029;
+
+  --theme-apps-launcher-panel-bg: #161922;
+
+  --theme-apps-launcher-tile-hover: #1e2230;
 
 
 
