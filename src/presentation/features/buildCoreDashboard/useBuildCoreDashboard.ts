@@ -1,16 +1,14 @@
 'use client';
 
 import type { SaaSEntitlementSnapshot } from '@/application/ports';
-import { useCallback, useEffect, useMemo, useRef, useState, type ChangeEvent, type RefObject } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import type { User } from '@/domain/entities/User';
 import { env } from '@/infrastructure/config/env';
 import { runtimeModes } from '@/infrastructure/config/runtimeModes';
 import { useAuth } from '@/presentation/hooks/useAuth';
 import { useBranding } from '@/presentation/hooks/useBranding';
-import { useOrganizationLogoUpload } from '@zenformed/core/dashboard-shell';
 import { buildCoreDashboardNavigation as nav } from '@/platform/navigation/buildCoreDashboardNavigation';
-import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
 import { useSaaSProfile } from '@/presentation/hooks/useSaaSProfile';
 import { useUserAvatar } from '@/presentation/hooks/useUserAvatar';
 import { useTenant } from '@/presentation/providers';
@@ -59,9 +57,6 @@ export function useBuildCoreDashboard(): {
   entitlementSnapshot: SaaSEntitlementSnapshot | null;
   hasAvatarPhoto: boolean;
   refetchBranding: () => Promise<void>;
-  logoUploading: boolean;
-  headerLogoFileInputRef: RefObject<HTMLInputElement>;
-  handleLogoFileChange: (e: ChangeEvent<HTMLInputElement>) => Promise<void>;
   onProjectRowClick: (project: CrmProjectSummary) => void;
 } {
   const router = useRouter();
@@ -158,13 +153,6 @@ export function useBuildCoreDashboard(): {
     return membershipContextStatus === 'pending';
   }, [membershipContextStatus]);
 
-  const { logoUploading, headerLogoFileInputRef, handleLogoFileChange } = useOrganizationLogoUpload({
-    brandingApiUrl: nav.apis.branding,
-    getAccessToken,
-    refetchBranding,
-    logoSaveFailedFallback: content.branding.logoSaveFailedFallback,
-  });
-
   return useMemo(
     () => ({
       user,
@@ -200,9 +188,6 @@ export function useBuildCoreDashboard(): {
       entitlementSnapshot,
       hasAvatarPhoto,
       refetchBranding,
-      logoUploading,
-      headerLogoFileInputRef,
-      handleLogoFileChange,
       onProjectRowClick,
     }),
     [
@@ -217,13 +202,10 @@ export function useBuildCoreDashboard(): {
       effectiveLicenseTier,
       entitlementSnapshot,
       getAccessToken,
-      handleLogoFileChange,
       hasAvatarPhoto,
       hasLogo,
-      headerLogoFileInputRef,
       isAdmin,
       canEditOrganizationProfile,
-      logoUploading,
       logoUrl,
       onProjectRowClick,
       organizationRoleLabel,

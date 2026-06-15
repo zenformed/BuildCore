@@ -52,17 +52,22 @@
   background: var(--theme-bg-shell, var(--color-bg));
 }
 
-/* Sidebar logo (in JobBoardSidebar slot) */
+/* Sidebar app identity (ZenformedSidebarBranding) */
+.sidebarAppBranding {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 .sidebarLogoCircleWrap {
   position: relative;
   flex-shrink: 0;
-  margin-bottom: 1.25rem; /* 20px */
 }
 
 .sidebarLogoCircle {
   width: 2.5rem;
   height: 2.5rem;
-  border-radius: 50%;
+  border-radius: 0.375rem;
   overflow: hidden;
   flex-shrink: 0;
   display: flex;
@@ -81,39 +86,6 @@
   font-size: 0.875rem;
   font-weight: 600;
   color: #fff;
-}
-
-.sidebarLogoCameraBtn {
-  position: absolute;
-  bottom: -2px;
-  right: -2px;
-  width: 1rem;
-  height: 1rem;
-  padding: 0;
-  margin: 0;
-  border-radius: 50%;
-  border: none;
-  background: #0f172a;
-  color: #fff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  font: inherit;
-}
-
-.sidebarLogoCameraBtn:hover:not(:disabled) {
-  background: #334155;
-}
-
-.sidebarLogoCameraBtn:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-.sidebarLogoCameraBtn svg {
-  width: 0.625rem;
-  height: 0.625rem;
 }
 
 /* Sidebar + Main Content: row layout, full height (legacy / unused when using dashboardWithSidebar) */

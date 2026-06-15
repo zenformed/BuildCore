@@ -9,9 +9,10 @@ import {
   ZenformedDashboardPageLoading,
   ZenformedDashboardSidebarRow,
   ZenformedSidebarBranding,
+  zenformedAppIconSrc,
 } from '@zenformed/core/dashboard-shell';
+import { buildcoreAppDefinition } from '@/platform/appDefinitions/buildcore';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
-import { buildCoreDashboardNavigation as nav } from '@/platform/navigation/buildCoreDashboardNavigation';
 import { useBuildCoreDashboardContext } from '@/presentation/providers/BuildCoreDashboardProvider';
 import { BuildCoreDashboardHeader } from './BuildCoreDashboardHeader';
 import { BuildCoreDashboardModals } from './BuildCoreDashboardModals';
@@ -72,18 +73,9 @@ export function BuildCoreDashboardShell({
           >
             <ZenformedSidebarBranding
               classNames={sidebarBrandingClassNames}
-              shopName={dash.shopName}
-              defaultShopNameFallback={content.branding.defaultShopNameFallback}
-              logoUrl={dash.logoUrl}
-              brandingLoading={dash.brandingLoading}
-              logoUploading={dash.logoUploading}
-              showCameraButton={dash.canEditOrganizationProfile}
-              fileInputRef={dash.headerLogoFileInputRef}
-              onLogoFileChange={(e) => {
-                void dash.handleLogoFileChange(e);
-              }}
-              companyLogoChangeTitle={nav.header.account.companyLogoChange.title}
-              companyLogoChangeAriaLabel={nav.header.account.companyLogoChange.ariaLabel}
+              appName={buildcoreAppDefinition.displayName}
+              appIconSrc={zenformedAppIconSrc('buildcore')}
+              appAltText={buildcoreAppDefinition.displayName}
             />
           </BuildCoreSidebar>
         }
