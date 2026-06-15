@@ -8,6 +8,8 @@ import { buildCoreDashboardContent as content } from '@/platform/content/buildCo
 import { CrmProjectDeleteConfirmModal } from '@/presentation/components/CrmProjects/CrmProjectDeleteConfirmModal';
 import { CreateCrmProjectModal } from '@/presentation/components/CrmProjects/CreateCrmProjectModal';
 import { CrmProjectsTable } from '@/presentation/components/CrmProjects/CrmProjectsTable';
+import { useDashboardMobileLayout } from '@/presentation/features/crmProjects/useDashboardMobileLayout';
+import { SubprojectsMobileList } from './SubprojectsMobileList';
 import { DetailToast } from '@/presentation/components/CrmProjectDetail/DetailToast';
 import { ConfirmModal } from '@/presentation/components/ConfirmModal';
 import { ProjectCompletionBlockedDialog } from '@/presentation/components/CrmProjectDetail/ProjectCompletionBlockedDialog';
@@ -102,6 +104,7 @@ export function SubprojectsSection(): ReactElement | null {
       : allSubprojectCount > 0 && rows.length === 0 && searchQuery.trim().length > 0
         ? content.crm.table.empty
         : copy.empty;
+  const isMobileLayout = useDashboardMobileLayout();
 
   const {
     pendingDeleteProject,
@@ -208,8 +211,8 @@ export function SubprojectsSection(): ReactElement | null {
 
       {expanded ? (
         <div id={panelId} className={styles.subprojectsTableBody}>
-          <div className={`${tableStyles.pipeline} ${tableStyles.pipelineFitContent}`}>
-            <CrmProjectsTable
+          {isMobileLayout ? (
+            <SubprojectsMobileList
               rows={rows}
               paymentTasksIndex={paymentTasksIndex}
               workflowProgressInputIndex={workflowProgressInputIndex}
@@ -224,11 +227,32 @@ export function SubprojectsSection(): ReactElement | null {
               onTogglePriority={togglePriority}
               onRequestCompletionChange={requestCompletionChange}
               showActions={!isMemberRole}
-              projectColumnLabel={copy.projectColumn}
               emptyMessage={subprojectsEmptyMessage}
               onRowClick={(child) => router.push(routes.subproject(child.slug))}
             />
-          </div>
+          ) : (
+            <div className={`${tableStyles.pipeline} ${tableStyles.pipelineFitContent}`}>
+              <CrmProjectsTable
+                rows={rows}
+                paymentTasksIndex={paymentTasksIndex}
+                workflowProgressInputIndex={workflowProgressInputIndex}
+                isWorkflowProgressLoading={isWorkflowProgressLoading}
+                isLoading={isLoading}
+                isPaymentFinancialsLoading={isPaymentFinancialsLoading}
+                isMemberRole={isMemberRole}
+                canDelete={canDelete && !isMemberRole}
+                deletingProjectId={deletingProjectId}
+                busyProjectId={busyProjectId}
+                onRequestDelete={setPendingDeleteProject}
+                onTogglePriority={togglePriority}
+                onRequestCompletionChange={requestCompletionChange}
+                showActions={!isMemberRole}
+                projectColumnLabel={copy.projectColumn}
+                emptyMessage={subprojectsEmptyMessage}
+                onRowClick={(child) => router.push(routes.subproject(child.slug))}
+              />
+            </div>
+          )}
         </div>
       ) : null}
 
