@@ -1108,6 +1108,69 @@
   flex-shrink: 0;
 }
 
+.detailHeader_mobile {
+  display: block;
+  width: 100%;
+  min-width: 0;
+}
+
+.detailHeader_mobile .titleBlock {
+  width: 100%;
+  min-width: 0;
+  min-height: unset;
+  flex: none;
+}
+
+.detailHeaderMobileBreadcrumbRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  width: 100%;
+  min-width: 0;
+  margin-bottom: 0.25rem;
+}
+
+.detailHeaderMobileBreadcrumb {
+  flex: 1 1 auto;
+  min-width: 0;
+  margin: 0;
+}
+
+.detailHeaderMobileBreadcrumb .breadcrumbCurrent {
+  max-width: 100%;
+}
+
+.detailHeaderMobileBreadcrumbRow .detailHeaderActions {
+  flex: 0 0 auto;
+  flex-wrap: nowrap;
+}
+
+.detailHeaderMobileRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 0.5rem;
+  width: 100%;
+  min-width: 0;
+}
+
+.detailHeaderMobileLead {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.titleBlockMobileAside {
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-end;
+  flex: 0 0 auto;
+  padding-top: 0.125rem;
+}
+
 .headerIconBtn {
   display: inline-flex;
   align-items: center;
@@ -2438,6 +2501,27 @@
   display: flex;
   flex-direction: column;
   align-items: flex-start;
+}
+
+.titleBlockMobileText {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.125rem;
+}
+
+.titleBlockMobileText .titleRow {
+  width: 100%;
+  max-width: 100%;
+  padding-left: var(--title-block-indent);
+}
+
+.titleBlockMobileText .title {
+  flex: 1 1 auto;
+  width: 100%;
+  max-width: 100%;
 }
 
 .titleRow {
