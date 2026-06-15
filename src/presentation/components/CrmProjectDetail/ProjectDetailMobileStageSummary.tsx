@@ -1,17 +1,9 @@
 'use client';
 
-import { useMemo, type ReactElement } from 'react';
+import type { ReactElement } from 'react';
 import type { CrmProjectStageCompletion, CrmWorkflowTask } from '@/domain/crm';
-import { CRM_PROJECT_COMPLETE_STAGE_SLUG } from '@/domain/crm/projectCompletion';
-import {
-  resolveProjectDetailProgressDisplay,
-  resolveWorkflowPipelineGraphState,
-} from '@/domain/buildcore/projectPipelineProgress';
-import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
-import { formatStageLabel } from '@/presentation/features/crmProjects/crmProjectFormatters';
-import { useProjectDetailShell } from '@/presentation/features/crmProjectDetail/ProjectDetailShellContext';
-import { useBuildCorePipelineStages } from '@/presentation/providers/BuildCorePipelineStagesProvider';
 import { ProjectProgressPercent } from './ProjectProgressPercent';
+import { useProjectDetailMobileStageSummary } from './useProjectDetailMobileStageSummary';
 import shared from '@/presentation/components/crmShared/crmShared.module.css';
 import styles from './ProjectDetail.module.css';
 
@@ -20,84 +12,61 @@ export type ProjectDetailMobileStageSummaryProps = {
   readonly manualStageCompletions: readonly CrmProjectStageCompletion[];
 };
 
-export function ProjectDetailMobileStageSummary({
+export function ProjectDetailMobileStageEnd({
   workflowTasks,
   manualStageCompletions,
 }: ProjectDetailMobileStageSummaryProps): ReactElement | null {
-  const { project, isMemberRole } = useProjectDetailShell();
-  const { catalogForProject } = useBuildCorePipelineStages();
-  const catalog = catalogForProject({ parentProjectId: project.summary.parentProjectId });
+  const stageSummary = useProjectDetailMobileStageSummary(workflowTasks, manualStageCompletions);
 
-  const graphState = useMemo(
-    () =>
-      resolveWorkflowPipelineGraphState({
-        workflowTasks,
-        stages: catalog,
-        manualStageCompletions,
-      }),
-    [catalog, manualStageCompletions, workflowTasks]
-  );
-
-  const progress = useMemo(
-    () =>
-      resolveProjectDetailProgressDisplay({
-        workflowTasks,
-        manualStageCompletions,
-        stages: catalog,
-      }),
-    [catalog, manualStageCompletions, workflowTasks]
-  );
-
-  const totalStages = graphState.stageStatuses.length;
-
-  const { currentStageIndex, stagePillLabel } = useMemo(() => {
-    if (totalStages === 0) {
-      return { currentStageIndex: 0, stagePillLabel: '—' };
-    }
-
-    if (graphState.derivedCurrentStageSlug == null) {
-      return {
-        currentStageIndex: totalStages,
-        stagePillLabel: formatStageLabel(CRM_PROJECT_COMPLETE_STAGE_SLUG, catalog),
-      };
-    }
-
-    const currentIndex = graphState.stageStatuses.findIndex(
-      (stage) => stage.stageSlug === graphState.derivedCurrentStageSlug
-    );
-    const stage = currentIndex >= 0 ? graphState.stageStatuses[currentIndex] : null;
-
-    return {
-      currentStageIndex: currentIndex >= 0 ? currentIndex + 1 : totalStages,
-      stagePillLabel: stage?.stageLabel ?? formatStageLabel(graphState.derivedCurrentStageSlug, catalog),
-    };
-  }, [catalog, graphState.derivedCurrentStageSlug, graphState.stageStatuses, totalStages]);
-
-  if (isMemberRole || totalStages === 0) {
+  if (stageSummary == null) {
     return null;
   }
 
-  const stagePositionLabel = `${currentStageIndex}/${totalStages}`;
+  return (
+    <div className={styles.detailHeaderMobileStageEnd}>
+      <span
+        className={`${shared.stagePill} ${styles.detailHeaderMobileStagePill}`}
+        title={stageSummary.stagePillLabel}
+      >
+        {stageSummary.stagePillLabel}
+      </span>
+      <span
+        className={styles.detailHeaderMobileStageCount}
+        aria-label={`Stage ${stageSummary.stagePositionLabel}`}
+      >
+        {stageSummary.stagePositionLabel}
+      </span>
+    </div>
+  );
+}
+
+export function ProjectDetailMobileHeaderProgress({
+  workflowTasks,
+  manualStageCompletions,
+}: ProjectDetailMobileStageSummaryProps): ReactElement | null {
+  const stageSummary = useProjectDetailMobileStageSummary(workflowTasks, manualStageCompletions);
+
+  if (stageSummary == null) {
+    return null;
+  }
 
   return (
-    <section
-      className={styles.mobileStageSummary}
-      aria-label={content.projectDetail.pipelineAriaLabel}
-    >
-      <div className={styles.mobileStageSummaryProgress}>
-        <ProjectProgressPercent variant="compact" progress={progress} />
-      </div>
-      <div className={styles.mobileStageSummaryEnd}>
+    <div className={styles.detailHeaderMobileProgress}>
+      <ProjectProgressPercent progress={stageSummary.progress} />
+      <div className={styles.detailHeaderMobileStageEnd}>
         <span
-          className={`${shared.stagePill} ${styles.mobileStageSummaryPill}`}
-          title={stagePillLabel}
+          className={`${shared.stagePill} ${styles.detailHeaderMobileStagePill}`}
+          title={stageSummary.stagePillLabel}
         >
-          {stagePillLabel}
+          {stageSummary.stagePillLabel}
         </span>
-        <span className={styles.mobileStageSummaryCount} aria-label={`Stage ${stagePositionLabel}`}>
-          {stagePositionLabel}
+        <span
+          className={styles.detailHeaderMobileStageCount}
+          aria-label={`Stage ${stageSummary.stagePositionLabel}`}
+        >
+          {stageSummary.stagePositionLabel}
         </span>
       </div>
-    </section>
+    </div>
   );
 }

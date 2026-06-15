@@ -825,6 +825,51 @@
   padding: 0 0.125rem;
 }
 
+.detailHeaderMobileStageEnd {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  flex: 0 1 auto;
+  min-width: 0;
+}
+
+.detailHeaderMobileStagePill {
+  flex: 0 1 auto;
+  max-width: min(8rem, 32vw);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  padding: 0.125rem 0.35rem;
+  font-size: 0.625rem;
+  line-height: 1.15;
+}
+
+.detailHeaderMobileStageCount {
+  flex: 0 0 auto;
+  font-size: 0.75rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text-muted, #64748b);
+  line-height: 1.25;
+}
+
+.detailHeaderMobileProgress {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  min-width: 0;
+  margin-top: 0.5rem;
+}
+
+.detailHeaderMobileProgress .projectProgressPercent {
+  flex: 1 1 auto;
+  min-width: 0;
+  width: auto;
+  max-width: none;
+}
+
 .mobileStageSummaryProgress {
   flex: 0 0 auto;
   min-width: 0;
@@ -2565,6 +2610,23 @@
   flex: 1 1 auto;
   width: 100%;
   max-width: 100%;
+}
+
+.titleBlockMobileText .subtitle,
+.titleBlockMobileText .headerTradeSubtitle {
+  width: 100%;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.titleBlockMobileText .headerIndustryEdit {
+  flex-direction: row;
+  align-items: center;
+  gap: 0.35rem;
+  min-width: 0;
+  overflow: hidden;
 }
 
 .titleRow {

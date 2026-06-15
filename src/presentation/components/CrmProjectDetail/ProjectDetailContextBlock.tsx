@@ -13,7 +13,6 @@ import { ProjectHeaderAssignee } from './ProjectHeaderAssignee';
 import { ProjectHeaderIndustry } from './ProjectHeaderIndustry';
 import { ProjectNotesInline } from './ProjectNotesInline';
 import { useDashboardMobileLayout } from '@/presentation/features/crmProjects/useDashboardMobileLayout';
-import { ProjectDetailMobileStageSummary } from './ProjectDetailMobileStageSummary';
 import { ProjectSummaryStrip } from './ProjectSummaryStrip';
 import { StageProgressBar } from './StageProgressBar';
 import styles from './ProjectDetail.module.css';
@@ -76,6 +75,12 @@ export function ProjectDetailContextBlock({
       canEditPrimaryPhoto={!isMemberRole}
       onPrimaryPhotoUpdated={onPrimaryPhotoUpdated}
       onPrimaryPhotoError={onPrimaryPhotoError}
+      mobileStageWorkflowTasks={
+        !isMemberRole && isMobileLayout ? project.workflowTasks : undefined
+      }
+      mobileStageCompletions={
+        !isMemberRole && isMobileLayout ? project.manualStageCompletions : undefined
+      }
       assigneeControl={
         isMemberRole ? null : (
           <ProjectHeaderAssignee
@@ -106,14 +111,6 @@ export function ProjectDetailContextBlock({
     />
   );
 
-  const mobileStageSummary =
-    !isMemberRole && isMobileLayout ? (
-      <ProjectDetailMobileStageSummary
-        workflowTasks={project.workflowTasks}
-        manualStageCompletions={project.manualStageCompletions}
-      />
-    ) : null;
-
   const summaryStrip = (
     <ProjectSummaryStrip
       project={project}
@@ -140,7 +137,6 @@ export function ProjectDetailContextBlock({
       <div className={styles.detailMobilePage}>
         <div className={styles.detailMobileStickyHeader}>
           {header}
-          {mobileStageSummary}
         </div>
         <div className={styles.detailMobileScroll}>
           {summaryStrip}
@@ -154,7 +150,6 @@ export function ProjectDetailContextBlock({
   return (
     <div className={styles.detailTop}>
       {header}
-      {mobileStageSummary}
       {summaryStrip}
       {notes}
       {isMemberRole || isMobileLayout ? null : (

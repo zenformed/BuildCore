@@ -1,13 +1,16 @@
 'use client';
 
 import type { ReactElement, ReactNode } from 'react';
-import type { CrmProjectSummary } from '@/domain/crm';
+import type { CrmProjectSummary, CrmProjectStageCompletion, CrmWorkflowTask } from '@/domain/crm';
 import { isCrmProjectComplete } from '@/domain/crm';
 import { CrmProjectCompleteIcon } from '@/presentation/components/crmShared/CrmProjectCompleteIcon';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
 import type { ProjectDetailPageContext } from '@/presentation/features/crmProjectDetail/projectDetailPageContext';
 import { useDashboardMobileLayout } from '@/presentation/features/crmProjects/useDashboardMobileLayout';
 import { ProjectPrimaryPhoto } from './ProjectPrimaryPhoto';
+import {
+  ProjectDetailMobileHeaderProgress,
+} from './ProjectDetailMobileStageSummary';
 import styles from './ProjectDetail.module.css';
 
 export type ProjectDetailHeaderProps = {
@@ -26,6 +29,8 @@ export type ProjectDetailHeaderProps = {
   onPrimaryPhotoUpdated?: (summary: CrmProjectSummary) => void;
   onPrimaryPhotoError?: (message: string) => void;
   canEditPrimaryPhoto?: boolean;
+  mobileStageWorkflowTasks?: readonly CrmWorkflowTask[];
+  mobileStageCompletions?: readonly CrmProjectStageCompletion[];
 };
 
 export function ProjectDetailHeader({
@@ -43,6 +48,8 @@ export function ProjectDetailHeader({
   onPrimaryPhotoUpdated,
   onPrimaryPhotoError,
   canEditPrimaryPhoto = false,
+  mobileStageWorkflowTasks,
+  mobileStageCompletions,
 }: ProjectDetailHeaderProps): ReactElement {
   const detail = content.projectDetail;
   const subPageLabel =
@@ -60,6 +67,10 @@ export function ProjectDetailHeader({
   const isComplete = isCrmProjectComplete(project);
   const isMobileLayout = useDashboardMobileLayout();
   const industryOrTrade = industryControl ?? tradeTypeControl;
+  const showMobileStageSummary =
+    isMobileLayout &&
+    mobileStageWorkflowTasks != null &&
+    mobileStageCompletions != null;
 
   const titleRow = (
     <div className={styles.titleRow}>
@@ -140,7 +151,12 @@ export function ProjectDetailHeader({
               <div className={styles.titleBlockMobileAside}>{assigneeControl}</div>
             ) : null}
           </div>
-          {progress ? <div className={styles.titleBlockProgress}>{progress}</div> : null}
+          {showMobileStageSummary ? (
+            <ProjectDetailMobileHeaderProgress
+              workflowTasks={mobileStageWorkflowTasks}
+              manualStageCompletions={mobileStageCompletions}
+            />
+          ) : null}
         </div>
       ) : (
         <>
