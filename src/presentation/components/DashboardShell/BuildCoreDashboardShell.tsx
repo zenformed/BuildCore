@@ -9,8 +9,8 @@ import {
   ZenformedDashboardPageLoading,
   ZenformedDashboardSidebarRow,
   ZenformedSidebarBranding,
-  zenformedAppIconSrc,
 } from '@zenformed/core/dashboard-shell';
+import { buildCoreAppIconSrc } from '@/platform/assets/buildCoreAppIcon';
 import { buildcoreAppDefinition } from '@/platform/appDefinitions/buildcore';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
 import { useBuildCoreDashboardContext } from '@/presentation/providers/BuildCoreDashboardProvider';
@@ -74,7 +74,7 @@ export function BuildCoreDashboardShell({
             <ZenformedSidebarBranding
               classNames={sidebarBrandingClassNames}
               appName={buildcoreAppDefinition.displayName}
-              appIconSrc={zenformedAppIconSrc('buildcore')}
+              appIconSrc={buildCoreAppIconSrc()}
               appAltText={buildcoreAppDefinition.displayName}
             />
           </BuildCoreSidebar>

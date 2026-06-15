@@ -1,7 +1,7 @@
 'use client';
 
 import type { ReactElement, ReactNode } from 'react';
-import { zenformedAppIconSrc } from '@zenformed/core/dashboard-shell';
+import { buildCoreAppIconSrc } from '@/platform/assets/buildCoreAppIcon';
 import { buildcoreAppDefinition } from '@/platform/appDefinitions/buildcore';
 import { Card } from '@/presentation/components/Card';
 import { ThemeToggle } from '@/presentation/components/ThemeToggle';
@@ -28,7 +28,7 @@ export function AuthPageShell({
   minimal = false,
 }: AuthPageShellProps): ReactElement {
   const { hasLogo, logoUrl } = useBranding();
-  const appIconSrc = zenformedAppIconSrc('buildcore');
+  const appIconSrc = buildCoreAppIconSrc();
 
   const brandRow = (
     <div className={styles.brandBlock}>
