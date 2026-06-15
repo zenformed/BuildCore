@@ -2740,8 +2740,8 @@
 }
 
 .workflowNotesCell {
-  text-align: right;
-  justify-content: flex-end;
+  text-align: left;
+  justify-content: flex-start;
   display: flex;
   align-items: center;
   min-width: 0;
@@ -2752,13 +2752,13 @@
   flex: 1;
   min-width: 0;
   max-width: 100%;
-  justify-content: flex-end;
+  justify-content: flex-start;
 }
 
 .workflowNotesCell .inlineFieldInput {
   flex: 1;
   min-width: 0;
-  text-align: right;
+  text-align: left;
 }
 
 .workflowNotesPreview {
@@ -2768,7 +2768,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  text-align: right;
+  text-align: left;
   font-size: 0.75rem;
   line-height: 1.25;
 }
