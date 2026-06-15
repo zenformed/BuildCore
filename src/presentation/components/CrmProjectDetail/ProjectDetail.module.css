@@ -257,6 +257,47 @@
   overflow: hidden;
 }
 
+/* Mobile card layout: stack main + graph and span full panel width (see isMobileLayout). */
+.projectFinancialReportBody_mobile {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  width: 100%;
+  min-width: 0;
+  overflow: visible;
+  gap: 0.5rem;
+}
+
+.projectFinancialReportBody_mobile .projectFinancialReportMain,
+.projectFinancialReportBody_mobile .projectFinancialReportGraph {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  max-height: none;
+  overflow: visible;
+}
+
+.projectFinancialReportBody_mobile .projectFinancialReportSection,
+.projectFinancialReportBody_mobile .projectFinancialPaymentsMobileList,
+.projectFinancialReportBody_mobile .projectFinancialKpiMobileCard,
+.projectFinancialReportBody_mobile .workflowTaskMobileCard {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.projectFinancialReportBody_mobile .projectFinancialKpiMobileCell {
+  max-width: none;
+  flex: 1 1 0;
+}
+
+.projectFinancialReportBody_mobile .workflowTaskMobileCardGrid2 .workflowTaskMobileCardCell {
+  max-width: none;
+  flex: 1 1 0;
+  min-width: 0;
+}
+
 .projectFinancialReportMain {
   display: flex;
   flex-direction: column;
@@ -5683,6 +5724,229 @@
   .detailPanelHeader_mobile .detailPanelHeaderRowActions .budgetFilterBtn {
     width: 2.125rem;
     height: 2.125rem;
+  }
+
+  .pageShell:has([data-project-detail-page]) .folderTabsRoot.folderTabsRootReportsActive,
+  .pageShell:has([data-project-financials-page]) .folderTabsRoot.folderTabsRootReportsActive {
+    flex: none;
+    min-height: unset;
+    align-self: flex-start;
+  }
+
+  .pageShell:has([data-project-detail-page]) .folderTabPanel.folderTabPanelReportsActive,
+  .pageShell:has([data-project-financials-page]) .folderTabPanel.folderTabPanelReportsActive {
+    flex: none;
+    min-height: unset;
+    overflow: visible;
+  }
+
+  .pageShell:has([data-project-detail-page]) .folderTabPanelInner.folderTabPanelInnerReportsActive,
+  .pageShell:has([data-project-financials-page]) .folderTabPanelInner.folderTabPanelInnerReportsActive {
+    flex: none;
+    min-height: unset;
+    overflow: visible;
+    --project-financial-report-height: auto;
+  }
+
+  .pageBodySubpage:has(.projectFinancialReport) {
+    flex: none;
+    min-height: unset;
+    overflow: visible;
+    padding-bottom: 2rem;
+  }
+
+  .pageBodySubpage:has(.projectFinancialReport) .detailFinancialsRowSingle {
+    flex: none;
+    min-height: unset;
+  }
+
+  .pageShell:has([data-project-detail-page]) .paymentsPanel.projectFinancialReport,
+  .pageBodySubpage:has(.projectFinancialReport) .paymentsPanel.projectFinancialReport {
+    padding: 0.5rem 0.5rem;
+    height: auto;
+    max-height: none;
+    overflow: visible;
+  }
+
+  .paymentsPanel.projectFinancialReport .projectFinancialReportBody,
+  .pageShell:has([data-project-detail-page]) .projectFinancialReportBody,
+  .pageShell:has([data-project-financials-page]) .projectFinancialReportBody,
+  .pageBodySubpage:has(.projectFinancialReport) .projectFinancialReportBody {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    width: 100%;
+    min-width: 0;
+    overflow: visible;
+    gap: 0.5rem;
+  }
+
+  .paymentsPanel.projectFinancialReport .projectFinancialReportMain,
+  .paymentsPanel.projectFinancialReport .projectFinancialReportGraph,
+  .paymentsPanel.projectFinancialReport .projectFinancialReportSection,
+  .paymentsPanel.projectFinancialReport .projectFinancialPaymentsMobileList,
+  .paymentsPanel.projectFinancialReport .projectFinancialKpiMobileCard,
+  .paymentsPanel.projectFinancialReport .workflowTaskMobileCard {
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+
+  .paymentsPanel.projectFinancialReport .projectFinancialKpiMobileCell,
+  .paymentsPanel.projectFinancialReport .workflowTaskMobileCardGrid2 .workflowTaskMobileCardCell {
+    max-width: none;
+    flex: 1 1 0;
+    min-width: 0;
+  }
+
+  .pageShell:has([data-project-detail-page]) .projectFinancialReportMain,
+  .pageShell:has([data-project-financials-page]) .projectFinancialReportMain,
+  .pageBodySubpage:has(.projectFinancialReport) .projectFinancialReportMain {
+    overflow: visible;
+    max-height: none;
+  }
+
+  .pageShell:has([data-project-detail-page]) .projectFinancialReportGraph,
+  .pageShell:has([data-project-financials-page]) .projectFinancialReportGraph,
+  .pageBodySubpage:has(.projectFinancialReport) .projectFinancialReportGraph {
+    height: auto;
+    max-height: none;
+    overflow: visible;
+  }
+
+  .pageShell:has([data-project-detail-page]) .projectFinancialReportGraphCard,
+  .pageShell:has([data-project-financials-page]) .projectFinancialReportGraphCard,
+  .pageBodySubpage:has(.projectFinancialReport) .projectFinancialReportGraphCard {
+    flex: none;
+    min-height: unset;
+    max-height: 11.5rem;
+  }
+
+  .pageShell:has([data-project-detail-page]) .projectFinancialReportGraphBody,
+  .pageShell:has([data-project-financials-page]) .projectFinancialReportGraphBody,
+  .pageBodySubpage:has(.projectFinancialReport) .projectFinancialReportGraphBody {
+    container-type: normal;
+    min-height: unset;
+    max-height: 11.5rem;
+    padding: 0.375rem 0.5rem;
+  }
+
+  .pageShell:has([data-project-detail-page]) .projectFinancialGraphChartCanvas,
+  .pageShell:has([data-project-financials-page]) .projectFinancialGraphChartCanvas,
+  .pageBodySubpage:has(.projectFinancialReport) .projectFinancialGraphChartCanvas {
+    width: min(100%, 10.5rem);
+    height: min(100%, 10.5rem);
+    max-height: 10.5rem;
+  }
+
+  .projectFinancialKpiMobileCard {
+    border: 1px solid var(--theme-border-card);
+    border-radius: var(--theme-radius-md, 0.5rem);
+    background: var(--theme-surface-card);
+    box-shadow: var(--theme-shadow-card);
+    padding: 0.625rem 0.75rem;
+    width: 100%;
+    box-sizing: border-box;
+    min-width: 0;
+  }
+
+  .projectFinancialKpiMobileGrid {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    width: 100%;
+    min-width: 0;
+  }
+
+  .projectFinancialKpiMobileRow {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 0.75rem;
+    width: 100%;
+    min-width: 0;
+  }
+
+  .projectFinancialKpiMobileCell {
+    display: flex;
+    flex-direction: column;
+    gap: 0.125rem;
+    min-width: 0;
+    flex: 0 1 auto;
+    max-width: calc(50% - 0.375rem);
+    align-items: flex-start;
+    text-align: left;
+  }
+
+  .projectFinancialKpiMobileCell_right {
+    align-items: flex-end;
+    text-align: right;
+    margin-left: auto;
+  }
+
+  .projectFinancialKpiMobileCell_right .projectInfoMobileLabel,
+  .projectFinancialKpiMobileCell_right .projectFinancialKpiMobileValue {
+    text-align: right;
+  }
+
+  .projectFinancialKpiMobileValue {
+    font-size: 0.875rem;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    line-height: 1.25;
+    color: var(--color-text, #0f172a);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  :global([data-theme='dark']) .projectFinancialKpiMobileValue {
+    color: #f1f5f9;
+  }
+
+  .projectFinancialPaymentsMobileList {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    min-width: 0;
+    width: 100%;
+  }
+
+  .projectFinancialPaymentStatusRow {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    margin-top: 0.5rem;
+    padding-top: 0.5rem;
+    border-top: 1px solid var(--theme-border-main, var(--color-border, #e2e8f0));
+  }
+
+  :global([data-theme='dark']) .projectFinancialPaymentStatusRow {
+    border-top-color: var(--theme-border-main, #3d3e4a);
+  }
+
+  .projectFinancialPaymentPaidValue {
+    font-size: 0.8125rem;
+    font-weight: 600;
+    line-height: 1.35;
+    color: #16a34a;
+  }
+
+  .projectFinancialPaymentUnpaidValue {
+    font-size: 0.8125rem;
+    font-weight: 600;
+    line-height: 1.35;
+    color: #dc2626;
+  }
+
+  :global([data-theme='dark']) .projectFinancialPaymentPaidValue {
+    color: #4ade80;
+  }
+
+  :global([data-theme='dark']) .projectFinancialPaymentUnpaidValue {
+    color: #f87171;
   }
 }
 
