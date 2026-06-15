@@ -8,6 +8,7 @@ import { countDocumentsByTaskId } from '@/presentation/features/crmProjectDetail
 import { listPaymentMilestones } from '@/presentation/features/crmProjectDetail/workflowTaskGroups';
 import { filterPaymentMilestonesBySearch } from '@/presentation/features/crmProjectDetail/projectSectionSearchModel';
 import { useBuildCoreProjectSectionAccess } from '@/presentation/providers/BuildCoreProjectSectionAccessProvider';
+import { useDashboardMobileLayout } from '@/presentation/features/crmProjects/useDashboardMobileLayout';
 import { PaymentMilestoneDraftRow } from './PaymentMilestoneDraftRow';
 import { useProjectDetailShell } from '@/presentation/features/crmProjectDetail/ProjectDetailShellContext';
 import { DetailPanelHeader } from './DetailPanelHeader';
@@ -57,40 +58,101 @@ export function PaymentsRail({
   const docCounts = countDocumentsByTaskId(project.documents);
   const payCols = content.projectDetail.payments.columns;
   const [draftOpen, setDraftOpen] = useState(false);
+  const isMobileLayout = useDashboardMobileLayout();
 
   const showTable = canView && (filteredMilestones.length > 0 || draftOpen);
 
+  const searchInput = (
+    <DetailPanelSectionSearch
+      value={searchQuery}
+      onChange={setSearchQuery}
+      placeholder={payments.searchPlaceholder}
+      ariaLabel={payments.searchAriaLabel}
+    />
+  );
+
+  const refreshButton = (
+    <DetailPanelSectionRefresh
+      sectionLabel={payments.title}
+      onRefresh={refreshWorkflowTasks}
+      onError={(message) => setToast({ kind: 'error', message })}
+    />
+  );
+
+  const addButton = canCreate ? (
+    <DetailPanelHeaderButton
+      variant="add"
+      disabled={draftOpen}
+      title={payments.addMilestone}
+      onClick={() => setDraftOpen(true)}
+    />
+  ) : null;
+
   return (
     <section className={styles.paymentsPanel} aria-labelledby="payments-rail-heading">
-      <DetailPanelHeader title={payments.title} titleId="payments-rail-heading">
-        <DetailPanelHeaderActions>
-          <DetailPanelSectionSearch
-            value={searchQuery}
-            onChange={setSearchQuery}
-            placeholder={payments.searchPlaceholder}
-            ariaLabel={payments.searchAriaLabel}
-          />
-          <DetailPanelSectionRefresh
-            sectionLabel={payments.title}
-            onRefresh={refreshWorkflowTasks}
-            onError={(message) => setToast({ kind: 'error', message })}
-          />
-          {canCreate ? (
-            <DetailPanelHeaderButton
-              variant="add"
-              disabled={draftOpen}
-              title={payments.addMilestone}
-              onClick={() => setDraftOpen(true)}
-            />
-          ) : null}
-        </DetailPanelHeaderActions>
-      </DetailPanelHeader>
+      {isMobileLayout ? (
+        <div
+          className={[styles.detailPanelHeader, styles.detailPanelHeader_mobile]
+            .filter(Boolean)
+            .join(' ')}
+        >
+          <div className={styles.detailPanelHeaderRow}>
+            <div className={styles.detailPanelHeaderTitleGroup}>
+              <h3 id="payments-rail-heading" className={styles.detailPanelTitle}>
+                {payments.title}
+              </h3>
+            </div>
+          </div>
+          <div className={styles.detailPanelHeaderRow}>
+            <div className={styles.detailPanelSearchWrap}>{searchInput}</div>
+            <div className={styles.detailPanelHeaderRowActions}>
+              {refreshButton}
+              {addButton}
+            </div>
+          </div>
+        </div>
+      ) : (
+        <DetailPanelHeader title={payments.title} titleId="payments-rail-heading">
+          <DetailPanelHeaderActions>
+            {searchInput}
+            {refreshButton}
+            {addButton}
+          </DetailPanelHeaderActions>
+        </DetailPanelHeader>
+      )}
       {isLoading && !isReady ? (
         <p className={styles.subtitle}>{paymentPermissionsCopy.loading}</p>
       ) : !canView ? (
         <p className={styles.subtitle}>{wf.noViewPermission}</p>
       ) : !showTable ? (
         <p className={styles.subtitle}>{payments.empty}</p>
+      ) : isMobileLayout ? (
+        <div className={styles.paymentsMobileList}>
+          {filteredMilestones.map((task) => (
+            <WorkflowTaskInlineRow
+              key={task.id}
+              variant="mobile"
+              projectSlug={project.summary.slug}
+              task={task}
+              docCount={docCounts.get(task.id) ?? 0}
+              taskDocuments={project.documents.filter((doc) => doc.workflowTaskId === task.id)}
+              showAmountColumn
+              permissionDomain="payments"
+              isApiSource={isApiSource}
+              onUpdated={onTaskUpdated}
+              onTaskError={onTaskError}
+              onRequestArchiveTask={canDelete ? onRequestArchiveTask : undefined}
+            />
+          ))}
+          {draftOpen ? (
+            <PaymentMilestoneDraftRow
+              project={project}
+              isApiSource={isApiSource}
+              onSaved={onTaskCreated ?? onTaskUpdated}
+              onCancel={() => setDraftOpen(false)}
+            />
+          ) : null}
+        </div>
       ) : (
         <div className={styles.detailPanelTableCard}>
           <div className={styles.paymentsTableScroll}>

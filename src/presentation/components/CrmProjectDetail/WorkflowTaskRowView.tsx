@@ -502,13 +502,19 @@ function WorkflowTaskRowDueField({
 
 function WorkflowTaskRowAmountField({
   model,
+  mobile = false,
 }: {
   readonly model: WorkflowTaskInlineRowModel;
+  readonly mobile?: boolean;
 }): ReactElement {
   const { task, saving, canEdit, editingAmount, amountDraft } = model;
+  const wrapClass = mobile
+    ? styles.workflowTaskMobileCardControl
+    : `${styles.inlineAmountCell} ${styles.workflowMetaCell}`;
+  const amountDisplay = formatCentsAsUsd(task.amountCents ?? 0);
 
   return (
-    <span className={`${styles.inlineAmountCell} ${styles.workflowMetaCell}`}>
+    <span className={wrapClass}>
       {editingAmount && canEdit ? (
         <input
           className={styles.inlineFieldInput}
@@ -529,7 +535,7 @@ function WorkflowTaskRowAmountField({
       ) : canEdit ? (
         <button
           type="button"
-          className={styles.inlineCellBtn}
+          className={mobile ? styles.workflowTaskMobileCardValueBtn : styles.inlineCellBtn}
           disabled={saving}
           onClick={() => {
             model.closeMenus();
@@ -537,11 +543,97 @@ function WorkflowTaskRowAmountField({
             model.setEditingAmount(true);
           }}
         >
-          {formatCentsAsUsd(task.amountCents ?? 0)}
+          <span className={mobile ? styles.workflowTaskMobileCardValue : undefined}>{amountDisplay}</span>
         </button>
       ) : (
-        <span className={styles.inlineCellBtn}>{formatCentsAsUsd(task.amountCents ?? 0)}</span>
+        <span className={mobile ? styles.workflowTaskMobileCardValue : styles.inlineCellBtn}>
+          {amountDisplay}
+        </span>
       )}
+    </span>
+  );
+}
+
+function WorkflowTaskRowInvoicedField({
+  model,
+  mobile = false,
+}: {
+  readonly model: WorkflowTaskInlineRowModel;
+  readonly mobile?: boolean;
+}): ReactElement {
+  const { task, saving } = model;
+  const payCols = content.projectDetail.payments.columns;
+  const wrapClass = mobile
+    ? styles.workflowTaskMobileCardControl
+    : `${styles.inlineDueCell} ${styles.workflowMetaCell}`;
+  const invoicedDisplay = formatShortDate(task.invoicedAt);
+
+  return (
+    <span className={wrapClass}>
+      <button
+        type="button"
+        className={mobile ? styles.workflowTaskMobileCardValueBtn : styles.inlineCellBtn}
+        disabled={saving}
+        title={payCols.invoiced}
+        onClick={(e) => {
+          const input = e.currentTarget.nextElementSibling as HTMLInputElement | null;
+          input?.showPicker?.();
+          input?.click();
+        }}
+      >
+        <span className={mobile ? styles.workflowTaskMobileCardValue : undefined}>{invoicedDisplay}</span>
+      </button>
+      <input
+        type="date"
+        className={styles.inlineDateInput}
+        value={workflowTaskDueToInputValue(task.invoicedAt)}
+        disabled={saving}
+        tabIndex={-1}
+        aria-label={payCols.invoiced}
+        onChange={(e) => void model.saveInvoiced(e.target.value)}
+      />
+    </span>
+  );
+}
+
+function WorkflowTaskRowPaidField({
+  model,
+  mobile = false,
+}: {
+  readonly model: WorkflowTaskInlineRowModel;
+  readonly mobile?: boolean;
+}): ReactElement {
+  const { task, saving } = model;
+  const payCols = content.projectDetail.payments.columns;
+  const wrapClass = mobile
+    ? styles.workflowTaskMobileCardControl
+    : `${styles.inlineDueCell} ${styles.workflowMetaCell}`;
+  const paidDisplay = formatShortDate(task.paidAt);
+
+  return (
+    <span className={wrapClass}>
+      <button
+        type="button"
+        className={mobile ? styles.workflowTaskMobileCardValueBtn : styles.inlineCellBtn}
+        disabled={saving}
+        title={payCols.paid}
+        onClick={(e) => {
+          const input = e.currentTarget.nextElementSibling as HTMLInputElement | null;
+          input?.showPicker?.();
+          input?.click();
+        }}
+      >
+        <span className={mobile ? styles.workflowTaskMobileCardValue : undefined}>{paidDisplay}</span>
+      </button>
+      <input
+        type="date"
+        className={styles.inlineDateInput}
+        value={workflowTaskDueToInputValue(task.paidAt)}
+        disabled={saving}
+        tabIndex={-1}
+        aria-label={payCols.paid}
+        onChange={(e) => void model.savePaid(e.target.value)}
+      />
     </span>
   );
 }
@@ -551,58 +643,10 @@ function WorkflowTaskRowPaymentDateFields({
 }: {
   readonly model: WorkflowTaskInlineRowModel;
 }): ReactElement {
-  const { task, saving } = model;
-
   return (
     <>
-      <span className={`${styles.inlineDueCell} ${styles.workflowMetaCell}`}>
-        <button
-          type="button"
-          className={styles.inlineCellBtn}
-          disabled={saving}
-          title={content.projectDetail.payments.columns.invoiced}
-          onClick={(e) => {
-            const input = e.currentTarget.nextElementSibling as HTMLInputElement | null;
-            input?.showPicker?.();
-            input?.click();
-          }}
-        >
-          {formatShortDate(task.invoicedAt)}
-        </button>
-        <input
-          type="date"
-          className={styles.inlineDateInput}
-          value={workflowTaskDueToInputValue(task.invoicedAt)}
-          disabled={saving}
-          tabIndex={-1}
-          aria-label={content.projectDetail.payments.columns.invoiced}
-          onChange={(e) => void model.saveInvoiced(e.target.value)}
-        />
-      </span>
-      <span className={`${styles.inlineDueCell} ${styles.workflowMetaCell}`}>
-        <button
-          type="button"
-          className={styles.inlineCellBtn}
-          disabled={saving}
-          title={content.projectDetail.payments.columns.paid}
-          onClick={(e) => {
-            const input = e.currentTarget.nextElementSibling as HTMLInputElement | null;
-            input?.showPicker?.();
-            input?.click();
-          }}
-        >
-          {formatShortDate(task.paidAt)}
-        </button>
-        <input
-          type="date"
-          className={styles.inlineDateInput}
-          value={workflowTaskDueToInputValue(task.paidAt)}
-          disabled={saving}
-          tabIndex={-1}
-          aria-label={content.projectDetail.payments.columns.paid}
-          onChange={(e) => void model.savePaid(e.target.value)}
-        />
-      </span>
+      <WorkflowTaskRowInvoicedField model={model} />
+      <WorkflowTaskRowPaidField model={model} />
     </>
   );
 }
@@ -658,6 +702,18 @@ export function WorkflowTaskRowMobileView({
 }: {
   readonly model: WorkflowTaskInlineRowModel;
 }): ReactElement {
+  if (model.showPaymentDates) {
+    return <WorkflowTaskRowPaymentMobileView model={model} />;
+  }
+
+  return <WorkflowTaskRowWorkflowMobileView model={model} />;
+}
+
+function WorkflowTaskRowWorkflowMobileView({
+  model,
+}: {
+  readonly model: WorkflowTaskInlineRowModel;
+}): ReactElement {
   const { cols, task, saving, documentActions, rowDragOver, rowDropHandlers } = model;
   const cardClass = [
     styles.card,
@@ -702,6 +758,80 @@ export function WorkflowTaskRowMobileView({
         <div className={`${styles.workflowTaskMobileCardCell} ${styles.workflowTaskMobileCardCell_right}`}>
           <span className={styles.projectInfoMobileLabel}>{cols.due}</span>
           <WorkflowTaskRowDueField model={model} mobile />
+        </div>
+      </div>
+      <div className={styles.workflowTaskMobileCardNotes}>
+        <span className={styles.projectInfoMobileLabel}>{cols.notes}</span>
+        <WorkflowTaskRowNotesField model={model} mobile />
+      </div>
+    </article>
+  );
+}
+
+function WorkflowTaskRowPaymentMobileView({
+  model,
+}: {
+  readonly model: WorkflowTaskInlineRowModel;
+}): ReactElement {
+  const { cols, task, saving, documentActions, rowDragOver, rowDropHandlers } = model;
+  const payCols = content.projectDetail.payments.columns;
+  const cardClass = [
+    styles.card,
+    styles.workflowTaskMobileCard,
+    rowDragOver ? styles.workflowInlineRow_fileDragOver : '',
+  ]
+    .filter(Boolean)
+    .join(' ');
+
+  return (
+    <article
+      className={cardClass}
+      aria-label={task.title}
+      aria-busy={saving || documentActions.uploading}
+      {...rowDropHandlers}
+    >
+      <div className={styles.workflowTaskMobileCardHeader}>
+        <div className={styles.workflowTaskMobileCardTitleWrap}>
+          <WorkflowTaskRowTitleField model={model} mobileHeader />
+        </div>
+        {model.showActionsMenu ? (
+          <div className={styles.workflowTaskMobileCardActions}>
+            <WorkflowTaskRowActionsMenuSlot model={model} />
+          </div>
+        ) : null}
+      </div>
+      <div className={styles.workflowTaskMobileCardGrid2}>
+        <div className={styles.workflowTaskMobileCardCell}>
+          <span className={styles.projectInfoMobileLabel}>{cols.status}</span>
+          <WorkflowTaskRowStatusField model={model} mobile />
+        </div>
+        <div className={`${styles.workflowTaskMobileCardCell} ${styles.workflowTaskMobileCardCell_right}`}>
+          <span className={styles.projectInfoMobileLabel}>{cols.assigned}</span>
+          <WorkflowTaskRowAssigneeField model={model} mobile />
+        </div>
+      </div>
+      <div className={styles.workflowTaskMobileCardGrid2}>
+        <div className={styles.workflowTaskMobileCardCell}>
+          <span className={styles.projectInfoMobileLabel}>{cols.documents}</span>
+          <WorkflowTaskRowDocumentsField model={model} mobile />
+        </div>
+        <div className={`${styles.workflowTaskMobileCardCell} ${styles.workflowTaskMobileCardCell_right}`}>
+          <span className={styles.projectInfoMobileLabel}>{cols.amount}</span>
+          <WorkflowTaskRowAmountField model={model} mobile />
+        </div>
+      </div>
+      <div className={styles.workflowTaskMobileCardGrid3}>
+        <div className={styles.workflowTaskMobileCardCell}>
+          <span className={styles.projectInfoMobileLabel}>{cols.due}</span>
+          <WorkflowTaskRowDueField model={model} mobile />
+        </div>
+        <div className={`${styles.workflowTaskMobileCardCell} ${styles.workflowTaskMobileCardCell_center}`}>
+          <span className={styles.projectInfoMobileLabel}>{payCols.invoiced}</span>
+          <WorkflowTaskRowInvoicedField model={model} mobile />
+        </div>
+        <div className={`${styles.workflowTaskMobileCardCell} ${styles.workflowTaskMobileCardCell_right}`}>
+          <span className={styles.projectInfoMobileLabel}>{payCols.paid}</span>
+          <WorkflowTaskRowPaidField model={model} mobile />
         </div>
       </div>
       <div className={styles.workflowTaskMobileCardNotes}>
