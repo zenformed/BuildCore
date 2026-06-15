@@ -28,6 +28,7 @@ import { getProjectTemplateScopeCopy } from '@/presentation/features/projectTemp
 import { LoadProjectTemplateDialogs } from '@/presentation/components/ProjectTemplates';
 import { useSaaSProfile } from '@/presentation/hooks/useSaaSProfile';
 import { useCrmPaymentTasksIndexContext } from '@/presentation/providers/CrmPaymentTasksIndexProvider';
+import { useDashboardMobileLayout } from '@/presentation/features/crmProjects/useDashboardMobileLayout';
 import { DetailToast } from './DetailToast';
 import { SaveProjectTemplateDialog } from './SaveProjectTemplateDialog';
 import { ProjectDetailActionsMenu } from './ProjectDetailActionsMenu';
@@ -89,6 +90,8 @@ function ProjectDetailShellBody({
     parentProjectId: scopedProject.summary.parentProjectId,
   });
   const templateScopeCopy = getProjectTemplateScopeCopy(templateScope);
+  const isMobileLayout = useDashboardMobileLayout();
+  const isMobileDetailOverview = isMobileLayout && pageContext === 'detail';
   const isParentOverview =
     subSlug == null && scopedProject.summary.parentProjectId == null;
   const {
@@ -292,9 +295,10 @@ function ProjectDetailShellBody({
           patchField={workspace.patchField}
           patchIndustry={workspace.patchIndustry}
           onEditProject={isMemberRole ? undefined : () => setEditProjectOpen(true)}
+          scrollBody={isMobileDetailOverview ? children : undefined}
         />
 
-        {children}
+        {!isMobileDetailOverview ? children : null}
 
         {!isMemberRole ? (
           <>
