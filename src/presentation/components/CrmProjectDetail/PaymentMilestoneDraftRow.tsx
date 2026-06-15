@@ -194,20 +194,6 @@ export function PaymentMilestoneDraftRow({
           />
         </span>
 
-        <span className={`${styles.inlineCellWrap} ${styles.workflowMetaCell}`}>
-          <select
-            className={styles.paymentDraftSelect}
-            value={form.documentsRequired}
-            disabled={saving}
-            onChange={(e) =>
-              updateField('documentsRequired', e.target.value as WorkflowTaskFormState['documentsRequired'])
-            }
-          >
-            <option value="yes">{wf.fields.documentsRequiredYes}</option>
-            <option value="no">{wf.fields.documentsRequiredNo}</option>
-          </select>
-        </span>
-
         <span className={`${styles.inlineCellWrap} ${styles.workflowMetaCell}`} ref={assigneeRef}>
           <button
             type="button"
@@ -278,6 +264,24 @@ export function PaymentMilestoneDraftRow({
 
         <span className={`${styles.workflowMetaCell} ${styles.paymentDatePlaceholder}`} aria-hidden>
           —
+        </span>
+
+        <span className={`${styles.workflowNotesCell} ${styles.workflowMetaCell}`} aria-hidden>
+          <span className={styles.workflowNotesPreview}>—</span>
+        </span>
+
+        <span className={`${styles.inlineCellWrap} ${styles.workflowMetaCell}`}>
+          <select
+            className={styles.paymentDraftSelect}
+            value={form.documentsRequired}
+            disabled={saving}
+            onChange={(e) =>
+              updateField('documentsRequired', e.target.value as WorkflowTaskFormState['documentsRequired'])
+            }
+          >
+            <option value="yes">{wf.fields.documentsRequiredYes}</option>
+            <option value="no">{wf.fields.documentsRequiredNo}</option>
+          </select>
         </span>
 
         <span className={`${styles.taskDeleteCell} ${styles.paymentDraftActions}`}>

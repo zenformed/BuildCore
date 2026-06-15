@@ -24,6 +24,17 @@ export function formatShortDate(iso: string | null): string {
   return formatBuildCoreDisplayDate(iso);
 }
 
+const WORKFLOW_TASK_NOTES_PREVIEW_MAX = 120;
+
+/** Single-line workflow task note preview for table cells. */
+export function formatWorkflowTaskNotesPreview(notes: string | null | undefined): string {
+  if (notes == null) return '—';
+  const trimmed = notes.replace(/\s+/g, ' ').trim();
+  if (!trimmed) return '—';
+  if (trimmed.length <= WORKFLOW_TASK_NOTES_PREVIEW_MAX) return trimmed;
+  return `${trimmed.slice(0, WORKFLOW_TASK_NOTES_PREVIEW_MAX - 1)}…`;
+}
+
 export function formatDocumentKind(kind: string): string {
   return kind
     .split('_')

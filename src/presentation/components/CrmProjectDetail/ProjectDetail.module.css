@@ -70,11 +70,11 @@
 }
 
 .workflowPanelFull .workflowGrid {
-  grid-template-columns: 8.25rem minmax(0, 1.65fr) 6rem 5.5rem 6.5rem 2rem;
+  grid-template-columns: 8.25rem minmax(0, 1.65fr) 5.5rem 6.5rem minmax(0, 1.25fr) 6rem 2rem;
 }
 
 .workflowPanelFull .workflowGridPayments {
-  grid-template-columns: 8.25rem minmax(0, 1.65fr) 5rem 6rem 5rem 6.75rem 2rem;
+  grid-template-columns: 8.25rem minmax(0, 1.65fr) 5rem 5.5rem 6.5rem minmax(0, 1.25fr) 6rem 2rem;
 }
 
 .workflowPanel.documentsPagePanel {
@@ -2681,16 +2681,16 @@
 }
 
 .workflowGrid {
-  grid-template-columns: 6.25rem minmax(0, 1fr) 5.5rem 4.5rem 6.25rem 1.75rem;
+  grid-template-columns: 6.25rem minmax(0, 1fr) 4.5rem 6.25rem minmax(0, 1.25fr) 5.5rem 1.75rem;
 }
 
 .workflowGridPayments {
-  grid-template-columns: 6.25rem minmax(0, 1fr) 4.5rem 5.5rem 4.5rem 6.25rem 1.75rem;
+  grid-template-columns: 6.25rem minmax(0, 1fr) 4.5rem 4.5rem 6.25rem minmax(0, 1.25fr) 5.5rem 1.75rem;
 }
 
 .workflowGridPaymentsWithDates {
   grid-template-columns:
-    5.5rem minmax(0, 1fr) 4.25rem 4.75rem 4.25rem 5rem 3.5rem 3.5rem 1.75rem;
+    5.5rem minmax(0, 1fr) 4.25rem 4.25rem 5rem 3.5rem 3.5rem minmax(0, 1.25fr) 4.75rem 1.75rem;
 }
 
 .paymentDatePlaceholder {
@@ -2732,6 +2732,30 @@
 
 .workflowMetaCell .assignedCell {
   justify-content: center;
+}
+
+.workflowNotesHeader,
+.workflowNotesCell {
+  text-align: left;
+  justify-content: flex-start;
+}
+
+.workflowNotesCell {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.workflowNotesPreview {
+  display: block;
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.75rem;
+  line-height: 1.25;
 }
 
 /* Budget rows: override workflow center alignment on data cells */
@@ -3630,9 +3654,10 @@
 .paymentsTableGridShell {
   --payments-grid-gap: 0.625rem;
   --payments-grid-columns:
-    5.5rem minmax(10rem, 2fr) minmax(4rem, 0.7fr) minmax(4.75rem, 0.85fr) minmax(4rem, 0.7fr)
-    minmax(4.75rem, 0.85fr) minmax(3.25rem, 0.6fr) minmax(3.25rem, 0.6fr) 1.75rem;
-  --payments-table-min-width: 46.25rem;
+    5.5rem minmax(10rem, 2fr) minmax(4rem, 0.7fr) minmax(4rem, 0.7fr) minmax(4.75rem, 0.85fr)
+    minmax(4.75rem, 0.85fr) minmax(3.25rem, 0.6fr) minmax(3.25rem, 0.6fr) minmax(5rem, 1fr)
+    minmax(4.75rem, 0.85fr) 1.75rem;
+  --payments-table-min-width: 50rem;
   display: grid;
   grid-template-columns: var(--payments-grid-columns);
   column-gap: var(--payments-grid-gap);
@@ -4022,11 +4047,13 @@
     5.5rem
     minmax(10rem, 2fr)
     minmax(4rem, 0.7fr)
-    minmax(4.75rem, 0.85fr)
     minmax(4rem, 0.7fr)
     minmax(4.75rem, 0.85fr)
+    minmax(4.75rem, 0.85fr)
     minmax(3.25rem, 0.6fr)
     minmax(3.25rem, 0.6fr)
+    minmax(5rem, 1fr)
+    minmax(4.75rem, 0.85fr)
     1.75rem;
 }
 
@@ -4968,19 +4995,19 @@
   }
 
   .workflowGrid {
-    grid-template-columns: 7.25rem minmax(0, 1fr) 5.5rem 4.5rem 6.25rem 1.75rem;
+    grid-template-columns: 7.25rem minmax(0, 1fr) 4.5rem 6.25rem minmax(0, 1.25fr) 5.5rem 1.75rem;
   }
 
   .workflowGridPayments {
-    grid-template-columns: 7.25rem minmax(0, 1fr) 4.5rem 5.5rem 4.5rem 6.25rem 1.75rem;
+    grid-template-columns: 7.25rem minmax(0, 1fr) 4.5rem 4.5rem 6.25rem minmax(0, 1.25fr) 5.5rem 1.75rem;
   }
 
   .workflowPanelFull .workflowGrid {
-    grid-template-columns: 8.25rem minmax(0, 1.65fr) 6rem 5.5rem 6.5rem 2rem;
+    grid-template-columns: 8.25rem minmax(0, 1.65fr) 5.5rem 6.5rem minmax(0, 1.25fr) 6rem 2rem;
   }
 
   .workflowPanelFull .workflowGridPayments {
-    grid-template-columns: 8.25rem minmax(0, 1.65fr) 5rem 6rem 5rem 6.75rem 2rem;
+    grid-template-columns: 8.25rem minmax(0, 1.65fr) 5rem 5.5rem 6.5rem minmax(0, 1.25fr) 6rem 2rem;
   }
 
   .statusPill {
@@ -5056,19 +5083,19 @@
   }
 
   .workflowGrid {
-    grid-template-columns: 8.25rem minmax(0, 1fr) 6rem 5rem 6.75rem 2rem;
+    grid-template-columns: 8.25rem minmax(0, 1fr) 5rem 6.75rem minmax(0, 1.25fr) 6rem 2rem;
   }
 
   .workflowGridPayments {
-    grid-template-columns: 8.25rem minmax(0, 1fr) 5rem 6rem 5rem 7rem 2rem;
+    grid-template-columns: 8.25rem minmax(0, 1fr) 5rem 5rem 7rem minmax(0, 1.25fr) 6rem 2rem;
   }
 
   .workflowPanelFull .workflowGrid {
-    grid-template-columns: 8.25rem minmax(0, 1.65fr) 6rem 5.5rem 6.75rem 2rem;
+    grid-template-columns: 8.25rem minmax(0, 1.65fr) 5.5rem 6.5rem minmax(0, 1.25fr) 6rem 2rem;
   }
 
   .workflowPanelFull .workflowGridPayments {
-    grid-template-columns: 8.25rem minmax(0, 1.65fr) 5rem 6rem 5rem 7.125rem 2rem;
+    grid-template-columns: 8.25rem minmax(0, 1.65fr) 5rem 5.5rem 6.5rem minmax(0, 1.25fr) 6rem 2rem;
   }
 
   .statusPill {

@@ -10,6 +10,7 @@ import { WORKFLOW_TASK_STATUSES } from '@/domain/crm/workflowTaskStatuses';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
 import {
   formatShortDate,
+  formatWorkflowTaskNotesPreview,
   formatWorkflowStatus,
 } from '@/presentation/features/crmProjectDetail/crmProjectDetailFormatters';
 import { parseUsdInputToCents } from '@/presentation/features/crmCreate/createCrmProjectFormModel';
@@ -347,6 +348,12 @@ export function WorkflowTaskInlineRow({
   const showAssignedNotification =
     canEdit && taskSupportsManualWorkflowTaskAssignedNotification(task, isApiSource);
 
+  const notesPreview = formatWorkflowTaskNotesPreview(task.notes);
+  const notesTitle =
+    task.notes?.replace(/\s+/g, ' ').trim() && notesPreview.endsWith('…')
+      ? task.notes.replace(/\s+/g, ' ').trim()
+      : undefined;
+
   return (
     <div
       className={rowClass}
@@ -477,115 +484,6 @@ export function WorkflowTaskInlineRow({
         </span>
       ) : null}
 
-      <span className={`${styles.inlineCellWrap} ${styles.workflowMetaCell}`} ref={documentsRef}>
-        <button
-          type="button"
-          className={`${styles.inlineCellBtn} ${styles.documentsCell}`}
-          disabled={saving || !canOpenDocumentsMenu}
-          aria-expanded={documentsMenuOpen}
-          onClick={() => {
-            setStatusMenuOpen(false);
-            setAssigneeMenuOpen(false);
-            if (isApiSource && awaitingCustomerReview && taskDocuments.length === 0) {
-              void syncWorkflowTaskDocuments(task.id);
-            }
-            setDocumentsMenuOpen((open) => !open);
-          }}
-        >
-          {showDocumentsIcon ? <span className={styles.documentsIcon} aria-hidden /> : null}
-          <span
-            className={
-              !task.documentsRequired && !hasDocuments ? styles.documentsNotRequired : undefined
-            }
-          >
-            {documentsLabel}
-          </span>
-        </button>
-        <input
-          ref={documentActions.fileInputRef}
-          type="file"
-          accept={documentAccept}
-          className={styles.hiddenFileInput}
-          onChange={(e) => void documentActions.handleFileSelected(e)}
-        />
-        <WorkflowInlineMenu
-          open={documentsMenuOpen}
-          onClose={() => setDocumentsMenuOpen(false)}
-          anchorRef={documentsRef}
-        >
-          {canUpload ? (
-            <button
-              type="button"
-              className={`${styles.inlineMenuAction} ${styles.inlineMenuUploadAction}`}
-              disabled={saving || documentActions.uploading}
-              onClick={() => {
-                setDocumentsMenuOpen(false);
-                documentActions.openFilePicker();
-              }}
-            >
-              <span className={styles.inlineMenuUploadIcon} aria-hidden />
-              {wf.documentsUpload}
-            </button>
-          ) : null}
-          {taskDocuments.map((doc) => (
-            <div key={doc.id} className={styles.inlineMenuDocRow}>
-              <WorkflowDocumentFileIcon fileName={doc.name} mimeType={doc.mimeType} compact />
-              <span className={styles.inlineMenuDocName} title={doc.name}>
-                {doc.name}
-              </span>
-              <button
-                type="button"
-                className={styles.inlineMenuIconBtn}
-                disabled={saving || documentActions.uploading}
-                title={wf.documentDownload}
-                aria-label={`${wf.documentDownload} ${doc.name}`}
-                onClick={() => {
-                  setDocumentsMenuOpen(false);
-                  void documentActions.downloadDocument(doc.id, doc.name);
-                }}
-              >
-                <span className={styles.inlineMenuDownloadIcon} aria-hidden />
-              </button>
-              {canEdit ? (
-                <button
-                  type="button"
-                  className={styles.inlineMenuIconBtn}
-                  disabled={saving || documentActions.uploading}
-                  title={wf.documentDelete}
-                  aria-label={`${wf.documentDelete} ${doc.name}`}
-                  onClick={() => {
-                    setDocumentsMenuOpen(false);
-                    void documentActions.deleteDocument(doc.id);
-                  }}
-                >
-                  <span className={styles.inlineMenuDeleteIcon} aria-hidden />
-                </button>
-              ) : null}
-            </div>
-          ))}
-          {canEdit && !task.documentsRequired ? (
-            <button
-              type="button"
-              className={styles.inlineMenuAction}
-              disabled={saving}
-              onClick={() => void saveDocumentsRequired(true)}
-            >
-              {wf.documentsMarkRequired}
-            </button>
-          ) : null}
-          {canEdit && task.documentsRequired && taskDocuments.length === 0 ? (
-            <button
-              type="button"
-              className={styles.inlineMenuAction}
-              disabled={saving}
-              onClick={() => void saveDocumentsRequired(false)}
-            >
-              {wf.documentsNotRequired}
-            </button>
-          ) : null}
-        </WorkflowInlineMenu>
-      </span>
-
       <span className={`${styles.inlineCellWrap} ${styles.workflowMetaCell}`} ref={assigneeRef}>
         <button
           type="button"
@@ -710,6 +608,119 @@ export function WorkflowTaskInlineRow({
           </span>
         </>
       ) : null}
+
+      <span className={`${styles.workflowNotesCell} ${styles.workflowMetaCell}`} title={notesTitle}>
+        <span className={styles.workflowNotesPreview}>{notesPreview}</span>
+      </span>
+
+      <span className={`${styles.inlineCellWrap} ${styles.workflowMetaCell}`} ref={documentsRef}>
+        <button
+          type="button"
+          className={`${styles.inlineCellBtn} ${styles.documentsCell}`}
+          disabled={saving || !canOpenDocumentsMenu}
+          aria-expanded={documentsMenuOpen}
+          onClick={() => {
+            setStatusMenuOpen(false);
+            setAssigneeMenuOpen(false);
+            if (isApiSource && awaitingCustomerReview && taskDocuments.length === 0) {
+              void syncWorkflowTaskDocuments(task.id);
+            }
+            setDocumentsMenuOpen((open) => !open);
+          }}
+        >
+          {showDocumentsIcon ? <span className={styles.documentsIcon} aria-hidden /> : null}
+          <span
+            className={
+              !task.documentsRequired && !hasDocuments ? styles.documentsNotRequired : undefined
+            }
+          >
+            {documentsLabel}
+          </span>
+        </button>
+        <input
+          ref={documentActions.fileInputRef}
+          type="file"
+          accept={documentAccept}
+          className={styles.hiddenFileInput}
+          onChange={(e) => void documentActions.handleFileSelected(e)}
+        />
+        <WorkflowInlineMenu
+          open={documentsMenuOpen}
+          onClose={() => setDocumentsMenuOpen(false)}
+          anchorRef={documentsRef}
+        >
+          {canUpload ? (
+            <button
+              type="button"
+              className={`${styles.inlineMenuAction} ${styles.inlineMenuUploadAction}`}
+              disabled={saving || documentActions.uploading}
+              onClick={() => {
+                setDocumentsMenuOpen(false);
+                documentActions.openFilePicker();
+              }}
+            >
+              <span className={styles.inlineMenuUploadIcon} aria-hidden />
+              {wf.documentsUpload}
+            </button>
+          ) : null}
+          {taskDocuments.map((doc) => (
+            <div key={doc.id} className={styles.inlineMenuDocRow}>
+              <WorkflowDocumentFileIcon fileName={doc.name} mimeType={doc.mimeType} compact />
+              <span className={styles.inlineMenuDocName} title={doc.name}>
+                {doc.name}
+              </span>
+              <button
+                type="button"
+                className={styles.inlineMenuIconBtn}
+                disabled={saving || documentActions.uploading}
+                title={wf.documentDownload}
+                aria-label={`${wf.documentDownload} ${doc.name}`}
+                onClick={() => {
+                  setDocumentsMenuOpen(false);
+                  void documentActions.downloadDocument(doc.id, doc.name);
+                }}
+              >
+                <span className={styles.inlineMenuDownloadIcon} aria-hidden />
+              </button>
+              {canEdit ? (
+                <button
+                  type="button"
+                  className={styles.inlineMenuIconBtn}
+                  disabled={saving || documentActions.uploading}
+                  title={wf.documentDelete}
+                  aria-label={`${wf.documentDelete} ${doc.name}`}
+                  onClick={() => {
+                    setDocumentsMenuOpen(false);
+                    void documentActions.deleteDocument(doc.id);
+                  }}
+                >
+                  <span className={styles.inlineMenuDeleteIcon} aria-hidden />
+                </button>
+              ) : null}
+            </div>
+          ))}
+          {canEdit && !task.documentsRequired ? (
+            <button
+              type="button"
+              className={styles.inlineMenuAction}
+              disabled={saving}
+              onClick={() => void saveDocumentsRequired(true)}
+            >
+              {wf.documentsMarkRequired}
+            </button>
+          ) : null}
+          {canEdit && task.documentsRequired && taskDocuments.length === 0 ? (
+            <button
+              type="button"
+              className={styles.inlineMenuAction}
+              disabled={saving}
+              onClick={() => void saveDocumentsRequired(false)}
+            >
+              {wf.documentsNotRequired}
+            </button>
+          ) : null}
+        </WorkflowInlineMenu>
+      </span>
 
       {canEdit || (canDelete && onRequestArchiveTask) || showAssignedNotification ? (
         <span className={styles.taskDeleteCell}>

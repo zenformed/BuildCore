@@ -99,11 +99,14 @@ export function PaymentsRail({
               <span role="columnheader">{cols.status}</span>
               <span role="columnheader">{cols.task}</span>
               <span role="columnheader">{cols.amount}</span>
-              <span role="columnheader">{cols.documents}</span>
               <span role="columnheader">{cols.assigned}</span>
               <span role="columnheader">{cols.due}</span>
               <span role="columnheader">{payCols.invoiced}</span>
               <span role="columnheader">{payCols.paid}</span>
+              <span role="columnheader" className={styles.workflowNotesHeader}>
+                {cols.notes}
+              </span>
+              <span role="columnheader">{cols.documents}</span>
               <span role="columnheader" className={styles.taskDeleteHeader} aria-hidden />
             </div>
             {filteredMilestones.map((task) => (

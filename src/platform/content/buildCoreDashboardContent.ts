@@ -713,6 +713,7 @@ export const buildCoreDashboardContent = {
         amount: 'Amount',
         assigned: 'Assigned',
         due: 'Due',
+        notes: 'Notes',
         actions: 'Actions',
       },
       viewAll: 'View all Workflow Tasks',
