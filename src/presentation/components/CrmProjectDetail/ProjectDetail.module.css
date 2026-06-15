@@ -4720,6 +4720,96 @@
   min-width: 0;
 }
 
+.accountabilityMobileList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.375rem 0 0.5rem;
+  min-width: 0;
+  width: 100%;
+}
+
+.accountabilityMobileEventValue {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1.35;
+  color: var(--theme-text-main, var(--color-text, #0f172a));
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+:global([data-theme='dark']) .accountabilityMobileEventValue {
+  color: #f1f5f9;
+}
+
+.accountabilityMobileUserValue {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.35rem;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.accountabilityMobileUserValue .workflowTaskMobileCardValue {
+  width: auto;
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.accountabilityMobileCardEventUserRow .workflowTaskMobileCardCell {
+  max-width: none;
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.accountabilityMobileCardEventUserRow .workflowTaskMobileCardCell_right {
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: 48%;
+}
+
+.accountabilityMobileCard .workflowTaskMobileCardGrid2 + .workflowTaskMobileCardGrid2 {
+  margin-top: 0.5rem;
+}
+
+.accountabilityMobileCard .workflowTaskMobileCardGrid2 .workflowTaskMobileCardCell {
+  max-width: none;
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.accountabilityMobileCard .workflowTaskMobileCardGrid2 .workflowTaskMobileCardCell .workflowTaskMobileCardValue {
+  white-space: normal;
+  overflow: visible;
+  text-overflow: unset;
+  word-break: break-word;
+}
+
+.accountabilityMobileCard
+  .workflowTaskMobileCardGrid2
+  .workflowTaskMobileCardCell_right
+  .workflowTaskMobileCardValue {
+  text-align: right;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  word-break: normal;
+}
+
+.accountabilityPagePanel_mobile {
+  overflow: visible;
+  min-height: unset;
+  flex: none;
+}
+
 .panelFooterLink {
   margin: 0.25rem 0 0;
   padding: 0;
@@ -5947,6 +6037,25 @@
 
   :global([data-theme='dark']) .projectFinancialPaymentUnpaidValue {
     color: #f87171;
+  }
+
+  .pageShell:has([data-project-detail-page]) .accountabilityPagePanel,
+  .pageBodySubpage[data-project-accountability-page] .accountabilityPagePanel {
+    overflow: visible;
+    min-height: unset;
+    flex: none;
+  }
+
+  .pageBodySubpage[data-project-accountability-page] {
+    overflow: visible;
+    flex: none;
+    min-height: unset;
+    padding-bottom: 2rem;
+  }
+
+  .accountabilityMobileList {
+    flex: none;
+    min-height: unset;
   }
 }
 
