@@ -1,6 +1,6 @@
 'use client';
 
-import type { ReactElement } from 'react';
+import type { ReactElement, ReactNode } from 'react';
 import { projectHasPaymentMilestones, type CrmProjectDetail } from '@/domain/crm';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
 import {
@@ -24,6 +24,28 @@ export type ProjectSummaryMobileCardProps = {
   readonly onEditClick?: () => void;
 };
 
+function ProjectInfoMobileFieldCell({
+  label,
+  align = 'left',
+  children,
+}: {
+  readonly label: string;
+  readonly align?: 'left' | 'right';
+  readonly children: ReactNode;
+}): ReactElement {
+  const cellClass =
+    align === 'right'
+      ? `${styles.workflowTaskMobileCardCell} ${styles.workflowTaskMobileCardCell_right}`
+      : styles.workflowTaskMobileCardCell;
+
+  return (
+    <div className={cellClass}>
+      <span className={styles.projectInfoMobileLabel}>{label}</span>
+      {children}
+    </div>
+  );
+}
+
 export function ProjectSummaryMobileCard({
   project,
   memberView = false,
@@ -45,84 +67,87 @@ export function ProjectSummaryMobileCard({
   const valueLabel = isSubproject ? fields.subValue : fields.value;
   const displayEmail = formatContactEmailDisplay(summary.contact.email, { maskForMember: memberView });
   const mobileValueClass = `${styles.summaryText} ${styles.projectInfoMobileValue}`;
-  const cardClass = onEditClick
-    ? `${styles.card} ${styles.projectInfoMobileCard} ${styles.projectInfoMobileCard_withEdit}`
-    : `${styles.card} ${styles.projectInfoMobileCard}`;
+  const editAction = onEditClick ? (
+    <button
+      type="button"
+      className={styles.summaryStripEditBtn}
+      onClick={onEditClick}
+      aria-label={edit.title}
+    >
+      <span className={styles.summaryStripEditIcon} aria-hidden />
+    </button>
+  ) : null;
 
   return (
-    <section className={cardClass} aria-label={content.projectDetail.sections.projectInformation}>
-      {onEditClick ? (
-        <div className={styles.projectInfoMobileEditAction}>
-          <button
-            type="button"
-            className={styles.summaryStripEditBtn}
-            onClick={onEditClick}
-            aria-label={edit.title}
-          >
-            <span className={styles.summaryStripEditIcon} aria-hidden />
-          </button>
+    <section
+      className={`${styles.card} ${styles.projectInfoMobileCard}`}
+      aria-label={content.projectDetail.sections.projectInformation}
+    >
+      <div className={styles.projectInfoMobileCardBody}>
+        <div className={styles.workflowTaskMobileCardGrid2}>
+          <ProjectInfoMobileFieldCell label={fields.customer}>
+            <SummaryInlineText
+              hideLabel
+              fieldKey="name"
+              label={fields.customer}
+              value={summary.name}
+              savingField={savingField}
+              disabled={readOnly}
+              valueClassName={mobileValueClass}
+              onPatch={patchField}
+            />
+          </ProjectInfoMobileFieldCell>
+          <ProjectInfoMobileFieldCell label={fields.contact} align="right">
+            <SummaryInlineText
+              hideLabel
+              fieldKey="contactName"
+              label={fields.contact}
+              value={summary.contact.name}
+              savingField={savingField}
+              disabled={readOnly}
+              valueClassName={mobileValueClass}
+              onPatch={patchField}
+            />
+          </ProjectInfoMobileFieldCell>
         </div>
-      ) : null}
-      <div className={styles.projectInfoMobileGrid}>
-        <div className={styles.projectInfoMobileCell}>
-          <span className={styles.projectInfoMobileLabel}>{fields.customer}</span>
-          <SummaryInlineText
-            hideLabel
-            fieldKey="name"
-            label={fields.customer}
-            value={summary.name}
-            savingField={savingField}
-            disabled={readOnly}
-            valueClassName={mobileValueClass}
-            onPatch={patchField}
-          />
+        <div className={styles.workflowTaskMobileCardGrid2}>
+          <ProjectInfoMobileFieldCell label={fields.email}>
+            <SummaryInlineText
+              hideLabel
+              fieldKey="email"
+              label={fields.email}
+              value={summary.contact.email}
+              displayValue={displayEmail}
+              savingField={savingField}
+              disabled={readOnly}
+              inputType="email"
+              displayClassName={styles.summaryLink}
+              valueClassName={`${styles.summaryLink} ${styles.projectInfoMobileValue}`}
+              onPatch={patchField}
+            />
+          </ProjectInfoMobileFieldCell>
+          <ProjectInfoMobileFieldCell label={fields.phone} align="right">
+            <SummaryInlineText
+              hideLabel
+              fieldKey="phone"
+              label={fields.phone}
+              value={summary.contact.phone}
+              displayValue={formatPhoneDisplay(summary.contact.phone)}
+              savingField={savingField}
+              disabled={readOnly}
+              inputType="tel"
+              displayClassName={styles.summaryLink}
+              valueClassName={`${styles.summaryLink} ${styles.projectInfoMobileValue}`}
+              onPatch={patchField}
+            />
+          </ProjectInfoMobileFieldCell>
         </div>
-        <div className={styles.projectInfoMobileCell}>
-          <span className={styles.projectInfoMobileLabel}>{fields.contact}</span>
-          <SummaryInlineText
-            hideLabel
-            fieldKey="contactName"
-            label={fields.contact}
-            value={summary.contact.name}
-            savingField={savingField}
-            disabled={readOnly}
-            valueClassName={mobileValueClass}
-            onPatch={patchField}
-          />
-        </div>
-        <div className={styles.projectInfoMobileCell}>
-          <span className={styles.projectInfoMobileLabel}>{fields.email}</span>
-          <SummaryInlineText
-            hideLabel
-            fieldKey="email"
-            label={fields.email}
-            value={summary.contact.email}
-            displayValue={displayEmail}
-            savingField={savingField}
-            disabled={readOnly}
-            inputType="email"
-            displayClassName={styles.summaryLink}
-            valueClassName={`${styles.summaryLink} ${styles.projectInfoMobileValue}`}
-            onPatch={patchField}
-          />
-        </div>
-        <div className={styles.projectInfoMobileCell}>
-          <span className={styles.projectInfoMobileLabel}>{fields.phone}</span>
-          <SummaryInlineText
-            hideLabel
-            fieldKey="phone"
-            label={fields.phone}
-            value={summary.contact.phone}
-            displayValue={formatPhoneDisplay(summary.contact.phone)}
-            savingField={savingField}
-            disabled={readOnly}
-            inputType="tel"
-            displayClassName={styles.summaryLink}
-            valueClassName={`${styles.summaryLink} ${styles.projectInfoMobileValue}`}
-            onPatch={patchField}
-          />
-        </div>
-        <ProjectSummaryAddress address={summary.address} label={fields.address} layout="mobile" />
+        <ProjectSummaryAddress
+          address={summary.address}
+          label={fields.address}
+          layout="mobile"
+          editAction={editAction}
+        />
       </div>
       {memberView ? null : (
         <div className={styles.projectInfoMobileFinancials} aria-label={content.projectDetail.sections.financials}>

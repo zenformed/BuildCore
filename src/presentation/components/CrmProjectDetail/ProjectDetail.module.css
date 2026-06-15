@@ -1481,25 +1481,108 @@
 
 /* Mobile project information card (< 768px) */
 .projectInfoMobileCard {
-  position: relative;
-  padding: 0.75rem 0.875rem;
+  padding: 0.625rem 0.75rem;
+  width: 100%;
+  box-sizing: border-box;
+  min-width: 0;
 }
 
-.projectInfoMobileCard_withEdit {
-  padding-right: 2.25rem;
+.projectInfoMobileCardBody {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  min-width: 0;
+  width: 100%;
 }
 
-.projectInfoMobileEditAction {
-  position: absolute;
-  top: 0.5rem;
-  right: 0.5rem;
-  z-index: 1;
+.projectInfoMobileCard .workflowTaskMobileCardGrid2 {
+  width: 100%;
+  min-width: 0;
 }
 
-.projectInfoMobileGrid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.625rem 0.75rem;
+.projectInfoMobileCard .workflowTaskMobileCardGrid2 .workflowTaskMobileCardCell {
+  max-width: none;
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.projectInfoMobileCard .workflowTaskMobileCardCell_right {
+  align-items: flex-end;
+}
+
+.projectInfoMobileCard .workflowTaskMobileCardCell_right > .projectInfoMobileLabel {
+  width: 100%;
+  text-align: right;
+}
+
+.projectInfoMobileCard .summaryValueOnly,
+.projectInfoMobileCard .summaryValueSlot {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.projectInfoMobileCard .summaryInlineDisplayOverlay,
+.projectInfoMobileCard .summaryText,
+.projectInfoMobileCard .summaryLink {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.projectInfoMobileCard .workflowTaskMobileCardCell_right .summaryInlineDisplayOverlay,
+.projectInfoMobileCard .workflowTaskMobileCardCell_right .summaryText,
+.projectInfoMobileCard .workflowTaskMobileCardCell_right .summaryLink {
+  text-align: right;
+}
+
+.projectInfoMobileAddressSection {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  min-width: 0;
+  width: 100%;
+}
+
+.projectInfoMobileAddressValueRow {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 0.5rem;
+  min-width: 0;
+  width: 100%;
+}
+
+.projectInfoMobileAddressValue {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.projectInfoMobileAddressLine {
+  display: block;
+  font-size: 0.8125rem;
+  line-height: 1.35;
+}
+
+.projectInfoMobileAddressLink {
+  display: block;
+  white-space: normal;
+  overflow: visible;
+  text-overflow: unset;
+  word-break: break-word;
+}
+
+.projectInfoMobileAddressValue .summaryText,
+.projectInfoMobileAddressValue .summaryLink,
+.projectInfoMobileAddressValue .projectInfoMobileValue {
+  white-space: normal;
+  overflow: visible;
+  text-overflow: unset;
+  word-break: break-word;
 }
 
 .projectInfoMobileCell,
@@ -5769,11 +5852,7 @@
   }
 
   .pageShell:has([data-project-detail-page]) .projectInfoMobileCard {
-    padding: 0.5rem 0.5rem;
-  }
-
-  .pageShell:has([data-project-detail-page]) .projectInfoMobileCard_withEdit {
-    padding-right: 2rem;
+    padding: 0.625rem 0.75rem;
   }
 
   .pageShell:has([data-project-detail-page]) .workflowPanel,
