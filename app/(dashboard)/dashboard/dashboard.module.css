@@ -183,7 +183,7 @@
     overflow-y: auto;
     overscroll-behavior: contain;
     -webkit-overflow-scrolling: touch;
-    padding: 0.75rem 0.5rem;
+    padding: 0.75rem 0.5rem calc(96px + env(safe-area-inset-bottom, 0px));
   }
 }
 

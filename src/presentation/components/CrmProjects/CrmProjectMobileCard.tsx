@@ -6,7 +6,6 @@ import type { ProjectPaymentFinancials } from '@/domain/crm/projectPaymentValue'
 import type { CrmProjectWorkflowProgressInputIndex } from '@/domain/crm/projectWorkflowProgressInput';
 import { isCrmProjectComplete } from '@/domain/crm';
 import { isProjectPriorityUrgent } from '@/domain/crm/projectPriorityToggle';
-import { ProjectProgressPercent } from '@/presentation/components/CrmProjectDetail/ProjectProgressPercent';
 import { CrmProjectCompleteIcon } from '@/presentation/components/crmShared/CrmProjectCompleteIcon';
 import { CrmProjectPriorityIcon } from '@/presentation/components/crmShared/CrmProjectPriorityIcon';
 import { TeamMemberAvatar } from '@/presentation/components/CrmProjectDetail/TeamMemberAvatar';
@@ -154,39 +153,73 @@ export function CrmProjectMobileCard({
 
         {!isMemberRole ? (
           <>
-            <div className={styles.mobileCardMetaRow}>
-              {progress != null ? (
-                <ProjectProgressPercent variant="compact" progress={progress} />
-              ) : null}
-              {derivedStageSlug != null ? (
-                <span className={`${shared.stagePill} ${styles.projectMetaStagePill}`}>
-                  {formatStageLabel(derivedStageSlug, catalog)}
+            {(derivedStageSlug != null || progress != null) ? (
+              <div className={styles.mobileCardMetaRow}>
+                <span className={projectStyles.subprojectMobileCardStageRow}>
+                  {derivedStageSlug != null ? (
+                    <span
+                      className={`${shared.stagePill} ${styles.projectMetaStagePill}`}
+                      title={formatStageLabel(derivedStageSlug, catalog)}
+                    >
+                      {formatStageLabel(derivedStageSlug, catalog)}
+                    </span>
+                  ) : null}
+                  {progress != null ? (
+                    <span
+                      className={projectStyles.subprojectMobileCardProgressPercent}
+                      aria-label={`Project progress ${progress.textPercent}%`}
+                    >
+                      {progress.textPercent}%
+                    </span>
+                  ) : null}
                 </span>
-              ) : null}
-            </div>
-            <div className={styles.mobileCardFinancials} aria-busy={financialsLoading || undefined}>
-              <span className={styles.mobileCardFinancialItem} title={displayValueLabel}>
-                <span className={styles.mobileCardFinancialLabel}>{valueLabels.value}</span>
-                <span className={styles.mobileCardFinancialValue}>
-                  {financialDisplay(displayFinancials.valueCents)}
-                </span>
-              </span>
-              <span className={styles.mobileCardFinancialItem} title={valueLabels.collected}>
-                <span className={styles.mobileCardFinancialLabel}>{valueLabels.collected}</span>
-                <span className={styles.mobileCardFinancialValue}>
-                  {financialDisplay(displayFinancials.collectedCents)}
-                </span>
-              </span>
-              <span className={styles.mobileCardFinancialItem} title={valueLabels.balance}>
-                <span className={styles.mobileCardFinancialLabel}>{valueLabels.balance}</span>
-                <span className={styles.mobileCardFinancialValue}>
-                  {financialDisplay(displayFinancials.balanceCents)}
-                </span>
-              </span>
-            </div>
+              </div>
+            ) : null}
           </>
         ) : null}
       </div>
+
+      {!isMemberRole ? (
+        <div
+          className={projectStyles.subprojectMobileCardFinancials}
+          aria-label={content.projectDetail.sections.financials}
+          aria-busy={financialsLoading || undefined}
+        >
+          <span className={projectStyles.subprojectMobileCardFinancialItem} title={displayValueLabel}>
+            <span className={projectStyles.subprojectMobileCardFinancialLabel}>
+              {valueLabels.value}
+            </span>
+            <span
+              className={projectStyles.subprojectMobileCardFinancialValue}
+              aria-busy={financialsLoading || undefined}
+            >
+              {financialDisplay(displayFinancials.valueCents)}
+            </span>
+          </span>
+          <span className={projectStyles.subprojectMobileCardFinancialItem} title={valueLabels.collected}>
+            <span className={projectStyles.subprojectMobileCardFinancialLabel}>
+              {valueLabels.collected}
+            </span>
+            <span
+              className={projectStyles.subprojectMobileCardFinancialValue}
+              aria-busy={financialsLoading || undefined}
+            >
+              {financialDisplay(displayFinancials.collectedCents)}
+            </span>
+          </span>
+          <span className={projectStyles.subprojectMobileCardFinancialItem} title={valueLabels.balance}>
+            <span className={projectStyles.subprojectMobileCardFinancialLabel}>
+              {valueLabels.balance}
+            </span>
+            <span
+              className={projectStyles.subprojectMobileCardFinancialValue}
+              aria-busy={financialsLoading || undefined}
+            >
+              {financialDisplay(displayFinancials.balanceCents)}
+            </span>
+          </span>
+        </div>
+      ) : null}
 
       {!isChild && hasChildren ? (
         <button

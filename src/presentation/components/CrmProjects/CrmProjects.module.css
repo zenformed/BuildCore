@@ -625,7 +625,11 @@
 }
 
 .projectMetaStagePill {
-  flex-shrink: 0;
+  flex: 0 1 auto;
+  max-width: min(8rem, 42vw);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   padding: 0.125rem 0.35rem;
   font-size: 0.625rem;
   line-height: 1.15;
@@ -967,56 +971,8 @@
 .mobileCardMetaRow {
   display: flex;
   align-items: center;
-  flex-wrap: wrap;
-  gap: 0.35rem 0.5rem;
   margin-top: 0.5rem;
   min-width: 0;
-}
-
-.mobileCardFinancials {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  width: 100%;
-  margin-top: 0.5rem;
-  padding-top: 0.5rem;
-  border-top: 1px solid var(--theme-border-main, var(--color-border, #e2e8f0));
-}
-
-.mobileCardFinancialItem {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.125rem;
-  flex: 0 1 auto;
-  min-width: 0;
-  max-width: 33.333%;
-  text-align: center;
-}
-
-.mobileCardFinancialLabel {
-  font-size: 0.5625rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: var(--color-text-muted, #64748b);
-  line-height: 1.2;
-}
-
-.mobileCardFinancialValue {
-  font-size: clamp(0.75rem, 3.5vw, 0.875rem);
-  font-weight: 600;
-  font-variant-numeric: tabular-nums;
-  color: var(--color-text, #0f172a);
-  line-height: 1.25;
-  max-width: 100%;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-:global([data-theme='dark']) .mobileCardFinancialValue {
-  color: #f1f5f9;
 }
 
 .mobileCardExpandBtn {
