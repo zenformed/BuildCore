@@ -8,7 +8,10 @@ import { usesCoreUserAvatars } from '@/infrastructure/userPhoto/userPhotoAuthori
 
 export const dynamic = 'force-dynamic';
 
-const NO_STORE_HEADERS = { 'Cache-Control': 'private, no-store, must-revalidate' };
+const NO_STORE_HEADERS = {
+  'Cache-Control': 'private, no-store, must-revalidate',
+  Pragma: 'no-cache',
+};
 
 /**
  * GET /api/auth/avatar
@@ -25,7 +28,8 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     if (token == null) {
       return new NextResponse(null, { status: 401, headers: NO_STORE_HEADERS });
     }
-    const result = await getMyAvatarBytes(token);
+    const revision = request.nextUrl.searchParams.get('t');
+    const result = await getMyAvatarBytes(token, revision);
     if (!result.ok) {
       if (result.error.kind === 'http_error' && result.error.status === 404) {
         return new NextResponse(null, { status: 404, headers: NO_STORE_HEADERS });
@@ -41,6 +45,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     return new NextResponse(result.data.buffer, {
       headers: {
         'Content-Type': result.data.contentType,
+        ...(result.data.revision ? { 'X-Avatar-Revision': result.data.revision } : {}),
         ...NO_STORE_HEADERS,
       },
     });

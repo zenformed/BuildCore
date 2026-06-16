@@ -52,7 +52,12 @@ export async function getMyAvatarMeta(
   if (url == null) {
     return { ok: false, error: { kind: 'unconfigured' } };
   }
-  const res = await fetchWithBearer(url, accessToken, { method: 'GET', headers: { Accept: 'application/json' } }, timeoutMs);
+  const res = await fetchWithBearer(
+    url,
+    accessToken,
+    { method: 'GET', headers: { Accept: 'application/json' }, cache: 'no-store' },
+    timeoutMs
+  );
   if ('error' in res) {
     return { ok: false, error: res.error };
   }
@@ -107,13 +112,23 @@ export async function getOrganizationMemberAvatarBytes(
 /** `GET /users/me/avatar` — image bytes. */
 export async function getMyAvatarBytes(
   accessToken: string,
+  revision?: string | null,
   timeoutMs: number = DEFAULT_TIMEOUT_MS
-): Promise<CoreApiResult<{ buffer: Buffer; contentType: string }>> {
-  const url = coreAvatarUrl('/users/me/avatar');
+): Promise<CoreApiResult<{ buffer: Buffer; contentType: string; revision: string | null }>> {
+  let path = '/users/me/avatar';
+  if (revision != null && revision.trim() !== '') {
+    path += `?revision=${encodeURIComponent(revision.trim())}`;
+  }
+  const url = coreAvatarUrl(path);
   if (url == null) {
     return { ok: false, error: { kind: 'unconfigured' } };
   }
-  const res = await fetchWithBearer(url, accessToken, { method: 'GET' }, timeoutMs);
+  const res = await fetchWithBearer(
+    url,
+    accessToken,
+    { method: 'GET', cache: 'no-store' },
+    timeoutMs
+  );
   if ('error' in res) {
     return { ok: false, error: res.error };
   }
@@ -131,7 +146,8 @@ export async function getMyAvatarBytes(
   }
   const buffer = Buffer.from(await res.arrayBuffer());
   const contentType = res.headers.get('content-type')?.split(';')[0]?.trim() || 'image/png';
-  return { ok: true, data: { buffer, contentType } };
+  const revisionHeader = res.headers.get('x-avatar-revision');
+  return { ok: true, data: { buffer, contentType, revision: revisionHeader } };
 }
 
 /** `PUT /users/me/avatar` — raw or multipart body forwarded as-is. */
