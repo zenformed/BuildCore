@@ -2,7 +2,7 @@
 
 import type { ReactElement } from 'react';
 import { ConfirmModal } from '@/presentation/components/ConfirmModal';
-import { ProfilePhotoModal } from '@/presentation/components/ProfilePhotoModal/ProfilePhotoModal';
+import { ProfilePhotoModal } from '@zenformed/core/dashboard-shell';
 import { buildCoreDashboardNavigation as nav } from '@/platform/navigation/buildCoreDashboardNavigation';
 
 export type BuildCoreDashboardModalsProps = {
