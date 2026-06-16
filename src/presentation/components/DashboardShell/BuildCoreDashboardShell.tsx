@@ -97,7 +97,6 @@ export function BuildCoreDashboardShell({
               onOpenSettings={() => dash.setSettingsOpen(true)}
               onRequestSignOutConfirm={() => dash.setSignOutModalOpen(true)}
               onRequestProfilePhotoModal={() => dash.setProfilePhotoModalOpen(true)}
-              profilePhotoChangeEnabled={false}
               sidebarActiveId={sidebarActiveId}
               onSidebarSelect={onSidebarSelect}
               sidebarNavAccess={{
