@@ -72,11 +72,15 @@ export function BuildCorePermissionMatrixMobile({
         return (
           <article
             key={row.roleKey}
-            className={`${projectStyles.card} ${styles.permissionMobileRoleCard}`}
+            className={`${projectStyles.card} ${projectStyles.workflowTaskMobileCard} ${styles.permissionMobileRoleCard}`}
             aria-label={`${roleLabel} permissions`}
           >
+            <div className={projectStyles.workflowTaskMobileCardHeader}>
+              <div className={projectStyles.workflowTaskMobileCardTitleWrap}>
+                <span className={projectStyles.workflowTaskMobileCardTitle}>{roleLabel}</span>
+              </div>
+            </div>
             <div className={styles.permissionMobileRoleCardBody}>
-              <h3 className={styles.permissionMobileRoleTitle}>{roleLabel}</h3>
               <div className={styles.permissionMobileGrid}>
                 <div className={styles.permissionMobileGridCol}>
                   {leftColumns.map((col) =>
