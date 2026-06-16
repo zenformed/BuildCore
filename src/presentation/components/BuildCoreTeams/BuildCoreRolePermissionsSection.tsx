@@ -5,6 +5,7 @@ import type { BuildCorePermissionDomain } from '@/domain/buildcore/rolePermissio
 import { BUILDCORE_PERMISSION_COLUMNS } from '@/domain/buildcore/rolePermissions';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
 import { useBuildCoreRolePermissions } from '@/presentation/features/buildCoreTeams/useBuildCoreRolePermissions';
+import { useDashboardMobileLayout } from '@/presentation/features/crmProjects/useDashboardMobileLayout';
 import projectStyles from '../CrmProjectDetail/ProjectDetail.module.css';
 import { BuildCorePermissionMatrix } from './BuildCorePermissionMatrix';
 import styles from './BuildCoreTeams.module.css';
@@ -36,9 +37,11 @@ function PermissionsSectionBody({
   permissions: ReturnType<typeof useBuildCoreRolePermissions>;
   footer?: ReactNode;
 }): ReactElement {
+  const isMobileLayout = useDashboardMobileLayout();
+
   return (
     <>
-      <p className={projectStyles.cardHelper}>{copy.hint}</p>
+      {!isMobileLayout ? <p className={projectStyles.cardHelper}>{copy.hint}</p> : null}
 
       {permissions.isLoading ? (
         <p className={styles.loading}>{copy.loading}</p>
@@ -48,6 +51,7 @@ function PermissionsSectionBody({
         <p className={styles.empty}>{copy.empty}</p>
       ) : (
         <>
+          {isMobileLayout ? <p className={styles.permissionMobileHint}>{copy.hint}</p> : null}
           <BuildCorePermissionMatrix
             columns={BUILDCORE_PERMISSION_COLUMNS}
             rows={permissions.data.rows}
@@ -70,7 +74,9 @@ function PermissionsSectionBody({
               {permissions.statusMessage}
             </p>
           ) : null}
-          {footer}
+          {footer ? (
+            <div className={isMobileLayout ? styles.permissionMobileFooter : undefined}>{footer}</div>
+          ) : null}
         </>
       )}
     </>

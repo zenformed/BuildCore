@@ -7,6 +7,8 @@ import type {
   BuildCoreRolePermissionRow,
 } from '@/domain/buildcore/rolePermissions';
 import { roleLabelForBuildCorePermissionKey } from '@/domain/buildcore/rolePermissions';
+import { useDashboardMobileLayout } from '@/presentation/features/crmProjects/useDashboardMobileLayout';
+import { BuildCorePermissionMatrixMobile } from './BuildCorePermissionMatrixMobile';
 import styles from './BuildCoreTeams.module.css';
 
 export type BuildCorePermissionMatrixProps = {
@@ -33,6 +35,20 @@ export function BuildCorePermissionMatrix({
   busyCell = null,
   roleColumnLabel = 'Role',
 }: BuildCorePermissionMatrixProps): ReactElement {
+  const isMobileLayout = useDashboardMobileLayout();
+
+  if (isMobileLayout) {
+    return (
+      <BuildCorePermissionMatrixMobile
+        columns={columns}
+        rows={rows}
+        canEditRow={canEditRow}
+        onToggle={onToggle}
+        busyCell={busyCell}
+      />
+    );
+  }
+
   return (
     <div className={styles.matrixWrap}>
       <table className={styles.permissionsMatrix}>

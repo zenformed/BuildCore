@@ -169,6 +169,22 @@
     -webkit-overflow-scrolling: touch;
     padding: 0.75rem 0.5rem;
   }
+
+  .listViewWrap:has([data-buildcore-teams-page]) {
+    flex: none;
+    min-height: unset;
+    overflow: visible;
+  }
+
+  .mainContent:has([data-buildcore-teams-page]) {
+    flex: 1;
+    min-height: 0;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+    padding: 0.75rem 0.5rem;
+  }
 }
 
 /* Sidebar app identity (ZenformedSidebarBranding) */
@@ -264,15 +280,17 @@
   }
 }
 
-/* Teams: folder tabs fill main column; panels scroll internally */
-.listViewWrap:has([data-buildcore-teams-page]) {
-  flex: 1;
-  min-height: 0;
-  overflow: hidden;
-}
+/* Teams: folder tabs fill main column; panels scroll internally (desktop) */
+@media (min-width: 768px) {
+  .listViewWrap:has([data-buildcore-teams-page]) {
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+  }
 
-.mainContent:has([data-buildcore-teams-page]) {
-  overflow: hidden;
+  .mainContent:has([data-buildcore-teams-page]) {
+    overflow: hidden;
+  }
 }
 
 /* Workflow settings: fixed page shell; stage panel scrolls inside its box */

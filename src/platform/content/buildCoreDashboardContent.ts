@@ -224,8 +224,11 @@ export const buildCoreDashboardContent = {
       regionAriaLabel: 'Organization members and BuildCore access',
       name: 'Name',
       email: 'Email',
+      role: 'Role',
       organizationRole: 'Organization role',
       buildCoreAccess: 'BuildCore access',
+      buildCoreAccessToggleAriaLabel: 'BuildCore access',
+      access: 'Access',
       buildCoreRole: 'BuildCore role',
       actions: 'Actions',
       empty: 'No team members found.',
@@ -241,6 +244,10 @@ export const buildCoreDashboardContent = {
       taskPermissions: 'Task Permissions',
       paymentPermissions: 'Payment Permissions',
       budgetPermissions: 'Budget Permissions',
+    },
+    mobileControls: {
+      sectionLabel: 'Section',
+      sectionAriaLabel: 'Team section',
     },
     workflowTaskPermissions: {
       title: 'Workflow Task Permissions',

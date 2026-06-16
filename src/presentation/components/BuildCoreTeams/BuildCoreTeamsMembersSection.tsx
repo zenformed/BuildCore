@@ -2,8 +2,10 @@
 
 import type { ReactElement } from 'react';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
+import { useDashboardMobileLayout } from '@/presentation/features/crmProjects/useDashboardMobileLayout';
 import type { BuildCoreTeamMemberRow } from '@/presentation/features/buildCoreTeams/buildCoreTeamsViewModel';
 import projectStyles from '../CrmProjectDetail/ProjectDetail.module.css';
+import { BuildCoreTeamMemberMobileCard } from './BuildCoreTeamMemberMobileCard';
 import styles from './BuildCoreTeams.module.css';
 
 export type BuildCoreTeamsMembersSectionProps = {
@@ -14,6 +16,26 @@ export function BuildCoreTeamsMembersSection({
   rows,
 }: BuildCoreTeamsMembersSectionProps): ReactElement {
   const copy = content.teams.table;
+  const isMobileLayout = useDashboardMobileLayout();
+
+  if (isMobileLayout) {
+    return (
+      <section
+        className={`${projectStyles.card} ${styles.membersTabPanel} ${styles.membersTabPanel_mobile}`}
+        aria-label={copy.title}
+      >
+        {rows.length === 0 ? (
+          <p className={styles.empty}>{copy.empty}</p>
+        ) : (
+          <div className={styles.memberMobileList}>
+            {rows.map((row) => (
+              <BuildCoreTeamMemberMobileCard key={row.id} row={row} />
+            ))}
+          </div>
+        )}
+      </section>
+    );
+  }
 
   return (
     <section
