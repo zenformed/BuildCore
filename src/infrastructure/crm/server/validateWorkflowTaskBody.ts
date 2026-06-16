@@ -68,6 +68,18 @@ function parseAmountCents(body: WorkflowTaskBody): ParsedAmountCents {
   return { kind: 'value', value: raw };
 }
 
+function resolveOperationalStageSlug(
+  body: WorkflowTaskBody,
+  allowedStageSlugs: ReadonlySet<string>
+): PipelineStageSlug | { ok: false; message: string } {
+  const stageSlug = asStageSlug(body.stageSlug, allowedStageSlugs);
+  if (!stageSlug) return { ok: false, message: 'Stage is invalid.' };
+  if (isInternalWorkflowStageSlug(stageSlug)) {
+    return { ok: false, message: 'Stage is invalid.' };
+  }
+  return stageSlug;
+}
+
 export function validateCreateWorkflowTaskBody(
   body: WorkflowTaskBody,
   options?: { allowedStageSlugs?: ReadonlySet<string> }
@@ -76,10 +88,18 @@ export function validateCreateWorkflowTaskBody(
   const title = asNonEmptyString(body.title);
   if (!title) return { ok: false, message: 'Task title is required.' };
 
-  const stageSlug = asStageSlug(body.stageSlug, allowedStageSlugs);
-  if (!stageSlug) return { ok: false, message: 'Stage is invalid.' };
-  if (isInternalWorkflowStageSlug(stageSlug)) {
-    return { ok: false, message: 'Stage is invalid.' };
+  const parsedAmount = parseAmountCents(body);
+  if (parsedAmount.kind === 'invalid') {
+    return { ok: false, message: 'Enter a valid payment amount.' };
+  }
+  const amountCents = parsedAmount.kind === 'value' ? parsedAmount.value : null;
+  const isPaymentMilestone = amountCents != null;
+
+  const stageSlug = isPaymentMilestone
+    ? PAYMENT_WORKFLOW_STAGE_SLUG
+    : resolveOperationalStageSlug(body, allowedStageSlugs);
+  if (typeof stageSlug !== 'string') {
+    return stageSlug;
   }
 
   const status = asStatus(body.status);
@@ -90,24 +110,18 @@ export function validateCreateWorkflowTaskBody(
     return { ok: false, message: 'Documents required must be true or false.' };
   }
 
-  const parsedAmount = parseAmountCents(body);
-  if (parsedAmount.kind === 'invalid') {
-    return { ok: false, message: 'Enter a valid payment amount.' };
-  }
-  const amountCents = parsedAmount.kind === 'value' ? parsedAmount.value : null;
-
   return {
     ok: true,
     input: {
       title,
-      stageSlug: amountCents != null ? PAYMENT_WORKFLOW_STAGE_SLUG : stageSlug,
+      stageSlug,
       status,
       documentsRequired,
       dueAt: asIsoOrNull(body.dueAt),
       notes: asOptionalString(body.notes),
       assignedMemberId: asOptionalUserId(body.assignedMemberId),
       amountCents,
-      ...(amountCents != null
+      ...(isPaymentMilestone
         ? {
             invoicedAt: asIsoOrNull(body.invoicedAt),
             paidAt: asIsoOrNull(body.paidAt),
@@ -141,12 +155,16 @@ export function validateUpdateWorkflowTaskBody(
     patch.title = title;
   }
   if ('stageSlug' in body) {
-    const stageSlug = asStageSlug(body.stageSlug, allowedStageSlugs);
-    if (!stageSlug) return { ok: false, message: 'Stage is invalid.' };
-    if (isInternalWorkflowStageSlug(stageSlug)) {
-      return { ok: false, message: 'Stage is invalid.' };
+    if (body.stageSlug === PAYMENT_WORKFLOW_STAGE_SLUG) {
+      patch.stageSlug = PAYMENT_WORKFLOW_STAGE_SLUG;
+    } else {
+      const stageSlug = asStageSlug(body.stageSlug, allowedStageSlugs);
+      if (!stageSlug) return { ok: false, message: 'Stage is invalid.' };
+      if (isInternalWorkflowStageSlug(stageSlug)) {
+        return { ok: false, message: 'Stage is invalid.' };
+      }
+      patch.stageSlug = stageSlug;
     }
-    patch.stageSlug = stageSlug;
   }
   if ('status' in body) {
     const status = asStatus(body.status);
