@@ -48,6 +48,7 @@ export function BuildCoreDashboardModals({ signOut, profilePhoto }: BuildCoreDas
           hasPhoto={profilePhoto.hasPhoto}
           onSuccess={profilePhoto.onSuccess}
           getAccessToken={profilePhoto.getAccessToken}
+          enableCameraCapture
         />
       ) : null}
     </>

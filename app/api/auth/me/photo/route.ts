@@ -7,6 +7,8 @@ import { saveUserPhoto, deleteUserPhoto } from '@/infrastructure/userPhoto/UserP
 import { usesCoreUserAvatars } from '@/infrastructure/userPhoto/userPhotoAuthority';
 import { runtimeModes } from '@/infrastructure/config/runtimeModes';
 
+export const dynamic = 'force-dynamic';
+
 const DICEBEAR_URL = 'https://api.dicebear.com/9.x/fun-emoji/png';
 const SAAS_MODE = runtimeModes.isSaasMode();
 
@@ -110,7 +112,11 @@ export async function POST(request: Request): Promise<NextResponse> {
       return NextResponse.json({ error: 'Invalid dicebearSeed' }, { status: 400 });
     }
     const url = `${DICEBEAR_URL}?seed=${encodeURIComponent(seed)}&size=256`;
-    const res = await fetch(url);
+    const res = await fetch(url, {
+      headers: { Accept: 'image/png' },
+      cache: 'no-store',
+      signal: AbortSignal.timeout(15_000),
+    });
     if (!res.ok) {
       return NextResponse.json({ error: 'Failed to fetch avatar' }, { status: 502 });
     }
