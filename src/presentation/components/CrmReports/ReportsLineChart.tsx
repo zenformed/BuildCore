@@ -6,6 +6,7 @@ import { Line } from 'react-chartjs-2';
 import type { ReportsTimeSeries } from '@/reports/types/crmReportsDashboard';
 import { ensureChartJsRegistered } from '@/presentation/charts/registerChartJs';
 import { useChartTheme } from '@/presentation/charts/useChartTheme';
+import { useDashboardMobileLayout } from '@/presentation/features/crmProjects/useDashboardMobileLayout';
 import styles from './CrmReports.module.css';
 
 ensureChartJsRegistered();
@@ -17,6 +18,7 @@ type ReportsLineChartProps = {
 
 export function ReportsLineChart({ series, formatValue }: ReportsLineChartProps): ReactElement {
   const theme = useChartTheme();
+  const isMobileLayout = useDashboardMobileLayout();
   const { labels, tooltipLabels, valuesCents } = series;
 
   const chartData = useMemo(
@@ -31,16 +33,17 @@ export function ReportsLineChart({ series, formatValue }: ReportsLineChartProps)
           pointBorderColor: theme.pointBorder,
           pointHoverBackgroundColor: theme.pointHover,
           pointHoverBorderColor: theme.pointBorder,
-          pointBorderWidth: 1.5,
-          pointRadius: 4,
-          pointHoverRadius: 5,
+          pointBorderWidth: isMobileLayout ? 0 : 1.5,
+          pointRadius: isMobileLayout ? 0 : 4,
+          pointHoverRadius: isMobileLayout ? 0 : 5,
+          pointHitRadius: isMobileLayout ? 14 : 4,
           borderWidth: 2,
           tension: 0,
           fill: false,
         },
       ],
     }),
-    [labels, valuesCents, theme]
+    [isMobileLayout, labels, valuesCents, theme]
   );
 
   const options = useMemo<ChartOptions<'line'>>(
@@ -69,10 +72,11 @@ export function ReportsLineChart({ series, formatValue }: ReportsLineChartProps)
         x: {
           ticks: {
             color: theme.textMuted,
-            maxTicksLimit: 12,
+            maxTicksLimit: isMobileLayout ? 5 : 12,
             autoSkip: true,
+            autoSkipPadding: isMobileLayout ? 12 : 4,
             maxRotation: 0,
-            font: { size: 11 },
+            font: { size: isMobileLayout ? 10 : 11 },
           },
           grid: { display: false },
           border: { color: theme.border },
@@ -90,7 +94,7 @@ export function ReportsLineChart({ series, formatValue }: ReportsLineChartProps)
         },
       },
     }),
-    [theme, tooltipLabels, labels, formatValue]
+    [isMobileLayout, theme, tooltipLabels, labels, formatValue]
   );
 
   if (labels.length === 0) {

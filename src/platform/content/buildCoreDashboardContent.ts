@@ -72,6 +72,9 @@ export const buildCoreDashboardContent = {
       waiting_approval: 'Waiting Approval',
       overdue_payments: 'Overdue Payments',
     },
+    projectPerformanceMobile: {
+      filterAriaLabel: 'Filter project performance',
+    },
     table: {
       project: 'Project / Customer',
       collected: 'Collected',
@@ -104,6 +107,12 @@ export const buildCoreDashboardContent = {
       buttonLabel: 'Export Data',
       exporting: 'Exporting…',
       error: 'Could not export organization data. Please try again.',
+    },
+    mobileControls: {
+      reportRangeLabel: 'Report Range',
+      reportRangeAriaLabel: 'Report range',
+      sectionLabel: 'Report Section',
+      sectionAriaLabel: 'Report section',
     },
     yearlyPdf: {
       reportTitle: 'BuildCore Financial Report',

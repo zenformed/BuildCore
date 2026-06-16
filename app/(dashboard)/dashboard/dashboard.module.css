@@ -153,6 +153,22 @@
   .mainContent:has([data-project-detail-page]) {
     padding: 0.75rem 0.5rem;
   }
+
+  .listViewWrap:has([data-crm-reports-page]) {
+    flex: none;
+    min-height: unset;
+    overflow: visible;
+  }
+
+  .mainContent:has([data-crm-reports-page]) {
+    flex: 1;
+    min-height: 0;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+    padding: 0.75rem 0.5rem;
+  }
 }
 
 /* Sidebar app identity (ZenformedSidebarBranding) */
@@ -235,15 +251,17 @@
   overflow: auto;
 }
 
-/* CRM reports: fill main column; tab panels grow and scroll internally */
-.listViewWrap:has([data-crm-reports-page]) {
-  flex: 1;
-  min-height: 0;
-  overflow: hidden;
-}
+/* CRM reports: fill main column; tab panels grow and scroll internally (desktop) */
+@media (min-width: 768px) {
+  .listViewWrap:has([data-crm-reports-page]) {
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+  }
 
-.mainContent:has([data-crm-reports-page]) {
-  overflow: hidden;
+  .mainContent:has([data-crm-reports-page]) {
+    overflow: hidden;
+  }
 }
 
 /* Teams: folder tabs fill main column; panels scroll internally */
