@@ -140,6 +140,7 @@ export function BuildCoreDashboardHeader({
       onOpenSettings={onOpenSettings}
       onRequestSignOutConfirm={onRequestSignOutConfirm}
       onRequestProfilePhotoModal={onRequestProfilePhotoModal}
+      profilePhotoChangeEnabled={false}
       settingsIcon={<SettingsIcon className={headerShellClassNames.accountMenuBtnIcon} />}
       signOutIcon={<SignOutIcon className={headerShellClassNames.accountMenuBtnIcon} />}
       profilePhotoCameraIcon={<CameraIcon />}

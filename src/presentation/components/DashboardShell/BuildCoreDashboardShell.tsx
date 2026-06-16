@@ -91,12 +91,13 @@ export function BuildCoreDashboardShell({
               }
               effectiveLicenseTier={dash.effectiveLicenseTier}
               organizationRoleLabel={dash.organizationRoleLabel}
-              avatarUrl={dash.avatarUrl}
-              avatarLoading={dash.avatarLoading}
+              avatarUrl={null}
+              avatarLoading={false}
               getAccessToken={dash.getAccessToken}
               onOpenSettings={() => dash.setSettingsOpen(true)}
               onRequestSignOutConfirm={() => dash.setSignOutModalOpen(true)}
               onRequestProfilePhotoModal={() => dash.setProfilePhotoModalOpen(true)}
+              profilePhotoChangeEnabled={false}
               sidebarActiveId={sidebarActiveId}
               onSidebarSelect={onSidebarSelect}
               sidebarNavAccess={{
@@ -137,21 +138,7 @@ export function BuildCoreDashboardShell({
             await dash.signOut();
           },
         }}
-        profilePhoto={
-          dash.user
-            ? {
-                isOpen: dash.profilePhotoModalOpen,
-                onClose: () => dash.setProfilePhotoModalOpen(false),
-                userEmail: dash.user.email,
-                avatarUrl: dash.avatarUrl,
-                hasPhoto: dash.hasAvatarPhoto,
-                onSuccess: () => {
-                  void dash.refetchAvatar();
-                },
-                getAccessToken: dash.getAccessToken,
-              }
-            : null
-        }
+        profilePhoto={null}
       />
     </ZenformedDashboardAppShell>
   );
