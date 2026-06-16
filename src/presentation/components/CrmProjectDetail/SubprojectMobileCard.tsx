@@ -49,7 +49,7 @@ export function SubprojectMobileCard({
 }: SubprojectMobileCardProps): ReactElement {
   const tableCopy = content.crm.table;
   const fields = content.projectDetail.fields;
-  const { industrySubtitle, derivedStageSlug, catalog } = useCrmProjectRowPresentation(
+  const { industrySubtitle, derivedStageSlug, progress, catalog } = useCrmProjectRowPresentation(
     project,
     workflowProgressInputIndex,
     isWorkflowProgressLoading
@@ -97,11 +97,21 @@ export function SubprojectMobileCard({
                 <span className={styles.subprojectMobileCardMeta}>—</span>
               )}
               {derivedStageSlug != null ? (
-                <span
-                  className={`${shared.stagePill} ${styles.subprojectMobileCardStagePill}`}
-                  title={formatStageLabel(derivedStageSlug, catalog)}
-                >
-                  {formatStageLabel(derivedStageSlug, catalog)}
+                <span className={styles.subprojectMobileCardStageRow}>
+                  <span
+                    className={`${shared.stagePill} ${styles.subprojectMobileCardStagePill}`}
+                    title={formatStageLabel(derivedStageSlug, catalog)}
+                  >
+                    {formatStageLabel(derivedStageSlug, catalog)}
+                  </span>
+                  {!isMemberRole && progress != null ? (
+                    <span
+                      className={styles.subprojectMobileCardProgressPercent}
+                      aria-label={`Project progress ${progress.textPercent}%`}
+                    >
+                      {progress.textPercent}%
+                    </span>
+                  ) : null}
                 </span>
               ) : (
                 <span className={styles.subprojectMobileCardMeta}>—</span>
