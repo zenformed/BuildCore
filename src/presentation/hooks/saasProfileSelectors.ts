@@ -8,7 +8,7 @@ import type { SaaSProfile, LicenseTier, OrganizationMembershipKind } from './use
 export function getLicenseTierFromSnapshot(
   snapshot: SaaSEntitlementSnapshot | null | undefined
 ): LicenseTier {
-  return snapshot?.licenseTier ?? 'STANDARD';
+  return snapshot?.licenseTier === 'PRO' ? 'PRO' : 'STANDARD';
 }
 
 /**
