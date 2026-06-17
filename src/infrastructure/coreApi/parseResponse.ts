@@ -437,6 +437,31 @@ export function parseOrganizationMembershipContextJson(
   };
 }
 
+function parseOrganizationMemberRecord(
+  row: unknown
+): ZenformedCoreOrganizationMembersResponse['members'][number] | null {
+  if (row == null || typeof row !== 'object') return null;
+  const m = row as Record<string, unknown>;
+  if (typeof m.id !== 'string' || typeof m.userId !== 'string') return null;
+  if (typeof m.displayName !== 'string') return null;
+  if (m.firstName != null && typeof m.firstName !== 'string') return null;
+  if (m.lastName != null && typeof m.lastName !== 'string') return null;
+  if (m.email != null && typeof m.email !== 'string') return null;
+  const role = parseOrganizationMemberRole(m.role);
+  if (role == null) return null;
+  if (m.status !== 'active' && m.status !== 'invited' && m.status !== 'removed') return null;
+  return {
+    id: m.id,
+    userId: m.userId,
+    displayName: m.displayName,
+    firstName: m.firstName ?? null,
+    lastName: m.lastName ?? null,
+    email: m.email ?? null,
+    role,
+    status: m.status,
+  };
+}
+
 export function parseOrganizationMembersJson(
   body: unknown
 ): ZenformedCoreOrganizationMembersResponse | null {
@@ -446,26 +471,9 @@ export function parseOrganizationMembersJson(
   if (!Array.isArray(o.members)) return null;
   const members: ZenformedCoreOrganizationMembersResponse['members'] = [];
   for (const m of o.members) {
-    if (m == null || typeof m !== 'object') return null;
-    const row = m as Record<string, unknown>;
-    if (typeof row.id !== 'string' || typeof row.userId !== 'string') return null;
-    if (typeof row.displayName !== 'string') return null;
-    if (row.firstName != null && typeof row.firstName !== 'string') return null;
-    if (row.lastName != null && typeof row.lastName !== 'string') return null;
-    if (row.email != null && typeof row.email !== 'string') return null;
-    const role = parseOrganizationMemberRole(row.role);
-    if (role == null) return null;
-    if (row.status !== 'active' && row.status !== 'invited' && row.status !== 'removed') return null;
-    members.push({
-      id: row.id,
-      userId: row.userId,
-      displayName: row.displayName,
-      firstName: row.firstName ?? null,
-      lastName: row.lastName ?? null,
-      email: row.email ?? null,
-      role,
-      status: row.status,
-    });
+    const parsed = parseOrganizationMemberRecord(m);
+    if (parsed == null) return null;
+    members.push(parsed);
   }
   return { organizationId: o.organizationId, members };
 }
@@ -578,6 +586,19 @@ export function parseOrganizationInviteMutationJson(
   if (body == null || typeof body !== 'object') return null;
   const o = body as Record<string, unknown>;
   if (typeof o.organizationId !== 'string') return null;
+
+  if (o.reactivated === true) {
+    const member = parseOrganizationMemberRecord(o.member);
+    if (member == null) return null;
+    if (o.message != null && typeof o.message !== 'string') return null;
+    return {
+      organizationId: o.organizationId,
+      reactivated: true,
+      member,
+      ...(typeof o.message === 'string' ? { message: o.message } : {}),
+    };
+  }
+
   const invite = parseOrganizationInviteRecord(o.invite);
   if (invite == null) return null;
   if (o.acceptUrl != null && typeof o.acceptUrl !== 'string') return null;

@@ -248,13 +248,35 @@ export type ZenformedCoreOrganizationInvitesResponse = {
   invites: ZenformedCoreOrganizationInvite[];
 };
 
-/** `POST /organizations/me/invites`, `PATCH /organizations/me/invites/:id/cancel` */
-export type ZenformedCoreOrganizationInviteMutationResponse = {
+export type ZenformedCoreOrganizationMember =
+  ZenformedCoreOrganizationMembersResponse['members'][number];
+
+/** `POST /organizations/me/invites` — new pending invite created. */
+export type ZenformedCoreOrganizationInviteCreatedResponse = {
   organizationId: string;
   invite: ZenformedCoreOrganizationInvite;
   acceptUrl?: string;
   emailDeliveryStatus?: 'sent' | 'failed';
 };
+
+/** `POST /organizations/me/invites` — previously removed member reactivated. */
+export type ZenformedCoreOrganizationInviteReactivatedResponse = {
+  organizationId: string;
+  reactivated: true;
+  member: ZenformedCoreOrganizationMember;
+  message?: string;
+};
+
+/** `POST /organizations/me/invites`, `PATCH /organizations/me/invites/:id/cancel` */
+export type ZenformedCoreOrganizationInviteMutationResponse =
+  | ZenformedCoreOrganizationInviteCreatedResponse
+  | ZenformedCoreOrganizationInviteReactivatedResponse;
+
+export function isOrganizationInviteReactivatedResponse(
+  response: ZenformedCoreOrganizationInviteMutationResponse
+): response is ZenformedCoreOrganizationInviteReactivatedResponse {
+  return 'reactivated' in response && response.reactivated === true;
+}
 
 /** `GET /organizations/invites/lookup` */
 export type ZenformedCoreOrganizationInviteLookupResponse = {
