@@ -3,7 +3,6 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import type { AuthChangeEvent, User } from '@supabase/supabase-js';
 import type { SaaSEntitlementSnapshot } from '@/application/ports';
-import { mapLegacyProfilesFieldsToSnapshot } from '@/application/entitlements/legacyProfilesEntitlementMapping';
 import { getRuntimeEntitlementSourceMode } from '@/infrastructure/config/runtimeEntitlementSource';
 import { runtimeModes } from '@/infrastructure/config/runtimeModes';
 import { parseEntitlementSnapshotJson } from '@/infrastructure/coreApi/parseResponse';
@@ -11,6 +10,7 @@ import {
   resolveSaasProfileAuthReaction,
   shouldApplyAuthCallbackSession,
   shouldShowSaasProfileFullPageLoading,
+  inactiveAppEntitlementSnapshot,
 } from '@zenformed/core';
 import { BUILD_CORE_APP_SLUG } from '@/infrastructure/entitlements/buildCoreZenformedAppContext';
 import {
@@ -98,11 +98,8 @@ function resolveEntitlementSnapshot(
     getRuntimeEntitlementSourceMode() === 'core' &&
     runtimeModes.isSaasMode() &&
     !runtimeModes.useMockAuth();
-  const legacy = mapLegacyProfilesFieldsToSnapshot({
-    subscription_status: profile.subscription_status,
-    license_tier: profile.license_tier,
-  });
-  if (!coreRuntimeEnabled) return legacy;
+  const inactive = inactiveAppEntitlementSnapshot(BUILD_CORE_APP_SLUG);
+  if (!coreRuntimeEnabled) return inactive;
   switch (resolution.status) {
     case 'from_core':
       return resolution.snapshot;
@@ -113,7 +110,7 @@ function resolveEntitlementSnapshot(
     case 'core_unreachable':
     case 'unused':
     default:
-      return cachedCoreEntitlement ?? legacy;
+      return cachedCoreEntitlement ?? inactive;
   }
 }
 
@@ -157,8 +154,8 @@ async function fetchEntitlementSnapshotFromInternalRelay(
     return { status: 'core_unreachable' };
   }
 
-  if (res.ok && isCoreRelaySuccess(relay)) {
-    const snap = parseEntitlementSnapshotJson(body.entitlement);
+  if (res.ok && (isCoreRelaySuccess(relay) || relay.relay === 'platform_tables')) {
+    const snap = parseEntitlementSnapshotJson(body.entitlement, BUILD_CORE_APP_SLUG);
     if (snap != null) return { status: 'from_core', snapshot: snap };
     return { status: 'from_profile_fallback' };
   }

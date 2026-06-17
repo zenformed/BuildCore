@@ -102,7 +102,10 @@ export function useBuildCoreDashboard(): {
     }
   }, [user?.tenantId, setTenantId]);
 
-  const effectiveLicenseTier = entitlementSnapshot?.licenseTier ?? saasProfile?.license_tier;
+  const appPlanSlug =
+    entitlementSnapshot?.subscriptionActive === true
+      ? entitlementSnapshot.planSlugNormalized
+      : undefined;
   const organizationRoleLabel = formatOrganizationRoleLabel(organizationMembershipContext?.role);
   const organizationPermissions =
     organizationMembershipContext?.permissions ?? EMPTY_ORGANIZATION_PERMISSIONS;
@@ -163,7 +166,7 @@ export function useBuildCoreDashboard(): {
       logoUrl,
       hasLogo,
       brandingLoading,
-      effectiveLicenseTier,
+      effectiveLicenseTier: appPlanSlug,
       organizationRoleLabel,
       canAccessBuildCoreTeams: canAccessBuildCoreTeamsNav,
       canAccessBuildCoreReports: canAccessBuildCoreReportsNav,
@@ -199,7 +202,7 @@ export function useBuildCoreDashboard(): {
       canAccessBuildCoreTeamsNav,
       canAccessBuildCoreWorkflowStagesNav,
       isOrganizationPermissionsLoading,
-      effectiveLicenseTier,
+      appPlanSlug,
       entitlementSnapshot,
       getAccessToken,
       hasAvatarPhoto,

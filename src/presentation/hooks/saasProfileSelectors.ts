@@ -1,30 +1,14 @@
 import type { SaaSEntitlementSnapshot } from '@/application/ports';
-import type { SaaSProfile, LicenseTier, OrganizationMembershipKind } from './useSaaSProfile';
+import type { SaaSProfile } from './useSaaSProfile';
+import { isAppEntitlementActive } from '@zenformed/core';
 
 /**
- * Tier from entitlement snapshot (legacy-derived via useSaaSProfile entitlementSnapshot).
- * Defaults to STANDARD when missing.
- */
-export function getLicenseTierFromSnapshot(
-  snapshot: SaaSEntitlementSnapshot | null | undefined
-): LicenseTier {
-  return snapshot?.licenseTier === 'PRO' ? 'PRO' : 'STANDARD';
-}
-
-/**
- * True when snapshot indicates active subscription access.
+ * Active BuildCore app entitlement from platform_app_entitlements (via Core relay).
  */
 export function isSubscriptionActiveFromSnapshot(
   snapshot: SaaSEntitlementSnapshot | null | undefined
 ): boolean {
-  return snapshot?.subscriptionActive ?? false;
-}
-
-/**
- * PRO-gated features: active subscription and PRO tier.
- */
-export function hasProAccessFromSnapshot(snapshot: SaaSEntitlementSnapshot | null | undefined): boolean {
-  return (snapshot?.subscriptionActive ?? false) && snapshot?.licenseTier === 'PRO';
+  return isAppEntitlementActive(snapshot);
 }
 
 /**
@@ -42,7 +26,7 @@ export function requiresOnboarding(
   profile: SaaSProfile | null | undefined,
   membershipContext?: {
     hasNonPersonalOrganizationMembership?: boolean;
-    membershipKind?: OrganizationMembershipKind;
+    membershipKind?: import('./useSaaSProfile').OrganizationMembershipKind;
   } | null
 ): boolean {
   if (hasCompanyProfile(profile)) return false;

@@ -1,6 +1,5 @@
 import type { Session, User } from '@supabase/supabase-js';
 import type { SaaSEntitlementSnapshot } from '@/application/ports';
-import { mapLegacyProfilesFieldsToSnapshot } from '@/application/entitlements/legacyProfilesEntitlementMapping';
 import type { CorePlatformStatus, SaaSProfile, MembershipContextStatus, EntitlementResolutionStatus } from '@/presentation/hooks/useSaaSProfile';
 import { hasCompanyProfile, requiresOnboarding, requiresPasswordReset } from '@/presentation/hooks/saasProfileSelectors';
 import { getRuntimeEntitlementSourceMode } from '@/infrastructure/config/runtimeEntitlementSource';
@@ -56,23 +55,18 @@ export function getSaaSAuthGateDecision(
     }
   }
 
-  const legacyEntitlement = mapLegacyProfilesFieldsToSnapshot({
-    subscription_status: profile.subscription_status,
-    license_tier: profile.license_tier,
-  });
-
   const coreEntitlementPending =
     getRuntimeEntitlementSourceMode() === 'core' &&
     runtimeModes.isSaasMode() &&
     !runtimeModes.useMockAuth() &&
     isZenformedCorePlatformRequired() &&
     entitlementResolutionStatus === 'pending' &&
-    !legacyEntitlement.subscriptionActive;
+    !(entitlementSnapshot?.subscriptionActive ?? false);
   if (coreEntitlementPending) {
     return 'loadingProfile';
   }
 
-  if (!(entitlementSnapshot?.subscriptionActive ?? legacyEntitlement.subscriptionActive)) {
+  if (!(entitlementSnapshot?.subscriptionActive ?? false)) {
     return 'licenseRequired';
   }
   return 'allowed';
