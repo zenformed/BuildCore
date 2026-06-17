@@ -1,11 +1,24 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { env } from '@/infrastructure/config/env';
-import { coreUpstreamHttpResponsePayload } from '@/infrastructure/coreApi/zenformedCoreRelayHttp';
+import {
+  coreUpstreamHttpResponsePayload,
+  ORGANIZATION_WORKSPACE_NO_STORE_HEADERS,
+} from '@/infrastructure/coreApi/zenformedCoreRelayHttp';
 import type { CoreApiResult } from '@/infrastructure/coreApi/types';
 import { runtimeModes } from '@/infrastructure/config/runtimeModes';
 import { getSupabaseUserFromToken } from '@/infrastructure/supabase/supabaseServer';
 import type { OrganizationPermissions } from '@zenformed/core/organization-settings';
 import { requireOrganizationPermission } from '@/infrastructure/organization/organizationPermissionEnforcement';
+
+function relayJson(body: unknown, init?: ResponseInit): NextResponse {
+  return NextResponse.json(body, {
+    ...init,
+    headers: {
+      ...ORGANIZATION_WORKSPACE_NO_STORE_HEADERS,
+      ...(init?.headers ?? {}),
+    },
+  });
+}
 
 export function readBearer(request: NextRequest): string | null {
   const authHeader = request.headers.get('Authorization');
@@ -18,7 +31,7 @@ export async function relayOrganizationPublicGet<T extends Record<string, unknow
   fetchCore: () => Promise<CoreApiResult<T>>
 ): Promise<NextResponse> {
   if (!runtimeModes.isSaasMode() || runtimeModes.useMockAuth()) {
-    return NextResponse.json(
+    return relayJson(
       {
         error: 'bad_request',
         message: 'Organization relay requires SaaS mode with real Supabase auth.',
@@ -28,7 +41,7 @@ export async function relayOrganizationPublicGet<T extends Record<string, unknow
   }
 
   if (env.zenformedCoreApiBaseUrl == null) {
-    return NextResponse.json({
+    return relayJson({
       relay: 'client_supabase_deprecated',
       reason: 'core_unconfigured',
     });
@@ -39,10 +52,10 @@ export async function relayOrganizationPublicGet<T extends Record<string, unknow
     if (result.error.kind === 'http_error') {
       const upstream = coreUpstreamHttpResponsePayload(result.error);
       if (upstream != null) {
-        return NextResponse.json(upstream.json, { status: upstream.status });
+        return relayJson(upstream.json, { status: upstream.status });
       }
     }
-    return NextResponse.json(
+    return relayJson(
       {
         relay: 'error',
         error: 'zenformed_core_unreachable',
@@ -52,7 +65,7 @@ export async function relayOrganizationPublicGet<T extends Record<string, unknow
     );
   }
 
-  return NextResponse.json({
+  return relayJson({
     relay: 'zenformed_core',
     ...result.data,
   });
@@ -63,7 +76,7 @@ export async function relayOrganizationGet<T extends Record<string, unknown>>(
   fetchCore: (token: string) => Promise<CoreApiResult<T>>
 ): Promise<NextResponse> {
   if (!runtimeModes.isSaasMode() || runtimeModes.useMockAuth()) {
-    return NextResponse.json(
+    return relayJson(
       {
         error: 'bad_request',
         message: 'Organization relay requires SaaS mode with real Supabase auth.',
@@ -75,11 +88,11 @@ export async function relayOrganizationGet<T extends Record<string, unknown>>(
   const raw = readBearer(request);
   const user = await getSupabaseUserFromToken(request.headers.get('Authorization'));
   if (!user || !raw) {
-    return NextResponse.json({ error: 'unauthenticated' }, { status: 401 });
+    return relayJson({ error: 'unauthenticated' }, { status: 401 });
   }
 
   if (env.zenformedCoreApiBaseUrl == null) {
-    return NextResponse.json({
+    return relayJson({
       relay: 'client_supabase_deprecated',
       reason: 'core_unconfigured',
     });
@@ -90,30 +103,30 @@ export async function relayOrganizationGet<T extends Record<string, unknown>>(
     if (result.error.kind === 'http_error') {
       const st = result.error.status;
       if (st === 401) {
-        return NextResponse.json({ error: 'unauthenticated' }, { status: 401 });
+        return relayJson({ error: 'unauthenticated' }, { status: 401 });
       }
       if (st === 403) {
         const upstream = coreUpstreamHttpResponsePayload(result.error);
         if (upstream != null) {
-          return NextResponse.json(upstream.json, { status: 403 });
+          return relayJson(upstream.json, { status: 403 });
         }
-        return NextResponse.json({ error: 'forbidden' }, { status: 403 });
+        return relayJson({ error: 'forbidden' }, { status: 403 });
       }
       if (st === 404) {
-        return NextResponse.json({ relay: 'zenformed_core', error: 'organization_not_found' }, { status: 404 });
+        return relayJson({ relay: 'zenformed_core', error: 'organization_not_found' }, { status: 404 });
       }
       if (st === 502 || st === 503) {
         const upstream = coreUpstreamHttpResponsePayload(result.error);
         if (upstream != null) {
-          return NextResponse.json(upstream.json, { status: upstream.status });
+          return relayJson(upstream.json, { status: upstream.status });
         }
       }
       const upstream = coreUpstreamHttpResponsePayload(result.error);
       if (upstream != null) {
-        return NextResponse.json(upstream.json, { status: upstream.status });
+        return relayJson(upstream.json, { status: upstream.status });
       }
     }
-    return NextResponse.json(
+    return relayJson(
       {
         relay: 'error',
         error: 'zenformed_core_unreachable',
@@ -123,7 +136,7 @@ export async function relayOrganizationGet<T extends Record<string, unknown>>(
     );
   }
 
-  return NextResponse.json({
+  return relayJson({
     relay: 'zenformed_core',
     ...result.data,
   });
@@ -139,7 +152,7 @@ export async function relayOrganizationMutate<T extends Record<string, unknown>>
   }
 ): Promise<NextResponse> {
   if (!runtimeModes.isSaasMode() || runtimeModes.useMockAuth()) {
-    return NextResponse.json(
+    return relayJson(
       {
         error: 'bad_request',
         message: 'Organization relay requires SaaS mode with real Supabase auth.',
@@ -151,11 +164,11 @@ export async function relayOrganizationMutate<T extends Record<string, unknown>>
   const raw = readBearer(request);
   const user = await getSupabaseUserFromToken(request.headers.get('Authorization'));
   if (!user || !raw) {
-    return NextResponse.json({ error: 'unauthenticated' }, { status: 401 });
+    return relayJson({ error: 'unauthenticated' }, { status: 401 });
   }
 
   if (env.zenformedCoreApiBaseUrl == null) {
-    return NextResponse.json({
+    return relayJson({
       relay: 'client_supabase_deprecated',
       reason: 'core_unconfigured',
     });
@@ -164,7 +177,7 @@ export async function relayOrganizationMutate<T extends Record<string, unknown>>
   if (options?.requiredPermission != null) {
     const permission = await requireOrganizationPermission(raw, options.requiredPermission);
     if (!permission.ok) {
-      return NextResponse.json(
+      return relayJson(
         { error: 'forbidden', message: 'You do not have permission to perform this action.' },
         { status: 403 }
       );
@@ -176,36 +189,36 @@ export async function relayOrganizationMutate<T extends Record<string, unknown>>
     if (result.error.kind === 'http_error') {
       const st = result.error.status;
       if (st === 401) {
-        return NextResponse.json({ error: 'unauthenticated' }, { status: 401 });
+        return relayJson({ error: 'unauthenticated' }, { status: 401 });
       }
       if (st === 403) {
         const upstream = coreUpstreamHttpResponsePayload(result.error);
         if (upstream != null) {
-          return NextResponse.json(upstream.json, { status: 403 });
+          return relayJson(upstream.json, { status: 403 });
         }
-        return NextResponse.json({ error: 'forbidden' }, { status: 403 });
+        return relayJson({ error: 'forbidden' }, { status: 403 });
       }
       if (st === 404) {
-        return NextResponse.json({ relay: 'zenformed_core', error: 'organization_not_found' }, { status: 404 });
+        return relayJson({ relay: 'zenformed_core', error: 'organization_not_found' }, { status: 404 });
       }
       if (st === 400 || st === 409 || st === 413) {
         const upstream = coreUpstreamHttpResponsePayload(result.error);
         if (upstream != null) {
-          return NextResponse.json(upstream.json, { status: upstream.status });
+          return relayJson(upstream.json, { status: upstream.status });
         }
       }
       if (st === 502 || st === 503) {
         const upstream = coreUpstreamHttpResponsePayload(result.error);
         if (upstream != null) {
-          return NextResponse.json(upstream.json, { status: upstream.status });
+          return relayJson(upstream.json, { status: upstream.status });
         }
       }
       const upstream = coreUpstreamHttpResponsePayload(result.error);
       if (upstream != null) {
-        return NextResponse.json(upstream.json, { status: upstream.status });
+        return relayJson(upstream.json, { status: upstream.status });
       }
     }
-    return NextResponse.json(
+    return relayJson(
       {
         relay: 'error',
         error: options?.rejectedError ?? 'zenformed_core_unreachable',
@@ -215,7 +228,7 @@ export async function relayOrganizationMutate<T extends Record<string, unknown>>
     );
   }
 
-  return NextResponse.json(
+  return relayJson(
     {
       relay: 'zenformed_core',
       ...result.data,

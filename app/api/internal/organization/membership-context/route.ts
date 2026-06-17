@@ -8,6 +8,7 @@ import { getSupabaseUserFromToken } from '@/infrastructure/supabase/supabaseServ
 import { readBearer } from '../coreOrganizationRelay';
 
 export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 export async function GET(request: NextRequest) {
   if (!runtimeModes.isSaasMode() || runtimeModes.useMockAuth()) {

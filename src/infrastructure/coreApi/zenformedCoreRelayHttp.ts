@@ -1,5 +1,12 @@
 import type { CoreApiError } from '@/infrastructure/coreApi/types';
 
+/** Prevent CDN/proxy/browser caching of organization workspace BFF responses. */
+export const ORGANIZATION_WORKSPACE_NO_STORE_HEADERS = {
+  'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+  Pragma: 'no-cache',
+  Expires: '0',
+} as const;
+
 /**
  * When ZenformedCore returns HTTP 5xx, surface the same status on the Forge BFF so local dev
  * does not see a generic 502 for upstream misconfiguration (e.g. Core **503** when Core’s Supabase env is incomplete).

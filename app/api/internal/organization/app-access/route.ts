@@ -3,6 +3,7 @@ import { getOrganizationAppAccess } from '@/infrastructure/coreApi/organizationW
 import { relayOrganizationGet } from '../coreOrganizationRelay';
 
 export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 export async function GET(request: NextRequest) {
   return relayOrganizationGet(request, getOrganizationAppAccess);

@@ -15,6 +15,7 @@ import { relayOrganizationGet, relayOrganizationMutate } from '../coreOrganizati
 
 
 export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 
 
