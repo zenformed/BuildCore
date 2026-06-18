@@ -1,6 +1,7 @@
 'use client';
 
 import type { ReactElement } from 'react';
+import { useMemo } from 'react';
 import { ThemeToggle } from '@/presentation/components/ThemeToggle';
 import {
   pickHeaderShellClassNames,
@@ -12,6 +13,7 @@ import {
   ZenformedDashboardHeader,
   useZenformedAppLaunch,
   useZenformedMobileShellLayout,
+  resolveAccountMenuUser,
   type ZenformedAccountMenuLabels,
 } from '@zenformed/core/dashboard-shell';
 import { buildCoreDashboardNavigation as nav } from '@/platform/navigation/buildCoreDashboardNavigation';
@@ -86,7 +88,13 @@ export function BuildCoreDashboardHeader({
   onSidebarSelect,
   sidebarNavAccess,
 }: BuildCoreDashboardHeaderProps): ReactElement {
-  const { session } = useSaaSProfile();
+  const { session, user: saasUser } = useSaaSProfile();
+  const accountUser = useMemo(() => {
+    if (user == null) return null;
+    return resolveAccountMenuUser(user.email, saasUser?.user_metadata, {
+      displayName: user.displayName ?? null,
+    });
+  }, [saasUser?.user_metadata, user]);
   const isMobileShell = useZenformedMobileShellLayout();
   const { launchApp, launchingAppId, launchError } = useZenformedAppLaunch({
     launchApiUrl: '/api/internal/app-launch',
@@ -113,7 +121,7 @@ export function BuildCoreDashboardHeader({
   return (
     <ZenformedDashboardHeader
       classNames={headerShellClassNames}
-      user={user}
+      user={accountUser}
       avatarUrl={avatarUrl}
       avatarLoading={avatarLoading}
       effectiveLicenseTier={effectiveLicenseTier}
