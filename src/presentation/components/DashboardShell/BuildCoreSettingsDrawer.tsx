@@ -17,6 +17,7 @@ import {
 import {
   buildCoreDashboardNavigation as nav,
 } from '@/platform/navigation/buildCoreDashboardNavigation';
+import { env } from '@/infrastructure/config/env';
 import { useBrandingContext } from '@/presentation/providers/BrandingProvider';
 
 export type BuildCoreSettingsDrawerProps = {
@@ -46,12 +47,18 @@ export function BuildCoreSettingsDrawer({
       members: nav.apis.organizationMembers,
       invites: nav.apis.organizationInvites,
       seats: nav.apis.organizationSeats,
-      appAccess: nav.apis.organizationAppAccess,
+      appEntitlements: nav.apis.organizationAppEntitlements,
       memberRole: nav.apis.organizationMemberRole,
     },
     getAccessToken,
     enabled: open,
   });
+
+  const handleManageAppSubscription = useCallback((appSlug: string) => {
+    onClose();
+    const platformOrigin = env.platformPublicAppUrl.replace(/\/+$/, '');
+    window.location.assign(`${platformOrigin}/products/${encodeURIComponent(appSlug)}`);
+  }, [onClose]);
 
   const workspacePermissions = orgWorkspace.snapshot?.membershipContext?.permissions ?? null;
 
@@ -151,6 +158,8 @@ export function BuildCoreSettingsDrawer({
       onUpdateMemberProfile: orgWorkspace.updateMemberProfile,
       onRemoveMember: orgWorkspace.removeMember,
       currentUserRole: orgWorkspace.snapshot?.membershipContext?.role ?? null,
+      onManageAppSubscription: handleManageAppSubscription,
+      appBillingIconBaseUrl: env.platformPublicAppUrl,
     },
   }), [
     workspacePermissions,
@@ -195,6 +204,7 @@ export function BuildCoreSettingsDrawer({
     orgWorkspace.updateMemberRole,
     orgWorkspace.updateMemberProfile,
     orgWorkspace.removeMember,
+    handleManageAppSubscription,
   ]);
 
   return (

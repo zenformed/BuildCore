@@ -23,6 +23,7 @@ export const buildCoreDashboardNavigation = {
     organizationMemberRole: '/api/internal/organization/members',
     organizationInvites: '/api/internal/organization/invites',
     organizationSeats: '/api/internal/organization/seats',
+    organizationAppEntitlements: '/api/internal/apps/entitlements',
     organizationAppAccess: '/api/internal/organization/app-access',
     organizationAssignmentIdentities: '/api/internal/organization/assignment-identities',
   },
