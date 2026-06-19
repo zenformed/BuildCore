@@ -58,6 +58,18 @@
   color: var(--color-text-muted, #64748b);
 }
 
+.appCardBody {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+  min-width: 0;
+}
+
+.appCardBadges {
+  /* Reserved for dashboard-shell CSS contract */
+}
+
 .appCardTitle {
   margin: 0;
   font-size: 0.9375rem;
