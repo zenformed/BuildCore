@@ -24,6 +24,7 @@ export const buildCoreDashboardNavigation = {
     organizationInvites: '/api/internal/organization/invites',
     organizationSeats: '/api/internal/organization/seats',
     organizationAppEntitlements: '/api/internal/apps/entitlements',
+    cancelAppSubscription: '/api/internal/billing/subscriptions/cancel',
     organizationAppAccess: '/api/internal/organization/app-access',
     organizationAssignmentIdentities: '/api/internal/organization/assignment-identities',
   },

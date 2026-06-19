@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useMemo, type ReactElement } from 'react';
+import { useCallback, useMemo, useState, type ReactElement } from 'react';
 import { useOrganizationLogoUpload } from '@zenformed/core/dashboard-shell';
 import {
   brandingProfileToViewModelOverrides,
@@ -10,6 +10,7 @@ import {
   useZenformedUserSettings,
   workspaceSnapshotToViewModelOverrides,
   userSettingsToViewModelOverrides,
+  DEFAULT_ORGANIZATION_SETTINGS_LABELS,
   ZenformedOrganizationSettingsOverlay,
   type OrganizationSettingsPersistence,
   type OrganizationSettingsShellContext,
@@ -34,6 +35,8 @@ export function BuildCoreSettingsDrawer({
   getAccessToken,
 }: BuildCoreSettingsDrawerProps): ReactElement | null {
   const { refetch: refetchShellBranding } = useBrandingContext();
+  const [cancelingAppSlug, setCancelingAppSlug] = useState<string | null>(null);
+  const [cancelSubscriptionError, setCancelSubscriptionError] = useState<string | null>(null);
 
   const userSettings = useZenformedUserSettings({
     settingsApiUrl: nav.apis.usersMeSettings,
@@ -59,6 +62,39 @@ export function BuildCoreSettingsDrawer({
     const platformOrigin = env.platformPublicAppUrl.replace(/\/+$/, '');
     window.location.assign(`${platformOrigin}/products/${encodeURIComponent(appSlug)}`);
   }, [onClose]);
+
+  const handleCancelAppSubscription = useCallback(
+    async (appSlug: string) => {
+      const token = getAccessToken()?.trim() ?? '';
+      if (!token) return false;
+      setCancelSubscriptionError(null);
+      setCancelingAppSlug(appSlug);
+      try {
+        const res = await fetch(nav.apis.cancelAppSubscription, {
+          method: 'POST',
+          cache: 'no-store',
+          headers: {
+            Accept: 'application/json',
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ productSlug: appSlug }),
+        });
+        if (!res.ok) {
+          setCancelSubscriptionError(DEFAULT_ORGANIZATION_SETTINGS_LABELS.cancelSubscriptionFailed);
+          return false;
+        }
+        await orgWorkspace.refetch();
+        return true;
+      } catch {
+        setCancelSubscriptionError(DEFAULT_ORGANIZATION_SETTINGS_LABELS.cancelSubscriptionFailed);
+        return false;
+      } finally {
+        setCancelingAppSlug(null);
+      }
+    },
+    [getAccessToken, orgWorkspace.refetch]
+  );
 
   const workspacePermissions = orgWorkspace.snapshot?.membershipContext?.permissions ?? null;
 
@@ -159,6 +195,10 @@ export function BuildCoreSettingsDrawer({
       onRemoveMember: orgWorkspace.removeMember,
       currentUserRole: orgWorkspace.snapshot?.membershipContext?.role ?? null,
       onManageAppSubscription: handleManageAppSubscription,
+      onCancelAppSubscription: handleCancelAppSubscription,
+      cancelingAppSlug,
+      cancelSubscriptionError,
+      onDismissCancelSubscriptionError: () => setCancelSubscriptionError(null),
       appBillingIconBaseUrl: env.platformPublicAppUrl,
     },
   }), [
@@ -205,6 +245,9 @@ export function BuildCoreSettingsDrawer({
     orgWorkspace.updateMemberProfile,
     orgWorkspace.removeMember,
     handleManageAppSubscription,
+    handleCancelAppSubscription,
+    cancelingAppSlug,
+    cancelSubscriptionError,
   ]);
 
   return (
