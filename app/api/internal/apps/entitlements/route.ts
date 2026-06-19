@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { inactiveAppEntitlementSnapshot, type SaaSEntitlementSnapshot } from '@zenformed/core';
-import { PLATFORM_SUITE_APP_SLUGS } from '@zenformed/core/organization-settings';
-import { ORGANIZATION_WORKSPACE_NO_STORE_HEADERS } from '@/infrastructure/coreApi/zenformedCoreRelayHttp';
-import { runtimeModes } from '@/infrastructure/config/runtimeModes';
+import { ORGANIZATION_WORKSPACE_NO_STORE_HEADERS } from '@/infrastructure/coreApi/zenformedCoreRelayHttp';import { runtimeModes } from '@/infrastructure/config/runtimeModes';
 import { getSupabaseUserFromToken } from '@/infrastructure/supabase/supabaseServer';
 import { env } from '@/infrastructure/config/env';
 import { fetchCoreAppEntitlementSnapshot } from '@/infrastructure/coreApi/coreAppEntitlementRelay';
@@ -19,6 +17,8 @@ function entitlementsJson(body: unknown, init?: ResponseInit): NextResponse {
     },
   });
 }
+
+const BUILD_CORE_SUITE_APP_SLUGS = ['buildcore', 'forgecore', 'formcore', 'analyticscore'] as const;
 
 export async function GET(request: NextRequest): Promise<NextResponse> {
   if (!runtimeModes.isSaasMode() || runtimeModes.useMockAuth()) {
@@ -51,13 +51,12 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     );
   }
 
-  const entitlements: Partial<Record<(typeof PLATFORM_SUITE_APP_SLUGS)[number], SaaSEntitlementSnapshot>> =
+  const entitlements: Partial<Record<(typeof BUILD_CORE_SUITE_APP_SLUGS)[number], SaaSEntitlementSnapshot>> =
     {};
   let hadUnreachable = false;
 
   await Promise.all(
-    PLATFORM_SUITE_APP_SLUGS.map(async (appSlug) => {
-      const result = await fetchCoreAppEntitlementSnapshot(appSlug, raw);
+    BUILD_CORE_SUITE_APP_SLUGS.map(async (appSlug) => {      const result = await fetchCoreAppEntitlementSnapshot(appSlug, raw);
       if (result.ok) {
         entitlements[appSlug] = result.snapshot;
         return;

@@ -31,10 +31,9 @@ export async function fetchCoreAppEntitlementSnapshot(
   accessToken: string
 ): Promise<CoreAppEntitlementRelayResult> {
   const normalizedSlug = appSlug.trim().toLowerCase();
-  const result: CoreApiResult<{ appSlug: string; entitlement: unknown }> = await getAppEntitlement(
-    normalizedSlug,
-    accessToken
-  );
+  const result = await getAppEntitlement(normalizedSlug, accessToken, {
+    authorityMode: 'platform',
+  });
 
   if (!result.ok) {
     if (result.error.kind === 'http_error') {
@@ -49,11 +48,12 @@ export async function fetchCoreAppEntitlementSnapshot(
     return { ok: false, kind: 'unreachable' };
   }
 
+  const snapshot = result.data.entitlement;
   return {
     ok: true,
-    snapshot: mapCoreEntitlementEnvelopeToSnapshot(
-      result.data.appSlug,
-      result.data.entitlement
-    ),
+    snapshot:
+      snapshot.appSlug.trim() !== ''
+        ? snapshot
+        : mapCoreEntitlementEnvelopeToSnapshot(result.data.appSlug, snapshot),
   };
 }

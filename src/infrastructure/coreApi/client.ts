@@ -1,6 +1,7 @@
 import { env } from '@/infrastructure/config/env';
 import {
   parseAppConfigPatchOkJson,
+  parseAppEntitlementEnvelopeJson,
   parseAppEntitlementWireResponse,
   parseHealthJson,
   parseProfileEnvelopeJson,
@@ -16,6 +17,7 @@ import type {
   CoreApiError,
   CoreApiResult,
   ZenformedCoreAppConfigPatchOk,
+  ZenformedCoreAppEntitlementEnvelope,
   ZenformedCoreAppEntitlementWireResponse,
   ZenformedCoreEntitlementAuthorityMode,
   ZenformedCoreHealthBody,
@@ -288,8 +290,23 @@ export type GetAppEntitlementOptions = {
   authorityMode?: ZenformedCoreEntitlementAuthorityMode;
 };
 
-/** `GET /apps/:appSlug/entitlement` — legacy snapshot for the app; optional `authority_mode` for dual-read (server-side / BFF only). */
+/** `GET /apps/:appSlug/entitlement` — platform-first snapshot; optional `authority_mode` for dual-read (server-side / BFF only). */
 export async function getAppEntitlement(
+  appSlug: string,
+  accessToken: string,
+  options?: GetAppEntitlementOptions
+): Promise<CoreApiResult<ZenformedCoreAppEntitlementEnvelope>> {
+  const encoded = encodeURIComponent(appSlug);
+  let path = `/apps/${encoded}/entitlement`;
+  const mode = options?.authorityMode ?? 'platform';
+  if (mode !== 'legacy') {
+    path += `?authority_mode=${encodeURIComponent(mode)}`;
+  }
+  return getFromCoreWithBearer(path, accessToken, parseAppEntitlementEnvelopeJson);
+}
+
+/** Same Core route with dual-read authority metadata when needed. */
+export async function getAppEntitlementWire(
   appSlug: string,
   accessToken: string,
   options?: GetAppEntitlementOptions
