@@ -36,6 +36,8 @@ export function BuildCoreSettingsDrawer({
 }: BuildCoreSettingsDrawerProps): ReactElement | null {
   const { refetch: refetchShellBranding } = useBrandingContext();
   const [cancelingAppSlug, setCancelingAppSlug] = useState<string | null>(null);
+  const [reactivatingAppSlug, setReactivatingAppSlug] = useState<string | null>(null);
+  const [removingScheduledChangeAppSlug, setRemovingScheduledChangeAppSlug] = useState<string | null>(null);
   const [cancelSubscriptionError, setCancelSubscriptionError] = useState<string | null>(null);
 
   const userSettings = useZenformedUserSettings({
@@ -91,6 +93,66 @@ export function BuildCoreSettingsDrawer({
         return false;
       } finally {
         setCancelingAppSlug(null);
+      }
+    },
+    [getAccessToken, orgWorkspace.refetch]
+  );
+
+  const handleReactivateAppSubscription = useCallback(
+    async (appSlug: string) => {
+      const token = getAccessToken()?.trim() ?? '';
+      if (!token) return false;
+      setReactivatingAppSlug(appSlug);
+      try {
+        const res = await fetch(nav.apis.reactivateAppSubscription, {
+          method: 'POST',
+          cache: 'no-store',
+          headers: {
+            Accept: 'application/json',
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ productSlug: appSlug }),
+        });
+        if (!res.ok) {
+          return false;
+        }
+        await orgWorkspace.refetch();
+        return true;
+      } catch {
+        return false;
+      } finally {
+        setReactivatingAppSlug(null);
+      }
+    },
+    [getAccessToken, orgWorkspace.refetch]
+  );
+
+  const handleRemoveScheduledPlanChange = useCallback(
+    async (appSlug: string) => {
+      const token = getAccessToken()?.trim() ?? '';
+      if (!token) return false;
+      setRemovingScheduledChangeAppSlug(appSlug);
+      try {
+        const res = await fetch(nav.apis.removeScheduledPlanChange, {
+          method: 'POST',
+          cache: 'no-store',
+          headers: {
+            Accept: 'application/json',
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ productSlug: appSlug }),
+        });
+        if (!res.ok) {
+          return false;
+        }
+        await orgWorkspace.refetch();
+        return true;
+      } catch {
+        return false;
+      } finally {
+        setRemovingScheduledChangeAppSlug(null);
       }
     },
     [getAccessToken, orgWorkspace.refetch]
@@ -196,7 +258,11 @@ export function BuildCoreSettingsDrawer({
       currentUserRole: orgWorkspace.snapshot?.membershipContext?.role ?? null,
       onManageAppSubscription: handleManageAppSubscription,
       onCancelAppSubscription: handleCancelAppSubscription,
+      onReactivateAppSubscription: handleReactivateAppSubscription,
+      onRemoveScheduledPlanChange: handleRemoveScheduledPlanChange,
       cancelingAppSlug,
+      reactivatingAppSlug,
+      removingScheduledChangeAppSlug,
       cancelSubscriptionError,
       onDismissCancelSubscriptionError: () => setCancelSubscriptionError(null),
       appBillingIconBaseUrl: env.platformPublicAppUrl,
@@ -246,7 +312,11 @@ export function BuildCoreSettingsDrawer({
     orgWorkspace.removeMember,
     handleManageAppSubscription,
     handleCancelAppSubscription,
+    handleReactivateAppSubscription,
+    handleRemoveScheduledPlanChange,
     cancelingAppSlug,
+    reactivatingAppSlug,
+    removingScheduledChangeAppSlug,
     cancelSubscriptionError,
   ]);
 
