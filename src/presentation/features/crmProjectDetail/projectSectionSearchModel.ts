@@ -150,6 +150,17 @@ export function filterDocumentPanelItemsBySearch(
       return haystackIncludes(haystack, query);
     }
 
+    if (item.kind === 'missing_budget') {
+      const haystack = joinHaystack([
+        item.entry.itemName,
+        formatBudgetCategory(item.entry.category),
+        'missing',
+        'required',
+        'budget',
+      ]);
+      return haystackIncludes(haystack, query);
+    }
+
     const haystack = joinHaystack([
       item.document.name,
       formatDocumentKind(item.document.kind),

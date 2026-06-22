@@ -7,9 +7,11 @@ import { BUILDCORE_UPLOAD_ALLOWED_EXTENSIONS } from '@/domain/crm/buildCoreUploa
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
 import { formatWorkflowTaskStageLabel } from '@/presentation/features/crmProjectDetail/crmProjectDetailFormatters';
 import {
+  buildDocumentPanelSourcesFromProject,
   filterDocumentPanelItems,
   type DocumentPanelFilter,
 } from '@/presentation/features/crmProjectDetail/documentPanelModel';
+import { formatBudgetCategory } from '@/presentation/features/crmProjectDetail/budgetCategoryLabels';
 import { useBuildCorePipelineStages } from '@/presentation/providers/BuildCorePipelineStagesProvider';
 import { filterDocumentPanelItemsBySearch } from '@/presentation/features/crmProjectDetail/projectSectionSearchModel';
 import {
@@ -61,10 +63,18 @@ export function ProjectDocumentsPanelContent({
     [project.workflowTasks]
   );
 
+  const budgetEntryById = useMemo(
+    () => new Map(project.budget.entries.map((entry) => [entry.id, entry] as const)),
+    [project.budget.entries]
+  );
+
   const items = useMemo(() => {
-    const byFilter = filterDocumentPanelItems(project.documents, project.workflowTasks, filter);
+    const byFilter = filterDocumentPanelItems(
+      buildDocumentPanelSourcesFromProject(project),
+      filter
+    );
     return filterDocumentPanelItemsBySearch(byFilter, searchQuery, stageCatalog);
-  }, [filter, project.documents, project.workflowTasks, searchQuery, stageCatalog]);
+  }, [filter, project, searchQuery, stageCatalog]);
 
   const formatDocStageLabel = (workflowTaskId: string, stageSlug: PipelineStageSlug | null) => {
     const task = taskById.get(workflowTaskId);
@@ -157,9 +167,28 @@ export function ProjectDocumentsPanelContent({
               );
             }
 
+            if (item.kind === 'missing_budget') {
+              return (
+                <li
+                  key={`missing-budget-${item.entry.id}`}
+                  className={`${styles.docListItem} ${styles.docListItem_missing}`}
+                >
+                  <WorkflowDocumentFileIcon fileName="file" mimeType="" modal />
+                  <div className={styles.docItemBody}>
+                    <span className={styles.docItemName}>{item.entry.itemName}</span>
+                    <span className={styles.docItemMeta}>
+                      {docsContent.missingForBudgetEntry} · {formatBudgetCategory(item.entry.category)}
+                    </span>
+                  </div>
+                  <span className={styles.docCompletionMissing}>0/1</span>
+                </li>
+              );
+            }
+
             const doc = item.document;
             const isBusy = busyDocId === doc.id;
             const isProjectMedia = doc.workflowTaskId == null && doc.budgetEntryId == null;
+            const budgetEntry = doc.budgetEntryId ? budgetEntryById.get(doc.budgetEntryId) : undefined;
 
             return (
               <li key={doc.id} className={`${styles.docListItem} ${styles.docListItem_hasFile}`}>
@@ -198,9 +227,11 @@ export function ProjectDocumentsPanelContent({
                       ? 'Project file'
                       : doc.workflowTaskId
                         ? formatDocStageLabel(doc.workflowTaskId, doc.stageSlug)
-                        : doc.stageSlug
-                          ? formatWorkflowTaskStageLabel({ stageSlug: doc.stageSlug, amountCents: null }, stageCatalog)
-                          : docsContent.noStage}
+                        : budgetEntry
+                          ? `${docsContent.uploadedForBudgetEntry} · ${budgetEntry.itemName} · ${formatBudgetCategory(budgetEntry.category)}`
+                          : doc.stageSlug
+                            ? formatWorkflowTaskStageLabel({ stageSlug: doc.stageSlug, amountCents: null }, stageCatalog)
+                            : docsContent.noStage}
                     {doc.uploadedAt ? ` · ${formatShortDate(doc.uploadedAt)}` : null}
                     {` · ${formatFileSize(doc.sizeBytes)}`}
                   </span>

@@ -426,7 +426,7 @@ export async function getCrmProjectDetailBySlugForOrg(
     supabase
       .from('crm_project_budget_entries')
       .select(
-        'id, project_id, item_name, category, cost_cents, budget_cents, notes, assigned_to, cost_incurred_at, created_at, updated_at, created_by'
+        'id, project_id, item_name, category, cost_cents, budget_cents, notes, assigned_to, cost_incurred_at, documents_required, created_at, updated_at, created_by'
       )
       .eq('project_id', project.id)
       .is('deleted_at', null)

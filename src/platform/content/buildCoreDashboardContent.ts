@@ -809,6 +809,8 @@ export const buildCoreDashboardContent = {
       },
       noStage: 'No stage',
       missingForTask: 'Required for task',
+      missingForBudgetEntry: 'Required for budget item',
+      uploadedForBudgetEntry: 'Budget item',
       placeholderMeta: 'Required · not uploaded',
       placeholders: ['Signed estimate', 'Site photos', 'Permit packet'],
       viewAll: 'View all documents',
