@@ -22,7 +22,7 @@ import { consumeCrmProjectDeleteSuccessToast } from '@/presentation/features/crm
 import { useSaaSProfile } from '@/presentation/hooks/useSaaSProfile';
 import { DetailPanelHeaderButton } from '@/presentation/components/CrmProjectDetail/DetailPanelHeaderButton';
 import { DetailPanelSectionRefresh } from '@/presentation/components/CrmProjectDetail/DetailPanelSectionRefresh';
-import { CrmProjectDeleteConfirmModal } from '@/presentation/components/CrmProjects/CrmProjectDeleteConfirmModal';
+import { CrmProjectDeleteWorkflowDialog } from '@/presentation/components/CrmProjects/CrmProjectDeleteWorkflowDialog';
 import { CreateCrmProjectModal } from '@/presentation/components/CrmProjects/CreateCrmProjectModal';
 import { DetailToast } from '@/presentation/components/CrmProjectDetail/DetailToast';
 import { ConfirmModal } from '@/presentation/components/ConfirmModal';
@@ -341,8 +341,10 @@ export function CrmProjectsPipeline({
         onCreated={handleProjectCreated}
         onTemplateToast={(nextToast) => setToast(nextToast)}
       />
-      <CrmProjectDeleteConfirmModal
+      <CrmProjectDeleteWorkflowDialog
         pendingProject={pendingDeleteProject}
+        workflowCopy={content.crm.delete.workflow}
+        confirmDisabled={deletingProjectId != null}
         onClose={() => setPendingDeleteProject(null)}
         onConfirm={() => void handleConfirmDelete()}
       />

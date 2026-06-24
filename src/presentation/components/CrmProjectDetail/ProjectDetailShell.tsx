@@ -309,6 +309,7 @@ function ProjectDetailShellBody({
               pendingDeleteProject={pendingDeleteProject}
               onCloseDelete={() => setPendingDeleteProject(null)}
               onConfirmDelete={() => void handleConfirmDelete()}
+              deleteConfirmDisabled={deleting}
             />
             {saveTemplate.open ? (
               <SaveProjectTemplateDialog

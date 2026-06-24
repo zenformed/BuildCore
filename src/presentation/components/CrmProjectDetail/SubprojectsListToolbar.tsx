@@ -4,7 +4,8 @@ import type { ReactElement } from 'react';
 import type { BulkSelectionToolbarAction } from '@/presentation/components/BulkSelection';
 import { BulkSelectionToolbar } from '@/presentation/components/BulkSelection';
 import bulkSelectionStyles from '@/presentation/components/BulkSelection/BulkSelection.module.css';
-import { EntityFilterMenu } from '@/presentation/components/filters/EntityFilterMenu';
+import { CrmProjectsFilterMenu } from '@/presentation/components/CrmProjects/CrmProjectsFilterMenu';
+import type { CrmProjectsListFilters } from '@/presentation/features/crmProjects/crmProjectsPipelineViewModel';
 import type { RadiusFilterState } from '@/presentation/features/filters/radiusFilterModel';
 import { DetailPanelHeaderButton } from './DetailPanelHeaderButton';
 import { DetailPanelSectionRefresh } from './DetailPanelSectionRefresh';
@@ -27,6 +28,8 @@ export type SubprojectsListToolbarProps = {
   readonly canUseBulkActions: boolean;
   readonly selectLabel: string;
   readonly onEnterSelectionMode: () => void;
+  readonly listFilters: CrmProjectsListFilters;
+  readonly onListFiltersChange: (filters: CrmProjectsListFilters) => void;
   readonly radiusFilter: RadiusFilterState;
   readonly onRadiusFilterChange: (filter: RadiusFilterState) => void;
   readonly selectionMode?: boolean;
@@ -55,6 +58,8 @@ export function SubprojectsListToolbar({
   canUseBulkActions,
   selectLabel,
   onEnterSelectionMode,
+  listFilters,
+  onListFiltersChange,
   radiusFilter,
   onRadiusFilterChange,
   selectionMode = false,
@@ -85,7 +90,10 @@ export function SubprojectsListToolbar({
   return (
     <>
       {expanded ? (
-        <EntityFilterMenu
+        <CrmProjectsFilterMenu
+          filters={listFilters}
+          onChange={onListFiltersChange}
+          stageScopeMode="subproject"
           radiusFilter={radiusFilter}
           onRadiusFilterChange={onRadiusFilterChange}
         />

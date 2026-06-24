@@ -391,6 +391,16 @@ export const buildCoreDashboardContent = {
       notFound: 'Project not found.',
       mockDisabledMessage:
         'Deleting projects in the database requires NEXT_PUBLIC_CRM_DATA_SOURCE=api. Mock mode keeps existing demo data read-only.',
+      workflow: {
+        title: 'Delete Project',
+        itemLabel: 'project',
+        intentActionLabel: 'I want to delete this project',
+        finalActionLabel: 'Delete Project',
+        consequenceDescription:
+          'This action permanently deletes this project and all associated data.',
+        affectedDataSummary:
+          'Affected data includes Subprojects, Workflow Tasks, Payments, Budget Entries, Documents, Reporting Data, and Accountability Records.',
+      },
     },
   },
   bulkSelection: {
@@ -692,6 +702,16 @@ export const buildCoreDashboardContent = {
         confirmMessage: (name: string): string =>
           `"${name}" will be permanently removed. This subproject and its data will no longer be accessible.`,
         success: 'Subproject deleted.',
+        workflow: {
+          title: 'Delete Subproject',
+          itemLabel: 'subproject',
+          intentActionLabel: 'I want to delete this subproject',
+          finalActionLabel: 'Delete Subproject',
+          consequenceDescription:
+            'This action permanently deletes this subproject and all associated data.',
+          affectedDataSummary:
+            'Affected data includes Workflow Tasks, Payments, Budget Entries, Documents, Reporting Data, and Accountability Records.',
+        },
       },
       bulkDelete: {
         itemLabel: 'subproject',

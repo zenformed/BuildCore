@@ -9,8 +9,10 @@ import {
   listCrmProjectSummariesSync,
 } from '@/application/use-cases/crm';
 import { getCrmDataSource } from '@/infrastructure/config/crmDataSource';
+import { resolvePipelineStageScopeForProject } from '@/domain/buildcore/orgPipelineStages';
 import { crmRepositories } from '@/shared/di/container';
 import { useCrmPaymentTasksIndexContext } from '@/presentation/providers/CrmPaymentTasksIndexProvider';
+import { useBuildCorePipelineStages } from '@/presentation/providers/BuildCorePipelineStagesProvider';
 import {
   EMPTY_CRM_PROJECTS_LIST_FILTERS,
   EMPTY_CRM_PROJECTS_DASHBOARD_VIEW,
@@ -60,6 +62,7 @@ export function useCrmProjectsPipeline(
     isLoading: isRollupIndexesLoading,
     refetch: refetchRollupIndexes,
   } = useCrmPaymentTasksIndexContext();
+  const { getCatalog } = useBuildCorePipelineStages();
   const [allSummaries, setAllSummaries] = useState<readonly CrmProjectSummary[] | null>(() =>
     isApiSource ? null : listCrmProjectSummariesSync(crmRepositories, { rootsOnly: false })
   );
@@ -90,8 +93,12 @@ export function useCrmProjectsPipeline(
     (): CrmProjectListFilterContext => ({
       workflowTaskStatusIndex,
       workflowTaskStatusIndexReady: !isRollupIndexesLoading,
+      workflowProgressInputIndex,
+      workflowProgressInputIndexReady: !isRollupIndexesLoading,
+      resolveStagesForProject: (project) =>
+        getCatalog(resolvePipelineStageScopeForProject({ parentProjectId: project.parentProjectId })),
     }),
-    [isRollupIndexesLoading, workflowTaskStatusIndex]
+    [getCatalog, isRollupIndexesLoading, workflowProgressInputIndex, workflowTaskStatusIndex]
   );
 
   const preFilteredView = useMemo(

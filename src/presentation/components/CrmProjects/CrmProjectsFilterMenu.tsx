@@ -67,7 +67,12 @@ export function CrmProjectsFilterMenu({
     return [
       {
         scope: stageScopeMode,
-        title: copy.stageLabel,
+        title:
+          stageScopeMode === 'subproject'
+            ? stageColumnCopy.subprojectStages
+            : stageScopeMode === 'project'
+              ? stageColumnCopy.projectStages
+              : copy.stageLabel,
         stages: getCatalog(stageScopeMode),
       },
     ];

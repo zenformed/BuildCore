@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { isBuildCoreMemberRole } from '@/domain/buildcore/memberRole';
 import type { CrmProjectSummary } from '@/domain/crm';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
-import { CrmProjectDeleteConfirmModal } from '@/presentation/components/CrmProjects/CrmProjectDeleteConfirmModal';
+import { CrmProjectDeleteWorkflowDialog } from '@/presentation/components/CrmProjects/CrmProjectDeleteWorkflowDialog';
 import { CreateCrmProjectModal } from '@/presentation/components/CrmProjects/CreateCrmProjectModal';
 import { CrmProjectsTable } from '@/presentation/components/CrmProjects/CrmProjectsTable';
 import { useDashboardMobileLayout } from '@/presentation/features/crmProjects/useDashboardMobileLayout';
@@ -16,9 +16,11 @@ import { ConfirmModal } from '@/presentation/components/ConfirmModal';
 import { ProjectCompletionBlockedDialog } from '@/presentation/components/CrmProjectDetail/ProjectCompletionBlockedDialog';
 import { useBuildCorePipelineStages } from '@/presentation/providers/BuildCorePipelineStagesProvider';
 import { useSubprojectListRows } from '@/presentation/features/crmProjectDetail/useSubprojectListRows';
+import { EMPTY_CRM_PROJECTS_LIST_FILTERS } from '@/presentation/features/crmProjects/crmProjectsPipelineViewModel';
 import { EMPTY_RADIUS_FILTER, type RadiusFilterState } from '@/presentation/features/filters/radiusFilterModel';
 import { useCrmProjectDeleteConfirmation } from '@/presentation/features/crmProjects/useCrmProjectDeleteConfirmation';
 import { useCrmProjectBulkDeleteActions } from '@/presentation/features/crmProjects/useCrmProjectBulkDeleteActions';
+import { formatCrmProjectDeleteWorkflowItemLabel } from '@/presentation/features/crmProjects/crmProjectDeleteWorkflow';
 import { useCrmProjectTableRowActions } from '@/presentation/features/crmProjects/useCrmProjectTableRowActions';
 import { useCrmProjectPaymentTasksIndex } from '@/presentation/features/crmProjects/useCrmProjectPaymentTasksIndex';
 import { useCrmPaymentTasksIndexContext } from '@/presentation/providers/CrmPaymentTasksIndexProvider';
@@ -57,6 +59,7 @@ export function SubprojectsSection(): ReactElement | null {
   const canManage = !isMemberRole && !isBuildCoreMemberRole(organizationMembershipContext?.role);
   const [expanded, setExpanded] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+  const [listFilters, setListFilters] = useState(EMPTY_CRM_PROJECTS_LIST_FILTERS);
   const [radiusFilter, setRadiusFilter] = useState<RadiusFilterState>(EMPTY_RADIUS_FILTER);
   const [createOpen, setCreateOpen] = useState(false);
   const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
@@ -69,7 +72,7 @@ export function SubprojectsSection(): ReactElement | null {
   const isLoading = childSummaries?.isLoading ?? false;
   const { paymentTasksIndex, isLoading: isPaymentFinancialsLoading } =
     useCrmProjectPaymentTasksIndex();
-  const { workflowProgressInputIndex, isLoading: isWorkflowProgressLoading } =
+  const { workflowProgressInputIndex, workflowTaskStatusIndex, isLoading: isWorkflowRollupsLoading } =
     useCrmPaymentTasksIndexContext();
   const { getCatalog } = useBuildCorePipelineStages();
   const subprojectStageCatalog = getCatalog('subproject');
@@ -78,12 +81,34 @@ export function SubprojectsSection(): ReactElement | null {
       getCatalog(resolvePipelineStageScopeForProject({ parentProjectId: childProject.parentProjectId })),
     [getCatalog]
   );
+  const isWorkflowProgressLoading = isWorkflowRollupsLoading;
+  const listFilterContext = useMemo(
+    () => ({
+      workflowTaskStatusIndex,
+      workflowTaskStatusIndexReady: !isWorkflowRollupsLoading,
+      workflowProgressInputIndex,
+      workflowProgressInputIndexReady: !isWorkflowRollupsLoading,
+      resolveStagesForProject,
+    }),
+    [
+      isWorkflowRollupsLoading,
+      resolveStagesForProject,
+      workflowProgressInputIndex,
+      workflowTaskStatusIndex,
+    ]
+  );
   const {
     rows,
     isRadiusGeocoding,
     radiusGeocodingError,
     isNarrowingResults,
-  } = useSubprojectListRows(childSummaries?.allRows ?? [], searchQuery, radiusFilter);
+  } = useSubprojectListRows(
+    childSummaries?.allRows ?? [],
+    searchQuery,
+    listFilters,
+    listFilterContext,
+    radiusFilter
+  );
   const listIsLoading = isLoading || isRadiusGeocoding;
   const allSubprojectCount = childSummaries?.allRows.length ?? 0;
   const subprojectAveragePercent = useMemo(() => {
@@ -301,6 +326,8 @@ export function SubprojectsSection(): ReactElement | null {
             canUseBulkActions={canUseBulkActions}
             selectLabel={bulkSelectionCopy.select}
             onEnterSelectionMode={() => bulkSelection.enterSelectionMode()}
+            listFilters={listFilters}
+            onListFiltersChange={setListFilters}
             radiusFilter={radiusFilter}
             onRadiusFilterChange={setRadiusFilter}
             selectionMode={bulkSelection.selectionMode && canUseBulkActions}
@@ -396,19 +423,19 @@ export function SubprojectsSection(): ReactElement | null {
 
       {!isMemberRole ? (
         <>
-          <CrmProjectDeleteConfirmModal
+          <CrmProjectDeleteWorkflowDialog
             pendingProject={pendingDeleteProject}
+            workflowCopy={deleteCopy.workflow}
+            confirmDisabled={deletingProjectId != null}
             onClose={() => setPendingDeleteProject(null)}
             onConfirm={() => void handleConfirmDelete()}
-            confirmTitle={deleteCopy.confirmTitle}
-            confirmMessage={deleteCopy.confirmMessage}
           />
           <DestructiveConfirmationWorkflowDialog
             open={bulkDeleteOpen}
             title={destructiveWorkflowCopy.title}
             itemTypeLabel={bulkDeleteItemLabel}
             selectedCount={bulkSelection.selectedCount}
-            selectedItemLabels={selectedProjects.map((project) => project.name)}
+            selectedItemLabels={selectedProjects.map(formatCrmProjectDeleteWorkflowItemLabel)}
             maxVisibleItems={5}
             selectedCountMessage={destructiveWorkflowCopy.selectedCountMessage(
               bulkSelection.selectedCount,

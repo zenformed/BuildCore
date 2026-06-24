@@ -2,6 +2,8 @@ import type { CrmPriority, CrmProjectSummary, PipelineStageSlug, WorkflowTaskSta
 import { buildCrmProjectSummarySearchHaystack, projectHasAnyWorkflowTaskStatus } from '@/domain/crm';
 import type { PipelineStage } from '@/domain/crm/pipelineStage';
 import type { PipelineStageScope } from '@/domain/buildcore/orgPipelineStages';
+import { resolveDerivedWorkflowStageSlugFromProgressIndex } from '@/domain/buildcore/projectPipelineProgress';
+import type { CrmProjectWorkflowProgressInputIndex } from '@/domain/crm/projectWorkflowProgressInput';
 import type { CrmProjectWorkflowTaskStatusIndex } from '@/domain/crm/projectWorkflowTaskStatusIndex';
 import {
   projectMatchesPriorityListFilter,
@@ -41,6 +43,11 @@ export const EMPTY_CRM_PROJECTS_LIST_FILTERS: CrmProjectsListFilters = {
 export type CrmProjectListFilterContext = {
   readonly workflowTaskStatusIndex: CrmProjectWorkflowTaskStatusIndex;
   readonly workflowTaskStatusIndexReady: boolean;
+  readonly workflowProgressInputIndex?: CrmProjectWorkflowProgressInputIndex;
+  readonly workflowProgressInputIndexReady?: boolean;
+  readonly resolveStagesForProject?: (
+    project: Pick<CrmProjectSummary, 'parentProjectId'>
+  ) => readonly PipelineStage[];
 };
 
 export const EMPTY_CRM_PROJECT_LIST_FILTER_CONTEXT: CrmProjectListFilterContext = {
@@ -68,6 +75,32 @@ export function resolveCrmProjectsTableEmptyMessage(options: {
   return options.searchOrFiltersMessage;
 }
 
+/** Matches list/table stage pills — derived from workflow progress when available. */
+export function resolveProjectListFilterStageSlug(
+  project: CrmProjectSummary,
+  filterContext: CrmProjectListFilterContext
+): PipelineStageSlug {
+  const {
+    workflowProgressInputIndex,
+    workflowProgressInputIndexReady,
+    resolveStagesForProject,
+  } = filterContext;
+
+  if (
+    workflowProgressInputIndex != null &&
+    workflowProgressInputIndexReady &&
+    resolveStagesForProject != null
+  ) {
+    return resolveDerivedWorkflowStageSlugFromProgressIndex({
+      summary: project,
+      workflowProgressInputIndex,
+      stages: resolveStagesForProject(project),
+    });
+  }
+
+  return project.currentStageSlug;
+}
+
 function projectMatchesListFilters(
   project: CrmProjectSummary,
   searchQuery: string,
@@ -78,8 +111,11 @@ function projectMatchesListFilters(
   const { stageSlugs, priorities, workflowTaskStatuses } = filters;
   const { workflowTaskStatusIndex, workflowTaskStatusIndexReady } = filterContext;
 
-  if (stageSlugs.length > 0 && !stageSlugs.includes(project.currentStageSlug)) {
-    return false;
+  if (stageSlugs.length > 0) {
+    const stageSlug = resolveProjectListFilterStageSlug(project, filterContext);
+    if (!stageSlugs.includes(stageSlug)) {
+      return false;
+    }
   }
   if (priorities.length > 0 && !projectMatchesPriorityListFilter(project.priority, priorities)) {
     return false;

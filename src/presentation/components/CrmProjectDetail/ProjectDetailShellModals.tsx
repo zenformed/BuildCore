@@ -5,7 +5,7 @@ import type { CrmProjectSummary } from '@/domain/crm';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
 import { ConfirmModal } from '@/presentation/components/ConfirmModal';
 import { ProjectCompletionBlockedDialog } from '@/presentation/components/CrmProjectDetail/ProjectCompletionBlockedDialog';
-import { CrmProjectDeleteConfirmModal } from '@/presentation/components/CrmProjects/CrmProjectDeleteConfirmModal';
+import { CrmProjectDeleteWorkflowDialog } from '@/presentation/components/CrmProjects/CrmProjectDeleteWorkflowDialog';
 import { WorkflowTaskCustomerNotifyDialog } from '@/presentation/components/CrmProjectDetail/WorkflowTaskCustomerNotifyDialog';
 import type { useProjectCompletionToggle } from '@/presentation/features/crmProjectDetail/useProjectCompletionToggle';
 import type { useProjectDetailWorkspace } from '@/presentation/features/crmProjectDetail/useProjectDetailWorkspace';
@@ -32,6 +32,7 @@ export type ProjectDetailShellModalsProps = {
   pendingDeleteProject: CrmProjectSummary | null;
   onCloseDelete: () => void;
   onConfirmDelete: () => void;
+  deleteConfirmDisabled?: boolean;
 };
 
 export function ProjectDetailShellModals({
@@ -41,8 +42,10 @@ export function ProjectDetailShellModals({
   pendingDeleteProject,
   onCloseDelete,
   onConfirmDelete,
+  deleteConfirmDisabled = false,
 }: ProjectDetailShellModalsProps): ReactElement {
   const detail = content.projectDetail;
+  const deleteWorkflowCopy = content.crm.delete.workflow;
   const {
     archiveConfirmTask,
     setArchiveConfirmTask,
@@ -136,8 +139,10 @@ export function ProjectDetailShellModals({
         cancelLabel={wf.archiveTaskCancelLabel}
         variant="danger"
       />
-      <CrmProjectDeleteConfirmModal
+      <CrmProjectDeleteWorkflowDialog
         pendingProject={pendingDeleteProject}
+        workflowCopy={deleteWorkflowCopy}
+        confirmDisabled={deleteConfirmDisabled}
         onClose={onCloseDelete}
         onConfirm={onConfirmDelete}
       />

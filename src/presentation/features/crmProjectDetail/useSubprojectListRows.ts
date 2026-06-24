@@ -2,7 +2,12 @@
 
 import { useMemo } from 'react';
 import type { CrmProjectSummary } from '@/domain/crm';
-import { filterSubprojects } from '@/presentation/features/crmProjectDetail/useCrmProjectChildSummaries';
+import {
+  filterCrmProjectSummaries,
+  isCrmProjectsListFiltersActive,
+  type CrmProjectListFilterContext,
+  type CrmProjectsListFilters,
+} from '@/presentation/features/crmProjects/crmProjectsPipelineViewModel';
 import type { RadiusFilterState } from '@/presentation/features/filters/radiusFilterModel';
 import { useRadiusFilteredProjects } from '@/presentation/features/filters/useRadiusFilteredProjects';
 
@@ -17,11 +22,13 @@ export type UseSubprojectListRowsResult = {
 export function useSubprojectListRows(
   allRows: readonly CrmProjectSummary[],
   searchQuery: string,
+  listFilters: CrmProjectsListFilters,
+  filterContext: CrmProjectListFilterContext,
   radiusFilter: RadiusFilterState
 ): UseSubprojectListRowsResult {
-  const searchFilteredRows = useMemo(
-    () => filterSubprojects(allRows, searchQuery),
-    [allRows, searchQuery]
+  const listFilteredRows = useMemo(
+    () => filterCrmProjectSummaries(allRows, searchQuery, listFilters, filterContext),
+    [allRows, filterContext, listFilters, searchQuery]
   );
 
   const {
@@ -29,10 +36,13 @@ export function useSubprojectListRows(
     isGeocoding,
     geocodingError,
     isRadiusFilterActive: radiusActive,
-  } = useRadiusFilteredProjects(searchFilteredRows, radiusFilter);
+  } = useRadiusFilteredProjects(listFilteredRows, radiusFilter);
 
   const isNarrowingResults =
-    searchQuery.trim().length > 0 || radiusActive || isGeocoding;
+    searchQuery.trim().length > 0 ||
+    isCrmProjectsListFiltersActive(listFilters) ||
+    radiusActive ||
+    isGeocoding;
 
   return {
     rows,
