@@ -1,3 +1,4 @@
+import type { BulkArchiveCrmProjectsResult } from '@/domain/crm/bulkArchiveProjects';
 import type {
   CreateCrmProjectInput,
   CreateCrmProjectResult,
@@ -34,4 +35,5 @@ export interface ICrmProjectsRepository {
   getSummaryBySlug(slug: string): CrmRepositoryResult<CrmProjectSummary | null>;
   create(input: CreateCrmProjectInput): CrmRepositoryResult<CreateCrmProjectResult>;
   archive(slug: string): CrmRepositoryResult<boolean>;
+  bulkArchive(slugs: readonly string[]): CrmRepositoryResult<BulkArchiveCrmProjectsResult>;
 }

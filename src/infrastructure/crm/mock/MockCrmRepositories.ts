@@ -294,6 +294,10 @@ export class MockCrmProjectsRepository implements ICrmProjectsRepository {
     return Promise.reject(new CrmWriteNotAvailableError());
   }
 
+  bulkArchive(_slugs: readonly string[]): Promise<import('@/domain/crm/bulkArchiveProjects').BulkArchiveCrmProjectsResult> {
+    return Promise.reject(new CrmWriteNotAvailableError());
+  }
+
 }
 
 

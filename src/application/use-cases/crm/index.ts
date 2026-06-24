@@ -1,4 +1,5 @@
 export { archiveCrmProject } from './archiveCrmProject';
+export { bulkArchiveCrmProjects } from './bulkArchiveCrmProjects';
 export { archiveCrmWorkflowTask } from './archiveCrmWorkflowTask';
 export { createCrmProject } from './createCrmProject';
 export { createCrmWorkflowTask } from './createCrmWorkflowTask';

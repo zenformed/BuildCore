@@ -14,6 +14,8 @@ import {
   formatStageLabel,
 } from '@/presentation/features/crmProjects/crmProjectFormatters';
 import { useCrmProjectRowPresentation } from '@/presentation/features/crmProjects/useCrmProjectRowPresentation';
+import type { BulkSelectionBindings } from '@/presentation/features/bulkSelection/BulkSelectionBindings';
+import { BulkSelectCheckbox } from '@/presentation/components/BulkSelection';
 import { CrmProjectCompleteIcon } from '@/presentation/components/crmShared/CrmProjectCompleteIcon';
 import { CrmProjectPriorityIcon } from '@/presentation/components/crmShared/CrmProjectPriorityIcon';
 import shared from '@/presentation/components/crmShared/crmShared.module.css';
@@ -34,6 +36,7 @@ export type SubprojectMobileCardProps = {
   readonly onRequestCompletionChange?: (project: CrmProjectSummary) => void;
   readonly workflowProgressInputIndex?: CrmProjectWorkflowProgressInputIndex;
   readonly isWorkflowProgressLoading?: boolean;
+  readonly bulkSelection?: BulkSelectionBindings;
 };
 
 export function SubprojectMobileCard({
@@ -46,6 +49,7 @@ export function SubprojectMobileCard({
   busy = false,
   workflowProgressInputIndex,
   isWorkflowProgressLoading = false,
+  bulkSelection,
 }: SubprojectMobileCardProps): ReactElement {
   const tableCopy = content.crm.table;
   const fields = content.projectDetail.fields;
@@ -68,7 +72,16 @@ export function SubprojectMobileCard({
 
   return (
     <article
-      className={`${styles.card} ${styles.subprojectMobileCard}`}
+      className={[
+        styles.card,
+        styles.subprojectMobileCard,
+        bulkSelection?.mode ? styles.subprojectMobileCard_selectionMode : '',
+        bulkSelection?.mode && bulkSelection.selectedIds.has(project.id)
+          ? styles.subprojectMobileCard_selected
+          : '',
+      ]
+        .filter(Boolean)
+        .join(' ')}
       aria-label={tableCopy.subprojectRowAriaLabel(project.name)}
       aria-busy={busy || deleting || undefined}
     >
@@ -83,6 +96,14 @@ export function SubprojectMobileCard({
           <div className={styles.subprojectMobileCardGrid}>
             <div className={styles.subprojectMobileCardCol}>
               <span className={styles.subprojectMobileCardNameRow}>
+                {bulkSelection?.mode ? (
+                  <BulkSelectCheckbox
+                    className={styles.subprojectMobileCardCheckbox}
+                    checked={bulkSelection.selectedIds.has(project.id)}
+                    ariaLabel={bulkSelection.selectItemAriaLabel(project.name)}
+                    onChange={() => bulkSelection.onToggle(project.id)}
+                  />
+                ) : null}
                 {isProjectPriorityUrgent(project.priority) ? (
                   <CrmProjectPriorityIcon ariaLabel={tableCopy.priorityMarkAriaLabel} />
                 ) : null}

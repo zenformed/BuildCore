@@ -19,6 +19,8 @@ import {
   formatStageLabel,
 } from '@/presentation/features/crmProjects/crmProjectFormatters';
 import { useCrmProjectRowPresentation } from '@/presentation/features/crmProjects/useCrmProjectRowPresentation';
+import type { BulkSelectionBindings } from '@/presentation/features/bulkSelection/BulkSelectionBindings';
+import { BulkSelectCheckbox } from '@/presentation/components/BulkSelection';
 import { TeamMemberAvatar } from '@/presentation/components/CrmProjectDetail/TeamMemberAvatar';
 import { CrmProjectTableRowActionsMenu } from './CrmProjectTableRowActionsMenu';
 import shared from '@/presentation/components/crmShared/crmShared.module.css';
@@ -48,6 +50,7 @@ export type CrmProjectTableRowProps = {
   onToggleExpand?: () => void;
   workflowProgressInputIndex?: CrmProjectWorkflowProgressInputIndex;
   isWorkflowProgressLoading?: boolean;
+  bulkSelection?: BulkSelectionBindings;
 };
 
 export function CrmProjectTableRow({
@@ -70,6 +73,7 @@ export function CrmProjectTableRow({
   onToggleExpand,
   workflowProgressInputIndex,
   isWorkflowProgressLoading = false,
+  bulkSelection,
 }: CrmProjectTableRowProps): ReactElement {
   const tableCopy = content.crm.table;
   const { catalog, industrySubtitle, progress, derivedStageSlug } = useCrmProjectRowPresentation(
@@ -96,7 +100,12 @@ export function CrmProjectTableRow({
     }
   };
 
-  const rowClass = isChild ? `${styles.gridRow} ${styles.gridRowChild}` : styles.gridRow;
+  const rowClass = [
+    isChild ? `${styles.gridRow} ${styles.gridRowChild}` : styles.gridRow,
+    bulkSelection?.mode && bulkSelection.selectedIds.has(project.id) ? styles.gridRowSelected : '',
+  ]
+    .filter(Boolean)
+    .join(' ');
   const projectCellClass = isChild
     ? `${styles.gridCellProject} ${styles.gridCellProject_child}`
     : styles.gridCellProject;
@@ -110,6 +119,15 @@ export function CrmProjectTableRow({
       onKeyDown={handleKeyDown}
       aria-label={rowAriaLabel}
     >
+      {bulkSelection?.mode ? (
+        <span className={styles.gridCellBulkSelect} role="cell">
+          <BulkSelectCheckbox
+            checked={bulkSelection.selectedIds.has(project.id)}
+            ariaLabel={bulkSelection.selectItemAriaLabel(project.name)}
+            onChange={() => bulkSelection.onToggle(project.id)}
+          />
+        </span>
+      ) : null}
       <span className={projectCellClass} role="cell">
         <span className={styles.projectNameRow}>
           {isProjectPriorityUrgent(project.priority) ? (

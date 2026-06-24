@@ -383,6 +383,41 @@ export const buildCoreDashboardContent = {
         'Deleting projects in the database requires NEXT_PUBLIC_CRM_DATA_SOURCE=api. Mock mode keeps existing demo data read-only.',
     },
   },
+  bulkSelection: {
+    select: 'Select',
+    cancel: 'Cancel',
+    selectAll: 'Select all visible',
+    selectAllAriaLabel: 'Select all visible items',
+    selectItemAriaLabel: (label: string): string => `Select ${label}`,
+    selectedCount: (count: number): string => `${count} selected`,
+    send: 'Send',
+    sendUnavailableTitle: 'Bulk send is not available yet',
+    delete: 'Delete',
+    toolbarAriaLabel: 'Bulk actions',
+  },
+  bulkDelete: {
+    confirmPhrase: 'confirm delete',
+    cancelLabel: 'Cancel',
+    closeAriaLabel: 'Close bulk delete confirmation',
+    failed: 'Failed to delete selected items. Try again.',
+    partialFailure: (deletedCount: number, failedCount: number): string =>
+      `Deleted ${deletedCount} item${deletedCount === 1 ? '' : 's'}, but ${failedCount} could not be deleted.`,
+    success: (count: number, itemLabel: string): string =>
+      `Deleted ${count} ${count === 1 ? itemLabel : `${itemLabel}s`}.`,
+  },
+  destructiveConfirmationWorkflow: {
+    title: 'Delete Selected Items',
+    intentActionLabel: 'I want to delete the selected items',
+    consequencesAcknowledgeLabel: 'I have read and understand these effects',
+    confirmationInstructions: (phrase: string): string =>
+      `To confirm deletion type "${phrase}" in the box below`,
+    irrevocableWarning: 'This action cannot be undone.',
+    closeAriaLabel: 'Close destructive confirmation',
+    finalActionLabel: 'Delete Selected Items',
+    selectedCountMessage: (count: number, itemLabel: string): string =>
+      `${count} ${count === 1 ? itemLabel : `${itemLabel}s`} selected`,
+    moreItems: (count: number): string => `+ ${count} more`,
+  },
   projectDetail: {
     backToProjects: 'All projects',
     pageTitleFallback: 'Project',
@@ -647,6 +682,13 @@ export const buildCoreDashboardContent = {
         confirmMessage: (name: string): string =>
           `"${name}" will be permanently removed. This subproject and its data will no longer be accessible.`,
         success: 'Subproject deleted.',
+      },
+      bulkDelete: {
+        itemLabel: 'subproject',
+        consequenceDescription:
+          'This action permanently deletes the selected subprojects and all associated data.',
+        affectedDataSummary:
+          'Affected data includes Workflow Tasks, Payments, Budget Entries, Documents, Reporting Data, and Accountability Records.',
       },
     },
     saveSuccess: 'Changes saved.',

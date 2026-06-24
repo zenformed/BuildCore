@@ -6,6 +6,8 @@ import type { CrmProjectPaymentTasksIndex } from '@/domain/crm/projectPaymentVal
 import type { CrmProjectWorkflowProgressInputIndex } from '@/domain/crm/projectWorkflowProgressInput';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
 import { resolveDashboardChildRowFinancials } from '@/presentation/features/crmProjects/projectPaymentFinancials';
+import type { BulkSelectionBindings } from '@/presentation/features/bulkSelection/BulkSelectionBindings';
+import { BulkSelectCheckbox } from '@/presentation/components/BulkSelection';
 import { SubprojectMobileCard } from './SubprojectMobileCard';
 import styles from './ProjectDetail.module.css';
 
@@ -26,6 +28,7 @@ export type SubprojectsMobileListProps = {
   readonly showActions?: boolean;
   readonly emptyMessage: string;
   readonly onRowClick: (project: CrmProjectSummary) => void;
+  readonly bulkSelection?: BulkSelectionBindings;
 };
 
 export function SubprojectsMobileList({
@@ -45,6 +48,7 @@ export function SubprojectsMobileList({
   showActions = true,
   emptyMessage,
   onRowClick,
+  bulkSelection,
 }: SubprojectsMobileListProps): ReactElement {
   const showList = rows.length > 0 || isLoading;
 
@@ -53,7 +57,22 @@ export function SubprojectsMobileList({
       {!showList ? (
         <p className={styles.subprojectsMobileEmptyState}>{emptyMessage}</p>
       ) : (
-        <ul className={styles.subprojectsMobileList}>
+        <>
+          {bulkSelection?.mode ? (
+            <div className={styles.subprojectsMobileSelectAllRow}>
+              <BulkSelectCheckbox
+                className={styles.subprojectsMobileSelectAllCheckbox}
+                checked={bulkSelection.allVisibleSelected}
+                indeterminate={bulkSelection.someVisibleSelected}
+                ariaLabel={bulkSelection.selectAllAriaLabel}
+                onChange={() => bulkSelection.onToggleAllVisible()}
+              />
+              <span className={styles.subprojectsMobileSelectAllLabel}>
+                {bulkSelection.selectAllAriaLabel}
+              </span>
+            </div>
+          ) : null}
+          <ul className={styles.subprojectsMobileList}>
           {rows.map((project) => (
             <li key={project.id} className={styles.subprojectsMobileListItem}>
               <SubprojectMobileCard
@@ -71,10 +90,12 @@ export function SubprojectsMobileList({
                 onRequestCompletionChange={onRequestCompletionChange}
                 workflowProgressInputIndex={workflowProgressInputIndex}
                 isWorkflowProgressLoading={isWorkflowProgressLoading}
+                bulkSelection={bulkSelection}
               />
             </li>
           ))}
         </ul>
+        </>
       )}
     </div>
   );

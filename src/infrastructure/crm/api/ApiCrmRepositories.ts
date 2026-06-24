@@ -59,6 +59,7 @@ import type {
   UpdateCrmBudgetEntryInput,
 
 } from '@/domain/crm/budgetMutations';
+import type { BulkArchiveCrmProjectsResult } from '@/domain/crm/bulkArchiveProjects';
 
 import { deserializeWorkflowTaskStatusIndex } from '@/domain/crm/projectWorkflowTaskStatusIndex';
 import { deserializeWorkflowProgressInputIndex } from '@/domain/crm/projectWorkflowProgressInput';
@@ -182,6 +183,14 @@ export class ApiCrmProjectsRepository implements ICrmProjectsRepository {
         if (err instanceof CrmApiError && err.status === 404) return false;
         throw err;
       });
+  }
+
+  bulkArchive(slugs: readonly string[]): Promise<BulkArchiveCrmProjectsResult> {
+    clearApiCrmDetailCache();
+    return crmApiPostJson<BulkArchiveCrmProjectsResult>(
+      '/api/crm/projects/bulk-archive',
+      { slugs }
+    );
   }
 
 }

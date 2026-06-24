@@ -361,6 +361,21 @@
   --projects-table-min-width: 58rem;
 }
 
+.tableInnerWithBulkSelection {
+  --projects-grid-columns:
+    2.5rem minmax(11rem, 1.35fr) minmax(7rem, 0.95fr) minmax(9rem, 1.05fr) minmax(6.5rem, 0.75fr)
+    minmax(8.5rem, 1fr) minmax(9rem, 1fr) minmax(4.75rem, 0.52fr) minmax(4.75rem, 0.52fr)
+    minmax(4.75rem, 0.52fr) minmax(4.5rem, 0.5fr) minmax(3.25rem, 0.35fr);
+  --projects-table-min-width: 82.5rem;
+}
+
+.tableInnerMember.tableInnerWithBulkSelection {
+  --projects-grid-columns:
+    2.5rem minmax(11rem, 1.35fr) minmax(7rem, 0.95fr) minmax(9rem, 1.05fr) minmax(6.5rem, 0.75fr)
+    minmax(8.5rem, 1fr) minmax(9rem, 1fr) minmax(4.5rem, 0.5fr);
+  --projects-table-min-width: 60.5rem;
+}
+
 .tableGridShell {
   display: grid;
   grid-template-columns: var(--projects-grid-columns);
@@ -476,6 +491,34 @@
 
 :global([data-theme='dark']) .gridRow:focus-visible {
   outline-color: #3b82f6;
+}
+
+.gridRowSelected {
+  background: color-mix(in srgb, var(--color-primary, #2563eb) 7%, transparent);
+}
+
+:global([data-theme='dark']) .gridRowSelected {
+  background: color-mix(in srgb, var(--color-primary, #3b82f6) 14%, transparent);
+}
+
+.gridRowSelected:hover {
+  background: color-mix(in srgb, var(--color-primary, #2563eb) 10%, transparent);
+}
+
+:global([data-theme='dark']) .gridRowSelected:hover {
+  background: color-mix(in srgb, var(--color-primary, #3b82f6) 18%, transparent);
+}
+
+.gridCellBulkSelect {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.gridHeaderBulkSelect {
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .gridRow::after {

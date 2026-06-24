@@ -7,6 +7,8 @@ import type { CrmProjectWorkflowProgressInputIndex } from '@/domain/crm/projectW
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
 import { buildCrmProjectsDashboardRowModels } from '@/presentation/features/crmProjects/buildCrmProjectsDashboardRowModels';
 import { useDashboardSubprojectExpansion } from '@/presentation/features/crmProjects/useDashboardSubprojectExpansion';
+import type { BulkSelectionBindings } from '@/presentation/features/bulkSelection/BulkSelectionBindings';
+import { BulkSelectCheckbox } from '@/presentation/components/BulkSelection';
 import { CrmProjectTableRow } from './CrmProjectTableRow';
 import styles from './CrmProjects.module.css';
 
@@ -45,6 +47,7 @@ export type CrmProjectsTableProps = {
   projectColumnLabel?: string;
   emptyMessage?: string;
   deleteLabels?: CrmProjectsTableDeleteLabels;
+  bulkSelection?: BulkSelectionBindings;
 };
 
 export function CrmProjectsTable({
@@ -73,6 +76,7 @@ export function CrmProjectsTable({
   showActions = true,
   projectColumnLabel,
   emptyMessage,
+  bulkSelection,
 }: CrmProjectsTableProps): ReactElement {
   const displayRoots = useMemo(
     () => (enableSubprojectExpansion ? (rootRows ?? []) : (rows ?? [])),
@@ -91,9 +95,12 @@ export function CrmProjectsTable({
   const showTable = displayRoots.length > 0 || isLoading;
   const tableCopy = content.crm.table;
   const valueLabels = tableCopy.columns;
-  const tableInnerClass = isMemberRole
-    ? `${styles.tableInner} ${styles.tableInnerMember}`
-    : styles.tableInner;
+  const tableInnerClass = [
+    isMemberRole ? `${styles.tableInner} ${styles.tableInnerMember}` : styles.tableInner,
+    bulkSelection?.mode ? styles.tableInnerWithBulkSelection : '',
+  ]
+    .filter(Boolean)
+    .join(' ');
   const projectHeader = projectColumnLabel ?? COLUMNS.project;
 
   const rowModels = useMemo(() => {
@@ -131,6 +138,18 @@ export function CrmProjectsTable({
         <div className={tableInnerClass}>
           <div className={styles.tableGridShell}>
             <div className={styles.gridHeader} role="row">
+              {bulkSelection?.mode ? (
+                <span role="columnheader" className={styles.gridHeaderBulkSelect}>
+                  <BulkSelectCheckbox
+                    checked={bulkSelection.allVisibleSelected}
+                    indeterminate={bulkSelection.someVisibleSelected}
+                    ariaLabel={bulkSelection.selectAllAriaLabel}
+                    onChange={() => {
+                      bulkSelection.onToggleAllVisible();
+                    }}
+                  />
+                </span>
+              ) : null}
               <span role="columnheader">{projectHeader}</span>
               <span role="columnheader">{COLUMNS.contact}</span>
               <span role="columnheader">{COLUMNS.email}</span>
@@ -185,6 +204,7 @@ export function CrmProjectsTable({
                     onToggleExpand={row.onToggleExpand}
                     workflowProgressInputIndex={workflowProgressInputIndex}
                     isWorkflowProgressLoading={isWorkflowProgressLoading}
+                    bulkSelection={bulkSelection}
                   />
                 ))
               )}

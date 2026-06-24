@@ -1,0 +1,166 @@
+.bulkSelectCheckbox {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1rem;
+  height: 1rem;
+  margin: 0;
+  flex-shrink: 0;
+  accent-color: var(--color-primary, #2563eb);
+  cursor: pointer;
+}
+
+.bulkSelectCheckbox:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.bulkSelectionToolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  margin-top: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--theme-border-main, var(--color-border, #e2e8f0));
+  border-radius: 0.5rem;
+  background: var(--theme-surface-muted, #f8fafc);
+}
+
+.bulkSelectionToolbar_header {
+  flex: 1;
+  min-width: 0;
+  margin-top: 0;
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+
+.bulkSelectionToolbar_header .bulkSelectionToolbarCount {
+  margin-right: auto;
+}
+
+.bulkSelectionToolbar_headerStacked {
+  /* Mobile stacked layout hooks in @media below */
+}
+
+@media (max-width: 767px) {
+  :global(.subprojectsPanelHeader_selectionMode) .bulkSelectionToolbar_headerStacked {
+    display: contents;
+  }
+
+  :global(.subprojectsPanelHeader_selectionMode)
+    .bulkSelectionToolbar_headerStacked
+    .bulkSelectionToolbarCount {
+    grid-column: 2;
+    grid-row: 1;
+    margin-right: 0;
+    justify-self: end;
+    white-space: nowrap;
+  }
+
+  :global(.subprojectsPanelHeader_selectionMode)
+    .bulkSelectionToolbar_headerStacked
+    .bulkSelectionToolbarActions {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem;
+    width: 100%;
+  }
+
+  :global(.subprojectsPanelHeader_selectionMode)
+    .bulkSelectionToolbar_headerStacked
+    .bulkSelectionToolbarActions
+    > button {
+    display: inline-flex;
+    align-items: center;
+    width: 100%;
+    justify-content: center;
+    text-align: center;
+  }
+
+  :global(.subprojectsPanelHeader_selectionMode)
+    .bulkSelectionToolbar_headerStacked
+    .bulkSelectionToolbarActions
+    > button:last-child {
+    grid-column: 1 / -1;
+  }
+}
+
+:global([data-theme='dark']) .bulkSelectionToolbar {
+  background: #1a1d26;
+  border-color: var(--theme-border-main, #3d3e4a);
+}
+
+.bulkSelectionToolbarCount {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--color-text, #0f172a);
+}
+
+:global([data-theme='dark']) .bulkSelectionToolbarCount {
+  color: #f1f5f9;
+}
+
+.bulkSelectionToolbarActions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.bulkSelectionToolbarBtn {
+  padding: 0.3125rem 0.75rem;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  border-radius: 0.375rem;
+  border: 1px solid var(--theme-border-button, var(--color-border, #e2e8f0));
+  background: var(--theme-surface-button, #fff);
+  color: var(--color-text, #0f172a);
+  cursor: pointer;
+}
+
+.bulkSelectionToolbarBtn:hover:not(:disabled) {
+  background: var(--color-muted, #f1f5f9);
+}
+
+.bulkSelectionToolbarBtn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+:global([data-theme='dark']) .bulkSelectionToolbarBtn {
+  background: #252836;
+  border-color: #3d3e4a;
+  color: #f1f5f9;
+}
+
+:global([data-theme='dark']) .bulkSelectionToolbarBtn:hover:not(:disabled) {
+  background: #1d2029;
+}
+
+.bulkSelectionToolbarBtn_danger {
+  border-color: #fecaca;
+  color: #b91c1c;
+  background: #fef2f2;
+}
+
+.bulkSelectionToolbarBtn_danger:hover:not(:disabled) {
+  background: #fee2e2;
+}
+
+:global([data-theme='dark']) .bulkSelectionToolbarBtn_danger {
+  border-color: #7f1d1d;
+  color: #fca5a5;
+  background: rgba(127, 29, 29, 0.25);
+}
+
+:global([data-theme='dark']) .bulkSelectionToolbarBtn_danger:hover:not(:disabled) {
+  background: rgba(127, 29, 29, 0.4);
+}

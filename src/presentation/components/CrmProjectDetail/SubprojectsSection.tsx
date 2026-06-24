@@ -4,6 +4,7 @@ import { useCallback, useId, useMemo, useState, type ReactElement } from 'react'
 import { resolvePipelineStageScopeForProject } from '@/domain/buildcore/orgPipelineStages';
 import { useRouter } from 'next/navigation';
 import { isBuildCoreMemberRole } from '@/domain/buildcore/memberRole';
+import type { CrmProjectSummary } from '@/domain/crm';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
 import { CrmProjectDeleteConfirmModal } from '@/presentation/components/CrmProjects/CrmProjectDeleteConfirmModal';
 import { CreateCrmProjectModal } from '@/presentation/components/CrmProjects/CreateCrmProjectModal';
@@ -18,6 +19,7 @@ import {
   filterSubprojects,
 } from '@/presentation/features/crmProjectDetail/useCrmProjectChildSummaries';
 import { useCrmProjectDeleteConfirmation } from '@/presentation/features/crmProjects/useCrmProjectDeleteConfirmation';
+import { useCrmProjectBulkDeleteActions } from '@/presentation/features/crmProjects/useCrmProjectBulkDeleteActions';
 import { useCrmProjectTableRowActions } from '@/presentation/features/crmProjects/useCrmProjectTableRowActions';
 import { useCrmProjectPaymentTasksIndex } from '@/presentation/features/crmProjects/useCrmProjectPaymentTasksIndex';
 import { useCrmPaymentTasksIndexContext } from '@/presentation/providers/CrmPaymentTasksIndexProvider';
@@ -27,6 +29,13 @@ import {
 } from '@/domain/buildcore/projectPipelineProgress';
 import { useProjectDetailShell } from '@/presentation/features/crmProjectDetail/ProjectDetailShellContext';
 import { useSaaSProfile } from '@/presentation/hooks/useSaaSProfile';
+import { useBulkSelection } from '@/presentation/features/bulkSelection/useBulkSelection';
+import type { BulkSelectionBindings } from '@/presentation/features/bulkSelection/BulkSelectionBindings';
+import {
+  BulkSelectionToolbar,
+} from '@/presentation/components/BulkSelection';
+import { DestructiveConfirmationWorkflowDialog } from '@/presentation/components/DestructiveConfirmationWorkflow';
+import bulkSelectionStyles from '@/presentation/components/BulkSelection/BulkSelection.module.css';
 import { DetailPanelHeaderButton } from './DetailPanelHeaderButton';
 import { DetailPanelSectionRefresh } from './DetailPanelSectionRefresh';
 import shared from '@/presentation/components/crmShared/crmShared.module.css';
@@ -41,6 +50,11 @@ export function SubprojectsSection(): ReactElement | null {
   const panelId = useId();
   const copy = content.projectDetail.subprojects;
   const deleteCopy = copy.delete;
+  const bulkDeleteItemLabel = copy.bulkDelete.itemLabel;
+  const bulkDeleteConfig = copy.bulkDelete;
+  const bulkSelectionCopy = content.bulkSelection;
+  const bulkDeleteCopy = content.bulkDelete;
+  const destructiveWorkflowCopy = content.destructiveConfirmationWorkflow;
   const detailCopy = content.projectDetail;
   const { project, routes, parentRouteSlug, subSlug, isMemberRole, childSummaries } =
     useProjectDetailShell();
@@ -50,6 +64,7 @@ export function SubprojectsSection(): ReactElement | null {
   const [expanded, setExpanded] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [createOpen, setCreateOpen] = useState(false);
+  const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
   const [toast, setToast] = useState<SubprojectsToast | null>(null);
   const refetch = childSummaries?.refetch ?? (async () => undefined);
   const appendChildProjectSummary =
@@ -105,6 +120,7 @@ export function SubprojectsSection(): ReactElement | null {
         ? content.crm.table.empty
         : copy.empty;
   const isMobileLayout = useDashboardMobileLayout();
+  const bulkSelection = useBulkSelection<string>();
 
   const {
     pendingDeleteProject,
@@ -119,6 +135,68 @@ export function SubprojectsSection(): ReactElement | null {
     onSuccess: () => setToast({ kind: 'success', message: deleteCopy.success }),
     onError: (message) => setToast({ kind: 'error', message }),
   });
+
+  const visibleIds = useMemo(() => rows.map((row) => row.id), [rows]);
+  const selectedProjects = useMemo(
+    () => rows.filter((row) => bulkSelection.selectedIds.has(row.id)),
+    [bulkSelection.selectedIds, rows]
+  );
+  const canUseBulkActions = canDelete && !isMemberRole;
+
+  const bulkSelectionBindings = useMemo<BulkSelectionBindings | undefined>(() => {
+    if (!bulkSelection.selectionMode) return undefined;
+    return {
+      mode: true,
+      selectedIds: bulkSelection.selectedIds,
+      onToggle: bulkSelection.toggle,
+      allVisibleSelected: bulkSelection.allVisibleSelected(visibleIds),
+      someVisibleSelected: bulkSelection.someVisibleSelected(visibleIds),
+      onToggleAllVisible: () => {
+        if (bulkSelection.allVisibleSelected(visibleIds)) {
+          bulkSelection.clearSelection();
+        } else {
+          bulkSelection.selectAllVisible(visibleIds);
+        }
+      },
+      selectItemAriaLabel: bulkSelectionCopy.selectItemAriaLabel,
+      selectAllAriaLabel: bulkSelectionCopy.selectAllAriaLabel,
+    };
+  }, [bulkSelection, bulkSelectionCopy.selectAllAriaLabel, bulkSelectionCopy.selectItemAriaLabel, visibleIds]);
+
+  const handleSubprojectRowClick = useCallback(
+    (child: CrmProjectSummary) => {
+      if (bulkSelection.selectionMode) {
+        bulkSelection.toggle(child.id);
+        return;
+      }
+      router.push(routes.subproject(child.slug));
+    },
+    [bulkSelection, router, routes]
+  );
+
+  const { deleting: bulkDeleting, deleteProjects: deleteSelectedProjects } =
+    useCrmProjectBulkDeleteActions({
+      onProjectsDeleted: () => {
+        void refetch();
+      },
+      onSuccess: (deletedCount) => {
+        setToast({
+          kind: 'success',
+          message: bulkDeleteCopy.success(deletedCount, bulkDeleteItemLabel),
+        });
+        bulkSelection.exitSelectionMode();
+        setBulkDeleteOpen(false);
+      },
+      onError: (message) => setToast({ kind: 'error', message }),
+    });
+
+  const handleConfirmBulkDelete = useCallback(async () => {
+    const ok = await deleteSelectedProjects(selectedProjects);
+    if (ok) {
+      setBulkDeleteOpen(false);
+      bulkSelection.exitSelectionMode();
+    }
+  }, [bulkSelection, deleteSelectedProjects, selectedProjects]);
 
   const {
     busyProjectId,
@@ -156,7 +234,16 @@ export function SubprojectsSection(): ReactElement | null {
           onDismiss={() => setToast(null)}
         />
       ) : null}
-      <div className={styles.subprojectsPanelHeader}>
+      <div
+        className={[
+          styles.subprojectsPanelHeader,
+          bulkSelection.selectionMode && canUseBulkActions
+            ? 'subprojectsPanelHeader_selectionMode'
+            : '',
+        ]
+          .filter(Boolean)
+          .join(' ')}
+      >
         <button
           type="button"
           className={styles.subprojectsPanelHeaderToggle}
@@ -182,30 +269,80 @@ export function SubprojectsSection(): ReactElement | null {
             </span>
           </span>
         </button>
-        <div className={styles.subprojectsPanelHeaderTools}>
-          {expanded ? (
-            <input
-              type="search"
-              value={searchQuery}
-              onChange={(event) => setSearchQuery(event.target.value)}
-              placeholder={copy.searchPlaceholder}
-              aria-label={copy.searchAriaLabel}
-              className={styles.subprojectsSearch}
+        <div
+          className={[
+            styles.subprojectsPanelHeaderTools,
+            bulkSelection.selectionMode && canUseBulkActions
+              ? styles.subprojectsPanelHeaderTools_selectionMode
+              : '',
+          ]
+            .filter(Boolean)
+            .join(' ')}
+        >
+          {bulkSelection.selectionMode && canUseBulkActions ? (
+            <BulkSelectionToolbar
+              variant="header"
+              className={
+                isMobileLayout ? bulkSelectionStyles.bulkSelectionToolbar_headerStacked : undefined
+              }
+              selectedCount={bulkSelection.selectedCount}
+              selectedCountLabel={bulkSelectionCopy.selectedCount(bulkSelection.selectedCount)}
+              ariaLabel={bulkSelectionCopy.toolbarAriaLabel}
+              cancelLabel={bulkSelectionCopy.cancel}
+              onCancel={() => bulkSelection.exitSelectionMode()}
+              actions={[
+                {
+                  id: 'send',
+                  label: bulkSelectionCopy.send,
+                  disabled: true,
+                  title: bulkSelectionCopy.sendUnavailableTitle,
+                  onClick: () => undefined,
+                },
+                {
+                  id: 'delete',
+                  label: bulkSelectionCopy.delete,
+                  variant: 'danger',
+                  disabled: bulkDeleting || bulkSelection.selectedCount === 0,
+                  onClick: () => setBulkDeleteOpen(true),
+                },
+              ]}
             />
-          ) : null}
-          <DetailPanelSectionRefresh
-            sectionLabel={copy.title}
-            onRefresh={refetch}
-            onError={(message) => setToast({ kind: 'error', message })}
-          />
-          {canManage ? (
-            <DetailPanelHeaderButton
-              variant="add"
-              title={copy.newSubprojectTitle}
-              aria-label={copy.newSubprojectAriaLabel}
-              onClick={() => setCreateOpen(true)}
-            />
-          ) : null}
+          ) : (
+            <>
+              {expanded ? (
+                <input
+                  type="search"
+                  value={searchQuery}
+                  onChange={(event) => setSearchQuery(event.target.value)}
+                  placeholder={copy.searchPlaceholder}
+                  aria-label={copy.searchAriaLabel}
+                  className={styles.subprojectsSearch}
+                />
+              ) : null}
+              <DetailPanelSectionRefresh
+                sectionLabel={copy.title}
+                onRefresh={refetch}
+                onError={(message) => setToast({ kind: 'error', message })}
+              />
+              {canManage ? (
+                <DetailPanelHeaderButton
+                  variant="add"
+                  title={copy.newSubprojectTitle}
+                  aria-label={copy.newSubprojectAriaLabel}
+                  onClick={() => setCreateOpen(true)}
+                />
+              ) : null}
+              {canUseBulkActions ? (
+                <button
+                  type="button"
+                  className={styles.subprojectsSelectBtn}
+                  onClick={() => bulkSelection.enterSelectionMode()}
+                >
+                  {bulkSelectionCopy.select}
+                </button>
+              ) : null}
+            </>
+          )}
         </div>
       </div>
 
@@ -228,7 +365,8 @@ export function SubprojectsSection(): ReactElement | null {
               onRequestCompletionChange={requestCompletionChange}
               showActions={!isMemberRole}
               emptyMessage={subprojectsEmptyMessage}
-              onRowClick={(child) => router.push(routes.subproject(child.slug))}
+              onRowClick={handleSubprojectRowClick}
+              bulkSelection={bulkSelectionBindings}
             />
           ) : (
             <div className={`${tableStyles.pipeline} ${tableStyles.pipelineFitContent}`}>
@@ -249,7 +387,8 @@ export function SubprojectsSection(): ReactElement | null {
                 showActions={!isMemberRole}
                 projectColumnLabel={copy.projectColumn}
                 emptyMessage={subprojectsEmptyMessage}
-                onRowClick={(child) => router.push(routes.subproject(child.slug))}
+                onRowClick={handleSubprojectRowClick}
+                bulkSelection={bulkSelectionBindings}
               />
             </div>
           )}
@@ -280,6 +419,33 @@ export function SubprojectsSection(): ReactElement | null {
             onConfirm={() => void handleConfirmDelete()}
             confirmTitle={deleteCopy.confirmTitle}
             confirmMessage={deleteCopy.confirmMessage}
+          />
+          <DestructiveConfirmationWorkflowDialog
+            open={bulkDeleteOpen}
+            title={destructiveWorkflowCopy.title}
+            itemTypeLabel={bulkDeleteItemLabel}
+            selectedCount={bulkSelection.selectedCount}
+            selectedItemLabels={selectedProjects.map((project) => project.name)}
+            maxVisibleItems={5}
+            selectedCountMessage={destructiveWorkflowCopy.selectedCountMessage(
+              bulkSelection.selectedCount,
+              bulkDeleteItemLabel
+            )}
+            moreItemsLabel={destructiveWorkflowCopy.moreItems}
+            consequenceDescription={bulkDeleteConfig.consequenceDescription}
+            affectedDataSummary={bulkDeleteConfig.affectedDataSummary}
+            irrevocableWarning={destructiveWorkflowCopy.irrevocableWarning}
+            confirmationPhrase={bulkDeleteCopy.confirmPhrase}
+            confirmationInstructions={destructiveWorkflowCopy.confirmationInstructions(
+              bulkDeleteCopy.confirmPhrase
+            )}
+            intentActionLabel={destructiveWorkflowCopy.intentActionLabel}
+            consequencesAcknowledgeLabel={destructiveWorkflowCopy.consequencesAcknowledgeLabel}
+            finalActionLabel={destructiveWorkflowCopy.finalActionLabel}
+            closeAriaLabel={destructiveWorkflowCopy.closeAriaLabel}
+            confirmDisabled={bulkDeleting}
+            onCancel={() => setBulkDeleteOpen(false)}
+            onConfirm={() => void handleConfirmBulkDelete()}
           />
           <ProjectCompletionBlockedDialog
             isOpen={completionBlockedStageStatuses != null}
