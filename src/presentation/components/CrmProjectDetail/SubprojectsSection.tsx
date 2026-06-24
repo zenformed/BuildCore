@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useId, useMemo, useState, type ReactElement } from 'react';
+import { useCallback, useEffect, useId, useMemo, useState, type ReactElement } from 'react';
 import { resolvePipelineStageScopeForProject } from '@/domain/buildcore/orgPipelineStages';
 import { useRouter } from 'next/navigation';
 import { isBuildCoreMemberRole } from '@/domain/buildcore/memberRole';
@@ -15,9 +15,8 @@ import { DetailToast } from '@/presentation/components/CrmProjectDetail/DetailTo
 import { ConfirmModal } from '@/presentation/components/ConfirmModal';
 import { ProjectCompletionBlockedDialog } from '@/presentation/components/CrmProjectDetail/ProjectCompletionBlockedDialog';
 import { useBuildCorePipelineStages } from '@/presentation/providers/BuildCorePipelineStagesProvider';
-import {
-  filterSubprojects,
-} from '@/presentation/features/crmProjectDetail/useCrmProjectChildSummaries';
+import { useSubprojectListRows } from '@/presentation/features/crmProjectDetail/useSubprojectListRows';
+import { EMPTY_RADIUS_FILTER, type RadiusFilterState } from '@/presentation/features/filters/radiusFilterModel';
 import { useCrmProjectDeleteConfirmation } from '@/presentation/features/crmProjects/useCrmProjectDeleteConfirmation';
 import { useCrmProjectBulkDeleteActions } from '@/presentation/features/crmProjects/useCrmProjectBulkDeleteActions';
 import { useCrmProjectTableRowActions } from '@/presentation/features/crmProjects/useCrmProjectTableRowActions';
@@ -31,13 +30,8 @@ import { useProjectDetailShell } from '@/presentation/features/crmProjectDetail/
 import { useSaaSProfile } from '@/presentation/hooks/useSaaSProfile';
 import { useBulkSelection } from '@/presentation/features/bulkSelection/useBulkSelection';
 import type { BulkSelectionBindings } from '@/presentation/features/bulkSelection/BulkSelectionBindings';
-import {
-  BulkSelectionToolbar,
-} from '@/presentation/components/BulkSelection';
 import { DestructiveConfirmationWorkflowDialog } from '@/presentation/components/DestructiveConfirmationWorkflow';
-import bulkSelectionStyles from '@/presentation/components/BulkSelection/BulkSelection.module.css';
-import { DetailPanelHeaderButton } from './DetailPanelHeaderButton';
-import { DetailPanelSectionRefresh } from './DetailPanelSectionRefresh';
+import { SubprojectsListToolbar } from './SubprojectsListToolbar';
 import shared from '@/presentation/components/crmShared/crmShared.module.css';
 import styles from './ProjectDetail.module.css';
 import tableStyles from '../CrmProjects/CrmProjects.module.css';
@@ -63,6 +57,7 @@ export function SubprojectsSection(): ReactElement | null {
   const canManage = !isMemberRole && !isBuildCoreMemberRole(organizationMembershipContext?.role);
   const [expanded, setExpanded] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+  const [radiusFilter, setRadiusFilter] = useState<RadiusFilterState>(EMPTY_RADIUS_FILTER);
   const [createOpen, setCreateOpen] = useState(false);
   const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
   const [toast, setToast] = useState<SubprojectsToast | null>(null);
@@ -83,10 +78,13 @@ export function SubprojectsSection(): ReactElement | null {
       getCatalog(resolvePipelineStageScopeForProject({ parentProjectId: childProject.parentProjectId })),
     [getCatalog]
   );
-  const rows = useMemo(
-    () => filterSubprojects(childSummaries?.allRows ?? [], searchQuery),
-    [childSummaries?.allRows, searchQuery]
-  );
+  const {
+    rows,
+    isRadiusGeocoding,
+    radiusGeocodingError,
+    isNarrowingResults,
+  } = useSubprojectListRows(childSummaries?.allRows ?? [], searchQuery, radiusFilter);
+  const listIsLoading = isLoading || isRadiusGeocoding;
   const allSubprojectCount = childSummaries?.allRows.length ?? 0;
   const subprojectAveragePercent = useMemo(() => {
     if (isMemberRole || allSubprojectCount === 0 || isLoading || isWorkflowProgressLoading) {
@@ -116,11 +114,18 @@ export function SubprojectsSection(): ReactElement | null {
   const subprojectsEmptyMessage =
     isMemberRole && allSubprojectCount === 0
       ? copy.emptyMemberNoAssignments
-      : allSubprojectCount > 0 && rows.length === 0 && searchQuery.trim().length > 0
+      : allSubprojectCount > 0 && rows.length === 0 && isNarrowingResults
         ? content.crm.table.empty
         : copy.empty;
   const isMobileLayout = useDashboardMobileLayout();
   const bulkSelection = useBulkSelection<string>();
+
+  useEffect(() => {
+    if (radiusGeocodingError == null) {
+      return;
+    }
+    setToast({ kind: 'error', message: radiusGeocodingError });
+  }, [radiusGeocodingError]);
 
   const {
     pendingDeleteProject,
@@ -279,70 +284,48 @@ export function SubprojectsSection(): ReactElement | null {
             .filter(Boolean)
             .join(' ')}
         >
-          {bulkSelection.selectionMode && canUseBulkActions ? (
-            <BulkSelectionToolbar
-              variant="header"
-              className={
-                isMobileLayout ? bulkSelectionStyles.bulkSelectionToolbar_headerStacked : undefined
-              }
-              selectedCount={bulkSelection.selectedCount}
-              selectedCountLabel={bulkSelectionCopy.selectedCount(bulkSelection.selectedCount)}
-              ariaLabel={bulkSelectionCopy.toolbarAriaLabel}
-              cancelLabel={bulkSelectionCopy.cancel}
-              onCancel={() => bulkSelection.exitSelectionMode()}
-              actions={[
-                {
-                  id: 'send',
-                  label: bulkSelectionCopy.send,
-                  disabled: true,
-                  title: bulkSelectionCopy.sendUnavailableTitle,
-                  onClick: () => undefined,
-                },
-                {
-                  id: 'delete',
-                  label: bulkSelectionCopy.delete,
-                  variant: 'danger',
-                  disabled: bulkDeleting || bulkSelection.selectedCount === 0,
-                  onClick: () => setBulkDeleteOpen(true),
-                },
-              ]}
-            />
-          ) : (
-            <>
-              {expanded ? (
-                <input
-                  type="search"
-                  value={searchQuery}
-                  onChange={(event) => setSearchQuery(event.target.value)}
-                  placeholder={copy.searchPlaceholder}
-                  aria-label={copy.searchAriaLabel}
-                  className={styles.subprojectsSearch}
-                />
-              ) : null}
-              <DetailPanelSectionRefresh
-                sectionLabel={copy.title}
-                onRefresh={refetch}
-                onError={(message) => setToast({ kind: 'error', message })}
-              />
-              {canManage ? (
-                <DetailPanelHeaderButton
-                  variant="add"
-                  title={copy.newSubprojectTitle}
-                  aria-label={copy.newSubprojectAriaLabel}
-                  onClick={() => setCreateOpen(true)}
-                />
-              ) : null}
-              {canUseBulkActions ? (
-                <button
-                  type="button"
-                  className={styles.subprojectsSelectBtn}
-                  onClick={() => bulkSelection.enterSelectionMode()}
-                >
-                  {bulkSelectionCopy.select}
-                </button>
-              ) : null}
-            </>
-          )}
+          <SubprojectsListToolbar
+            expanded={expanded}
+            isMobileLayout={isMobileLayout}
+            searchQuery={searchQuery}
+            searchPlaceholder={copy.searchPlaceholder}
+            searchAriaLabel={copy.searchAriaLabel}
+            onSearchQueryChange={setSearchQuery}
+            sectionLabel={copy.title}
+            onRefresh={refetch}
+            onRefreshError={(message) => setToast({ kind: 'error', message })}
+            canManage={canManage}
+            newSubprojectTitle={copy.newSubprojectTitle}
+            newSubprojectAriaLabel={copy.newSubprojectAriaLabel}
+            onCreateOpen={() => setCreateOpen(true)}
+            canUseBulkActions={canUseBulkActions}
+            selectLabel={bulkSelectionCopy.select}
+            onEnterSelectionMode={() => bulkSelection.enterSelectionMode()}
+            radiusFilter={radiusFilter}
+            onRadiusFilterChange={setRadiusFilter}
+            selectionMode={bulkSelection.selectionMode && canUseBulkActions}
+            selectedCount={bulkSelection.selectedCount}
+            selectedCountLabel={bulkSelectionCopy.selectedCount(bulkSelection.selectedCount)}
+            bulkToolbarAriaLabel={bulkSelectionCopy.toolbarAriaLabel}
+            bulkCancelLabel={bulkSelectionCopy.cancel}
+            onExitSelectionMode={() => bulkSelection.exitSelectionMode()}
+            bulkActions={[
+              {
+                id: 'send',
+                label: bulkSelectionCopy.send,
+                disabled: true,
+                title: bulkSelectionCopy.sendUnavailableTitle,
+                onClick: () => undefined,
+              },
+              {
+                id: 'delete',
+                label: bulkSelectionCopy.delete,
+                variant: 'danger',
+                disabled: bulkDeleting || bulkSelection.selectedCount === 0,
+                onClick: () => setBulkDeleteOpen(true),
+              },
+            ]}
+          />
         </div>
       </div>
 
@@ -354,7 +337,7 @@ export function SubprojectsSection(): ReactElement | null {
               paymentTasksIndex={paymentTasksIndex}
               workflowProgressInputIndex={workflowProgressInputIndex}
               isWorkflowProgressLoading={isWorkflowProgressLoading}
-              isLoading={isLoading}
+              isLoading={listIsLoading}
               isPaymentFinancialsLoading={isPaymentFinancialsLoading}
               isMemberRole={isMemberRole}
               canDelete={canDelete && !isMemberRole}
@@ -375,7 +358,7 @@ export function SubprojectsSection(): ReactElement | null {
                 paymentTasksIndex={paymentTasksIndex}
                 workflowProgressInputIndex={workflowProgressInputIndex}
                 isWorkflowProgressLoading={isWorkflowProgressLoading}
-                isLoading={isLoading}
+                isLoading={listIsLoading}
                 isPaymentFinancialsLoading={isPaymentFinancialsLoading}
                 isMemberRole={isMemberRole}
                 canDelete={canDelete && !isMemberRole}

@@ -1,0 +1,136 @@
+.filterMenuSectionBody {
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+}
+
+.radiusFilterField {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3125rem;
+}
+
+.radiusFilterLabel {
+  font-size: 0.625rem;
+  font-weight: 500;
+  color: var(--color-text-muted, #64748b);
+}
+
+.radiusFilterInputWrap {
+  position: relative;
+}
+
+.radiusFilterInput,
+.radiusFilterRadiusInput {
+  width: 100%;
+  padding: 0.375rem 0.5rem;
+  font-size: 0.8125rem;
+  border: 1px solid var(--theme-form-input-border, var(--color-border, #e2e8f0));
+  border-radius: 0.375rem;
+  background: var(--theme-form-input-bg, var(--theme-surface-elevated, #fff));
+  color: var(--theme-form-input-text, var(--color-text, #0f172a));
+  box-sizing: border-box;
+}
+
+.radiusFilterInput {
+  padding-right: 1.75rem;
+}
+
+.radiusFilterInput:focus,
+.radiusFilterInput:focus-visible,
+.radiusFilterRadiusInput:focus,
+.radiusFilterRadiusInput:focus-visible {
+  outline: none;
+  border-color: var(--color-primary, #2563eb) !important;
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
+}
+
+:global([data-theme='dark']) .radiusFilterInput:focus,
+:global([data-theme='dark']) .radiusFilterInput:focus-visible,
+:global([data-theme='dark']) .radiusFilterRadiusInput:focus,
+:global([data-theme='dark']) .radiusFilterRadiusInput:focus-visible {
+  border-color: #60a5fa !important;
+  box-shadow: 0 0 0 2px rgba(96, 165, 250, 0.25);
+}
+
+.radiusFilterInputClear {
+  position: absolute;
+  top: 50%;
+  right: 0.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.25rem;
+  height: 1.25rem;
+  padding: 0;
+  border: 0;
+  border-radius: 0.25rem;
+  background: transparent;
+  color: var(--color-text-muted, #64748b);
+  cursor: pointer;
+  transform: translateY(-50%);
+}
+
+.radiusFilterInputClear:hover {
+  color: var(--color-text, #0f172a);
+  background: var(--theme-surface-muted, rgba(15, 23, 42, 0.06));
+}
+
+:global([data-theme='dark']) .radiusFilterInputClear:hover {
+  color: #f1f5f9;
+  background: rgba(241, 245, 249, 0.08);
+}
+
+.radiusFilterInputClearIcon {
+  width: 0.75rem;
+  height: 0.75rem;
+}
+
+.radiusFilterRadiusRow {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+}
+
+.radiusFilterRadiusInput {
+  max-width: 5rem;
+}
+
+:global([data-theme='dark']) .radiusFilterInput,
+:global([data-theme='dark']) .radiusFilterRadiusInput {
+  color-scheme: dark;
+}
+
+.radiusFilterUnit {
+  font-size: 0.8125rem;
+  color: var(--color-text-muted, #64748b);
+}
+
+.radiusFilterSliderWrap {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+}
+
+.radiusFilterSlider {
+  width: 100%;
+  accent-color: var(--color-primary, #2563eb);
+}
+
+.radiusFilterSliderLabels {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  font-size: 0.6875rem;
+  color: var(--color-text-muted, #64748b);
+}
+
+.radiusFilterSliderValue {
+  font-weight: 600;
+  color: var(--color-text, #0f172a);
+}
+
+:global([data-theme='dark']) .radiusFilterSliderValue {
+  color: #f1f5f9;
+}

@@ -292,6 +292,16 @@ export const buildCoreDashboardContent = {
       stageLabel: 'Stage',
       priorityLabel: 'Priority',
       statusLabel: 'Status',
+      radius: {
+        sectionLabel: 'Radius',
+        zipCodeLabel: 'ZIP Code',
+        radiusLabel: 'Radius',
+        milesUnit: 'miles',
+        clearZipCodeAriaLabel: 'Clear ZIP code',
+        sliderAriaLabel: 'Radius in miles',
+        zipCodeAriaLabel: 'ZIP code for radius filter',
+        radiusInputAriaLabel: 'Radius distance in miles',
+      },
     },
     assignee: {
       customer: 'Assign to Customer',

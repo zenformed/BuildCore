@@ -28,7 +28,8 @@
   background: var(--theme-surface-muted, #f8fafc);
 }
 
-.bulkSelectionToolbar_header {
+.bulkSelectionToolbar_header,
+.bulkSelectionToolbar.bulkSelectionToolbar_header {
   flex: 1;
   min-width: 0;
   margin-top: 0;
@@ -36,6 +37,7 @@
   border: none;
   border-radius: 0;
   background: transparent;
+  box-shadow: none;
   justify-content: flex-end;
   gap: 0.5rem;
 }
@@ -96,6 +98,11 @@
 :global([data-theme='dark']) .bulkSelectionToolbar {
   background: #1a1d26;
   border-color: var(--theme-border-main, #3d3e4a);
+}
+
+:global([data-theme='dark']) .bulkSelectionToolbar.bulkSelectionToolbar_header {
+  background: transparent;
+  border: none;
 }
 
 .bulkSelectionToolbarCount {
