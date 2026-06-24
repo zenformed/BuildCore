@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import type { CrmBudgetEntry, CrmProjectDetail, CrmWorkflowTask } from '@/domain/crm';
+import type { CrmBudgetEntry, CrmDocumentMetadata, CrmProjectDetail, CrmWorkflowTask } from '@/domain/crm';
 import { isPaymentWorkflowTask } from '@/domain/crm';
 import { archiveCrmWorkflowTask } from '@/application/use-cases/crm';
 import { listWorkflowTaskDocuments } from '@/application/use-cases/crm/listWorkflowTaskDocuments';
@@ -14,6 +14,9 @@ import { useWorkflowTasksSection } from '@/presentation/features/crmProjectDetai
 import type { WorkflowTaskDrawerContext } from '@/presentation/components/CrmProjectDetail/WorkflowTaskDrawer';
 import { crmRepositories } from '@/shared/di/container';
 import { useWorkflowTaskAssignedNotifyPrompt } from '@/presentation/features/crmProjectDetail/useWorkflowTaskCustomerNotifyPrompt';
+import { useSendAttachmentDialog } from '@/presentation/features/communications/useSendAttachmentDialog';
+import { buildWorkflowTaskSendAttachmentContext } from '@/presentation/features/communications/workflowTaskSendAttachmentAdapter';
+import { useAssignmentIdentityCatalog } from '@/presentation/providers/AssignmentIdentityProvider';
 import { useCrmPaymentTasksIndexContext } from '@/presentation/providers/CrmPaymentTasksIndexProvider';
 
 export type ProjectDetailToast = { kind: 'success' | 'error'; message: string };
@@ -56,6 +59,19 @@ export function useProjectDetailWorkspace(initialProject: CrmProjectDetail) {
     onBudgetEntryDocumentDeleted,
   } = useBudgetSection(project, setProject);
   const assignedNotify = useWorkflowTaskAssignedNotifyPrompt(project.summary.contact);
+  const assignmentCatalog = useAssignmentIdentityCatalog();
+  const sendAttachment = useSendAttachmentDialog({
+    onSent: () => {
+      void refreshWorkflowTasks();
+      setToast({
+        kind: 'success',
+        message: content.projectDetail.communications.sendAttachment.success,
+      });
+    },
+    onError: (message) => {
+      setToast({ kind: 'error', message });
+    },
+  });
   const { refetch: refetchRollupIndexes } = useCrmPaymentTasksIndexContext();
 
   const refreshRollupIndexes = useCallback(() => {
@@ -206,6 +222,20 @@ export function useProjectDetailWorkspace(initialProject: CrmProjectDetail) {
     setTaskDrawer({ open: false, mode: 'create', context: 'workflow', task: null });
   }, []);
 
+  const openSendAttachmentDialogForTask = useCallback(
+    (task: CrmWorkflowTask, taskDocuments: readonly CrmDocumentMetadata[] = []) => {
+      const context = buildWorkflowTaskSendAttachmentContext(
+        project,
+        task,
+        taskDocuments,
+        assignmentCatalog
+      );
+      if (context == null) return;
+      sendAttachment.openSendAttachmentDialog(context);
+    },
+    [assignmentCatalog, project, sendAttachment]
+  );
+
   const { savingField, patchField, patchIndustry } = useProjectSummaryPatch(
     project,
     handleProjectSaved,
@@ -261,6 +291,24 @@ export function useProjectDetailWorkspace(initialProject: CrmProjectDetail) {
       assignedNotify.requestCustomerNotifyAfterAssigneeChange,
     openCustomerNotifyPromptForTask: assignedNotify.openCustomerNotifyPromptForTask,
     sendCustomerNotifyEmail: assignedNotify.sendCustomerNotifyEmail,
+    sendAttachmentDialogContext: sendAttachment.dialogContext,
+    sendAttachmentRecipientOptions: sendAttachment.recipientOptions,
+    sendAttachmentSelectedRecipient: sendAttachment.selectedRecipient,
+    onSendAttachmentRecipientChange: sendAttachment.onRecipientChange,
+    sendAttachmentSubject: sendAttachment.subject,
+    setSendAttachmentSubject: sendAttachment.setSubject,
+    sendAttachmentMessage: sendAttachment.message,
+    setSendAttachmentMessage: sendAttachment.setMessage,
+    sendAttachmentSelectedAttachments: sendAttachment.selectedAttachments,
+    sendAttachmentSending: sendAttachment.sending,
+    sendAttachmentFeedback: sendAttachment.feedback,
+    sendAttachmentCanSend: sendAttachment.canSend,
+    closeSendAttachmentDialog: sendAttachment.closeDialog,
+    addSendAttachmentFiles: sendAttachment.addFiles,
+    addSendAttachmentExistingDocument: sendAttachment.addExistingDocument,
+    removeSendAttachmentSelected: sendAttachment.removeSelectedAttachment,
+    sendAttachmentEmail: sendAttachment.sendAttachment,
+    openSendAttachmentDialogForTask,
     onProjectSaved: handleProjectSaved,
     onPrimaryPhotoUpdated: handlePrimaryPhotoUpdated,
     refreshRollupIndexes,

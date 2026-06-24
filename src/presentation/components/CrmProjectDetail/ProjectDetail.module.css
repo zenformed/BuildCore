@@ -721,6 +721,11 @@
   -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect width='20' height='16' x='2' y='4' rx='2'/%3E%3Cpath d='m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7'/%3E%3C/svg%3E");
 }
 
+.actionsMenuAttachmentIcon {
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M21.44 11.05 12.25 20.24a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66L9.88 17.66a2 2 0 01-2.83-2.83l8.49-8.49'/%3E%3C/svg%3E");
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M21.44 11.05 12.25 20.24a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66L9.88 17.66a2 2 0 01-2.83-2.83l8.49-8.49'/%3E%3C/svg%3E");
+}
+
 .actionsMenuItemDanger {
   color: var(--color-error, #dc2626);
 }
@@ -3895,6 +3900,14 @@
   color: #db2777;
 }
 
+.docFileIconWrap_image {
+  color: #0d9488;
+}
+
+.docFileIconWrap_archive {
+  color: #7c3aed;
+}
+
 .docFileIconWrap_generic {
   color: #64748b;
 }
@@ -3918,6 +3931,14 @@
 
 :global([data-theme='dark']) .docFileIconWrap_presentation {
   color: #f472b6;
+}
+
+:global([data-theme='dark']) .docFileIconWrap_image {
+  color: #2dd4bf;
+}
+
+:global([data-theme='dark']) .docFileIconWrap_archive {
+  color: #a78bfa;
 }
 
 .inlineMenuDocRow {
@@ -6123,6 +6144,42 @@
 
 :global([data-theme='dark']) .subprojectsSelectBtn:hover:not(:disabled) {
   background: #1d2029;
+}
+
+.subprojectsSelectBtn_icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  padding: 0;
+  color: var(--color-text-muted, #64748b);
+}
+
+.subprojectsSelectBtnIcon {
+  display: block;
+  width: 0.9375rem;
+  height: 0.9375rem;
+}
+
+@media (max-width: 767px) {
+  .subprojectsPanelHeaderTools {
+    gap: 0.375rem;
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  .subprojectsSearch {
+    min-width: 0;
+    max-width: none;
+    flex: 1 1 4rem;
+    width: auto;
+  }
+
+  .subprojectsSelectBtn_icon {
+    width: 2.125rem;
+    height: 2.125rem;
+  }
 }
 
 .subprojectMobileCardContent {

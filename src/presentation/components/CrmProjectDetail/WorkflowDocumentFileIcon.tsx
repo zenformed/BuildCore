@@ -6,10 +6,12 @@ import {
   FaFile,
   FaFileCsv,
   FaFileExcel,
+  FaFileImage,
   FaFileLines,
   FaFilePdf,
   FaFilePowerpoint,
   FaFileWord,
+  FaFileZipper,
 } from 'react-icons/fa6';
 import {
   inferWorkflowDocumentFileIconType,
@@ -26,6 +28,8 @@ const ICON_BY_TYPE: Record<
   sheet: FaFileExcel,
   text: FaFileLines,
   presentation: FaFilePowerpoint,
+  image: FaFileImage,
+  archive: FaFileZipper,
   generic: FaFile,
 };
 

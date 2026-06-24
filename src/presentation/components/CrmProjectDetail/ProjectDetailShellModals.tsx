@@ -7,6 +7,7 @@ import { ConfirmModal } from '@/presentation/components/ConfirmModal';
 import { ProjectCompletionBlockedDialog } from '@/presentation/components/CrmProjectDetail/ProjectCompletionBlockedDialog';
 import { CrmProjectDeleteWorkflowDialog } from '@/presentation/components/CrmProjects/CrmProjectDeleteWorkflowDialog';
 import { WorkflowTaskCustomerNotifyDialog } from '@/presentation/components/CrmProjectDetail/WorkflowTaskCustomerNotifyDialog';
+import { SendAttachmentDialog } from '@/presentation/components/communications/SendAttachmentDialog';
 import type { useProjectCompletionToggle } from '@/presentation/features/crmProjectDetail/useProjectCompletionToggle';
 import type { useProjectDetailWorkspace } from '@/presentation/features/crmProjectDetail/useProjectDetailWorkspace';
 
@@ -28,6 +29,23 @@ export type ProjectDetailShellModalsProps = {
     | 'customerNotifyFeedback'
     | 'closeCustomerNotifyPrompt'
     | 'sendCustomerNotifyEmail'
+    | 'sendAttachmentDialogContext'
+    | 'sendAttachmentRecipientOptions'
+    | 'sendAttachmentSelectedRecipient'
+    | 'onSendAttachmentRecipientChange'
+    | 'sendAttachmentSubject'
+    | 'setSendAttachmentSubject'
+    | 'sendAttachmentMessage'
+    | 'setSendAttachmentMessage'
+    | 'sendAttachmentSelectedAttachments'
+    | 'sendAttachmentSending'
+    | 'sendAttachmentFeedback'
+    | 'sendAttachmentCanSend'
+    | 'closeSendAttachmentDialog'
+    | 'addSendAttachmentFiles'
+    | 'addSendAttachmentExistingDocument'
+    | 'removeSendAttachmentSelected'
+    | 'sendAttachmentEmail'
   >;
   pendingDeleteProject: CrmProjectSummary | null;
   onCloseDelete: () => void;
@@ -60,6 +78,23 @@ export function ProjectDetailShellModals({
     customerNotifyFeedback,
     closeCustomerNotifyPrompt,
     sendCustomerNotifyEmail,
+    sendAttachmentDialogContext,
+    sendAttachmentRecipientOptions,
+    sendAttachmentSelectedRecipient,
+    onSendAttachmentRecipientChange,
+    sendAttachmentSubject,
+    setSendAttachmentSubject,
+    sendAttachmentMessage,
+    setSendAttachmentMessage,
+    sendAttachmentSelectedAttachments,
+    sendAttachmentSending,
+    sendAttachmentFeedback,
+    sendAttachmentCanSend,
+    closeSendAttachmentDialog,
+    addSendAttachmentFiles,
+    addSendAttachmentExistingDocument,
+    removeSendAttachmentSelected,
+    sendAttachmentEmail,
   } = workspace;
 
   return (
@@ -153,6 +188,27 @@ export function ProjectDetailShellModals({
         onClose={closeCustomerNotifyPrompt}
         onSendEmail={() => {
           void sendCustomerNotifyEmail();
+        }}
+      />
+      <SendAttachmentDialog
+        context={sendAttachmentDialogContext}
+        recipientOptions={sendAttachmentRecipientOptions}
+        selectedRecipient={sendAttachmentSelectedRecipient}
+        onRecipientChange={onSendAttachmentRecipientChange}
+        subject={sendAttachmentSubject}
+        message={sendAttachmentMessage}
+        selectedAttachments={sendAttachmentSelectedAttachments}
+        sending={sendAttachmentSending}
+        feedback={sendAttachmentFeedback}
+        canSend={sendAttachmentCanSend}
+        onSubjectChange={setSendAttachmentSubject}
+        onMessageChange={setSendAttachmentMessage}
+        onAddFiles={addSendAttachmentFiles}
+        onAddExistingDocument={addSendAttachmentExistingDocument}
+        onRemoveSelectedAttachment={removeSendAttachmentSelected}
+        onClose={closeSendAttachmentDialog}
+        onSend={() => {
+          void sendAttachmentEmail();
         }}
       />
     </>

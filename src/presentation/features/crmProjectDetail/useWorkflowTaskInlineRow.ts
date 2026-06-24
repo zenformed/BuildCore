@@ -24,6 +24,7 @@ import {
   shouldOfferWorkflowTaskCustomerNotify,
   taskSupportsManualWorkflowTaskAssignedNotification,
 } from '@/presentation/features/crmProjectDetail/workflowTaskCustomerNotify';
+import { workflowTaskSupportsSendAttachment } from '@/presentation/features/communications/workflowTaskSendAttachmentAdapter';
 import { useWorkflowTaskPatch } from '@/presentation/features/crmProjectDetail/useWorkflowTaskPatch';
 import { validateWorkflowTaskStatusChange } from '@/presentation/features/crmProjectDetail/workflowTaskDocumentsValidation';
 import {
@@ -69,6 +70,7 @@ export function useWorkflowTaskInlineRow({
     onWorkflowTaskDocumentDeleted,
     requestCustomerNotifyAfterAssigneeChange,
     openAssignedNotifyPromptForTask,
+    openSendAttachmentDialogForTask,
     openEditWorkflowTask,
     syncWorkflowTaskDocuments,
   } = useProjectDetailShell();
@@ -355,13 +357,17 @@ export function useWorkflowTaskInlineRow({
     canView && (hasDocuments || awaitingCustomerReview || canUpload || canEdit);
   const showAssignedNotification =
     canEdit && taskSupportsManualWorkflowTaskAssignedNotification(task, isApiSource);
+  const showSendAttachment = canEdit && workflowTaskSupportsSendAttachment(project, isApiSource);
   const notesPreview = formatWorkflowTaskNotesPreview(task.notes);
   const notesTitle =
     task.notes?.replace(/\s+/g, ' ').trim() && notesPreview.endsWith('…')
       ? task.notes.replace(/\s+/g, ' ').trim()
       : undefined;
   const showActionsMenu =
-    canEdit || (canDelete && onRequestArchiveTask != null) || showAssignedNotification;
+    canEdit ||
+    (canDelete && onRequestArchiveTask != null) ||
+    showAssignedNotification ||
+    showSendAttachment;
 
   return {
     wf,
@@ -425,11 +431,13 @@ export function useWorkflowTaskInlineRow({
     awaitingCustomerReview,
     hasDocuments,
     showAssignedNotification,
+    showSendAttachment,
     notesPreview,
     notesTitle,
     showActionsMenu,
     openEditWorkflowTask,
     openAssignedNotifyPromptForTask,
+    openSendAttachmentDialogForTask,
     onRequestArchiveTask,
   };
 }

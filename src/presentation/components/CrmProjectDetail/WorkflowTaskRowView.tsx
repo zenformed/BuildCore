@@ -37,6 +37,7 @@ function WorkflowTaskRowActionsMenuSlot({
       disabled={model.saving}
       canEdit={model.canEdit}
       canDelete={model.canDelete}
+      showSendAttachment={model.showSendAttachment}
       showAssignedNotification={model.showAssignedNotification}
       onEdit={() => {
         model.closeMenus();
@@ -50,6 +51,10 @@ function WorkflowTaskRowActionsMenuSlot({
             }
           : undefined
       }
+      onSendAttachment={() => {
+        model.closeMenus();
+        model.openSendAttachmentDialogForTask(model.task, model.taskDocuments);
+      }}
       onNotifyAssigned={() => {
         model.closeMenus();
         model.openAssignedNotifyPromptForTask(model.task);

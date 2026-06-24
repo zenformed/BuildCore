@@ -11,9 +11,11 @@ export type WorkflowTaskRowActionsMenuProps = {
   readonly disabled?: boolean;
   readonly canEdit?: boolean;
   readonly canDelete?: boolean;
+  readonly showSendAttachment?: boolean;
   readonly showAssignedNotification?: boolean;
   readonly onEdit?: () => void;
   readonly onDelete?: () => void;
+  readonly onSendAttachment?: () => void;
   readonly onNotifyAssigned?: () => void;
 };
 
@@ -30,9 +32,11 @@ export function WorkflowTaskRowActionsMenu({
   disabled = false,
   canEdit = false,
   canDelete = false,
+  showSendAttachment = false,
   showAssignedNotification = false,
   onEdit,
   onDelete,
+  onSendAttachment,
   onNotifyAssigned,
 }: WorkflowTaskRowActionsMenuProps): ReactElement | null {
   const wf = content.projectDetail.workflow;
@@ -41,6 +45,14 @@ export function WorkflowTaskRowActionsMenu({
 
   const menuItems = useMemo((): readonly WorkflowTaskRowMenuItem[] => {
     const items: WorkflowTaskRowMenuItem[] = [];
+    if (showSendAttachment && onSendAttachment) {
+      items.push({
+        key: 'send-attachment',
+        label: wf.sendAttachment,
+        onSelect: onSendAttachment,
+        iconClass: styles.actionsMenuAttachmentIcon,
+      });
+    }
     if (canEdit && onEdit) {
       items.push({
         key: 'edit',
@@ -73,10 +85,13 @@ export function WorkflowTaskRowActionsMenu({
     onDelete,
     onEdit,
     onNotifyAssigned,
+    onSendAttachment,
     showAssignedNotification,
+    showSendAttachment,
     wf.deleteTask,
     wf.editTask,
     wf.notifyAssigned,
+    wf.sendAttachment,
   ]);
 
   useEffect(() => {

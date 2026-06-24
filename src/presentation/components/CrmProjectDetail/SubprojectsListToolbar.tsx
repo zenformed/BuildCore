@@ -5,6 +5,7 @@ import type { BulkSelectionToolbarAction } from '@/presentation/components/BulkS
 import { BulkSelectionToolbar } from '@/presentation/components/BulkSelection';
 import bulkSelectionStyles from '@/presentation/components/BulkSelection/BulkSelection.module.css';
 import { CrmProjectsFilterMenu } from '@/presentation/components/CrmProjects/CrmProjectsFilterMenu';
+import { SelectItemsIcon } from '@/platform/icons/buildCoreDashboardShellIcons';
 import type { CrmProjectsListFilters } from '@/presentation/features/crmProjects/crmProjectsPipelineViewModel';
 import type { RadiusFilterState } from '@/presentation/features/filters/radiusFilterModel';
 import { DetailPanelHeaderButton } from './DetailPanelHeaderButton';
@@ -122,8 +123,23 @@ export function SubprojectsListToolbar({
         />
       ) : null}
       {canUseBulkActions ? (
-        <button type="button" className={styles.subprojectsSelectBtn} onClick={onEnterSelectionMode}>
-          {selectLabel}
+        <button
+          type="button"
+          className={[
+            styles.subprojectsSelectBtn,
+            isMobileLayout ? styles.subprojectsSelectBtn_icon : '',
+          ]
+            .filter(Boolean)
+            .join(' ')}
+          title={selectLabel}
+          aria-label={selectLabel}
+          onClick={onEnterSelectionMode}
+        >
+          {isMobileLayout ? (
+            <SelectItemsIcon className={styles.subprojectsSelectBtnIcon} />
+          ) : (
+            selectLabel
+          )}
         </button>
       ) : null}
     </>

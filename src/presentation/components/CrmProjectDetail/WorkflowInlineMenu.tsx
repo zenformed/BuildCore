@@ -174,15 +174,21 @@ export function WorkflowInlineMenu({
 
   useWorkflowInlineMenuDismiss(anchorRef, menuRef, open, onClose);
 
-  if (!open || position == null || typeof document === 'undefined') return null;
+  if (!open || typeof document === 'undefined') return null;
+
+  const anchor = anchorRef.current;
+  if (anchor == null) return null;
+
+  const resolvedPosition =
+    position ?? computeMenuPosition(anchor, menuRef.current, align, sizeToContent);
 
   const menuStyle: CSSProperties = {
-    top: position.top,
-    left: position.left,
-    maxHeight: position.maxHeight,
+    top: resolvedPosition.top,
+    left: resolvedPosition.left,
+    maxHeight: resolvedPosition.maxHeight,
     overflowY: 'auto',
-    ...(sizeToContent ? {} : { minWidth: position.minWidth }),
-    transform: position.effectiveAlign === 'end' ? 'translateX(-100%)' : undefined,
+    ...(sizeToContent ? {} : { minWidth: resolvedPosition.minWidth }),
+    transform: resolvedPosition.effectiveAlign === 'end' ? 'translateX(-100%)' : undefined,
   };
 
   return createPortal(
@@ -191,6 +197,9 @@ export function WorkflowInlineMenu({
       className={portalClassName ?? styles.inlineMenu_portal}
       style={menuStyle}
       role="menu"
+      onMouseDown={(event) => {
+        event.stopPropagation();
+      }}
     >
       {children}
     </div>,
