@@ -16,6 +16,8 @@ import { crmRepositories } from '@/shared/di/container';
 import { useWorkflowTaskAssignedNotifyPrompt } from '@/presentation/features/crmProjectDetail/useWorkflowTaskCustomerNotifyPrompt';
 import { useSendAttachmentDialog } from '@/presentation/features/communications/useSendAttachmentDialog';
 import { buildWorkflowTaskSendAttachmentContext } from '@/presentation/features/communications/workflowTaskSendAttachmentAdapter';
+import { buildPaymentSendAttachmentContext } from '@/presentation/features/communications/paymentSendAttachmentAdapter';
+import { buildBudgetEntrySendAttachmentContext } from '@/presentation/features/communications/budgetEntrySendAttachmentAdapter';
 import { useAssignmentIdentityCatalog } from '@/presentation/providers/AssignmentIdentityProvider';
 import { useCrmPaymentTasksIndexContext } from '@/presentation/providers/CrmPaymentTasksIndexProvider';
 
@@ -236,6 +238,37 @@ export function useProjectDetailWorkspace(initialProject: CrmProjectDetail) {
     [assignmentCatalog, project, sendAttachment]
   );
 
+  const openSendAttachmentDialogForPayment = useCallback(
+    (payment: CrmWorkflowTask, paymentDocuments: readonly CrmDocumentMetadata[] = []) => {
+      const context = buildPaymentSendAttachmentContext(
+        project,
+        payment,
+        paymentDocuments,
+        assignmentCatalog
+      );
+      if (context == null) return;
+      sendAttachment.openSendAttachmentDialog(context);
+    },
+    [assignmentCatalog, project, sendAttachment]
+  );
+
+  const openSendAttachmentDialogForBudgetEntry = useCallback(
+    (
+      entry: CrmBudgetEntry,
+      entryDocuments: readonly CrmDocumentMetadata[] = []
+    ) => {
+      const context = buildBudgetEntrySendAttachmentContext(
+        project,
+        entry,
+        entryDocuments,
+        assignmentCatalog
+      );
+      if (context == null) return;
+      sendAttachment.openSendAttachmentDialog(context);
+    },
+    [assignmentCatalog, project, sendAttachment]
+  );
+
   const { savingField, patchField, patchIndustry } = useProjectSummaryPatch(
     project,
     handleProjectSaved,
@@ -309,6 +342,8 @@ export function useProjectDetailWorkspace(initialProject: CrmProjectDetail) {
     removeSendAttachmentSelected: sendAttachment.removeSelectedAttachment,
     sendAttachmentEmail: sendAttachment.sendAttachment,
     openSendAttachmentDialogForTask,
+    openSendAttachmentDialogForPayment,
+    openSendAttachmentDialogForBudgetEntry,
     onProjectSaved: handleProjectSaved,
     onPrimaryPhotoUpdated: handlePrimaryPhotoUpdated,
     refreshRollupIndexes,

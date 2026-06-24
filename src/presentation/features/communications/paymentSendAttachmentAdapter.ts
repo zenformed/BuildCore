@@ -1,48 +1,44 @@
 import type { CrmDocumentMetadata, CrmProjectDetail, CrmWorkflowTask } from '@/domain/crm';
 import type { AssignmentIdentityCatalog } from '@/presentation/features/crmAssignment/assignmentIdentityModel';
-import {
-  buildSendAttachmentRecipientContext,
-  projectSupportsSendAttachment,
-} from '@/presentation/features/communications/sendAttachmentEligibility';
+import { formatCentsAsUsd } from '@/presentation/features/crmProjects/crmProjectFormatters';
+import { buildSendAttachmentRecipientContext } from '@/presentation/features/communications/sendAttachmentEligibility';
 import type { SendAttachmentDialogContext } from '@/presentation/features/communications/sendAttachmentTypes';
 import { mapCrmDocumentsToExistingAttachmentOptions } from '@/presentation/features/communications/mapExistingAttachmentOptions';
 
-export function workflowTaskSupportsSendAttachment(
-  project: Pick<CrmProjectDetail, 'summary'>,
-  isApiSource: boolean,
-  catalog: AssignmentIdentityCatalog | null = null
-): boolean {
-  return projectSupportsSendAttachment(project, catalog, isApiSource);
+function formatPaymentEntityLabel(payment: CrmWorkflowTask): string {
+  const title = payment.title.trim();
+  if (title.length > 0) return title;
+  return formatCentsAsUsd(payment.amountCents ?? 0);
 }
 
-export function buildWorkflowTaskSendAttachmentContext(
+export function buildPaymentSendAttachmentContext(
   project: CrmProjectDetail,
-  task: CrmWorkflowTask,
-  taskDocuments: readonly CrmDocumentMetadata[] = [],
+  payment: CrmWorkflowTask,
+  paymentDocuments: readonly CrmDocumentMetadata[] = [],
   catalog: AssignmentIdentityCatalog | null = null
 ): SendAttachmentDialogContext | null {
   const recipientContext = buildSendAttachmentRecipientContext(project, catalog);
   if (recipientContext == null) return null;
 
-  const entityLabel = task.title.trim() || 'Task';
+  const paymentLabel = formatPaymentEntityLabel(payment);
 
   return {
     recipientOptions: recipientContext.recipientOptions,
     defaultRecipientId: recipientContext.defaultRecipientId,
     entity: {
-      type: 'workflow_task',
-      id: task.id,
+      type: 'payment',
+      id: payment.id,
     },
     context: {
       projectName: recipientContext.projectName,
-      entityLabel,
+      entityLabel: `Payment: ${paymentLabel}`,
     },
     uploadScope: {
       scope: 'workflow_task',
       projectSlug: project.summary.slug,
-      workflowTaskId: task.id,
+      workflowTaskId: payment.id,
     },
-    defaultSubject: `Documents for ${recipientContext.projectName}`,
-    existingDocuments: mapCrmDocumentsToExistingAttachmentOptions(taskDocuments),
+    defaultSubject: `Payment documents for ${recipientContext.projectName}`,
+    existingDocuments: mapCrmDocumentsToExistingAttachmentOptions(paymentDocuments),
   };
 }

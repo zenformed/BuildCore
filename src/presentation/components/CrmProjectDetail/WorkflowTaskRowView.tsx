@@ -53,7 +53,7 @@ function WorkflowTaskRowActionsMenuSlot({
       }
       onSendAttachment={() => {
         model.closeMenus();
-        model.openSendAttachmentDialogForTask(model.task, model.taskDocuments);
+        model.openSendAttachmentForRow();
       }}
       onNotifyAssigned={() => {
         model.closeMenus();

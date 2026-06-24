@@ -18,6 +18,8 @@ import {
   formatCostDateDisplay,
 } from '@/presentation/features/crmProjectDetail/budgetCostDate';
 import { useProjectDetailShell } from '@/presentation/features/crmProjectDetail/ProjectDetailShellContext';
+import { projectSupportsSendAttachment } from '@/presentation/features/communications/sendAttachmentEligibility';
+import { useAssignmentIdentityCatalog } from '@/presentation/providers/AssignmentIdentityProvider';
 import { useBuildCoreProjectSectionAccess } from '@/presentation/providers/BuildCoreProjectSectionAccessProvider';
 import { useBudgetEntryDocumentActions } from '@/presentation/features/crmProjectDetail/useBudgetEntryDocumentActions';
 import { WorkflowDocumentFileIcon } from './WorkflowDocumentFileIcon';
@@ -64,12 +66,19 @@ export function BudgetInlineRow({
   const {
     onBudgetEntryDocumentUploaded,
     onBudgetEntryDocumentDeleted,
+    openSendAttachmentDialogForBudgetEntry,
+    project,
+    isApiSource,
   } = useProjectDetailShell();
+  const assignmentCatalog = useAssignmentIdentityCatalog();
   const { budget: budgetAccess } = useBuildCoreProjectSectionAccess();
   const { permissions, isReady } = budgetAccess;
   const canEdit = isReady && permissions.canEdit;
   const canUpload = isReady && permissions.canUpload;
   const canDelete = isReady && permissions.canDelete;
+  const showSendAttachment =
+    canEdit && projectSupportsSendAttachment(project, assignmentCatalog, isApiSource);
+  const showActionsMenu = showSendAttachment || (canDelete && onRequestDelete != null);
   const documentActions = useBudgetEntryDocumentActions({
     projectSlug,
     budgetEntryId: entry.id,
@@ -205,6 +214,12 @@ export function BudgetInlineRow({
     onRequestDelete?.();
   };
 
+  const handleSendAttachment = (): void => {
+    setCategoryMenuOpen(false);
+    setDocumentsMenuOpen(false);
+    openSendAttachmentDialogForBudgetEntry(entry, entryDocuments);
+  };
+
   if (variant === 'mobile') {
     const mobileValueBtn = styles.workflowTaskMobileCardValueBtn;
     const mobileValue = styles.workflowTaskMobileCardValue;
@@ -253,12 +268,14 @@ export function BudgetInlineRow({
               </button>
             )}
           </div>
-          {onRequestDelete ? (
+          {showActionsMenu ? (
             <div className={styles.workflowTaskMobileCardActions}>
               <BudgetRowActionsMenu
                 itemName={entry.itemName}
                 disabled={saving}
-                onDelete={handleRequestDelete}
+                showSendAttachment={showSendAttachment}
+                onSendAttachment={handleSendAttachment}
+                onDelete={canDelete && onRequestDelete ? handleRequestDelete : undefined}
               />
             </div>
           ) : null}
@@ -855,11 +872,13 @@ export function BudgetInlineRow({
       </span>
 
       <span className={styles.taskDeleteCell}>
-        {onRequestDelete ? (
+        {showActionsMenu ? (
           <BudgetRowActionsMenu
             itemName={entry.itemName}
             disabled={saving}
-            onDelete={handleRequestDelete}
+            showSendAttachment={showSendAttachment}
+            onSendAttachment={handleSendAttachment}
+            onDelete={canDelete && onRequestDelete ? handleRequestDelete : undefined}
           />
         ) : null}
       </span>

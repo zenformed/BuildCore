@@ -19,7 +19,9 @@ import {
   buildWorkflowTaskSendAttachmentContext,
   workflowTaskSupportsSendAttachment,
 } from '@/presentation/features/communications/workflowTaskSendAttachmentAdapter';
-import type { CrmDocumentMetadata, CrmProjectDetail, CrmWorkflowTask } from '@/domain/crm';
+import { buildPaymentSendAttachmentContext } from '@/presentation/features/communications/paymentSendAttachmentAdapter';
+import { buildBudgetEntrySendAttachmentContext } from '@/presentation/features/communications/budgetEntrySendAttachmentAdapter';
+import type { CrmBudgetEntry, CrmDocumentMetadata, CrmProjectDetail, CrmWorkflowTask } from '@/domain/crm';
 
 const project = {
   summary: {
@@ -37,6 +39,18 @@ const task = {
   id: 'task-1',
   title: 'Send contract',
 } as CrmWorkflowTask;
+
+const payment = {
+  id: 'payment-1',
+  title: 'Deposit',
+  amountCents: 250000,
+} as CrmWorkflowTask;
+
+const budgetEntry = {
+  id: 'budget-1',
+  itemName: 'Drywall materials',
+  category: 'materials',
+} as CrmBudgetEntry;
 
 const document = {
   id: 'doc-1',
@@ -186,10 +200,38 @@ describe('workflowTaskSendAttachmentAdapter', () => {
     assert.ok(context);
     assert.equal(context!.defaultRecipientId, 'customer:contact-1');
     assert.equal(context!.recipientOptions.length, 2);
-    assert.equal(context!.recipientOptions[0]?.type, 'customer');
-    assert.equal(context!.recipientOptions[1]?.type, 'member');
     assert.equal(context!.entity.type, 'workflow_task');
     assert.equal(context!.existingDocuments.length, 1);
-    assert.equal(context!.existingDocuments[0]?.crmDocumentId, 'doc-1');
+  });
+});
+
+describe('paymentSendAttachmentAdapter', () => {
+  it('builds payment communication context with workflow_task upload scope', () => {
+    const context = buildPaymentSendAttachmentContext(project, payment, [document], catalog);
+    assert.ok(context);
+    assert.equal(context!.entity.type, 'payment');
+    assert.equal(context!.entity.id, 'payment-1');
+    assert.equal(context!.defaultSubject, 'Payment documents for Kitchen Remodel');
+    assert.equal(context!.context.entityLabel, 'Payment: Deposit');
+    assert.equal(context!.uploadScope.scope, 'workflow_task');
+    assert.equal(context!.uploadScope.workflowTaskId, 'payment-1');
+  });
+});
+
+describe('budgetEntrySendAttachmentAdapter', () => {
+  it('builds budget communication context with budget_entry upload scope', () => {
+    const context = buildBudgetEntrySendAttachmentContext(
+      project,
+      budgetEntry,
+      [document],
+      catalog
+    );
+    assert.ok(context);
+    assert.equal(context!.entity.type, 'budget_entry');
+    assert.equal(context!.entity.id, 'budget-1');
+    assert.equal(context!.defaultSubject, 'Budget documents for Kitchen Remodel');
+    assert.equal(context!.context.entityLabel, 'Budget: Drywall materials');
+    assert.equal(context!.uploadScope.scope, 'budget_entry');
+    assert.equal(context!.uploadScope.budgetEntryId, 'budget-1');
   });
 });

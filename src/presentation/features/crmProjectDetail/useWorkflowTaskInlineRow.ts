@@ -24,7 +24,7 @@ import {
   shouldOfferWorkflowTaskCustomerNotify,
   taskSupportsManualWorkflowTaskAssignedNotification,
 } from '@/presentation/features/crmProjectDetail/workflowTaskCustomerNotify';
-import { workflowTaskSupportsSendAttachment } from '@/presentation/features/communications/workflowTaskSendAttachmentAdapter';
+import { projectSupportsSendAttachment } from '@/presentation/features/communications/sendAttachmentEligibility';
 import { useWorkflowTaskPatch } from '@/presentation/features/crmProjectDetail/useWorkflowTaskPatch';
 import { validateWorkflowTaskStatusChange } from '@/presentation/features/crmProjectDetail/workflowTaskDocumentsValidation';
 import {
@@ -71,6 +71,7 @@ export function useWorkflowTaskInlineRow({
     requestCustomerNotifyAfterAssigneeChange,
     openAssignedNotifyPromptForTask,
     openSendAttachmentDialogForTask,
+    openSendAttachmentDialogForPayment,
     openEditWorkflowTask,
     syncWorkflowTaskDocuments,
   } = useProjectDetailShell();
@@ -357,7 +358,8 @@ export function useWorkflowTaskInlineRow({
     canView && (hasDocuments || awaitingCustomerReview || canUpload || canEdit);
   const showAssignedNotification =
     canEdit && taskSupportsManualWorkflowTaskAssignedNotification(task, isApiSource);
-  const showSendAttachment = canEdit && workflowTaskSupportsSendAttachment(project, isApiSource);
+  const showSendAttachment =
+    canEdit && projectSupportsSendAttachment(project, assignmentCatalog, isApiSource);
   const notesPreview = formatWorkflowTaskNotesPreview(task.notes);
   const notesTitle =
     task.notes?.replace(/\s+/g, ' ').trim() && notesPreview.endsWith('…')
@@ -438,6 +440,15 @@ export function useWorkflowTaskInlineRow({
     openEditWorkflowTask,
     openAssignedNotifyPromptForTask,
     openSendAttachmentDialogForTask,
+    openSendAttachmentDialogForPayment,
+    openSendAttachmentForRow: () => {
+      if (permissionDomain === 'payments') {
+        openSendAttachmentDialogForPayment(task, taskDocuments);
+      } else {
+        openSendAttachmentDialogForTask(task, taskDocuments);
+      }
+    },
+    permissionDomain,
     onRequestArchiveTask,
   };
 }
