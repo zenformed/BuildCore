@@ -4256,10 +4256,10 @@
 
 .paymentsTableGridShell {
   --payments-grid-gap: 0.625rem;
+  /* Status | Task (2fr) | Amount | Notes (1fr) | Docs | Assigned | Due | Invoiced | Paid | Actions */
   --payments-grid-columns:
-    5.5rem minmax(10rem, 1.6fr) minmax(4rem, 0.7fr) minmax(5rem, 0.4fr) minmax(4.75rem, 0.85fr)
-    minmax(4rem, 0.7fr) minmax(4.75rem, 0.85fr) minmax(3.25rem, 0.6fr) minmax(3.25rem, 0.6fr) 1.75rem;
-  --payments-table-min-width: 47.25rem;
+    5.5rem minmax(8rem, 2fr) 4.75rem minmax(5rem, 1fr) 4.5rem 4.25rem 7.25rem 7.25rem 4rem 3.25rem;
+  --payments-table-min-width: 55.375rem;
   display: grid;
   grid-template-columns: var(--payments-grid-columns);
   column-gap: var(--payments-grid-gap);
@@ -4385,6 +4385,26 @@
   align-items: center;
   justify-content: center;
   gap: 0.25rem;
+}
+
+.paymentsTableGridShell .paymentDraftRow .paymentDraftSelect {
+  width: 100%;
+  max-width: 100%;
+}
+
+.paymentsTableGridShell .paymentDraftRow .workflowMetaCell.inlineDueCell .paymentDraftDateInput,
+.paymentsTableGridShell .paymentDraftRow .workflowMetaCell .paymentDraftDateInput {
+  min-width: 0;
+  width: 100%;
+}
+
+.paymentsTableGridShell .paymentDraftRow .inlineAmountCell .inlineFieldInput {
+  text-align: right;
+}
+
+.paymentsTableGridShell .paymentDraftActions {
+  flex-wrap: nowrap;
+  min-width: 0;
 }
 
 .paymentDraftActionBtn {
@@ -4647,15 +4667,15 @@
 .paymentsList .workflowGridPaymentsWithDates {
   grid-template-columns:
     5.5rem
-    minmax(10rem, 1.6fr)
-    minmax(4rem, 0.7fr)
-    minmax(5rem, 0.4fr)
-    minmax(4.75rem, 0.85fr)
-    minmax(4rem, 0.7fr)
-    minmax(4.75rem, 0.85fr)
-    minmax(3.25rem, 0.6fr)
-    minmax(3.25rem, 0.6fr)
-    1.75rem;
+    minmax(8rem, 2fr)
+    4.75rem
+    minmax(5rem, 1fr)
+    4.5rem
+    4.25rem
+    7.25rem
+    7.25rem
+    4rem
+    3.25rem;
 }
 
 .paymentsList .tableHeader {
