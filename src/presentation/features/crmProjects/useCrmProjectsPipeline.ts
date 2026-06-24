@@ -13,17 +13,27 @@ import { crmRepositories } from '@/shared/di/container';
 import { useCrmPaymentTasksIndexContext } from '@/presentation/providers/CrmPaymentTasksIndexProvider';
 import {
   EMPTY_CRM_PROJECTS_LIST_FILTERS,
+  EMPTY_CRM_PROJECTS_DASHBOARD_VIEW,
+  applyRadiusFilterToDashboardView,
+  collectDashboardRadiusFilterCandidates,
   filterDashboardProjectSummaries,
   partitionCrmProjectSummaries,
   type CrmProjectListFilterContext,
   type CrmProjectsListFilters,
 } from './crmProjectsPipelineViewModel';
+import {
+  EMPTY_RADIUS_FILTER,
+  isRadiusFilterActive,
+  type RadiusFilterState,
+} from '@/presentation/features/filters/radiusFilterModel';
+import { useRadiusFilteredProjects } from '@/presentation/features/filters/useRadiusFilteredProjects';
 
 const EMPTY_PROJECT_SUMMARIES: readonly CrmProjectSummary[] = [];
 
 export function useCrmProjectsPipeline(
   searchQuery: string,
-  filters: CrmProjectsListFilters
+  filters: CrmProjectsListFilters,
+  radiusFilter: RadiusFilterState = EMPTY_RADIUS_FILTER
 ): {
   rootRows: CrmProjectSummary[];
   allChildrenByParentId: Map<string, CrmProjectSummary[]>;
@@ -34,6 +44,8 @@ export function useCrmProjectsPipeline(
   totalCount: number;
   filteredCount: number;
   isLoading: boolean;
+  isRadiusGeocoding: boolean;
+  radiusGeocodingError: string | null;
   isPaymentFinancialsLoading: boolean;
   isWorkflowProgressLoading: boolean;
   refetch: () => Promise<void>;
@@ -82,10 +94,41 @@ export function useCrmProjectsPipeline(
     [isRollupIndexesLoading, workflowTaskStatusIndex]
   );
 
-  const dashboardView = useMemo(
+  const preFilteredView = useMemo(
     () => filterDashboardProjectSummaries(summaries, searchQuery, filters, filterContext),
     [summaries, searchQuery, filters, filterContext]
   );
+
+  const radiusFilterCandidates = useMemo(
+    () => collectDashboardRadiusFilterCandidates(preFilteredView),
+    [preFilteredView]
+  );
+
+  const {
+    rows: radiusFilteredProjects,
+    isGeocoding: isRadiusGeocoding,
+    geocodingError: radiusGeocodingError,
+    isRadiusFilterActive: radiusActive,
+  } = useRadiusFilteredProjects(radiusFilterCandidates, radiusFilter);
+
+  const dashboardView = useMemo(() => {
+    if (!radiusActive) {
+      return preFilteredView;
+    }
+
+    if (isRadiusGeocoding || radiusGeocodingError != null) {
+      return EMPTY_CRM_PROJECTS_DASHBOARD_VIEW;
+    }
+
+    const matchingProjectIds = new Set(radiusFilteredProjects.map((project) => project.id));
+    return applyRadiusFilterToDashboardView(preFilteredView, matchingProjectIds);
+  }, [
+    isRadiusGeocoding,
+    preFilteredView,
+    radiusActive,
+    radiusFilteredProjects,
+    radiusGeocodingError,
+  ]);
 
   const { roots: allRoots } = useMemo(
     () => partitionCrmProjectSummaries(summaries),
@@ -116,6 +159,8 @@ export function useCrmProjectsPipeline(
     totalCount: allRoots.length,
     filteredCount: dashboardView.rootRows.length,
     isLoading,
+    isRadiusGeocoding,
+    radiusGeocodingError,
     isPaymentFinancialsLoading,
     isWorkflowProgressLoading: isRollupIndexesLoading,
     refetch,
@@ -124,4 +169,4 @@ export function useCrmProjectsPipeline(
   };
 }
 
-export { EMPTY_CRM_PROJECTS_LIST_FILTERS };
+export { EMPTY_CRM_PROJECTS_LIST_FILTERS, EMPTY_RADIUS_FILTER };

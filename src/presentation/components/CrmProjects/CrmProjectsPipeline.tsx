@@ -9,8 +9,10 @@ import { buildCoreDashboardContent as content } from '@/platform/content/buildCo
 import { buildCoreDashboardNavigation as nav } from '@/platform/navigation/buildCoreDashboardNavigation';
 import {
   EMPTY_CRM_PROJECTS_LIST_FILTERS,
+  EMPTY_RADIUS_FILTER,
   useCrmProjectsPipeline,
 } from '@/presentation/features/crmProjects/useCrmProjectsPipeline';
+import type { RadiusFilterState } from '@/presentation/features/filters/radiusFilterModel';
 import {
   resolveCrmProjectsTableEmptyMessage,
   type CrmProjectsListFilters,
@@ -53,6 +55,7 @@ export function CrmProjectsPipeline({
   const isMobileLayout = useDashboardMobileLayout();
   const [searchQuery, setSearchQuery] = useState('');
   const [filters, setFilters] = useState<CrmProjectsListFilters>(EMPTY_CRM_PROJECTS_LIST_FILTERS);
+  const [radiusFilter, setRadiusFilter] = useState<RadiusFilterState>(EMPTY_RADIUS_FILTER);
   const [expandedParentIds, setExpandedParentIds] = useState<ReadonlySet<string>>(
     () => new Set()
   );
@@ -65,13 +68,16 @@ export function CrmProjectsPipeline({
     workflowProgressInputIndex,
     totalCount,
     isLoading,
+    isRadiusGeocoding,
+    radiusGeocodingError,
     isPaymentFinancialsLoading,
     isWorkflowProgressLoading,
     refetch,
     removeProject,
     patchProjectSummary,
-  } = useCrmProjectsPipeline(searchQuery, filters);
+  } = useCrmProjectsPipeline(searchQuery, filters, radiusFilter);
   const [toast, setToast] = useState<PipelineToast | null>(null);
+  const listIsLoading = isLoading || isRadiusGeocoding;
 
   const {
     pendingDeleteProject,
@@ -114,6 +120,13 @@ export function CrmProjectsPipeline({
       setToast({ kind: 'success', message });
     }
   }, []);
+
+  useEffect(() => {
+    if (radiusGeocodingError == null) {
+      return;
+    }
+    setToast({ kind: 'error', message: radiusGeocodingError });
+  }, [radiusGeocodingError]);
 
   useEffect(() => {
     if (isMemberRole && createOpen) {
@@ -174,7 +187,12 @@ export function CrmProjectsPipeline({
   });
 
   const filterMenu = (
-    <CrmProjectsFilterMenu filters={filters} onChange={setFilters} />
+    <CrmProjectsFilterMenu
+      filters={filters}
+      onChange={setFilters}
+      radiusFilter={radiusFilter}
+      onRadiusFilterChange={setRadiusFilter}
+    />
   );
   const expandAllButton = (
     <CrmProjectsExpandAllButton
@@ -277,7 +295,7 @@ export function CrmProjectsPipeline({
             paymentTasksIndex={paymentTasksIndex}
             workflowProgressInputIndex={workflowProgressInputIndex}
             isWorkflowProgressLoading={isWorkflowProgressLoading}
-            isLoading={isLoading}
+            isLoading={listIsLoading}
             isPaymentFinancialsLoading={isPaymentFinancialsLoading}
             onRowClick={onProjectRowClick}
             onSubprojectRowClick={handleSubprojectRowClick}
@@ -302,7 +320,7 @@ export function CrmProjectsPipeline({
             paymentTasksIndex={paymentTasksIndex}
             workflowProgressInputIndex={workflowProgressInputIndex}
             isWorkflowProgressLoading={isWorkflowProgressLoading}
-            isLoading={isLoading}
+            isLoading={listIsLoading}
             isPaymentFinancialsLoading={isPaymentFinancialsLoading}
             onRowClick={onProjectRowClick}
             onSubprojectRowClick={handleSubprojectRowClick}

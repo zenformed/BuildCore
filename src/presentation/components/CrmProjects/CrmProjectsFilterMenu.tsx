@@ -22,6 +22,12 @@ import {
   isCrmProjectsListFiltersActive,
   type CrmProjectsListFilters,
 } from '@/presentation/features/crmProjects/crmProjectsPipelineViewModel';
+import { RadiusFilterSection } from '@/presentation/components/filters/RadiusFilterSection';
+import {
+  EMPTY_RADIUS_FILTER,
+  isRadiusFilterActive,
+  type RadiusFilterState,
+} from '@/presentation/features/filters/radiusFilterModel';
 import styles from './CrmProjects.module.css';
 
 const PRIORITY_LABELS: Record<CrmPriorityFilterValue, string> = {
@@ -34,12 +40,16 @@ export type CrmProjectsFilterMenuProps = {
   readonly onChange: (filters: CrmProjectsListFilters) => void;
   /** Mixed dashboard lists show both catalogs; single-entity views use one scope. */
   readonly stageScopeMode?: 'mixed' | PipelineStageScope;
+  readonly radiusFilter?: RadiusFilterState;
+  readonly onRadiusFilterChange?: (filter: RadiusFilterState) => void;
 };
 
 export function CrmProjectsFilterMenu({
   filters,
   onChange,
   stageScopeMode = 'mixed',
+  radiusFilter,
+  onRadiusFilterChange,
 }: CrmProjectsFilterMenuProps): ReactElement {
   const copy = content.crm.filters;
   const stageColumnCopy = content.workflowSettings.stageColumns;
@@ -64,7 +74,10 @@ export function CrmProjectsFilterMenu({
   }, [getCatalog, stageColumnCopy.projectStages, stageColumnCopy.subprojectStages, stageScopeMode, copy.stageLabel]);
   const [open, setOpen] = useState(false);
   const anchorRef = useRef<HTMLDivElement>(null);
-  const active = isCrmProjectsListFiltersActive(filters);
+  const showRadiusFilter = radiusFilter != null && onRadiusFilterChange != null;
+  const active =
+    isCrmProjectsListFiltersActive(filters) ||
+    (showRadiusFilter && isRadiusFilterActive(radiusFilter));
 
   const toggleStage = (slug: PipelineStageSlug): void => {
     const next = filters.stageSlugs.includes(slug)
@@ -160,11 +173,17 @@ export function CrmProjectsFilterMenu({
               ))}
             </div>
           </fieldset>
+          {showRadiusFilter ? (
+            <RadiusFilterSection filter={radiusFilter} onChange={onRadiusFilterChange} />
+          ) : null}
           <button
             type="button"
             className={styles.projectsFilterClearBtn}
             disabled={!active}
-            onClick={() => onChange(EMPTY_CRM_PROJECTS_LIST_FILTERS)}
+            onClick={() => {
+              onChange(EMPTY_CRM_PROJECTS_LIST_FILTERS);
+              onRadiusFilterChange?.(EMPTY_RADIUS_FILTER);
+            }}
           >
             {copy.clear}
           </button>

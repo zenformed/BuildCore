@@ -48,66 +48,72 @@ export function RadiusFilterSection({
 
   return (
     <FilterMenuSection title={copy.sectionLabel}>
-      <label className={styles.radiusFilterField}>
-        <span className={styles.radiusFilterLabel}>{copy.zipCodeLabel}</span>
-        <div className={styles.radiusFilterInputWrap}>
-          <input
-            type="text"
-            inputMode="numeric"
-            autoComplete="postal-code"
-            className={styles.radiusFilterInput}
-            value={filter.postalCode}
-            aria-label={copy.zipCodeAriaLabel}
-            onChange={handlePostalCodeChange}
-          />
-          {filter.postalCode.length > 0 ? (
-            <button
-              type="button"
-              className={styles.radiusFilterInputClear}
-              aria-label={copy.clearZipCodeAriaLabel}
-              onClick={() => onChange(clearRadiusFilter(filter))}
-            >
-              <CloseIcon className={styles.radiusFilterInputClearIcon} />
-            </button>
-          ) : null}
+      <div className={styles.radiusFilterIndentedRow}>
+        <div className={styles.radiusFilterColumns}>
+          <label className={styles.radiusFilterColumn}>
+            <span className={styles.radiusFilterLabel}>{copy.zipCodeLabel}</span>
+            <div className={styles.radiusFilterInputWrap}>
+              <input
+                type="text"
+                inputMode="numeric"
+                autoComplete="postal-code"
+                className={styles.radiusFilterInput}
+                value={filter.postalCode}
+                aria-label={copy.zipCodeAriaLabel}
+                onChange={handlePostalCodeChange}
+              />
+              {filter.postalCode.length > 0 ? (
+                <button
+                  type="button"
+                  className={styles.radiusFilterInputClear}
+                  aria-label={copy.clearZipCodeAriaLabel}
+                  onClick={() => onChange(clearRadiusFilter(filter))}
+                >
+                  <CloseIcon className={styles.radiusFilterInputClearIcon} />
+                </button>
+              ) : null}
+            </div>
+          </label>
+          <label className={styles.radiusFilterColumn}>
+            <span className={styles.radiusFilterLabel}>{copy.radiusLabel}</span>
+            <div className={styles.radiusFilterRadiusRow}>
+              <input
+                type="number"
+                min={RADIUS_FILTER_MIN_MILES}
+                max={RADIUS_FILTER_MAX_MILES}
+                step={RADIUS_FILTER_STEP_MILES}
+                className={styles.radiusFilterRadiusInput}
+                value={filter.radiusMiles}
+                aria-label={copy.radiusInputAriaLabel}
+                onChange={handleRadiusInputChange}
+              />
+              <span className={styles.radiusFilterUnit}>{copy.milesUnit}</span>
+            </div>
+          </label>
         </div>
-      </label>
-      <label className={styles.radiusFilterField}>
-        <span className={styles.radiusFilterLabel}>{copy.radiusLabel}</span>
-        <div className={styles.radiusFilterRadiusRow}>
+      </div>
+      <div className={styles.radiusFilterIndentedRow}>
+        <div className={styles.radiusFilterSliderWrap}>
           <input
-            type="number"
+            type="range"
             min={RADIUS_FILTER_MIN_MILES}
             max={RADIUS_FILTER_MAX_MILES}
             step={RADIUS_FILTER_STEP_MILES}
-            className={styles.radiusFilterRadiusInput}
+            className={styles.radiusFilterSlider}
             value={filter.radiusMiles}
-            aria-label={copy.radiusInputAriaLabel}
-            onChange={handleRadiusInputChange}
+            aria-label={copy.sliderAriaLabel}
+            aria-valuemin={RADIUS_FILTER_MIN_MILES}
+            aria-valuemax={RADIUS_FILTER_MAX_MILES}
+            aria-valuenow={filter.radiusMiles}
+            onChange={handleRadiusSliderChange}
           />
-          <span className={styles.radiusFilterUnit}>{copy.milesUnit}</span>
-        </div>
-      </label>
-      <div className={styles.radiusFilterSliderWrap}>
-        <input
-          type="range"
-          min={RADIUS_FILTER_MIN_MILES}
-          max={RADIUS_FILTER_MAX_MILES}
-          step={RADIUS_FILTER_STEP_MILES}
-          className={styles.radiusFilterSlider}
-          value={filter.radiusMiles}
-          aria-label={copy.sliderAriaLabel}
-          aria-valuemin={RADIUS_FILTER_MIN_MILES}
-          aria-valuemax={RADIUS_FILTER_MAX_MILES}
-          aria-valuenow={filter.radiusMiles}
-          onChange={handleRadiusSliderChange}
-        />
-        <div className={styles.radiusFilterSliderLabels}>
-          <span>{RADIUS_FILTER_MIN_MILES}</span>
-          <span className={styles.radiusFilterSliderValue}>
-            {filter.radiusMiles} {copy.milesUnit}
-          </span>
-          <span>{RADIUS_FILTER_MAX_MILES}</span>
+          <div className={styles.radiusFilterSliderLabels}>
+            <span>{RADIUS_FILTER_MIN_MILES}</span>
+            <span className={styles.radiusFilterSliderValue}>
+              {filter.radiusMiles} {copy.milesUnit}
+            </span>
+            <span>{RADIUS_FILTER_MAX_MILES}</span>
+          </div>
         </div>
       </div>
     </FilterMenuSection>

@@ -178,3 +178,65 @@ export function filterDashboardProjectSummaries(
     parentsWithMatchingChildren,
   };
 }
+
+export type CrmProjectsDashboardView = ReturnType<typeof filterDashboardProjectSummaries>;
+
+export const EMPTY_CRM_PROJECTS_DASHBOARD_VIEW: CrmProjectsDashboardView = {
+  rootRows: [],
+  allChildrenByParentId: new Map(),
+  visibleChildrenByParentId: new Map(),
+  parentsWithMatchingChildren: new Set(),
+};
+
+export function collectDashboardRadiusFilterCandidates(
+  view: CrmProjectsDashboardView
+): CrmProjectSummary[] {
+  const projects: CrmProjectSummary[] = [];
+  const seen = new Set<string>();
+
+  const add = (project: CrmProjectSummary): void => {
+    if (seen.has(project.id)) {
+      return;
+    }
+    seen.add(project.id);
+    projects.push(project);
+  };
+
+  for (const root of view.rootRows) {
+    add(root);
+  }
+  for (const children of view.visibleChildrenByParentId.values()) {
+    for (const child of children) {
+      add(child);
+    }
+  }
+
+  return projects;
+}
+
+export function applyRadiusFilterToDashboardView(
+  view: CrmProjectsDashboardView,
+  matchingProjectIds: ReadonlySet<string>
+): CrmProjectsDashboardView {
+  const visibleChildrenByParentId = new Map<string, CrmProjectSummary[]>();
+  const parentsWithMatchingChildren = new Set<string>();
+
+  for (const [parentId, children] of view.visibleChildrenByParentId) {
+    const matchingChildren = children.filter((child) => matchingProjectIds.has(child.id));
+    if (matchingChildren.length > 0) {
+      visibleChildrenByParentId.set(parentId, sortCrmProjectSummaries(matchingChildren));
+      parentsWithMatchingChildren.add(parentId);
+    }
+  }
+
+  const rootRows = view.rootRows.filter(
+    (root) => matchingProjectIds.has(root.id) || parentsWithMatchingChildren.has(root.id)
+  );
+
+  return {
+    rootRows: sortCrmProjectSummaries(rootRows),
+    allChildrenByParentId: view.allChildrenByParentId,
+    visibleChildrenByParentId,
+    parentsWithMatchingChildren,
+  };
+}
