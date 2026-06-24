@@ -4256,10 +4256,11 @@
 
 .paymentsTableGridShell {
   --payments-grid-gap: 0.625rem;
-  /* Status | Task (2fr) | Amount | Notes (1fr) | Docs | Assigned | Due | Invoiced | Paid | Actions */
+  /* Status | Task | Amount | Notes | Docs | Assigned | Due | Invoiced | Paid | Actions */
   --payments-grid-columns:
-    5.5rem minmax(8rem, 2fr) 4.75rem minmax(5rem, 1fr) 4.5rem 4.25rem 7.25rem 7.25rem 4rem 3.25rem;
-  --payments-table-min-width: 55.375rem;
+    5.5rem minmax(7rem, 1.5fr) 4.75rem minmax(5rem, 1fr) 4.5rem 4.25rem 7.25rem 7.25rem 7.25rem
+    3.25rem;
+  --payments-table-min-width: 57.625rem;
   display: grid;
   grid-template-columns: var(--payments-grid-columns);
   column-gap: var(--payments-grid-gap);
@@ -4667,14 +4668,14 @@
 .paymentsList .workflowGridPaymentsWithDates {
   grid-template-columns:
     5.5rem
-    minmax(8rem, 2fr)
+    minmax(7rem, 1.5fr)
     4.75rem
     minmax(5rem, 1fr)
     4.5rem
     4.25rem
     7.25rem
     7.25rem
-    4rem
+    7.25rem
     3.25rem;
 }
 
@@ -7118,17 +7119,27 @@
   font-weight: 500;
 }
 
-.workflowTaskMobileDraftActions {
-  display: flex;
+.workflowTaskMobileCardHeader:has(.workflowTaskMobileDraftActions) {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
-  justify-content: center;
+  column-gap: 0.5rem;
+}
+
+.workflowTaskMobileDraftActions {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
   flex-shrink: 0;
-  gap: 0.125rem;
+  gap: 0;
 }
 
 .workflowTaskMobileDraftActions .paymentDraftActionBtn {
-  width: 2.75rem;
-  height: 2.75rem;
+  width: auto;
+  height: auto;
+  min-width: 2rem;
+  min-height: 2rem;
+  padding: 0.3125rem;
 }
 
 .workflowTaskMobileDraftField {

@@ -356,9 +356,14 @@ export function PaymentMilestoneDraftRow({
             </div>
             <div className={`${styles.workflowTaskMobileCardCell} ${styles.workflowTaskMobileCardCell_right}`}>
               <span className={styles.projectInfoMobileLabel}>{payCols.paid}</span>
-              <span className={styles.workflowTaskMobileCardValue} aria-hidden>
-                —
-              </span>
+              <input
+                type="date"
+                className={`${styles.paymentDraftDateInput} ${styles.workflowTaskMobileDraftField}`}
+                value={form.paidAt}
+                disabled={saving}
+                aria-label={payCols.paid}
+                onChange={(e) => updateField('paidAt', e.target.value)}
+              />
             </div>
           </div>
           </div>
@@ -526,8 +531,15 @@ export function PaymentMilestoneDraftRow({
           />
         </span>
 
-        <span className={`${styles.workflowMetaCell} ${styles.paymentDatePlaceholder}`} aria-hidden>
-          —
+        <span className={`${styles.inlineDueCell} ${styles.workflowMetaCell}`}>
+          <input
+            type="date"
+            className={styles.paymentDraftDateInput}
+            value={form.paidAt}
+            disabled={saving}
+            aria-label={payments.columns.paid}
+            onChange={(e) => updateField('paidAt', e.target.value)}
+          />
         </span>
 
         <PaymentMilestoneDraftActions
