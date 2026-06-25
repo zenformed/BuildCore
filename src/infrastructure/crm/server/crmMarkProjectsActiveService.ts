@@ -18,7 +18,7 @@ export async function markCrmProjectsActiveForOrg(
 ): Promise<BulkMarkActiveCrmProjectsResult> {
   const uniqueSlugs = [...new Set(input.projectSlugs.map((slug) => slug.trim()).filter(Boolean))];
   if (uniqueSlugs.length === 0) {
-    throw new CrmMarkProjectsActiveValidationError('At least one subproject slug is required.');
+    throw new CrmMarkProjectsActiveValidationError('At least one project slug is required.');
   }
 
   const { data: projects, error: fetchError } = await supabase
@@ -34,7 +34,6 @@ export async function markCrmProjectsActiveForOrg(
   const failedSlugs: string[] = uniqueSlugs.filter((slug) => {
     const project = foundBySlug.get(slug);
     if (project == null) return true;
-    if (project.parent_project_id == null) return true;
     if (project.subproject_status !== 'inactive') return true;
     return false;
   });
@@ -43,7 +42,6 @@ export async function markCrmProjectsActiveForOrg(
     .map((slug) => foundBySlug.get(slug))
     .filter((project): project is NonNullable<typeof project> => {
       if (project == null) return false;
-      if (project.parent_project_id == null) return false;
       if (project.subproject_status !== 'inactive') return false;
       return true;
     });
@@ -77,7 +75,7 @@ export async function markCrmProjectsActiveForOrg(
         projectId: project.id as string,
         actorMemberId: actorUserId,
         eventType: 'project_marked_active',
-        summary: `Marked subproject active: ${project.name as string}`,
+        summary: `Marked project active: ${project.name as string}`,
         metadata: { slug: project.slug as string },
       })
     )

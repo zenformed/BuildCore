@@ -29,11 +29,13 @@ import { ConfirmModal } from '@/presentation/components/ConfirmModal';
 import { ProjectCompletionBlockedDialog } from '@/presentation/components/CrmProjectDetail/ProjectCompletionBlockedDialog';
 import { useBuildCorePipelineStages } from '@/presentation/providers/BuildCorePipelineStagesProvider';
 import { useCrmProjectTableRowActions } from '@/presentation/features/crmProjects/useCrmProjectTableRowActions';
+import { useCrmProjectInactiveActions } from '@/presentation/features/crmProjects/useCrmProjectInactiveActions';
 import { useDashboardMobileLayout } from '@/presentation/features/crmProjects/useDashboardMobileLayout';
 import { CrmProjectsFilterMenu } from './CrmProjectsFilterMenu';
 import { CrmProjectsExpandAllButton } from './CrmProjectsExpandAllButton';
 import { CrmProjectsTable } from './CrmProjectsTable';
 import { CrmProjectsMobileList } from './CrmProjectsMobileList';
+import { MarkInactiveDialog } from './MarkInactiveDialog';
 import styles from './CrmProjects.module.css';
 
 export type CrmProjectsPipelineProps = {
@@ -51,6 +53,8 @@ export function CrmProjectsPipeline({
   const nav = useBuildCoreNavigation();
   const panelCopy = content.crm.panel;
   const detailCopy = content.projectDetail;
+  const markInactiveCopy = content.projectDetail.subprojects.markInactive;
+  const markActiveCopy = content.projectDetail.subprojects.markActive;
   const { organizationMembershipContext } = useSaaSProfile();
   const isMemberRole = isBuildCoreMemberRole(organizationMembershipContext?.role);
   const isMobileLayout = useDashboardMobileLayout();
@@ -114,6 +118,43 @@ export function CrmProjectsPipeline({
     onError: (message) => setToast({ kind: 'error', message }),
     resolveStagesForProject,
   });
+
+  const {
+    markInactiveTarget,
+    openMarkInactive,
+    closeMarkInactive,
+    submitting: markingInactive,
+    markingActiveProjectId,
+    submitMarkInactive,
+    markProjectActive,
+  } = useCrmProjectInactiveActions({
+    onProjectsUpdated: () => {
+      void refetch();
+    },
+    onMarkInactiveSuccess: () => {
+      setToast({ kind: 'success', message: markInactiveCopy.success });
+    },
+    onMarkActiveSuccess: () => {
+      setToast({ kind: 'success', message: markActiveCopy.success });
+    },
+    onError: (message) => setToast({ kind: 'error', message }),
+  });
+
+  const handleRequestMarkInactive = useCallback(
+    (project: CrmProjectSummary) => {
+      openMarkInactive({ mode: 'single', project });
+    },
+    [openMarkInactive]
+  );
+
+  const handleRequestMarkActive = useCallback(
+    (project: CrmProjectSummary) => {
+      void markProjectActive(project);
+    },
+    [markProjectActive]
+  );
+
+  const rowActionsBusyProjectId = busyProjectId ?? markingActiveProjectId;
 
   useEffect(() => {
     const message = consumeCrmProjectDeleteSuccessToast();
@@ -303,10 +344,12 @@ export function CrmProjectsPipeline({
             isMemberRole={isMemberRole}
             canDelete={canDelete && !isMemberRole}
             deletingProjectId={deletingProjectId}
-            busyProjectId={busyProjectId}
+            busyProjectId={rowActionsBusyProjectId}
             onRequestDelete={setPendingDeleteProject}
             onTogglePriority={togglePriority}
             onRequestCompletionChange={requestCompletionChange}
+            onRequestMarkInactive={handleRequestMarkInactive}
+            onRequestMarkActive={handleRequestMarkActive}
             emptyMessage={tableEmptyMessage}
           />
         ) : (
@@ -328,10 +371,12 @@ export function CrmProjectsPipeline({
             isMemberRole={isMemberRole}
             canDelete={canDelete && !isMemberRole}
             deletingProjectId={deletingProjectId}
-            busyProjectId={busyProjectId}
+            busyProjectId={rowActionsBusyProjectId}
             onRequestDelete={setPendingDeleteProject}
             onTogglePriority={togglePriority}
             onRequestCompletionChange={requestCompletionChange}
+            onRequestMarkInactive={handleRequestMarkInactive}
+            onRequestMarkActive={handleRequestMarkActive}
             emptyMessage={tableEmptyMessage}
           />
         )}
@@ -379,6 +424,16 @@ export function CrmProjectsPipeline({
         variant="primary"
         hideIcon
       />
+      {!isMemberRole ? (
+        <MarkInactiveDialog
+          target={markInactiveTarget}
+          submitting={markingInactive}
+          onClose={closeMarkInactive}
+          onSubmit={(values) => {
+            void submitMarkInactive(values);
+          }}
+        />
+      ) : null}
     </section>
   );
 }

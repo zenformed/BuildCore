@@ -44,7 +44,6 @@ export async function markCrmProjectsInactiveForOrg(
   const failedSlugs: string[] = uniqueSlugs.filter((slug) => {
     const project = foundBySlug.get(slug);
     if (project == null) return true;
-    if (project.parent_project_id == null) return true;
     if (project.subproject_status === 'inactive') return true;
     return false;
   });
@@ -53,7 +52,6 @@ export async function markCrmProjectsInactiveForOrg(
     .map((slug) => foundBySlug.get(slug))
     .filter((project): project is NonNullable<typeof project> => {
       if (project == null) return false;
-      if (project.parent_project_id == null) return false;
       if (project.subproject_status === 'inactive') return false;
       return true;
     });
@@ -91,7 +89,7 @@ export async function markCrmProjectsInactiveForOrg(
         projectId: project.id as string,
         actorMemberId: actorUserId,
         eventType: 'project_marked_inactive',
-        summary: `Marked subproject inactive: ${project.name as string}`,
+        summary: `Marked project inactive: ${project.name as string}`,
         metadata: {
           slug: project.slug as string,
           reason,

@@ -61,7 +61,7 @@ export function ProjectDetailActionsMenu({
   const anchorRef = useRef<HTMLButtonElement>(null);
   const isInactive = isCrmProjectInactive(projectSummary);
   const menuDisabled = deleting || lifecycleBusy;
-  const showLifecycleActions = isSubproject && (onRequestMarkInactive != null || onRequestMarkActive != null);
+  const showLifecycleActions = onRequestMarkInactive != null || onRequestMarkActive != null;
   const showActionSection = showLifecycleActions || canDelete;
 
   useEffect(() => {

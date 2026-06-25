@@ -148,7 +148,6 @@ export function CrmProjectTableRow({
           ) : null}
           <span className={styles.projectNameGroup}>
             <span className={styles.projectName}>{project.name}</span>
-            {isInactive ? <CrmProjectInactiveInlineLabel project={project} /> : null}
           </span>
           {!isChild && hasChildren ? (
             <button
@@ -176,14 +175,20 @@ export function CrmProjectTableRow({
         {industrySubtitle ? <span className={styles.projectMeta}>{industrySubtitle}</span> : null}
         {!isMemberRole ? (
           <span className={styles.projectProgressRow}>
-            {progress != null ? (
-              <ProjectProgressPercent variant="compact" progress={progress} />
-            ) : null}
-            {derivedStageSlug != null ? (
-              <span className={`${shared.stagePill} ${styles.projectMetaStagePill}`}>
-                {formatStageLabel(derivedStageSlug, catalog)}
-              </span>
-            ) : null}
+            {isInactive ? (
+              <CrmProjectInactiveInlineLabel project={project} />
+            ) : (
+              <>
+                {progress != null ? (
+                  <ProjectProgressPercent variant="compact" progress={progress} />
+                ) : null}
+                {derivedStageSlug != null ? (
+                  <span className={`${shared.stagePill} ${styles.projectMetaStagePill}`}>
+                    {formatStageLabel(derivedStageSlug, catalog)}
+                  </span>
+                ) : null}
+              </>
+            )}
           </span>
         ) : null}
       </span>

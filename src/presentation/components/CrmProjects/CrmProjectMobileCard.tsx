@@ -4,7 +4,7 @@ import type { KeyboardEvent, ReactElement } from 'react';
 import type { CrmProjectSummary } from '@/domain/crm';
 import type { ProjectPaymentFinancials } from '@/domain/crm/projectPaymentValue';
 import type { CrmProjectWorkflowProgressInputIndex } from '@/domain/crm/projectWorkflowProgressInput';
-import { isCrmProjectComplete } from '@/domain/crm';
+import { isCrmProjectComplete, isCrmProjectInactive } from '@/domain/crm';
 import { isProjectPriorityUrgent } from '@/domain/crm/projectPriorityToggle';
 import { CrmProjectCompleteIcon } from '@/presentation/components/crmShared/CrmProjectCompleteIcon';
 import { CrmProjectPriorityIcon } from '@/presentation/components/crmShared/CrmProjectPriorityIcon';
@@ -16,6 +16,7 @@ import {
 } from '@/presentation/features/crmProjects/crmProjectFormatters';
 import { useCrmProjectRowPresentation } from '@/presentation/features/crmProjects/useCrmProjectRowPresentation';
 import { CrmProjectTableRowActionsMenu } from './CrmProjectTableRowActionsMenu';
+import { CrmProjectInactiveIcon, CrmProjectInactiveInlineLabel } from './CrmProjectInactiveBadge';
 import projectStyles from '@/presentation/components/CrmProjectDetail/ProjectDetail.module.css';
 import shared from '@/presentation/components/crmShared/crmShared.module.css';
 import styles from './CrmProjects.module.css';
@@ -35,6 +36,8 @@ export type CrmProjectMobileCardProps = {
   readonly onRequestDelete?: (project: CrmProjectSummary) => void;
   readonly onTogglePriority?: (project: CrmProjectSummary) => void | Promise<void>;
   readonly onRequestCompletionChange?: (project: CrmProjectSummary) => void;
+  readonly onRequestMarkInactive?: (project: CrmProjectSummary) => void;
+  readonly onRequestMarkActive?: (project: CrmProjectSummary) => void | Promise<void>;
   readonly hasChildren?: boolean;
   readonly isExpanded?: boolean;
   readonly onToggleExpand?: () => void;
@@ -57,6 +60,8 @@ export function CrmProjectMobileCard({
   onRequestDelete,
   onTogglePriority,
   onRequestCompletionChange,
+  onRequestMarkInactive,
+  onRequestMarkActive,
   hasChildren = false,
   isExpanded = false,
   onToggleExpand,
@@ -66,6 +71,7 @@ export function CrmProjectMobileCard({
   const tableCopy = content.crm.table;
   const valueLabels = tableCopy.columns;
   const isChild = variant === 'child';
+  const isInactive = isCrmProjectInactive(project);
   const { catalog, industrySubtitle, progress, derivedStageSlug } = useCrmProjectRowPresentation(
     project,
     workflowProgressInputIndex,
@@ -87,9 +93,14 @@ export function CrmProjectMobileCard({
     }
   };
 
-  const cardClass = isChild
-    ? `${projectStyles.card} ${styles.mobileCard} ${styles.mobileCardChild}`
-    : `${projectStyles.card} ${styles.mobileCard}`;
+  const cardClass = [
+    projectStyles.card,
+    styles.mobileCard,
+    isChild ? styles.mobileCardChild : '',
+    isInactive ? styles.mobileCardInactive : '',
+  ]
+    .filter(Boolean)
+    .join(' ');
 
   return (
     <article
@@ -107,7 +118,9 @@ export function CrmProjectMobileCard({
         <div className={styles.mobileCardHeader}>
           <div className={styles.mobileCardTitleBlock}>
             <span className={styles.mobileCardTitleRow}>
-              {isProjectPriorityUrgent(project.priority) ? (
+              {isInactive ? (
+                <CrmProjectInactiveIcon ariaLabel={tableCopy.inactiveBadge} />
+              ) : isProjectPriorityUrgent(project.priority) ? (
                 <CrmProjectPriorityIcon ariaLabel={tableCopy.priorityMarkAriaLabel} />
               ) : null}
               {isCrmProjectComplete(project) ? (
@@ -145,37 +158,39 @@ export function CrmProjectMobileCard({
                   onRequestDelete={onRequestDelete}
                   onTogglePriority={onTogglePriority}
                   onRequestCompletionChange={onRequestCompletionChange}
+                  onRequestMarkInactive={onRequestMarkInactive}
+                  onRequestMarkActive={onRequestMarkActive}
                 />
               </span>
             ) : null}
           </div>
         </div>
 
-        {!isMemberRole ? (
-          <>
-            {(derivedStageSlug != null || progress != null) ? (
-              <div className={styles.mobileCardMetaRow}>
-                <span className={projectStyles.subprojectMobileCardStageRow}>
-                  {derivedStageSlug != null ? (
-                    <span
-                      className={`${shared.stagePill} ${styles.projectMetaStagePill}`}
-                      title={formatStageLabel(derivedStageSlug, catalog)}
-                    >
-                      {formatStageLabel(derivedStageSlug, catalog)}
-                    </span>
-                  ) : null}
-                  {progress != null ? (
-                    <span
-                      className={projectStyles.subprojectMobileCardProgressPercent}
-                      aria-label={`Project progress ${progress.textPercent}%`}
-                    >
-                      {progress.textPercent}%
-                    </span>
-                  ) : null}
-                </span>
-              </div>
-            ) : null}
-          </>
+        {!isMemberRole && (isInactive || derivedStageSlug != null || progress != null) ? (
+          <div className={styles.mobileCardMetaRow}>
+            {isInactive ? (
+              <CrmProjectInactiveInlineLabel project={project} />
+            ) : (
+              <span className={projectStyles.subprojectMobileCardStageRow}>
+                {derivedStageSlug != null ? (
+                  <span
+                    className={`${shared.stagePill} ${styles.projectMetaStagePill}`}
+                    title={formatStageLabel(derivedStageSlug, catalog)}
+                  >
+                    {formatStageLabel(derivedStageSlug, catalog)}
+                  </span>
+                ) : null}
+                {progress != null ? (
+                  <span
+                    className={projectStyles.subprojectMobileCardProgressPercent}
+                    aria-label={`Project progress ${progress.textPercent}%`}
+                  >
+                    {progress.textPercent}%
+                  </span>
+                ) : null}
+              </span>
+            )}
+          </div>
         ) : null}
       </div>
 

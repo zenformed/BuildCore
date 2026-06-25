@@ -106,7 +106,7 @@ export type MarkCrmProjectsActiveInput = {
 
 export function validateMarkCrmProjectsInactiveInput(input: MarkCrmProjectsInactiveInput): string | null {
   if (input.projectSlugs.length === 0) {
-    return 'At least one subproject is required.';
+    return 'At least one project is required.';
   }
   if (!isCrmInactiveReason(input.reason)) {
     return 'A valid inactive reason is required.';

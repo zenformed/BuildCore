@@ -991,6 +991,19 @@
   overflow: hidden;
 }
 
+.mobileCardInactive {
+  opacity: 0.72;
+}
+
+.mobileCardInactive .mobileCardTitle,
+.mobileCardInactive .mobileCardIndustry {
+  color: var(--theme-text-muted, #94a3b8);
+}
+
+.mobileCardInactive .inactiveInlineReason {
+  color: var(--color-text-muted, #64748b);
+}
+
 .mobileCardChild {
   margin-left: 0.75rem;
   border-left: 2px solid var(--color-border, #e2e8f0);

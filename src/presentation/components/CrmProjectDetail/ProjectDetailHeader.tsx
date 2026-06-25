@@ -55,7 +55,7 @@ export function ProjectDetailHeader({
   mobileStageCompletions,
 }: ProjectDetailHeaderProps): ReactElement {
   const isComplete = isCrmProjectComplete(project);
-  const isInactiveSubproject = project.parentProjectId != null && isCrmProjectInactive(project);
+  const isInactive = isCrmProjectInactive(project);
   const isMobileLayout = useDashboardMobileLayout();
   const industryOrTrade = industryControl ?? tradeTypeControl;
   const inactiveStatus = <ProjectDetailInactiveStatus project={project} />;
@@ -66,7 +66,7 @@ export function ProjectDetailHeader({
 
   const titleRow = (
     <div className={styles.titleRow}>
-      {isInactiveSubproject ? (
+      {isInactive ? (
         <CrmProjectInactiveIcon ariaLabel={content.crm.table.inactiveBadge} />
       ) : isComplete ? (
         <CrmProjectCompleteIcon ariaLabel={content.crm.table.completionCheckAriaLabel} />
@@ -147,15 +147,17 @@ export function ProjectDetailHeader({
                   {industryOrTrade}
                   {progress ? <div className={styles.titleBlockProgress}>{progress}</div> : null}
                 </div>
+                {isInactive ? (
+                  <div className={styles.titleBlockInactiveBanner}>
+                    <ProjectDetailInactiveStatus project={project} variant="banner" />
+                  </div>
+                ) : null}
               </div>
             </div>
           </div>
-          {actions || inactiveStatus ? (
+          {actions ? (
             <div className={styles.detailHeaderActionsColumn}>
-              {actions ? <div className={styles.detailHeaderActions}>{actions}</div> : null}
-              {inactiveStatus ? (
-                <div className={styles.detailHeaderInactiveStatus}>{inactiveStatus}</div>
-              ) : null}
+              <div className={styles.detailHeaderActions}>{actions}</div>
             </div>
           ) : null}
         </>

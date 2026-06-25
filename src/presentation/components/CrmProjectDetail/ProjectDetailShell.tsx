@@ -159,9 +159,9 @@ function ProjectDetailShellBody({
     onError: (message) => workspace.setToast({ kind: 'error', message }),
   });
   const lifecycleBusy = markingInactive || markingActive || markingActiveProjectId != null;
-  const subprojectLifecycleProps = isSubproject && canMutateProjects && !isMemberRole
+  const projectLifecycleProps = canMutateProjects && !isMemberRole
     ? {
-        isSubproject: true,
+        isSubproject,
         onRequestMarkInactive: () => {
           openMarkInactive({ mode: 'single', project: projectSummary });
         },
@@ -171,7 +171,7 @@ function ProjectDetailShellBody({
         lifecycleBusy,
       }
     : {
-        isSubproject: false,
+        isSubproject,
         lifecycleBusy,
       };
   const childSummaries = useMemo(
@@ -238,7 +238,7 @@ function ProjectDetailShellBody({
     onLoadTemplate: loadTemplate.openList,
     canShowQrCode,
     onShowQrCode: () => setQrDialogOpen(true),
-    ...subprojectLifecycleProps,
+    ...projectLifecycleProps,
   };
 
   const showDetailProgress = pageContext === 'detail';
@@ -380,7 +380,7 @@ function ProjectDetailShellBody({
                 onClose={() => setQrDialogOpen(false)}
               />
             ) : null}
-            {isSubproject && canMutateProjects && !isMemberRole ? (
+            {canMutateProjects && !isMemberRole ? (
               <MarkInactiveDialog
                 target={markInactiveTarget}
                 submitting={markingInactive}
