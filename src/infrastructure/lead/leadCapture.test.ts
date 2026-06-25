@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import { validateLeadCaptureBody } from '@/infrastructure/crm/server/validateLeadCaptureBody';
+import { validateLeadCaptureBody, validateLeadCaptureFormFields } from '@/infrastructure/crm/server/validateLeadCaptureBody';
 import { mergeLeadCaptureContactFields } from '@/infrastructure/lead/leadCaptureContactMerge';
 import { pickLeadCaptureContactFromRows } from '@/infrastructure/lead/pickLeadCaptureContactFromRows';
 
@@ -28,6 +28,16 @@ describe('validateLeadCaptureBody', () => {
   it('rejects missing required fields', () => {
     const result = validateLeadCaptureBody({ firstName: 'Scott' });
     assert.equal(result.ok, false);
+  });
+
+  it('returns field-level errors for an empty form', () => {
+    const result = validateLeadCaptureFormFields({});
+    assert.equal(result.ok, false);
+    if (!result.ok) {
+      assert.equal(result.errors.firstName, 'First name is required.');
+      assert.equal(result.errors.email, 'Email is required.');
+      assert.equal(result.errors.postalCode, 'ZIP is required.');
+    }
   });
 });
 

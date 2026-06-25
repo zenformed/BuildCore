@@ -26,6 +26,22 @@ export type ValidateLeadCaptureBodyResult =
   | { readonly ok: true; readonly input: LeadCaptureSubmitInput }
   | { readonly ok: false; readonly message: string };
 
+export type LeadCaptureFormFieldKey =
+  | 'firstName'
+  | 'lastName'
+  | 'email'
+  | 'phone'
+  | 'addressLine1'
+  | 'city'
+  | 'state'
+  | 'postalCode';
+
+export type LeadCaptureFormFieldErrors = Partial<Record<LeadCaptureFormFieldKey, string>>;
+
+export type ValidateLeadCaptureFormFieldsResult =
+  | { readonly ok: true; readonly input: LeadCaptureSubmitInput }
+  | { readonly ok: false; readonly errors: LeadCaptureFormFieldErrors; readonly formError?: string };
+
 function asRequiredString(value: unknown, fieldLabel: string, maxLength: number): string | null {
   if (typeof value !== 'string') return null;
   const trimmed = value.trim();
@@ -43,74 +59,100 @@ function asOptionalString(value: unknown, maxLength: number): string | null {
   return trimmed;
 }
 
-export function validateLeadCaptureBody(body: LeadCaptureBody): ValidateLeadCaptureBodyResult {
+export function validateLeadCaptureFormFields(body: LeadCaptureBody): ValidateLeadCaptureFormFieldsResult {
+  const errors: LeadCaptureFormFieldErrors = {};
+
   const firstName = asRequiredString(body.firstName, 'First name', MAX_NAME);
   if (!firstName) {
-    return { ok: false, message: 'First name is required.' };
+    errors.firstName = 'First name is required.';
   }
 
   const lastName = asRequiredString(body.lastName, 'Last name', MAX_NAME);
   if (!lastName) {
-    return { ok: false, message: 'Last name is required.' };
+    errors.lastName = 'Last name is required.';
   }
 
-  const fullName = buildLeadCaptureFullName(firstName, lastName);
-  if (fullName.length > MAX_NAME) {
-    return { ok: false, message: 'Name is too long.' };
+  if (firstName && lastName) {
+    const fullName = buildLeadCaptureFullName(firstName, lastName);
+    if (fullName.length > MAX_NAME) {
+      errors.firstName = 'Name is too long.';
+    }
   }
 
   const emailRaw = asRequiredString(body.email, 'Email', MAX_EMAIL);
   if (!emailRaw) {
-    return { ok: false, message: 'Email is required.' };
-  }
-  const email = emailRaw.toLowerCase();
-  if (!EMAIL_PATTERN.test(email)) {
-    return { ok: false, message: 'Email is invalid.' };
+    errors.email = 'Email is required.';
+  } else {
+    const email = emailRaw.toLowerCase();
+    if (!EMAIL_PATTERN.test(email)) {
+      errors.email = 'Email is invalid.';
+    }
   }
 
   const phone = asRequiredString(body.phone, 'Phone', MAX_PHONE);
   if (!phone) {
-    return { ok: false, message: 'Phone is required.' };
+    errors.phone = 'Phone is required.';
   }
 
   const addressLine1 = asRequiredString(body.addressLine1, 'Address', MAX_ADDRESS);
   if (!addressLine1) {
-    return { ok: false, message: 'Address is required.' };
+    errors.addressLine1 = 'Address is required.';
   }
 
-  const addressLine2 = asOptionalString(body.addressLine2, MAX_ADDRESS);
+  asOptionalString(body.addressLine2, MAX_ADDRESS);
 
   const city = asRequiredString(body.city, 'City', MAX_CITY);
   if (!city) {
-    return { ok: false, message: 'City is required.' };
+    errors.city = 'City is required.';
   }
 
   const state = asRequiredString(body.state, 'State', 2);
   if (!state) {
-    return { ok: false, message: 'State is required.' };
-  }
-  const stateUpper = state.toUpperCase();
-  if (!US_STATE_CODES.has(stateUpper)) {
-    return { ok: false, message: 'State must be a valid US state code.' };
+    errors.state = 'State is required.';
+  } else {
+    const stateUpper = state.toUpperCase();
+    if (!US_STATE_CODES.has(stateUpper)) {
+      errors.state = 'State must be a valid US state code.';
+    }
   }
 
   const postalCode = asRequiredString(body.postalCode, 'ZIP', MAX_POSTAL);
   if (!postalCode) {
-    return { ok: false, message: 'ZIP is required.' };
+    errors.postalCode = 'ZIP is required.';
   }
+
+  if (Object.keys(errors).length > 0) {
+    return { ok: false, errors };
+  }
+
+  const email = emailRaw!.toLowerCase();
+  const stateUpper = state!.toUpperCase();
 
   return {
     ok: true,
     input: {
-      firstName,
-      lastName,
+      firstName: firstName!,
+      lastName: lastName!,
       email,
-      phone,
-      addressLine1,
-      addressLine2,
-      city,
+      phone: phone!,
+      addressLine1: addressLine1!,
+      addressLine2: asOptionalString(body.addressLine2, MAX_ADDRESS),
+      city: city!,
       state: stateUpper,
-      postalCode,
+      postalCode: postalCode!,
     },
+  };
+}
+
+export function validateLeadCaptureBody(body: LeadCaptureBody): ValidateLeadCaptureBodyResult {
+  const result = validateLeadCaptureFormFields(body);
+  if (result.ok) {
+    return result;
+  }
+
+  const firstFieldError = Object.values(result.errors)[0];
+  return {
+    ok: false,
+    message: result.formError ?? firstFieldError ?? 'Please complete all required fields.',
   };
 }

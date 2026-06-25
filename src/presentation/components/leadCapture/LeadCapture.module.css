@@ -29,17 +29,10 @@
 .loading,
 .invalidMessage,
 .successMessage,
-.intro,
-.industry {
+.intro {
   margin: 0;
   color: var(--color-text-muted, #64748b);
   line-height: 1.5;
-}
-
-.orgName {
-  margin: 0 0 0.375rem;
-  font-size: 0.8125rem;
-  color: var(--color-text-muted, #64748b);
 }
 
 .title,
@@ -57,39 +50,35 @@
   color: #f1f5f9;
 }
 
-.industry {
-  margin-bottom: 0.75rem;
-  font-size: 0.875rem;
-}
-
 .intro {
-  margin-bottom: 1.25rem;
+  margin-bottom: 1.5rem;
   font-size: 0.9375rem;
-  color: var(--color-text, #0f172a);
+  color: var(--color-text-muted, #64748b);
 }
 
 :global([data-theme='dark']) .intro {
-  color: #e2e8f0;
+  color: #94a3b8;
 }
 
 .form {
   display: flex;
   flex-direction: column;
-  gap: 0.875rem;
+  gap: 1rem;
 }
 
-.fieldGrid {
+.nameFieldGrid,
+.addressFieldGrid {
   display: grid;
-  gap: 0.875rem;
+  gap: 1rem;
 }
 
 @media (min-width: 640px) {
-  .fieldGrid {
+  .nameFieldGrid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .fieldGrid .field:last-child:nth-child(odd) {
-    grid-column: span 1;
+  .addressFieldGrid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
 
@@ -97,6 +86,7 @@
   display: flex;
   flex-direction: column;
   gap: 0.375rem;
+  min-width: 0;
 }
 
 .label {
@@ -107,6 +97,15 @@
 
 :global([data-theme='dark']) .label {
   color: #e2e8f0;
+}
+
+.requiredMark {
+  color: #dc2626;
+  font-weight: 700;
+}
+
+:global([data-theme='dark']) .requiredMark {
+  color: #f87171;
 }
 
 .input {
@@ -129,13 +128,37 @@
   opacity: 0.65;
 }
 
+.inputInvalid {
+  border-color: #dc2626;
+}
+
+:global([data-theme='dark']) .inputInvalid {
+  border-color: #f87171;
+}
+
+.fieldError {
+  margin: 0;
+  font-size: 0.8125rem;
+  line-height: 1.35;
+  color: #b91c1c;
+}
+
+:global([data-theme='dark']) .fieldError {
+  color: #fca5a5;
+}
+
 .error {
   margin: 0;
   font-size: 0.875rem;
   color: #b91c1c;
 }
 
+:global([data-theme='dark']) .error {
+  color: #fca5a5;
+}
+
 .submitBtn {
+  width: 100%;
   margin-top: 0.25rem;
   padding: 0.75rem 1rem;
   font-size: 0.9375rem;

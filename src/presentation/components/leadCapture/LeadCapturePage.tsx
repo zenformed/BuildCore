@@ -78,9 +78,7 @@ export function LeadCapturePage({ token }: LeadCapturePageProps): ReactElement {
   return (
     <div className={styles.page}>
       <div className={styles.card}>
-        <p className={styles.orgName}>{context.organizationName}</p>
-        <h1 className={styles.title}>{context.projectName}</h1>
-        {context.industry ? <p className={styles.industry}>{context.industry}</p> : null}
+        <h1 className={styles.title}>{context.organizationName}</h1>
         <p className={styles.intro}>{copy.intro}</p>
         <LeadCaptureForm
           submitting={submitting}
