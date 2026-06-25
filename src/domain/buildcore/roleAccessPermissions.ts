@@ -75,6 +75,7 @@ export function resolveBuildCoreRoleAccess(
     canDelete: flags.canDelete,
     canApprove: flags.canApprove,
     canUpload: flags.canUpload,
+    canSendFiles: flags.canSendFiles,
   };
 }
 

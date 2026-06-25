@@ -75,9 +75,10 @@ export function BudgetInlineRow({
   const { permissions, isReady } = budgetAccess;
   const canEdit = isReady && permissions.canEdit;
   const canUpload = isReady && permissions.canUpload;
+  const canSendFiles = isReady && permissions.canSendFiles;
   const canDelete = isReady && permissions.canDelete;
   const showSendAttachment =
-    canEdit && projectSupportsSendAttachment(project, assignmentCatalog, isApiSource);
+    canSendFiles && projectSupportsSendAttachment(project, assignmentCatalog, isApiSource);
   const showActionsMenu = showSendAttachment || (canDelete && onRequestDelete != null);
   const documentActions = useBudgetEntryDocumentActions({
     projectSlug,

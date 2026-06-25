@@ -352,6 +352,9 @@
 
 .permissionsMatrix thead th {
   text-align: center;
+  padding-inline: 0.35rem;
+  font-size: 0.625rem;
+  letter-spacing: 0.03em;
 }
 
 .permissionsMatrix thead th.matrixRoleCol {

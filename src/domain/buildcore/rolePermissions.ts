@@ -33,7 +33,8 @@ export type BuildCorePermissionColumnId =
   | 'canApprove'
   | 'canDelete'
   | 'canCreate'
-  | 'canUpload';
+  | 'canUpload'
+  | 'canSendFiles';
 
 export const BUILDCORE_PERMISSION_COLUMNS: readonly {
   readonly id: BuildCorePermissionColumnId;
@@ -45,6 +46,7 @@ export const BUILDCORE_PERMISSION_COLUMNS: readonly {
   { id: 'canDelete', label: 'Delete' },
   { id: 'canCreate', label: 'Create' },
   { id: 'canUpload', label: 'Upload' },
+  { id: 'canSendFiles', label: 'Send Files' },
 ];
 
 export const BUILDCORE_WORKFLOW_TASK_PERMISSION_COLUMNS = BUILDCORE_PERMISSION_COLUMNS;
@@ -56,6 +58,7 @@ export type BuildCoreRolePermissionFlags = {
   readonly canDelete: boolean;
   readonly canApprove: boolean;
   readonly canUpload: boolean;
+  readonly canSendFiles: boolean;
 };
 
 export type BuildCoreRolePermissionRow = BuildCoreRolePermissionFlags & {

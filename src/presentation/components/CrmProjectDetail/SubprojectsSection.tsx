@@ -340,6 +340,7 @@ function SubprojectsSectionContent(): ReactElement {
         iconClass: styles.actionsMenuAttachmentIcon,
         disabled: bulkSelection.selectedCount === 0,
         onClick: () => bulkSendAttachment.openBulkSendAttachmentDialog(selectedProjects),
+        // Bulk subproject send is CRM-scoped (canUseBulkActions), not task/payment/budget Send Files.
       },
       {
         id: 'delete',

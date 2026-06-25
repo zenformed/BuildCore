@@ -93,6 +93,7 @@ export function useWorkflowTaskInlineRow({
   const canEdit = isReady && permissions.canEdit;
   const canDelete = isReady && permissions.canDelete;
   const canUpload = isReady && permissions.canUpload;
+  const canSendFiles = isReady && permissions.canSendFiles;
   const canApprove = isReady && permissions.canApprove;
   const canChangeStatus = canView;
   const documentAccept = BUILDCORE_UPLOAD_ALLOWED_EXTENSIONS.join(',');
@@ -359,7 +360,7 @@ export function useWorkflowTaskInlineRow({
   const showAssignedNotification =
     canEdit && taskSupportsManualWorkflowTaskAssignedNotification(task, isApiSource);
   const showSendAttachment =
-    canEdit && projectSupportsSendAttachment(project, assignmentCatalog, isApiSource);
+    canSendFiles && projectSupportsSendAttachment(project, assignmentCatalog, isApiSource);
   const notesPreview = formatWorkflowTaskNotesPreview(task.notes);
   const notesTitle =
     task.notes?.replace(/\s+/g, ' ').trim() && notesPreview.endsWith('…')

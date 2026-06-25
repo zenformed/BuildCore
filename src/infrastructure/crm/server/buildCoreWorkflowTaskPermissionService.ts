@@ -59,6 +59,7 @@ export function workflowTaskPermissionFlagsFromAccess(
     canDelete: access.canDelete,
     canApprove: access.canApprove,
     canUpload: access.canUpload,
+    canSendFiles: access.canSendFiles,
   };
 }
 

@@ -13,6 +13,10 @@ import {
 } from '@/infrastructure/crm/server/communicationSendRelay';
 import { coreUpstreamHttpResponsePayload } from '@/infrastructure/coreApi/zenformedCoreRelayHttp';
 import { requireCrmApiAuth } from '@/infrastructure/crm/server/crmApiRouteAuth';
+import {
+  requireBuildCoreSendFilesPermission,
+  sendAttachmentEntityPermissionDomain,
+} from '@/infrastructure/crm/server/buildCoreSendFilesPermissionService';
 import { env } from '@/infrastructure/config/env';
 
 export const dynamic = 'force-dynamic';
@@ -131,6 +135,22 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   const parsed = parseSendBody(rawBody);
   if ('error' in parsed) {
     return NextResponse.json({ error: 'invalid_request', message: parsed.error }, { status: 400 });
+  }
+
+  if (parsed.entity != null) {
+    const permissionDomain = sendAttachmentEntityPermissionDomain(parsed.entity.type);
+    if (permissionDomain != null) {
+      const sendPermission = await requireBuildCoreSendFilesPermission(
+        auth.context.supabase,
+        auth.context.organizationId,
+        auth.context.user.id,
+        permissionDomain
+      );
+      if (!sendPermission.ok) {
+        return sendPermission.response;
+      }
+    }
+    // project/subproject sends (e.g. bulk subproject email) use CRM project access, not task/payment/budget matrices.
   }
 
   const token = auth.context.authHeader.slice('Bearer '.length).trim();
