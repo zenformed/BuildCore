@@ -255,19 +255,24 @@
   align-self: center;
   min-height: 2rem;
   padding: 0.375rem 0.875rem;
-  border: 1px solid var(--theme-border-button, #cbd5e1);
+  border: 1px solid rgba(17, 146, 71, 0.55);
   border-radius: 999px;
-  background: var(--theme-surface-button, #fff);
-  color: var(--color-text-muted, #64748b);
+  background: #119247;
+  color: #ffffff;
   font-size: 0.8125rem;
   font-weight: 600;
-  cursor: not-allowed;
-  opacity: 0.85;
+  cursor: pointer;
+  transition: filter 0.15s ease;
+}
+
+.demoTeamsBannerCta:hover {
+  filter: brightness(1.05);
 }
 
 :global([data-theme='dark']) .demoTeamsBannerCta {
-  background: var(--theme-surface-button, #2a2d3a);
-  border-color: var(--theme-border-button, #4b5563);
+  background: #119247;
+  border-color: rgba(17, 146, 71, 0.55);
+  color: #ffffff;
 }
 
 .readOnlyNote {

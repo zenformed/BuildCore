@@ -160,6 +160,8 @@ export const buildCoreDashboardContent = {
       resetDemo: 'Reset Demo',
       startFreeTrial: 'Start Free Trial',
       pricingSectionId: 'buildcore-pricing',
+      collapseBanner: 'Collapse demo banner',
+      expandBanner: 'Expand demo banner',
     },
     shell: {
       appLauncherDisabledTitle: 'App switching is disabled in the interactive demo.',

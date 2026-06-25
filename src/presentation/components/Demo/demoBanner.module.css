@@ -6,14 +6,35 @@
   z-index: 200;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
+  justify-content: center;
   padding: 0.625rem 1.25rem;
   padding-bottom: calc(0.625rem + env(safe-area-inset-bottom, 0px));
   border-top: 1px solid rgba(255, 193, 7, 0.35);
   background: linear-gradient(90deg, rgba(120, 53, 15, 0.97), rgba(69, 26, 3, 0.97));
   color: #fff7ed;
   box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.18);
+  transition:
+    padding 0.2s ease,
+    min-height 0.2s ease;
+}
+
+.demoBannerCollapsed {
+  min-height: calc(1.75rem + env(safe-area-inset-bottom, 0px));
+  padding-top: 0.25rem;
+  padding-bottom: calc(0.25rem + env(safe-area-inset-bottom, 0px));
+}
+
+.demoBannerContent {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  width: 100%;
+  min-width: 0;
+}
+
+.demoBannerContent[hidden] {
+  display: none;
 }
 
 .demoBannerCopy {
@@ -21,6 +42,7 @@
   flex-direction: column;
   gap: 0.125rem;
   min-width: 0;
+  padding-right: 1.75rem;
 }
 
 .demoBannerTitle {
@@ -43,6 +65,43 @@
   align-items: center;
   justify-content: flex-end;
   gap: 0.5rem;
+  padding-left: 1.75rem;
+}
+
+.demoBannerToggle {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  padding: 0;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff7ed;
+  cursor: pointer;
+  transform: translate(-50%, -50%);
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease;
+}
+
+.demoBannerToggle:hover {
+  background: rgba(255, 255, 255, 0.18);
+  border-color: rgba(255, 255, 255, 0.32);
+}
+
+.demoBannerCollapsed .demoBannerToggle {
+  position: static;
+  transform: none;
+}
+
+.demoBannerToggleIcon {
+  display: block;
 }
 
 .demoBannerButton,
@@ -80,12 +139,28 @@
 }
 
 @media (max-width: 640px) {
-  .demoBanner {
+  .demoBannerContent {
     flex-direction: column;
     align-items: stretch;
   }
 
+  .demoBannerCopy,
+  .demoBannerActions {
+    padding-left: 0;
+    padding-right: 0;
+  }
+
   .demoBannerActions {
     justify-content: flex-end;
+  }
+
+  .demoBannerToggle {
+    top: 0.5rem;
+    transform: translate(-50%, 0);
+  }
+
+  .demoBannerCollapsed .demoBannerToggle {
+    top: auto;
+    transform: none;
   }
 }
