@@ -170,9 +170,15 @@ export const buildCoreDashboardContent = {
     loadError: 'Could not load workflow settings. Try again.',
     noAccess: 'You do not have permission to manage workflow settings for this organization.',
     readOnlyNote: 'Workflow settings are managed by organization owners and admins.',
+    introNote: 'Manage workflow stages for project and subproject stages.',
     folderTabs: {
       workflowStages: 'Workflow Stages',
       alerts: 'Customer Task Alerts',
+    },
+    desktopNav: {
+      workflowStages: 'Workflow Stages',
+      alerts: 'Alerts',
+      ariaLabel: 'Workflow settings',
     },
     stageColumns: {
       projectStages: 'Project Stages',
@@ -244,6 +250,11 @@ export const buildCoreDashboardContent = {
       taskPermissions: 'Task Permissions',
       paymentPermissions: 'Payment Permissions',
       budgetPermissions: 'Budget Permissions',
+    },
+    desktopNav: {
+      members: 'Members',
+      permissions: 'Permissions',
+      ariaLabel: 'Team settings',
     },
     mobileControls: {
       sectionLabel: 'Section',

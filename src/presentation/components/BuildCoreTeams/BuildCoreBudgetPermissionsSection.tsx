@@ -6,7 +6,7 @@ import { BuildCoreRolePermissionsSection } from './BuildCoreRolePermissionsSecti
 
 export type BuildCoreBudgetPermissionsSectionProps = {
   readonly enabled: boolean;
-  readonly layout?: 'accordion' | 'tabPanel';
+  readonly layout?: 'accordion' | 'tabPanel' | 'stackedCard';
 };
 
 export function BuildCoreBudgetPermissionsSection({

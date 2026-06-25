@@ -325,9 +325,20 @@
   overflow: hidden;
 }
 
+/* Teams + workflow settings: match CRM shell inset (24px), not default 32px sides */
+@media (min-width: 768px) {
+  .mainContent:has([data-buildcore-teams-page]),
+  .mainContent:has([data-buildcore-workflow-settings-page]) {
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+  }
+}
+
 /* ~1920×1080 project detail — slightly less shell padding (see projectDetailViewport.ts) */
 @media (min-width: 1870px) and (max-width: 1920px) and (min-height: 900px) and (max-height: 1100px) {
-  .mainContent:has([data-project-detail-page]) {
+  .mainContent:has([data-project-detail-page]),
+  .mainContent:has([data-buildcore-teams-page]),
+  .mainContent:has([data-buildcore-workflow-settings-page]) {
     padding: 1.125rem 1.5rem;
   }
 }

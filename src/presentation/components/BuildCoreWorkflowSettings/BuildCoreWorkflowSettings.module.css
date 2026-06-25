@@ -7,8 +7,127 @@
   width: 100%;
 }
 
+.workflowSettingsPageContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+  width: 100%;
+}
+
+@media (min-width: 768px) {
+  .workflowSettingsPageContainer {
+    max-width: 80rem;
+    margin-right: auto;
+  }
+}
+
 .pageBody {
-  gap: 0;
+  gap: 0.625rem;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.pageIntroNote {
+  margin: 0;
+  font-size: 0.8125rem;
+  line-height: 1.45;
+  color: var(--color-text-muted, #64748b);
+}
+
+.workflowSettingsPageLayout {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  gap: 1rem;
+  width: 100%;
+  align-items: stretch;
+}
+
+.workflowSettingsSidebarNav {
+  flex: 0 0 16rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 0.5rem;
+  border: 1px solid var(--theme-border-main, var(--color-border, #e2e8f0));
+  border-radius: var(--theme-radius-md, 0.5rem);
+  background: var(--theme-surface-card, var(--color-surface, #fff));
+  align-self: flex-start;
+  position: sticky;
+  top: 0;
+}
+
+:global([data-theme='dark']) .workflowSettingsSidebarNav {
+  background: var(--theme-surface-card, #252836);
+  border-color: var(--theme-border-main, #3d3e4a);
+}
+
+.workflowSettingsSidebarNavItem {
+  width: 100%;
+  text-align: left;
+  padding: 0.625rem 0.75rem;
+  border: none;
+  border-radius: 0.375rem;
+  background: transparent;
+  font-size: 0.875rem;
+  font-weight: 500;
+  line-height: 1.25;
+  color: var(--color-text-muted, #64748b);
+  cursor: pointer;
+  transition:
+    background-color 0.15s,
+    color 0.15s;
+}
+
+.workflowSettingsSidebarNavItem:hover {
+  background: var(--color-muted, #f8fafc);
+  color: var(--color-text, #0f172a);
+}
+
+.workflowSettingsSidebarNavItem_active {
+  background: color-mix(in srgb, var(--color-primary, #2563eb) 12%, transparent);
+  color: var(--color-primary, #2563eb);
+}
+
+.workflowSettingsSidebarNavItem_active:hover {
+  background: color-mix(in srgb, var(--color-primary, #2563eb) 16%, transparent);
+  color: var(--color-primary, #2563eb);
+}
+
+:global([data-theme='dark']) .workflowSettingsSidebarNavItem:hover {
+  background: #2d3142;
+  color: #f1f5f9;
+}
+
+:global([data-theme='dark']) .workflowSettingsSidebarNavItem_active,
+:global([data-theme='dark']) .workflowSettingsSidebarNavItem_active:hover {
+  background: color-mix(in srgb, var(--color-primary, #2563eb) 22%, #2d3142);
+  color: #93c5fd;
+}
+
+.workflowSettingsSidebarNavItem:focus-visible {
+  outline: 2px solid var(--color-primary, #2563eb);
+  outline-offset: 2px;
+}
+
+.workflowSettingsPageContent {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.workflowSettingsPageContent .workflowSettingsPanel_stages {
+  flex: 1;
+  min-height: 0;
 }
 
 .workflowSettingsSections {

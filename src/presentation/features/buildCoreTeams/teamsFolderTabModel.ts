@@ -6,10 +6,25 @@ export type TeamsFolderTabId =
   | 'paymentPermissions'
   | 'budgetPermissions';
 
+export type TeamsDesktopNavId = 'members' | 'permissions';
+
 export type TeamsFolderTabDef = {
   readonly id: TeamsFolderTabId;
   readonly label: string;
 };
+
+export type TeamsDesktopNavDef = {
+  readonly id: TeamsDesktopNavId;
+  readonly label: string;
+};
+
+export function buildTeamsDesktopNav(): readonly TeamsDesktopNavDef[] {
+  const navCopy = content.teams.desktopNav;
+  return [
+    { id: 'members', label: navCopy.members },
+    { id: 'permissions', label: navCopy.permissions },
+  ];
+}
 
 export function buildTeamsFolderTabs(): readonly TeamsFolderTabDef[] {
   const tabCopy = content.teams.folderTabs;

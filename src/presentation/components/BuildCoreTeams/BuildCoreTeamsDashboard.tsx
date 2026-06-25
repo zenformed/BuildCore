@@ -13,33 +13,47 @@ function BuildCoreTeamsDashboardContent(): ReactElement {
   const copy = content.teams;
 
   if (isLoading) {
-    return <p className={styles.loading}>{copy.loading}</p>;
+    return (
+      <div className={`${projectStyles.pageShell} ${styles.teamsPageShell}`} data-buildcore-teams-page>
+        <div className={styles.teamsPageContainer}>
+          <p className={styles.loading}>{copy.loading}</p>
+        </div>
+      </div>
+    );
   }
 
   if (loadError) {
-    return <p className={styles.error}>{loadError ?? copy.loadError}</p>;
+    return (
+      <div className={`${projectStyles.pageShell} ${styles.teamsPageShell}`} data-buildcore-teams-page>
+        <div className={styles.teamsPageContainer}>
+          <p className={styles.error}>{loadError ?? copy.loadError}</p>
+        </div>
+      </div>
+    );
   }
 
   return (
     <div className={`${projectStyles.pageShell} ${styles.teamsPageShell}`} data-buildcore-teams-page>
-      <header className={projectStyles.detailHeader}>
-        <div className={projectStyles.detailHeaderMain}>
-          <div className={projectStyles.titleBlock}>
-            <nav className={projectStyles.breadcrumb} aria-label="Breadcrumb">
-              <span className={projectStyles.breadcrumbMuted}>Organization</span>
-              <span className={projectStyles.breadcrumbSep} aria-hidden>
-                /
-              </span>
-              <span className={projectStyles.breadcrumbCurrent}>{copy.title}</span>
-            </nav>
-            <h1 className={projectStyles.title}>{copy.title}</h1>
+      <div className={styles.teamsPageContainer}>
+        <header className={projectStyles.detailHeader}>
+          <div className={projectStyles.detailHeaderMain}>
+            <div className={projectStyles.titleBlock}>
+              <nav className={projectStyles.breadcrumb} aria-label="Breadcrumb">
+                <span className={projectStyles.breadcrumbMuted}>Organization</span>
+                <span className={projectStyles.breadcrumbSep} aria-hidden>
+                  /
+                </span>
+                <span className={projectStyles.breadcrumbCurrent}>{copy.title}</span>
+              </nav>
+              <h1 className={projectStyles.title}>{copy.title}</h1>
+            </div>
           </div>
-        </div>
-      </header>
+        </header>
 
-      <div className={styles.pageBody}>
-        <p className={styles.architectureNote}>{copy.architectureNote}</p>
-        <TeamsFolderTabs model={model} />
+        <div className={styles.pageBody}>
+          <p className={styles.architectureNote}>{copy.architectureNote}</p>
+          <TeamsFolderTabs model={model} />
+        </div>
       </div>
     </div>
   );

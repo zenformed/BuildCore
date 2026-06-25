@@ -14,11 +14,29 @@ function BuildCoreWorkflowSettingsDashboardContent(): ReactElement {
   const copy = content.workflowSettings;
 
   if (isLoading) {
-    return <p className={stageStyles.loading}>{copy.loading}</p>;
+    return (
+      <div
+        className={`${projectStyles.pageShell} ${stageStyles.pageShell} ${styles.pageShell}`}
+        data-buildcore-workflow-settings-page
+      >
+        <div className={styles.workflowSettingsPageContainer}>
+          <p className={stageStyles.loading}>{copy.loading}</p>
+        </div>
+      </div>
+    );
   }
 
   if (loadError) {
-    return <p className={stageStyles.error}>{loadError ?? copy.loadError}</p>;
+    return (
+      <div
+        className={`${projectStyles.pageShell} ${stageStyles.pageShell} ${styles.pageShell}`}
+        data-buildcore-workflow-settings-page
+      >
+        <div className={styles.workflowSettingsPageContainer}>
+          <p className={stageStyles.error}>{loadError ?? copy.loadError}</p>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -26,23 +44,26 @@ function BuildCoreWorkflowSettingsDashboardContent(): ReactElement {
       className={`${projectStyles.pageShell} ${stageStyles.pageShell} ${styles.pageShell}`}
       data-buildcore-workflow-settings-page
     >
-      <header className={projectStyles.detailHeader}>
-        <div className={projectStyles.detailHeaderMain}>
-          <div className={projectStyles.titleBlock}>
-            <nav className={projectStyles.breadcrumb} aria-label="Breadcrumb">
-              <span className={projectStyles.breadcrumbMuted}>Organization</span>
-              <span className={projectStyles.breadcrumbSep} aria-hidden>
-                /
-              </span>
-              <span className={projectStyles.breadcrumbCurrent}>{copy.title}</span>
-            </nav>
-            <h1 className={projectStyles.title}>{copy.title}</h1>
+      <div className={styles.workflowSettingsPageContainer}>
+        <header className={projectStyles.detailHeader}>
+          <div className={projectStyles.detailHeaderMain}>
+            <div className={projectStyles.titleBlock}>
+              <nav className={projectStyles.breadcrumb} aria-label="Breadcrumb">
+                <span className={projectStyles.breadcrumbMuted}>Organization</span>
+                <span className={projectStyles.breadcrumbSep} aria-hidden>
+                  /
+                </span>
+                <span className={projectStyles.breadcrumbCurrent}>{copy.title}</span>
+              </nav>
+              <h1 className={projectStyles.title}>{copy.title}</h1>
+            </div>
           </div>
-        </div>
-      </header>
+        </header>
 
-      <div className={`${projectStyles.pageBodyOverview} ${styles.pageBody}`}>
-        <BuildCoreWorkflowSettingsSections />
+        <div className={`${projectStyles.pageBodyOverview} ${styles.pageBody}`}>
+          <p className={styles.pageIntroNote}>{copy.introNote}</p>
+          <BuildCoreWorkflowSettingsSections />
+        </div>
       </div>
     </div>
   );

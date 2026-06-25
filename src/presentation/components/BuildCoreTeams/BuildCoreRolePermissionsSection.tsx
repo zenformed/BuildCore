@@ -24,7 +24,7 @@ export type BuildCoreRolePermissionsSectionProps = {
   readonly headingId: string;
   readonly copy: BuildCoreRolePermissionsSectionCopy;
   readonly defaultExpanded?: boolean;
-  readonly layout?: 'accordion' | 'tabPanel';
+  readonly layout?: 'accordion' | 'tabPanel' | 'stackedCard';
   readonly footer?: ReactNode;
 };
 
@@ -107,6 +107,25 @@ export function BuildCoreRolePermissionsSection({
           {copy.title}
         </h2>
         <div className={styles.permissionsTabPanelBody}>
+          <PermissionsSectionBody copy={copy} permissions={permissions} footer={footer} />
+        </div>
+      </section>
+    );
+  }
+
+  if (layout === 'stackedCard') {
+    return (
+      <section
+        className={`${projectStyles.card} ${styles.permissionsStackedCard}`}
+        aria-labelledby={headingId}
+      >
+        <h2
+          id={headingId}
+          className={`${projectStyles.cardTitle} ${styles.permissionsStackedCardTitle}`}
+        >
+          {copy.title}
+        </h2>
+        <div className={styles.permissionsStackedCardBody}>
           <PermissionsSectionBody copy={copy} permissions={permissions} footer={footer} />
         </div>
       </section>

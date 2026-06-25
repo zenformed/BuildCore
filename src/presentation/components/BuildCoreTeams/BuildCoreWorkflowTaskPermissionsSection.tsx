@@ -8,7 +8,7 @@ import styles from './BuildCoreTeams.module.css';
 
 export type BuildCoreWorkflowTaskPermissionsSectionProps = {
   readonly enabled: boolean;
-  readonly layout?: 'accordion' | 'tabPanel';
+  readonly layout?: 'accordion' | 'tabPanel' | 'stackedCard';
 };
 
 export function BuildCoreWorkflowTaskPermissionsSection({

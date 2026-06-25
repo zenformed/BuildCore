@@ -1,46 +1,48 @@
 'use client';
 
 import type { ReactElement } from 'react';
-import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
-import { BuildCoreWorkflowStagesSplitTab } from './BuildCoreWorkflowStagesSplitTab';
-import { BuildCoreWorkflowSettingsAlertsTab } from './BuildCoreWorkflowSettingsAlertsTab';
-import projectStyles from '../CrmProjectDetail/ProjectDetail.module.css';
+import { useState } from 'react';
+import type { WorkflowSettingsDesktopNavId } from '@/presentation/features/buildCoreWorkflowSettings/workflowSettingsNavModel';
+import { useDashboardMobileLayout } from '@/presentation/features/crmProjects/useDashboardMobileLayout';
+import { WorkflowSettingsSidebarNav } from './WorkflowSettingsSidebarNav';
+import {
+  WorkflowSettingsAlertsPanel,
+  WorkflowSettingsMobileSections,
+  WorkflowSettingsStagesPanel,
+} from './WorkflowSettingsPanels';
 import styles from './BuildCoreWorkflowSettings.module.css';
 
+function renderDesktopPanel(selectedNav: WorkflowSettingsDesktopNavId): ReactElement {
+  switch (selectedNav) {
+    case 'workflowStages':
+      return <WorkflowSettingsStagesPanel />;
+    case 'alerts':
+      return <WorkflowSettingsAlertsPanel />;
+    default: {
+      const _exhaustive: never = selectedNav;
+      return _exhaustive;
+    }
+  }
+}
+
 export function BuildCoreWorkflowSettingsSections(): ReactElement {
-  const sectionCopy = content.workflowSettings.folderTabs;
+  const isMobileLayout = useDashboardMobileLayout();
+  const [selectedNav, setSelectedNav] = useState<WorkflowSettingsDesktopNavId>('workflowStages');
+
+  if (isMobileLayout) {
+    return <WorkflowSettingsMobileSections />;
+  }
 
   return (
-    <div className={styles.workflowSettingsSections}>
-      <section
-        className={`${styles.workflowSettingsPanel} ${styles.workflowSettingsPanel_alerts}`}
-        aria-labelledby="workflow-settings-alerts-heading"
+    <div className={styles.workflowSettingsPageLayout} data-workflow-settings-nav={selectedNav}>
+      <WorkflowSettingsSidebarNav selectedNav={selectedNav} onSelectNav={setSelectedNav} />
+      <div
+        className={styles.workflowSettingsPageContent}
+        role="region"
+        aria-label={selectedNav === 'workflowStages' ? 'Workflow Stages' : 'Alerts'}
       >
-        <div className={styles.workflowSettingsPanelHeader}>
-          <h2 id="workflow-settings-alerts-heading" className={projectStyles.detailPanelTitle}>
-            {sectionCopy.alerts}
-          </h2>
-        </div>
-        <div className={styles.workflowSettingsPanelBody}>
-          <BuildCoreWorkflowSettingsAlertsTab />
-        </div>
-      </section>
-
-      <section
-        className={`${styles.workflowSettingsPanel} ${styles.workflowSettingsPanel_stages}`}
-        aria-labelledby="workflow-settings-stages-heading"
-      >
-        <div className={styles.workflowSettingsPanelHeader}>
-          <h2 id="workflow-settings-stages-heading" className={projectStyles.detailPanelTitle}>
-            {sectionCopy.workflowStages}
-          </h2>
-        </div>
-        <div
-          className={`${styles.workflowSettingsPanelBody} ${styles.workflowSettingsPanelBody_scroll}`}
-        >
-          <BuildCoreWorkflowStagesSplitTab />
-        </div>
-      </section>
+        {renderDesktopPanel(selectedNav)}
+      </div>
     </div>
   );
 }
