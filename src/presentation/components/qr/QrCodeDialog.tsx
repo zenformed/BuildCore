@@ -80,23 +80,25 @@ export function QrCodeDialog({
 
           {subtitle ? <p className={styles.qrDialogSubtitle}>{subtitle}</p> : null}
 
-          <dl className={styles.qrDialogMeta}>
-            {metaRows.map((row) => (
-              <div key={row.label} className={styles.qrDialogMetaRow}>
-                <dt className={styles.qrDialogMetaLabel}>{row.label}</dt>
-                <dd
-                  className={[
-                    styles.qrDialogMetaValue,
-                    row.variant === 'url' ? styles.qrDialogMetaValue_url : '',
-                  ]
-                    .filter(Boolean)
-                    .join(' ')}
-                >
-                  {row.value}
-                </dd>
-              </div>
-            ))}
-          </dl>
+          {metaRows.length > 0 ? (
+            <dl className={styles.qrDialogMeta}>
+              {metaRows.map((row) => (
+                <div key={row.label} className={styles.qrDialogMetaRow}>
+                  <dt className={styles.qrDialogMetaLabel}>{row.label}</dt>
+                  <dd
+                    className={[
+                      styles.qrDialogMetaValue,
+                      row.variant === 'url' ? styles.qrDialogMetaValue_url : '',
+                    ]
+                      .filter(Boolean)
+                      .join(' ')}
+                  >
+                    {row.value}
+                  </dd>
+                </div>
+              ))}
+            </dl>
+          ) : null}
 
           <p className={styles.qrDialogHelper}>{helperText}</p>
 

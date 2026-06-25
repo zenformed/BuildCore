@@ -24,7 +24,7 @@ export function ProjectQrDialog({ open, project, onClose }: ProjectQrDialogProps
       qrValue={leadUrl}
       qrAriaLabel={qrAriaLabel}
       subtitle={project.name}
-      metaRows={[{ label: copy.leadUrlLabel, value: leadUrl, variant: 'url' }]}
+      metaRows={[]}
       helperText={copy.helperText}
       downloadLabel={copy.downloadPng}
       downloadFileName={downloadFileName}
