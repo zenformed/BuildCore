@@ -1,13 +1,10 @@
 import {
   CRM_BUDGET_CATEGORIES,
+  isCrmProjectInactive,
   isPaymentWorkflowTask,
   type CrmBudgetCategory,
   type CrmProjectDetail,
 } from '@/domain/crm';
-import {
-  computeBalanceDueFromPayments,
-  computeProjectValueFromPayments,
-} from '@/domain/crm/projectPaymentValue';
 import type {
   CrmReportsDashboardData,
   ReportPeriodId,
@@ -33,6 +30,7 @@ import {
   isTimestampInRange,
   resolveReportPeriodRange,
 } from './reportPeriodRange';
+import { computeReportsActiveParentMetrics } from './reportsActiveParentMetrics';
 
 /** Open receivables: invoiced but not paid (point-in-time, not period-filtered). */
 function sumOpenReceivables(payments: ReturnType<typeof collectPaymentTasks>): {
@@ -79,40 +77,6 @@ function formatPercent(value: number | null): string {
   if (value == null || Number.isNaN(value)) return '—';
   const sign = value > 0 ? '+' : '';
   return `${sign}${value.toFixed(1)}%`;
-}
-
-function computeActiveProjectMetrics(projects: readonly CrmProjectDetail[]): {
-  count: number;
-  waitingApprovalCount: number;
-  overdueProjectCount: number;
-  pipelineCents: number;
-  unpaidCents: number;
-} {
-  const now = Date.now();
-  let count = 0;
-  let waitingApprovalCount = 0;
-  let overdueProjectCount = 0;
-  let pipelineCents = 0;
-  let unpaidCents = 0;
-
-  for (const project of projects) {
-    if (project.summary.completedAt != null) continue;
-    count += 1;
-    if (project.summary.currentStageSlug === 'waiting-on-approval') {
-      waitingApprovalCount += 1;
-    }
-    const payments = project.workflowTasks.filter(isPaymentWorkflowTask);
-    pipelineCents += computeProjectValueFromPayments(payments);
-    unpaidCents += computeBalanceDueFromPayments(payments);
-    const hasOverdue = payments.some((task) => {
-      if (task.invoicedAt == null || task.paidAt != null || task.dueAt == null) return false;
-      const dueMs = new Date(task.dueAt).getTime();
-      return !Number.isNaN(dueMs) && dueMs < now;
-    });
-    if (hasOverdue) overdueProjectCount += 1;
-  }
-
-  return { count, waitingApprovalCount, overdueProjectCount, pipelineCents, unpaidCents };
 }
 
 function computeAvgDaysToPay(payments: ReturnType<typeof collectPaymentTasks>): number | null {
@@ -170,7 +134,7 @@ export function computeCrmReportsDashboard(
     sumCostsInRange(projects, bucket.start, bucket.end).totalCents
   );
 
-  const activeMetrics = computeActiveProjectMetrics(projects);
+  const activeMetrics = computeReportsActiveParentMetrics(projects);
 
   const avgDaysToPay = computeAvgDaysToPay(payments);
   const now = Date.now();
@@ -185,7 +149,7 @@ export function computeCrmReportsDashboard(
     const isCompleted = project.summary.completedAt != null;
     const isWaitingApproval =
       !isCompleted && project.summary.currentStageSlug === 'waiting-on-approval';
-    const isActive = !isCompleted;
+    const isActive = !isCompleted && !isCrmProjectInactive(project.summary);
     const hasOverduePayments = projectPayments.some((task) => {
       if (task.invoicedAt == null || task.paidAt != null || task.dueAt == null) return false;
       const dueMs = new Date(task.dueAt).getTime();

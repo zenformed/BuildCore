@@ -44,7 +44,6 @@ export function filterReportsProjectPerformanceView(
 } {
   const { roots, childrenByParentId } = partitionReportsProjectRows(rows);
   const visibleChildrenByParentId = new Map<string, ReportsProjectRow[]>();
-  const parentsWithMatchingChildren = new Set<string>();
 
   for (const [parentId, children] of childrenByParentId) {
     const matchingChildren = children.filter((child) =>
@@ -52,15 +51,11 @@ export function filterReportsProjectPerformanceView(
     );
     if (matchingChildren.length > 0) {
       visibleChildrenByParentId.set(parentId, sortReportsProjectRowsByCollected(matchingChildren));
-      parentsWithMatchingChildren.add(parentId);
     }
   }
 
   const rootRows = sortReportsProjectRowsByCollected(
-    roots.filter(
-      (root) =>
-        reportsProjectRowMatchesFilter(root, filter) || parentsWithMatchingChildren.has(root.projectId)
-    )
+    roots.filter((root) => reportsProjectRowMatchesFilter(root, filter))
   );
 
   return {
@@ -88,11 +83,7 @@ export function buildReportsProjectPerformanceFilterCounts(
     'waiting_approval',
     'overdue_payments',
   ] as const) {
-    counts[filter] = roots.filter((root) => {
-      if (reportsProjectRowMatchesFilter(root, filter)) return true;
-      const children = childrenByParentId.get(root.projectId) ?? [];
-      return children.some((child) => reportsProjectRowMatchesFilter(child, filter));
-    }).length;
+    counts[filter] = roots.filter((root) => reportsProjectRowMatchesFilter(root, filter)).length;
   }
 
   return counts;
