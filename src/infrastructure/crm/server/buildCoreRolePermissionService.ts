@@ -24,6 +24,7 @@ type DbPermissionRow = {
   can_delete: boolean;
   can_approve: boolean;
   can_upload: boolean;
+  can_download: boolean;
   can_send_files: boolean;
 };
 
@@ -43,6 +44,7 @@ function rowFromDb(db: DbPermissionRow): BuildCoreRolePermissionRow | null {
     canDelete: Boolean(db.can_delete),
     canApprove: Boolean(db.can_approve),
     canUpload: Boolean(db.can_upload),
+    canDownload: Boolean(db.can_download),
     canSendFiles: Boolean(db.can_send_files),
   };
 }
@@ -55,7 +57,7 @@ export async function loadBuildCoreRolePermissionRows(
   const { data, error } = await supabase
     .from('buildcore_role_permissions')
     .select(
-      'role_key, can_view, can_create, can_edit, can_delete, can_approve, can_upload, can_send_files'
+      'role_key, can_view, can_create, can_edit, can_delete, can_approve, can_upload, can_download, can_send_files'
     )
     .eq('organization_id', organizationId)
     .eq('permission_domain', domain);
@@ -138,12 +140,13 @@ export async function saveBuildCoreRolePermissionRow(
         can_delete: flags.canDelete,
         can_approve: flags.canApprove,
         can_upload: flags.canUpload,
+        can_download: flags.canDownload,
         can_send_files: flags.canSendFiles,
       },
       { onConflict: 'organization_id,role_key,permission_domain' }
     )
     .select(
-      'role_key, can_view, can_create, can_edit, can_delete, can_approve, can_upload, can_send_files'
+      'role_key, can_view, can_create, can_edit, can_delete, can_approve, can_upload, can_download, can_send_files'
     )
     .single();
 

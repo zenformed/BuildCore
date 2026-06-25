@@ -4,6 +4,10 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { requireCrmApiAuth } from '@/infrastructure/crm/server/crmApiRouteAuth';
+import {
+  requireBuildCoreDownloadPermission,
+  resolveWorkflowTaskDocumentDownloadPermissionDomain,
+} from '@/infrastructure/crm/server/buildCoreDownloadPermissionService';
 import { crmDocumentErrorResponse } from '@/infrastructure/crm/server/crmDocumentRouteErrors';
 import { resolveWorkflowTaskDocumentAttachmentForOrg } from '@/infrastructure/crm/server/crmDocumentService';
 import { crmDocumentAttachmentNextResponse } from '@/infrastructure/crm/server/crmDocumentDownloadResponse';
@@ -25,6 +29,22 @@ export async function GET(
   const documentId = context.params.documentId?.trim();
   if (!slug || !taskId || !documentId) {
     return NextResponse.json({ error: 'not_found', message: 'Not found' }, { status: 404 });
+  }
+
+  const permissionDomain = await resolveWorkflowTaskDocumentDownloadPermissionDomain(
+    auth.context.supabase,
+    auth.context.organizationId,
+    slug,
+    taskId
+  );
+  const downloadPermission = await requireBuildCoreDownloadPermission(
+    auth.context.supabase,
+    auth.context.organizationId,
+    auth.context.user.id,
+    permissionDomain
+  );
+  if (!downloadPermission.ok) {
+    return downloadPermission.response;
   }
 
   try {

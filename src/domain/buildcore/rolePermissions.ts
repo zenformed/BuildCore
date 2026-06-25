@@ -29,11 +29,12 @@ export const BUILDCORE_PERMISSION_ROLE_KEYS: readonly BuildCorePermissionRoleKey
 
 export type BuildCorePermissionColumnId =
   | 'canView'
+  | 'canCreate'
   | 'canEdit'
   | 'canApprove'
   | 'canDelete'
-  | 'canCreate'
   | 'canUpload'
+  | 'canDownload'
   | 'canSendFiles';
 
 export const BUILDCORE_PERMISSION_COLUMNS: readonly {
@@ -41,11 +42,12 @@ export const BUILDCORE_PERMISSION_COLUMNS: readonly {
   readonly label: string;
 }[] = [
   { id: 'canView', label: 'View' },
+  { id: 'canCreate', label: 'Create' },
   { id: 'canEdit', label: 'Edit' },
   { id: 'canApprove', label: 'Approve' },
   { id: 'canDelete', label: 'Delete' },
-  { id: 'canCreate', label: 'Create' },
   { id: 'canUpload', label: 'Upload' },
+  { id: 'canDownload', label: 'Download' },
   { id: 'canSendFiles', label: 'Send Files' },
 ];
 
@@ -58,6 +60,7 @@ export type BuildCoreRolePermissionFlags = {
   readonly canDelete: boolean;
   readonly canApprove: boolean;
   readonly canUpload: boolean;
+  readonly canDownload: boolean;
   readonly canSendFiles: boolean;
 };
 

@@ -25,6 +25,7 @@ export const DENIED_BUILDCORE_WORKFLOW_TASK_PERMISSIONS: BuildCoreRolePermission
   canDelete: false,
   canApprove: false,
   canUpload: false,
+  canDownload: false,
   canSendFiles: false,
 };
 
@@ -36,6 +37,7 @@ export const UNRESTRICTED_BUILDCORE_WORKFLOW_TASK_PERMISSIONS: BuildCoreRolePerm
   canDelete: true,
   canApprove: true,
   canUpload: true,
+  canDownload: true,
   canSendFiles: true,
 };
 
@@ -57,6 +59,7 @@ export function defaultBuildCoreRolePermissionFlags(
         canDelete: true,
         canApprove: true,
         canUpload: true,
+        canDownload: true,
         canSendFiles: true,
       };
     case 'coordinator':
@@ -67,6 +70,7 @@ export function defaultBuildCoreRolePermissionFlags(
         canDelete: true,
         canApprove: true,
         canUpload: true,
+        canDownload: true,
         canSendFiles: true,
       };
     case 'member':
@@ -77,6 +81,7 @@ export function defaultBuildCoreRolePermissionFlags(
         canDelete: false,
         canApprove: false,
         canUpload: true,
+        canDownload: true,
         canSendFiles: false,
       };
     default: {
@@ -138,6 +143,7 @@ export function resolveBuildCoreWorkflowTaskPermissions(
     canDelete: flags.canDelete,
     canApprove: flags.canApprove,
     canUpload: flags.canUpload,
+    canDownload: flags.canDownload,
     canSendFiles: flags.canSendFiles,
   };
 }

@@ -14,6 +14,7 @@ export function parseBuildCoreRoleAccessJson(json: unknown): BuildCoreRoleAccess
     typeof o.canDelete !== 'boolean' ||
     typeof o.canApprove !== 'boolean' ||
     typeof o.canUpload !== 'boolean' ||
+    typeof o.canDownload !== 'boolean' ||
     typeof o.canSendFiles !== 'boolean'
   ) {
     return null;
@@ -44,6 +45,7 @@ export function parseBuildCoreRoleAccessJson(json: unknown): BuildCoreRoleAccess
     canDelete: o.canDelete,
     canApprove: o.canApprove,
     canUpload: o.canUpload,
+    canDownload: o.canDownload,
     canSendFiles: o.canSendFiles,
   };
 }

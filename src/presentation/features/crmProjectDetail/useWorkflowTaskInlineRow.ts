@@ -93,6 +93,7 @@ export function useWorkflowTaskInlineRow({
   const canEdit = isReady && permissions.canEdit;
   const canDelete = isReady && permissions.canDelete;
   const canUpload = isReady && permissions.canUpload;
+  const canDownload = isReady && permissions.canDownload;
   const canSendFiles = isReady && permissions.canSendFiles;
   const canApprove = isReady && permissions.canApprove;
   const canChangeStatus = canView;
@@ -420,6 +421,7 @@ export function useWorkflowTaskInlineRow({
     canEdit,
     canDelete,
     canUpload,
+    canDownload,
     canApprove,
     canChangeStatus,
     documentAccept,

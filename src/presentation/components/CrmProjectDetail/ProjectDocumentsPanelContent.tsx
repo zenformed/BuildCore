@@ -2,7 +2,7 @@
 
 import type { ChangeEvent, ReactElement } from 'react';
 import { useMemo, useRef, useState } from 'react';
-import type { CrmProjectDetail, PipelineStageSlug } from '@/domain/crm';
+import type { CrmProjectDetail, PipelineStageSlug, CrmDocumentMetadata } from '@/domain/crm';
 import { BUILDCORE_UPLOAD_ALLOWED_EXTENSIONS } from '@/domain/crm/buildCoreUploadPolicy';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
 import { formatWorkflowTaskStageLabel } from '@/presentation/features/crmProjectDetail/crmProjectDetailFormatters';
@@ -13,6 +13,9 @@ import {
 } from '@/presentation/features/crmProjectDetail/documentPanelModel';
 import { formatBudgetCategory } from '@/presentation/features/crmProjectDetail/budgetCategoryLabels';
 import { useBuildCorePipelineStages } from '@/presentation/providers/BuildCorePipelineStagesProvider';
+import { useBuildCoreWorkflowTaskAccess } from '@/presentation/providers/BuildCoreWorkflowTaskAccessProvider';
+import { useBuildCoreProjectSectionAccess } from '@/presentation/providers/BuildCoreProjectSectionAccessProvider';
+import { resolveCrmDocumentDownloadPermissionDomain } from '@/presentation/features/crmProjectDetail/crmDocumentDownloadPermission';
 import { filterDocumentPanelItemsBySearch } from '@/presentation/features/crmProjectDetail/projectSectionSearchModel';
 import {
   formatDocumentKind,
@@ -44,6 +47,8 @@ export function ProjectDocumentsPanelContent({
   onError,
 }: ProjectDocumentsPanelContentProps): ReactElement {
   const { catalogForProject } = useBuildCorePipelineStages();
+  const workflowAccess = useBuildCoreWorkflowTaskAccess();
+  const sectionAccess = useBuildCoreProjectSectionAccess();
   const stageCatalog = catalogForProject({ parentProjectId: project.summary.parentProjectId });
   const docsContent = content.projectDetail.documents;
   const wf = content.projectDetail.workflow;
@@ -82,6 +87,23 @@ export function ProjectDocumentsPanelContent({
     return stageSlug
       ? formatWorkflowTaskStageLabel({ stageSlug, amountCents: null }, stageCatalog)
       : docsContent.noStage;
+  };
+
+  const canDownloadDoc = (doc: CrmDocumentMetadata): boolean => {
+    const domain = resolveCrmDocumentDownloadPermissionDomain(
+      doc,
+      doc.workflowTaskId ? taskById.get(doc.workflowTaskId) : undefined
+    );
+    if (domain == null) {
+      return true;
+    }
+    if (domain === 'workflow_tasks') {
+      return workflowAccess.isReady && workflowAccess.permissions.canDownload;
+    }
+    if (domain === 'payments') {
+      return sectionAccess.payment.isReady && sectionAccess.payment.permissions.canDownload;
+    }
+    return sectionAccess.budget.isReady && sectionAccess.budget.permissions.canDownload;
   };
 
   const runDocAction = async (docId: string, action: () => Promise<void>) => {
@@ -199,16 +221,18 @@ export function ProjectDocumentsPanelContent({
                       {doc.name}
                     </span>
                     <div className={styles.docListItemActions}>
-                      <button
-                        type="button"
-                        className={styles.inlineMenuIconBtn}
-                        disabled={isBusy}
-                        title={wf.documentDownload}
-                        aria-label={`${wf.documentDownload} ${doc.name}`}
-                        onClick={() => void runDocAction(doc.id, () => downloadDocument(doc))}
-                      >
-                        <span className={styles.inlineMenuDownloadIcon} aria-hidden />
-                      </button>
+                      {canDownloadDoc(doc) ? (
+                        <button
+                          type="button"
+                          className={styles.inlineMenuIconBtn}
+                          disabled={isBusy}
+                          title={wf.documentDownload}
+                          aria-label={`${wf.documentDownload} ${doc.name}`}
+                          onClick={() => void runDocAction(doc.id, () => downloadDocument(doc))}
+                        >
+                          <span className={styles.inlineMenuDownloadIcon} aria-hidden />
+                        </button>
+                      ) : null}
                       <button
                         type="button"
                         className={styles.inlineMenuIconBtn}

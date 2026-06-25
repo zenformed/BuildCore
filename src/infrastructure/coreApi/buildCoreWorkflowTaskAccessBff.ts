@@ -15,6 +15,7 @@ export function parseBuildCoreWorkflowTaskAccessJson(json: unknown): BuildCoreWo
     typeof o.canDelete !== 'boolean' ||
     typeof o.canApprove !== 'boolean' ||
     typeof o.canUpload !== 'boolean' ||
+    typeof o.canDownload !== 'boolean' ||
     typeof o.canSendFiles !== 'boolean'
   ) {
     return null;
@@ -45,6 +46,7 @@ export function parseBuildCoreWorkflowTaskAccessJson(json: unknown): BuildCoreWo
     canDelete: o.canDelete,
     canApprove: o.canApprove,
     canUpload: o.canUpload,
+    canDownload: o.canDownload,
     canSendFiles: o.canSendFiles,
     onlyAssignedUserCanView:
       typeof o.onlyAssignedUserCanView === 'boolean'

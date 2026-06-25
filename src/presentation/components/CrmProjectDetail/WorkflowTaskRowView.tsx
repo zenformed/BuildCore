@@ -339,19 +339,21 @@ function WorkflowTaskRowDocumentsField({
             <span className={styles.inlineMenuDocName} title={doc.name}>
               {doc.name}
             </span>
-            <button
-              type="button"
-              className={styles.inlineMenuIconBtn}
-              disabled={model.saving || model.documentActions.uploading}
-              title={model.wf.documentDownload}
-              aria-label={`${model.wf.documentDownload} ${doc.name}`}
-              onClick={() => {
-                model.setDocumentsMenuOpen(false);
-                void model.documentActions.downloadDocument(doc.id, doc.name);
-              }}
-            >
-              <span className={styles.inlineMenuDownloadIcon} aria-hidden />
-            </button>
+            {model.canDownload ? (
+              <button
+                type="button"
+                className={styles.inlineMenuIconBtn}
+                disabled={model.saving || model.documentActions.uploading}
+                title={model.wf.documentDownload}
+                aria-label={`${model.wf.documentDownload} ${doc.name}`}
+                onClick={() => {
+                  model.setDocumentsMenuOpen(false);
+                  void model.documentActions.downloadDocument(doc.id, doc.name);
+                }}
+              >
+                <span className={styles.inlineMenuDownloadIcon} aria-hidden />
+              </button>
+            ) : null}
             {model.canEdit ? (
               <button
                 type="button"

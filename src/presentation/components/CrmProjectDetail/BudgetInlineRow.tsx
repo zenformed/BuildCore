@@ -75,6 +75,7 @@ export function BudgetInlineRow({
   const { permissions, isReady } = budgetAccess;
   const canEdit = isReady && permissions.canEdit;
   const canUpload = isReady && permissions.canUpload;
+  const canDownload = isReady && permissions.canDownload;
   const canSendFiles = isReady && permissions.canSendFiles;
   const canDelete = isReady && permissions.canDelete;
   const showSendAttachment =
@@ -379,19 +380,21 @@ export function BudgetInlineRow({
                     <span className={styles.inlineMenuDocName} title={doc.name}>
                       {doc.name}
                     </span>
-                    <button
-                      type="button"
-                      className={styles.inlineMenuIconBtn}
-                      disabled={saving || documentActions.uploading}
-                      title={wf.documentDownload}
-                      aria-label={`${wf.documentDownload} ${doc.name}`}
-                      onClick={() => {
-                        setDocumentsMenuOpen(false);
-                        void documentActions.downloadDocument(doc.id, doc.name);
-                      }}
-                    >
-                      <span className={styles.inlineMenuDownloadIcon} aria-hidden />
-                    </button>
+                    {canDownload ? (
+                      <button
+                        type="button"
+                        className={styles.inlineMenuIconBtn}
+                        disabled={saving || documentActions.uploading}
+                        title={wf.documentDownload}
+                        aria-label={`${wf.documentDownload} ${doc.name}`}
+                        onClick={() => {
+                          setDocumentsMenuOpen(false);
+                          void documentActions.downloadDocument(doc.id, doc.name);
+                        }}
+                      >
+                        <span className={styles.inlineMenuDownloadIcon} aria-hidden />
+                      </button>
+                    ) : null}
                     {canDelete ? (
                       <button
                         type="button"
@@ -819,19 +822,21 @@ export function BudgetInlineRow({
               <span className={styles.inlineMenuDocName} title={doc.name}>
                 {doc.name}
               </span>
-              <button
-                type="button"
-                className={styles.inlineMenuIconBtn}
-                disabled={saving || documentActions.uploading}
-                title={wf.documentDownload}
-                aria-label={`${wf.documentDownload} ${doc.name}`}
-                onClick={() => {
-                  setDocumentsMenuOpen(false);
-                  void documentActions.downloadDocument(doc.id, doc.name);
-                }}
-              >
-                <span className={styles.inlineMenuDownloadIcon} aria-hidden />
-              </button>
+              {canDownload ? (
+                <button
+                  type="button"
+                  className={styles.inlineMenuIconBtn}
+                  disabled={saving || documentActions.uploading}
+                  title={wf.documentDownload}
+                  aria-label={`${wf.documentDownload} ${doc.name}`}
+                  onClick={() => {
+                    setDocumentsMenuOpen(false);
+                    void documentActions.downloadDocument(doc.id, doc.name);
+                  }}
+                >
+                  <span className={styles.inlineMenuDownloadIcon} aria-hidden />
+                </button>
+              ) : null}
               {canDelete ? (
                 <button
                   type="button"

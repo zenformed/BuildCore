@@ -4,6 +4,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { requireCrmApiAuth } from '@/infrastructure/crm/server/crmApiRouteAuth';
+import { requireBuildCoreDownloadPermission } from '@/infrastructure/crm/server/buildCoreDownloadPermissionService';
 import { crmDocumentErrorResponse } from '@/infrastructure/crm/server/crmDocumentRouteErrors';
 import { resolveBudgetEntryDocumentAttachmentForOrg } from '@/infrastructure/crm/server/crmBudgetEntryDocumentService';
 import { crmDocumentAttachmentNextResponse } from '@/infrastructure/crm/server/crmDocumentDownloadResponse';
@@ -25,6 +26,16 @@ export async function GET(
   const documentId = context.params.documentId?.trim();
   if (!slug || !entryId || !documentId) {
     return NextResponse.json({ error: 'not_found', message: 'Not found' }, { status: 404 });
+  }
+
+  const downloadPermission = await requireBuildCoreDownloadPermission(
+    auth.context.supabase,
+    auth.context.organizationId,
+    auth.context.user.id,
+    'budget'
+  );
+  if (!downloadPermission.ok) {
+    return downloadPermission.response;
   }
 
   try {

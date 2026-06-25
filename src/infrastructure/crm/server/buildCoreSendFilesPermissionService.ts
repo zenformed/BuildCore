@@ -3,13 +3,8 @@
  */
 
 import type { SupabaseClient } from '@supabase/supabase-js';
-import { NextResponse } from 'next/server';
 import type { BuildCorePermissionDomain } from '@/domain/buildcore/rolePermissions';
-import { resolveBuildCoreRoleAccessForUser } from './buildCoreRoleAccessService';
-import {
-  resolveBuildCoreWorkflowTaskAccessForUser,
-  workflowTaskPermissionForbiddenResponse,
-} from './buildCoreWorkflowTaskPermissionService';
+import { requireBuildCoreRolePermissionFlag } from './buildCoreRolePermissionEnforcement';
 
 export type SendAttachmentEntityType =
   | 'workflow_task'
@@ -39,28 +34,13 @@ export async function requireBuildCoreSendFilesPermission(
   organizationId: string,
   userId: string,
   domain: BuildCorePermissionDomain
-): Promise<{ ok: true } | { ok: false; response: NextResponse }> {
-  const canSendFiles =
-    domain === 'workflow_tasks'
-      ? (await resolveBuildCoreWorkflowTaskAccessForUser(supabase, organizationId, userId))
-          .canSendFiles
-      : (
-          await resolveBuildCoreRoleAccessForUser(
-            supabase,
-            organizationId,
-            userId,
-            domain === 'payments' ? 'payments' : 'budget'
-          )
-        ).canSendFiles;
-
-  if (!canSendFiles) {
-    return {
-      ok: false,
-      response: workflowTaskPermissionForbiddenResponse(
-        'You do not have permission to send attachments.'
-      ),
-    };
-  }
-
-  return { ok: true };
+) {
+  return requireBuildCoreRolePermissionFlag(
+    supabase,
+    organizationId,
+    userId,
+    domain,
+    (flags) => flags.canSendFiles,
+    'You do not have permission to send attachments.'
+  );
 }
