@@ -14,13 +14,12 @@ import { ReportsMobileExportActions } from './ReportsMobileExportActions';
 import { ReportsPeriodMobileControls } from './ReportsPeriodMobileControls';
 import type { ReportPeriodId } from '@/reports/types/crmReportsDashboard';
 import projectStyles from '../CrmProjectDetail/ProjectDetail.module.css';
-import { ReportsFolderTabs } from './ReportsFolderTabs';
+import { ReportsExecutiveDashboard } from './ReportsExecutiveDashboard';
 import { ReportsKpiCard } from './ReportsKpiCard';
 import styles from './CrmReports.module.css';
 
 export function CrmReportsDashboard(): ReactElement {
-  const { dashboard, projects, isLoading, error, period, setPeriod, chartTab, setChartTab } =
-    useCrmReportsDashboard();
+  const { dashboard, projects, isLoading, error, period, setPeriod } = useCrmReportsDashboard();
   const pdfExport = useCrmReportsPdfExport(projects, period);
   const organizationExport = useOrganizationExport(projects);
   const isMobileLayout = useDashboardMobileLayout();
@@ -143,14 +142,29 @@ export function CrmReportsDashboard(): ReactElement {
             }
             footRightLabel={content.reports.kpi.foot.avgDaysToPay}
           />
+          <ReportsKpiCard
+            icon="activeProjects"
+            mainDisplay={String(dashboard.activeProjects.count)}
+            metricLabel={content.reports.kpi.activeProjects}
+            comparison={dashboard.activeProjects.comparison}
+            footLeftValue={String(dashboard.activeProjects.waitingApprovalCount)}
+            footLeftLabel={content.reports.kpi.foot.waitingApproval}
+            footRightValue={String(dashboard.activeProjects.overdueProjectCount)}
+            footRightLabel={content.reports.kpi.foot.overduePayments}
+          />
+          <ReportsKpiCard
+            icon="pipelineValue"
+            mainDisplay={formatCentsAsUsd(dashboard.pipelineValue.mainCents)}
+            metricLabel={content.reports.kpi.pipelineValue}
+            comparison={dashboard.pipelineValue.comparison}
+            footLeftValue={formatCentsAsUsd(dashboard.pipelineValue.unpaidCents)}
+            footLeftLabel={content.reports.kpi.foot.unpaidBalance}
+            footRightValue={String(dashboard.pipelineValue.activeProjectCount)}
+            footRightLabel={content.reports.kpi.foot.activeProjects}
+          />
         </section>
 
-        <ReportsFolderTabs
-          dashboard={dashboard}
-          period={period}
-          chartTab={chartTab}
-          onChartTabChange={setChartTab}
-        />
+        <ReportsExecutiveDashboard dashboard={dashboard} period={period} />
       </div>
     </div>
   );

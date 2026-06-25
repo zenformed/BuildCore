@@ -1,5 +1,4 @@
 import {
-  ArcElement,
   CategoryScale,
   Chart as ChartJS,
   Filler,
@@ -8,6 +7,9 @@ import {
   LineElement,
   PointElement,
   Tooltip,
+  ArcElement,
+  BarElement,
+  BarController,
 } from 'chart.js';
 
 let registered = false;
@@ -20,6 +22,8 @@ export function ensureChartJsRegistered(): void {
     LinearScale,
     PointElement,
     LineElement,
+    BarElement,
+    BarController,
     ArcElement,
     Tooltip,
     Legend,

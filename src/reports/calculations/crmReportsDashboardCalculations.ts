@@ -4,16 +4,18 @@ import {
   type CrmBudgetCategory,
   type CrmProjectDetail,
 } from '@/domain/crm';
+import {
+  computeBalanceDueFromPayments,
+  computeProjectValueFromPayments,
+} from '@/domain/crm/projectPaymentValue';
 import type {
   CrmReportsDashboardData,
-  ReportChartTabId,
   ReportPeriodId,
   ReportsKpiCard,
 } from '../types/crmReportsDashboard';
 import {
   buildChartTimeBuckets,
   resolveChartActivityStart,
-  type ChartTimeBucket,
 } from './reportChartBuckets';
 import { buildReportsFinancialActivity } from './reportsFinancialActivity';
 import {
@@ -79,28 +81,38 @@ function formatPercent(value: number | null): string {
   return `${sign}${value.toFixed(1)}%`;
 }
 
-function bucketValueForTab(
-  tab: ReportChartTabId,
-  payments: ReturnType<typeof collectPaymentTasks>,
-  projects: readonly CrmProjectDetail[],
-  bucket: ChartTimeBucket
-): number {
-  const { start, end } = bucket;
-  switch (tab) {
-    case 'revenue':
-      return sumCollectedInRange(payments, start, end);
-    case 'costs':
-      return sumCostsInRange(projects, start, end).totalCents;
-    case 'profit': {
-      const collected = sumCollectedInRange(payments, start, end);
-      const costs = sumCostsInRange(projects, start, end).totalCents;
-      return collected - costs;
+function computeActiveProjectMetrics(projects: readonly CrmProjectDetail[]): {
+  count: number;
+  waitingApprovalCount: number;
+  overdueProjectCount: number;
+  pipelineCents: number;
+  unpaidCents: number;
+} {
+  const now = Date.now();
+  let count = 0;
+  let waitingApprovalCount = 0;
+  let overdueProjectCount = 0;
+  let pipelineCents = 0;
+  let unpaidCents = 0;
+
+  for (const project of projects) {
+    if (project.summary.completedAt != null) continue;
+    count += 1;
+    if (project.summary.currentStageSlug === 'waiting-on-approval') {
+      waitingApprovalCount += 1;
     }
-    case 'receivables':
-      return sumInvoicedInRange(payments, start, end);
-    default:
-      return 0;
+    const payments = project.workflowTasks.filter(isPaymentWorkflowTask);
+    pipelineCents += computeProjectValueFromPayments(payments);
+    unpaidCents += computeBalanceDueFromPayments(payments);
+    const hasOverdue = payments.some((task) => {
+      if (task.invoicedAt == null || task.paidAt != null || task.dueAt == null) return false;
+      const dueMs = new Date(task.dueAt).getTime();
+      return !Number.isNaN(dueMs) && dueMs < now;
+    });
+    if (hasOverdue) overdueProjectCount += 1;
   }
+
+  return { count, waitingApprovalCount, overdueProjectCount, pipelineCents, unpaidCents };
 }
 
 function computeAvgDaysToPay(payments: ReturnType<typeof collectPaymentTasks>): number | null {
@@ -118,8 +130,7 @@ function computeAvgDaysToPay(payments: ReturnType<typeof collectPaymentTasks>): 
 
 export function computeCrmReportsDashboard(
   projects: readonly CrmProjectDetail[],
-  period: ReportPeriodId,
-  chartTab: ReportChartTabId
+  period: ReportPeriodId
 ): CrmReportsDashboardData {
   const range = resolveReportPeriodRange(period);
   const payments = collectPaymentTasks(projects);
@@ -152,9 +163,14 @@ export function computeCrmReportsDashboard(
 
   const chartActivityStart = resolveChartActivityStart(projects);
   const chartBuckets = buildChartTimeBuckets(range, chartActivityStart);
-  const chartValues = chartBuckets.map((b) =>
-    bucketValueForTab(chartTab, payments, projects, b)
+  const revenueCents = chartBuckets.map((bucket) =>
+    sumCollectedInRange(payments, bucket.start, bucket.end)
   );
+  const costsCentsSeries = chartBuckets.map((bucket) =>
+    sumCostsInRange(projects, bucket.start, bucket.end).totalCents
+  );
+
+  const activeMetrics = computeActiveProjectMetrics(projects);
 
   const avgDaysToPay = computeAvgDaysToPay(payments);
   const now = Date.now();
@@ -262,10 +278,28 @@ export function computeCrmReportsDashboard(
       marginPercent,
       avgDaysToPay,
     },
-    chart: {
+    activeProjects: {
+      comparison: { percent: null, label: '' },
+      footLeft: '',
+      footRight: '',
+      mainCents: activeMetrics.count,
+      count: activeMetrics.count,
+      waitingApprovalCount: activeMetrics.waitingApprovalCount,
+      overdueProjectCount: activeMetrics.overdueProjectCount,
+    },
+    pipelineValue: {
+      comparison: { percent: null, label: '' },
+      footLeft: '',
+      footRight: '',
+      mainCents: activeMetrics.pipelineCents,
+      unpaidCents: activeMetrics.unpaidCents,
+      activeProjectCount: activeMetrics.count,
+    },
+    revenueCostChart: {
       labels: chartBuckets.map((b) => b.label),
       tooltipLabels: chartBuckets.map((b) => b.tooltipLabel),
-      valuesCents: chartValues,
+      revenueCents,
+      costsCents: costsCentsSeries,
     },
     projectRows,
     costBreakdown,

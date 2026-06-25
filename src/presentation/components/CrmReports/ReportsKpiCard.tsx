@@ -5,7 +5,12 @@ import type { PeriodComparison } from '@/reports/types/crmReportsDashboard';
 import projectStyles from '../CrmProjectDetail/ProjectDetail.module.css';
 import styles from './CrmReports.module.css';
 
-export type ReportsKpiIcon = 'collected' | 'receivables' | 'netProfit';
+export type ReportsKpiIcon =
+  | 'collected'
+  | 'receivables'
+  | 'netProfit'
+  | 'activeProjects'
+  | 'pipelineValue';
 
 export type ReportsKpiCardProps = {
   icon: ReportsKpiIcon;
@@ -36,6 +41,8 @@ const KPI_ICON_CLASS: Record<ReportsKpiIcon, string> = {
   collected: styles.kpiIcon_collected,
   receivables: styles.kpiIcon_receivables,
   netProfit: styles.kpiIcon_netProfit,
+  activeProjects: styles.kpiIcon_activeProjects,
+  pipelineValue: styles.kpiIcon_pipelineValue,
 };
 
 function kpiMainSizeClass(display: string, hasTrend: boolean): string | undefined {

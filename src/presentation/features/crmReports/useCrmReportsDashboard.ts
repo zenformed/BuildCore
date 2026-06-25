@@ -7,7 +7,7 @@ import {
   listCrmProjectsForReportingSync,
 } from '@/application/use-cases/crm';
 import { computeCrmReportsDashboard } from '@/reports/calculations/crmReportsDashboardCalculations';
-import type { CrmReportsDashboardData, ReportChartTabId, ReportPeriodId } from '@/reports/types/crmReportsDashboard';
+import type { CrmReportsDashboardData, ReportPeriodId } from '@/reports/types/crmReportsDashboard';
 import { getCrmDataSource } from '@/infrastructure/config/crmDataSource';
 import {
   invalidateSessionCache,
@@ -24,13 +24,10 @@ export function useCrmReportsDashboard(): {
   error: string | null;
   period: ReportPeriodId;
   setPeriod: (period: ReportPeriodId) => void;
-  chartTab: ReportChartTabId;
-  setChartTab: (tab: ReportChartTabId) => void;
   reload: () => void;
 } {
   const isApiSource = getCrmDataSource() === 'api';
   const [period, setPeriod] = useState<ReportPeriodId>('mtd');
-  const [chartTab, setChartTab] = useState<ReportChartTabId>('revenue');
   const [reloadKey, setReloadKey] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [projects, setProjects] = useState<readonly CrmProjectDetail[] | null>(() =>
@@ -71,8 +68,8 @@ export function useCrmReportsDashboard(): {
 
   const dashboard = useMemo(() => {
     if (projects == null) return null;
-    return computeCrmReportsDashboard(projects, period, chartTab);
-  }, [projects, period, chartTab]);
+    return computeCrmReportsDashboard(projects, period);
+  }, [projects, period]);
 
   return {
     dashboard,
@@ -81,8 +78,6 @@ export function useCrmReportsDashboard(): {
     error,
     period,
     setPeriod,
-    chartTab,
-    setChartTab,
     reload,
   };
 }

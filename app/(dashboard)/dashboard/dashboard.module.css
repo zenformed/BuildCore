@@ -267,12 +267,19 @@
   overflow: auto;
 }
 
-/* CRM reports: fill main column; tab panels grow and scroll internally (desktop) */
+/* CRM reports: fill main column; bottom panels scroll internally (desktop) */
 @media (min-width: 768px) {
   .listViewWrap:has([data-crm-reports-page]) {
     flex: 1;
     min-height: 0;
     overflow: hidden;
+  }
+
+  .listViewWrap:has([data-crm-reports-page]) > * {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
   }
 
   .mainContent:has([data-crm-reports-page]) {

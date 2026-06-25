@@ -64,6 +64,14 @@ export type ReportsTimeSeries = {
   readonly valuesCents: readonly number[];
 };
 
+/** Daily / weekly / monthly revenue vs costs for the executive bar chart. */
+export type ReportsRevenueCostChart = {
+  readonly labels: readonly string[];
+  readonly tooltipLabels: readonly string[];
+  readonly revenueCents: readonly number[];
+  readonly costsCents: readonly number[];
+};
+
 export type ReportsFinancialActivityItem = {
   readonly id: string;
   readonly occurredAt: string;
@@ -88,7 +96,16 @@ export type CrmReportsDashboardData = {
     readonly marginPercent: number | null;
     readonly avgDaysToPay: number | null;
   };
-  readonly chart: ReportsTimeSeries;
+  readonly activeProjects: ReportsKpiCard & {
+    readonly count: number;
+    readonly waitingApprovalCount: number;
+    readonly overdueProjectCount: number;
+  };
+  readonly pipelineValue: ReportsKpiCard & {
+    readonly unpaidCents: number;
+    readonly activeProjectCount: number;
+  };
+  readonly revenueCostChart: ReportsRevenueCostChart;
   readonly projectRows: readonly ReportsProjectRow[];
   readonly costBreakdown: readonly ReportsCostBreakdownRow[];
   readonly costsIncludeUndatedEntries: boolean;
