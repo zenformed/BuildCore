@@ -7,6 +7,10 @@ import { CrmProjectCompleteIcon } from '@/presentation/components/crmShared/CrmP
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
 import type { ProjectDetailPageContext } from '@/presentation/features/crmProjectDetail/projectDetailPageContext';
 import { useDashboardMobileLayout } from '@/presentation/features/crmProjects/useDashboardMobileLayout';
+import {
+  ProjectDetailBreadcrumbNav,
+  type ProjectDetailBreadcrumbNavigation,
+} from './ProjectDetailBreadcrumbNav';
 import { ProjectPrimaryPhoto } from './ProjectPrimaryPhoto';
 import {
   ProjectDetailMobileHeaderProgress,
@@ -17,9 +21,7 @@ export type ProjectDetailHeaderProps = {
   project: CrmProjectSummary;
   parentProject?: CrmProjectSummary | null;
   pageContext?: ProjectDetailPageContext;
-  onBack: () => void;
-  onOpenProject?: () => void;
-  onOpenParentProject?: () => void;
+  breadcrumbNavigation: ProjectDetailBreadcrumbNavigation;
   assigneeControl?: ReactNode;
   tradeTypeControl?: ReactNode;
   /** @deprecated Use industryControl */
@@ -37,9 +39,7 @@ export function ProjectDetailHeader({
   project,
   parentProject = null,
   pageContext = 'detail',
-  onBack,
-  onOpenProject,
-  onOpenParentProject,
+  breadcrumbNavigation,
   assigneeControl,
   tradeTypeControl,
   industryControl,
@@ -51,19 +51,6 @@ export function ProjectDetailHeader({
   mobileStageWorkflowTasks,
   mobileStageCompletions,
 }: ProjectDetailHeaderProps): ReactElement {
-  const detail = content.projectDetail;
-  const subPageLabel =
-    pageContext === 'workflowTasks'
-      ? detail.actions.workflowTasks
-      : pageContext === 'documents'
-        ? content.projectDetail.sections.documents
-        : pageContext === 'accountability'
-          ? content.projectDetail.sections.accountability
-          : pageContext === 'financials'
-            ? content.projectDetail.actions.financials
-            : null;
-  const showSubPageBreadcrumb = subPageLabel != null && onOpenProject != null;
-  const showParentBreadcrumb = parentProject != null && onOpenParentProject != null;
   const isComplete = isCrmProjectComplete(project);
   const isMobileLayout = useDashboardMobileLayout();
   const industryOrTrade = industryControl ?? tradeTypeControl;
@@ -93,44 +80,13 @@ export function ProjectDetailHeader({
       {isMobileLayout ? (
         <div className={styles.titleBlock}>
           <div className={styles.detailHeaderMobileBreadcrumbRow}>
-            <nav
+            <ProjectDetailBreadcrumbNav
+              project={project}
+              parentProject={parentProject}
+              pageContext={pageContext}
+              navigation={breadcrumbNavigation}
               className={`${styles.breadcrumb} ${styles.detailHeaderMobileBreadcrumb}`}
-              aria-label="Breadcrumb"
-            >
-              <span className={styles.breadcrumbMuted}>{detail.breadcrumbCrm}</span>
-              <span className={styles.breadcrumbSep} aria-hidden>
-                /
-              </span>
-              <button type="button" className={styles.breadcrumbLink} onClick={onBack}>
-                {detail.breadcrumbProjects}
-              </button>
-              <span className={styles.breadcrumbSep} aria-hidden>
-                /
-              </span>
-              {showParentBreadcrumb ? (
-                <>
-                  <button type="button" className={styles.breadcrumbLink} onClick={onOpenParentProject}>
-                    {parentProject.name}
-                  </button>
-                  <span className={styles.breadcrumbSep} aria-hidden>
-                    /
-                  </span>
-                </>
-              ) : null}
-              {showSubPageBreadcrumb ? (
-                <>
-                  <button type="button" className={styles.breadcrumbLink} onClick={onOpenProject}>
-                    {project.name}
-                  </button>
-                  <span className={styles.breadcrumbSep} aria-hidden>
-                    /
-                  </span>
-                  <span className={styles.breadcrumbCurrent}>{subPageLabel}</span>
-                </>
-              ) : (
-                <span className={styles.breadcrumbCurrent}>{project.name}</span>
-              )}
-            </nav>
+            />
             {actions}
           </div>
           <div className={styles.detailHeaderMobileRow}>
@@ -162,41 +118,12 @@ export function ProjectDetailHeader({
         <>
           <div className={styles.detailHeaderMain}>
             <div className={styles.titleBlock}>
-              <nav className={styles.breadcrumb} aria-label="Breadcrumb">
-                <span className={styles.breadcrumbMuted}>{detail.breadcrumbCrm}</span>
-                <span className={styles.breadcrumbSep} aria-hidden>
-                  /
-                </span>
-                <button type="button" className={styles.breadcrumbLink} onClick={onBack}>
-                  {detail.breadcrumbProjects}
-                </button>
-                <span className={styles.breadcrumbSep} aria-hidden>
-                  /
-                </span>
-                {showParentBreadcrumb ? (
-                  <>
-                    <button type="button" className={styles.breadcrumbLink} onClick={onOpenParentProject}>
-                      {parentProject.name}
-                    </button>
-                    <span className={styles.breadcrumbSep} aria-hidden>
-                      /
-                    </span>
-                  </>
-                ) : null}
-                {showSubPageBreadcrumb ? (
-                  <>
-                    <button type="button" className={styles.breadcrumbLink} onClick={onOpenProject}>
-                      {project.name}
-                    </button>
-                    <span className={styles.breadcrumbSep} aria-hidden>
-                      /
-                    </span>
-                    <span className={styles.breadcrumbCurrent}>{subPageLabel}</span>
-                  </>
-                ) : (
-                  <span className={styles.breadcrumbCurrent}>{project.name}</span>
-                )}
-              </nav>
+              <ProjectDetailBreadcrumbNav
+                project={project}
+                parentProject={parentProject}
+                pageContext={pageContext}
+                navigation={breadcrumbNavigation}
+              />
               <div className={styles.titleBlockBody}>
                 <ProjectPrimaryPhoto
                   summary={project}

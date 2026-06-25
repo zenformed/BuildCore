@@ -43,6 +43,14 @@ import tableStyles from '../CrmProjects/CrmProjects.module.css';
 type SubprojectsToast = { kind: 'success' | 'error'; message: string };
 
 export function SubprojectsSection(): ReactElement | null {
+  const { project, subSlug } = useProjectDetailShell();
+  if (subSlug != null || project.summary.parentProjectId != null) {
+    return null;
+  }
+  return <SubprojectsSectionContent />;
+}
+
+function SubprojectsSectionContent(): ReactElement {
   const router = useRouter();
   const sectionId = useId();
   const panelId = useId();
@@ -54,10 +62,9 @@ export function SubprojectsSection(): ReactElement | null {
   const bulkDeleteCopy = content.bulkDelete;
   const destructiveWorkflowCopy = content.destructiveConfirmationWorkflow;
   const detailCopy = content.projectDetail;
-  const { project, routes, parentRouteSlug, subSlug, isMemberRole, childSummaries } =
+  const { project, routes, parentRouteSlug, isMemberRole, childSummaries } =
     useProjectDetailShell();
   const { organizationMembershipContext } = useSaaSProfile();
-  const hidden = subSlug != null || project.summary.parentProjectId != null;
   const canManage = !isMemberRole && !isBuildCoreMemberRole(organizationMembershipContext?.role);
   const [expanded, setExpanded] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -254,10 +261,6 @@ export function SubprojectsSection(): ReactElement | null {
     onError: (message) => setToast({ kind: 'error', message }),
     resolveStagesForProject,
   });
-
-  if (hidden) {
-    return null;
-  }
 
   const panelClass = [
     styles.subprojectsPanel,

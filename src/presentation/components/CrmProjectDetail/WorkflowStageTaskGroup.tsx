@@ -109,28 +109,29 @@ export function WorkflowStageTaskGroup({
     <CrmProjectStatusCircleIcon kind="complete" active={stageIsComplete} size={16} />
   );
 
+  const completeIconControl = canToggleManualStageCompletion ? (
+    <button
+      type="button"
+      className={styles.stageGroupCompleteIconBtn}
+      title={manualToggleConfirmTitle}
+      aria-label={manualToggleConfirmTitle}
+      disabled={markStageCompleteBusy}
+      onClick={handleToggleManualStageCompletionClick}
+    >
+      {completeIcon}
+    </button>
+  ) : (
+    <span
+      className={styles.stageGroupCompleteIcon}
+      title={stageIsComplete ? wf.stageAllDone : wf.stageNotComplete}
+      aria-label={stageIsComplete ? wf.stageAllDone : wf.stageNotComplete}
+    >
+      {completeIcon}
+    </span>
+  );
+
   const stageTitle = (
     <span className={styles.stageGroupTitle}>
-      {canToggleManualStageCompletion ? (
-        <button
-          type="button"
-          className={styles.stageGroupCompleteIconBtn}
-          title={manualToggleConfirmTitle}
-          aria-label={manualToggleConfirmTitle}
-          disabled={markStageCompleteBusy}
-          onClick={handleToggleManualStageCompletionClick}
-        >
-          {completeIcon}
-        </button>
-      ) : (
-        <span
-          className={styles.stageGroupCompleteIcon}
-          title={stageIsComplete ? wf.stageAllDone : wf.stageNotComplete}
-          aria-label={stageIsComplete ? wf.stageAllDone : wf.stageNotComplete}
-        >
-          {completeIcon}
-        </span>
-      )}
       <span className={styles.stageGroupName}>{group.stageLabel}</span>
       {collapsible ? (
         <span className={styles.stageGroupChevronWrap} aria-hidden>
@@ -217,24 +218,27 @@ export function WorkflowStageTaskGroup({
 
   return (
     <section className={groupClass} aria-label={group.stageLabel}>
-      {collapsible ? (
-        <button
-          type="button"
-          className={styles.stageGroupHeaderBtn}
-          onClick={persisted.toggle}
-          aria-expanded={expanded}
-          aria-controls={panelId}
-          aria-label={`${expanded ? wf.collapseStageTasks : wf.expandStageTasks}: ${group.stageLabel}`}
-        >
-          {stageTitle}
-          {taskCount}
-        </button>
-      ) : (
-        <div className={styles.stageGroupHeaderStatic}>
-          {stageTitle}
-          {taskCount}
-        </div>
-      )}
+      <div className={styles.stageGroupHeaderRow}>
+        {completeIconControl}
+        {collapsible ? (
+          <button
+            type="button"
+            className={styles.stageGroupHeaderBtn}
+            onClick={persisted.toggle}
+            aria-expanded={expanded}
+            aria-controls={panelId}
+            aria-label={`${expanded ? wf.collapseStageTasks : wf.expandStageTasks}: ${group.stageLabel}`}
+          >
+            {stageTitle}
+            {taskCount}
+          </button>
+        ) : (
+          <div className={styles.stageGroupHeaderStatic}>
+            {stageTitle}
+            {taskCount}
+          </div>
+        )}
+      </div>
       {expanded ? table : null}
     </section>
   );

@@ -7,6 +7,7 @@ import type { ProjectDetailPageContext } from '@/presentation/features/crmProjec
 import type { SummaryEditableField } from '@/presentation/features/crmProjectDetail/projectDetailFormModel';
 import { getProjectIndustryDisplayLabel } from '@/presentation/features/crmProjects/crmProjectFormatters';
 import { ProjectDetailHeader } from './ProjectDetailHeader';
+import type { ProjectDetailBreadcrumbNavigation } from './ProjectDetailBreadcrumbNav';
 
 export type { ProjectDetailPageContext } from '@/presentation/features/crmProjectDetail/projectDetailPageContext';
 import { ProjectHeaderAssignee } from './ProjectHeaderAssignee';
@@ -22,9 +23,7 @@ export type ProjectDetailContextBlockProps = {
   isApiSource: boolean;
   pageContext?: ProjectDetailPageContext;
   isMemberRole?: boolean;
-  onBack: () => void;
-  onOpenProject?: () => void;
-  onOpenParentProject?: () => void;
+  breadcrumbNavigation: ProjectDetailBreadcrumbNavigation;
   parentProject?: CrmProjectSummary | null;
   actions?: ReactNode;
   progress?: ReactNode;
@@ -43,9 +42,7 @@ export function ProjectDetailContextBlock({
   isApiSource,
   pageContext = 'detail',
   isMemberRole = false,
-  onBack,
-  onOpenProject,
-  onOpenParentProject,
+  breadcrumbNavigation,
   parentProject = null,
   actions,
   progress,
@@ -67,9 +64,7 @@ export function ProjectDetailContextBlock({
       project={project.summary}
       parentProject={parentProject}
       pageContext={pageContext}
-      onBack={onBack}
-      onOpenProject={onOpenProject}
-      onOpenParentProject={onOpenParentProject}
+      breadcrumbNavigation={breadcrumbNavigation}
       actions={actions}
       progress={progress}
       canEditPrimaryPhoto={!isMemberRole}

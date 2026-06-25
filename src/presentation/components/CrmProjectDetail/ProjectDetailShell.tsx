@@ -33,6 +33,7 @@ import { DetailToast } from './DetailToast';
 import { SaveProjectTemplateDialog } from './SaveProjectTemplateDialog';
 import { ProjectQrDialog } from './ProjectQrDialog';
 import { ProjectDetailActionsMenu } from './ProjectDetailActionsMenu';
+import type { ProjectDetailBreadcrumbNavigation } from './ProjectDetailBreadcrumbNav';
 import { ProjectDetailContextBlock } from './ProjectDetailContextBlock';
 import { ProjectDetailHeaderActions } from './ProjectDetailHeaderActions';
 import { ProjectDetailHeaderProgress } from './ProjectDetailHeaderProgress';
@@ -48,9 +49,7 @@ export type ProjectDetailShellProps = {
   pageContext: ProjectDetailPageContext;
   project: CrmProjectDetail;
   isApiSource: boolean;
-  onBack: () => void;
-  onOpenProject?: () => void;
-  onOpenParentProject?: () => void;
+  breadcrumbNavigation: ProjectDetailBreadcrumbNavigation;
   parentProject?: CrmProjectSummary | null;
   routes: ProjectDetailRoutes;
   parentRouteSlug: string;
@@ -67,9 +66,7 @@ function ProjectDetailShellBody({
   pageContext,
   project: initialProject,
   isApiSource,
-  onBack,
-  onOpenProject,
-  onOpenParentProject,
+  breadcrumbNavigation,
   parentProject = null,
   routes,
   parentRouteSlug,
@@ -288,9 +285,7 @@ function ProjectDetailShellBody({
           isApiSource={isApiSource}
           pageContext={pageContext}
           isMemberRole={isMemberRole}
-          onBack={onBack}
-          onOpenProject={onOpenProject}
-          onOpenParentProject={onOpenParentProject}
+          breadcrumbNavigation={breadcrumbNavigation}
           parentProject={parentProject}
           actions={headerActions}
           progress={headerProgress}
