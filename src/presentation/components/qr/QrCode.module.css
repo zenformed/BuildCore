@@ -1,0 +1,244 @@
+.qrCodeCard {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.qrCodeDisplay {
+  display: inline-flex;
+  padding: 0.75rem;
+  border-radius: 0.75rem;
+  background: #fff;
+  border: 1px solid var(--color-border, #e2e8f0);
+}
+
+.qrCodeSvg {
+  display: block;
+}
+
+.qrCodeDownloadHost {
+  position: fixed;
+  left: -9999px;
+  top: 0;
+  width: 0;
+  height: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.qrDialogOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10001;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  background: var(--color-overlay, rgba(0, 0, 0, 0.4));
+}
+
+.qrDialogPanel {
+  width: min(28rem, 100%);
+  max-height: calc(100vh - 3rem);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-radius: 0.875rem;
+  background: var(--theme-surface-card, #ffffff);
+  border: 1px solid var(--color-border, #e2e8f0);
+  box-shadow: 0 18px 48px rgba(15, 23, 42, 0.18);
+}
+
+:global([data-theme='dark']) .qrDialogPanel {
+  background: var(--theme-surface-card, #161922);
+  border-color: #334155;
+  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.45);
+}
+
+.qrDialogHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-shrink: 0;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid var(--color-border, #e2e8f0);
+  background: var(--theme-table-header-bg, #f8fafc);
+}
+
+:global([data-theme='dark']) .qrDialogHeader {
+  border-bottom-color: #334155;
+  background: #252836;
+}
+
+.qrDialogTitle {
+  margin: 0;
+  font-size: 1.0625rem;
+  font-weight: 600;
+  color: var(--color-text, #0f172a);
+}
+
+:global([data-theme='dark']) .qrDialogTitle {
+  color: #f1f5f9;
+}
+
+.qrDialogCloseBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  border: none;
+  border-radius: 0.5rem;
+  background: transparent;
+  color: var(--color-text-muted, #64748b);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.qrDialogCloseBtn:hover {
+  background: var(--color-muted, #f1f5f9);
+  color: var(--color-text, #0f172a);
+}
+
+:global([data-theme='dark']) .qrDialogCloseBtn:hover {
+  background: #1d2029;
+  color: #f1f5f9;
+}
+
+.qrDialogBody {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.25rem;
+  overflow-y: auto;
+}
+
+.qrDialogSubtitle {
+  margin: 0;
+  font-size: 1.125rem;
+  font-weight: 600;
+  line-height: 1.35;
+  text-align: center;
+  color: var(--color-text, #0f172a);
+}
+
+:global([data-theme='dark']) .qrDialogSubtitle {
+  color: #f1f5f9;
+}
+
+.qrDialogMeta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+  width: 100%;
+}
+
+.qrDialogMetaRow {
+  display: grid;
+  grid-template-columns: 5.5rem 1fr;
+  gap: 0.75rem;
+  align-items: start;
+}
+
+.qrDialogMetaLabel {
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--color-text-muted, #64748b);
+}
+
+.qrDialogMetaValue {
+  font-size: 0.875rem;
+  color: var(--color-text, #0f172a);
+  word-break: break-word;
+}
+
+:global([data-theme='dark']) .qrDialogMetaValue {
+  color: #e2e8f0;
+}
+
+.qrDialogMetaValue_url {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New',
+    monospace;
+  font-size: 0.8125rem;
+}
+
+.qrDialogHelper {
+  margin: 0;
+  width: 100%;
+  font-size: 0.8125rem;
+  line-height: 1.45;
+  color: var(--color-text-muted, #64748b);
+  text-align: center;
+}
+
+.qrDialogActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  justify-content: center;
+  width: 100%;
+}
+
+.qrActionBtn {
+  padding: 0.5rem 0.875rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  border-radius: 0.5rem;
+  border: 1px solid var(--color-border, #e2e8f0);
+  background: var(--color-muted, #f1f5f9);
+  color: var(--color-text, #0f172a);
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, opacity 0.15s;
+}
+
+.qrActionBtn:hover:not(:disabled) {
+  background: var(--color-muted-hover, #e2e8f0);
+  border-color: #cbd5e1;
+}
+
+.qrActionBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+:global([data-theme='dark']) .qrActionBtn {
+  background: #252836;
+  border-color: #3d3e4a;
+  color: #f1f5f9;
+}
+
+:global([data-theme='dark']) .qrActionBtn:hover:not(:disabled) {
+  background: #1d2029;
+  border-color: #4b4c5c;
+}
+
+.qrDialogFeedback {
+  margin: 0;
+  width: 100%;
+  font-size: 0.8125rem;
+  text-align: center;
+}
+
+.qrDialogFeedback_success {
+  color: #15803d;
+}
+
+.qrDialogFeedback_error {
+  color: #b91c1c;
+}
+
+@media (max-width: 640px) {
+  .qrDialogOverlay {
+    padding: 0.75rem;
+  }
+
+  .qrDialogMetaRow {
+    grid-template-columns: 1fr;
+    gap: 0.25rem;
+  }
+}

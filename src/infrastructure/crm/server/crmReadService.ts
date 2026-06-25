@@ -47,6 +47,7 @@ ${crmProjectIndustrySelectLines(mode)}
   completed_at,
   completed_by,
   primary_photo_path,
+  lead_token,
   address_line_1,
   address_line_2,
   city,

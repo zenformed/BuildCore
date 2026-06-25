@@ -19,6 +19,8 @@ export type ProjectDetailHeaderActionsProps = {
   onRequestDelete: (project: CrmProjectSummary) => void;
   onSaveTemplate: () => void;
   onLoadTemplate: () => void;
+  canShowQrCode?: boolean;
+  onShowQrCode?: () => void;
   isComplete: boolean;
   completionBusy: boolean;
   onMarkComplete: () => void;
@@ -44,6 +46,8 @@ export function ProjectDetailHeaderActions({
   onRequestDelete,
   onSaveTemplate,
   onLoadTemplate,
+  canShowQrCode = false,
+  onShowQrCode,
   isComplete,
   completionBusy,
   onMarkComplete,
@@ -86,6 +90,8 @@ export function ProjectDetailHeaderActions({
         onRequestDelete={onRequestDelete}
         onSaveTemplate={onSaveTemplate}
         onLoadTemplate={onLoadTemplate}
+        canShowQrCode={canShowQrCode}
+        onShowQrCode={onShowQrCode}
       />
     </div>
   );

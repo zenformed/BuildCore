@@ -1,10 +1,8 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { validateBuildCoreUpload } from '@/domain/crm/buildCoreUploadPolicy';
 import { CrmApiError } from '@/infrastructure/crm/api/crmApiClient';
 import { sendCommunication } from '@/infrastructure/crm/api/sendCommunication';
-import { performCrmDirectUpload } from '@/presentation/features/crmDirectUpload/performBuildCoreDirectUpload';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
 import {
   communicationRecipientOptionToSendRecipient,
@@ -12,13 +10,16 @@ import {
 } from '@/presentation/features/communications/communicationRecipientTypes';
 import type { CommunicationRecipientOption } from '@/presentation/features/communications/communicationRecipientTypes';
 import {
+  resolveSelectedAttachmentDocumentIds,
+  toSelectedExistingAttachment,
+  validateSelectedNewFiles,
+} from '@/presentation/features/communications/sendAttachmentAttachmentState';
+import {
   BUILDCORE_GENERIC_ATTACHMENT_TEMPLATE_KEY,
   isExistingAttachmentSelected,
   isSendAttachmentFormValid,
   type ExistingAttachmentOption,
   type SelectedAttachment,
-  type SelectedExistingAttachment,
-  type SelectedNewAttachment,
   type SendAttachmentDialogContext,
 } from '@/presentation/features/communications/sendAttachmentTypes';
 
@@ -31,31 +32,6 @@ export type UseSendAttachmentDialogOptions = {
   readonly onSent?: () => void;
   readonly onError?: (message: string) => void;
 };
-
-function createSelectedNewAttachment(file: File): SelectedNewAttachment {
-  return {
-    id: `${file.name}-${file.size}-${file.lastModified}-${Math.random().toString(36).slice(2)}`,
-    source: 'new',
-    file,
-    fileName: file.name,
-    mimeType: file.type || 'application/octet-stream',
-    sizeBytes: file.size,
-  };
-}
-
-function toSelectedExistingAttachment(
-  document: ExistingAttachmentOption
-): SelectedExistingAttachment {
-  return {
-    id: `existing-${document.crmDocumentId}`,
-    source: 'existing',
-    crmDocumentId: document.crmDocumentId,
-    fileName: document.fileName,
-    mimeType: document.mimeType,
-    kind: document.kind,
-    sizeBytes: document.sizeBytes,
-  };
-}
 
 export function useSendAttachmentDialog(options: UseSendAttachmentDialogOptions = {}) {
   const copy = content.projectDetail.communications.sendAttachment;
@@ -98,22 +74,13 @@ export function useSendAttachmentDialog(options: UseSendAttachmentDialogOptions 
   }, []);
 
   const addFiles = useCallback((incoming: readonly File[]) => {
-    const next: SelectedNewAttachment[] = [];
-    for (const file of incoming) {
-      const validation = validateBuildCoreUpload({
-        fileName: file.name,
-        mimeType: file.type || 'application/octet-stream',
-        sizeBytes: file.size,
-      });
-      if (!validation.ok) {
-        setFeedback({ kind: 'error', message: validation.message });
-        continue;
-      }
-      next.push(createSelectedNewAttachment(file));
+    const { attachments, errorMessage } = validateSelectedNewFiles(incoming);
+    if (errorMessage != null) {
+      setFeedback({ kind: 'error', message: errorMessage });
     }
-    if (next.length === 0) return;
+    if (attachments.length === 0) return;
     setFeedback(null);
-    setSelectedAttachments((current) => [...current, ...next]);
+    setSelectedAttachments((current) => [...current, ...attachments]);
   }, []);
 
   const addExistingDocument = useCallback((document: ExistingAttachmentOption) => {
@@ -148,15 +115,10 @@ export function useSendAttachmentDialog(options: UseSendAttachmentDialogOptions 
     setSending(true);
     setFeedback(null);
     try {
-      const attachmentDocumentIds: string[] = [];
-      for (const selected of selectedAttachments) {
-        if (selected.source === 'existing') {
-          attachmentDocumentIds.push(selected.crmDocumentId);
-          continue;
-        }
-        const prepared = await performCrmDirectUpload(selected.file, dialogContext.uploadScope);
-        attachmentDocumentIds.push(prepared.documentId);
-      }
+      const attachmentDocumentIds = await resolveSelectedAttachmentDocumentIds(
+        selectedAttachments,
+        dialogContext.uploadScope
+      );
 
       await sendCommunication({
         templateKey: BUILDCORE_GENERIC_ATTACHMENT_TEMPLATE_KEY,

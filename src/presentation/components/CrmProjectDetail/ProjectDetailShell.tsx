@@ -31,6 +31,7 @@ import { useCrmPaymentTasksIndexContext } from '@/presentation/providers/CrmPaym
 import { useDashboardMobileLayout } from '@/presentation/features/crmProjects/useDashboardMobileLayout';
 import { DetailToast } from './DetailToast';
 import { SaveProjectTemplateDialog } from './SaveProjectTemplateDialog';
+import { ProjectQrDialog } from './ProjectQrDialog';
 import { ProjectDetailActionsMenu } from './ProjectDetailActionsMenu';
 import { ProjectDetailContextBlock } from './ProjectDetailContextBlock';
 import { ProjectDetailHeaderActions } from './ProjectDetailHeaderActions';
@@ -79,6 +80,7 @@ function ProjectDetailShellBody({
 }: ProjectDetailShellBodyProps): ReactElement {
   const router = useRouter();
   const [editProjectOpen, setEditProjectOpen] = useState(false);
+  const [qrDialogOpen, setQrDialogOpen] = useState(false);
   const { organizationMembershipContext } = useSaaSProfile();
   const showCompletionActions = pageContext === 'detail' && !isMemberRole;
   const scopedProject = useBuildCoreMemberScopedProject(initialProject, isMemberRole, isApiSource);
@@ -167,6 +169,7 @@ function ProjectDetailShellBody({
   });
 
   const deleting = deletingProjectId === projectSummary.id;
+  const canShowQrCode = projectSummary.parentProjectId == null;
   const saveTemplate = useSaveProjectTemplate({
     projectSlug: projectSummary.slug,
     templateScope,
@@ -191,6 +194,8 @@ function ProjectDetailShellBody({
     onRequestDelete: setPendingDeleteProject,
     onSaveTemplate: saveTemplate.openDialog,
     onLoadTemplate: loadTemplate.openList,
+    canShowQrCode,
+    onShowQrCode: () => setQrDialogOpen(true),
   };
 
   const showDetailProgress = pageContext === 'detail';
@@ -326,6 +331,13 @@ function ProjectDetailShellBody({
             ) : null}
             {loadTemplate.listOpen || loadTemplate.pendingApply || loadTemplate.pendingDelete ? (
               <LoadProjectTemplateDialogs controller={loadTemplate} />
+            ) : null}
+            {canShowQrCode ? (
+              <ProjectQrDialog
+                open={qrDialogOpen}
+                project={projectSummary}
+                onClose={() => setQrDialogOpen(false)}
+              />
             ) : null}
             <CreateCrmProjectModal
               open={editProjectOpen}

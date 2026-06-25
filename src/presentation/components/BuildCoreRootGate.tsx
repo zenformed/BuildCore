@@ -18,9 +18,10 @@ export interface BuildCoreRootGateProps {
  */
 export function BuildCoreRootGate({ children }: BuildCoreRootGateProps): React.ReactElement {
   const pathname = usePathname();
-  const isCustomerTaskPortal = pathname?.startsWith('/customer-task');
+  const isPublicPortal =
+    pathname?.startsWith('/customer-task') || pathname?.startsWith('/lead');
 
-  if (isCustomerTaskPortal) {
+  if (isPublicPortal) {
     return <>{children}</>;
   }
 

@@ -41,6 +41,8 @@ export type CrmProjectSummary = {
   readonly completedBy: CrmTeamMemberRef | null;
   /** Supabase storage key for primary project photo; null when using initials placeholder. */
   readonly primaryPhotoPath: string | null;
+  /** Permanent random token for public lead URLs; never derived from slug or id. */
+  readonly leadToken: string;
 };
 
 export type CrmStageProgress = {

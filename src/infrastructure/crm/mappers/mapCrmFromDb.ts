@@ -63,6 +63,7 @@ export type DbCrmProjectRow = {
   completed_at: string | null;
   completed_by: string | null;
   primary_photo_path?: string | null;
+  lead_token: string;
   address_line_1: string | null;
   address_line_2: string | null;
   city: string | null;
@@ -346,6 +347,7 @@ export function mapDbProjectSummary(
     completedAt: row.completed_at,
     completedBy,
     primaryPhotoPath: row.primary_photo_path ?? null,
+    leadToken: row.lead_token,
   };
 }
 

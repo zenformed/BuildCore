@@ -40,6 +40,8 @@ export type SubprojectsListToolbarProps = {
   readonly bulkCancelLabel?: string;
   readonly onExitSelectionMode?: () => void;
   readonly bulkActions?: readonly BulkSelectionToolbarAction[];
+  readonly bulkActionsLayout?: 'inline' | 'menu';
+  readonly bulkActionsMenuAriaLabel?: string;
 };
 
 export function SubprojectsListToolbar({
@@ -70,6 +72,8 @@ export function SubprojectsListToolbar({
   bulkCancelLabel = '',
   onExitSelectionMode,
   bulkActions = [],
+  bulkActionsLayout = 'inline',
+  bulkActionsMenuAriaLabel,
 }: SubprojectsListToolbarProps): ReactElement {
   if (selectionMode && canUseBulkActions) {
     return (
@@ -84,6 +88,8 @@ export function SubprojectsListToolbar({
         cancelLabel={bulkCancelLabel}
         onCancel={onExitSelectionMode ?? (() => undefined)}
         actions={bulkActions}
+        actionsLayout={bulkActionsLayout}
+        actionsMenuAriaLabel={bulkActionsMenuAriaLabel ?? bulkToolbarAriaLabel}
       />
     );
   }
@@ -114,6 +120,17 @@ export function SubprojectsListToolbar({
         onRefresh={onRefresh}
         onError={onRefreshError}
       />
+      {canUseBulkActions ? (
+        <button
+          type="button"
+          className={styles.subprojectsSelectBtn}
+          title={selectLabel}
+          aria-label={selectLabel}
+          onClick={onEnterSelectionMode}
+        >
+          <SelectItemsIcon className={styles.subprojectsSelectBtnIcon} />
+        </button>
+      ) : null}
       {canManage ? (
         <DetailPanelHeaderButton
           variant="add"
@@ -121,26 +138,6 @@ export function SubprojectsListToolbar({
           aria-label={newSubprojectAriaLabel}
           onClick={onCreateOpen}
         />
-      ) : null}
-      {canUseBulkActions ? (
-        <button
-          type="button"
-          className={[
-            styles.subprojectsSelectBtn,
-            isMobileLayout ? styles.subprojectsSelectBtn_icon : '',
-          ]
-            .filter(Boolean)
-            .join(' ')}
-          title={selectLabel}
-          aria-label={selectLabel}
-          onClick={onEnterSelectionMode}
-        >
-          {isMobileLayout ? (
-            <SelectItemsIcon className={styles.subprojectsSelectBtnIcon} />
-          ) : (
-            selectLabel
-          )}
-        </button>
       ) : null}
     </>
   );

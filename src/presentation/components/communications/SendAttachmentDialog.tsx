@@ -1,26 +1,15 @@
 'use client';
 
-import type { ChangeEvent, DragEvent, ReactElement } from 'react';
-import { useMemo, useRef, useState } from 'react';
-import {
-  BUILDCORE_UPLOAD_ALLOWED_EXTENSIONS,
-  BUILDCORE_UPLOAD_MAX_DOCUMENT_BYTES,
-} from '@/domain/crm/buildCoreUploadPolicy';
+import type { ReactElement } from 'react';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
-import {
-  formatFileSize,
-  formatShortDate,
-} from '@/presentation/features/crmProjectDetail/crmProjectDetailFormatters';
-import { formatDocumentFileTypeLabel } from '@/presentation/features/crmProjectDetail/workflowDocumentFileIconType';
-import { WorkflowDocumentFileIcon } from '@/presentation/components/CrmProjectDetail/WorkflowDocumentFileIcon';
 import { CommunicationRecipientPicker } from '@/presentation/components/communications/CommunicationRecipientPicker';
+import { SendAttachmentComposeFields } from '@/presentation/components/communications/SendAttachmentComposeFields';
 import type { CommunicationRecipientOption } from '@/presentation/features/communications/communicationRecipientTypes';
 import type { SendAttachmentDialogFeedback } from '@/presentation/features/communications/useSendAttachmentDialog';
-import {
-  isExistingAttachmentSelected,
-  type ExistingAttachmentOption,
-  type SelectedAttachment,
-  type SendAttachmentDialogContext,
+import type {
+  ExistingAttachmentOption,
+  SelectedAttachment,
+  SendAttachmentDialogContext,
 } from '@/presentation/features/communications/sendAttachmentTypes';
 import styles from './SendAttachmentDialog.module.css';
 
@@ -44,10 +33,6 @@ export type SendAttachmentDialogProps = {
   readonly onSend: () => void;
 };
 
-function attachmentTypeLabel(fileName: string, mimeType: string): string {
-  return formatDocumentFileTypeLabel(fileName, mimeType);
-}
-
 export function SendAttachmentDialog({
   context,
   recipientOptions,
@@ -68,43 +53,12 @@ export function SendAttachmentDialog({
   onSend,
 }: SendAttachmentDialogProps): ReactElement | null {
   const copy = content.projectDetail.communications.sendAttachment;
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const [dragOver, setDragOver] = useState(false);
   const sent = feedback?.kind === 'success';
-  const maxUploadMb = Math.floor(BUILDCORE_UPLOAD_MAX_DOCUMENT_BYTES / (1024 * 1024));
-
   const existingDocuments = context?.existingDocuments ?? [];
-
-  const selectedAttachmentDetails = useMemo(
-    () =>
-      selectedAttachments.map((attachment) => ({
-        attachment,
-        typeLabel: attachmentTypeLabel(attachment.fileName, attachment.mimeType),
-        details: formatFileSize(attachment.sizeBytes),
-      })),
-    [selectedAttachments]
-  );
 
   if (context == null) {
     return null;
   }
-
-  const handleFilesSelected = (selected: FileList | null): void => {
-    if (selected == null || selected.length === 0) return;
-    onAddFiles(Array.from(selected));
-  };
-
-  const onFileInputChange = (event: ChangeEvent<HTMLInputElement>): void => {
-    handleFilesSelected(event.target.files);
-    event.target.value = '';
-  };
-
-  const onDrop = (event: DragEvent<HTMLDivElement>): void => {
-    event.preventDefault();
-    setDragOver(false);
-    if (sending) return;
-    handleFilesSelected(event.dataTransfer.files);
-  };
 
   return (
     <div
@@ -155,150 +109,18 @@ export function SendAttachmentDialog({
                 </div>
               </div>
 
-              <div className={styles.field}>
-                <label className={styles.label} htmlFor="send-attachment-subject">
-                  {copy.subjectLabel}
-                </label>
-                <input
-                  id="send-attachment-subject"
-                  className={styles.input}
-                  type="text"
-                  value={subject}
-                  disabled={sending}
-                  onChange={(event) => onSubjectChange(event.target.value)}
-                />
-              </div>
-
-              <div className={styles.field}>
-                <label className={styles.label} htmlFor="send-attachment-message">
-                  {copy.messageLabel}
-                </label>
-                <textarea
-                  id="send-attachment-message"
-                  className={styles.textarea}
-                  value={message}
-                  placeholder={copy.messagePlaceholder}
-                  disabled={sending}
-                  onChange={(event) => onMessageChange(event.target.value)}
-                />
-              </div>
-
-              <div className={styles.field}>
-                <span className={styles.label}>{copy.attachmentsLabel}</span>
-                <div
-                  className={[styles.uploadZone, dragOver ? styles.uploadZone_dragOver : '']
-                    .filter(Boolean)
-                    .join(' ')}
-                  role="button"
-                  tabIndex={0}
-                  onClick={() => {
-                    if (!sending) fileInputRef.current?.click();
-                  }}
-                  onKeyDown={(event) => {
-                    if (event.key === 'Enter' || event.key === ' ') {
-                      event.preventDefault();
-                      if (!sending) fileInputRef.current?.click();
-                    }
-                  }}
-                  onDragOver={(event) => {
-                    event.preventDefault();
-                    if (!sending) setDragOver(true);
-                  }}
-                  onDragLeave={() => setDragOver(false)}
-                  onDrop={onDrop}
-                >
-                  <p className={styles.uploadHint}>{copy.uploadHint}</p>
-                  <p className={styles.uploadSubHint}>
-                    {copy.uploadMaxSizeNote.replace('{maxMb}', String(maxUploadMb))}
-                  </p>
-                </div>
-                <input
-                  ref={fileInputRef}
-                  className={styles.fileInput}
-                  type="file"
-                  multiple
-                  accept={BUILDCORE_UPLOAD_ALLOWED_EXTENSIONS.join(',')}
-                  disabled={sending}
-                  onChange={onFileInputChange}
-                />
-              </div>
-
-              <div className={styles.existingDocumentsSection}>
-                <h3 className={styles.sectionHeading}>{copy.existingDocumentsHeading}</h3>
-                {existingDocuments.length === 0 ? (
-                  <p className={styles.existingDocumentsEmpty}>{copy.existingDocumentsEmpty}</p>
-                ) : (
-                  <div className={styles.existingDocumentsList}>
-                    {existingDocuments.map((document) => {
-                      const added = isExistingAttachmentSelected(
-                        selectedAttachments,
-                        document.crmDocumentId
-                      );
-                      const typeLabel = attachmentTypeLabel(document.fileName, document.mimeType);
-                      return (
-                        <div key={document.crmDocumentId} className={styles.existingDocumentRow}>
-                          <WorkflowDocumentFileIcon
-                            fileName={document.fileName}
-                            mimeType={document.mimeType}
-                            modal
-                          />
-                          <div className={styles.fileMeta}>
-                            <span className={styles.fileName}>{document.fileName}</span>
-                            <span className={styles.fileDetails}>
-                              {typeLabel} · {formatFileSize(document.sizeBytes)}
-                              {document.uploadedAt
-                                ? ` · ${formatShortDate(document.uploadedAt)}`
-                                : ''}
-                            </span>
-                          </div>
-                          <button
-                            type="button"
-                            className={[
-                              styles.rowActionBtn,
-                              added ? styles.rowActionBtnAdded : '',
-                            ]
-                              .filter(Boolean)
-                              .join(' ')}
-                            disabled={sending || added}
-                            onClick={() => onAddExistingDocument(document)}
-                          >
-                            {added ? copy.addedExistingFile : copy.addExistingFile}
-                          </button>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-
-              {selectedAttachmentDetails.length > 0 ? (
-                <div className={styles.selectedAttachmentsSection}>
-                  <h3 className={styles.sectionHeading}>{copy.selectedAttachmentsHeading}</h3>
-                  {selectedAttachmentDetails.map(({ attachment, typeLabel, details }) => (
-                    <div key={attachment.id} className={styles.selectedAttachmentRow}>
-                      <WorkflowDocumentFileIcon
-                        fileName={attachment.fileName}
-                        mimeType={attachment.mimeType}
-                        modal
-                      />
-                      <div className={styles.fileMeta}>
-                        <span className={styles.fileName}>{attachment.fileName}</span>
-                        <span className={styles.fileDetails}>
-                          {typeLabel} · {details}
-                        </span>
-                      </div>
-                      <button
-                        type="button"
-                        className={styles.rowActionBtn}
-                        disabled={sending}
-                        onClick={() => onRemoveSelectedAttachment(attachment.id)}
-                      >
-                        {copy.removeSelectedFile}
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              ) : null}
+              <SendAttachmentComposeFields
+                subject={subject}
+                message={message}
+                selectedAttachments={selectedAttachments}
+                disabled={sending}
+                onSubjectChange={onSubjectChange}
+                onMessageChange={onMessageChange}
+                onAddFiles={onAddFiles}
+                onRemoveSelectedAttachment={onRemoveSelectedAttachment}
+                existingDocuments={existingDocuments}
+                onAddExistingDocument={onAddExistingDocument}
+              />
             </div>
 
             {feedback?.kind === 'error' ? (

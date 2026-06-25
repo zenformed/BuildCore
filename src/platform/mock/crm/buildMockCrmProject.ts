@@ -42,6 +42,7 @@ export type BuildMockCrmProjectInput = {
   readonly completedAt?: string | null;
   readonly completedById?: string | null;
   readonly primaryPhotoPath?: string | null;
+  readonly leadToken?: string;
   readonly workflowTasks?: readonly CrmWorkflowTask[];
   readonly manualStageCompletions?: readonly CrmProjectStageCompletion[];
   readonly documents?: readonly CrmDocumentMetadata[];
@@ -347,6 +348,7 @@ export function buildMockCrmProjectDetail(input: BuildMockCrmProjectInput): CrmP
         ? getMockCrmTeamMember(input.completedById)
         : null,
     primaryPhotoPath: input.primaryPhotoPath ?? null,
+    leadToken: input.leadToken ?? `00000000-0000-4000-8000-${input.id.replace(/\D/g, '').padStart(12, '0').slice(-12)}`,
   };
 
   const milestonePayment =

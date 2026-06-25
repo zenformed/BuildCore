@@ -33,6 +33,8 @@ import { useSaaSProfile } from '@/presentation/hooks/useSaaSProfile';
 import { useBulkSelection } from '@/presentation/features/bulkSelection/useBulkSelection';
 import type { BulkSelectionBindings } from '@/presentation/features/bulkSelection/BulkSelectionBindings';
 import { DestructiveConfirmationWorkflowDialog } from '@/presentation/components/DestructiveConfirmationWorkflow';
+import { BulkSendAttachmentDialog } from '@/presentation/components/communications/BulkSendAttachmentDialog';
+import { useBulkSendAttachmentDialog } from '@/presentation/features/communications/useBulkSendAttachmentDialog';
 import { SubprojectsListToolbar } from './SubprojectsListToolbar';
 import shared from '@/presentation/components/crmShared/crmShared.module.css';
 import styles from './ProjectDetail.module.css';
@@ -144,6 +146,15 @@ export function SubprojectsSection(): ReactElement | null {
         : copy.empty;
   const isMobileLayout = useDashboardMobileLayout();
   const bulkSelection = useBulkSelection<string>();
+  const bulkSendAttachment = useBulkSendAttachmentDialog({
+    parentProjectSlug: project.summary.slug,
+    parentProjectName: project.summary.name,
+    onComplete: (result) => {
+      if (result.failedCount === 0 && result.sentCount > 0) {
+        setToast({ kind: 'success', message: copy.bulkSendAttachment.success });
+      }
+    },
+  });
 
   useEffect(() => {
     if (radiusGeocodingError == null) {
@@ -336,18 +347,21 @@ export function SubprojectsSection(): ReactElement | null {
             bulkToolbarAriaLabel={bulkSelectionCopy.toolbarAriaLabel}
             bulkCancelLabel={bulkSelectionCopy.cancel}
             onExitSelectionMode={() => bulkSelection.exitSelectionMode()}
+            bulkActionsLayout="menu"
+            bulkActionsMenuAriaLabel={bulkSelectionCopy.actionsMenuAriaLabel}
             bulkActions={[
               {
-                id: 'send',
-                label: bulkSelectionCopy.send,
-                disabled: true,
-                title: bulkSelectionCopy.sendUnavailableTitle,
-                onClick: () => undefined,
+                id: 'send-attachment',
+                label: bulkSelectionCopy.sendAttachment,
+                iconClass: styles.actionsMenuAttachmentIcon,
+                disabled: bulkSelection.selectedCount === 0,
+                onClick: () => bulkSendAttachment.openBulkSendAttachmentDialog(selectedProjects),
               },
               {
                 id: 'delete',
-                label: bulkSelectionCopy.delete,
+                label: bulkSelectionCopy.deleteSelected,
                 variant: 'danger',
+                iconClass: styles.actionsMenuDeleteIcon,
                 disabled: bulkDeleting || bulkSelection.selectedCount === 0,
                 onClick: () => setBulkDeleteOpen(true),
               },
@@ -456,6 +470,34 @@ export function SubprojectsSection(): ReactElement | null {
             confirmDisabled={bulkDeleting}
             onCancel={() => setBulkDeleteOpen(false)}
             onConfirm={() => void handleConfirmBulkDelete()}
+          />
+          <BulkSendAttachmentDialog
+            open={bulkSendAttachment.open}
+            recipientSummary={bulkSendAttachment.recipientSummary}
+            deliveryRows={bulkSendAttachment.deliveryRows}
+            subject={bulkSendAttachment.subject}
+            message={bulkSendAttachment.message}
+            selectedAttachments={bulkSendAttachment.selectedAttachments}
+            sending={bulkSendAttachment.sending}
+            progressLabel={bulkSendAttachment.progressLabel}
+            feedback={bulkSendAttachment.feedback}
+            completed={bulkSendAttachment.completed}
+            canSend={bulkSendAttachment.canSend}
+            readyCount={bulkSendAttachment.readyCount}
+            onSubjectChange={bulkSendAttachment.setSubject}
+            onMessageChange={bulkSendAttachment.setMessage}
+            onAddFiles={bulkSendAttachment.addFiles}
+            onRemoveSelectedAttachment={bulkSendAttachment.removeSelectedAttachment}
+            onClose={() => {
+              const wasCompleted = bulkSendAttachment.completed;
+              bulkSendAttachment.closeDialog();
+              if (wasCompleted) {
+                bulkSelection.exitSelectionMode();
+              }
+            }}
+            onSend={() => {
+              void bulkSendAttachment.sendBulkAttachment();
+            }}
           />
           <ProjectCompletionBlockedDialog
             isOpen={completionBlockedStageStatuses != null}

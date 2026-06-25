@@ -20,6 +20,8 @@ export type ProjectDetailActionsMenuProps = {
   onRequestDelete: (project: CrmProjectSummary) => void;
   onSaveTemplate: () => void;
   onLoadTemplate: () => void;
+  canShowQrCode?: boolean;
+  onShowQrCode?: () => void;
 };
 
 export function ProjectDetailActionsMenu({
@@ -33,6 +35,8 @@ export function ProjectDetailActionsMenu({
   onRequestDelete,
   onSaveTemplate,
   onLoadTemplate,
+  canShowQrCode = false,
+  onShowQrCode,
 }: ProjectDetailActionsMenuProps): ReactElement {
   const router = useRouter();
   const detail = content.projectDetail;
@@ -70,6 +74,11 @@ export function ProjectDetailActionsMenu({
   const handleLoadTemplate = () => {
     setOpen(false);
     onLoadTemplate();
+  };
+
+  const handleShowQrCode = () => {
+    setOpen(false);
+    onShowQrCode?.();
   };
 
   return (
@@ -140,6 +149,18 @@ export function ProjectDetailActionsMenu({
           <span className={`${styles.actionsMenuIcon} ${styles.actionsMenuFolderIcon}`} aria-hidden />
           {wf.openDocuments}
         </button>
+        {canShowQrCode ? (
+          <button
+            type="button"
+            role="menuitem"
+            className={`${styles.inlineMenuAction} ${styles.actionsMenuItem}`}
+            disabled={menuDisabled}
+            onClick={handleShowQrCode}
+          >
+            <span className={`${styles.actionsMenuIcon} ${styles.actionsMenuQrIcon}`} aria-hidden />
+            {detail.actions.showQrCode}
+          </button>
+        ) : null}
         {canSaveTemplate ? (
           <>
             <button

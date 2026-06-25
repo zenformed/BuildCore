@@ -67,7 +67,7 @@
 
   :global(.subprojectsPanelHeader_selectionMode)
     .bulkSelectionToolbar_headerStacked
-    .bulkSelectionToolbarActions {
+    .bulkSelectionToolbarActions:not(.bulkSelectionToolbarActions_menu) {
     grid-column: 1 / -1;
     grid-row: 2;
     display: grid;
@@ -78,7 +78,7 @@
 
   :global(.subprojectsPanelHeader_selectionMode)
     .bulkSelectionToolbar_headerStacked
-    .bulkSelectionToolbarActions
+    .bulkSelectionToolbarActions:not(.bulkSelectionToolbarActions_menu)
     > button {
     display: inline-flex;
     align-items: center;
@@ -89,7 +89,7 @@
 
   :global(.subprojectsPanelHeader_selectionMode)
     .bulkSelectionToolbar_headerStacked
-    .bulkSelectionToolbarActions
+    .bulkSelectionToolbarActions:not(.bulkSelectionToolbarActions_menu)
     > button:last-child {
     grid-column: 1 / -1;
   }
@@ -168,6 +168,101 @@
   background: rgba(127, 29, 29, 0.25);
 }
 
-:global([data-theme='dark']) .bulkSelectionToolbarBtn_danger:hover:not(:disabled) {
+  :global([data-theme='dark']) .bulkSelectionToolbarBtn_danger:hover:not(:disabled) {
   background: rgba(127, 29, 29, 0.4);
+}
+
+.bulkSelectionToolbarMenuBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  border-radius: 0.375rem;
+  border: 1px solid var(--theme-border-button, var(--color-border, #e2e8f0));
+  background: var(--theme-surface-button, #fff);
+  color: var(--color-text-muted, #64748b);
+  cursor: pointer;
+}
+
+.bulkSelectionToolbarMenuBtn:hover:not(:disabled) {
+  background: var(--color-muted, #f1f5f9);
+  color: var(--color-text, #0f172a);
+}
+
+.bulkSelectionToolbarMenuBtn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+:global([data-theme='dark']) .bulkSelectionToolbarMenuBtn {
+  background: #252836;
+  border-color: #3d3e4a;
+  color: #94a3b8;
+}
+
+:global([data-theme='dark']) .bulkSelectionToolbarMenuBtn:hover:not(:disabled) {
+  background: #1d2029;
+  color: #f1f5f9;
+}
+
+.bulkSelectionToolbarMenuDots {
+  font-size: 1.125rem;
+  line-height: 1;
+}
+
+.bulkSelectionToolbarCancelBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 1.75rem;
+  height: 1.75rem;
+  padding: 0;
+  border: none;
+  border-radius: 0.375rem;
+  background: #dc2626;
+  color: #fff;
+  cursor: pointer;
+  transition: background-color 0.12s ease;
+}
+
+.bulkSelectionToolbarCancelBtn:hover:not(:disabled) {
+  background: #b91c1c;
+}
+
+.bulkSelectionToolbarCancelBtnIcon {
+  display: block;
+  width: 0.9375rem;
+  height: 0.9375rem;
+}
+
+:global([data-theme='dark']) .bulkSelectionToolbarCancelBtn {
+  background: #b91c1c;
+}
+
+:global([data-theme='dark']) .bulkSelectionToolbarCancelBtn:hover:not(:disabled) {
+  background: #991b1b;
+}
+
+@media (max-width: 767px) {
+  :global(.subprojectsPanelHeader_selectionMode)
+    .bulkSelectionToolbar_headerStacked
+    .bulkSelectionToolbarActions_menu {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.5rem;
+    width: 100%;
+  }
+
+  :global(.subprojectsPanelHeader_selectionMode)
+    .bulkSelectionToolbar_headerStacked
+    .bulkSelectionToolbarActions_menu
+    > button:last-child {
+    grid-column: auto;
+  }
 }
