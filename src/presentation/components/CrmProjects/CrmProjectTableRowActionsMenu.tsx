@@ -3,7 +3,7 @@
 import type { ReactElement } from 'react';
 import { useEffect, useRef, useState } from 'react';
 import type { CrmProjectSummary } from '@/domain/crm';
-import { isCrmProjectComplete } from '@/domain/crm';
+import { isCrmProjectComplete, isCrmProjectInactive } from '@/domain/crm';
 import { isProjectPriorityUrgent } from '@/domain/crm/projectPriorityToggle';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
 import { WorkflowInlineMenu } from '@/presentation/components/CrmProjectDetail/WorkflowInlineMenu';
@@ -18,6 +18,8 @@ export type CrmProjectTableRowActionsMenuProps = {
   readonly onRequestDelete?: (project: CrmProjectSummary) => void;
   readonly onTogglePriority?: (project: CrmProjectSummary) => void | Promise<void>;
   readonly onRequestCompletionChange?: (project: CrmProjectSummary) => void;
+  readonly onRequestMarkInactive?: (project: CrmProjectSummary) => void;
+  readonly onRequestMarkActive?: (project: CrmProjectSummary) => void | Promise<void>;
 };
 
 export function CrmProjectTableRowActionsMenu({
@@ -27,12 +29,17 @@ export function CrmProjectTableRowActionsMenu({
   onRequestDelete,
   onTogglePriority,
   onRequestCompletionChange,
+  onRequestMarkInactive,
+  onRequestMarkActive,
 }: CrmProjectTableRowActionsMenuProps): ReactElement {
   const tableCopy = content.crm.table;
   const deleteCopy = content.crm.delete;
+  const inactiveCopy = content.projectDetail.subprojects.markInactive;
+  const activeCopy = content.projectDetail.subprojects.markActive;
   const [open, setOpen] = useState(false);
   const anchorRef = useRef<HTMLButtonElement>(null);
   const isComplete = isCrmProjectComplete(project);
+  const isInactive = isCrmProjectInactive(project);
   const isPriority = isProjectPriorityUrgent(project.priority);
   const menuDisabled = busy;
   const completionLabel = isComplete ? tableCopy.markIncomplete : tableCopy.markComplete;
@@ -99,7 +106,7 @@ export function CrmProjectTableRowActionsMenu({
             {tableCopy.deleteAction}
           </button>
         ) : null}
-        {!isComplete ? (
+        {!isComplete && !isInactive ? (
           <button
             type="button"
             role="menuitem"
@@ -117,6 +124,45 @@ export function CrmProjectTableRowActionsMenu({
             {priorityLabel}
           </button>
         ) : null}
+        {isInactive ? (
+          <button
+            type="button"
+            role="menuitem"
+            className={`${detailStyles.inlineMenuAction} ${detailStyles.actionsMenuItem}`}
+            disabled={menuDisabled}
+            aria-label={activeCopy.menuActionAriaLabel(project.name)}
+            onClick={(event) => {
+              event.stopPropagation();
+              closeMenu();
+              void onRequestMarkActive?.(project);
+            }}
+          >
+            <span
+              className={`${detailStyles.actionsMenuIcon} ${detailStyles.actionsMenuMarkActiveIcon}`}
+              aria-hidden
+            />
+            {activeCopy.menuAction}
+          </button>
+        ) : (
+          <button
+            type="button"
+            role="menuitem"
+            className={`${detailStyles.inlineMenuAction} ${detailStyles.actionsMenuItem}`}
+            disabled={menuDisabled}
+            aria-label={inactiveCopy.menuActionAriaLabel(project.name)}
+            onClick={(event) => {
+              event.stopPropagation();
+              closeMenu();
+              onRequestMarkInactive?.(project);
+            }}
+          >
+            <span
+              className={`${detailStyles.actionsMenuIcon} ${detailStyles.actionsMenuMarkInactiveIcon}`}
+              aria-hidden
+            />
+            {inactiveCopy.menuAction}
+          </button>
+        )}
         <button
           type="button"
           role="menuitem"

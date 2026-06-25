@@ -4,6 +4,8 @@ import type { ReactElement, ReactNode } from 'react';
 import type { CrmProjectSummary, CrmProjectStageCompletion, CrmWorkflowTask } from '@/domain/crm';
 import { isCrmProjectComplete } from '@/domain/crm';
 import { CrmProjectCompleteIcon } from '@/presentation/components/crmShared/CrmProjectCompleteIcon';
+import { CrmProjectInactiveIcon } from '@/presentation/components/CrmProjects/CrmProjectInactiveBadge';
+import { isCrmProjectInactive } from '@/domain/crm';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
 import type { ProjectDetailPageContext } from '@/presentation/features/crmProjectDetail/projectDetailPageContext';
 import { useDashboardMobileLayout } from '@/presentation/features/crmProjects/useDashboardMobileLayout';
@@ -15,6 +17,7 @@ import { ProjectPrimaryPhoto } from './ProjectPrimaryPhoto';
 import {
   ProjectDetailMobileHeaderProgress,
 } from './ProjectDetailMobileStageSummary';
+import { ProjectDetailInactiveStatus } from './ProjectDetailInactiveStatus';
 import styles from './ProjectDetail.module.css';
 
 export type ProjectDetailHeaderProps = {
@@ -52,8 +55,10 @@ export function ProjectDetailHeader({
   mobileStageCompletions,
 }: ProjectDetailHeaderProps): ReactElement {
   const isComplete = isCrmProjectComplete(project);
+  const isInactiveSubproject = project.parentProjectId != null && isCrmProjectInactive(project);
   const isMobileLayout = useDashboardMobileLayout();
   const industryOrTrade = industryControl ?? tradeTypeControl;
+  const inactiveStatus = <ProjectDetailInactiveStatus project={project} />;
   const showMobileStageSummary =
     isMobileLayout &&
     mobileStageWorkflowTasks != null &&
@@ -61,7 +66,9 @@ export function ProjectDetailHeader({
 
   const titleRow = (
     <div className={styles.titleRow}>
-      {isComplete ? (
+      {isInactiveSubproject ? (
+        <CrmProjectInactiveIcon ariaLabel={content.crm.table.inactiveBadge} />
+      ) : isComplete ? (
         <CrmProjectCompleteIcon ariaLabel={content.crm.table.completionCheckAriaLabel} />
       ) : null}
       <h1 className={styles.title}>{project.client.name}</h1>
@@ -100,7 +107,10 @@ export function ProjectDetailHeader({
               />
               <div className={styles.titleBlockMobileText}>
                 {titleRow}
-                {industryOrTrade}
+                <div className={styles.detailHeaderIndustryRow}>
+                  {industryOrTrade}
+                  {inactiveStatus}
+                </div>
               </div>
             </div>
             {assigneeControl ? (
@@ -140,7 +150,14 @@ export function ProjectDetailHeader({
               </div>
             </div>
           </div>
-          {actions ? <div className={styles.detailHeaderActions}>{actions}</div> : null}
+          {actions || inactiveStatus ? (
+            <div className={styles.detailHeaderActionsColumn}>
+              {actions ? <div className={styles.detailHeaderActions}>{actions}</div> : null}
+              {inactiveStatus ? (
+                <div className={styles.detailHeaderInactiveStatus}>{inactiveStatus}</div>
+              ) : null}
+            </div>
+          ) : null}
         </>
       )}
     </header>

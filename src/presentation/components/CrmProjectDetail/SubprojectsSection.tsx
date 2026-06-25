@@ -20,6 +20,7 @@ import { EMPTY_CRM_PROJECTS_LIST_FILTERS } from '@/presentation/features/crmProj
 import { EMPTY_RADIUS_FILTER, type RadiusFilterState } from '@/presentation/features/filters/radiusFilterModel';
 import { useCrmProjectDeleteConfirmation } from '@/presentation/features/crmProjects/useCrmProjectDeleteConfirmation';
 import { useCrmProjectBulkDeleteActions } from '@/presentation/features/crmProjects/useCrmProjectBulkDeleteActions';
+import { useCrmProjectInactiveActions } from '@/presentation/features/crmProjects/useCrmProjectInactiveActions';
 import { formatCrmProjectDeleteWorkflowItemLabel } from '@/presentation/features/crmProjects/crmProjectDeleteWorkflow';
 import { useCrmProjectTableRowActions } from '@/presentation/features/crmProjects/useCrmProjectTableRowActions';
 import { useCrmProjectPaymentTasksIndex } from '@/presentation/features/crmProjects/useCrmProjectPaymentTasksIndex';
@@ -34,6 +35,7 @@ import { useBulkSelection } from '@/presentation/features/bulkSelection/useBulkS
 import type { BulkSelectionBindings } from '@/presentation/features/bulkSelection/BulkSelectionBindings';
 import { DestructiveConfirmationWorkflowDialog } from '@/presentation/components/DestructiveConfirmationWorkflow';
 import { BulkSendAttachmentDialog } from '@/presentation/components/communications/BulkSendAttachmentDialog';
+import { MarkInactiveDialog } from '@/presentation/components/CrmProjects/MarkInactiveDialog';
 import { useBulkSendAttachmentDialog } from '@/presentation/features/communications/useBulkSendAttachmentDialog';
 import { SubprojectsListToolbar } from './SubprojectsListToolbar';
 import shared from '@/presentation/components/crmShared/crmShared.module.css';
@@ -55,6 +57,8 @@ function SubprojectsSectionContent(): ReactElement {
   const sectionId = useId();
   const panelId = useId();
   const copy = content.projectDetail.subprojects;
+  const markInactiveCopy = copy.markInactive;
+  const markActiveCopy = copy.markActive;
   const deleteCopy = copy.delete;
   const bulkDeleteItemLabel = copy.bulkDelete.itemLabel;
   const bulkDeleteConfig = copy.bulkDelete;
@@ -189,6 +193,14 @@ function SubprojectsSectionContent(): ReactElement {
     () => rows.filter((row) => bulkSelection.selectedIds.has(row.id)),
     [bulkSelection.selectedIds, rows]
   );
+  const selectedInactiveProjects = useMemo(
+    () => selectedProjects.filter((project) => project.subprojectStatus === 'inactive'),
+    [selectedProjects]
+  );
+  const selectedActiveProjects = useMemo(
+    () => selectedProjects.filter((project) => project.subprojectStatus !== 'inactive'),
+    [selectedProjects]
+  );
   const canUseBulkActions = canDelete && !isMemberRole;
 
   const bulkSelectionBindings = useMemo<BulkSelectionBindings | undefined>(() => {
@@ -245,6 +257,116 @@ function SubprojectsSectionContent(): ReactElement {
       bulkSelection.exitSelectionMode();
     }
   }, [bulkSelection, deleteSelectedProjects, selectedProjects]);
+
+  const {
+    markInactiveTarget,
+    openMarkInactive,
+    closeMarkInactive,
+    submitting: markingInactive,
+    markingActive,
+    markingActiveProjectId,
+    submitMarkInactive,
+    markProjectActive,
+    markProjectsActive,
+  } = useCrmProjectInactiveActions({
+    onProjectsUpdated: () => {
+      void refetch();
+    },
+    onMarkInactiveSuccess: (updatedCount) => {
+      setToast({
+        kind: 'success',
+        message: markInactiveCopy.bulkSuccess(updatedCount),
+      });
+      bulkSelection.exitSelectionMode();
+    },
+    onMarkActiveSuccess: (updatedCount) => {
+      setToast({
+        kind: 'success',
+        message: markActiveCopy.bulkSuccess(updatedCount),
+      });
+      bulkSelection.exitSelectionMode();
+    },
+    onError: (message) => setToast({ kind: 'error', message }),
+  });
+
+  const handleRequestMarkInactive = useCallback(
+    (childProject: CrmProjectSummary) => {
+      openMarkInactive({ mode: 'single', project: childProject });
+    },
+    [openMarkInactive]
+  );
+
+  const handleRequestMarkActive = useCallback(
+    (childProject: CrmProjectSummary) => {
+      void markProjectActive(childProject);
+    },
+    [markProjectActive]
+  );
+
+  const handleOpenBulkMarkInactive = useCallback(() => {
+    if (selectedActiveProjects.length === 0) return;
+    openMarkInactive({ mode: 'bulk', projects: selectedActiveProjects });
+  }, [openMarkInactive, selectedActiveProjects]);
+
+  const handleBulkMarkActive = useCallback(() => {
+    void markProjectsActive(selectedInactiveProjects);
+  }, [markProjectsActive, selectedInactiveProjects]);
+
+  const bulkSubprojectActions = useMemo(
+    () => [
+      {
+        id: 'mark-inactive',
+        label: markInactiveCopy.bulkMenuAction,
+        iconClass: styles.actionsMenuMarkInactiveIcon,
+        disabled:
+          bulkSelection.selectedCount === 0 ||
+          markingInactive ||
+          selectedActiveProjects.length === 0,
+        onClick: handleOpenBulkMarkInactive,
+      },
+      {
+        id: 'mark-active',
+        label: markActiveCopy.bulkMenuAction,
+        iconClass: styles.actionsMenuMarkActiveIcon,
+        disabled:
+          bulkSelection.selectedCount === 0 ||
+          markingActive ||
+          selectedInactiveProjects.length === 0,
+        onClick: handleBulkMarkActive,
+      },
+      {
+        id: 'send-attachment',
+        label: bulkSelectionCopy.sendAttachment,
+        iconClass: styles.actionsMenuAttachmentIcon,
+        disabled: bulkSelection.selectedCount === 0,
+        onClick: () => bulkSendAttachment.openBulkSendAttachmentDialog(selectedProjects),
+      },
+      {
+        id: 'delete',
+        label: bulkSelectionCopy.deleteSelected,
+        variant: 'danger' as const,
+        iconClass: styles.actionsMenuDeleteIcon,
+        disabled: bulkDeleting || bulkSelection.selectedCount === 0,
+        onClick: () => setBulkDeleteOpen(true),
+      },
+    ],
+    [
+      bulkDeleting,
+      bulkSelection.selectedCount,
+      bulkSelectionCopy.deleteSelected,
+      bulkSelectionCopy.sendAttachment,
+      bulkSendAttachment,
+      handleBulkMarkActive,
+      handleOpenBulkMarkInactive,
+      markActiveCopy.bulkMenuAction,
+      markInactiveCopy.bulkMenuAction,
+      markingActive,
+      markingInactive,
+      selectedActiveProjects.length,
+      selectedInactiveProjects.length,
+      selectedProjects,
+    ]
+  );
 
   const {
     busyProjectId,
@@ -352,23 +474,7 @@ function SubprojectsSectionContent(): ReactElement {
             onExitSelectionMode={() => bulkSelection.exitSelectionMode()}
             bulkActionsLayout="menu"
             bulkActionsMenuAriaLabel={bulkSelectionCopy.actionsMenuAriaLabel}
-            bulkActions={[
-              {
-                id: 'send-attachment',
-                label: bulkSelectionCopy.sendAttachment,
-                iconClass: styles.actionsMenuAttachmentIcon,
-                disabled: bulkSelection.selectedCount === 0,
-                onClick: () => bulkSendAttachment.openBulkSendAttachmentDialog(selectedProjects),
-              },
-              {
-                id: 'delete',
-                label: bulkSelectionCopy.deleteSelected,
-                variant: 'danger',
-                iconClass: styles.actionsMenuDeleteIcon,
-                disabled: bulkDeleting || bulkSelection.selectedCount === 0,
-                onClick: () => setBulkDeleteOpen(true),
-              },
-            ]}
+            bulkActions={bulkSubprojectActions}
           />
         </div>
       </div>
@@ -386,10 +492,12 @@ function SubprojectsSectionContent(): ReactElement {
               isMemberRole={isMemberRole}
               canDelete={canDelete && !isMemberRole}
               deletingProjectId={deletingProjectId}
-              busyProjectId={busyProjectId}
+              busyProjectId={busyProjectId ?? markingActiveProjectId}
               onRequestDelete={setPendingDeleteProject}
               onTogglePriority={togglePriority}
               onRequestCompletionChange={requestCompletionChange}
+              onRequestMarkInactive={handleRequestMarkInactive}
+              onRequestMarkActive={handleRequestMarkActive}
               showActions={!isMemberRole}
               emptyMessage={subprojectsEmptyMessage}
               onRowClick={handleSubprojectRowClick}
@@ -407,10 +515,12 @@ function SubprojectsSectionContent(): ReactElement {
                 isMemberRole={isMemberRole}
                 canDelete={canDelete && !isMemberRole}
                 deletingProjectId={deletingProjectId}
-                busyProjectId={busyProjectId}
+                busyProjectId={busyProjectId ?? markingActiveProjectId}
                 onRequestDelete={setPendingDeleteProject}
                 onTogglePriority={togglePriority}
                 onRequestCompletionChange={requestCompletionChange}
+                onRequestMarkInactive={handleRequestMarkInactive}
+                onRequestMarkActive={handleRequestMarkActive}
                 showActions={!isMemberRole}
                 projectColumnLabel={copy.projectColumn}
                 emptyMessage={subprojectsEmptyMessage}
@@ -500,6 +610,14 @@ function SubprojectsSectionContent(): ReactElement {
             }}
             onSend={() => {
               void bulkSendAttachment.sendBulkAttachment();
+            }}
+          />
+          <MarkInactiveDialog
+            target={markInactiveTarget}
+            submitting={markingInactive}
+            onClose={closeMarkInactive}
+            onSubmit={(values) => {
+              void submitMarkInactive(values);
             }}
           />
           <ProjectCompletionBlockedDialog

@@ -125,6 +125,25 @@ export {
   validateCrmIndustryFields,
 } from './industry';
 export { isCrmProjectComplete, CRM_PROJECT_COMPLETE_STAGE_SLUG, type SetCrmProjectCompletionInput } from './projectCompletion';
+export type { BulkMarkInactiveCrmProjectsResult } from './bulkMarkInactiveProjects';
+export type { BulkMarkActiveCrmProjectsResult } from './bulkMarkActiveProjects';
+export {
+  CRM_INACTIVE_REASON_OPTIONS,
+  CRM_INACTIVE_REASON_VALUES,
+  CRM_SUBPROJECT_STATUS_VALUES,
+  deriveCrmSubprojectStatus,
+  getCrmInactiveReasonLabel,
+  isCrmInactiveReason,
+  isCrmProjectInactive,
+  isCrmSubprojectStatus,
+  resolveCrmSubprojectListSortRank,
+  validateMarkCrmProjectsInactiveInput,
+  type CrmInactiveReason,
+  type CrmInactiveReasonOption,
+  type CrmSubprojectStatus,
+  type MarkCrmProjectsInactiveInput,
+  type MarkCrmProjectsActiveInput,
+} from './subprojectStatus';
 export {
   areAllWorkflowStagesComplete,
   isStageManuallyCompleted,

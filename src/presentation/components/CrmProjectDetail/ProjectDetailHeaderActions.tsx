@@ -21,6 +21,10 @@ export type ProjectDetailHeaderActionsProps = {
   onLoadTemplate: () => void;
   canShowQrCode?: boolean;
   onShowQrCode?: () => void;
+  isSubproject?: boolean;
+  onRequestMarkInactive?: () => void;
+  onRequestMarkActive?: () => void | Promise<void>;
+  lifecycleBusy?: boolean;
   isComplete: boolean;
   completionBusy: boolean;
   onMarkComplete: () => void;
@@ -48,6 +52,10 @@ export function ProjectDetailHeaderActions({
   onLoadTemplate,
   canShowQrCode = false,
   onShowQrCode,
+  isSubproject = false,
+  onRequestMarkInactive,
+  onRequestMarkActive,
+  lifecycleBusy = false,
   isComplete,
   completionBusy,
   onMarkComplete,
@@ -92,6 +100,10 @@ export function ProjectDetailHeaderActions({
         onLoadTemplate={onLoadTemplate}
         canShowQrCode={canShowQrCode}
         onShowQrCode={onShowQrCode}
+        isSubproject={isSubproject}
+        onRequestMarkInactive={onRequestMarkInactive}
+        onRequestMarkActive={onRequestMarkActive}
+        lifecycleBusy={lifecycleBusy}
       />
     </div>
   );

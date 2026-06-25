@@ -4,7 +4,7 @@ import type { KeyboardEvent, ReactElement } from 'react';
 import type { CrmProjectSummary } from '@/domain/crm';
 import type { ProjectPaymentFinancials } from '@/domain/crm/projectPaymentValue';
 import type { CrmProjectWorkflowProgressInputIndex } from '@/domain/crm/projectWorkflowProgressInput';
-import { isCrmProjectComplete } from '@/domain/crm';
+import { isCrmProjectComplete, isCrmProjectInactive } from '@/domain/crm';
 import { isProjectPriorityUrgent } from '@/domain/crm/projectPriorityToggle';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
 import {
@@ -18,6 +18,8 @@ import type { BulkSelectionBindings } from '@/presentation/features/bulkSelectio
 import { BulkSelectCheckbox } from '@/presentation/components/BulkSelection';
 import { CrmProjectCompleteIcon } from '@/presentation/components/crmShared/CrmProjectCompleteIcon';
 import { CrmProjectPriorityIcon } from '@/presentation/components/crmShared/CrmProjectPriorityIcon';
+import { CrmProjectInactiveIcon, CrmProjectInactiveInlineLabel } from '@/presentation/components/CrmProjects/CrmProjectInactiveBadge';
+import { CrmProjectTableRowActionsMenu } from '@/presentation/components/CrmProjects/CrmProjectTableRowActionsMenu';
 import shared from '@/presentation/components/crmShared/crmShared.module.css';
 import styles from './ProjectDetail.module.css';
 
@@ -34,6 +36,8 @@ export type SubprojectMobileCardProps = {
   readonly onRequestDelete?: (project: CrmProjectSummary) => void;
   readonly onTogglePriority?: (project: CrmProjectSummary) => void | Promise<void>;
   readonly onRequestCompletionChange?: (project: CrmProjectSummary) => void;
+  readonly onRequestMarkInactive?: (project: CrmProjectSummary) => void;
+  readonly onRequestMarkActive?: (project: CrmProjectSummary) => void | Promise<void>;
   readonly workflowProgressInputIndex?: CrmProjectWorkflowProgressInputIndex;
   readonly isWorkflowProgressLoading?: boolean;
   readonly bulkSelection?: BulkSelectionBindings;
@@ -45,8 +49,15 @@ export function SubprojectMobileCard({
   financialsLoading = false,
   onRowClick,
   isMemberRole = false,
+  canDelete = false,
+  showActions = true,
   deleting = false,
   busy = false,
+  onRequestDelete,
+  onTogglePriority,
+  onRequestCompletionChange,
+  onRequestMarkInactive,
+  onRequestMarkActive,
   workflowProgressInputIndex,
   isWorkflowProgressLoading = false,
   bulkSelection,
@@ -58,6 +69,7 @@ export function SubprojectMobileCard({
     workflowProgressInputIndex,
     isWorkflowProgressLoading
   );
+  const isInactive = isCrmProjectInactive(project);
   const displayEmail = formatContactEmailDisplay(project.contact.email, { maskForMember: isMemberRole });
   const displayPhone = formatPhoneDisplay(project.contact.phone);
   const financialDisplay = (cents: number): string =>
@@ -75,6 +87,7 @@ export function SubprojectMobileCard({
       className={[
         styles.card,
         styles.subprojectMobileCard,
+        isInactive ? styles.subprojectMobileCard_inactive : '',
         bulkSelection?.mode ? styles.subprojectMobileCard_selectionMode : '',
         bulkSelection?.mode && bulkSelection.selectedIds.has(project.id)
           ? styles.subprojectMobileCard_selected
@@ -104,13 +117,18 @@ export function SubprojectMobileCard({
                     onChange={() => bulkSelection.onToggle(project.id)}
                   />
                 ) : null}
-                {isProjectPriorityUrgent(project.priority) ? (
+                {isInactive ? (
+                  <CrmProjectInactiveIcon ariaLabel={tableCopy.inactiveBadge} />
+                ) : isProjectPriorityUrgent(project.priority) ? (
                   <CrmProjectPriorityIcon ariaLabel={tableCopy.priorityMarkAriaLabel} />
                 ) : null}
                 {isCrmProjectComplete(project) ? (
                   <CrmProjectCompleteIcon ariaLabel={tableCopy.completionCheckAriaLabel} />
                 ) : null}
-                <span className={styles.subprojectMobileCardName}>{project.name}</span>
+                <span className={styles.subprojectMobileCardNameGroup}>
+                  <span className={styles.subprojectMobileCardName}>{project.name}</span>
+                  {isInactive ? <CrmProjectInactiveInlineLabel project={project} /> : null}
+                </span>
               </span>
               {industrySubtitle ? (
                 <span className={styles.subprojectMobileCardMeta}>{industrySubtitle}</span>
@@ -172,6 +190,20 @@ export function SubprojectMobileCard({
           </span>
         </div>
       )}
+      {!isMemberRole && showActions && !bulkSelection?.mode ? (
+        <div className={styles.subprojectMobileCardActionsRow}>
+          <CrmProjectTableRowActionsMenu
+            project={project}
+            busy={busy || deleting}
+            canDelete={canDelete}
+            onRequestDelete={onRequestDelete}
+            onTogglePriority={onTogglePriority}
+            onRequestCompletionChange={onRequestCompletionChange}
+            onRequestMarkInactive={onRequestMarkInactive}
+            onRequestMarkActive={onRequestMarkActive}
+          />
+        </div>
+      ) : null}
     </article>
   );
 }

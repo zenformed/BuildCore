@@ -60,6 +60,9 @@ import type {
 
 } from '@/domain/crm/budgetMutations';
 import type { BulkArchiveCrmProjectsResult } from '@/domain/crm/bulkArchiveProjects';
+import type { BulkMarkInactiveCrmProjectsResult } from '@/domain/crm/bulkMarkInactiveProjects';
+import type { BulkMarkActiveCrmProjectsResult } from '@/domain/crm/bulkMarkActiveProjects';
+import type { MarkCrmProjectsInactiveInput, MarkCrmProjectsActiveInput } from '@/domain/crm/subprojectStatus';
 
 import { deserializeWorkflowTaskStatusIndex } from '@/domain/crm/projectWorkflowTaskStatusIndex';
 import { deserializeWorkflowProgressInputIndex } from '@/domain/crm/projectWorkflowProgressInput';
@@ -190,6 +193,26 @@ export class ApiCrmProjectsRepository implements ICrmProjectsRepository {
     return crmApiPostJson<BulkArchiveCrmProjectsResult>(
       '/api/crm/projects/bulk-archive',
       { slugs }
+    );
+  }
+
+  markInactive(input: MarkCrmProjectsInactiveInput): Promise<BulkMarkInactiveCrmProjectsResult> {
+    clearApiCrmDetailCache();
+    return crmApiPostJson<BulkMarkInactiveCrmProjectsResult>(
+      '/api/crm/projects/mark-inactive',
+      {
+        projectSlugs: input.projectSlugs,
+        reason: input.reason,
+        customReason: input.customReason ?? null,
+      }
+    );
+  }
+
+  markActive(input: MarkCrmProjectsActiveInput): Promise<BulkMarkActiveCrmProjectsResult> {
+    clearApiCrmDetailCache();
+    return crmApiPostJson<BulkMarkActiveCrmProjectsResult>(
+      '/api/crm/projects/mark-active',
+      { projectSlugs: input.projectSlugs }
     );
   }
 

@@ -21,6 +21,7 @@ import {
   type ProjectDetailShellContextValue,
 } from '@/presentation/features/crmProjectDetail/ProjectDetailShellContext';
 import { useCrmProjectDeleteConfirmation } from '@/presentation/features/crmProjects/useCrmProjectDeleteConfirmation';
+import { useCrmProjectInactiveActions } from '@/presentation/features/crmProjects/useCrmProjectInactiveActions';
 import { queueCrmProjectDeleteSuccessToast } from '@/presentation/features/crmProjects/crmProjectDeleteFeedback';
 import { useLoadProjectTemplate } from '@/presentation/features/crmProjectDetail/useLoadProjectTemplate';
 import { useSaveProjectTemplate } from '@/presentation/features/crmProjectDetail/useSaveProjectTemplate';
@@ -40,6 +41,7 @@ import { ProjectDetailHeaderProgress } from './ProjectDetailHeaderProgress';
 import { ProjectPriorityToggle } from './ProjectPriorityToggle';
 import { ProjectDetailShellModals } from './ProjectDetailShellModals';
 import { CreateCrmProjectModal } from '@/presentation/components/CrmProjects/CreateCrmProjectModal';
+import { MarkInactiveDialog } from '@/presentation/components/CrmProjects/MarkInactiveDialog';
 import { WorkflowTaskDrawer } from './WorkflowTaskDrawer';
 import styles from './ProjectDetail.module.css';
 
@@ -128,7 +130,47 @@ function ProjectDetailShellBody({
     await refreshWorkflowTasks();
   }, [refreshWorkflowTasks]);
   const detail = content.projectDetail;
+  const markInactiveCopy = content.projectDetail.subprojects.markInactive;
+  const markActiveCopy = content.projectDetail.subprojects.markActive;
   const projectSummary = workspace.project.summary;
+  const isSubproject = projectSummary.parentProjectId != null;
+  const {
+    markInactiveTarget,
+    openMarkInactive,
+    closeMarkInactive,
+    submitting: markingInactive,
+    markingActive,
+    markingActiveProjectId,
+    submitMarkInactive,
+    markProjectActive,
+  } = useCrmProjectInactiveActions({
+    onProjectsUpdated: () => {
+      void refreshProjectDetail();
+    },
+    onMarkInactiveSuccess: () => {
+      workspace.setToast({ kind: 'success', message: markInactiveCopy.success });
+    },
+    onMarkActiveSuccess: () => {
+      workspace.setToast({ kind: 'success', message: markActiveCopy.success });
+    },
+    onError: (message) => workspace.setToast({ kind: 'error', message }),
+  });
+  const lifecycleBusy = markingInactive || markingActive || markingActiveProjectId != null;
+  const subprojectLifecycleProps = isSubproject && isApiSource && !isMemberRole
+    ? {
+        isSubproject: true,
+        onRequestMarkInactive: () => {
+          openMarkInactive({ mode: 'single', project: projectSummary });
+        },
+        onRequestMarkActive: () => {
+          void markProjectActive(projectSummary);
+        },
+        lifecycleBusy,
+      }
+    : {
+        isSubproject: false,
+        lifecycleBusy,
+      };
   const childSummaries = useMemo(
     () =>
       isParentOverview
@@ -193,6 +235,7 @@ function ProjectDetailShellBody({
     onLoadTemplate: loadTemplate.openList,
     canShowQrCode,
     onShowQrCode: () => setQrDialogOpen(true),
+    ...subprojectLifecycleProps,
   };
 
   const showDetailProgress = pageContext === 'detail';
@@ -332,6 +375,16 @@ function ProjectDetailShellBody({
                 open={qrDialogOpen}
                 project={projectSummary}
                 onClose={() => setQrDialogOpen(false)}
+              />
+            ) : null}
+            {isSubproject && isApiSource && !isMemberRole ? (
+              <MarkInactiveDialog
+                target={markInactiveTarget}
+                submitting={markingInactive}
+                onClose={closeMarkInactive}
+                onSubmit={(values) => {
+                  void submitMarkInactive(values);
+                }}
               />
             ) : null}
             <CreateCrmProjectModal

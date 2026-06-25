@@ -572,6 +572,31 @@
   min-width: 0;
 }
 
+.projectNameGroup {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.375rem;
+  min-width: 0;
+}
+
+.inactiveInlineLabel {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  flex-shrink: 0;
+}
+
+.inactiveInlineReason {
+  color: var(--color-text-muted, #64748b);
+  font-size: 0.8125rem;
+  font-weight: 400;
+}
+
+:global([data-theme='dark']) .inactiveInlineReason {
+  color: var(--theme-text-muted, #94a3b8);
+}
+
 .expandToggle {
   display: inline-flex;
   align-items: center;
@@ -640,6 +665,56 @@
 
 :global([data-theme='dark']) .gridRowChild:hover {
   background-color: #1e212b;
+}
+
+.gridRowInactive,
+.gridRowChild.gridRowInactive {
+  opacity: 0.72;
+}
+
+.gridRowInactive .projectName,
+.gridRowInactive .projectMeta,
+.gridRowInactive .gridCell,
+.gridRowInactive .projectProgressRow {
+  color: var(--theme-text-muted, #94a3b8);
+}
+
+.gridRowInactive .projectName {
+  color: var(--theme-text-muted, #94a3b8);
+}
+
+.gridRowInactive .inactiveInlineReason {
+  color: var(--color-text-muted, #64748b);
+}
+
+.inactiveBadgeWrap {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.375rem;
+}
+
+.inactiveBadge {
+  background: var(--color-muted, #e2e8f0);
+  color: var(--theme-text-muted, #64748b);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+:global([data-theme='dark']) .inactiveBadge {
+  background: rgba(148, 163, 184, 0.16);
+  color: var(--theme-text-muted, #94a3b8);
+}
+
+.inactiveReasonText {
+  font-size: 0.75rem;
+  color: var(--theme-text-muted, #94a3b8);
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .gridCellProject {

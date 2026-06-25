@@ -4,7 +4,7 @@ import { type KeyboardEvent, type ReactElement } from 'react';
 import type { CrmProjectSummary } from '@/domain/crm';
 import type { ProjectPaymentFinancials } from '@/domain/crm/projectPaymentValue';
 import type { CrmProjectWorkflowProgressInputIndex } from '@/domain/crm/projectWorkflowProgressInput';
-import { isCrmProjectComplete } from '@/domain/crm';
+import { isCrmProjectComplete, isCrmProjectInactive } from '@/domain/crm';
 import { formatCrmProjectAddressLine } from '@/domain/crm/projectAddress';
 import { isProjectPriorityUrgent } from '@/domain/crm/projectPriorityToggle';
 import { ProjectProgressPercent } from '@/presentation/components/CrmProjectDetail/ProjectProgressPercent';
@@ -23,6 +23,7 @@ import type { BulkSelectionBindings } from '@/presentation/features/bulkSelectio
 import { BulkSelectCheckbox } from '@/presentation/components/BulkSelection';
 import { TeamMemberAvatar } from '@/presentation/components/CrmProjectDetail/TeamMemberAvatar';
 import { CrmProjectTableRowActionsMenu } from './CrmProjectTableRowActionsMenu';
+import { CrmProjectInactiveIcon, CrmProjectInactiveInlineLabel } from './CrmProjectInactiveBadge';
 import shared from '@/presentation/components/crmShared/crmShared.module.css';
 import styles from './CrmProjects.module.css';
 export type CrmProjectTableRowDeleteLabels = {
@@ -45,6 +46,8 @@ export type CrmProjectTableRowProps = {
   onRequestDelete?: (project: CrmProjectSummary) => void;
   onTogglePriority?: (project: CrmProjectSummary) => void | Promise<void>;
   onRequestCompletionChange?: (project: CrmProjectSummary) => void;
+  onRequestMarkInactive?: (project: CrmProjectSummary) => void;
+  onRequestMarkActive?: (project: CrmProjectSummary) => void | Promise<void>;
   hasChildren?: boolean;
   isExpanded?: boolean;
   onToggleExpand?: () => void;
@@ -68,6 +71,8 @@ export function CrmProjectTableRow({
   onRequestDelete,
   onTogglePriority,
   onRequestCompletionChange,
+  onRequestMarkInactive,
+  onRequestMarkActive,
   hasChildren = false,
   isExpanded = false,
   onToggleExpand,
@@ -81,7 +86,9 @@ export function CrmProjectTableRow({
     workflowProgressInputIndex,
     isWorkflowProgressLoading
   );
-  const isChild = variant === 'child';  const displayFinancials = financials ?? { valueCents: 0, collectedCents: 0, balanceCents: 0 };
+  const isChild = variant === 'child';
+  const isInactive = isCrmProjectInactive(project);
+  const displayFinancials = financials ?? { valueCents: 0, collectedCents: 0, balanceCents: 0 };
   const financialDisplay = (cents: number): string =>
     financialsLoading ? '…' : formatCentsAsUsd(cents);
   const valueLabels = tableCopy.columns;
@@ -102,6 +109,7 @@ export function CrmProjectTableRow({
 
   const rowClass = [
     isChild ? `${styles.gridRow} ${styles.gridRowChild}` : styles.gridRow,
+    isInactive ? styles.gridRowInactive : '',
     bulkSelection?.mode && bulkSelection.selectedIds.has(project.id) ? styles.gridRowSelected : '',
   ]
     .filter(Boolean)
@@ -130,13 +138,18 @@ export function CrmProjectTableRow({
       ) : null}
       <span className={projectCellClass} role="cell">
         <span className={styles.projectNameRow}>
-          {isProjectPriorityUrgent(project.priority) ? (
+          {isInactive ? (
+            <CrmProjectInactiveIcon ariaLabel={tableCopy.inactiveBadge} />
+          ) : isProjectPriorityUrgent(project.priority) ? (
             <CrmProjectPriorityIcon ariaLabel={tableCopy.priorityMarkAriaLabel} />
           ) : null}
           {isCrmProjectComplete(project) ? (
             <CrmProjectCompleteIcon ariaLabel={tableCopy.completionCheckAriaLabel} />
           ) : null}
-          <span className={styles.projectName}>{project.name}</span>
+          <span className={styles.projectNameGroup}>
+            <span className={styles.projectName}>{project.name}</span>
+            {isInactive ? <CrmProjectInactiveInlineLabel project={project} /> : null}
+          </span>
           {!isChild && hasChildren ? (
             <button
               type="button"
@@ -247,6 +260,8 @@ export function CrmProjectTableRow({
             onRequestDelete={onRequestDelete}
             onTogglePriority={onTogglePriority}
             onRequestCompletionChange={onRequestCompletionChange}
+            onRequestMarkInactive={onRequestMarkInactive}
+            onRequestMarkActive={onRequestMarkActive}
           />
         </span>
       ) : null}

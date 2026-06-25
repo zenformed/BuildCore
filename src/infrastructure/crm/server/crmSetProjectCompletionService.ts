@@ -46,6 +46,13 @@ export async function setCrmProjectCompletionBySlugForOrg(
       completed_at: complete ? now : null,
       completed_by: complete ? actorUserId : null,
       last_activity_at: now,
+      subproject_status: complete
+        ? 'completed'
+        : existing.summary.subprojectStatus === 'inactive'
+          ? 'inactive'
+          : existing.summary.priority === 'urgent'
+            ? 'urgent'
+            : 'normal',
       ...(complete
         ? { priority: 'low', current_stage_slug: CRM_PROJECT_COMPLETE_STAGE_SLUG }
         : {}),

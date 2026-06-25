@@ -374,6 +374,7 @@ export const buildCoreDashboardContent = {
       removePriority: 'Remove Priority',
       markComplete: 'Mark Complete',
       markIncomplete: 'Mark Incomplete',
+      inactiveBadge: 'Inactive',
       makePrioritySuccess: 'Project marked as priority.',
       removePrioritySuccess: 'Project priority removed.',
       makePriorityFailed: 'Could not update project priority.',
@@ -734,6 +735,43 @@ export const buildCoreDashboardContent = {
           'This action permanently deletes the selected subprojects and all associated data.',
         affectedDataSummary:
           'Affected data includes Workflow Tasks, Payments, Budget Entries, Documents, Reporting Data, and Accountability Records.',
+      },
+      markInactive: {
+        title: 'Mark inactive',
+        singleMessage: (name: string): string =>
+          `Are you sure you want to make ${name} inactive?`,
+        bulkMessage: (count: number): string =>
+          `Are you sure you want to make ${count} subprojects inactive?`,
+        reasonLabel: 'Reason',
+        reasonPlaceholder: 'Select a reason',
+        customReasonLabel: 'Custom reason',
+        reasonRequired: 'Reason is required.',
+        customReasonRequired: 'Custom reason is required when Other is selected.',
+        submit: 'Mark inactive',
+        submitting: 'Marking inactive…',
+        closeAriaLabel: 'Close mark inactive dialog',
+        menuAction: 'Mark Inactive',
+        menuActionAriaLabel: (name: string): string => `Mark ${name} inactive`,
+        bulkMenuAction: 'Mark Inactive',
+        success: 'Subproject marked inactive.',
+        bulkSuccess: (count: number): string =>
+          count === 1 ? 'Subproject marked inactive.' : `${count} subprojects marked inactive.`,
+        failed: 'Could not mark subprojects inactive.',
+        partialFailure: (updated: number, failed: number): string =>
+          `Marked ${updated} inactive · ${failed} could not be updated`,
+        badge: 'Inactive',
+        inactiveReasonPrefix: 'Inactive:',
+      },
+      markActive: {
+        menuAction: 'Mark Active',
+        menuActionAriaLabel: (name: string): string => `Mark ${name} active`,
+        bulkMenuAction: 'Mark Active',
+        success: 'Subproject marked active.',
+        bulkSuccess: (count: number): string =>
+          count === 1 ? 'Subproject marked active.' : `${count} subprojects marked active.`,
+        failed: 'Could not mark subproject active.',
+        partialFailure: (updated: number, failed: number): string =>
+          `Marked ${updated} active · ${failed} could not be updated`,
       },
       bulkSendAttachment: {
         title: 'Send attachment to selected items',

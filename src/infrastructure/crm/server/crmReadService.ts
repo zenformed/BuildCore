@@ -46,6 +46,11 @@ ${crmProjectIndustrySelectLines(mode)}
   last_activity_at,
   completed_at,
   completed_by,
+  subproject_status,
+  inactive_reason,
+  inactive_reason_custom,
+  inactive_at,
+  inactive_by,
   primary_photo_path,
   lead_token,
   address_line_1,
@@ -72,6 +77,7 @@ function collectMemberIds(rows: {
   for (const p of rows.projects ?? []) {
     if (p.assigned_member_id) ids.add(p.assigned_member_id);
     if (p.completed_by) ids.add(p.completed_by);
+    if (p.inactive_by) ids.add(p.inactive_by);
   }
   for (const t of rows.workflowTasks ?? []) {
     if (t.assigned_member_id) ids.add(t.assigned_member_id);

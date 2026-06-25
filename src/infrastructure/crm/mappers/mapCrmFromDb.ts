@@ -25,6 +25,13 @@ import {
 } from '@/domain/crm';
 import { asCrmIndustry } from '@/domain/crm/industry';
 import {
+  deriveCrmSubprojectStatus,
+  isCrmInactiveReason,
+  isCrmSubprojectStatus,
+  type CrmInactiveReason,
+  type CrmSubprojectStatus,
+} from '@/domain/crm/subprojectStatus';
+import {
   displayNameFromProfileParts,
   initialsFromPersonName,
 } from '@/domain/crm/teamMemberDisplay';
@@ -62,6 +69,11 @@ export type DbCrmProjectRow = {
   last_activity_at: string;
   completed_at: string | null;
   completed_by: string | null;
+  subproject_status?: string;
+  inactive_reason?: string | null;
+  inactive_reason_custom?: string | null;
+  inactive_at?: string | null;
+  inactive_by?: string | null;
   primary_photo_path?: string | null;
   lead_token: string;
   address_line_1: string | null;
@@ -183,6 +195,21 @@ function asPriority(value: string): CrmPriority {
     return value as CrmPriority;
   }
   return 'normal';
+}
+
+function asSubprojectStatus(value: string | null | undefined, row: DbCrmProjectRow): CrmSubprojectStatus {
+  if (value != null && isCrmSubprojectStatus(value)) {
+    return value;
+  }
+  return deriveCrmSubprojectStatus({
+    priority: asPriority(row.priority),
+    completedAt: row.completed_at,
+  });
+}
+
+function asInactiveReason(value: string | null | undefined): CrmInactiveReason | null {
+  if (value == null) return null;
+  return isCrmInactiveReason(value) ? value : null;
 }
 
 function asWorkflowStatus(value: string): WorkflowTaskStatus {
@@ -327,6 +354,10 @@ export function mapDbProjectSummary(
     row.completed_by != null
       ? (memberById.get(row.completed_by) ?? mapProfileToTeamMemberRef(null, row.completed_by))
       : null;
+  const inactiveBy =
+    row.inactive_by != null
+      ? (memberById.get(row.inactive_by) ?? mapProfileToTeamMemberRef(null, row.inactive_by))
+      : null;
 
   return {
     id: row.id,
@@ -348,6 +379,11 @@ export function mapDbProjectSummary(
     completedBy,
     primaryPhotoPath: row.primary_photo_path ?? null,
     leadToken: row.lead_token,
+    subprojectStatus: asSubprojectStatus(row.subproject_status, row),
+    inactiveReason: asInactiveReason(row.inactive_reason),
+    inactiveReasonCustom: row.inactive_reason_custom ?? null,
+    inactiveAt: row.inactive_at ?? null,
+    inactiveBy,
   };
 }
 

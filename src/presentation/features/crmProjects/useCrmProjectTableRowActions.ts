@@ -2,7 +2,7 @@
 
 import { useCallback, useState } from 'react';
 import type { CrmProjectSummary } from '@/domain/crm';
-import { isCrmProjectComplete } from '@/domain/crm';
+import { isCrmProjectComplete, isCrmProjectInactive } from '@/domain/crm';
 import type { PipelineStage } from '@/domain/crm/pipelineStage';
 import {
   listWorkflowStageCompletionStatuses,
@@ -56,7 +56,7 @@ export function useCrmProjectTableRowActions(input: {
 
   const togglePriority = useCallback(
     async (project: CrmProjectSummary): Promise<void> => {
-      if (busyProjectId != null || isCrmProjectComplete(project)) {
+      if (busyProjectId != null || isCrmProjectComplete(project) || isCrmProjectInactive(project)) {
         return;
       }
 

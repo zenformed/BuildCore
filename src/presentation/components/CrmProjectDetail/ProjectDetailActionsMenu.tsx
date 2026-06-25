@@ -4,6 +4,7 @@ import type { ReactElement } from 'react';
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import type { CrmProjectSummary } from '@/domain/crm';
+import { isCrmProjectInactive } from '@/domain/crm';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
 import type { ProjectDetailRoutes } from '@/platform/navigation/projectDetailRoutes';
 import { WorkflowInlineMenu } from './WorkflowInlineMenu';
@@ -22,7 +23,15 @@ export type ProjectDetailActionsMenuProps = {
   onLoadTemplate: () => void;
   canShowQrCode?: boolean;
   onShowQrCode?: () => void;
+  isSubproject?: boolean;
+  onRequestMarkInactive?: () => void;
+  onRequestMarkActive?: () => void;
+  lifecycleBusy?: boolean;
 };
+
+function ActionsMenuSeparator(): ReactElement {
+  return <div className={styles.actionsMenuSeparator} role="separator" aria-hidden />;
+}
 
 export function ProjectDetailActionsMenu({
   routes,
@@ -37,14 +46,23 @@ export function ProjectDetailActionsMenu({
   onLoadTemplate,
   canShowQrCode = false,
   onShowQrCode,
+  isSubproject = false,
+  onRequestMarkInactive,
+  onRequestMarkActive,
+  lifecycleBusy = false,
 }: ProjectDetailActionsMenuProps): ReactElement {
   const router = useRouter();
   const detail = content.projectDetail;
   const deleteCopy = content.crm.delete;
+  const inactiveCopy = content.projectDetail.subprojects.markInactive;
+  const activeCopy = content.projectDetail.subprojects.markActive;
   const wf = detail.workflow;
   const [open, setOpen] = useState(false);
   const anchorRef = useRef<HTMLButtonElement>(null);
-  const menuDisabled = deleting;
+  const isInactive = isCrmProjectInactive(projectSummary);
+  const menuDisabled = deleting || lifecycleBusy;
+  const showLifecycleActions = isSubproject && (onRequestMarkInactive != null || onRequestMarkActive != null);
+  const showActionSection = showLifecycleActions || canDelete;
 
   useEffect(() => {
     if (!open) return;
@@ -79,6 +97,16 @@ export function ProjectDetailActionsMenu({
   const handleShowQrCode = () => {
     setOpen(false);
     onShowQrCode?.();
+  };
+
+  const handleMarkInactive = () => {
+    setOpen(false);
+    onRequestMarkInactive?.();
+  };
+
+  const handleMarkActive = () => {
+    setOpen(false);
+    void onRequestMarkActive?.();
   };
 
   return (
@@ -161,6 +189,7 @@ export function ProjectDetailActionsMenu({
             {detail.actions.showQrCode}
           </button>
         ) : null}
+        {canSaveTemplate || showActionSection ? <ActionsMenuSeparator /> : null}
         {canSaveTemplate ? (
           <>
             <button
@@ -190,6 +219,40 @@ export function ProjectDetailActionsMenu({
               {saveTemplateLabel}
             </button>
           </>
+        ) : null}
+        {showActionSection ? <ActionsMenuSeparator /> : null}
+        {showLifecycleActions ? (
+          isInactive ? (
+            <button
+              type="button"
+              role="menuitem"
+              className={`${styles.inlineMenuAction} ${styles.actionsMenuItem}`}
+              disabled={menuDisabled}
+              aria-label={activeCopy.menuActionAriaLabel(projectSummary.name)}
+              onClick={handleMarkActive}
+            >
+              <span
+                className={`${styles.actionsMenuIcon} ${styles.actionsMenuMarkActiveIcon}`}
+                aria-hidden
+              />
+              {activeCopy.menuAction}
+            </button>
+          ) : (
+            <button
+              type="button"
+              role="menuitem"
+              className={`${styles.inlineMenuAction} ${styles.actionsMenuItem}`}
+              disabled={menuDisabled}
+              aria-label={inactiveCopy.menuActionAriaLabel(projectSummary.name)}
+              onClick={handleMarkInactive}
+            >
+              <span
+                className={`${styles.actionsMenuIcon} ${styles.actionsMenuMarkInactiveIcon}`}
+                aria-hidden
+              />
+              {inactiveCopy.menuAction}
+            </button>
+          )
         ) : null}
         {canDelete ? (
           <button

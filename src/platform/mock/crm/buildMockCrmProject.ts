@@ -16,6 +16,7 @@ import {
   type PipelineStageSlug,
   type WorkflowTaskStatus,
 } from '@/domain/crm';
+import { deriveCrmSubprojectStatus } from '@/domain/crm/subprojectStatus';
 import { emptyCrmProjectAddress } from '@/domain/crm/projectAddress';
 import type { CrmClient } from '@/domain/crm/client';
 import type { CrmContact } from '@/domain/crm/contact';
@@ -349,6 +350,14 @@ export function buildMockCrmProjectDetail(input: BuildMockCrmProjectInput): CrmP
         : null,
     primaryPhotoPath: input.primaryPhotoPath ?? null,
     leadToken: input.leadToken ?? `00000000-0000-4000-8000-${input.id.replace(/\D/g, '').padStart(12, '0').slice(-12)}`,
+    subprojectStatus: deriveCrmSubprojectStatus({
+      priority: input.priority,
+      completedAt: input.completedAt ?? null,
+    }),
+    inactiveReason: null,
+    inactiveReasonCustom: null,
+    inactiveAt: null,
+    inactiveBy: null,
   };
 
   const milestonePayment =

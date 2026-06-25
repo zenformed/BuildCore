@@ -218,6 +218,13 @@ function applyProjectCompletion(
     completedBy: complete ? actor : null,
     priority: complete ? 'low' : detail.summary.priority,
     currentStageSlug: complete ? CRM_PROJECT_COMPLETE_STAGE_SLUG : detail.summary.currentStageSlug,
+    subprojectStatus: complete
+      ? 'completed'
+      : detail.summary.subprojectStatus === 'inactive'
+        ? 'inactive'
+        : detail.summary.priority === 'urgent'
+          ? 'urgent'
+          : 'normal',
     lastUpdatedAt: now,
   };
   const accountability: CrmAccountabilityAction = {
@@ -295,6 +302,14 @@ export class MockCrmProjectsRepository implements ICrmProjectsRepository {
   }
 
   bulkArchive(_slugs: readonly string[]): Promise<import('@/domain/crm/bulkArchiveProjects').BulkArchiveCrmProjectsResult> {
+    return Promise.reject(new CrmWriteNotAvailableError());
+  }
+
+  markInactive(_input: import('@/domain/crm/subprojectStatus').MarkCrmProjectsInactiveInput): Promise<import('@/domain/crm/bulkMarkInactiveProjects').BulkMarkInactiveCrmProjectsResult> {
+    return Promise.reject(new CrmWriteNotAvailableError());
+  }
+
+  markActive(_input: import('@/domain/crm/subprojectStatus').MarkCrmProjectsActiveInput): Promise<import('@/domain/crm/bulkMarkActiveProjects').BulkMarkActiveCrmProjectsResult> {
     return Promise.reject(new CrmWriteNotAvailableError());
   }
 

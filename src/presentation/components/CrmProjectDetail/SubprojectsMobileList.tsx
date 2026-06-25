@@ -25,6 +25,8 @@ export type SubprojectsMobileListProps = {
   readonly onRequestDelete?: (project: CrmProjectSummary) => void;
   readonly onTogglePriority?: (project: CrmProjectSummary) => void | Promise<void>;
   readonly onRequestCompletionChange?: (project: CrmProjectSummary) => void;
+  readonly onRequestMarkInactive?: (project: CrmProjectSummary) => void;
+  readonly onRequestMarkActive?: (project: CrmProjectSummary) => void | Promise<void>;
   readonly showActions?: boolean;
   readonly emptyMessage: string;
   readonly onRowClick: (project: CrmProjectSummary) => void;
@@ -45,6 +47,8 @@ export function SubprojectsMobileList({
   onRequestDelete,
   onTogglePriority,
   onRequestCompletionChange,
+  onRequestMarkInactive,
+  onRequestMarkActive,
   showActions = true,
   emptyMessage,
   onRowClick,
@@ -88,6 +92,8 @@ export function SubprojectsMobileList({
                 onRequestDelete={onRequestDelete}
                 onTogglePriority={onTogglePriority}
                 onRequestCompletionChange={onRequestCompletionChange}
+                onRequestMarkInactive={onRequestMarkInactive}
+                onRequestMarkActive={onRequestMarkActive}
                 workflowProgressInputIndex={workflowProgressInputIndex}
                 isWorkflowProgressLoading={isWorkflowProgressLoading}
                 bulkSelection={bulkSelection}

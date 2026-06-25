@@ -350,6 +350,10 @@
   color: #dc2626;
 }
 
+.statusCircleIcon_inactive {
+  color: var(--color-text-muted, #94a3b8);
+}
+
 :global([data-theme='dark']) .statusCircleIcon_priorityInactive,
 :global([data-theme='dark']) .statusCircleIcon_completeInactive {
   color: #64748b;
@@ -365,6 +369,10 @@
 
 :global([data-theme='dark']) .statusCircleIcon_incomplete {
   color: #f87171;
+}
+
+:global([data-theme='dark']) .statusCircleIcon_inactive {
+  color: #94a3b8;
 }
 
 .rowDeleteHeader {

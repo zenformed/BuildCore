@@ -1,5 +1,6 @@
 import type { CrmPriority, CrmProjectSummary } from './project';
 import { isCrmProjectComplete } from './projectCompletion';
+import { resolveCrmSubprojectListSortRank } from './subprojectStatus';
 
 /** True when the project is flagged priority (urgent). */
 export function isProjectPriorityUrgent(priority: CrmPriority): boolean {
@@ -35,11 +36,9 @@ export function projectMatchesPriorityListFilter(
   return false;
 }
 
-/** Dashboard / pipeline list order: urgent, then normal, then complete. */
+/** Dashboard / pipeline list order: urgent, normal, completed, inactive. */
 export function getCrmProjectListSortRank(project: CrmProjectSummary): number {
-  if (isCrmProjectComplete(project)) return 2;
-  if (isProjectPriorityUrgent(project.priority)) return 0;
-  return 1;
+  return resolveCrmSubprojectListSortRank(project);
 }
 
 export function compareCrmProjectsForListSort(

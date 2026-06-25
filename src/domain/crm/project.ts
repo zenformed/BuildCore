@@ -10,6 +10,7 @@ import type { PipelineStageSlug } from './pipelineStage';
 import type { CrmTeamMemberRef } from './teamMember';
 import type { CrmIndustry } from './industry';
 import type { CrmWorkflowTask } from './workflowTask';
+import type { CrmInactiveReason, CrmSubprojectStatus } from './subprojectStatus';
 
 export type CrmPriority = 'low' | 'normal' | 'high' | 'urgent';
 
@@ -43,6 +44,12 @@ export type CrmProjectSummary = {
   readonly primaryPhotoPath: string | null;
   /** Permanent random token for public lead URLs; never derived from slug or id. */
   readonly leadToken: string;
+  /** Subproject lifecycle status — urgent, normal, completed, or inactive. */
+  readonly subprojectStatus: CrmSubprojectStatus;
+  readonly inactiveReason: CrmInactiveReason | null;
+  readonly inactiveReasonCustom: string | null;
+  readonly inactiveAt: string | null;
+  readonly inactiveBy: CrmTeamMemberRef | null;
 };
 
 export type CrmStageProgress = {
