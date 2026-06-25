@@ -58,17 +58,17 @@ export function ProjectDetailHeader({
   const isInactive = isCrmProjectInactive(project);
   const isMobileLayout = useDashboardMobileLayout();
   const industryOrTrade = industryControl ?? tradeTypeControl;
-  const inactiveStatus = <ProjectDetailInactiveStatus project={project} />;
   const showMobileStageSummary =
     isMobileLayout &&
+    !isInactive &&
     mobileStageWorkflowTasks != null &&
     mobileStageCompletions != null;
 
   const titleRow = (
     <div className={styles.titleRow}>
-      {isInactive ? (
+      {isInactive && !isMobileLayout ? (
         <CrmProjectInactiveIcon ariaLabel={content.crm.table.inactiveBadge} />
-      ) : isComplete ? (
+      ) : !isInactive && isComplete ? (
         <CrmProjectCompleteIcon ariaLabel={content.crm.table.completionCheckAriaLabel} />
       ) : null}
       <h1 className={styles.title}>{project.client.name}</h1>
@@ -107,17 +107,18 @@ export function ProjectDetailHeader({
               />
               <div className={styles.titleBlockMobileText}>
                 {titleRow}
-                <div className={styles.detailHeaderIndustryRow}>
-                  {industryOrTrade}
-                  {inactiveStatus}
-                </div>
+                <div className={styles.detailHeaderIndustryRow}>{industryOrTrade}</div>
               </div>
             </div>
             {assigneeControl ? (
               <div className={styles.titleBlockMobileAside}>{assigneeControl}</div>
             ) : null}
           </div>
-          {showMobileStageSummary ? (
+          {isInactive ? (
+            <div className={styles.detailHeaderMobileInactiveBanner}>
+              <ProjectDetailInactiveStatus project={project} variant="mobileBanner" />
+            </div>
+          ) : showMobileStageSummary ? (
             <ProjectDetailMobileHeaderProgress
               workflowTasks={mobileStageWorkflowTasks}
               manualStageCompletions={mobileStageCompletions}
