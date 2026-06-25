@@ -11,25 +11,23 @@ function DemoBannerChevron({ expanded }: { readonly expanded: boolean }): ReactE
     <svg
       className={styles.demoBannerToggleIcon}
       viewBox="0 0 20 20"
-      width={16}
-      height={16}
       aria-hidden
     >
       {expanded ? (
         <path
-          d="M5 7.5 10 12.5 15 7.5"
+          d="M5 12.5 10 7.5 15 12.5"
           fill="none"
           stroke="currentColor"
-          strokeWidth="1.75"
+          strokeWidth="1.65"
           strokeLinecap="round"
           strokeLinejoin="round"
         />
       ) : (
         <path
-          d="M5 12.5 10 7.5 15 12.5"
+          d="M5 7.5 10 12.5 15 7.5"
           fill="none"
           stroke="currentColor"
-          strokeWidth="1.75"
+          strokeWidth="1.65"
           strokeLinecap="round"
           strokeLinejoin="round"
         />
@@ -56,38 +54,46 @@ export function DemoBanner(): ReactElement {
   }, []);
 
   return (
-    <div
-      className={`${styles.demoBanner} ${collapsed ? styles.demoBannerCollapsed : ''}`}
-      role="contentinfo"
-      aria-label="Interactive demo footer"
-    >
-      <div className={styles.demoBannerContent} hidden={collapsed}>
-        <div className={styles.demoBannerCopy}>
-          <p className={styles.demoBannerTitle}>{copy.title}</p>
-          <p className={styles.demoBannerMessage}>{copy.message}</p>
+    <div className={styles.demoBannerDock}>
+      {collapsed ? (
+        <div className={styles.demoBannerCollapsedRail} aria-hidden />
+      ) : (
+        <div
+          id="demo-banner-panel"
+          className={styles.demoBanner}
+          role="banner"
+          aria-label="Interactive demo notice"
+        >
+          <div className={styles.demoBannerContent}>
+            <div className={styles.demoBannerCopy}>
+              <p className={styles.demoBannerTitle}>{copy.title}</p>
+              <p className={styles.demoBannerMessage}>{copy.message}</p>
+            </div>
+            <div className={styles.demoBannerActions}>
+              <button type="button" className={styles.demoBannerButton} onClick={handleCloseDemo}>
+                {copy.closeDemo}
+              </button>
+              <button type="button" className={styles.demoBannerButton} onClick={resetDemo}>
+                {copy.resetDemo}
+              </button>
+              <button
+                type="button"
+                className={styles.demoBannerButtonSecondary}
+                onClick={handleStartFreeTrial}
+              >
+                {copy.startFreeTrial}
+              </button>
+            </div>
+          </div>
         </div>
-        <div className={styles.demoBannerActions}>
-          <button type="button" className={styles.demoBannerButton} onClick={handleCloseDemo}>
-            {copy.closeDemo}
-          </button>
-          <button type="button" className={styles.demoBannerButton} onClick={resetDemo}>
-            {copy.resetDemo}
-          </button>
-          <button
-            type="button"
-            className={styles.demoBannerButtonSecondary}
-            onClick={handleStartFreeTrial}
-          >
-            {copy.startFreeTrial}
-          </button>
-        </div>
-      </div>
+      )}
 
       <button
         type="button"
         className={styles.demoBannerToggle}
         onClick={toggleCollapsed}
         aria-expanded={!collapsed}
+        aria-controls="demo-banner-panel"
         aria-label={collapsed ? copy.expandBanner : copy.collapseBanner}
       >
         <DemoBannerChevron expanded={!collapsed} />
