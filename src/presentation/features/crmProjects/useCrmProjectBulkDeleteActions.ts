@@ -3,7 +3,7 @@
 import { useCallback, useState } from 'react';
 import type { CrmProjectSummary } from '@/domain/crm';
 import { bulkArchiveCrmProjects } from '@/application/use-cases/crm/bulkArchiveCrmProjects';
-import { getCrmDataSource } from '@/infrastructure/config/crmDataSource';
+import { canMutateCrmProjectsInCurrentRuntime } from '@/infrastructure/demo/canMutateCrmProjectsInCurrentRuntime';
 import { CrmWriteNotAvailableError } from '@/infrastructure/crm/errors';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
 import { crmRepositories } from '@/shared/di/container';
@@ -24,7 +24,7 @@ export function useCrmProjectBulkDeleteActions(input: {
     async (projects: readonly CrmProjectSummary[]): Promise<boolean> => {
       if (projects.length === 0) return false;
 
-      if (getCrmDataSource() !== 'api') {
+      if (!canMutateCrmProjectsInCurrentRuntime()) {
         input.onError(deleteCopy.mockDisabledMessage);
         return false;
       }

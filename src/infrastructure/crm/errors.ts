@@ -1,7 +1,7 @@
 /** Thrown when writes are invoked while CRM mock data source is active. */
 export class CrmWriteNotAvailableError extends Error {
   constructor(
-    message = 'CRM writes require NEXT_PUBLIC_CRM_DATA_SOURCE=api.'
+    message = 'This action is not available in the current environment.'
   ) {
     super(message);
     this.name = 'CrmWriteNotAvailableError';
@@ -10,7 +10,7 @@ export class CrmWriteNotAvailableError extends Error {
 
 /** @deprecated Use CrmWriteNotAvailableError */
 export class CrmCreateNotAvailableError extends CrmWriteNotAvailableError {
-  constructor(message = 'Creating projects requires NEXT_PUBLIC_CRM_DATA_SOURCE=api.') {
+  constructor(message = 'Project creation is not available in this environment.') {
     super(message);
     this.name = 'CrmCreateNotAvailableError';
   }

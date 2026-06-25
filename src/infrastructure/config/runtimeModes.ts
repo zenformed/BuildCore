@@ -1,4 +1,5 @@
 import { env } from './env';
+import { isDemoRuntimeClient } from '@/infrastructure/runtime/buildCoreRuntime';
 
 /**
  * Central runtime mode resolver used by both client and server modules.
@@ -9,7 +10,11 @@ export const runtimeModes = {
   isSaasMode(): boolean {
     return env.isSaasMode;
   },
-  /** Demo mode is client-only by existing env semantics (false on server). */
+  /** Interactive demo runtime (client pathname/host or deploy flag). */
+  isDemoRuntime(): boolean {
+    return isDemoRuntimeClient();
+  },
+  /** @deprecated Legacy client flag — prefer `isDemoRuntime()`. */
   isDemoMode(): boolean {
     return env.isDemoMode;
   },

@@ -2,8 +2,10 @@
 
 import type { ReactElement } from 'react';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
+import { runtimeModes } from '@/infrastructure/config/runtimeModes';
 import { useBuildCoreTeamsPage } from '@/presentation/features/buildCoreTeams/useBuildCoreTeamsPage';
 import { BuildCoreTeamsAccessGate } from './BuildCoreTeamsAccessGate';
+import { DemoTeamsViewOnlyBanner } from './DemoTeamsViewOnlyBanner';
 import { TeamsFolderTabs } from './TeamsFolderTabs';
 import projectStyles from '../CrmProjectDetail/ProjectDetail.module.css';
 import styles from './BuildCoreTeams.module.css';
@@ -11,6 +13,7 @@ import styles from './BuildCoreTeams.module.css';
 function BuildCoreTeamsDashboardContent(): ReactElement {
   const { model, isLoading, loadError } = useBuildCoreTeamsPage();
   const copy = content.teams;
+  const isDemoRuntime = runtimeModes.isDemoRuntime();
 
   if (isLoading) {
     return (
@@ -51,7 +54,11 @@ function BuildCoreTeamsDashboardContent(): ReactElement {
         </header>
 
         <div className={styles.pageBody}>
-          <p className={styles.architectureNote}>{copy.architectureNote}</p>
+          {isDemoRuntime ? (
+            <DemoTeamsViewOnlyBanner />
+          ) : (
+            <p className={styles.architectureNote}>{copy.architectureNote}</p>
+          )}
           <TeamsFolderTabs model={model} />
         </div>
       </div>

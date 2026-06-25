@@ -3,6 +3,8 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { CrmApiError } from '@/infrastructure/crm/api/crmApiClient';
 import { sendCommunication } from '@/infrastructure/crm/api/sendCommunication';
+import { DEMO_COMMUNICATION_SIMULATED_MESSAGE } from '@/infrastructure/demo/demoSafetyPolicy';
+import { isDemoRuntimeClient } from '@/infrastructure/runtime/buildCoreRuntime';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
 import {
   communicationRecipientOptionToSendRecipient,
@@ -136,7 +138,10 @@ export function useSendAttachmentDialog(options: UseSendAttachmentDialogOptions 
         context: dialogContext.context,
       });
 
-      setFeedback({ kind: 'success', message: copy.success });
+      setFeedback({
+        kind: 'success',
+        message: isDemoRuntimeClient() ? DEMO_COMMUNICATION_SIMULATED_MESSAGE : copy.success,
+      });
       options.onSent?.();
     } catch (err) {
       const messageText =

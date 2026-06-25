@@ -12,9 +12,10 @@ import {
 } from '@/domain/crm/projectTemplateDraft';
 import { createCrmProject } from '@/application/use-cases/crm';
 import { getCrmDataSource } from '@/infrastructure/config/crmDataSource';
+import { canMutateCrmProjectsInCurrentRuntime } from '@/infrastructure/demo/canMutateCrmProjectsInCurrentRuntime';
 import { CrmCreateNotAvailableError } from '@/infrastructure/crm/errors';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
-import { buildCoreDashboardNavigation as nav } from '@/platform/navigation/buildCoreDashboardNavigation';
+import { useBuildCoreNavigation } from '@/presentation/providers/BuildCoreNavigationProvider';
 import {
   defaultCreateCrmProjectFormState,
   validateCreateCrmProjectForm,
@@ -48,6 +49,7 @@ export function CrmProjectDraftRow({
   onCancel,
 }: CrmProjectDraftRowProps): ReactElement {
   const router = useRouter();
+  const nav = useBuildCoreNavigation();
   const dash = useBuildCoreDashboardContext();
   const { organizationMembershipContext } = useSaaSProfile();
   const assignmentCatalog = useAssignmentIdentityCatalog();
@@ -55,6 +57,7 @@ export function CrmProjectDraftRow({
   const { getCatalog } = useBuildCorePipelineStages();
   const catalog = getCatalog('project');
   const templateCopy = getProjectTemplateScopeCopy('project').load;
+  const canMutateProjects = canMutateCrmProjectsInCurrentRuntime();
   const isApiSource = getCrmDataSource() === 'api';
   const canManageTemplates = useMemo(
     () => canManageBuildCoreProjectTemplates(organizationMembershipContext?.role),
@@ -96,7 +99,7 @@ export function CrmProjectDraftRow({
 
   const handleSave = useCallback(async () => {
     setError(null);
-    if (!isApiSource) {
+    if (!canMutateProjects) {
       setError(create.mockDisabledMessage);
       return;
     }
@@ -130,10 +133,11 @@ export function CrmProjectDraftRow({
       setSaving(false);
     }
   }, [
+    canMutateProjects,
     create.mockDisabledMessage,
     create.submitFailed,
     form,
-    isApiSource,
+    nav.routes.projectDetail,
     onSaved,
     router,
     templateDraft,

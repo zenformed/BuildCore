@@ -152,6 +152,21 @@ export const buildCoreDashboardContent = {
     aboutSectionBody:
       'Construction/trades CRM shell: SaaS auth, ZenformedCore profile/entitlement relay, and shared dashboard chrome from @zenformed/core.',
   },
+  demo: {
+    banner: {
+      title: 'Interactive Demo',
+      message: 'Changes stay inside this demo and never affect real data.',
+      closeDemo: 'Close Demo',
+      resetDemo: 'Reset Demo',
+      startFreeTrial: 'Start Free Trial',
+      pricingSectionId: 'buildcore-pricing',
+    },
+    shell: {
+      appLauncherDisabledTitle: 'App switching is disabled in the interactive demo.',
+      accountMenuDisabledTitle: 'Account settings are disabled in the interactive demo.',
+    },
+    exportDisabledMessage: 'Export is disabled in the interactive demo.',
+  },
   workflowStages: {
     breadcrumb: 'Organization / Workflow Stages',
     title: 'Workflow Stages',
@@ -175,6 +190,7 @@ export const buildCoreDashboardContent = {
     editStageAriaLabel: (name: string) => `Edit ${name}`,
     deleteStageAriaLabel: (name: string) => `Delete ${name}`,
     reservedStageDeleteHint: 'Complete is the terminal stage and cannot be deleted.',
+    reorderFailed: 'Could not reorder workflow stages. Please try again.',
   },
   workflowSettings: {
     breadcrumb: 'Organization / Workflow Settings',
@@ -273,6 +289,15 @@ export const buildCoreDashboardContent = {
       sectionLabel: 'Section',
       sectionAriaLabel: 'Team section',
     },
+    demo: {
+      viewOnlyBannerTitle: 'Team management is view-only in the interactive demo.',
+      viewOnlyBannerMessage:
+        'Start your own workspace to invite team members, assign roles, and collaborate with your team.',
+      startFreeTrial: 'Start Free Trial',
+      permissionsReadOnlyNote:
+        'Permission changes are view-only in the interactive demo.',
+      accessToggleDisabledTitle: 'BuildCore access cannot be changed in the interactive demo.',
+    },
     workflowTaskPermissions: {
       title: 'Workflow Task Permissions',
       hint: 'Control what each BuildCore role can do with workflow tasks.',
@@ -342,7 +367,7 @@ export const buildCoreDashboardContent = {
       submitFailed: 'Failed to create project. Please try again.',
       projectAddedSuccess: 'Project created.',
       mockDisabledMessage:
-        'Creating projects in the database requires NEXT_PUBLIC_CRM_DATA_SOURCE=api. Mock mode keeps existing demo data read-only.',
+        'Project creation is not available in this environment.',
       assigneeUnassigned: 'Unassigned',
       assigneeSelf: 'Assign to myself',
       fields: {
@@ -415,7 +440,7 @@ export const buildCoreDashboardContent = {
       failed: 'Failed to delete project. Try again.',
       notFound: 'Project not found.',
       mockDisabledMessage:
-        'Deleting projects in the database requires NEXT_PUBLIC_CRM_DATA_SOURCE=api. Mock mode keeps existing demo data read-only.',
+        'Project deletion is not available in this environment.',
       workflow: {
         title: 'Delete Project',
         itemLabel: 'project',

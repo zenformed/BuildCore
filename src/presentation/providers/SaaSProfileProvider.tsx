@@ -192,6 +192,9 @@ type SaaSProfileContextValue = {
 
 const SaaSProfileContext = createContext<SaaSProfileContextValue | null>(null);
 
+export { SaaSProfileContext };
+export type { SaaSProfileContextValue };
+
 function hasUsableAccessToken(session: Session | null): session is Session & { access_token: string } {
   return typeof session?.access_token === 'string' && session.access_token.length > 0;
 }

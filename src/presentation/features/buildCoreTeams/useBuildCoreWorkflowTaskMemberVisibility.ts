@@ -5,6 +5,7 @@ import {
   fetchBuildCoreWorkflowTaskMemberVisibilityBff,
   patchBuildCoreWorkflowTaskMemberVisibilityBff,
 } from '@/infrastructure/coreApi/buildCoreWorkflowTaskMemberVisibilityBff';
+import { runtimeModes } from '@/infrastructure/config/runtimeModes';
 import { useBuildCoreDashboardContext } from '@/presentation/providers/BuildCoreDashboardProvider';
 import { useSaaSProfile } from '@/presentation/hooks/useSaaSProfile';
 import { isBuildCoreTeamsManagerRole } from '@/domain/buildcore/memberRole';
@@ -35,7 +36,8 @@ export function useBuildCoreWorkflowTaskMemberVisibility(enabled: boolean): {
   const [isSaving, setIsSaving] = useState(false);
   const loadGenerationRef = useRef(0);
 
-  const canEdit = isBuildCoreTeamsManagerRole(organizationMembershipContext?.role);
+  const canEdit =
+    !runtimeModes.isDemoRuntime() && isBuildCoreTeamsManagerRole(organizationMembershipContext?.role);
 
   const applyResponse = useCallback(
     (next: {
@@ -52,6 +54,16 @@ export function useBuildCoreWorkflowTaskMemberVisibility(enabled: boolean): {
   const load = useCallback(
     async (options?: { background?: boolean }) => {
       if (!enabled) return;
+
+      if (runtimeModes.isDemoRuntime()) {
+        applyResponse({
+          onlyAssignedUserCanView: DEFAULT_BUILDCORE_WORKFLOW_TASK_ONLY_ASSIGNED_USER_CAN_VIEW,
+          memberRoleUserIds: [],
+        });
+        setLoadError(null);
+        setHasLoadedOnce(true);
+        return;
+      }
 
       const token = getAccessToken();
       if (!token) {
@@ -104,7 +116,7 @@ export function useBuildCoreWorkflowTaskMemberVisibility(enabled: boolean): {
 
   const toggleOnlyAssignedUserCanView = useCallback(
     async (nextValue: boolean) => {
-      if (!canEdit) return;
+      if (!canEdit || runtimeModes.isDemoRuntime()) return;
       const token = getAccessToken();
       if (!token) return;
 

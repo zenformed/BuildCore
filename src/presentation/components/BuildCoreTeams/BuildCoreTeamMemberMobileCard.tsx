@@ -1,9 +1,9 @@
 'use client';
 
 import type { ReactElement } from 'react';
-import { useState } from 'react';
 import { buildcoreAppDefinition } from '@/platform/appDefinitions/buildcore';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
+import { runtimeModes } from '@/infrastructure/config/runtimeModes';
 import type { BuildCoreTeamMemberRow } from '@/presentation/features/buildCoreTeams/buildCoreTeamsViewModel';
 import projectStyles from '../CrmProjectDetail/ProjectDetail.module.css';
 import styles from './BuildCoreTeams.module.css';
@@ -16,9 +16,10 @@ export function BuildCoreTeamMemberMobileCard({
   row,
 }: BuildCoreTeamMemberMobileCardProps): ReactElement {
   const copy = content.teams.table;
+  const demoCopy = content.teams.demo;
   const accessCopy = content.teams.accessStatus;
-  const buildCoreEnabledDefault = row.buildCoreAccessStatus === 'enabled';
-  const [buildCoreEnabled, setBuildCoreEnabled] = useState(buildCoreEnabledDefault);
+  const isDemoRuntime = runtimeModes.isDemoRuntime();
+  const buildCoreEnabled = row.buildCoreAccessStatus === 'enabled';
 
   return (
     <article className={`${projectStyles.card} ${styles.memberMobileCard}`} aria-label={row.name}>
@@ -53,9 +54,10 @@ export function BuildCoreTeamMemberMobileCard({
                 className={`${styles.permissionSwitch} ${
                   buildCoreEnabled ? styles.permissionSwitchOn : ''
                 }`}
+                disabled={isDemoRuntime}
+                title={isDemoRuntime ? demoCopy.accessToggleDisabledTitle : undefined}
                 aria-checked={buildCoreEnabled}
                 aria-label={`${copy.buildCoreAccessToggleAriaLabel}: ${buildCoreEnabled ? accessCopy.enabled : accessCopy.notConfigured}`}
-                onClick={() => setBuildCoreEnabled((current) => !current)}
               >
                 <span className={styles.permissionSwitchThumb} aria-hidden />
               </button>

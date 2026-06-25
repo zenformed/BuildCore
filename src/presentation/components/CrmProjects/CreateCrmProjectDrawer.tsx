@@ -5,9 +5,10 @@ import { useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createCrmProject } from '@/application/use-cases/crm';
 import { getCrmDataSource } from '@/infrastructure/config/crmDataSource';
+import { canMutateCrmProjectsInCurrentRuntime } from '@/infrastructure/demo/canMutateCrmProjectsInCurrentRuntime';
 import { CrmCreateNotAvailableError } from '@/infrastructure/crm/errors';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
-import { buildCoreDashboardNavigation as nav } from '@/platform/navigation/buildCoreDashboardNavigation';
+import { useBuildCoreNavigation } from '@/presentation/providers/BuildCoreNavigationProvider';
 import { getCrmProjectAssigneeOptions } from '@/presentation/features/crmProjects/crmProjectAssigneeOptions';
 import { useAssignmentIdentityCatalog } from '@/presentation/providers/AssignmentIdentityProvider';
 import { useBuildCoreDashboardContext } from '@/presentation/providers/BuildCoreDashboardProvider';
@@ -28,8 +29,10 @@ export type CreateCrmProjectDrawerProps = {
 
 export function CreateCrmProjectDrawer({ open, onClose }: CreateCrmProjectDrawerProps): ReactElement | null {
   const router = useRouter();
+  const nav = useBuildCoreNavigation();
   const dash = useBuildCoreDashboardContext();
   const assignmentCatalog = useAssignmentIdentityCatalog();
+  const canMutateProjects = canMutateCrmProjectsInCurrentRuntime();
   const isApiSource = getCrmDataSource() === 'api';
   const create = content.crm.create;
 
@@ -56,7 +59,7 @@ export function CreateCrmProjectDrawer({ open, onClose }: CreateCrmProjectDrawer
       e.preventDefault();
       setError(null);
 
-      if (!isApiSource) {
+      if (!canMutateProjects) {
         setError(create.mockDisabledMessage);
         return;
       }
@@ -84,7 +87,7 @@ export function CreateCrmProjectDrawer({ open, onClose }: CreateCrmProjectDrawer
         setSaving(false);
       }
     },
-    [form, isApiSource, onClose, router, create.mockDisabledMessage, create.submitFailed]
+    [form, canMutateProjects, onClose, router, create.mockDisabledMessage, create.submitFailed]
   );
 
   if (!open) return null;
@@ -119,7 +122,7 @@ export function CreateCrmProjectDrawer({ open, onClose }: CreateCrmProjectDrawer
         </div>
 
         <div className={shellStyles.settingsContent}>
-          {!isApiSource ? <p className={styles.notice}>{create.mockDisabledMessage}</p> : null}
+          {!canMutateProjects ? <p className={styles.notice}>{create.mockDisabledMessage}</p> : null}
 
           <form onSubmit={(e) => void handleSubmit(e)}>
             <CreateCrmProjectFormFields
@@ -135,7 +138,7 @@ export function CreateCrmProjectDrawer({ open, onClose }: CreateCrmProjectDrawer
               <button type="button" className={styles.cancelButton} onClick={onClose} disabled={saving}>
                 {create.cancel}
               </button>
-              <button type="submit" className={styles.submitButton} disabled={saving || !isApiSource}>
+              <button type="submit" className={styles.submitButton} disabled={saving || !canMutateProjects}>
                 {saving ? create.submitting : create.submit}
               </button>
             </div>

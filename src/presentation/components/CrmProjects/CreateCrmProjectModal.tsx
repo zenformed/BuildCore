@@ -21,10 +21,10 @@ import type { BuildCoreProjectTemplateScope } from '@/domain/crm/projectTemplate
 import { createCrmProject, updateCrmProject } from '@/application/use-cases/crm';
 
 import { getCrmDataSource } from '@/infrastructure/config/crmDataSource';
+import { canMutateCrmProjectsInCurrentRuntime } from '@/infrastructure/demo/canMutateCrmProjectsInCurrentRuntime';
 import { CrmCreateNotAvailableError } from '@/infrastructure/crm/errors';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
-
-import { buildCoreDashboardNavigation as nav } from '@/platform/navigation/buildCoreDashboardNavigation';
+import { useBuildCoreNavigation } from '@/presentation/providers/BuildCoreNavigationProvider';
 
 import {
 
@@ -128,6 +128,7 @@ export function CreateCrmProjectModal({
 }: CreateCrmProjectModalProps): ReactElement {
 
   const router = useRouter();
+  const nav = useBuildCoreNavigation();
 
   const dash = useBuildCoreDashboardContext();
 
@@ -135,6 +136,7 @@ export function CreateCrmProjectModal({
 
   const assignmentCatalog = useAssignmentIdentityCatalog();
 
+  const canMutateProjects = canMutateCrmProjectsInCurrentRuntime();
   const isApiSource = getCrmDataSource() === 'api';
 
   const isEditMode = mode === 'edit';
@@ -203,10 +205,15 @@ export function CreateCrmProjectModal({
 
     } else {
 
-      setForm(
+      const baseDefaults =
         parentProjectId != null && parentProjectForDefaults != null
           ? createSubprojectFormDefaultsFromParent(parentProjectForDefaults)
-          : defaultCreateCrmProjectFormState()
+          : defaultCreateCrmProjectFormState();
+
+      setForm(
+        canMutateProjects && dash.user?.id
+          ? { ...baseDefaults, assignedMemberId: dash.user.id }
+          : baseDefaults
       );
 
       setTemplateDraft(null);
@@ -221,7 +228,7 @@ export function CreateCrmProjectModal({
 
     setSaving(false);
 
-  }, [isEditMode, open, parentProjectForDefaults, parentProjectId, project]);
+  }, [canMutateProjects, dash.user?.id, isEditMode, open, parentProjectForDefaults, parentProjectId, project]);
 
 
 
@@ -259,7 +266,7 @@ export function CreateCrmProjectModal({
 
 
 
-      if (!isApiSource) {
+      if (!canMutateProjects) {
 
         setError(create.mockDisabledMessage);
 
@@ -418,7 +425,7 @@ export function CreateCrmProjectModal({
 
       form,
 
-      isApiSource,
+      canMutateProjects,
 
       isEditMode,
 
@@ -462,7 +469,7 @@ export function CreateCrmProjectModal({
 
             <div className={styles.formScroll}>
 
-              {!isApiSource ? <p className={formStyles.notice}>{create.mockDisabledMessage}</p> : null}
+              {!canMutateProjects ? <p className={formStyles.notice}>{create.mockDisabledMessage}</p> : null}
 
               <CreateCrmProjectFormFields
                 form={form}
@@ -495,7 +502,7 @@ export function CreateCrmProjectModal({
 
               </button>
 
-              <button type="submit" className={formStyles.submitButton} disabled={saving || !isApiSource}>
+              <button type="submit" className={formStyles.submitButton} disabled={saving || !canMutateProjects}>
 
                 {saving ? copy.submitting : copy.submit}
 

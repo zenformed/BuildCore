@@ -954,6 +954,14 @@
   opacity: 0.9;
 }
 
+.accountMenuTriggerDecorative {
+  cursor: default;
+}
+
+.accountMenuTriggerDecorative:hover {
+  opacity: 1;
+}
+
 .accountMenuTriggerImg {
   width: 40px;
   height: 40px;

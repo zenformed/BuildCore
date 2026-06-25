@@ -2,7 +2,8 @@
 
 import { useCallback, useEffect, useMemo, type ReactElement, type ReactNode } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
-import { buildCoreDashboardNavigation as nav } from '@/platform/navigation/buildCoreDashboardNavigation';
+import { useBuildCoreNavigation } from '@/presentation/providers/BuildCoreNavigationProvider';
+import type { BuildCoreNavigation } from '@/platform/navigation/buildCoreNavigationTypes';
 import { isBuildCoreMemberRole } from '@/domain/buildcore/memberRole';
 import { resolveBuildCoreDashboardShellConfig } from '@/presentation/features/buildCoreDashboard/resolveBuildCoreDashboardShellConfig';
 import { useBuildCoreDashboardContext } from '@/presentation/providers/BuildCoreDashboardProvider';
@@ -19,13 +20,14 @@ export function BuildCorePersistentDashboardShell({
 }: BuildCorePersistentDashboardShellProps): ReactElement {
   const pathname = usePathname();
   const router = useRouter();
+  const nav = useBuildCoreNavigation();
   const dash = useBuildCoreDashboardContext();
   const { organizationMembershipContext } = useSaaSProfile();
   const isMemberRole = isBuildCoreMemberRole(organizationMembershipContext?.role);
 
   const shellConfig = useMemo(
-    () => resolveBuildCoreDashboardShellConfig(pathname),
-    [pathname]
+    () => resolveBuildCoreDashboardShellConfig(pathname, nav),
+    [nav, pathname]
   );
 
   const onSidebarSelect = useCallback(
@@ -51,7 +53,7 @@ export function BuildCorePersistentDashboardShell({
       }
       router.push(nav.routes.dashboard);
     },
-    [dash, router]
+    [dash, nav, router]
   );
 
   useEffect(() => {

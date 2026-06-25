@@ -27,6 +27,11 @@ import {
   SignOutIcon,
 } from '@/platform/icons/buildCoreDashboardShellIcons';
 import { useSaaSProfile } from '@/presentation/hooks/useSaaSProfile';
+import { runtimeModes } from '@/infrastructure/config/runtimeModes';
+import {
+  DemoDecorativeAccountAvatar,
+  DemoDisabledAppsLauncher,
+} from '@/presentation/components/Demo/DemoDisabledShellControls';
 import {
   buildBuildCoreAppIconNavMenuItems,
   type BuildCoreSidebarNavAccess,
@@ -88,6 +93,7 @@ export function BuildCoreDashboardHeader({
   onSidebarSelect,
   sidebarNavAccess,
 }: BuildCoreDashboardHeaderProps): ReactElement {
+  const isDemoRuntime = runtimeModes.isDemoRuntime();
   const { session, user: saasUser } = useSaaSProfile();
   const accountUser = useMemo(() => {
     if (user == null) return null;
@@ -117,6 +123,35 @@ export function BuildCoreDashboardHeader({
       )}
     />
   ) : null;
+
+  if (isDemoRuntime) {
+    return (
+      <header className={headerShellClassNames.header} data-zenformed-dashboard-header>
+        <div
+          className={headerShellClassNames.headerLeft}
+          data-zenformed-header-left
+          aria-hidden={appIconNavMenu == null ? true : undefined}
+        >
+          {appIconNavMenu}
+        </div>
+        {accountUser ? (
+          <div className={headerShellClassNames.headerRight} data-zenformed-header-right>
+            <>
+              <ThemeToggle />
+              <DemoDisabledAppsLauncher
+                classNames={appsLauncherClassNames}
+                appsIcon={<AppsIcon />}
+              />
+            </>
+            <DemoDecorativeAccountAvatar
+              classNames={headerShellClassNames}
+              user={accountUser}
+            />
+          </div>
+        ) : null}
+      </header>
+    );
+  }
 
   return (
     <ZenformedDashboardHeader

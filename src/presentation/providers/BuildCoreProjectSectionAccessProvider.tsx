@@ -69,7 +69,7 @@ export function BuildCoreProjectSectionAccessProvider({
   const hasLoadedOnceRef = useRef(false);
 
   const load = useCallback(async () => {
-    if (runtimeModes.useMockAuth()) {
+    if (runtimeModes.useMockAuth() || runtimeModes.isDemoRuntime()) {
       const full = fullAdminBuildCoreRoleAccess('owner');
       setPaymentAccess(full);
       setBudgetAccess(full);

@@ -4,7 +4,7 @@ import { useCallback, useState } from 'react';
 import type { CrmInactiveReason, CrmProjectSummary } from '@/domain/crm';
 import { markCrmProjectsInactive } from '@/application/use-cases/crm/markCrmProjectsInactive';
 import { markCrmProjectsActive } from '@/application/use-cases/crm/markCrmProjectsActive';
-import { getCrmDataSource } from '@/infrastructure/config/crmDataSource';
+import { canMutateCrmProjectsInCurrentRuntime } from '@/infrastructure/demo/canMutateCrmProjectsInCurrentRuntime';
 import { CrmWriteNotAvailableError } from '@/infrastructure/crm/errors';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
 import { crmRepositories } from '@/shared/di/container';
@@ -55,7 +55,7 @@ export function useCrmProjectInactiveActions(input: {
     }): Promise<boolean> => {
       if (markInactiveTarget == null) return false;
 
-      if (getCrmDataSource() !== 'api') {
+      if (!canMutateCrmProjectsInCurrentRuntime()) {
         input.onError(deleteCopy.mockDisabledMessage);
         return false;
       }
@@ -107,7 +107,7 @@ export function useCrmProjectInactiveActions(input: {
       const eligibleProjects = projects.filter((project) => project.subprojectStatus === 'inactive');
       if (eligibleProjects.length === 0) return false;
 
-      if (getCrmDataSource() !== 'api') {
+      if (!canMutateCrmProjectsInCurrentRuntime()) {
         input.onError(deleteCopy.mockDisabledMessage);
         return false;
       }

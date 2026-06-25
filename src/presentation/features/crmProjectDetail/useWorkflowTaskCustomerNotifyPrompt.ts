@@ -4,6 +4,8 @@ import { useCallback, useEffect, useState } from 'react';
 import type { CrmContact, CrmWorkflowTask } from '@/domain/crm';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
 import { CrmApiError } from '@/infrastructure/crm/api/crmApiClient';
+import { DEMO_COMMUNICATION_SIMULATED_MESSAGE } from '@/infrastructure/demo/demoSafetyPolicy';
+import { isDemoRuntimeClient } from '@/infrastructure/runtime/buildCoreRuntime';
 import { notifyWorkflowTaskAssigned } from '@/infrastructure/crm/api/notifyWorkflowTaskAssigned';
 import { notifyWorkflowTaskCustomer } from '@/infrastructure/crm/api/notifyWorkflowTaskCustomer';
 import {
@@ -84,7 +86,10 @@ export function useWorkflowTaskAssignedNotifyPrompt(projectContact: CrmContact) 
       } else {
         await notifyWorkflowTaskAssigned(prompt.taskId);
       }
-      setFeedback({ kind: 'success', message: copy.success });
+      setFeedback({
+        kind: 'success',
+        message: isDemoRuntimeClient() ? DEMO_COMMUNICATION_SIMULATED_MESSAGE : copy.success,
+      });
     } catch (err) {
       const message =
         err instanceof CrmApiError && err.message.trim() ? err.message : copy.sendFailed;

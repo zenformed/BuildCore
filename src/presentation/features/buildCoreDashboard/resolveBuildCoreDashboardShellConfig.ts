@@ -1,4 +1,4 @@
-import { buildCoreDashboardNavigation as nav } from '@/platform/navigation/buildCoreDashboardNavigation';
+import type { BuildCoreNavigation } from '@/platform/navigation/buildCoreNavigationTypes';
 import type { BuildCoreSidebarNavId } from '@/presentation/components/DashboardShell/BuildCoreSidebar';
 
 export type BuildCoreDashboardShellConfig = {
@@ -6,7 +6,10 @@ export type BuildCoreDashboardShellConfig = {
   readonly title: string | null;
 };
 
-export function resolveBuildCoreDashboardShellConfig(pathname: string): BuildCoreDashboardShellConfig {
+export function resolveBuildCoreDashboardShellConfig(
+  pathname: string,
+  nav: BuildCoreNavigation
+): BuildCoreDashboardShellConfig {
   if (pathname === nav.routes.teams || pathname.startsWith(`${nav.routes.teams}/`)) {
     return {
       sidebarActiveId: 'teams',
@@ -31,7 +34,7 @@ export function resolveBuildCoreDashboardShellConfig(pathname: string): BuildCor
     };
   }
 
-  if (pathname.startsWith('/projects')) {
+  if (pathname.startsWith('/demo/projects') || pathname.startsWith('/projects')) {
     return {
       sidebarActiveId: 'projects',
       title: null,

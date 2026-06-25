@@ -17,6 +17,15 @@ export function invalidateSessionBlob(cacheKey: string): void {
   absentKeys.delete(cacheKey);
 }
 
+export function seedSessionBlob(cacheKey: string, blob: Blob): string {
+  const existing = blobByKey.get(cacheKey);
+  if (existing) URL.revokeObjectURL(existing);
+  const url = URL.createObjectURL(blob);
+  blobByKey.set(cacheKey, url);
+  absentKeys.delete(cacheKey);
+  return url;
+}
+
 export async function loadSessionBlob(
   cacheKey: string,
   fetchBlob: () => Promise<Blob | null>

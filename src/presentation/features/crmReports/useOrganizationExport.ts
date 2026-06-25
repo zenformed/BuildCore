@@ -11,6 +11,7 @@ import { renderOrganizationExportBlob } from '@/export/organization/buildOrganiz
 import { organizationExportFilename } from '@/export/organization/organizationExportFilename';
 import { getCrmDataSource } from '@/infrastructure/config/crmDataSource';
 import { downloadOrganizationExportFromApi } from '@/infrastructure/crm/api/downloadOrganizationExportFromApi';
+import { isDemoRuntimeClient } from '@/infrastructure/runtime/buildCoreRuntime';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
 import { useSaaSProfile } from '@/presentation/hooks/useSaaSProfile';
 import { downloadBlob } from '@/reports/export/downloadBlob';
@@ -18,6 +19,8 @@ import { canExportBuildCoreOrganizationData } from './buildCoreOrganizationExpor
 
 export type UseOrganizationExportResult = {
   readonly canExport: boolean;
+  readonly disabledInDemo: boolean;
+  readonly disabledReason: string | null;
   readonly isExporting: boolean;
   readonly exportOrganization: () => Promise<void>;
 };
@@ -28,16 +31,19 @@ export function useOrganizationExport(
   const { organizationMembershipContext } = useSaaSProfile();
   const [isExporting, setIsExporting] = useState(false);
   const isApiSource = getCrmDataSource() === 'api';
+  const disabledInDemo = isDemoRuntimeClient();
+  const disabledReason = disabledInDemo ? content.demo.exportDisabledMessage : null;
 
   const canExport = useMemo(
     () =>
+      !disabledInDemo &&
       canExportBuildCoreOrganizationData(organizationMembershipContext?.role) &&
       projects != null,
-    [organizationMembershipContext?.role, projects]
+    [disabledInDemo, organizationMembershipContext?.role, projects]
   );
 
   const exportOrganization = useCallback(async () => {
-    if (!canExport || isExporting || projects == null) return;
+    if (!canExport || isExporting || projects == null || disabledInDemo) return;
 
     setIsExporting(true);
     try {
@@ -62,10 +68,12 @@ export function useOrganizationExport(
     } finally {
       setIsExporting(false);
     }
-  }, [canExport, isApiSource, isExporting, projects]);
+  }, [canExport, disabledInDemo, isApiSource, isExporting, projects]);
 
   return {
     canExport,
+    disabledInDemo,
+    disabledReason,
     isExporting,
     exportOrganization,
   };

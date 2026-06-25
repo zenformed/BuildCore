@@ -4,6 +4,7 @@ import { useCallback, useMemo, useState } from 'react';
 import type { CrmProjectDetail } from '@/domain/crm';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
 import { useBranding } from '@/presentation/hooks/useBranding';
+import { isDemoRuntimeClient } from '@/infrastructure/runtime/buildCoreRuntime';
 import { listAvailableReportYears } from '@/reports/calculations/listAvailableReportYears';
 import { exportCrmReportsPdf } from '@/reports/export/exportCrmReportsPdf';
 import { exportCrmReportsSummaryPdf } from '@/reports/export/exportCrmReportsSummaryPdf';
@@ -20,6 +21,8 @@ export type UseCrmReportsPdfExportResult = {
   readonly exportCurrentReport: () => Promise<void>;
   readonly exportYear: (year: number) => Promise<void>;
   readonly canExport: boolean;
+  readonly disabledInDemo: boolean;
+  readonly disabledReason: string | null;
 };
 
 export function useCrmReportsPdfExport(
@@ -29,6 +32,8 @@ export function useCrmReportsPdfExport(
   const { shopName } = useBranding();
   const [exportingTarget, setExportingTarget] = useState<ReportsPdfExportTarget | null>(null);
   const currentYear = new Date().getFullYear();
+  const disabledInDemo = isDemoRuntimeClient();
+  const disabledReason = disabledInDemo ? content.demo.exportDisabledMessage : null;
 
   const availableYears = useMemo(() => {
     if (projects == null || projects.length === 0) return [currentYear] as const;
@@ -36,7 +41,7 @@ export function useCrmReportsPdfExport(
   }, [currentYear, projects]);
 
   const exportCurrentReport = useCallback(async () => {
-    if (exportingTarget != null || projects == null || projects.length === 0) return;
+    if (disabledInDemo || exportingTarget != null || projects == null || projects.length === 0) return;
     setExportingTarget({ kind: 'current' });
     try {
       await exportCrmReportsSummaryPdf(projects, {
@@ -49,11 +54,11 @@ export function useCrmReportsPdfExport(
     } finally {
       setExportingTarget(null);
     }
-  }, [exportingTarget, period, projects, shopName]);
+  }, [disabledInDemo, exportingTarget, period, projects, shopName]);
 
   const exportYear = useCallback(
     async (year: number) => {
-      if (exportingTarget != null || projects == null || projects.length === 0) return;
+      if (disabledInDemo || exportingTarget != null || projects == null || projects.length === 0) return;
       setExportingTarget({ kind: 'year', year });
       try {
         await exportCrmReportsPdf(projects, {
@@ -67,7 +72,7 @@ export function useCrmReportsPdfExport(
         setExportingTarget(null);
       }
     },
-    [exportingTarget, projects, shopName]
+    [disabledInDemo, exportingTarget, projects, shopName]
   );
 
   return {
@@ -76,6 +81,8 @@ export function useCrmReportsPdfExport(
     exportingTarget,
     exportCurrentReport,
     exportYear,
-    canExport: projects != null && projects.length > 0,
+    canExport: !disabledInDemo && projects != null && projects.length > 0,
+    disabledInDemo,
+    disabledReason,
   };
 }

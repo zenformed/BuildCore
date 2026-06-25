@@ -1,5 +1,5 @@
 import type { CrmRepositories } from '@/application/ports/crm';
-import { getCrmDataSource } from '@/infrastructure/config/crmDataSource';
+import { getCrmDataSource, type CrmDataSource } from '@/infrastructure/config/crmDataSource';
 import {
   ApiCrmAccountabilityRepository,
   ApiCrmBudgetRepository,
@@ -22,6 +22,7 @@ import {
 import { MockCrmReportsRepository } from '@/infrastructure/crm/mock/MockCrmReportsRepository';
 
 let cached: CrmRepositories | null = null;
+let cachedSource: CrmDataSource | null = null;
 
 function createMockCrmRepositories(): CrmRepositories {
   return {
@@ -59,8 +60,16 @@ function createCrmRepositories(): CrmRepositories {
 
 /** Singleton CRM repository bag for hooks and use cases. */
 export function getCrmRepositories(): CrmRepositories {
-  if (cached == null) {
+  const source = getCrmDataSource();
+  if (cached == null || cachedSource !== source) {
     cached = createCrmRepositories();
+    cachedSource = source;
   }
   return cached;
+}
+
+/** Clears the repository singleton (demo reset / runtime transitions). */
+export function resetCrmRepositoriesCache(): void {
+  cached = null;
+  cachedSource = null;
 }

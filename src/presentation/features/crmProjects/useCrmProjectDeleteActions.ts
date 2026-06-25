@@ -3,7 +3,7 @@
 import { useCallback, useState } from 'react';
 import type { CrmProjectSummary } from '@/domain/crm';
 import { archiveCrmProject } from '@/application/use-cases/crm/archiveCrmProject';
-import { getCrmDataSource } from '@/infrastructure/config/crmDataSource';
+import { canMutateCrmProjectsInCurrentRuntime } from '@/infrastructure/demo/canMutateCrmProjectsInCurrentRuntime';
 import { CrmWriteNotAvailableError } from '@/infrastructure/crm/errors';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
 import { crmRepositories } from '@/shared/di/container';
@@ -21,7 +21,7 @@ export function useCrmProjectDeleteActions(input: {
 
   const deleteProject = useCallback(
     async (project: CrmProjectSummary): Promise<boolean> => {
-      if (getCrmDataSource() !== 'api') {
+      if (!canMutateCrmProjectsInCurrentRuntime()) {
         input.onError(deleteCopy.mockDisabledMessage);
         return false;
       }

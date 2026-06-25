@@ -5,13 +5,10 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 import type { CrmProjectSummary } from '@/domain/crm';
 import { isBuildCoreMemberRole } from '@/domain/buildcore/memberRole';
-import { buildCoreDashboardNavigation as nav } from '@/platform/navigation/buildCoreDashboardNavigation';
+import { useBuildCoreNavigation } from '@/presentation/providers/BuildCoreNavigationProvider';
 import { parseProjectDetailPathname } from '@/platform/navigation/parseProjectDetailPathname';
 import { resolveProjectDetailBreadcrumbCurrentLabel } from '@/platform/navigation/resolveProjectDetailBreadcrumbLabels';
-import {
-  buildProjectDetailRoutes,
-  resolveActiveProjectSlug,
-} from '@/platform/navigation/projectDetailRoutes';
+import { resolveActiveProjectSlug } from '@/platform/navigation/projectDetailRoutes';
 import { useCrmProjectDetail } from '@/presentation/features/crmProjectDetail/useCrmProjectDetail';
 import type { CrmProjectDetailState } from '@/presentation/features/crmProjectDetail/useCrmProjectDetail';
 import { resolveProjectDetailPageContext } from '@/presentation/features/crmProjectDetail/resolveProjectDetailPageContext';
@@ -31,12 +28,13 @@ type ReadyDetailState = Extract<CrmProjectDetailState, { status: 'ready' }>;
 export function ProjectDetailRouteLayout({ children }: ProjectDetailRouteLayoutProps): ReactElement {
   const pathname = usePathname();
   const router = useRouter();
+  const nav = useBuildCoreNavigation();
   const routeIdentity = useMemo(() => parseProjectDetailPathname(pathname), [pathname]);
   const { parentRouteSlug, subSlug } = routeIdentity;
   const activeProjectSlug = resolveActiveProjectSlug(routeIdentity);
   const routes = useMemo(
-    () => buildProjectDetailRoutes(routeIdentity),
-    [routeIdentity]
+    () => nav.routes.projectRoutes(routeIdentity),
+    [nav, routeIdentity]
   );
   const pageContext = useMemo(
     () => resolveProjectDetailPageContext(pathname, parentRouteSlug, subSlug),
@@ -57,7 +55,7 @@ export function ProjectDetailRouteLayout({ children }: ProjectDetailRouteLayoutP
 
   const goToProjects = useCallback(() => {
     router.push(nav.routes.dashboard);
-  }, [router]);
+  }, [nav.routes.dashboard, router]);
 
   const goToProject = useCallback(() => {
     if (!parentRouteSlug) return;
@@ -105,6 +103,8 @@ export function ProjectDetailRouteLayout({ children }: ProjectDetailRouteLayoutP
   }, [
     detailState,
     isRefreshing,
+    nav.routes.dashboard,
+    nav.routes.projectDetail,
     pageContext,
     parentProject,
     parentRouteSlug,

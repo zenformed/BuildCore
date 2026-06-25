@@ -9,6 +9,7 @@ import {
   getCrmProjectSummaryBySlugSync,
 } from '@/application/use-cases/crm';
 import { getCrmDataSource } from '@/infrastructure/config/crmDataSource';
+import { DEMO_RESET_EVENT } from '@/presentation/providers/DemoModeProvider';
 import { crmRepositories } from '@/shared/di/container';
 
 export type CrmProjectDetailState =
@@ -102,6 +103,14 @@ export function useCrmProjectDetail(
 
   useEffect(() => {
     void load({ silent: false });
+  }, [load]);
+
+  useEffect(() => {
+    const onDemoReset = () => {
+      void load({ silent: true });
+    };
+    window.addEventListener(DEMO_RESET_EVENT, onDemoReset);
+    return () => window.removeEventListener(DEMO_RESET_EVENT, onDemoReset);
   }, [load]);
 
   const refetch = useCallback(async () => {

@@ -1,7 +1,7 @@
 import type { CrmContact, CrmProjectDetail, CrmTeamMemberRef } from '@/domain/crm';
 import { isWorkflowTaskContactAssigneeId } from '@/domain/crm/workflowTaskAssignee';
 import { teamMemberRefFromContact } from '@/presentation/features/crmAssignment/assignmentIdentityModel';
-import { getMockCrmTeamMember } from '@/platform/mock/crm';
+import { resolveMockCrmTeamMember } from '@/platform/mock/crm';
 
 export function resolveMockWorkflowTaskAssignee(
   assignedMemberId: string | null,
@@ -11,7 +11,7 @@ export function resolveMockWorkflowTaskAssignee(
   if (isWorkflowTaskContactAssigneeId(assignedMemberId)) {
     return teamMemberRefFromContact(projectContact);
   }
-  return getMockCrmTeamMember(assignedMemberId);
+  return resolveMockCrmTeamMember(assignedMemberId);
 }
 
 export function resolveMockWorkflowTaskAssigneeFromDetail(

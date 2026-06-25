@@ -7,6 +7,7 @@ import type { SignInResult, SignUpResult } from '@/application/ports/IAuthServic
 import { waitForAuthSessionSync } from '@/infrastructure/auth/authSessionSync';
 import { buildPlatformLoginUrl } from '@/infrastructure/auth/buildPlatformAuthEntryUrl';
 import { useSaaSProfile } from '@/presentation/hooks/useSaaSProfile';
+import { useOptionalDemoMode } from '@/presentation/providers/DemoModeProvider';
 
 /**
  * Auth state returned by useAuth.
@@ -32,18 +33,21 @@ export interface UseAuthState {
  * @expandable Add refresh, tenant switch, or MFA methods.
  */
 export function useAuth(): UseAuthState {
+  const demoMode = useOptionalDemoMode();
   const { profile: saasProfile } = useSaaSProfile();
   const [user, setUser] = useState<User | null>(null);
   /** SaaS gate already bootstrapped profile — do not block dashboard on useAuth remount after tab focus. */
   const [isLoading, setIsLoading] = useState(() => saasProfile == null);
 
   useEffect(() => {
+    if (demoMode != null) return;
     if (saasProfile != null) {
       setIsLoading(false);
     }
-  }, [saasProfile]);
+  }, [demoMode, saasProfile]);
 
   useEffect(() => {
+    if (demoMode != null) return;
     let cancelled = false;
     getCurrentUserUseCase.execute().then((u) => {
       if (!cancelled) {
@@ -54,7 +58,7 @@ export function useAuth(): UseAuthState {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [demoMode]);
 
   const signIn = useCallback(async (email: string, password: string): Promise<SignInResult> => {
     const { authService } = await import('@/shared/di/container');
@@ -99,6 +103,10 @@ export function useAuth(): UseAuthState {
     },
     []
   );
+
+  if (demoMode != null) {
+    return demoMode.auth;
+  }
 
   return { user, isLoading, signIn, signUp, waitForSessionSync, signOut };
 }

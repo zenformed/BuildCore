@@ -15,7 +15,7 @@ import type {
   WorkflowTaskDocumentDownload,
 } from '@/domain/crm/documentMutations';
 import { CrmDocumentServiceError } from '@/infrastructure/crm/errors';
-import { getMockCrmTeamMember } from '@/platform/mock/crm';
+import { resolveMockCrmTeamMember } from '@/platform/mock/crm';
 import type { IDocumentStorageProvider } from '@/application/ports/storage/IDocumentStorageProvider';
 import {
   getEffectiveMockProjectDetailBySlug,
@@ -94,7 +94,7 @@ export async function mockUploadWorkflowTaskDocument(
     body: new Uint8Array(input.body),
   });
 
-  const uploadedBy = getMockCrmTeamMember(actorUserId) ?? {
+  const uploadedBy = resolveMockCrmTeamMember(actorUserId) ?? {
     id: actorUserId,
     displayName: 'You',
     initials: 'YO',

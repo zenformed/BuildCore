@@ -5,6 +5,8 @@ import {
   fetchBuildCoreRolePermissionsBff,
   patchBuildCoreRolePermissionBff,
 } from '@/infrastructure/coreApi/buildCoreRolePermissionsBff';
+import { runtimeModes } from '@/infrastructure/config/runtimeModes';
+import { buildDefaultBuildCoreRolePermissionsResponse } from '@/infrastructure/crm/server/buildCoreRolePermissionService';
 import { useBuildCoreDashboardContext } from '@/presentation/providers/BuildCoreDashboardProvider';
 import { useSaaSProfile } from '@/presentation/hooks/useSaaSProfile';
 import type {
@@ -63,6 +65,7 @@ export function useBuildCoreRolePermissions(
 
   const canEditRow = useCallback(
     (roleKey: BuildCorePermissionRoleKey) =>
+      !runtimeModes.isDemoRuntime() &&
       canEditBuildCorePermissionRoleRow(editableRoleKeys, roleKey),
     [editableRoleKeys]
   );
@@ -81,6 +84,19 @@ export function useBuildCoreRolePermissions(
   const load = useCallback(
     async (options?: { background?: boolean }) => {
       if (!enabled) return;
+
+      if (runtimeModes.isDemoRuntime()) {
+        applyServerResponse(
+          buildDefaultBuildCoreRolePermissionsResponse(
+            domain,
+            organizationMembershipContext?.role ?? 'owner'
+          )
+        );
+        setLoadError(null);
+        hasLoadedOnceRef.current = true;
+        setHasLoadedOnce(true);
+        return;
+      }
 
       const token = getAccessToken();
       if (!token) {
@@ -116,7 +132,7 @@ export function useBuildCoreRolePermissions(
         }
       }
     },
-    [applyServerResponse, domain, enabled, getAccessToken, membershipContextStatus]
+    [applyServerResponse, domain, enabled, getAccessToken, membershipContextStatus, organizationMembershipContext?.role]
   );
 
   useEffect(() => {
@@ -143,7 +159,7 @@ export function useBuildCoreRolePermissions(
       columnId: BuildCorePermissionColumnId,
       nextValue: boolean
     ) => {
-      if (draftRows == null || !canEditRow(roleKey)) return;
+      if (draftRows == null || !canEditRow(roleKey) || runtimeModes.isDemoRuntime()) return;
       const token = getAccessToken();
       if (!token) return;
 

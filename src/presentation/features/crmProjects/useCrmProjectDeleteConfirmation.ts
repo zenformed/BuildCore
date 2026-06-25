@@ -2,7 +2,7 @@
 
 import { useCallback, useState } from 'react';
 import type { CrmProjectSummary } from '@/domain/crm';
-import { getCrmDataSource } from '@/infrastructure/config/crmDataSource';
+import { canMutateCrmProjectsInCurrentRuntime } from '@/infrastructure/demo/canMutateCrmProjectsInCurrentRuntime';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
 import { useCrmProjectDeleteActions } from './useCrmProjectDeleteActions';
 
@@ -20,7 +20,7 @@ export function useCrmProjectDeleteConfirmation(input: {
 } {
   const [pendingDeleteProject, setPendingDeleteProject] = useState<CrmProjectSummary | null>(null);
   const deleteCopy = content.crm.delete;
-  const canDelete = getCrmDataSource() === 'api';
+  const canDelete = canMutateCrmProjectsInCurrentRuntime();
 
   const { deletingProjectId, deleteProject } = useCrmProjectDeleteActions(input);
 

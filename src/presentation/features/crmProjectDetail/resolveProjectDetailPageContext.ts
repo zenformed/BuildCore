@@ -4,6 +4,11 @@ function normalizePathname(pathname: string): string {
   return pathname.endsWith('/') && pathname.length > 1 ? pathname.slice(0, -1) : pathname;
 }
 
+function stripDemoPrefix(pathname: string): string {
+  const normalized = normalizePathname(pathname);
+  return normalized.startsWith('/demo/') ? normalized.slice('/demo'.length) : normalized;
+}
+
 function resolveSubPageContext(normalized: string, base: string): ProjectDetailPageContext {
   if (normalized === `${base}/tasks`) return 'workflowTasks';
   if (normalized === `${base}/financials` || normalized === `${base}/budget`) return 'financials';
@@ -21,7 +26,7 @@ export function resolveProjectDetailPageContext(
   const trimmedParent = parentRouteSlug.trim();
   if (!trimmedParent) return 'detail';
 
-  const normalized = normalizePathname(pathname);
+  const normalized = stripDemoPrefix(pathname);
   const parentBase = `/projects/${trimmedParent}`;
 
   if (subSlug?.trim()) {

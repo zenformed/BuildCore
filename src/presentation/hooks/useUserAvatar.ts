@@ -8,6 +8,7 @@ import type {
 } from '@zenformed/core/dashboard-shell';
 import type { User } from '@/domain/entities/User';
 import { deferNonCriticalWork } from '@/presentation/utils/deferNonCriticalWork';
+import { useOptionalDemoMode } from '@/presentation/providers/DemoModeProvider';
 import {
   loadSessionBlob,
   peekSessionBlobUrl,
@@ -20,6 +21,7 @@ export type UseUserAvatarState = UseZenformedUserAvatarResult;
  * Uses server avatarRevision for cache busting; session blob cache avoids duplicate fetches.
  */
 export function useUserAvatar(user: User | null, getAccessToken?: () => string | null): UseUserAvatarState {
+  const demoMode = useOptionalDemoMode();
   const identity: ZenformedUserAvatarIdentity | null = user?.email ? { email: user.email } : null;
   const options: UseZenformedUserAvatarOptions = {
     ...(getAccessToken ? { getAccessToken } : {}),
@@ -31,5 +33,11 @@ export function useUserAvatar(user: User | null, getAccessToken?: () => string |
         });
       }),
   };
-  return useZenformedUserAvatar(identity, options);
+  const zenformedAvatar = useZenformedUserAvatar(identity, options);
+
+  if (demoMode != null) {
+    return demoMode.avatar;
+  }
+
+  return zenformedAvatar;
 }

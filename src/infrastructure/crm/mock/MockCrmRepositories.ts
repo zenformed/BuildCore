@@ -57,7 +57,7 @@ import type {
 
 } from '@/domain/crm/budgetMutations';
 
-import { getMockCrmTeamMember } from '@/platform/mock/crm';
+import { getMockCrmTeamMember, resolveMockCrmTeamMember } from '@/platform/mock/crm';
 import { resolveMockWorkflowTaskAssigneeFromDetail } from '@/infrastructure/crm/mock/resolveMockWorkflowTaskAssignee';
 
 import { MOCK_CRM_PROJECT_DETAILS, MOCK_CRM_PROJECT_SUMMARIES } from '@/platform/mock/crm';
@@ -67,6 +67,21 @@ import { buildMockProjectWorkflowTaskStatusIndex } from '@/infrastructure/crm/mo
 import { buildMockProjectWorkflowProgressInputIndex } from '@/infrastructure/crm/mock/buildMockProjectWorkflowProgressInputIndex';
 
 import { CrmWriteNotAvailableError } from '@/infrastructure/crm/errors';
+import { DEMO_TEAM_MEMBER_ID } from '@/infrastructure/demo/demoProfileFixtures';
+import { isDemoRuntimeClient } from '@/infrastructure/runtime/buildCoreRuntime';
+import {
+  getEffectiveMockProjectDetailById,
+  getEffectiveMockProjectDetailBySlug,
+  listEffectiveMockProjectSummaries,
+  saveMockProjectDetail,
+} from './mockCrmMutationStore';
+import {
+  mockArchiveCrmProject,
+  mockBulkArchiveCrmProjects,
+  mockCreateCrmProject,
+  mockMarkCrmProjectsActive,
+  mockMarkCrmProjectsInactive,
+} from './mockCrmProjectCrud';
 import { getDocumentStorageProvider } from '@/infrastructure/storage/getDocumentStorageProvider';
 import {
   mockAssertWorkflowTaskCanBeMarkedDone,
@@ -81,16 +96,6 @@ import {
   mockListBudgetEntryDocuments,
   mockUploadBudgetEntryDocument,
 } from './mockCrmBudgetEntryDocumentMutations';
-
-import {
-
-  getEffectiveMockProjectDetailById,
-
-  getEffectiveMockProjectDetailBySlug,
-
-  saveMockProjectDetail,
-
-} from './mockCrmMutationStore';
 
 function notesPreview(notes: string | null, max = 120): string | null {
 
@@ -111,8 +116,7 @@ function notesPreview(notes: string | null, max = 120): string | null {
 function applyProjectUpdate(detail: CrmProjectDetail, input: UpdateCrmProjectInput): CrmProjectDetail {
 
   const assignedTo =
-
-    input.assignedMemberId != null ? getMockCrmTeamMember(input.assignedMemberId) : null;
+    input.assignedMemberId != null ? resolveMockCrmTeamMember(input.assignedMemberId) : null;
 
   const now = new Date().toISOString();
 
@@ -211,7 +215,7 @@ function applyProjectCompletion(
   actorId: string
 ): CrmProjectDetail {
   const now = new Date().toISOString();
-  const actor = getMockCrmTeamMember(actorId);
+  const actor = resolveMockCrmTeamMember(actorId) ?? getMockCrmTeamMember('tm-alex');
   const summary: CrmProjectSummary = {
     ...detail.summary,
     completedAt: complete ? now : null,
@@ -248,11 +252,7 @@ function applyProjectCompletion(
 export class MockCrmProjectsRepository implements ICrmProjectsRepository {
 
   listSummaries(options?: { rootsOnly?: boolean }): readonly CrmProjectSummary[] {
-    const rootsOnly = options?.rootsOnly !== false;
-    return MOCK_CRM_PROJECT_DETAILS.map((seed) => {
-      const effective = getEffectiveMockProjectDetailBySlug(seed.summary.slug);
-      return effective?.summary ?? seed.summary;
-    }).filter((summary) => !rootsOnly || summary.parentProjectId == null);
+    return listEffectiveMockProjectSummaries(options);
   }
 
   listChildSummaries(input: {
@@ -260,10 +260,9 @@ export class MockCrmProjectsRepository implements ICrmProjectsRepository {
     parentSlug: string;
   }): readonly CrmProjectSummary[] {
     void input.parentSlug;
-    return MOCK_CRM_PROJECT_DETAILS.map((seed) => {
-      const effective = getEffectiveMockProjectDetailBySlug(seed.summary.slug);
-      return effective?.summary ?? seed.summary;
-    }).filter((summary) => summary.parentProjectId === input.parentProjectId);
+    return listEffectiveMockProjectSummaries({ rootsOnly: false }).filter(
+      (summary) => summary.parentProjectId === input.parentProjectId
+    );
   }
 
   listPaymentBalanceTasks() {
@@ -291,26 +290,45 @@ export class MockCrmProjectsRepository implements ICrmProjectsRepository {
 
 
 
-  create(_input: CreateCrmProjectInput): Promise<CreateCrmProjectResult> {
-
-    return Promise.reject(new CrmWriteNotAvailableError());
-
+  create(input: CreateCrmProjectInput): Promise<CreateCrmProjectResult> {
+    if (!isDemoRuntimeClient()) {
+      return Promise.reject(new CrmWriteNotAvailableError());
+    }
+    return Promise.resolve(mockCreateCrmProject(input));
   }
 
-  archive(_slug: string): Promise<boolean> {
-    return Promise.reject(new CrmWriteNotAvailableError());
+  archive(slug: string): Promise<boolean> {
+    if (!isDemoRuntimeClient()) {
+      return Promise.reject(new CrmWriteNotAvailableError());
+    }
+    return Promise.resolve(mockArchiveCrmProject(slug));
   }
 
-  bulkArchive(_slugs: readonly string[]): Promise<import('@/domain/crm/bulkArchiveProjects').BulkArchiveCrmProjectsResult> {
-    return Promise.reject(new CrmWriteNotAvailableError());
+  bulkArchive(
+    slugs: readonly string[]
+  ): Promise<import('@/domain/crm/bulkArchiveProjects').BulkArchiveCrmProjectsResult> {
+    if (!isDemoRuntimeClient()) {
+      return Promise.reject(new CrmWriteNotAvailableError());
+    }
+    return Promise.resolve(mockBulkArchiveCrmProjects(slugs));
   }
 
-  markInactive(_input: import('@/domain/crm/subprojectStatus').MarkCrmProjectsInactiveInput): Promise<import('@/domain/crm/bulkMarkInactiveProjects').BulkMarkInactiveCrmProjectsResult> {
-    return Promise.reject(new CrmWriteNotAvailableError());
+  markInactive(
+    input: import('@/domain/crm/subprojectStatus').MarkCrmProjectsInactiveInput
+  ): Promise<import('@/domain/crm/bulkMarkInactiveProjects').BulkMarkInactiveCrmProjectsResult> {
+    if (!isDemoRuntimeClient()) {
+      return Promise.reject(new CrmWriteNotAvailableError());
+    }
+    return Promise.resolve(mockMarkCrmProjectsInactive(input));
   }
 
-  markActive(_input: import('@/domain/crm/subprojectStatus').MarkCrmProjectsActiveInput): Promise<import('@/domain/crm/bulkMarkActiveProjects').BulkMarkActiveCrmProjectsResult> {
-    return Promise.reject(new CrmWriteNotAvailableError());
+  markActive(
+    input: import('@/domain/crm/subprojectStatus').MarkCrmProjectsActiveInput
+  ): Promise<import('@/domain/crm/bulkMarkActiveProjects').BulkMarkActiveCrmProjectsResult> {
+    if (!isDemoRuntimeClient()) {
+      return Promise.reject(new CrmWriteNotAvailableError());
+    }
+    return Promise.resolve(mockMarkCrmProjectsActive(input));
   }
 
 }
@@ -690,7 +708,7 @@ export class MockCrmDocumentsRepository implements ICrmDocumentsRepository {
     return mockUploadWorkflowTaskDocument(
       getDocumentStorageProvider(),
       MOCK_ORG_ID,
-      'mock-user',
+      DEMO_TEAM_MEMBER_ID,
       input
     ).then((document) => ({ document }));
   }
@@ -728,7 +746,7 @@ export class MockCrmDocumentsRepository implements ICrmDocumentsRepository {
     return mockUploadBudgetEntryDocument(
       getDocumentStorageProvider(),
       MOCK_ORG_ID,
-      'mock-user',
+      DEMO_TEAM_MEMBER_ID,
       input
     ).then((document) => ({ document }));
   }
@@ -841,7 +859,7 @@ export class MockCrmBudgetRepository implements ICrmBudgetRepository {
 
     const assignee =
 
-      input.assignedMemberId != null ? getMockCrmTeamMember(input.assignedMemberId) : null;
+      input.assignedMemberId != null ? resolveMockCrmTeamMember(input.assignedMemberId) : null;
 
     const now = new Date().toISOString();
 
@@ -897,7 +915,7 @@ export class MockCrmBudgetRepository implements ICrmBudgetRepository {
 
           ? input.assignedMemberId
 
-            ? getMockCrmTeamMember(input.assignedMemberId)
+            ? resolveMockCrmTeamMember(input.assignedMemberId)
 
             : null
 

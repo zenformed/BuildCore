@@ -1,4 +1,5 @@
 import { crmApiPostJson } from '@/infrastructure/crm/api/crmApiClient';
+import { shouldSimulateDemoOperation } from '@/infrastructure/demo/demoSafetyPolicy';
 
 export type NotifyWorkflowTaskAssignedResponse = {
   readonly ok: true;
@@ -10,6 +11,10 @@ export type NotifyWorkflowTaskAssignedResponse = {
 export async function notifyWorkflowTaskAssigned(
   taskId: string
 ): Promise<NotifyWorkflowTaskAssignedResponse> {
+  if (shouldSimulateDemoOperation('customer-notification')) {
+    return { ok: true, emailDeliveryStatus: 'sent' };
+  }
+
   const encoded = encodeURIComponent(taskId);
   return crmApiPostJson<NotifyWorkflowTaskAssignedResponse>(
     `/api/crm/tasks/${encoded}/notify-assigned`,

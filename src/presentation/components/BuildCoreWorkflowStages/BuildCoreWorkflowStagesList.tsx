@@ -45,6 +45,7 @@ export function BuildCoreWorkflowStagesList({
     deleteStage,
     reorderStages,
     clearStatus,
+    notifyStageActionFailed,
   } = useBuildCoreWorkflowStagesPage(scope);
   const [editor, setEditor] = useState<StageEditorState>(null);
   const [draftLabel, setDraftLabel] = useState('');
@@ -98,6 +99,10 @@ export function BuildCoreWorkflowStagesList({
 
   const handleDrop = (targetStage: OrgPipelineStageRecord) => async (event: DragEvent<HTMLDivElement>): Promise<void> => {
     event.preventDefault();
+    if (!canManage) {
+      notifyStageActionFailed(copy.reorderFailed);
+      return;
+    }
     if (!isStageReorderable(targetStage)) return;
     const sourceStageId = event.dataTransfer.getData('text/plain') || draggingStageId;
     setDraggingStageId(null);
@@ -105,12 +110,18 @@ export function BuildCoreWorkflowStagesList({
     if (!sourceStageId || sourceStageId === targetStage.id) return;
 
     const sourceStage = reorderableStages.find((stage) => stage.id === sourceStageId);
-    if (sourceStage == null || !isStageReorderable(sourceStage)) return;
+    if (sourceStage == null || !isStageReorderable(sourceStage)) {
+      notifyStageActionFailed(copy.reorderFailed);
+      return;
+    }
 
     const currentIds = reorderableStages.map((stage) => stage.id);
     const fromIndex = currentIds.indexOf(sourceStageId);
     const toIndex = currentIds.indexOf(targetStage.id);
-    if (fromIndex < 0 || toIndex < 0) return;
+    if (fromIndex < 0 || toIndex < 0) {
+      notifyStageActionFailed(copy.reorderFailed);
+      return;
+    }
 
     const nextReorderableIds = [...currentIds];
     nextReorderableIds.splice(fromIndex, 1);
@@ -119,7 +130,10 @@ export function BuildCoreWorkflowStagesList({
     const nextIds = terminalStage
       ? [...nextReorderableIds, terminalStage.id]
       : nextReorderableIds;
-    await reorderStages(nextIds);
+    const ok = await reorderStages(nextIds);
+    if (!ok) {
+      notifyStageActionFailed(copy.reorderFailed);
+    }
   };
 
   const handleEditorConfirm = async (): Promise<void> => {

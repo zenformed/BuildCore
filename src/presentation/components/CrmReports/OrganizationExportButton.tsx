@@ -4,6 +4,7 @@ import type { ReactElement } from 'react';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
 import type { UseOrganizationExportResult } from '@/presentation/features/crmReports/useOrganizationExport';
 import projectStyles from '../CrmProjectDetail/ProjectDetail.module.css';
+import styles from './CrmReports.module.css';
 
 export type OrganizationExportButtonProps = {
   readonly exportState: UseOrganizationExportResult;
@@ -12,17 +13,17 @@ export type OrganizationExportButtonProps = {
 export function OrganizationExportButton({
   exportState,
 }: OrganizationExportButtonProps): ReactElement | null {
-  const { canExport, isExporting, exportOrganization } = exportState;
+  const { canExport, disabledInDemo, isExporting, exportOrganization } = exportState;
   const copy = content.reports.organizationExport;
 
-  if (!canExport) return null;
+  if (!canExport && !disabledInDemo) return null;
 
   return (
     <button
       type="button"
-      className={projectStyles.stageChip}
+      className={`${projectStyles.stageChip} ${styles.reportsMenuTrigger}`}
       aria-label={copy.buttonLabel}
-      disabled={isExporting}
+      disabled={disabledInDemo || isExporting}
       onClick={() => {
         void exportOrganization();
       }}

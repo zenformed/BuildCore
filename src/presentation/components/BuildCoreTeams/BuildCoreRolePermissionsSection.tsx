@@ -4,6 +4,7 @@ import { useId, useState, type ReactElement, type ReactNode } from 'react';
 import type { BuildCorePermissionDomain } from '@/domain/buildcore/rolePermissions';
 import { BUILDCORE_PERMISSION_COLUMNS } from '@/domain/buildcore/rolePermissions';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
+import { runtimeModes } from '@/infrastructure/config/runtimeModes';
 import { useBuildCoreRolePermissions } from '@/presentation/features/buildCoreTeams/useBuildCoreRolePermissions';
 import { useDashboardMobileLayout } from '@/presentation/features/crmProjects/useDashboardMobileLayout';
 import projectStyles from '../CrmProjectDetail/ProjectDetail.module.css';
@@ -38,10 +39,14 @@ function PermissionsSectionBody({
   footer?: ReactNode;
 }): ReactElement {
   const isMobileLayout = useDashboardMobileLayout();
+  const isDemoRuntime = runtimeModes.isDemoRuntime();
 
   return (
     <>
       {!isMobileLayout ? <p className={projectStyles.cardHelper}>{copy.hint}</p> : null}
+      {isDemoRuntime ? (
+        <p className={styles.readOnlyNote}>{content.teams.demo.permissionsReadOnlyNote}</p>
+      ) : null}
 
       {permissions.isLoading ? (
         <p className={styles.loading}>{copy.loading}</p>

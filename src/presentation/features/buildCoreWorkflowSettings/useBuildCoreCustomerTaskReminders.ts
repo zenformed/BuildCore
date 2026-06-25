@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   DEFAULT_BUILDCORE_ORGANIZATION_CUSTOMER_TASK_REMINDER_SETTINGS,
+  CUSTOMER_TASK_REMINDER_FREQUENCY_OPTIONS,
   type BuildCoreOrganizationCustomerTaskReminderSettings,
   type CustomerTaskReminderFrequencyMinutes,
 } from '@/domain/buildcore/buildCoreOrganizationSettings';
@@ -11,6 +12,7 @@ import {
   patchBuildCoreCustomerTaskRemindersBff,
   type BuildCoreCustomerTaskReminderFrequencyOption,
 } from '@/infrastructure/coreApi/buildCoreCustomerTaskRemindersBff';
+import { runtimeModes } from '@/infrastructure/config/runtimeModes';
 import { useBuildCoreDashboardContext } from '@/presentation/providers/BuildCoreDashboardProvider';
 import { useSaaSProfile } from '@/presentation/hooks/useSaaSProfile';
 import { organizationRoleCanAccessPipelineStagesAdmin } from '@/domain/buildcore/orgPipelineStages';
@@ -44,7 +46,9 @@ export function useBuildCoreCustomerTaskReminders(enabled: boolean): {
   const [isSaving, setIsSaving] = useState(false);
   const loadGenerationRef = useRef(0);
 
-  const canEdit = organizationRoleCanAccessPipelineStagesAdmin(organizationMembershipContext?.role);
+  const canEdit =
+    !runtimeModes.isDemoRuntime() &&
+    organizationRoleCanAccessPipelineStagesAdmin(organizationMembershipContext?.role);
 
   const applyResponse = useCallback(
     (next: {
@@ -65,6 +69,16 @@ export function useBuildCoreCustomerTaskReminders(enabled: boolean): {
   const load = useCallback(
     async (options?: { background?: boolean }) => {
       if (!enabled) return;
+
+      if (runtimeModes.isDemoRuntime()) {
+        applyResponse({
+          ...DEFAULT_BUILDCORE_ORGANIZATION_CUSTOMER_TASK_REMINDER_SETTINGS,
+          frequencyOptions: CUSTOMER_TASK_REMINDER_FREQUENCY_OPTIONS,
+        });
+        setLoadError(null);
+        setHasLoadedOnce(true);
+        return;
+      }
 
       const token = getAccessToken();
       if (!token) {
@@ -117,7 +131,7 @@ export function useBuildCoreCustomerTaskReminders(enabled: boolean): {
 
   const savePatch = useCallback(
     async (patch: Partial<BuildCoreOrganizationCustomerTaskReminderSettings>) => {
-      if (!canEdit) return;
+      if (!canEdit || runtimeModes.isDemoRuntime()) return;
       const token = getAccessToken();
       if (!token) return;
 

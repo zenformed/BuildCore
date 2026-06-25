@@ -8,7 +8,8 @@ import { isBuildCoreMemberRole } from '@/domain/buildcore/memberRole';
 import { canManageBuildCoreProjectTemplates } from '@/domain/buildcore/projectTemplateAccess';
 import { resolveProjectTemplateScopeForProject } from '@/domain/crm/projectTemplateScope';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
-import { buildCoreDashboardNavigation as nav } from '@/platform/navigation/buildCoreDashboardNavigation';
+import { useBuildCoreNavigation } from '@/presentation/providers/BuildCoreNavigationProvider';
+import { canMutateCrmProjectsInCurrentRuntime } from '@/infrastructure/demo/canMutateCrmProjectsInCurrentRuntime';
 import type { ProjectDetailRoutes } from '@/platform/navigation/projectDetailRoutes';
 import { useBuildCorePipelineStages } from '@/presentation/providers/BuildCorePipelineStagesProvider';
 import { useProjectCompletionToggle } from '@/presentation/features/crmProjectDetail/useProjectCompletionToggle';
@@ -78,6 +79,8 @@ function ProjectDetailShellBody({
   isMemberRole,
 }: ProjectDetailShellBodyProps): ReactElement {
   const router = useRouter();
+  const nav = useBuildCoreNavigation();
+  const canMutateProjects = canMutateCrmProjectsInCurrentRuntime();
   const [editProjectOpen, setEditProjectOpen] = useState(false);
   const [qrDialogOpen, setQrDialogOpen] = useState(false);
   const { organizationMembershipContext } = useSaaSProfile();
@@ -156,7 +159,7 @@ function ProjectDetailShellBody({
     onError: (message) => workspace.setToast({ kind: 'error', message }),
   });
   const lifecycleBusy = markingInactive || markingActive || markingActiveProjectId != null;
-  const subprojectLifecycleProps = isSubproject && isApiSource && !isMemberRole
+  const subprojectLifecycleProps = isSubproject && canMutateProjects && !isMemberRole
     ? {
         isSubproject: true,
         onRequestMarkInactive: () => {
@@ -244,7 +247,7 @@ function ProjectDetailShellBody({
   const priorityToggleProps = {
     priority: projectSummary.priority,
     priorityBusy: workspace.savingField === 'priority',
-    priorityDisabled: !isApiSource,
+    priorityDisabled: !canMutateProjects,
     markPriorityLabel: detail.markPriority,
     removePriorityLabel: detail.removePriority,
     onPriorityToggle: (nextPriority: CrmPriority) => {
@@ -377,7 +380,7 @@ function ProjectDetailShellBody({
                 onClose={() => setQrDialogOpen(false)}
               />
             ) : null}
-            {isSubproject && isApiSource && !isMemberRole ? (
+            {isSubproject && canMutateProjects && !isMemberRole ? (
               <MarkInactiveDialog
                 target={markInactiveTarget}
                 submitting={markingInactive}

@@ -8,7 +8,7 @@ import { env } from '@/infrastructure/config/env';
 import { runtimeModes } from '@/infrastructure/config/runtimeModes';
 import { useAuth } from '@/presentation/hooks/useAuth';
 import { useBranding } from '@/presentation/hooks/useBranding';
-import { buildCoreDashboardNavigation as nav } from '@/platform/navigation/buildCoreDashboardNavigation';
+import { useBuildCoreNavigation } from '@/presentation/providers/BuildCoreNavigationProvider';
 import { useSaaSProfile } from '@/presentation/hooks/useSaaSProfile';
 import { useUserAvatar } from '@/presentation/hooks/useUserAvatar';
 import { useTenant } from '@/presentation/providers';
@@ -60,6 +60,7 @@ export function useBuildCoreDashboard(): {
   onProjectRowClick: (project: CrmProjectSummary) => void;
 } {
   const router = useRouter();
+  const nav = useBuildCoreNavigation();
   const { user, isLoading: authLoading, signOut } = useAuth();
   const { shopName, logoUrl, hasLogo, isLoading: brandingLoading, refetch: refetchBranding } = useBranding();
   const {

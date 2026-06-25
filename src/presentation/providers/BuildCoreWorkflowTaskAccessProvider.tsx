@@ -48,7 +48,7 @@ export function BuildCoreWorkflowTaskAccessProvider({
   const hasLoadedOnceRef = useRef(false);
 
   const load = useCallback(async () => {
-    if (runtimeModes.useMockAuth()) {
+    if (runtimeModes.useMockAuth() || runtimeModes.isDemoRuntime()) {
       setAccess(fullAdminBuildCoreWorkflowTaskAccess('owner'));
       setLoadError(null);
       setIsLoading(false);

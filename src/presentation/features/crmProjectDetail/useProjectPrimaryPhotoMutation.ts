@@ -2,8 +2,17 @@
 
 import { useCallback, useState } from 'react';
 import type { CrmProjectDetail } from '@/domain/crm';
+import { shouldSimulateDemoOperation } from '@/infrastructure/demo/demoSafetyPolicy';
+import {
+  simulateDemoPrimaryPhotoRemoval,
+  simulateDemoPrimaryPhotoUpload,
+} from '@/infrastructure/demo/demoSimulatedDocumentUpload';
 import { getSession } from '@/infrastructure/supabase/supabaseClient';
 import { CrmApiError } from '@/infrastructure/crm/api/crmApiClient';
+import {
+  buildProjectPrimaryPhotoApiPath,
+} from '@/presentation/features/crmProjectDetail/useProjectPrimaryPhotoBlob';
+import { projectPhotoApiPathCacheKey, seedSessionBlob } from '@/presentation/utils/sessionBlobCache';
 
 async function getAccessToken(): Promise<string> {
   const session = await getSession();
@@ -25,6 +34,15 @@ export function useProjectPrimaryPhotoMutation(slug: string): {
     async (file: File): Promise<CrmProjectDetail> => {
       setUploading(true);
       try {
+        if (shouldSimulateDemoOperation('project-primary-photo-upload')) {
+          const updated = await simulateDemoPrimaryPhotoUpload(slug, file);
+          const apiPath = buildProjectPrimaryPhotoApiPath(slug, updated.summary.primaryPhotoPath);
+          if (apiPath != null) {
+            seedSessionBlob(projectPhotoApiPathCacheKey(apiPath), file);
+          }
+          return updated;
+        }
+
         const token = await getAccessToken();
         const formData = new FormData();
         formData.append('photo', file);
@@ -53,6 +71,10 @@ export function useProjectPrimaryPhotoMutation(slug: string): {
   const removePhoto = useCallback(async (): Promise<CrmProjectDetail> => {
     setRemoving(true);
     try {
+      if (shouldSimulateDemoOperation('project-primary-photo-upload')) {
+        return simulateDemoPrimaryPhotoRemoval(slug);
+      }
+
       const token = await getAccessToken();
       const response = await fetch(`/api/crm/projects/${encodeURIComponent(slug)}/photo`, {
         method: 'DELETE',

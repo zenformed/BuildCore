@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import type { CrmProjectSummary } from '@/domain/crm';
 import { isBuildCoreMemberRole } from '@/domain/buildcore/memberRole';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
-import { buildCoreDashboardNavigation as nav } from '@/platform/navigation/buildCoreDashboardNavigation';
+import { useBuildCoreNavigation } from '@/presentation/providers/BuildCoreNavigationProvider';
 import {
   EMPTY_CRM_PROJECTS_LIST_FILTERS,
   EMPTY_RADIUS_FILTER,
@@ -48,6 +48,7 @@ export function CrmProjectsPipeline({
   onProjectCreated,
 }: CrmProjectsPipelineProps): ReactElement {
   const router = useRouter();
+  const nav = useBuildCoreNavigation();
   const panelCopy = content.crm.panel;
   const detailCopy = content.projectDetail;
   const { organizationMembershipContext } = useSaaSProfile();

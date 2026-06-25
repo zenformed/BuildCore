@@ -20,8 +20,9 @@ export function BuildCoreRootGate({ children }: BuildCoreRootGateProps): React.R
   const pathname = usePathname();
   const isPublicPortal =
     pathname?.startsWith('/customer-task') || pathname?.startsWith('/lead');
+  const isDemoExperience = pathname?.startsWith('/demo');
 
-  if (isPublicPortal) {
+  if (isPublicPortal || isDemoExperience) {
     return <>{children}</>;
   }
 

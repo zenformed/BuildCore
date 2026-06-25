@@ -12,6 +12,7 @@ import { getCrmDataSource } from '@/infrastructure/config/crmDataSource';
 import { resolvePipelineStageScopeForProject } from '@/domain/buildcore/orgPipelineStages';
 import { crmRepositories } from '@/shared/di/container';
 import { useCrmPaymentTasksIndexContext } from '@/presentation/providers/CrmPaymentTasksIndexProvider';
+import { useOptionalDemoMode } from '@/presentation/providers/DemoModeProvider';
 import { useBuildCorePipelineStages } from '@/presentation/providers/BuildCorePipelineStagesProvider';
 import {
   EMPTY_CRM_PROJECTS_LIST_FILTERS,
@@ -55,6 +56,7 @@ export function useCrmProjectsPipeline(
   patchProjectSummary: (summary: CrmProjectSummary) => void;
 } {
   const isApiSource = getCrmDataSource() === 'api';
+  const demoMode = useOptionalDemoMode();
   const {
     paymentTasksIndex,
     workflowTaskStatusIndex,
@@ -84,6 +86,12 @@ export function useCrmProjectsPipeline(
     void loadSummaries();
     void refetchRollupIndexes();
   }, [isApiSource, loadSummaries, refetchRollupIndexes]);
+
+  useEffect(() => {
+    if (demoMode == null) return;
+    void loadSummaries();
+    void refetchRollupIndexes();
+  }, [demoMode, demoMode?.resetVersion, loadSummaries, refetchRollupIndexes]);
 
   const summaries = allSummaries ?? EMPTY_PROJECT_SUMMARIES;
   const isLoading = allSummaries === null;

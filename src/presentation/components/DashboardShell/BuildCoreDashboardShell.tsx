@@ -17,6 +17,7 @@ import { useBuildCoreDashboardContext } from '@/presentation/providers/BuildCore
 import { BuildCoreDashboardHeader } from './BuildCoreDashboardHeader';
 import { BuildCoreDashboardModals } from './BuildCoreDashboardModals';
 import { BuildCoreSettingsDrawer } from './BuildCoreSettingsDrawer';
+import { useOptionalDemoMode } from '@/presentation/providers/DemoModeProvider';
 import { BuildCoreSidebar, type BuildCoreSidebarNavId } from './BuildCoreSidebar';
 import { CorePlatformDegradedBanner } from '@/presentation/components/CorePlatform/CorePlatformDegradedBanner';
 import { CurrentUserAvatarProvider } from '@/presentation/providers/CurrentUserAvatarContext';
@@ -41,6 +42,7 @@ export function BuildCoreDashboardShell({
   children,
 }: BuildCoreDashboardShellProps): ReactElement {
   const dash = useBuildCoreDashboardContext();
+  const demoMode = useOptionalDemoMode();
   if (dash.saasProfile == null && dash.authLoading) {
     return (
       <ZenformedDashboardPageLoading classNames={pageLoadingClassNames} message={content.loading.page} />
@@ -118,27 +120,31 @@ export function BuildCoreDashboardShell({
         }
       />
 
-      <BuildCoreSettingsDrawer
-        open={dash.settingsOpen}
-        onClose={() => dash.setSettingsOpen(false)}
-        getAccessToken={dash.getAccessToken}
-        shellContext={{
-          userEmail: dash.user?.email ?? null,
-          organizationName: dash.shopName ?? null,
-          logoUrl: dash.logoUrl ?? null,
-        }}
-      />
+      {demoMode == null ? (
+        <BuildCoreSettingsDrawer
+          open={dash.settingsOpen}
+          onClose={() => dash.setSettingsOpen(false)}
+          getAccessToken={dash.getAccessToken}
+          shellContext={{
+            userEmail: dash.user?.email ?? null,
+            organizationName: dash.shopName ?? null,
+            logoUrl: dash.logoUrl ?? null,
+          }}
+        />
+      ) : null}
 
-      <BuildCoreDashboardModals
-        signOut={{
-          isOpen: dash.signOutModalOpen,
-          onClose: () => dash.setSignOutModalOpen(false),
-          onConfirm: async () => {
-            await dash.signOut();
-          },
-        }}
-        profilePhoto={null}
-      />
+      {demoMode == null ? (
+        <BuildCoreDashboardModals
+          signOut={{
+            isOpen: dash.signOutModalOpen,
+            onClose: () => dash.setSignOutModalOpen(false),
+            onConfirm: async () => {
+              await dash.signOut();
+            },
+          }}
+          profilePhoto={null}
+        />
+      ) : null}
     </ZenformedDashboardAppShell>
   );
 }

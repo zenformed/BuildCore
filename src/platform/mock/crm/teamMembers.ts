@@ -38,8 +38,27 @@ export const MOCK_CRM_TEAM_MEMBERS: readonly CrmTeamMemberRef[] = [
   },
 ] as const;
 
+/** Canonical demo / mock CRM team member (Alex Rivera). */
+export const MOCK_CRM_DEMO_TEAM_MEMBER_ID = 'tm-alex';
+
+const MOCK_TEAM_MEMBER_ID_ALIASES: Readonly<Record<string, string>> = {
+  'demo-user-alex': MOCK_CRM_DEMO_TEAM_MEMBER_ID,
+  'mock-user': MOCK_CRM_DEMO_TEAM_MEMBER_ID,
+};
+
+export function resolveMockCrmTeamMemberId(id: string): string {
+  return MOCK_TEAM_MEMBER_ID_ALIASES[id] ?? id;
+}
+
+export function resolveMockCrmTeamMember(id: string | null | undefined): CrmTeamMemberRef | null {
+  const trimmed = id?.trim();
+  if (!trimmed) return null;
+  const canonicalId = resolveMockCrmTeamMemberId(trimmed);
+  return MOCK_CRM_TEAM_MEMBERS.find((member) => member.id === canonicalId) ?? null;
+}
+
 export function getMockCrmTeamMember(id: string): CrmTeamMemberRef {
-  const member = MOCK_CRM_TEAM_MEMBERS.find((m) => m.id === id);
+  const member = resolveMockCrmTeamMember(id);
   if (member == null) {
     throw new Error(`Unknown mock team member: ${id}`);
   }

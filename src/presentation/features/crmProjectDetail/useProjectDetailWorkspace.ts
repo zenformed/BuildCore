@@ -15,6 +15,8 @@ import type { WorkflowTaskDrawerContext } from '@/presentation/components/CrmPro
 import { crmRepositories } from '@/shared/di/container';
 import { useWorkflowTaskAssignedNotifyPrompt } from '@/presentation/features/crmProjectDetail/useWorkflowTaskCustomerNotifyPrompt';
 import { useSendAttachmentDialog } from '@/presentation/features/communications/useSendAttachmentDialog';
+import { DEMO_COMMUNICATION_SIMULATED_MESSAGE } from '@/infrastructure/demo/demoSafetyPolicy';
+import { isDemoRuntimeClient } from '@/infrastructure/runtime/buildCoreRuntime';
 import { buildWorkflowTaskSendAttachmentContext } from '@/presentation/features/communications/workflowTaskSendAttachmentAdapter';
 import { buildPaymentSendAttachmentContext } from '@/presentation/features/communications/paymentSendAttachmentAdapter';
 import { buildBudgetEntrySendAttachmentContext } from '@/presentation/features/communications/budgetEntrySendAttachmentAdapter';
@@ -67,7 +69,9 @@ export function useProjectDetailWorkspace(initialProject: CrmProjectDetail) {
       void refreshWorkflowTasks();
       setToast({
         kind: 'success',
-        message: content.projectDetail.communications.sendAttachment.success,
+        message: isDemoRuntimeClient()
+          ? DEMO_COMMUNICATION_SIMULATED_MESSAGE
+          : content.projectDetail.communications.sendAttachment.success,
       });
     },
     onError: (message) => {

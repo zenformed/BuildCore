@@ -2,6 +2,7 @@
 
 import type { ReactElement } from 'react';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
+import { runtimeModes } from '@/infrastructure/config/runtimeModes';
 import { useDashboardMobileLayout } from '@/presentation/features/crmProjects/useDashboardMobileLayout';
 import { useBuildCoreWorkflowTaskMemberVisibility } from '@/presentation/features/buildCoreTeams/useBuildCoreWorkflowTaskMemberVisibility';
 import projectStyles from '../CrmProjectDetail/ProjectDetail.module.css';
@@ -15,8 +16,10 @@ export function BuildCoreWorkflowTaskMemberVisibilitySetting({
   enabled,
 }: BuildCoreWorkflowTaskMemberVisibilitySettingProps): ReactElement {
   const copy = content.teams.workflowTaskPermissions.memberVisibility;
+  const demoCopy = content.teams.demo;
   const visibility = useBuildCoreWorkflowTaskMemberVisibility(enabled);
   const isMobileLayout = useDashboardMobileLayout();
+  const isDemoRuntime = runtimeModes.isDemoRuntime();
 
   if (visibility.isLoading) {
     return <p className={styles.loading}>{copy.loading}</p>;
@@ -34,6 +37,7 @@ export function BuildCoreWorkflowTaskMemberVisibilitySetting({
         visibility.onlyAssignedUserCanView ? styles.permissionSwitchOn : ''
       }`}
       disabled={!visibility.canEdit || visibility.isSaving}
+      title={isDemoRuntime ? demoCopy.permissionsReadOnlyNote : undefined}
       aria-checked={visibility.onlyAssignedUserCanView}
       aria-label={`${copy.toggleLabel}: ${visibility.onlyAssignedUserCanView ? 'on' : 'off'}`}
       onClick={() =>

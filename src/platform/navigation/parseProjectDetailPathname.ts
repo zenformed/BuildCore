@@ -15,9 +15,17 @@ function normalizePathname(pathname: string): string {
   return pathname.endsWith('/') && pathname.length > 1 ? pathname.slice(0, -1) : pathname;
 }
 
+function projectPathSegments(pathname: string): readonly string[] {
+  const segments = normalizePathname(pathname).split('/').filter(Boolean);
+  if (segments[0] === 'demo' && segments[1] === 'projects') {
+    return segments.slice(1);
+  }
+  return segments;
+}
+
 /** Derive parent/subproject slugs from the URL (more reliable than layout useParams). */
 export function parseProjectDetailPathname(pathname: string): ParsedProjectDetailPathname {
-  const segments = normalizePathname(pathname).split('/').filter(Boolean);
+  const segments = projectPathSegments(pathname);
   if (segments[0] !== 'projects') {
     return { parentRouteSlug: '' };
   }

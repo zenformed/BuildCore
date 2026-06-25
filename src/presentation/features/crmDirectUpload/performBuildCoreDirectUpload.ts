@@ -1,6 +1,8 @@
 'use client';
 
 import { validateBuildCoreUpload } from '@/domain/crm/buildCoreUploadPolicy';
+import { shouldSimulateDemoOperation } from '@/infrastructure/demo/demoSafetyPolicy';
+import { simulateDemoDocumentUpload } from '@/infrastructure/demo/demoSimulatedDocumentUpload';
 import { uploadFileToSignedUrl } from '@/infrastructure/coreApi/buildCoreDirectUploadClient';
 import { getSession } from '@/infrastructure/supabase/supabaseClient';
 
@@ -26,6 +28,16 @@ export async function performCrmDirectUpload(
   });
   if (!validation.ok) {
     throw new Error(validation.message);
+  }
+
+  if (shouldSimulateDemoOperation('crm-direct-upload')) {
+    const simulated = await simulateDemoDocumentUpload(file, uploadScope);
+    return {
+      documentId: simulated.documentId,
+      uploadUrl: 'demo://local',
+      mimeType: simulated.mimeType,
+      fileName: simulated.fileName,
+    };
   }
 
   const session = await getSession();

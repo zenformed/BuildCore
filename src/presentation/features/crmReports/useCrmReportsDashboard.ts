@@ -13,6 +13,7 @@ import {
   invalidateSessionCache,
   runSessionCached,
 } from '@/infrastructure/coreApi/clientRequestDedupe';
+import { DEMO_RESET_EVENT, useOptionalDemoMode } from '@/presentation/providers/DemoModeProvider';
 import { crmRepositories } from '@/shared/di/container';
 
 const CRM_REPORTS_PROJECTS_CACHE_KEY = 'crm-reports-projects';
@@ -27,6 +28,7 @@ export function useCrmReportsDashboard(): {
   reload: () => void;
 } {
   const isApiSource = getCrmDataSource() === 'api';
+  const demoMode = useOptionalDemoMode();
   const [period, setPeriod] = useState<ReportPeriodId>('mtd');
   const [reloadKey, setReloadKey] = useState(0);
   const [error, setError] = useState<string | null>(null);
@@ -65,6 +67,19 @@ export function useCrmReportsDashboard(): {
       cancelled = true;
     };
   }, [isApiSource, reloadKey]);
+
+  useEffect(() => {
+    if (demoMode == null) return;
+    reload();
+  }, [demoMode, demoMode?.resetVersion, reload]);
+
+  useEffect(() => {
+    const onDemoReset = () => {
+      reload();
+    };
+    window.addEventListener(DEMO_RESET_EVENT, onDemoReset);
+    return () => window.removeEventListener(DEMO_RESET_EVENT, onDemoReset);
+  }, [reload]);
 
   const dashboard = useMemo(() => {
     if (projects == null) return null;
