@@ -51,6 +51,8 @@ import {
   type WorkflowTaskViewMode,
 } from './WorkflowTasksViewToggleButton';
 import { WorkflowUsersColumn } from './WorkflowUsersColumn';
+import { WorkflowAssigneeDragHeldIndicator } from './WorkflowAssigneeDragHeldIndicator';
+import { WorkflowTaskAssigneeDragProvider } from '@/presentation/features/crmProjectDetail/workflowTaskAssigneeDragContext';
 import styles from './ProjectDetail.module.css';
 
 export type WorkflowTasksTableLayout = 'preview' | 'full';
@@ -98,6 +100,7 @@ export function WorkflowTasksTable({
   const canView = isReady && permissions.canView;
   const canCreate = isReady && permissions.canCreate;
   const canDelete = isReady && permissions.canDelete;
+  const canAssignTasks = isReady && permissions.canEdit;
   const isFullLayout = layout === 'full';
   const isMobileLayout = useDashboardMobileLayout();
   const currentStage = project.summary.currentStageSlug;
@@ -445,10 +448,11 @@ export function WorkflowTasksTable({
       ) : (
         <div className={stackClass}>
           {isDesktopStageCardMode ? (
-            <>
+            <WorkflowTaskAssigneeDragProvider>
               <div className={stageGroupsClass}>{stageGroupElements}</div>
-              <WorkflowUsersColumn tasks={filteredTasks} />
-            </>
+              <WorkflowUsersColumn tasks={filteredTasks} canAssignTasks={canAssignTasks} />
+              <WorkflowAssigneeDragHeldIndicator />
+            </WorkflowTaskAssigneeDragProvider>
           ) : (
             stageGroupElements
           )}

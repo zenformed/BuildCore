@@ -1,9 +1,13 @@
 'use client';
 
-import type { ReactElement } from 'react';
+import type { DragEvent, ReactElement } from 'react';
 import { useMemo } from 'react';
-import type { CrmWorkflowTask } from '@/domain/crm';
+import type { CrmTeamMemberRef, CrmWorkflowTask } from '@/domain/crm';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
+import {
+  setWorkflowTaskAssigneeDragData,
+  useOptionalWorkflowTaskAssigneeDrag,
+} from '@/presentation/features/crmProjectDetail/workflowTaskAssigneeDragContext';
 import {
   useAssignmentIdentityCatalog,
   useAssignmentIdentityState,
@@ -13,6 +17,7 @@ import styles from './ProjectDetail.module.css';
 
 export type WorkflowUsersColumnProps = {
   readonly tasks: readonly CrmWorkflowTask[];
+  readonly canAssignTasks?: boolean;
 };
 
 function countWorkflowTasksByAssigneeId(
@@ -27,10 +32,34 @@ function countWorkflowTasksByAssigneeId(
   return counts;
 }
 
-export function WorkflowUsersColumn({ tasks }: WorkflowUsersColumnProps): ReactElement {
+function setAssigneeDragPreview(event: DragEvent<HTMLDivElement>): void {
+  const source = event.currentTarget;
+  const dragPreview = source.cloneNode(true) as HTMLDivElement;
+  dragPreview.classList.add(styles.workflowUsersColumnRow_dragPreview);
+  dragPreview.style.position = 'fixed';
+  dragPreview.style.top = '-9999px';
+  dragPreview.style.left = '-9999px';
+  dragPreview.style.pointerEvents = 'none';
+  document.body.appendChild(dragPreview);
+  event.dataTransfer.setDragImage(
+    dragPreview,
+    Math.min(dragPreview.offsetWidth * 0.5, 80),
+    dragPreview.offsetHeight / 2
+  );
+  window.requestAnimationFrame(() => {
+    dragPreview.remove();
+  });
+}
+
+export function WorkflowUsersColumn({
+  tasks,
+  canAssignTasks = false,
+}: WorkflowUsersColumnProps): ReactElement {
   const wf = content.projectDetail.workflow;
   const catalog = useAssignmentIdentityCatalog();
   const { isLoading } = useAssignmentIdentityState();
+  const assigneeDrag = useOptionalWorkflowTaskAssigneeDrag();
+  const canDragUsers = canAssignTasks && assigneeDrag != null;
 
   const taskCountsByAssigneeId = useMemo(() => countWorkflowTasksByAssigneeId(tasks), [tasks]);
 
@@ -40,6 +69,17 @@ export function WorkflowUsersColumn({ tasks }: WorkflowUsersColumnProps): ReactE
       a.displayName.localeCompare(b.displayName, undefined, { sensitivity: 'base' })
     );
   }, [catalog?.assignableMembers]);
+
+  const handleDragStart = (event: DragEvent<HTMLDivElement>, member: CrmTeamMemberRef): void => {
+    if (!canDragUsers || assigneeDrag == null) return;
+    setWorkflowTaskAssigneeDragData(event.dataTransfer, member);
+    assigneeDrag.setDraggedMember(member);
+    setAssigneeDragPreview(event);
+  };
+
+  const handleDragEnd = (): void => {
+    assigneeDrag?.setDraggedMember(null);
+  };
 
   return (
     <aside className={styles.workflowUsersColumn} aria-labelledby="workflow-users-column-heading">
@@ -57,12 +97,27 @@ export function WorkflowUsersColumn({ tasks }: WorkflowUsersColumnProps): ReactE
           members.map((member) => {
             const taskCount = taskCountsByAssigneeId.get(member.id) ?? 0;
             const taskCountLabel = wf.usersColumnTaskCount(taskCount);
+            const isDragging = assigneeDrag?.draggedMember?.id === member.id;
+            const rowClass = [
+              styles.workflowUsersColumnRow,
+              canDragUsers ? styles.workflowUsersColumnRow_draggable : '',
+              isDragging ? styles.workflowUsersColumnRow_dragging : '',
+            ]
+              .filter(Boolean)
+              .join(' ');
 
             return (
               <div
                 key={member.id}
-                className={styles.workflowUsersColumnRow}
-                title={`${member.displayName} · ${taskCountLabel}`}
+                className={rowClass}
+                title={
+                  canDragUsers
+                    ? `${member.displayName} · ${taskCountLabel} · ${wf.usersColumnDragHint}`
+                    : `${member.displayName} · ${taskCountLabel}`
+                }
+                draggable={canDragUsers}
+                onDragStart={(event) => handleDragStart(event, member)}
+                onDragEnd={handleDragEnd}
               >
                 <span className={styles.workflowUsersColumnAvatar}>
                   <TeamMemberAvatar member={member} />

@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState, type DragEvent } from 'react';
 import { BUILDCORE_UPLOAD_ALLOWED_EXTENSIONS } from '@/domain/crm/buildCoreUploadPolicy';
 import {
   isPaymentWorkflowTask,
@@ -33,6 +33,7 @@ import {
 } from '@/presentation/features/crmProjectDetail/workflowTaskInlineUtils';
 import { useWorkflowTaskDocumentActions } from '@/presentation/features/crmProjectDetail/useWorkflowTaskDocumentActions';
 import { useWorkflowTaskRowFileDrop } from '@/presentation/features/crmProjectDetail/useWorkflowTaskRowFileDrop';
+import { useWorkflowTaskRowAssigneeDrop } from '@/presentation/features/crmProjectDetail/useWorkflowTaskRowAssigneeDrop';
 import { useBuildCoreWorkflowTaskAccess } from '@/presentation/providers/BuildCoreWorkflowTaskAccessProvider';
 import { useBuildCoreProjectSectionAccess } from '@/presentation/providers/BuildCoreProjectSectionAccessProvider';
 import type { WorkflowTaskPermissionDomain } from '@/presentation/features/crmProjectDetail/workflowTaskInlineRowTypes';
@@ -100,8 +101,8 @@ export function useWorkflowTaskInlineRow({
   const canApprove = isReady && permissions.canApprove;
   const canChangeStatus = canView;
   const documentAccept = BUILDCORE_UPLOAD_ALLOWED_EXTENSIONS.join(',');
-  const { rowDragOver, rowDropHandlers: rawRowDropHandlers } = useWorkflowTaskRowFileDrop(task);
-  const rowDropHandlers = canUpload ? rawRowDropHandlers : {};
+  const { rowDragOver: fileDragOver, rowDropHandlers: fileDropHandlers } =
+    useWorkflowTaskRowFileDrop(task);
 
   const [editingTitle, setEditingTitle] = useState(false);
   const [titleDraft, setTitleDraft] = useState(task.title);
@@ -335,8 +336,37 @@ export function useWorkflowTaskInlineRow({
         reportError(err);
       }
     },
-    [canEdit, patchTask, reportError, task.id, task.paidAt]
+    [canEdit, patchTask, reportError, task.id, task.paidAt    ]
   );
+
+  const { assigneeDragOver, assigneeDropHandlers } = useWorkflowTaskRowAssigneeDrop(
+    canEdit,
+    (memberId) => {
+      void saveAssignee(memberId);
+    }
+  );
+
+  const rowDragOver = fileDragOver || assigneeDragOver;
+  const rowDropHandlers = {
+    onDragOver: (event: DragEvent<HTMLElement>) => {
+      if (canUpload) {
+        fileDropHandlers.onDragOver(event as DragEvent<HTMLDivElement>);
+      }
+      assigneeDropHandlers.onDragOver(event);
+    },
+    onDragLeave: (event: DragEvent<HTMLElement>) => {
+      if (canUpload) {
+        fileDropHandlers.onDragLeave(event as DragEvent<HTMLDivElement>);
+      }
+      assigneeDropHandlers.onDragLeave(event);
+    },
+    onDrop: (event: DragEvent<HTMLElement>) => {
+      if (canUpload) {
+        fileDropHandlers.onDrop(event as DragEvent<HTMLDivElement>);
+      }
+      assigneeDropHandlers.onDrop(event);
+    },
+  };
 
   const showAmount = showAmountColumn || isPaymentWorkflowTask(task);
   const showPaymentDates = isPaymentWorkflowTask(task);

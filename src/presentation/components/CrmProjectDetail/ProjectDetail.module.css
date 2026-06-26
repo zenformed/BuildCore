@@ -4858,6 +4858,7 @@
   grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 0.75rem;
   align-items: stretch;
+  padding-inline: 0.375rem;
 }
 
 .workflowUsersColumn {
@@ -4901,6 +4902,84 @@
   align-items: center;
   gap: 0.3125rem;
   min-width: 0;
+  border-radius: 0.375rem;
+  padding: 0.1875rem 0.25rem;
+}
+
+.workflowUsersColumnRow_draggable {
+  cursor: grab;
+  user-select: none;
+  touch-action: none;
+}
+
+.workflowUsersColumnRow_draggable:hover {
+  background: color-mix(in srgb, var(--color-primary, #2563eb) 8%, transparent);
+}
+
+.workflowUsersColumnRow_dragging {
+  opacity: 0.45;
+}
+
+.workflowUsersColumnRow_dragPreview {
+  opacity: 0.95;
+  box-shadow: 0 4px 14px color-mix(in srgb, #0f172a 18%, transparent);
+  background: var(--color-surface, #fff);
+  border-radius: 0.375rem;
+  padding: 0.1875rem 0.375rem;
+}
+
+:global([data-theme='dark']) .workflowUsersColumnRow_dragPreview {
+  background: #1d2029;
+  box-shadow: 0 4px 14px color-mix(in srgb, #000 45%, transparent);
+}
+
+.workflowAssigneeDragHeld {
+  position: fixed;
+  z-index: 9999;
+  bottom: 1.25rem;
+  left: 50%;
+  transform: translateX(-50%);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.375rem 0.75rem;
+  border-radius: 999px;
+  background: var(--color-surface, #fff);
+  color: var(--color-text, #0f172a);
+  box-shadow:
+    0 4px 16px color-mix(in srgb, #0f172a 14%, transparent),
+    0 0 0 1px color-mix(in srgb, var(--color-primary, #2563eb) 35%, transparent);
+  pointer-events: none;
+}
+
+:global([data-theme='dark']) .workflowAssigneeDragHeld {
+  background: #1d2029;
+  color: #f1f5f9;
+  box-shadow:
+    0 4px 16px color-mix(in srgb, #000 40%, transparent),
+    0 0 0 1px color-mix(in srgb, #60a5fa 45%, transparent);
+}
+
+.workflowAssigneeDragHeldAvatar {
+  display: inline-flex;
+  line-height: 0;
+  flex-shrink: 0;
+}
+
+.workflowAssigneeDragHeldAvatar .avatar,
+.workflowAssigneeDragHeldAvatar .avatarPhoto {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+.workflowAssigneeDragHeldAvatar .avatarInitials {
+  font-size: 0.625rem;
+}
+
+.workflowAssigneeDragHeldLabel {
+  font-size: 0.75rem;
+  font-weight: 600;
+  white-space: nowrap;
 }
 
 .workflowUsersColumnAvatar {
@@ -4984,6 +5063,7 @@
   max-height: min(28rem, 55vh);
   overflow-y: auto;
   gap: 0.375rem;
+  padding: 0.375rem 0.5rem 0.5rem;
 }
 
 .workflowTaskCompactCard {

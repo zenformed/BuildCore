@@ -1008,6 +1008,8 @@ export const buildCoreDashboardContent = {
       usersColumnEmpty: 'No users',
       usersColumnTaskCount: (count: number): string =>
         `${count} ${count === 1 ? 'task' : 'tasks'}`,
+      usersColumnDragHint: 'Drag to a task to assign',
+      usersColumnDragLabel: (displayName: string): string => `Assigning ${displayName}`,
       openDocuments: 'Documents',
       fields: {
         title: 'Task title',
