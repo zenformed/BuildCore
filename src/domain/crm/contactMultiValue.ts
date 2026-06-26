@@ -130,3 +130,7 @@ export function resolveContactPhonesFromDb(
   const trimmed = legacyPhone?.trim() ?? '';
   return trimmed ? [trimmed] : [];
 }
+
+export function nonEmptyContactValues(values: readonly string[]): readonly string[] {
+  return values.filter((value) => value.trim() !== '');
+}

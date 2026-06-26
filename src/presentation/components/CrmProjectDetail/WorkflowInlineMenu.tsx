@@ -89,26 +89,27 @@ function computeMenuPosition(
   anchor: HTMLElement,
   menu: HTMLElement | null,
   align: 'start' | 'end',
-  sizeToContent: boolean
+  sizeToContent: boolean,
+  menuGapPx: number
 ): MenuPosition {
   const rect = anchor.getBoundingClientRect();
   const minWidth = sizeToContent ? 0 : Math.max(rect.width, 136);
   const menuHeight = menu?.offsetHeight ?? 0;
   const menuWidth = menu?.offsetWidth ?? minWidth;
 
-  let top = rect.bottom + MENU_GAP_PX;
-  const spaceBelow = window.innerHeight - rect.bottom - MENU_GAP_PX;
-  const spaceAbove = rect.top - MENU_GAP_PX;
+  let top = rect.bottom + menuGapPx;
+  const spaceBelow = window.innerHeight - rect.bottom - menuGapPx;
+  const spaceAbove = rect.top - menuGapPx;
 
   if (menuHeight > 0) {
     if (menuHeight > spaceBelow && spaceAbove >= spaceBelow) {
-      top = rect.top - menuHeight - MENU_GAP_PX;
+      top = rect.top - menuHeight - menuGapPx;
     }
 
     const maxTop = window.innerHeight - menuHeight - VIEWPORT_PADDING_PX;
     top = Math.max(VIEWPORT_PADDING_PX, Math.min(top, maxTop));
   } else if (spaceBelow < 160 && spaceAbove > spaceBelow) {
-    top = Math.max(VIEWPORT_PADDING_PX, rect.top - 160 - MENU_GAP_PX);
+    top = Math.max(VIEWPORT_PADDING_PX, rect.top - 160 - menuGapPx);
   }
 
   const { left, effectiveAlign } = computeHorizontalMenuPosition(rect, menuWidth, align);
@@ -131,6 +132,13 @@ export type WorkflowInlineMenuProps = {
   portalClassName?: string;
   /** Size dropdown to fit labels instead of anchoring to trigger width. */
   sizeToContent?: boolean;
+  /** Gap between anchor and menu in px; defaults to 4. */
+  menuGapPx?: number;
+  /** Optional hover handlers for the portaled menu panel. */
+  portalHandlers?: {
+    onMouseEnter?: () => void;
+    onMouseLeave?: () => void;
+  };
 };
 
 export function WorkflowInlineMenu({
@@ -141,6 +149,8 @@ export function WorkflowInlineMenu({
   align = 'start',
   portalClassName,
   sizeToContent = false,
+  menuGapPx = MENU_GAP_PX,
+  portalHandlers,
 }: WorkflowInlineMenuProps): ReactElement | null {
   const menuRef = useRef<HTMLDivElement>(null);
   const [position, setPosition] = useState<MenuPosition | null>(null);
@@ -148,8 +158,8 @@ export function WorkflowInlineMenu({
   const updatePosition = useCallback(() => {
     const anchor = anchorRef.current;
     if (!anchor) return;
-    setPosition(computeMenuPosition(anchor, menuRef.current, align, sizeToContent));
-  }, [align, anchorRef, sizeToContent]);
+    setPosition(computeMenuPosition(anchor, menuRef.current, align, sizeToContent, menuGapPx));
+  }, [align, anchorRef, menuGapPx, sizeToContent]);
 
   useLayoutEffect(() => {
     if (!open) {
@@ -180,7 +190,7 @@ export function WorkflowInlineMenu({
   if (anchor == null) return null;
 
   const resolvedPosition =
-    position ?? computeMenuPosition(anchor, menuRef.current, align, sizeToContent);
+    position ?? computeMenuPosition(anchor, menuRef.current, align, sizeToContent, menuGapPx);
 
   const menuStyle: CSSProperties = {
     top: resolvedPosition.top,
@@ -197,6 +207,8 @@ export function WorkflowInlineMenu({
       className={portalClassName ?? styles.inlineMenu_portal}
       style={menuStyle}
       role="menu"
+      onMouseEnter={portalHandlers?.onMouseEnter}
+      onMouseLeave={portalHandlers?.onMouseLeave}
       onMouseDown={(event) => {
         event.stopPropagation();
       }}

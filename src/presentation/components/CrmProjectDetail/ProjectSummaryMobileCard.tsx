@@ -1,7 +1,9 @@
 'use client';
 
 import type { ReactElement, ReactNode } from 'react';
+import { useCallback } from 'react';
 import { projectHasPaymentMilestones, type CrmProjectDetail } from '@/domain/crm';
+import { nonEmptyContactValues } from '@/domain/crm/contactMultiValue';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
 import {
   formatCentsAsUsd,
@@ -55,7 +57,7 @@ export function ProjectSummaryMobileCard({
   onEditClick,
 }: ProjectSummaryMobileCardProps): ReactElement {
   const { summary } = project;
-  const { childSummaries } = useProjectDetailShell();
+  const { childSummaries, setToast } = useProjectDetailShell();
   const paymentFinancials = useProjectDetailPaymentFinancials({
     project,
     childSummaries: childSummaries?.allRows ?? null,
@@ -66,6 +68,29 @@ export function ProjectSummaryMobileCard({
   const isSubproject = summary.parentProjectId != null;
   const valueLabel = isSubproject ? fields.subValue : fields.value;
   const displayEmail = formatContactEmailDisplay(summary.contact.email, { maskForMember: memberView });
+  const contactEmails = nonEmptyContactValues(summary.contact.emails);
+  const contactPhones = nonEmptyContactValues(summary.contact.phones);
+  const onContactCopied = useCallback(
+    (message: string) => setToast({ kind: 'success', message }),
+    [setToast]
+  );
+  const formatEmailPopoverValue = useCallback(
+    (email: string) => formatContactEmailDisplay(email, { maskForMember: memberView }),
+    [memberView]
+  );
+  const getEmailCopyValue = useCallback(
+    (email: string) =>
+      memberView ? formatContactEmailDisplay(email, { maskForMember: true }) : email.trim(),
+    [memberView]
+  );
+  const formatPhonePopoverValue = useCallback(
+    (phone: string) => formatPhoneDisplay(phone),
+    []
+  );
+  const getPhoneCopyValue = useCallback(
+    (phone: string) => formatPhoneDisplay(phone) || phone.trim(),
+    []
+  );
   const mobileValueClass = `${styles.summaryText} ${styles.projectInfoMobileValue}`;
   const editAction = onEditClick ? (
     <button
@@ -124,6 +149,11 @@ export function ProjectSummaryMobileCard({
               displayClassName={styles.summaryLink}
               valueClassName={`${styles.summaryLink} ${styles.projectInfoMobileValue}`}
               onPatch={patchField}
+              contactPopoverValues={contactEmails}
+              contactPopoverKind="email"
+              formatContactPopoverValue={formatEmailPopoverValue}
+              getContactCopyValue={getEmailCopyValue}
+              onContactCopied={onContactCopied}
             />
           </ProjectInfoMobileFieldCell>
           <ProjectInfoMobileFieldCell label={fields.phone} align="right">
@@ -139,6 +169,11 @@ export function ProjectSummaryMobileCard({
               displayClassName={styles.summaryLink}
               valueClassName={`${styles.summaryLink} ${styles.projectInfoMobileValue}`}
               onPatch={patchField}
+              contactPopoverValues={contactPhones}
+              contactPopoverKind="phone"
+              formatContactPopoverValue={formatPhonePopoverValue}
+              getContactCopyValue={getPhoneCopyValue}
+              onContactCopied={onContactCopied}
             />
           </ProjectInfoMobileFieldCell>
         </div>

@@ -1,6 +1,6 @@
 'use client';
 
-import type { KeyboardEvent, ReactElement, ReactNode } from 'react';
+import type { KeyboardEvent, ReactElement, ReactNode, Ref } from 'react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { projectHasPaymentMilestones, type CrmProjectDetail } from '@/domain/crm';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
@@ -13,8 +13,13 @@ import type { SummaryEditableField } from '@/presentation/features/crmProjectDet
 import { useProjectDetailShell } from '@/presentation/features/crmProjectDetail/ProjectDetailShellContext';
 import { useProjectDetailPaymentFinancials } from '@/presentation/features/crmProjectDetail/useProjectDetailPaymentFinancials';
 import { useDashboardMobileLayout } from '@/presentation/features/crmProjects/useDashboardMobileLayout';
+import { nonEmptyContactValues } from '@/domain/crm/contactMultiValue';
 import { ProjectSummaryAddress } from './ProjectSummaryAddress';
 import { ProjectSummaryMobileCard } from './ProjectSummaryMobileCard';
+import {
+  useSummaryContactValuesPopover,
+  type SummaryContactValuesPopoverKind,
+} from './SummaryContactValuesPopover';
 import styles from './ProjectDetail.module.css';
 
 type SummaryMetricProps = {
@@ -65,6 +70,11 @@ type SummaryInlineTextProps = {
   hideLabel?: boolean;
   valueClassName?: string;
   onPatch: (field: SummaryEditableField, value: string) => Promise<boolean>;
+  contactPopoverValues?: readonly string[];
+  contactPopoverKind?: SummaryContactValuesPopoverKind;
+  formatContactPopoverValue?: (value: string) => string;
+  getContactCopyValue?: (value: string) => string;
+  onContactCopied?: (message: string) => void;
 };
 
 export function SummaryInlineText({
@@ -79,11 +89,17 @@ export function SummaryInlineText({
   hideLabel = false,
   valueClassName,
   onPatch,
+  contactPopoverValues,
+  contactPopoverKind,
+  formatContactPopoverValue,
+  getContactCopyValue,
+  onContactCopied,
 }: SummaryInlineTextProps): ReactElement {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(value);
   const inputRef = useRef<HTMLInputElement>(null);
   const isSaving = savingField === fieldKey;
+  const isMobileLayout = useDashboardMobileLayout();
 
   useEffect(() => {
     if (!editing) setDraft(value);
@@ -125,34 +141,99 @@ export function SummaryInlineText({
   const displayText = (displayValue ?? value) || '—';
   const resolvedValueClassName = valueClassName ?? displayClassName;
 
+  const popoverValues =
+    contactPopoverKind != null &&
+    contactPopoverValues != null &&
+    formatContactPopoverValue != null &&
+    getContactCopyValue != null &&
+    onContactCopied != null
+      ? nonEmptyContactValues(contactPopoverValues)
+      : [];
+
+  const hasContactPopover =
+    popoverValues.length > 0 &&
+    contactPopoverKind != null &&
+    formatContactPopoverValue != null &&
+    getContactCopyValue != null &&
+    onContactCopied != null;
+
+  const contactPopover = useSummaryContactValuesPopover({
+    kind: contactPopoverKind ?? 'email',
+    values: popoverValues,
+    formatDisplayValue: formatContactPopoverValue ?? ((value) => value),
+    getCopyValue: getContactCopyValue ?? ((value) => value),
+    onCopied: onContactCopied ?? (() => undefined),
+    enabled: hasContactPopover && !editing && !disabled && !isSaving,
+    interactionMode: isMobileLayout ? 'tap' : 'hover',
+  });
+
+  const valueSlotClassName = [
+    styles.summaryValueSlot,
+    hasContactPopover && isMobileLayout ? styles.summaryContactValueSlot_mobile : '',
+  ]
+    .filter(Boolean)
+    .join(' ');
+
+  const displayOverlayClassName = [
+    styles.summaryInlineDisplayOverlay,
+    resolvedValueClassName,
+    hasContactPopover && isMobileLayout ? styles.summaryInlineDisplayOverlay_withContactToggle : '',
+  ]
+    .filter(Boolean)
+    .join(' ');
+
+  const toggleIconClassName = [
+    styles.summaryContactValuesToggleIcon,
+    contactPopover.open ? styles.summaryContactValuesToggleIcon_open : '',
+  ]
+    .filter(Boolean)
+    .join(' ');
+
   const valueSlot = (
-    <div className={styles.summaryValueSlot}>
-      <span className={styles.summaryInlineGhost} aria-hidden>
-        {displayText}
-      </span>
-      {editing ? (
-        <input
-          ref={inputRef}
-          type={inputType}
-          className={styles.summaryInlineInputOverlay}
-          value={draft}
-          disabled={isSaving}
-          aria-label={label}
-          onChange={(e) => setDraft(e.target.value)}
-          onBlur={() => void save()}
-          onKeyDown={onKeyDown}
-        />
-      ) : (
-        <button
-          type="button"
-          className={`${styles.summaryInlineDisplayOverlay} ${resolvedValueClassName}`}
-          disabled={disabled || isSaving}
-          onClick={() => setEditing(true)}
-        >
+    <>
+      <div
+        ref={contactPopover.anchorRef as Ref<HTMLDivElement>}
+        className={valueSlotClassName}
+        {...(hasContactPopover && !isMobileLayout ? contactPopover.anchorHandlers : {})}
+      >
+        <span className={styles.summaryInlineGhost} aria-hidden>
           {displayText}
-        </button>
-      )}
-    </div>
+        </span>
+        {editing ? (
+          <input
+            ref={inputRef}
+            type={inputType}
+            className={styles.summaryInlineInputOverlay}
+            value={draft}
+            disabled={isSaving}
+            aria-label={label}
+            onChange={(e) => setDraft(e.target.value)}
+            onBlur={() => void save()}
+            onKeyDown={onKeyDown}
+          />
+        ) : (
+          <>
+            <button
+              type="button"
+              className={displayOverlayClassName}
+              disabled={disabled || isSaving}
+              onClick={() => setEditing(true)}
+            >
+              {displayText}
+            </button>
+            {contactPopover.toggleButtonProps ? (
+              <button
+                className={styles.summaryContactValuesToggle}
+                {...contactPopover.toggleButtonProps}
+              >
+                <span className={toggleIconClassName} aria-hidden />
+              </button>
+            ) : null}
+          </>
+        )}
+      </div>
+      {contactPopover.menu}
+    </>
   );
 
   if (hideLabel) {
@@ -198,7 +279,7 @@ export function ProjectSummaryStrip({
   onEditClick,
 }: ProjectSummaryStripProps): ReactElement {
   const { summary } = project;
-  const { childSummaries } = useProjectDetailShell();
+  const { childSummaries, setToast } = useProjectDetailShell();
   const paymentFinancials = useProjectDetailPaymentFinancials({
     project,
     childSummaries: childSummaries?.allRows ?? null,
@@ -210,6 +291,29 @@ export function ProjectSummaryStrip({
   const valueLabel = isSubproject ? fields.subValue : fields.value;
   const displayEmail = formatContactEmailDisplay(summary.contact.email, { maskForMember: memberView });
   const isMobileLayout = useDashboardMobileLayout();
+  const contactEmails = nonEmptyContactValues(summary.contact.emails);
+  const contactPhones = nonEmptyContactValues(summary.contact.phones);
+  const onContactCopied = useCallback(
+    (message: string) => setToast({ kind: 'success', message }),
+    [setToast]
+  );
+  const formatEmailPopoverValue = useCallback(
+    (email: string) => formatContactEmailDisplay(email, { maskForMember: memberView }),
+    [memberView]
+  );
+  const getEmailCopyValue = useCallback(
+    (email: string) =>
+      memberView ? formatContactEmailDisplay(email, { maskForMember: true }) : email.trim(),
+    [memberView]
+  );
+  const formatPhonePopoverValue = useCallback(
+    (phone: string) => formatPhoneDisplay(phone),
+    []
+  );
+  const getPhoneCopyValue = useCallback(
+    (phone: string) => formatPhoneDisplay(phone) || phone.trim(),
+    []
+  );
 
   if (isMobileLayout) {
     return (
@@ -255,6 +359,11 @@ export function ProjectSummaryStrip({
           inputType="email"
           displayClassName={styles.summaryLink}
           onPatch={patchField}
+          contactPopoverValues={contactEmails}
+          contactPopoverKind="email"
+          formatContactPopoverValue={formatEmailPopoverValue}
+          getContactCopyValue={getEmailCopyValue}
+          onContactCopied={onContactCopied}
         />
         <SummaryInlineText
           fieldKey="phone"
@@ -266,6 +375,11 @@ export function ProjectSummaryStrip({
           inputType="tel"
           displayClassName={styles.summaryLink}
           onPatch={patchField}
+          contactPopoverValues={contactPhones}
+          contactPopoverKind="phone"
+          formatContactPopoverValue={formatPhonePopoverValue}
+          getContactCopyValue={getPhoneCopyValue}
+          onContactCopied={onContactCopied}
         />
         <ProjectSummaryAddress address={summary.address} label={fields.address} />
         {memberView ? null : (

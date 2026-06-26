@@ -541,6 +541,18 @@ export const buildCoreDashboardContent = {
       sectionsLabel: 'Project Sections',
       selectAriaLabel: 'Project section',
     },
+    contactValues: {
+      emailCopied: 'Email copied',
+      phoneCopied: 'Phone copied',
+      allEmailsAriaLabel: 'All email addresses',
+      allPhonesAriaLabel: 'All phone numbers',
+      copyEmailAriaLabel: (value: string): string => `Copy email ${value}`,
+      copyPhoneAriaLabel: (value: string): string => `Copy phone ${value}`,
+      showEmailsToggleAriaLabel: 'Show all email addresses',
+      hideEmailsToggleAriaLabel: 'Hide email addresses',
+      showPhonesToggleAriaLabel: 'Show all phone numbers',
+      hidePhonesToggleAriaLabel: 'Hide phone numbers',
+    },
     fields: {
       contact: 'Contact',
       email: 'Email',
