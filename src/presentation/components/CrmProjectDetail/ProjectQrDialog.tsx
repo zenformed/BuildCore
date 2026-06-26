@@ -5,6 +5,7 @@ import type { CrmProjectSummary } from '@/domain/crm';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
 import { QrCodeDialog } from '@/presentation/components/qr/QrCodeDialog';
 import { useProjectQrCode } from '@/presentation/features/qr/useProjectQrCode';
+import { ProjectQrIdentityHeader } from './ProjectQrIdentityHeader';
 
 export type ProjectQrDialogProps = {
   readonly open: boolean;
@@ -23,7 +24,7 @@ export function ProjectQrDialog({ open, project, onClose }: ProjectQrDialogProps
       closeAriaLabel={copy.closeAriaLabel}
       qrValue={leadUrl}
       qrAriaLabel={qrAriaLabel}
-      subtitle={project.name}
+      identityHeader={<ProjectQrIdentityHeader project={project} />}
       metaRows={[]}
       helperText={copy.helperText}
       downloadLabel={copy.downloadPng}

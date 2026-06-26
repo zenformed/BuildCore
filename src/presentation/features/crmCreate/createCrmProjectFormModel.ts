@@ -5,9 +5,15 @@ import { titleCasePersonOrEntityName } from '@/domain/crm/titleCaseName';
 import { US_STATE_CODES } from '@/domain/crm/usStates';
 import {
   contactValuesToFormFields,
+  contactPhonesToFormFields,
   validateContactEmailValues,
   validateContactPhoneValues,
 } from '@/domain/crm/contactMultiValue';
+import {
+  validateOptionalCity,
+  validateOptionalPostalCode,
+  validateProjectNotes,
+} from '@/domain/crm/projectFormFieldValidation';
 import { normalizeAssigneeMemberIdForSave } from '@/presentation/features/crmAssignment/buildAssigneeOptions';
 
 export type CreateCrmProjectFormState = {
@@ -61,7 +67,7 @@ export function createSubprojectFormDefaultsFromParent(
     name: summary.name,
     contactName: summary.contact.name,
     emails: contactValuesToFormFields(summary.contact.emails),
-    phones: contactValuesToFormFields(summary.contact.phones),
+    phones: contactPhonesToFormFields(summary.contact.phones),
     addressLine1: summary.address.addressLine1 ?? '',
     addressLine2: summary.address.addressLine2 ?? '',
     city: summary.address.city ?? '',
@@ -115,6 +121,21 @@ export function validateCreateCrmProjectForm(
     return phoneValidated;
   }
 
+  const cityValidated = validateOptionalCity(form.city);
+  if (!cityValidated.ok) {
+    return cityValidated;
+  }
+
+  const postalValidated = validateOptionalPostalCode(form.postalCode);
+  if (!postalValidated.ok) {
+    return postalValidated;
+  }
+
+  const notesValidated = validateProjectNotes(form.notes);
+  if (!notesValidated.ok) {
+    return notesValidated;
+  }
+
   const optionalText = (value: string): string | null => {
     const trimmed = value.trim();
     return trimmed.length > 0 ? trimmed : null;
@@ -131,15 +152,15 @@ export function validateCreateCrmProjectForm(
       phones: phoneValidated.phones,
       priority: form.priority,
       currentStageSlug: form.currentStageSlug,
-      notes: form.notes.trim() || null,
+      notes: notesValidated.notes,
       dealValueCents,
       balanceRemainingCents: 0,
       assignedMemberId: normalizeAssigneeMemberIdForSave(form.assignedMemberId),
       addressLine1: optionalText(form.addressLine1),
       addressLine2: optionalText(form.addressLine2),
-      city: optionalText(form.city),
+      city: cityValidated.city,
       state: state || null,
-      postalCode: optionalText(form.postalCode),
+      postalCode: postalValidated.postalCode,
     },
   };
 }

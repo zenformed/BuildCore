@@ -10,8 +10,8 @@ export type LeadCapturePublicContext = {
 export type LeadCaptureSubmitInput = {
   readonly firstName: string;
   readonly lastName: string;
-  readonly email: string;
-  readonly phone: string;
+  readonly emails: readonly string[];
+  readonly phones: readonly string[];
   readonly addressLine1: string;
   readonly addressLine2: string | null;
   readonly city: string;

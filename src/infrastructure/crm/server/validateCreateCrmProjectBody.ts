@@ -14,6 +14,11 @@ import {
   validateContactEmailValues,
   validateContactPhoneValues,
 } from '@/domain/crm/contactMultiValue';
+import {
+  validateOptionalCity,
+  validateOptionalPostalCode,
+  validateProjectNotes,
+} from '@/domain/crm/projectFormFieldValidation';
 
 const PRIORITIES: readonly CrmPriority[] = ['low', 'normal', 'high', 'urgent'];
 
@@ -217,6 +222,24 @@ export function validateCreateCrmProjectBody(
     return phoneValidated;
   }
 
+  const cityRaw = asOptionalString(body.city);
+  const cityValidated = validateOptionalCity(cityRaw ?? '');
+  if (!cityValidated.ok) {
+    return cityValidated;
+  }
+
+  const postalRaw = asOptionalString(body.postalCode);
+  const postalValidated = validateOptionalPostalCode(postalRaw ?? '');
+  if (!postalValidated.ok) {
+    return postalValidated;
+  }
+
+  const notesRaw = asOptionalString(body.notes);
+  const notesValidated = validateProjectNotes(notesRaw ?? '');
+  if (!notesValidated.ok) {
+    return notesValidated;
+  }
+
   return {
     ok: true,
     input: {
@@ -228,15 +251,15 @@ export function validateCreateCrmProjectBody(
       phones: phoneValidated.phones,
       priority,
       currentStageSlug,
-      notes: asOptionalString(body.notes),
+      notes: notesValidated.notes,
       dealValueCents,
       balanceRemainingCents,
       assignedMemberId: asOptionalUserId(body.assignedMemberId),
       addressLine1: asOptionalString(body.addressLine1),
       addressLine2: asOptionalString(body.addressLine2),
-      city: asOptionalString(body.city),
+      city: cityValidated.city,
       state,
-      postalCode: asOptionalString(body.postalCode),
+      postalCode: postalValidated.postalCode,
       initialTemplateBlueprints,
       ...(parentProjectId !== undefined ? { parentProjectId } : {}),
     },

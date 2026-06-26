@@ -4,6 +4,7 @@ import type { ReactElement } from 'react';
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import type { CrmIndustry } from '@/domain/crm';
+import { formatUsPhoneInput } from '@/domain/crm/phoneFormat';
 import { canManageBuildCoreProjectTemplates } from '@/domain/buildcore/projectTemplateAccess';
 import {
   createProjectTemplateDraftSummary,
@@ -223,15 +224,15 @@ export function CrmProjectDraftRow({
           <input
             className={styles.draftInput}
             type="tel"
-            value={form.phones[0] ?? ''}
+            value={formatUsPhoneInput(form.phones[0] ?? '')}
             disabled={saving}
             placeholder={create.fields.phone}
             onChange={(e) =>
               updateField(
                 'phones',
                 form.phones.length > 0
-                  ? [e.target.value, ...form.phones.slice(1)]
-                  : [e.target.value]
+                  ? [formatUsPhoneInput(e.target.value), ...form.phones.slice(1)]
+                  : [formatUsPhoneInput(e.target.value)]
               )
             }
           />

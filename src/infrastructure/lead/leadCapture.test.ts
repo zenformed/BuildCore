@@ -9,8 +9,8 @@ describe('validateLeadCaptureBody', () => {
     const result = validateLeadCaptureBody({
       firstName: 'Scott',
       lastName: 'Thompson',
-      email: 'Scott@Example.com',
-      phone: '555-0100',
+      emails: ['Scott@Example.com'],
+      phones: ['7135550198'],
       addressLine1: '123 Main St',
       addressLine2: 'Apt 2',
       city: 'Austin',
@@ -20,7 +20,8 @@ describe('validateLeadCaptureBody', () => {
 
     assert.equal(result.ok, true);
     if (result.ok) {
-      assert.equal(result.input.email, 'scott@example.com');
+      assert.equal(result.input.emails[0], 'scott@example.com');
+      assert.equal(result.input.phones[0], '(713) 555-0198');
       assert.equal(result.input.state, 'TX');
     }
   });
@@ -53,13 +54,13 @@ describe('mergeLeadCaptureContactFields', () => {
       },
       {
         fullName: 'New Name',
-        phone: '555-0100',
+        phones: ['(713) 555-0198'],
         clientId: 'client-1',
       }
     );
 
     assert.equal(merged.full_name, 'Existing Name');
-    assert.equal(merged.phone, '555-0100');
+    assert.equal(merged.phone, '(713) 555-0198');
     assert.equal(merged.client_id, 'client-1');
   });
 });

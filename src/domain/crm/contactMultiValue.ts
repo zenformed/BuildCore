@@ -1,8 +1,10 @@
+import { formatUsPhoneDisplay, formatUsPhoneInput } from '@/domain/crm/phoneFormat';
+
 export const MAX_CONTACT_EMAILS = 4;
 export const MAX_CONTACT_PHONES = 4;
 export const MAX_CONTACT_PHONE_LENGTH = 40;
 
-const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const EMAIL_PATTERN = /^[^\s@]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/;
 
 export function isValidContactEmail(email: string): boolean {
   const trimmed = email.trim();
@@ -27,8 +29,9 @@ export function normalizeContactPhones(values: readonly string[]): readonly stri
   for (const value of values) {
     const trimmed = value.trim();
     if (!trimmed) continue;
-    if (normalized.includes(trimmed)) continue;
-    normalized.push(trimmed.slice(0, MAX_CONTACT_PHONE_LENGTH));
+    const formatted = formatUsPhoneDisplay(trimmed);
+    if (normalized.includes(formatted)) continue;
+    normalized.push(formatted.slice(0, MAX_CONTACT_PHONE_LENGTH));
     if (normalized.length >= MAX_CONTACT_PHONES) break;
   }
   return normalized;
@@ -47,6 +50,11 @@ export function contactValuesToFormFields(values: readonly string[]): string[] {
   return [...values];
 }
 
+export function contactPhonesToFormFields(values: readonly string[]): string[] {
+  if (values.length === 0) return [''];
+  return values.map((value) => (value.trim() ? formatUsPhoneInput(value) : ''));
+}
+
 export function updatePrimaryContactFormValue(values: readonly string[], nextPrimary: string): string[] {
   if (values.length === 0) return [nextPrimary];
   return [nextPrimary, ...values.slice(1)];
@@ -61,7 +69,7 @@ export function validateContactEmailValues(
   }
   for (const email of nonEmpty) {
     if (!isValidContactEmail(email)) {
-      return { ok: false, message: 'Enter a valid email address.' };
+      return { ok: false, message: 'Enter a valid email address (for example, name@example.com).' };
     }
   }
   return { ok: true, emails: normalizeContactEmails(nonEmpty) };

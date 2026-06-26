@@ -2,7 +2,10 @@
 
 import type { FormEvent, ReactElement, ReactNode } from 'react';
 import { useState } from 'react';
-import { US_STATE_CODES } from '@/domain/crm/usStates';
+import {
+  sanitizeCityInput,
+  sanitizePostalCodeInput,
+} from '@/domain/crm/projectFormFieldValidation';
 import type { LeadCaptureSubmitInput } from '@/domain/lead/leadCapture';
 import {
   validateLeadCaptureFormFields,
@@ -10,6 +13,12 @@ import {
   type LeadCaptureFormFieldKey,
 } from '@/infrastructure/crm/server/validateLeadCaptureBody';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
+import {
+  ContactMultiValueFields,
+  CONTACT_EMAIL_FIELD_MAX,
+  CONTACT_PHONE_FIELD_MAX,
+} from '@/presentation/components/crmShared/ContactMultiValueFields';
+import { UsStateCombobox } from '@/presentation/components/crmShared/UsStateCombobox';
 import styles from './LeadCapture.module.css';
 
 export type LeadCaptureFormProps = {
@@ -21,8 +30,8 @@ export type LeadCaptureFormProps = {
 type LeadCaptureFormState = {
   firstName: string;
   lastName: string;
-  email: string;
-  phone: string;
+  emails: string[];
+  phones: string[];
   addressLine1: string;
   addressLine2: string;
   city: string;
@@ -33,8 +42,8 @@ type LeadCaptureFormState = {
 const EMPTY_FORM: LeadCaptureFormState = {
   firstName: '',
   lastName: '',
-  email: '',
-  phone: '',
+  emails: [''],
+  phones: [''],
   addressLine1: '',
   addressLine2: '',
   city: '',
@@ -108,6 +117,16 @@ export function LeadCaptureForm({
     setFormError(null);
   };
 
+  const clearContactFieldError = (field: 'email' | 'phone'): void => {
+    if (fieldErrors[field] == null) return;
+    setFieldErrors((current) => {
+      const next = { ...current };
+      delete next[field];
+      return next;
+    });
+    setFormError(null);
+  };
+
   const inputClassName = (field: LeadCaptureFormFieldKey | 'addressLine2'): string => {
     const hasError = field !== 'addressLine2' && fieldErrors[field] != null;
     return hasError ? `${styles.input} ${styles.inputInvalid}` : styles.input;
@@ -122,8 +141,8 @@ export function LeadCaptureForm({
     const validated = validateLeadCaptureFormFields({
       firstName: form.firstName,
       lastName: form.lastName,
-      email: form.email,
-      phone: form.phone,
+      emails: form.emails,
+      phones: form.phones,
       addressLine1: form.addressLine1,
       addressLine2: form.addressLine2,
       city: form.city,
@@ -144,8 +163,6 @@ export function LeadCaptureForm({
       setFormError(err instanceof Error ? err.message : copy.submitFailed);
     }
   };
-
-  const stateOptions = [...US_STATE_CODES].sort();
 
   return (
     <form className={styles.form} onSubmit={(event) => void handleSubmit(event)} noValidate>
@@ -185,37 +202,52 @@ export function LeadCaptureForm({
         </FormField>
       </div>
 
-      <FormField id="email" label={copy.emailLabel} required error={fieldErrors.email}>
-        <input
-          id="email"
-          type="email"
-          className={inputClassName('email')}
-          value={form.email}
-          autoComplete="email"
-          inputMode="email"
-          aria-required="true"
-          aria-invalid={fieldErrors.email != null}
-          aria-describedby={fieldErrors.email ? 'email-error' : undefined}
-          disabled={disabled || submitting}
-          onChange={(event) => updateField('email', event.target.value)}
-        />
-      </FormField>
-
-      <FormField id="phone" label={copy.phoneLabel} required error={fieldErrors.phone}>
-        <input
-          id="phone"
-          type="tel"
-          className={inputClassName('phone')}
-          value={form.phone}
-          autoComplete="tel"
-          inputMode="tel"
-          aria-required="true"
-          aria-invalid={fieldErrors.phone != null}
-          aria-describedby={fieldErrors.phone ? 'phone-error' : undefined}
-          disabled={disabled || submitting}
-          onChange={(event) => updateField('phone', event.target.value)}
-        />
-      </FormField>
+      <div className={styles.contactEmailPhoneGrid}>
+        <div className={styles.contactFieldBlock}>
+          <ContactMultiValueFields
+            label={copy.emailAddressesLabel}
+            values={form.emails}
+            inputType="email"
+            disabled={disabled || submitting}
+            maxCount={CONTACT_EMAIL_FIELD_MAX}
+            idPrefix="lead-capture-email"
+            addButtonLabel={copy.addEmail}
+            addAriaLabel={copy.addEmail}
+            removeAriaLabel={copy.removeEmail}
+            onChange={(emails) => {
+              updateField('emails', emails);
+              clearContactFieldError('email');
+            }}
+          />
+          {fieldErrors.email ? (
+            <p className={styles.fieldError} id="email-error" role="alert">
+              {fieldErrors.email}
+            </p>
+          ) : null}
+        </div>
+        <div className={styles.contactFieldBlock}>
+          <ContactMultiValueFields
+            label={copy.phoneNumbersLabel}
+            values={form.phones}
+            inputType="tel"
+            disabled={disabled || submitting}
+            maxCount={CONTACT_PHONE_FIELD_MAX}
+            idPrefix="lead-capture-phone"
+            addButtonLabel={copy.addPhone}
+            addAriaLabel={copy.addPhone}
+            removeAriaLabel={copy.removePhone}
+            onChange={(phones) => {
+              updateField('phones', phones);
+              clearContactFieldError('phone');
+            }}
+          />
+          {fieldErrors.phone ? (
+            <p className={styles.fieldError} id="phone-error" role="alert">
+              {fieldErrors.phone}
+            </p>
+          ) : null}
+        </div>
+      </div>
 
       <FormField id="addressLine1" label={copy.addressLine1Label} required error={fieldErrors.addressLine1}>
         <input
@@ -256,28 +288,23 @@ export function LeadCaptureForm({
             aria-invalid={fieldErrors.city != null}
             aria-describedby={fieldErrors.city ? 'city-error' : undefined}
             disabled={disabled || submitting}
-            onChange={(event) => updateField('city', event.target.value)}
+            onChange={(event) => updateField('city', sanitizeCityInput(event.target.value))}
           />
         </FormField>
         <FormField id="state" label={copy.stateLabel} required error={fieldErrors.state}>
-          <select
+          <UsStateCombobox
             id="state"
-            className={inputClassName('state')}
             value={form.state}
-            autoComplete="address-level1"
-            aria-required="true"
-            aria-invalid={fieldErrors.state != null}
-            aria-describedby={fieldErrors.state ? 'state-error' : undefined}
             disabled={disabled || submitting}
-            onChange={(event) => updateField('state', event.target.value)}
-          >
-            <option value="">{copy.statePlaceholder}</option>
-            {stateOptions.map((code) => (
-              <option key={code} value={code}>
-                {code}
-              </option>
-            ))}
-          </select>
+            ariaLabel={copy.stateLabel}
+            placeholder={copy.statePlaceholder}
+            inputClassName={inputClassName('state')}
+            invalid={fieldErrors.state != null}
+            menuPortalClassName={styles.stateMenuPortal}
+            menuOptionClassName={styles.stateMenuOption}
+            menuOptionSelectedClassName={styles.stateMenuOption_selected}
+            onChange={(state) => updateField('state', state)}
+          />
         </FormField>
         <FormField id="postalCode" label={copy.postalCodeLabel} required error={fieldErrors.postalCode}>
           <input
@@ -287,11 +314,12 @@ export function LeadCaptureForm({
             value={form.postalCode}
             autoComplete="postal-code"
             inputMode="numeric"
+            maxLength={5}
             aria-required="true"
             aria-invalid={fieldErrors.postalCode != null}
             aria-describedby={fieldErrors.postalCode ? 'postalCode-error' : undefined}
             disabled={disabled || submitting}
-            onChange={(event) => updateField('postalCode', event.target.value)}
+            onChange={(event) => updateField('postalCode', sanitizePostalCodeInput(event.target.value))}
           />
         </FormField>
       </div>

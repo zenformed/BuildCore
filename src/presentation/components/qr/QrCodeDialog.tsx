@@ -1,6 +1,6 @@
 'use client';
 
-import type { ReactElement } from 'react';
+import type { ReactElement, ReactNode } from 'react';
 import { CloseIcon } from '@/platform/icons/buildCoreDashboardShellIcons';
 import { QrCodeCard } from '@/presentation/components/qr/QrCodeCard';
 import { QrDownloadButton } from '@/presentation/components/qr/QrDownloadButton';
@@ -19,6 +19,7 @@ export type QrCodeDialogProps = {
   readonly closeAriaLabel: string;
   readonly qrValue: string;
   readonly qrAriaLabel: string;
+  readonly identityHeader?: ReactNode;
   readonly subtitle?: string;
   readonly metaRows: readonly QrCodeDialogMetaRow[];
   readonly helperText: string;
@@ -38,6 +39,7 @@ export function QrCodeDialog({
   closeAriaLabel,
   qrValue,
   qrAriaLabel,
+  identityHeader,
   subtitle,
   metaRows,
   helperText,
@@ -76,7 +78,11 @@ export function QrCodeDialog({
         </div>
 
         <div className={styles.qrDialogBody}>
-          <QrCodeCard value={qrValue} ariaLabel={qrAriaLabel} />
+          {identityHeader}
+
+          <div className={styles.qrDialogQrWrap}>
+            <QrCodeCard value={qrValue} ariaLabel={qrAriaLabel} />
+          </div>
 
           {subtitle ? <p className={styles.qrDialogSubtitle}>{subtitle}</p> : null}
 

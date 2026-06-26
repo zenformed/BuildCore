@@ -7,6 +7,7 @@ import {
 } from '@/domain/crm';
 import {
   contactValuesToFormFields,
+  contactPhonesToFormFields,
   isValidContactEmail,
   updatePrimaryContactFormValue,
 } from '@/domain/crm/contactMultiValue';
@@ -136,7 +137,7 @@ export function projectDetailToFormState(project: CrmProjectDetail): CreateCrmPr
     customIndustry: summary.customIndustry ?? '',
     contactName: summary.contact.name,
     emails: contactValuesToFormFields(summary.contact.emails),
-    phones: contactValuesToFormFields(summary.contact.phones),
+    phones: contactPhonesToFormFields(summary.contact.phones),
     priority: summary.priority,
     currentStageSlug: summary.currentStageSlug,
     notes: notes ?? '',

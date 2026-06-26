@@ -233,8 +233,8 @@ export async function buildLeadCaptureSubprojectCreateInput(
     readonly parentProjectId: string;
     readonly subprojectName: string;
     readonly contactName: string;
-    readonly email: string;
-    readonly phone: string;
+    readonly emails: readonly string[];
+    readonly phones: readonly string[];
     readonly industry: CreateCrmProjectInput['industry'];
     readonly customIndustry: string | null;
     readonly addressLine1: string;
@@ -255,8 +255,8 @@ export async function buildLeadCaptureSubprojectCreateInput(
     industry: params.industry,
     customIndustry: params.customIndustry,
     contactName: params.contactName,
-    emails: params.email.trim() ? [params.email.trim()] : [],
-    phones: params.phone.trim() ? [params.phone.trim()] : [],
+    emails: [...params.emails],
+    phones: [...params.phones],
     priority: 'normal',
     currentStageSlug: getFirstPipelineStageSlug(stageCatalog),
     notes: null,

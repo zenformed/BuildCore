@@ -1,4 +1,5 @@
 import { maskEmailForMemberDisplay } from '@/domain/buildcore/maskEmailForMemberDisplay';
+import { formatUsPhoneDisplay } from '@/domain/crm/phoneFormat';
 import { formatBuildCoreDisplayDate } from '@/platform/formatting/buildCoreDisplayDate';
 import {
   CRM_INDUSTRIES,
@@ -27,18 +28,9 @@ export function formatStageLabel(
   return getPipelineStage(slug, stages).label;
 }
 
-/** US-style display: 9186713407 → 918-671-3407; leaves non-10-digit values unchanged. */
+/** US-style display: 9186713407 → (918) 671-3407 */
 export function formatPhoneDisplay(phone: string): string {
-  const trimmed = phone.trim();
-  if (!trimmed) return '';
-  const digits = trimmed.replace(/\D/g, '');
-  if (digits.length === 10) {
-    return `${digits.slice(0, 3)}-${digits.slice(3, 6)}-${digits.slice(6)}`;
-  }
-  if (digits.length === 11 && digits.startsWith('1')) {
-    return `${digits.slice(1, 4)}-${digits.slice(4, 7)}-${digits.slice(7)}`;
-  }
-  return trimmed;
+  return formatUsPhoneDisplay(phone);
 }
 
 export function formatContactEmailDisplay(

@@ -16,7 +16,7 @@ export function mergeLeadCaptureContactFields(
   existing: LeadCaptureContactRow,
   input: {
     readonly fullName: string;
-    readonly phone: string;
+    readonly phones: readonly string[];
     readonly clientId: string;
   }
 ): {
@@ -29,12 +29,10 @@ export function mergeLeadCaptureContactFields(
 } {
   const existingName = existing.full_name.trim();
   const existingPhone = existing.phone?.trim() ?? '';
-  const nextPhone = existingPhone.length > 0 ? existingPhone : input.phone.trim();
+  const submittedPhones = input.phones.map((phone) => phone.trim()).filter(Boolean);
+  const nextPhones = existingPhone.length > 0 ? [existingPhone] : submittedPhones;
   const existingEmails = existing.email?.trim() ? [existing.email.trim()] : [];
-  const contactPayload = buildCrmContactDbWritePayload(
-    existingEmails,
-    nextPhone ? [nextPhone] : []
-  );
+  const contactPayload = buildCrmContactDbWritePayload(existingEmails, nextPhones);
 
   return {
     full_name: existingName.length > 0 ? existingName : input.fullName,

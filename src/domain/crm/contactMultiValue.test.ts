@@ -43,12 +43,12 @@ describe('contactMultiValue', () => {
 
   it('writes primary columns from first array values', () => {
     assert.deepEqual(
-      buildCrmContactDbWritePayload(['a@x.com', 'b@x.com'], ['111', '222']),
+      buildCrmContactDbWritePayload(['a@x.com', 'b@x.com'], ['1112223333', '4445556666']),
       {
         contact_emails: ['a@x.com', 'b@x.com'],
-        contact_phones: ['111', '222'],
+        contact_phones: ['(111) 222-3333', '(444) 555-6666'],
         email: 'a@x.com',
-        phone: '111',
+        phone: '(111) 222-3333',
       }
     );
     assert.deepEqual(buildCrmContactDbWritePayload([], []), {

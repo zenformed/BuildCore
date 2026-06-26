@@ -1,5 +1,5 @@
 .widePanel {
-  width: min(52.8rem, calc(100vw - 2rem));
+  width: min(58rem, calc(100vw - 2rem));
   max-height: 90vh;
 }
 

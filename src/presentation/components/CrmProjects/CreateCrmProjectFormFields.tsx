@@ -1,13 +1,18 @@
 'use client';
 
 import type { ReactElement } from 'react';
-import { US_STATE_OPTIONS } from '@/domain/crm/usStates';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
 import type { CreateCrmProjectFormState } from '@/presentation/features/crmCreate/createCrmProjectFormModel';
 import type { CrmProjectAssigneeOption } from '@/presentation/features/crmProjects/crmProjectAssigneeOptions';
 import { CreateFormAssigneePicker } from '@/presentation/components/crmShared/CreateFormAssigneePicker';
-import { CreateFormSelectPicker } from '@/presentation/components/crmShared/CreateFormSelectPicker';
+import { UsStateCombobox } from '@/presentation/components/crmShared/UsStateCombobox';
 import { IndustrySelectFields } from '@/presentation/components/crmShared/IndustrySelectFields';
+import {
+  MAX_PROJECT_NOTES_LENGTH,
+  sanitizeCityInput,
+  sanitizePostalCodeInput,
+  sanitizeProjectNotesInput,
+} from '@/domain/crm/projectFormFieldValidation';
 import {
   ContactMultiValueFields,
   CONTACT_EMAIL_FIELD_MAX,
@@ -23,8 +28,6 @@ export type CreateCrmProjectFormFieldsProps = {
     key: K,
     value: CreateCrmProjectFormState[K]
   ) => void;
-  /** Edit modal only — create flows omit notes. */
-  readonly showNotes?: boolean;
 };
 
 export function CreateCrmProjectFormFields({
@@ -32,78 +35,98 @@ export function CreateCrmProjectFormFields({
   saving,
   assigneeOptions,
   updateField,
-  showNotes = false,
 }: CreateCrmProjectFormFieldsProps): ReactElement {
   const create = content.crm.create;
+  const showAssignee = assigneeOptions.length > 0;
 
   return (
     <>
-      <div className={formStyles.field}>
-        <label className={formStyles.label} htmlFor="crm-create-name">
-          {create.fields.name} *
-        </label>
-        <input
-          id="crm-create-name"
-          className={formStyles.input}
-          value={form.name}
-          disabled={saving}
-          onChange={(e) => updateField('name', e.target.value)}
-          autoFocus
-        />
-      </div>
-
-      <div className={formStyles.rowTradeDeal}>
-        <div className={formStyles.fieldStack}>
-          <IndustrySelectFields
-            industry={form.industry}
-            customIndustry={form.customIndustry}
-            industryLabel={create.fields.industry}
-            customIndustryLabel={create.fields.customIndustry}
+      <div
+        className={`${formStyles.rowTopFour}${showAssignee ? '' : ` ${formStyles.rowTopFourNoAssignee}`}`}
+      >
+        <div className={formStyles.field}>
+          <label className={formStyles.label} htmlFor="crm-create-name">
+            {create.fields.name} *
+          </label>
+          <input
+            id="crm-create-name"
+            className={formStyles.input}
+            value={form.name}
             disabled={saving}
-            required
-            industryId="crm-create-industry"
-            customIndustryId="crm-create-custom-industry"
-            onIndustryChange={(industry) => updateField('industry', industry)}
-            onCustomIndustryChange={(value) => updateField('customIndustry', value)}
+            onChange={(e) => updateField('name', e.target.value)}
+            autoFocus
           />
         </div>
-        {assigneeOptions.length > 0 ? (
-          <div className={formStyles.fieldAssigneeCompact}>
-            <span className={formStyles.label}>{create.fields.assignedShort}</span>
-            <CreateFormAssigneePicker
-              value={form.assignedMemberId}
-              options={assigneeOptions}
+
+        <IndustrySelectFields
+          variant="industryOnly"
+          industry={form.industry}
+          customIndustry={form.customIndustry}
+          industryLabel={create.fields.industry}
+          customIndustryLabel={create.fields.customIndustry}
+          disabled={saving}
+          required
+          industryId="crm-create-industry"
+          customIndustryId="crm-create-custom-industry"
+          onIndustryChange={(industry) => updateField('industry', industry)}
+          onCustomIndustryChange={(value) => updateField('customIndustry', value)}
+        />
+
+        <div className={formStyles.rowTopContactAssignee}>
+          <div className={formStyles.field}>
+            <label className={formStyles.label} htmlFor="crm-create-contact">
+              {create.fields.contactName} *
+            </label>
+            <input
+              id="crm-create-contact"
+              className={formStyles.input}
+              value={form.contactName}
               disabled={saving}
-              unassignedLabel={create.assigneeUnassigned}
-              ariaLabel={create.fields.assignedShort}
-              onChange={(memberId) => updateField('assignedMemberId', memberId)}
+              onChange={(e) => updateField('contactName', e.target.value)}
             />
           </div>
-        ) : null}
+
+          {showAssignee ? (
+            <div className={formStyles.fieldAssigneeCompact}>
+              <span className={formStyles.label}>{create.fields.assignedShort}</span>
+              <CreateFormAssigneePicker
+                value={form.assignedMemberId}
+                options={assigneeOptions}
+                disabled={saving}
+                unassignedLabel={create.assigneeUnassigned}
+                ariaLabel={create.fields.assignedShort}
+                onChange={(memberId) => updateField('assignedMemberId', memberId)}
+              />
+            </div>
+          ) : null}
+        </div>
       </div>
 
-      <div className={formStyles.field}>
-        <label className={formStyles.label} htmlFor="crm-create-contact">
-          {create.fields.contactName} *
-        </label>
-        <input
-          id="crm-create-contact"
-          className={formStyles.input}
-          value={form.contactName}
-          disabled={saving}
-          onChange={(e) => updateField('contactName', e.target.value)}
-        />
-      </div>
+      {form.industry === 'other' ? (
+        <div className={formStyles.field}>
+          <label className={formStyles.label} htmlFor="crm-create-custom-industry">
+            {create.fields.customIndustry} *
+          </label>
+          <input
+            id="crm-create-custom-industry"
+            className={formStyles.input}
+            value={form.customIndustry}
+            disabled={saving}
+            onChange={(e) => updateField('customIndustry', e.target.value)}
+          />
+        </div>
+      ) : null}
 
       <div className={formStyles.rowContactEmailPhone}>
         <div className={formStyles.rowContactEmailCol}>
           <ContactMultiValueFields
-            label={create.fields.email}
+            label={create.fields.emailAddresses}
             values={form.emails}
             inputType="email"
             disabled={saving}
             maxCount={CONTACT_EMAIL_FIELD_MAX}
             idPrefix="crm-create-email"
+            addButtonLabel={create.fields.addEmail}
             addAriaLabel={create.fields.addEmail}
             removeAriaLabel={create.fields.removeEmail}
             onChange={(emails) => updateField('emails', emails)}
@@ -111,12 +134,13 @@ export function CreateCrmProjectFormFields({
         </div>
         <div className={formStyles.rowContactPhoneCol}>
           <ContactMultiValueFields
-            label={create.fields.phone}
+            label={create.fields.phoneNumbers}
             values={form.phones}
             inputType="tel"
             disabled={saving}
             maxCount={CONTACT_PHONE_FIELD_MAX}
             idPrefix="crm-create-phone"
+            addButtonLabel={create.fields.addPhone}
             addAriaLabel={create.fields.addPhone}
             removeAriaLabel={create.fields.removePhone}
             onChange={(phones) => updateField('phones', phones)}
@@ -160,23 +184,20 @@ export function CreateCrmProjectFormFields({
             className={formStyles.input}
             value={form.city}
             disabled={saving}
-            onChange={(e) => updateField('city', e.target.value)}
+            autoComplete="address-level2"
+            onChange={(e) => updateField('city', sanitizeCityInput(e.target.value))}
           />
         </div>
         <div className={formStyles.field}>
           <label className={formStyles.label} htmlFor="crm-create-state">
             {create.fields.state}
           </label>
-          <CreateFormSelectPicker
+          <UsStateCombobox
             id="crm-create-state"
             value={form.state}
-            options={US_STATE_OPTIONS.map((state) => ({
-              value: state.code,
-              label: state.name,
-            }))}
-            placeholder="Select state"
             disabled={saving}
             ariaLabel={create.fields.state}
+            placeholder="Select state"
             onChange={(state) => updateField('state', state)}
           />
         </div>
@@ -190,25 +211,26 @@ export function CreateCrmProjectFormFields({
             value={form.postalCode}
             disabled={saving}
             inputMode="numeric"
-            onChange={(e) => updateField('postalCode', e.target.value)}
+            autoComplete="postal-code"
+            maxLength={5}
+            onChange={(e) => updateField('postalCode', sanitizePostalCodeInput(e.target.value))}
           />
         </div>
       </div>
 
-      {showNotes ? (
-        <div className={formStyles.field}>
-          <label className={formStyles.label} htmlFor="crm-create-notes">
-            {create.fields.notes}
-          </label>
-          <textarea
-            id="crm-create-notes"
-            className={formStyles.textarea}
-            value={form.notes}
-            disabled={saving}
-            onChange={(e) => updateField('notes', e.target.value)}
-          />
-        </div>
-      ) : null}
+      <div className={formStyles.field}>
+        <label className={formStyles.label} htmlFor="crm-create-notes">
+          {create.fields.notes}
+        </label>
+        <textarea
+          id="crm-create-notes"
+          className={formStyles.textarea}
+          value={form.notes}
+          disabled={saving}
+          maxLength={MAX_PROJECT_NOTES_LENGTH}
+          onChange={(e) => updateField('notes', sanitizeProjectNotesInput(e.target.value))}
+        />
+      </div>
     </>
   );
 }

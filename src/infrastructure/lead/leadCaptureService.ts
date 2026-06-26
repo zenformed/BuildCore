@@ -6,6 +6,7 @@ import type {
   LeadCaptureSubmitInput,
   LeadCaptureSubmitResult,
 } from '@/domain/lead/leadCapture';
+import { primaryContactEmail } from '@/domain/crm/contactMultiValue';
 import { titleCasePersonOrEntityName } from '@/domain/crm/titleCaseName';
 import {
   buildLeadCaptureSubprojectCreateInput,
@@ -149,8 +150,8 @@ async function resolveLeadCaptureContactParty(
   params: {
     readonly fullName: string;
     readonly contactName: string;
-    readonly email: string;
-    readonly phone: string;
+    readonly emails: readonly string[];
+    readonly phones: readonly string[];
   }
 ): Promise<{
   readonly clientId: string;
@@ -158,7 +159,8 @@ async function resolveLeadCaptureContactParty(
   readonly contactCreated: boolean;
   readonly contactUpdated: boolean;
 }> {
-  const existingContact = await findContactByEmail(supabase, organizationId, params.email);
+  const lookupEmail = primaryContactEmail(params.emails);
+  const existingContact = await findContactByEmail(supabase, organizationId, lookupEmail);
 
   if (existingContact != null) {
     let clientId = existingContact.client_id?.trim() ?? '';
@@ -173,7 +175,7 @@ async function resolveLeadCaptureContactParty(
 
     const merged = mergeLeadCaptureContactFields(existingContact, {
       fullName: params.fullName,
-      phone: params.phone,
+      phones: params.phones,
       clientId,
     });
     const { error } = await supabase
@@ -196,8 +198,8 @@ async function resolveLeadCaptureContactParty(
     const party = await createCrmClientAndContactForOrg(supabase, organizationId, {
       companyName: params.contactName,
       contactName: params.contactName,
-      emails: params.email.trim() ? [params.email.trim()] : [],
-      phones: params.phone.trim() ? [params.phone.trim()] : [],
+      emails: [...params.emails],
+      phones: [...params.phones],
     });
     return {
       clientId: party.clientId,
@@ -250,8 +252,8 @@ export async function submitLeadCaptureForToken(
   const party = await resolveLeadCaptureContactParty(supabase, parentProject.organization_id, {
     fullName,
     contactName,
-    email: input.email,
-    phone: input.phone,
+    emails: input.emails,
+    phones: input.phones,
   });
 
   let createInput;
@@ -263,8 +265,8 @@ export async function submitLeadCaptureForToken(
         parentProjectId: parentProject.id,
         subprojectName,
         contactName,
-        email: input.email,
-        phone: input.phone,
+        emails: input.emails,
+        phones: input.phones,
         industry,
         customIndustry,
         addressLine1: input.addressLine1,

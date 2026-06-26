@@ -476,7 +476,6 @@ export function CreateCrmProjectModal({
                 saving={saving}
                 assigneeOptions={assigneeOptions}
                 updateField={updateField}
-                showNotes={isEditMode}
               />
 
               {!isEditMode && canManageTemplates && isApiSource ? (
