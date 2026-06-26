@@ -7,6 +7,7 @@ import {
   getCrmProjectIndustrySchemaMode,
 } from './crmProjectIndustrySchema';
 import { getCrmProjectDetailBySlugForOrg } from './crmReadService';
+import { buildCrmContactDbWritePayload } from '@/domain/crm/contactMultiValue';
 
 export async function updateCrmProjectBySlugForOrg(
   supabase: SupabaseClient,
@@ -29,12 +30,13 @@ export async function updateCrmProjectBySlugForOrg(
 
   if (clientError) throw new Error(clientError.message);
 
+  const contactPayload = buildCrmContactDbWritePayload(input.emails, input.phones);
+
   const { error: contactError } = await supabase
     .from('crm_contacts')
     .update({
       full_name: input.contactName,
-      email: input.email || null,
-      phone: input.phone || null,
+      ...contactPayload,
     })
     .eq('id', existing.summary.contact.id)
     .eq('organization_id', organizationId);

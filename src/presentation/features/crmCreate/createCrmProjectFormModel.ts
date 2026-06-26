@@ -3,6 +3,11 @@ import { validateCrmIndustryFields } from '@/domain/crm';
 import { getFirstPipelineStageSlug } from '@/domain/crm/pipelineStage';
 import { titleCasePersonOrEntityName } from '@/domain/crm/titleCaseName';
 import { US_STATE_CODES } from '@/domain/crm/usStates';
+import {
+  contactValuesToFormFields,
+  validateContactEmailValues,
+  validateContactPhoneValues,
+} from '@/domain/crm/contactMultiValue';
 import { normalizeAssigneeMemberIdForSave } from '@/presentation/features/crmAssignment/buildAssigneeOptions';
 
 export type CreateCrmProjectFormState = {
@@ -10,8 +15,8 @@ export type CreateCrmProjectFormState = {
   industry: CrmIndustry;
   customIndustry: string;
   contactName: string;
-  email: string;
-  phone: string;
+  emails: string[];
+  phones: string[];
   priority: CrmPriority;
   currentStageSlug: PipelineStageSlug;
   notes: string;
@@ -30,8 +35,8 @@ export const defaultCreateCrmProjectFormState = (): CreateCrmProjectFormState =>
   industry: 'hvac',
   customIndustry: '',
   contactName: '',
-  email: '',
-  phone: '',
+  emails: [''],
+  phones: [''],
   priority: 'normal',
   currentStageSlug: getFirstPipelineStageSlug(),
   notes: '',
@@ -55,8 +60,8 @@ export function createSubprojectFormDefaultsFromParent(
     ...base,
     name: summary.name,
     contactName: summary.contact.name,
-    email: summary.contact.email,
-    phone: summary.contact.phone,
+    emails: contactValuesToFormFields(summary.contact.emails),
+    phones: contactValuesToFormFields(summary.contact.phones),
     addressLine1: summary.address.addressLine1 ?? '',
     addressLine2: summary.address.addressLine2 ?? '',
     city: summary.address.city ?? '',
@@ -100,6 +105,16 @@ export function validateCreateCrmProjectForm(
     return { ok: false, message: 'Select a valid US state.' };
   }
 
+  const emailValidated = validateContactEmailValues(form.emails);
+  if (!emailValidated.ok) {
+    return emailValidated;
+  }
+
+  const phoneValidated = validateContactPhoneValues(form.phones);
+  if (!phoneValidated.ok) {
+    return phoneValidated;
+  }
+
   const optionalText = (value: string): string | null => {
     const trimmed = value.trim();
     return trimmed.length > 0 ? trimmed : null;
@@ -112,8 +127,8 @@ export function validateCreateCrmProjectForm(
       industry: industryValidated.industry,
       customIndustry: industryValidated.customIndustry,
       contactName,
-      email: form.email.trim(),
-      phone: form.phone.trim(),
+      emails: emailValidated.emails,
+      phones: phoneValidated.phones,
       priority: form.priority,
       currentStageSlug: form.currentStageSlug,
       notes: form.notes.trim() || null,

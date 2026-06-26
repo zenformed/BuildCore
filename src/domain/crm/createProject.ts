@@ -8,8 +8,8 @@ export type CreateCrmProjectInput = {
   readonly industry: CrmIndustry;
   readonly customIndustry: string | null;
   readonly contactName: string;
-  readonly email: string;
-  readonly phone: string;
+  readonly emails: readonly string[];
+  readonly phones: readonly string[];
   readonly priority: CrmPriority;
   readonly currentStageSlug: PipelineStageSlug;
   readonly notes: string | null;

@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import type { CrmProjectSummary } from '@/domain/crm';
+import type { CrmContact, CrmProjectSummary } from '@/domain/crm';
 import {
   orderBulkSendCompletionRows,
   summarizeBulkSendDeliveryRows,
@@ -11,18 +11,29 @@ import {
   resolveBulkSubprojectSendRecipients,
 } from '@/presentation/features/communications/subprojectBulkSendRecipients';
 
+function testContact(
+  email: string,
+  overrides: Partial<CrmContact> = {}
+): CrmContact {
+  const trimmedEmail = email.trim();
+  return {
+    id: 'contact-1',
+    name: 'Jane Customer',
+    email: trimmedEmail,
+    phone: '',
+    emails: trimmedEmail ? [trimmedEmail] : [],
+    phones: [],
+    title: null,
+    ...overrides,
+  };
+}
+
 function buildSubproject(overrides: Partial<CrmProjectSummary> & { id: string; name: string }): CrmProjectSummary {
   return {
     slug: overrides.id,
     parentProjectId: 'parent-1',
     stageId: 'stage-1',
-    contact: {
-      id: 'contact-1',
-      name: 'Jane Customer',
-      email: 'jane@example.com',
-      phone: '',
-      title: null,
-    },
+    contact: testContact('jane@example.com'),
     ...overrides,
   } as CrmProjectSummary;
 }
@@ -33,17 +44,17 @@ describe('resolveBulkSubprojectSendRecipients', () => {
       buildSubproject({
         id: 'sub-1',
         name: 'North wing',
-        contact: { id: 'c1', name: 'Alice', email: 'alice@example.com', phone: '', title: null },
+        contact: testContact('alice@example.com', { id: 'c1', name: 'Alice' }),
       }),
       buildSubproject({
         id: 'sub-2',
         name: 'South wing',
-        contact: { id: 'c2', name: 'Bob', email: '   ', phone: '', title: null },
+        contact: testContact('   ', { id: 'c2', name: 'Bob' }),
       }),
       buildSubproject({
         id: 'sub-3',
         name: 'Garage',
-        contact: { id: 'c3', name: 'Carol', email: 'carol@example.com', phone: '', title: null },
+        contact: testContact('carol@example.com', { id: 'c3', name: 'Carol' }),
       }),
     ]);
 
@@ -61,7 +72,7 @@ describe('resolveBulkSubprojectSendRecipients', () => {
       buildSubproject({
         id: 'sub-1',
         name: 'Unit A',
-        contact: { id: 'c1', name: '   ', email: 'a@example.com', phone: '', title: null },
+        contact: testContact('a@example.com', { id: 'c1', name: '   ' }),
       }),
     ]);
 
@@ -81,8 +92,8 @@ describe('buildBulkSubprojectSendDefaultSubject', () => {
 describe('orderBulkSendCompletionRows', () => {
   it('preserves recipient selection order and merges delivery status', () => {
     const recipients = resolveBulkSubprojectSendRecipients([
-      buildSubproject({ id: 'sub-1', name: 'North', contact: { id: 'c1', name: 'Alice', email: 'a@example.com', phone: '', title: null } }),
-      buildSubproject({ id: 'sub-2', name: 'South', contact: { id: 'c2', name: 'Bob', email: '', phone: '', title: null } }),
+      buildSubproject({ id: 'sub-1', name: 'North', contact: testContact('a@example.com', { id: 'c1', name: 'Alice' }) }),
+      buildSubproject({ id: 'sub-2', name: 'South', contact: testContact('', { id: 'c2', name: 'Bob' }) }),
     ]).recipients;
 
     const deliveryRows: BulkSendDeliveryRow[] = [
@@ -100,9 +111,9 @@ describe('orderBulkSendCompletionRows', () => {
 describe('summarizeBulkSendDeliveryRows', () => {
   it('counts sent, failed, and skipped rows', () => {
     const summary = resolveBulkSubprojectSendRecipients([
-      buildSubproject({ id: 'sub-1', name: 'A', contact: { id: 'c1', name: 'Alice', email: 'a@example.com', phone: '', title: null } }),
-      buildSubproject({ id: 'sub-2', name: 'B', contact: { id: 'c2', name: 'Bob', email: 'b@example.com', phone: '', title: null } }),
-      buildSubproject({ id: 'sub-3', name: 'C', contact: { id: 'c3', name: 'Carol', email: '', phone: '', title: null } }),
+      buildSubproject({ id: 'sub-1', name: 'A', contact: testContact('a@example.com', { id: 'c1', name: 'Alice' }) }),
+      buildSubproject({ id: 'sub-2', name: 'B', contact: testContact('b@example.com', { id: 'c2', name: 'Bob' }) }),
+      buildSubproject({ id: 'sub-3', name: 'C', contact: testContact('', { id: 'c3', name: 'Carol' }) }),
     ]);
 
     const rows: BulkSendDeliveryRow[] = [

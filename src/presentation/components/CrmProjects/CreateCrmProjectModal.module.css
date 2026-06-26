@@ -1,5 +1,5 @@
 .widePanel {
-  width: min(48rem, calc(100vw - 2rem));
+  width: min(52.8rem, calc(100vw - 2rem));
   max-height: 90vh;
 }
 
@@ -23,6 +23,7 @@
 .formScroll {
   flex: 1;
   min-height: 0;
+  overflow-x: hidden;
   overflow-y: auto;
   overscroll-behavior: contain;
   padding-right: 0.25rem;

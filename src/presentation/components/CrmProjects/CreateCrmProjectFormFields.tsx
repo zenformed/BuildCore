@@ -8,6 +8,11 @@ import type { CrmProjectAssigneeOption } from '@/presentation/features/crmProjec
 import { CreateFormAssigneePicker } from '@/presentation/components/crmShared/CreateFormAssigneePicker';
 import { CreateFormSelectPicker } from '@/presentation/components/crmShared/CreateFormSelectPicker';
 import { IndustrySelectFields } from '@/presentation/components/crmShared/IndustrySelectFields';
+import {
+  ContactMultiValueFields,
+  CONTACT_EMAIL_FIELD_MAX,
+  CONTACT_PHONE_FIELD_MAX,
+} from '@/presentation/components/crmShared/ContactMultiValueFields';
 import formStyles from './CreateCrmProjectDrawer.module.css';
 
 export type CreateCrmProjectFormFieldsProps = {
@@ -90,31 +95,31 @@ export function CreateCrmProjectFormFields({
         />
       </div>
 
-      <div className={formStyles.rowTwoCol}>
-        <div className={formStyles.field}>
-          <label className={formStyles.label} htmlFor="crm-create-email">
-            {create.fields.email}
-          </label>
-          <input
-            id="crm-create-email"
-            type="email"
-            className={formStyles.input}
-            value={form.email}
+      <div className={formStyles.rowContactEmailPhone}>
+        <div className={formStyles.rowContactEmailCol}>
+          <ContactMultiValueFields
+            label={create.fields.email}
+            values={form.emails}
+            inputType="email"
             disabled={saving}
-            onChange={(e) => updateField('email', e.target.value)}
+            maxCount={CONTACT_EMAIL_FIELD_MAX}
+            idPrefix="crm-create-email"
+            addAriaLabel={create.fields.addEmail}
+            removeAriaLabel={create.fields.removeEmail}
+            onChange={(emails) => updateField('emails', emails)}
           />
         </div>
-        <div className={formStyles.field}>
-          <label className={formStyles.label} htmlFor="crm-create-phone">
-            {create.fields.phone}
-          </label>
-          <input
-            id="crm-create-phone"
-            type="tel"
-            className={formStyles.input}
-            value={form.phone}
+        <div className={formStyles.rowContactPhoneCol}>
+          <ContactMultiValueFields
+            label={create.fields.phone}
+            values={form.phones}
+            inputType="tel"
             disabled={saving}
-            onChange={(e) => updateField('phone', e.target.value)}
+            maxCount={CONTACT_PHONE_FIELD_MAX}
+            idPrefix="crm-create-phone"
+            addAriaLabel={create.fields.addPhone}
+            removeAriaLabel={create.fields.removePhone}
+            onChange={(phones) => updateField('phones', phones)}
           />
         </div>
       </div>

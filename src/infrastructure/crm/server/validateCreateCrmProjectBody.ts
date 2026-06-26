@@ -8,6 +8,12 @@ import {
 } from '@/domain/crm';
 import { US_STATE_CODES } from '@/domain/crm/usStates';
 import { parseProjectTemplateBlueprintsFromUnknown } from '@/infrastructure/crm/mappers/mapProjectTemplateFromDb';
+import {
+  MAX_CONTACT_EMAILS,
+  MAX_CONTACT_PHONES,
+  validateContactEmailValues,
+  validateContactPhoneValues,
+} from '@/domain/crm/contactMultiValue';
 
 const PRIORITIES: readonly CrmPriority[] = ['low', 'normal', 'high', 'urgent'];
 
@@ -16,6 +22,8 @@ export type CreateCrmProjectBody = {
   contactName?: unknown;
   email?: unknown;
   phone?: unknown;
+  emails?: unknown;
+  phones?: unknown;
   priority?: unknown;
   industry?: unknown;
   customIndustry?: unknown;
@@ -90,6 +98,35 @@ function asOptionalParentProjectId(value: unknown): string | null | undefined {
   return trimmed.length > 0 ? trimmed : null;
 }
 
+function asContactValueArray(
+  values: unknown,
+  legacySingle: unknown,
+  maxCount: number
+): readonly string[] | null {
+  if (values !== undefined) {
+    if (!Array.isArray(values)) return null;
+    if (values.length > maxCount) return null;
+    const normalized: string[] = [];
+    for (const item of values) {
+      if (typeof item !== 'string') return null;
+      const trimmed = item.trim();
+      if (trimmed) normalized.push(trimmed);
+    }
+    return normalized;
+  }
+
+  if (typeof legacySingle === 'string') {
+    const trimmed = legacySingle.trim();
+    return trimmed ? [trimmed] : [];
+  }
+
+  if (legacySingle == null || legacySingle === '') {
+    return [];
+  }
+
+  return null;
+}
+
 export function validateCreateCrmProjectBody(
   body: CreateCrmProjectBody,
   options?: { allowedStageSlugs?: ReadonlySet<string> }
@@ -162,6 +199,24 @@ export function validateCreateCrmProjectBody(
     return { ok: false, message: 'Parent project id is invalid.' };
   }
 
+  const rawEmails = asContactValueArray(body.emails, body.email, MAX_CONTACT_EMAILS);
+  if (rawEmails == null) {
+    return { ok: false, message: 'Email addresses are invalid.' };
+  }
+  const emailValidated = validateContactEmailValues(rawEmails);
+  if (!emailValidated.ok) {
+    return emailValidated;
+  }
+
+  const rawPhones = asContactValueArray(body.phones, body.phone, MAX_CONTACT_PHONES);
+  if (rawPhones == null) {
+    return { ok: false, message: 'Phone numbers are invalid.' };
+  }
+  const phoneValidated = validateContactPhoneValues(rawPhones);
+  if (!phoneValidated.ok) {
+    return phoneValidated;
+  }
+
   return {
     ok: true,
     input: {
@@ -169,8 +224,8 @@ export function validateCreateCrmProjectBody(
       industry: industryValidated.industry,
       customIndustry: industryValidated.customIndustry,
       contactName,
-      email: typeof body.email === 'string' ? body.email.trim() : '',
-      phone: typeof body.phone === 'string' ? body.phone.trim() : '',
+      emails: emailValidated.emails,
+      phones: phoneValidated.phones,
       priority,
       currentStageSlug,
       notes: asOptionalString(body.notes),

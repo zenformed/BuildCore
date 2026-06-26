@@ -15,6 +15,10 @@ import type {
 import { validateMarkCrmProjectsInactiveInput } from '@/domain/crm/subprojectStatus';
 import { DEMO_TEAM_MEMBER_ID } from '@/infrastructure/demo/demoProfileFixtures';
 import { slugifyProjectName } from '@/infrastructure/crm/server/crmSlug';
+import {
+  primaryContactEmail,
+  primaryContactPhone,
+} from '@/domain/crm/contactMultiValue';
 import { MOCK_CRM_PROJECT_DETAILS } from '@/platform/mock/crm';
 import { buildMockCrmProjectDetail } from '@/platform/mock/crm/buildMockCrmProject';
 import { resolveMockCrmTeamMember } from '@/platform/mock/crm/teamMembers';
@@ -101,8 +105,10 @@ export function mockCreateCrmProject(input: CreateCrmProjectInput): CreateCrmPro
     contact: {
       id: `contact-${id}`,
       name: input.contactName,
-      email: input.email,
-      phone: input.phone,
+      emails: [...input.emails],
+      phones: [...input.phones],
+      email: primaryContactEmail(input.emails),
+      phone: primaryContactPhone(input.phones),
       title: null,
     },
     client: {

@@ -45,6 +45,10 @@ import type {
 } from '@/domain/crm';
 
 import { buildProjectBudgetSummary, listEmptyIncompleteWorkflowStages, resolvePaymentTimingFields } from '@/domain/crm';
+import {
+  primaryContactEmail,
+  primaryContactPhone,
+} from '@/domain/crm/contactMultiValue';
 import { CRM_PROJECT_COMPLETE_STAGE_SLUG } from '@/domain/crm/projectCompletion';
 
 import type {
@@ -135,9 +139,10 @@ function applyProjectUpdate(detail: CrmProjectDetail, input: UpdateCrmProjectInp
 
       name: input.contactName,
 
-      email: input.email,
-
-      phone: input.phone,
+      emails: [...input.emails],
+      phones: [...input.phones],
+      email: primaryContactEmail(input.emails),
+      phone: primaryContactPhone(input.phones),
 
     },
 

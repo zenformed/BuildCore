@@ -61,7 +61,7 @@ ${crmProjectIndustrySelectLines(mode)}
   client_id,
   primary_contact_id,
   crm_clients ( id, company_name ),
-  crm_contacts:primary_contact_id ( id, full_name, email, phone, role_title )
+  crm_contacts:primary_contact_id ( id, full_name, email, phone, contact_emails, contact_phones, role_title )
 `;
 }
 

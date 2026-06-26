@@ -12,6 +12,8 @@ const REDACTED_CONTACT: CrmContact = {
   name: '—',
   email: '',
   phone: '',
+  emails: [],
+  phones: [],
   title: null,
 };
 

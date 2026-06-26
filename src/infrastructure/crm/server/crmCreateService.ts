@@ -10,6 +10,7 @@ import {
 import { loadOrganizationPipelineStageCatalog } from './pipelineStageService';
 import { ensureUniqueProjectSlug, slugifyProjectName } from './crmSlug';
 import { generateCrmProjectLeadToken } from '@/infrastructure/lead/generateLeadToken';
+import { buildCrmContactDbWritePayload } from '@/domain/crm/contactMultiValue';
 
 export type CrmClientContactParty = {
   readonly clientId: string;
@@ -43,11 +44,12 @@ export async function createCrmClientAndContactForOrg(
   params: {
     readonly companyName: string;
     readonly contactName: string;
-    readonly email: string;
-    readonly phone: string;
+    readonly emails: readonly string[];
+    readonly phones: readonly string[];
   }
 ): Promise<CrmClientContactParty> {
   const { clientId } = await createCrmClientForOrg(supabase, organizationId, params.companyName);
+  const contactPayload = buildCrmContactDbWritePayload(params.emails, params.phones);
 
   const { data: contactRow, error: contactError } = await supabase
     .from('crm_contacts')
@@ -55,8 +57,7 @@ export async function createCrmClientAndContactForOrg(
       organization_id: organizationId,
       client_id: clientId,
       full_name: params.contactName,
-      email: params.email || null,
-      phone: params.phone || null,
+      ...contactPayload,
     })
     .select('id')
     .single();
@@ -172,8 +173,8 @@ export async function createCrmProjectForOrg(
   const party = await createCrmClientAndContactForOrg(supabase, organizationId, {
     companyName: input.name,
     contactName: input.contactName,
-    email: input.email,
-    phone: input.phone,
+    emails: input.emails,
+    phones: input.phones,
   });
 
   if (input.parentProjectId) {
@@ -254,8 +255,8 @@ export async function buildLeadCaptureSubprojectCreateInput(
     industry: params.industry,
     customIndustry: params.customIndustry,
     contactName: params.contactName,
-    email: params.email,
-    phone: params.phone,
+    emails: params.email.trim() ? [params.email.trim()] : [],
+    phones: params.phone.trim() ? [params.phone.trim()] : [],
     priority: 'normal',
     currentStageSlug: getFirstPipelineStageSlug(stageCatalog),
     notes: null,

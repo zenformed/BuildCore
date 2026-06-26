@@ -12,6 +12,8 @@ const c = (
   name,
   email,
   phone,
+  emails: email ? [email] : [],
+  phones: phone ? [phone] : [],
   title,
 });
 

@@ -9,6 +9,8 @@ export function buildCrmProjectSummarySearchHaystack(project: CrmProjectSummary)
     project.contact.name,
     project.contact.email,
     project.contact.phone,
+    ...project.contact.emails,
+    ...project.contact.phones,
     crmProjectAddressSearchText(project.address),
     project.notesPreview,
     project.assignedTo?.displayName,

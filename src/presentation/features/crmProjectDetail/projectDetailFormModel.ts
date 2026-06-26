@@ -5,6 +5,11 @@ import {
   type PipelineStageSlug,
   type UpdateCrmProjectInput,
 } from '@/domain/crm';
+import {
+  contactValuesToFormFields,
+  isValidContactEmail,
+  updatePrimaryContactFormValue,
+} from '@/domain/crm/contactMultiValue';
 import type { CreateCrmProjectFormState } from '@/presentation/features/crmCreate/createCrmProjectFormModel';
 import {
   parseUsdInputToCents,
@@ -28,12 +33,8 @@ export type SummaryEditableField =
   | 'state'
   | 'postalCode';
 
-const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
 export function isValidProjectEmail(email: string): boolean {
-  const trimmed = email.trim();
-  if (!trimmed) return true;
-  return EMAIL_PATTERN.test(trimmed);
+  return isValidContactEmail(email);
 }
 
 export function applySummaryFieldToForm(
@@ -55,9 +56,9 @@ export function applySummaryFieldToForm(
     case 'contactName':
       return { ...form, contactName: value };
     case 'email':
-      return { ...form, email: value };
+      return { ...form, emails: updatePrimaryContactFormValue(form.emails, value) };
     case 'phone':
-      return { ...form, phone: value };
+      return { ...form, phones: updatePrimaryContactFormValue(form.phones, value) };
     case 'currentStageSlug':
       return { ...form, currentStageSlug: value as PipelineStageSlug };
     case 'priority':
@@ -134,8 +135,8 @@ export function projectDetailToFormState(project: CrmProjectDetail): CreateCrmPr
     industry: summary.industry,
     customIndustry: summary.customIndustry ?? '',
     contactName: summary.contact.name,
-    email: summary.contact.email,
-    phone: summary.contact.phone,
+    emails: contactValuesToFormFields(summary.contact.emails),
+    phones: contactValuesToFormFields(summary.contact.phones),
     priority: summary.priority,
     currentStageSlug: summary.currentStageSlug,
     notes: notes ?? '',
@@ -156,11 +157,6 @@ export function validateProjectDetailForm(
 ): { ok: true; input: UpdateCrmProjectInput } | { ok: false; message: string } {
   const validated = validateCreateCrmProjectForm(form);
   if (!validated.ok) return validated;
-
-  const email = form.email.trim();
-  if (!isValidProjectEmail(email)) {
-    return { ok: false, message: 'Enter a valid email address.' };
-  }
 
   return {
     ok: true,

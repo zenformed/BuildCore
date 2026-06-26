@@ -38,6 +38,12 @@ import {
 import { workflowTaskAssigneeIdFromContactId } from '@/domain/crm/workflowTaskAssignee';
 import { isWorkflowTaskStatus } from '@/domain/crm/workflowTaskStatuses';
 import type { CrmProjectAddress } from '@/domain/crm/projectAddress';
+import {
+  primaryContactEmail,
+  primaryContactPhone,
+  resolveContactEmailsFromDb,
+  resolveContactPhonesFromDb,
+} from '@/domain/crm/contactMultiValue';
 
 export type DbCrmClientRow = {
   id: string;
@@ -49,6 +55,8 @@ export type DbCrmContactRow = {
   full_name: string;
   email: string | null;
   phone: string | null;
+  contact_emails?: string[] | null;
+  contact_phones?: string[] | null;
   role_title: string | null;
 };
 
@@ -294,14 +302,20 @@ export function mapDbContact(
       name: clientName,
       email: '',
       phone: '',
+      emails: [],
+      phones: [],
       title: null,
     };
   }
+  const emails = resolveContactEmailsFromDb(row.contact_emails, row.email);
+  const phones = resolveContactPhonesFromDb(row.contact_phones, row.phone);
   return {
     id: row.id,
     name: row.full_name,
-    email: row.email ?? '',
-    phone: row.phone ?? '',
+    emails,
+    phones,
+    email: primaryContactEmail(emails),
+    phone: primaryContactPhone(phones),
     title: row.role_title,
   };
 }

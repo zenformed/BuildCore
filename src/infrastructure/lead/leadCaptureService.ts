@@ -196,8 +196,8 @@ async function resolveLeadCaptureContactParty(
     const party = await createCrmClientAndContactForOrg(supabase, organizationId, {
       companyName: params.contactName,
       contactName: params.contactName,
-      email: params.email,
-      phone: params.phone,
+      emails: params.email.trim() ? [params.email.trim()] : [],
+      phones: params.phone.trim() ? [params.phone.trim()] : [],
     });
     return {
       clientId: party.clientId,

@@ -206,20 +206,34 @@ export function CrmProjectDraftRow({
           <input
             className={styles.draftInput}
             type="email"
-            value={form.email}
+            value={form.emails[0] ?? ''}
             disabled={saving}
             placeholder={create.fields.email}
-            onChange={(e) => updateField('email', e.target.value)}
+            onChange={(e) =>
+              updateField(
+                'emails',
+                form.emails.length > 0
+                  ? [e.target.value, ...form.emails.slice(1)]
+                  : [e.target.value]
+              )
+            }
           />
         </span>
         <span className={draftFieldCell} role="cell">
           <input
             className={styles.draftInput}
             type="tel"
-            value={form.phone}
+            value={form.phones[0] ?? ''}
             disabled={saving}
             placeholder={create.fields.phone}
-            onChange={(e) => updateField('phone', e.target.value)}
+            onChange={(e) =>
+              updateField(
+                'phones',
+                form.phones.length > 0
+                  ? [e.target.value, ...form.phones.slice(1)]
+                  : [e.target.value]
+              )
+            }
           />
         </span>
         <span className={`${draftFieldCell} ${styles.gridCellAlignCenter}`} role="cell">
