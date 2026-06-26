@@ -5,6 +5,7 @@ import type { CrmDocumentMetadata } from '@/domain/crm';
 import { deleteWorkflowTaskDocument } from '@/application/use-cases/crm/deleteWorkflowTaskDocument';
 import { listWorkflowTaskDocuments } from '@/application/use-cases/crm/listWorkflowTaskDocuments';
 import { downloadCrmProjectDocument } from '@/presentation/features/crmProjectDetail/downloadCrmProjectDocument';
+import { notifyCrmProjectDocumentDownloadResult } from '@/presentation/features/crmProjectDetail/crmProjectDocumentDownloadFeedback';
 import { crmRepositories } from '@/shared/di/container';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
 import { mapCrmDocumentActionError } from '@/presentation/features/crmProjectDetail/crmDocumentActionErrors';
@@ -20,6 +21,7 @@ export function useWorkflowTaskDocumentActions(input: {
   projectSlug: string;
   workflowTaskId: string;
   onError: (message: string) => void;
+  onDemoDownloadBlocked: (message: string) => void;
 } & WorkflowTaskDocumentChangeHandlers): {
   uploading: boolean;
   fileInputRef: React.RefObject<HTMLInputElement>;
@@ -92,13 +94,19 @@ export function useWorkflowTaskDocumentActions(input: {
         return;
       }
       try {
-        await downloadCrmProjectDocument(crmRepositories, {
+        const result = await downloadCrmProjectDocument(crmRepositories, {
           kind: 'workflow_task',
           projectSlug: input.projectSlug,
           workflowTaskId: input.workflowTaskId,
           documentId,
           fileName,
         });
+        if (result === 'demo_blocked') {
+          notifyCrmProjectDocumentDownloadResult(result, {
+            onDemoDownloadBlocked: input.onDemoDownloadBlocked,
+            onError: input.onError,
+          });
+        }
       } catch (err) {
         input.onError(mapError(err));
       }

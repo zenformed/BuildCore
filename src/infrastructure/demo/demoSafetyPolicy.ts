@@ -3,6 +3,8 @@ import { isDemoRuntimeClient } from '@/infrastructure/runtime/buildCoreRuntime';
 export const DEMO_COMMUNICATION_SIMULATED_MESSAGE =
   'Demo mode: message simulated. No email or SMS was sent.';
 
+export const DEMO_DOCUMENT_DOWNLOAD_LOCKED_MESSAGE = 'Download locked in demo.';
+
 /**
  * Operations gated while the demo runtime is active.
  * Mock repository mutations are allowed; live-only paths resolve to simulate or block.

@@ -24,6 +24,7 @@ import {
 } from '@/presentation/features/crmProjectDetail/crmProjectDetailFormatters';
 import { performCrmDirectUpload } from '@/presentation/features/crmDirectUpload/performBuildCoreDirectUpload';
 import { useProjectDocumentModalActions } from '@/presentation/features/crmProjectDetail/useProjectDocumentModalActions';
+import { useProjectDetailShell } from '@/presentation/features/crmProjectDetail/ProjectDetailShellContext';
 import { WorkflowDocumentFileIcon } from './WorkflowDocumentFileIcon';
 import styles from './ProjectDetail.module.css';
 
@@ -52,6 +53,7 @@ export function ProjectDocumentsPanelContent({
   const stageCatalog = catalogForProject({ parentProjectId: project.summary.parentProjectId });
   const docsContent = content.projectDetail.documents;
   const wf = content.projectDetail.workflow;
+  const { setToast } = useProjectDetailShell();
   const [filter, setFilter] = useState<DocumentPanelFilter>('all');
   const [busyDocId, setBusyDocId] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
@@ -61,6 +63,7 @@ export function ProjectDocumentsPanelContent({
     projectSlug: project.summary.slug,
     onChanged: onRefresh,
     onError: (message) => onError?.(message),
+    onDemoDownloadBlocked: (message) => setToast({ kind: 'success', message }),
   });
 
   const taskById = useMemo(

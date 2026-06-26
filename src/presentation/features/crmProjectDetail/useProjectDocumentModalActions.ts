@@ -7,6 +7,7 @@ import { deleteProjectMediaDocument } from '@/application/use-cases/crm/deletePr
 import { deleteWorkflowTaskDocument } from '@/application/use-cases/crm/deleteWorkflowTaskDocument';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
 import { mapCrmDocumentActionError } from '@/presentation/features/crmProjectDetail/crmDocumentActionErrors';
+import { notifyCrmProjectDocumentDownloadResult } from '@/presentation/features/crmProjectDetail/crmProjectDocumentDownloadFeedback';
 import {
   crmProjectDocumentDownloadTargetFromMetadata,
   downloadCrmProjectDocument,
@@ -18,6 +19,7 @@ export function useProjectDocumentModalActions(input: {
   projectSlug: string;
   onChanged: () => Promise<void>;
   onError: (message: string) => void;
+  onDemoDownloadBlocked: (message: string) => void;
 }): {
   downloadDocument: (doc: CrmDocumentMetadata) => Promise<void>;
   deleteDocument: (doc: CrmDocumentMetadata) => Promise<void>;
@@ -37,10 +39,16 @@ export function useProjectDocumentModalActions(input: {
         return;
       }
       try {
-        await downloadCrmProjectDocument(
+        const result = await downloadCrmProjectDocument(
           crmRepositories,
           crmProjectDocumentDownloadTargetFromMetadata(input.projectSlug, doc)
         );
+        if (result === 'demo_blocked') {
+          notifyCrmProjectDocumentDownloadResult(result, {
+            onDemoDownloadBlocked: input.onDemoDownloadBlocked,
+            onError: input.onError,
+          });
+        }
       } catch (err) {
         input.onError(mapError(err));
       }

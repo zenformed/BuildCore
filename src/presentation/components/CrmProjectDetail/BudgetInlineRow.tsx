@@ -69,6 +69,7 @@ export function BudgetInlineRow({
     openSendAttachmentDialogForBudgetEntry,
     project,
     isApiSource,
+    setToast,
   } = useProjectDetailShell();
   const assignmentCatalog = useAssignmentIdentityCatalog();
   const { budget: budgetAccess } = useBuildCoreProjectSectionAccess();
@@ -87,6 +88,7 @@ export function BudgetInlineRow({
     onDocumentUploaded: onBudgetEntryDocumentUploaded,
     onDocumentDeleted: onBudgetEntryDocumentDeleted,
     onError: (message) => onError?.(message),
+    onDemoDownloadBlocked: (message) => setToast({ kind: 'success', message }),
   });
   const documentAccept = BUILDCORE_UPLOAD_ALLOWED_EXTENSIONS.join(',');
 

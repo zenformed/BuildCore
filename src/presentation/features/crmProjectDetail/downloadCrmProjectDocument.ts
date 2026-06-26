@@ -3,6 +3,7 @@
 import type { CrmRepositories } from '@/application/ports/crm';
 import type { CrmDocumentMetadata } from '@/domain/crm';
 import { getCrmDataSource } from '@/infrastructure/config/crmDataSource';
+import { isDemoRuntimeClient } from '@/infrastructure/runtime/buildCoreRuntime';
 import { createBudgetEntryDocumentDownload } from '@/application/use-cases/crm/createBudgetEntryDocumentDownload';
 import { createProjectMediaDocumentDownload } from '@/application/use-cases/crm/createProjectMediaDocumentDownload';
 import { createWorkflowTaskDocumentDownload } from '@/application/use-cases/crm/createWorkflowTaskDocumentDownload';
@@ -75,10 +76,16 @@ export function crmProjectDocumentDownloadTargetFromMetadata(
   };
 }
 
+export type CrmProjectDocumentDownloadResult = 'downloaded' | 'demo_blocked';
+
 export async function downloadCrmProjectDocument(
   repositories: CrmRepositories,
   target: CrmProjectDocumentDownloadTarget
-): Promise<void> {
+): Promise<CrmProjectDocumentDownloadResult> {
+  if (isDemoRuntimeClient()) {
+    return 'demo_blocked';
+  }
+
   if (getCrmDataSource() === 'mock') {
     const signed =
       target.kind === 'workflow_task'
@@ -98,11 +105,12 @@ export async function downloadCrmProjectDocument(
               documentId: target.documentId,
             });
     await downloadCrmDocumentFromSignedUrl(signed.url, signed.fileName);
-    return;
+    return 'downloaded';
   }
 
   await downloadCrmDocumentAttachment(
     buildCrmProjectDocumentDownloadApiPath(target),
     target.fileName
   );
+  return 'downloaded';
 }

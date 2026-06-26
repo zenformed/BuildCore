@@ -5,6 +5,7 @@ import type { CrmDocumentMetadata } from '@/domain/crm';
 import { deleteBudgetEntryDocument } from '@/application/use-cases/crm/deleteBudgetEntryDocument';
 import { listBudgetEntryDocuments } from '@/application/use-cases/crm/listBudgetEntryDocuments';
 import { downloadCrmProjectDocument } from '@/presentation/features/crmProjectDetail/downloadCrmProjectDocument';
+import { notifyCrmProjectDocumentDownloadResult } from '@/presentation/features/crmProjectDetail/crmProjectDocumentDownloadFeedback';
 import { crmRepositories } from '@/shared/di/container';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
 import { mapCrmDocumentActionError } from '@/presentation/features/crmProjectDetail/crmDocumentActionErrors';
@@ -21,6 +22,7 @@ export function useBudgetEntryDocumentActions(
     projectSlug: string;
     budgetEntryId: string;
     onError: (message: string) => void;
+    onDemoDownloadBlocked: (message: string) => void;
   } & BudgetEntryDocumentChangeHandlers
 ): {
   uploading: boolean;
@@ -94,13 +96,19 @@ export function useBudgetEntryDocumentActions(
         return;
       }
       try {
-        await downloadCrmProjectDocument(crmRepositories, {
+        const result = await downloadCrmProjectDocument(crmRepositories, {
           kind: 'budget_entry',
           projectSlug: input.projectSlug,
           budgetEntryId: input.budgetEntryId,
           documentId,
           fileName,
         });
+        if (result === 'demo_blocked') {
+          notifyCrmProjectDocumentDownloadResult(result, {
+            onDemoDownloadBlocked: input.onDemoDownloadBlocked,
+            onError: input.onError,
+          });
+        }
       } catch (err) {
         input.onError(mapError(err));
       }

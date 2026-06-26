@@ -74,6 +74,7 @@ export function useWorkflowTaskInlineRow({
     openSendAttachmentDialogForPayment,
     openEditWorkflowTask,
     syncWorkflowTaskDocuments,
+    setToast,
   } = useProjectDetailShell();
   const dash = useBuildCoreDashboardContext();
   const assignmentCatalog = useAssignmentIdentityCatalog();
@@ -84,6 +85,7 @@ export function useWorkflowTaskInlineRow({
     onDocumentUploaded: onWorkflowTaskDocumentUploaded,
     onDocumentDeleted: onWorkflowTaskDocumentDeleted,
     onError: (message) => onTaskError?.(message),
+    onDemoDownloadBlocked: (message) => setToast({ kind: 'success', message }),
   });
   const workflowAccess = useBuildCoreWorkflowTaskAccess();
   const sectionAccess = useBuildCoreProjectSectionAccess();
