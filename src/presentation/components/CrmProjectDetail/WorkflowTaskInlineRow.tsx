@@ -35,7 +35,7 @@ export function WorkflowTaskInlineRow({
 export type WorkflowTaskMobileCardProps = Omit<WorkflowTaskInlineRowProps, 'variant'>;
 
 export function WorkflowTaskMobileCard(props: WorkflowTaskMobileCardProps): ReactElement {
-  return <WorkflowTaskInlineRow {...props} variant="mobile" />;
+  return <WorkflowTaskInlineRow {...props} variant="compact" />;
 }
 
 export type { CrmWorkflowTask, CrmDocumentMetadata };

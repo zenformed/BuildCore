@@ -67,7 +67,7 @@ export function WorkflowStageTaskGroup({
   const wf = content.projectDetail.workflow;
   const isMobileLayout = useDashboardMobileLayout();
   const showCardLayout = useCardLayout ?? isMobileLayout;
-  const taskRowVariant = layoutAsStageCard ? 'compact' : showCardLayout ? 'mobile' : 'table';
+  const taskRowVariant = showCardLayout || layoutAsStageCard ? 'compact' : 'table';
   const persisted = useWorkflowStageExpanded(projectSlug, group.collapseKey);
   const expanded = forceExpanded || (collapsible ? persisted.expanded : true);
   const groupClass = [

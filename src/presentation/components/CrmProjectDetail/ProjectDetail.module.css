@@ -5075,6 +5075,54 @@
   box-sizing: border-box;
 }
 
+.workflowTaskCompactDraftCard {
+  outline: 1px dashed color-mix(in srgb, var(--color-primary, #2563eb) 45%, transparent);
+  outline-offset: -1px;
+}
+
+.workflowTaskCompactDraftTitleInput {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: transparent;
+  font: inherit;
+  font-size: 0.75rem;
+  font-weight: 400;
+  line-height: 1.35;
+  color: var(--color-text, #0f172a);
+  outline: none;
+}
+
+.workflowTaskCompactDraftTitleInput::placeholder {
+  color: var(--color-text-muted, #64748b);
+}
+
+:global([data-theme='dark']) .workflowTaskCompactDraftTitleInput {
+  color: #f1f5f9;
+}
+
+:global([data-theme='dark']) .workflowTaskCompactDraftTitleInput::placeholder {
+  color: #94a3b8;
+}
+
+.workflowTaskCompactDraftActions {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  gap: 0.125rem;
+}
+
+.workflowTaskCompactDraftActions .paymentDraftActionBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.375rem;
+  height: 1.375rem;
+}
+
 .workflowTaskCompactRow1 {
   display: flex;
   align-items: center;
@@ -7677,8 +7725,8 @@
   .stageGroupMobileTaskList {
     display: flex;
     flex-direction: column;
-    gap: 0.5rem;
-    padding: 0.375rem 0 0.5rem;
+    gap: 0.375rem;
+    padding: 0.375rem 0.5rem 0.5rem;
     min-width: 0;
   }
 

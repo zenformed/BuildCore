@@ -143,9 +143,9 @@ export function WorkflowTasksTable({
   );
 
   const orderedGroups = useMemo(() => {
-    if (draftStageSlug == null) return groups;
+    if (draftStageSlug == null || isDesktopStageCardMode) return groups;
     return promoteWorkflowStageGroup(groups, draftStageSlug, catalog);
-  }, [catalog, draftStageSlug, groups]);
+  }, [catalog, draftStageSlug, groups, isDesktopStageCardMode]);
 
   const totalTasks = countWorkflowTasksInGroups(groups);
   const previewStageGroups = isFullLayout
@@ -383,7 +383,7 @@ export function WorkflowTasksTable({
             project={project}
             stageSlug={group.stageSlug}
             isApiSource={isApiSource}
-            useCardLayout={useCardTaskLayout}
+            useCompactLayout={useCardTaskLayout}
             onSaved={handleDraftSaved}
             onCancel={handleCancelDraft}
           />

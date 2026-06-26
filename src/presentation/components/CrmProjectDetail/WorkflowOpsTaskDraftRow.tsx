@@ -6,7 +6,10 @@ import type { CrmProjectDetail, CrmWorkflowTask, PipelineStageSlug, WorkflowTask
 import { WORKFLOW_TASK_STATUSES } from '@/domain/crm/workflowTaskStatuses';
 import { createCrmWorkflowTask } from '@/application/use-cases/crm';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
-import { formatWorkflowStatus } from '@/presentation/features/crmProjectDetail/crmProjectDetailFormatters';
+import {
+  formatShortDate,
+  formatWorkflowStatus,
+} from '@/presentation/features/crmProjectDetail/crmProjectDetailFormatters';
 import { useDashboardMobileLayout } from '@/presentation/features/crmProjects/useDashboardMobileLayout';
 import {
   defaultWorkflowTaskFormState,
@@ -35,8 +38,10 @@ export type WorkflowOpsTaskDraftRowProps = {
   isApiSource: boolean;
   onSaved: (task: CrmWorkflowTask) => Promise<void>;
   onCancel: () => void;
-  /** When set, overrides the viewport breakpoint for card vs table draft layout. */
+  /** Mobile card draft layout (< 768px). */
   useCardLayout?: boolean;
+  /** Desktop stage-column compact card draft layout. */
+  useCompactLayout?: boolean;
 };
 
 type WorkflowOpsTaskDraftFieldsProps = {
@@ -57,6 +62,7 @@ type WorkflowOpsTaskDraftFieldsProps = {
     value: WorkflowTaskFormState[K]
   ) => void;
   readonly mobile?: boolean;
+  readonly compact?: boolean;
 };
 
 function WorkflowOpsTaskDraftStatusField({
@@ -68,10 +74,13 @@ function WorkflowOpsTaskDraftStatusField({
   onAssigneeMenuOpenChange,
   updateField,
   mobile = false,
+  compact = false,
 }: WorkflowOpsTaskDraftFieldsProps): ReactElement {
-  const wrapClass = mobile
-    ? styles.workflowTaskMobileCardControl
-    : `${styles.inlineCellWrap} ${styles.workflowStatusCell}`;
+  const wrapClass = compact
+    ? styles.workflowTaskCompactControl
+    : mobile
+      ? styles.workflowTaskMobileCardControl
+      : `${styles.inlineCellWrap} ${styles.workflowStatusCell}`;
 
   return (
     <div className={wrapClass} ref={statusRef}>
@@ -126,19 +135,24 @@ function WorkflowOpsTaskDraftAssigneeField({
   onAssigneeMenuOpenChange,
   updateField,
   mobile = false,
+  compact = false,
 }: WorkflowOpsTaskDraftFieldsProps): ReactElement {
-  const wrapClass = mobile
-    ? styles.workflowTaskMobileCardControl
-    : `${styles.inlineCellWrap} ${styles.workflowMetaCell}`;
+  const wrapClass = compact
+    ? styles.workflowTaskCompactAssignee
+    : mobile
+      ? styles.workflowTaskMobileCardControl
+      : `${styles.inlineCellWrap} ${styles.workflowMetaCell}`;
 
   return (
     <div className={wrapClass} ref={assigneeRef}>
       <button
         type="button"
         className={
-          mobile
-            ? `${styles.workflowTaskMobileCardValueBtn} ${styles.assignedCell}`
-            : `${styles.inlineCellBtn} ${styles.assignedCell}`
+          compact
+            ? styles.workflowTaskCompactAssigneeBtn
+            : mobile
+              ? `${styles.workflowTaskMobileCardValueBtn} ${styles.assignedCell}`
+              : `${styles.inlineCellBtn} ${styles.assignedCell}`
         }
         disabled={saving}
         aria-expanded={assigneeMenuOpen}
@@ -191,16 +205,20 @@ function WorkflowOpsTaskDraftActions({
   onSave,
   onCancel,
   mobile = false,
+  compact = false,
 }: {
   readonly wf: (typeof content.projectDetail.workflow);
   readonly saving: boolean;
   readonly onSave: () => void;
   readonly onCancel: () => void;
   readonly mobile?: boolean;
+  readonly compact?: boolean;
 }): ReactElement {
-  const actionClass = mobile
-    ? styles.workflowTaskMobileDraftActions
-    : `${styles.taskDeleteCell} ${styles.paymentDraftActions}`;
+  const actionClass = compact
+    ? styles.workflowTaskCompactDraftActions
+    : mobile
+      ? styles.workflowTaskMobileDraftActions
+      : `${styles.taskDeleteCell} ${styles.paymentDraftActions}`;
 
   return (
     <span className={actionClass}>
@@ -230,6 +248,149 @@ function WorkflowOpsTaskDraftActions({
   );
 }
 
+function WorkflowOpsTaskDraftCompactDueField({
+  wf,
+  form,
+  saving,
+  updateField,
+  onCloseMenus,
+}: {
+  readonly wf: (typeof content.projectDetail.workflow);
+  readonly form: WorkflowTaskFormState;
+  readonly saving: boolean;
+  readonly updateField: WorkflowOpsTaskDraftFieldsProps['updateField'];
+  readonly onCloseMenus: () => void;
+}): ReactElement {
+  const dueInputRef = useRef<HTMLInputElement>(null);
+  const dueDisplay = form.dueAt.trim()
+    ? formatShortDate(`${form.dueAt.trim()}T12:00:00.000Z`)
+    : '';
+
+  return (
+    <span className={styles.workflowTaskCompactControl}>
+      <button
+        type="button"
+        className={`${styles.inlineCellBtn} ${styles.workflowTaskCompactMetaBtn} ${styles.workflowTaskCompactDueBtn}`}
+        disabled={saving}
+        aria-label={wf.columns.due}
+        onClick={() => {
+          onCloseMenus();
+          dueInputRef.current?.showPicker?.();
+          dueInputRef.current?.click();
+        }}
+      >
+        <span className={styles.workflowTaskCompactDueContent}>
+          <span className={styles.dueIcon} aria-hidden />
+          {dueDisplay ? (
+            <span className={styles.workflowTaskCompactMeta}>{dueDisplay}</span>
+          ) : null}
+        </span>
+      </button>
+      <input
+        ref={dueInputRef}
+        type="date"
+        className={styles.inlineDateInput}
+        value={form.dueAt}
+        disabled={saving}
+        tabIndex={-1}
+        aria-hidden
+        onChange={(e) => updateField('dueAt', e.target.value)}
+      />
+    </span>
+  );
+}
+
+function WorkflowOpsTaskDraftCompactDocumentsField({
+  wf,
+  form,
+  saving,
+  documentsMenuOpen,
+  documentsRef,
+  onDocumentsMenuOpenChange,
+  onCloseMenus,
+  updateField,
+}: {
+  readonly wf: (typeof content.projectDetail.workflow);
+  readonly form: WorkflowTaskFormState;
+  readonly saving: boolean;
+  readonly documentsMenuOpen: boolean;
+  readonly documentsRef: RefObject<HTMLSpanElement>;
+  readonly onDocumentsMenuOpenChange: (open: boolean) => void;
+  readonly onCloseMenus: () => void;
+  readonly updateField: WorkflowOpsTaskDraftFieldsProps['updateField'];
+}): ReactElement {
+  return (
+    <span className={styles.workflowTaskCompactControl} ref={documentsRef}>
+      <button
+        type="button"
+        className={`${styles.inlineCellBtn} ${styles.documentsCell} ${styles.workflowTaskCompactMetaBtn}`}
+        disabled={saving}
+        aria-expanded={documentsMenuOpen}
+        aria-label={wf.columns.documents}
+        onClick={() => {
+          onCloseMenus();
+          onDocumentsMenuOpenChange(!documentsMenuOpen);
+        }}
+      >
+        <span className={styles.documentsIcon} aria-hidden />
+      </button>
+      <WorkflowInlineMenu
+        open={documentsMenuOpen}
+        onClose={() => onDocumentsMenuOpenChange(false)}
+        anchorRef={documentsRef}
+        align="end"
+      >
+        <button
+          type="button"
+          className={styles.inlineMenuAction}
+          disabled={saving || form.documentsRequired === 'yes'}
+          onClick={() => {
+            updateField('documentsRequired', 'yes');
+            onDocumentsMenuOpenChange(false);
+          }}
+        >
+          {wf.fields.documentsRequiredYes}
+        </button>
+        <button
+          type="button"
+          className={styles.inlineMenuAction}
+          disabled={saving || form.documentsRequired === 'no'}
+          onClick={() => {
+            updateField('documentsRequired', 'no');
+            onDocumentsMenuOpenChange(false);
+          }}
+        >
+          {wf.fields.documentsRequiredNo}
+        </button>
+      </WorkflowInlineMenu>
+    </span>
+  );
+}
+
+function WorkflowOpsTaskDraftCompactMenuPlaceholder({
+  wf,
+  saving,
+}: {
+  readonly wf: (typeof content.projectDetail.workflow);
+  readonly saving: boolean;
+}): ReactElement {
+  return (
+    <div className={styles.workflowTaskCompactActions}>
+      <button
+        type="button"
+        className={styles.taskActionsBtn}
+        disabled={saving}
+        aria-label={wf.taskActionsMenuAriaLabel(wf.fields.title)}
+        tabIndex={-1}
+      >
+        <span className={styles.taskActionsDotsHorizontal} aria-hidden>
+          ⋯
+        </span>
+      </button>
+    </div>
+  );
+}
+
 export function WorkflowOpsTaskDraftRow({
   project,
   stageSlug,
@@ -237,11 +398,12 @@ export function WorkflowOpsTaskDraftRow({
   onSaved,
   onCancel,
   useCardLayout,
+  useCompactLayout = false,
 }: WorkflowOpsTaskDraftRowProps): ReactElement {
   const wf = content.projectDetail.workflow;
   const cols = wf.columns;
   const isMobileLayout = useDashboardMobileLayout();
-  const showCardLayout = useCardLayout ?? isMobileLayout;
+  const showCompactLayout = useCompactLayout || (useCardLayout ?? isMobileLayout);
   const dash = useBuildCoreDashboardContext();
   const { requestCustomerNotifyAfterAssigneeChange } = useProjectDetailShell();
   const assignmentCatalog = useAssignmentIdentityCatalog();
@@ -252,9 +414,17 @@ export function WorkflowOpsTaskDraftRow({
   const [saving, setSaving] = useState(false);
   const [statusMenuOpen, setStatusMenuOpen] = useState(false);
   const [assigneeMenuOpen, setAssigneeMenuOpen] = useState(false);
+  const [documentsMenuOpen, setDocumentsMenuOpen] = useState(false);
 
   const statusRef = useRef<HTMLDivElement>(null);
   const assigneeRef = useRef<HTMLDivElement>(null);
+  const documentsRef = useRef<HTMLSpanElement>(null);
+
+  const closeMenus = useCallback(() => {
+    setStatusMenuOpen(false);
+    setAssigneeMenuOpen(false);
+    setDocumentsMenuOpen(false);
+  }, []);
 
   const assigneeOptions = getWorkflowTaskAssigneeOptions(
     isApiSource,
@@ -336,77 +506,59 @@ export function WorkflowOpsTaskDraftRow({
     updateField,
   };
 
-  if (showCardLayout) {
+  if (showCompactLayout) {
     return (
       <div className={styles.paymentDraftBlock}>
         <article
-          className={`${styles.card} ${styles.workflowTaskMobileCard} ${styles.workflowTaskMobileDraftCard}`}
+          className={`${styles.card} ${styles.workflowTaskCompactCard} ${styles.workflowTaskCompactDraftCard}`}
           aria-busy={saving}
         >
-          <div className={styles.workflowTaskMobileCardHeader}>
-            <div className={styles.workflowTaskMobileCardTitleWrap}>
-              <input
-                className={styles.workflowTaskMobileDraftTitleInput}
-                value={form.title}
-                disabled={saving}
-                placeholder={wf.fields.title}
-                aria-label={wf.fields.title}
-                onChange={(e) => updateField('title', e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') void handleSave();
-                  if (e.key === 'Escape') onCancel();
-                }}
-                autoFocus
-              />
-            </div>
+          <div className={styles.workflowTaskCompactRow1}>
+            <WorkflowOpsTaskDraftStatusField {...fieldProps} compact />
             <WorkflowOpsTaskDraftActions
               wf={wf}
               saving={saving}
-              mobile
+              compact
               onSave={() => void handleSave()}
               onCancel={onCancel}
             />
-          </div>
-          <div className={styles.workflowTaskMobileCardGrid2}>
-            <div className={styles.workflowTaskMobileCardCell}>
-              <span className={styles.projectInfoMobileLabel}>{cols.status}</span>
-              <WorkflowOpsTaskDraftStatusField {...fieldProps} mobile />
-            </div>
-            <div className={`${styles.workflowTaskMobileCardCell} ${styles.workflowTaskMobileCardCell_right}`}>
-              <span className={styles.projectInfoMobileLabel}>{cols.assigned}</span>
-              <WorkflowOpsTaskDraftAssigneeField {...fieldProps} mobile />
-            </div>
-          </div>
-          <div className={styles.workflowTaskMobileCardGrid2}>
-            <div className={styles.workflowTaskMobileCardCell}>
-              <span className={styles.projectInfoMobileLabel}>{cols.documents}</span>
-              <select
-                className={`${styles.paymentDraftSelect} ${styles.workflowTaskMobileDraftField}`}
-                value={form.documentsRequired}
-                disabled={saving}
-                aria-label={wf.fields.documentsRequired}
-                onChange={(e) =>
-                  updateField(
-                    'documentsRequired',
-                    e.target.value as WorkflowTaskFormState['documentsRequired']
-                  )
-                }
-              >
-                <option value="yes">{wf.fields.documentsRequiredYes}</option>
-                <option value="no">{wf.fields.documentsRequiredNo}</option>
-              </select>
-            </div>
-            <div className={`${styles.workflowTaskMobileCardCell} ${styles.workflowTaskMobileCardCell_right}`}>
-              <span className={styles.projectInfoMobileLabel}>{cols.due}</span>
-              <input
-                type="date"
-                className={`${styles.paymentDraftDateInput} ${styles.workflowTaskMobileDraftField}`}
-                value={form.dueAt}
-                disabled={saving}
-                aria-label={wf.fields.due}
-                onChange={(e) => updateField('dueAt', e.target.value)}
+            <WorkflowOpsTaskDraftCompactMenuPlaceholder wf={wf} saving={saving} />
+            <span className={styles.workflowTaskCompactRow1Spacer} aria-hidden />
+            <div className={styles.workflowTaskCompactRow1End}>
+              <WorkflowOpsTaskDraftCompactDueField
+                wf={wf}
+                form={form}
+                saving={saving}
+                updateField={updateField}
+                onCloseMenus={closeMenus}
               />
+              <WorkflowOpsTaskDraftCompactDocumentsField
+                wf={wf}
+                form={form}
+                saving={saving}
+                documentsMenuOpen={documentsMenuOpen}
+                documentsRef={documentsRef}
+                onDocumentsMenuOpenChange={setDocumentsMenuOpen}
+                onCloseMenus={closeMenus}
+                updateField={updateField}
+              />
+              <WorkflowOpsTaskDraftAssigneeField {...fieldProps} compact />
             </div>
+          </div>
+          <div className={styles.workflowTaskCompactRow2}>
+            <input
+              className={styles.workflowTaskCompactDraftTitleInput}
+              value={form.title}
+              disabled={saving}
+              placeholder={wf.fields.title}
+              aria-label={wf.fields.title}
+              onChange={(e) => updateField('title', e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') void handleSave();
+                if (e.key === 'Escape') onCancel();
+              }}
+              autoFocus
+            />
           </div>
         </article>
         {error ? <p className={styles.paymentDraftError}>{error}</p> : null}
