@@ -22,6 +22,12 @@ export type BuildCoreRoleAccess = BuildCoreRolePermissionFlags & {
   readonly roleKey: BuildCorePermissionRoleKey | null;
 };
 
+export type BuildCorePaymentAccess = BuildCoreRoleAccess & {
+  readonly onlyAssignedUserCanView: boolean;
+  readonly viewerUserId: string | null;
+  readonly memberRoleUserIds: readonly string[];
+};
+
 export function defaultBuildCoreRolePermissionFlagsForDomain(
   domain: BuildCorePermissionDomain,
   roleKey: BuildCorePermissionRoleKey
@@ -77,6 +83,7 @@ export function resolveBuildCoreRoleAccess(
     canUpload: flags.canUpload,
     canDownload: flags.canDownload,
     canSendFiles: flags.canSendFiles,
+    canViewAllStages: flags.canViewAllStages,
   };
 }
 

@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { CrmProjectDetail } from '@/domain/crm';
 import {
   applyBuildCoreMemberProjectDetailView,
+  DEFAULT_BUILDCORE_PAYMENT_ONLY_ASSIGNED_USER_CAN_VIEW,
   DEFAULT_BUILDCORE_WORKFLOW_TASK_ONLY_ASSIGNED_USER_CAN_VIEW,
   filterBudgetEntriesForBuildCoreMember,
   filterWorkflowTasksForBuildCoreMember,
@@ -13,6 +14,7 @@ import { useBuildCoreWorkflowTaskAccess } from '@/presentation/providers/BuildCo
 import { useBuildCoreProjectSectionAccess } from '@/presentation/providers/BuildCoreProjectSectionAccessProvider';
 import { useAuth } from '@/presentation/hooks/useAuth';
 import { fetchBuildCoreWorkflowTaskMemberVisibilityBff } from '@/infrastructure/coreApi/buildCoreWorkflowTaskMemberVisibilityBff';
+import { fetchBuildCorePaymentMemberVisibilityBff } from '@/infrastructure/coreApi/buildCorePaymentMemberVisibilityBff';
 import { useBuildCoreDashboardContext } from '@/presentation/providers/BuildCoreDashboardProvider';
 
 export function useBuildCoreMemberScopedProject(
@@ -27,6 +29,9 @@ export function useBuildCoreMemberScopedProject(
   const [fallbackMemberIds, setFallbackMemberIds] = useState<readonly string[]>([]);
   const [fallbackOnlyAssigned, setFallbackOnlyAssigned] = useState(
     DEFAULT_BUILDCORE_WORKFLOW_TASK_ONLY_ASSIGNED_USER_CAN_VIEW
+  );
+  const [fallbackPaymentOnlyAssigned, setFallbackPaymentOnlyAssigned] = useState(
+    DEFAULT_BUILDCORE_PAYMENT_ONLY_ASSIGNED_USER_CAN_VIEW
   );
   const [fallbackLoaded, setFallbackLoaded] = useState(false);
 
@@ -44,11 +49,16 @@ export function useBuildCoreMemberScopedProject(
       return;
     }
     try {
-      const settings = await fetchBuildCoreWorkflowTaskMemberVisibilityBff(token);
-      setFallbackOnlyAssigned(settings.onlyAssignedUserCanView);
-      setFallbackMemberIds(settings.memberRoleUserIds);
+      const [workflowSettings, paymentSettings] = await Promise.all([
+        fetchBuildCoreWorkflowTaskMemberVisibilityBff(token),
+        fetchBuildCorePaymentMemberVisibilityBff(token),
+      ]);
+      setFallbackOnlyAssigned(workflowSettings.onlyAssignedUserCanView);
+      setFallbackMemberIds(workflowSettings.memberRoleUserIds);
+      setFallbackPaymentOnlyAssigned(paymentSettings.onlyAssignedUserCanView);
     } catch {
       setFallbackOnlyAssigned(DEFAULT_BUILDCORE_WORKFLOW_TASK_ONLY_ASSIGNED_USER_CAN_VIEW);
+      setFallbackPaymentOnlyAssigned(DEFAULT_BUILDCORE_PAYMENT_ONLY_ASSIGNED_USER_CAN_VIEW);
       setFallbackMemberIds([]);
     } finally {
       setFallbackLoaded(true);
@@ -73,6 +83,12 @@ export function useBuildCoreMemberScopedProject(
       access?.actorRole === 'member'
         ? access.onlyAssignedUserCanView
         : fallbackOnlyAssigned;
+    const onlyAssignedUserCanViewPayments =
+      paymentAccess.access?.actorRole === 'member' &&
+      paymentAccess.access != null &&
+      'onlyAssignedUserCanView' in paymentAccess.access
+        ? paymentAccess.access.onlyAssignedUserCanView
+        : fallbackPaymentOnlyAssigned;
     const memberRoleUserIds =
       access?.actorRole === 'member' ? access.memberRoleUserIds : fallbackMemberIds;
 
@@ -83,6 +99,7 @@ export function useBuildCoreMemberScopedProject(
     const scopeInput = {
       viewerUserId,
       onlyAssignedUserCanView,
+      onlyAssignedUserCanViewPayments,
       memberRoleUserIds,
       includePaymentsAssignedToViewer:
         paymentAccess.isReady && paymentAccess.permissions.canView,
@@ -104,9 +121,11 @@ export function useBuildCoreMemberScopedProject(
     fallbackLoaded,
     fallbackMemberIds,
     fallbackOnlyAssigned,
+    fallbackPaymentOnlyAssigned,
     isApiSource,
     isMemberRole,
     needsFallback,
+    paymentAccess.access,
     paymentAccess.isReady,
     paymentAccess.permissions.canView,
     budgetAccess.isReady,

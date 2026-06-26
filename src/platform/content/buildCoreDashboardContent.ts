@@ -319,6 +319,12 @@ export const buildCoreDashboardContent = {
       roleColumn: 'Role',
       loading: 'Loading payment permissions…',
       empty: 'No permission settings available.',
+      memberVisibility: {
+        toggleLabel: 'Only assigned user can view',
+        defaultNote: 'Default: Enabled',
+        hint: 'When enabled, members only see payment milestones assigned to themselves. When disabled, members see payment milestones assigned to any member-role user.',
+        loading: 'Loading member visibility setting…',
+      },
     },
     budgetPermissions: {
       title: 'Budget Permissions',
@@ -947,7 +953,7 @@ export const buildCoreDashboardContent = {
       markStageIncompleteFailed: 'Could not mark stage as incomplete.',
       markAllEmptyStagesComplete: 'Mark All Complete',
       markAllEmptyStagesCompleteConfirmTitle:
-        'The following stages have no tasks. Are you sure you want to mark them all complete?',
+        'Are you sure you want to mark all stages complete?',
       markAllEmptyStagesCompleteSuccess: 'Empty stages marked as complete.',
       markAllEmptyStagesCompleteFailed: 'Could not mark empty stages as complete.',
       markAllEmptyStagesCompleteNone: 'No empty incomplete stages to mark complete.',

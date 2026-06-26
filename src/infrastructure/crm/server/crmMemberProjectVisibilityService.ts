@@ -10,7 +10,8 @@ import {
   type BuildCoreMemberProjectVisibilityScope,
   type MemberProjectVisibilityTaskRef,
 } from '@/domain/buildcore/buildCoreMemberProjectVisibility';
-import { loadActiveOrganizationMemberRole, resolveBuildCoreWorkflowTaskMemberVisibilityInput } from './buildCoreWorkflowTaskVisibilityService';
+import { loadActiveOrganizationMemberRole } from './buildCoreWorkflowTaskVisibilityService';
+import { resolveBuildCoreMemberTaskVisibilityInput } from './buildCorePaymentVisibilityService';
 import { resolveBuildCoreRoleAccessForUser } from './buildCoreRoleAccessService';
 import { resolveCrmProjectIdBySlug } from './resolveCrmProjectIdBySlug';
 
@@ -84,7 +85,7 @@ export async function resolveBuildCoreMemberProjectVisibilityScope(
   }
 
   const [visibilityInput, paymentAccess, tasks] = await Promise.all([
-    resolveBuildCoreWorkflowTaskMemberVisibilityInput(supabase, organizationId, userId),
+    resolveBuildCoreMemberTaskVisibilityInput(supabase, organizationId, userId),
     resolveBuildCoreRoleAccessForUser(supabase, organizationId, userId, 'payments'),
     loadMemberVisibilityTaskRefs(supabase, organizationId),
   ]);

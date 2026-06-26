@@ -4,6 +4,8 @@ import { maskEmailForMemberDisplay } from '@/domain/buildcore/maskEmailForMember
 import { emptyCrmProjectAddress, type CrmProjectAddress } from '@/domain/crm/projectAddress';
 import type { CrmProjectDetail, CrmProjectSummary } from '@/domain/crm/project';
 import type { BuildCoreWorkflowTaskMemberVisibilityInput } from '@/domain/buildcore/workflowTaskMemberVisibility';
+import { DEFAULT_BUILDCORE_PAYMENT_ONLY_ASSIGNED_USER_CAN_VIEW } from '@/domain/buildcore/workflowTaskMemberVisibility';
+import { isBuildCoreMemberAssigneeVisibleToViewer } from '@/domain/buildcore/buildCoreMemberAssigneeVisibility';
 
 const REDACTED_CONTACT: CrmContact = {
   id: 'redacted',
@@ -45,14 +47,21 @@ export function isMemberProjectVisibilityTaskVisible(
   const isPayment = task.amountCents != null;
   if (isPayment) {
     if (!includePaymentsAssignedToViewer) return false;
-    return assigneeId === input.viewerUserId;
+    return isBuildCoreMemberAssigneeVisibleToViewer({
+      assigneeMemberId: assigneeId,
+      viewerUserId: input.viewerUserId,
+      onlyAssignedUserCanView:
+        input.onlyAssignedUserCanViewPayments ?? DEFAULT_BUILDCORE_PAYMENT_ONLY_ASSIGNED_USER_CAN_VIEW,
+      memberRoleUserIds: input.memberRoleUserIds,
+    });
   }
 
-  if (input.onlyAssignedUserCanView) {
-    return assigneeId === input.viewerUserId;
-  }
-
-  return new Set(input.memberRoleUserIds).has(assigneeId);
+  return isBuildCoreMemberAssigneeVisibleToViewer({
+    assigneeMemberId: assigneeId,
+    viewerUserId: input.viewerUserId,
+    onlyAssignedUserCanView: input.onlyAssignedUserCanView,
+    memberRoleUserIds: input.memberRoleUserIds,
+  });
 }
 
 export function collectDirectProjectIdsFromMemberVisibleTasks(

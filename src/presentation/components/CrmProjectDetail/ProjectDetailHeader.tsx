@@ -15,7 +15,7 @@ import {
 } from './ProjectDetailBreadcrumbNav';
 import { ProjectPrimaryPhoto } from './ProjectPrimaryPhoto';
 import {
-  ProjectDetailMobileHeaderProgress,
+  ProjectDetailMobileStageEnd,
 } from './ProjectDetailMobileStageSummary';
 import { ProjectDetailInactiveStatus } from './ProjectDetailInactiveStatus';
 import styles from './ProjectDetail.module.css';
@@ -97,7 +97,7 @@ export function ProjectDetailHeader({
             {actions}
           </div>
           <div className={styles.detailHeaderMobileRow}>
-            <div className={styles.detailHeaderMobileLead}>
+            <div className={styles.detailHeaderMobilePhoto}>
               <ProjectPrimaryPhoto
                 summary={project}
                 parentSummary={parentProject}
@@ -105,24 +105,29 @@ export function ProjectDetailHeader({
                 onPhotoUpdated={(summary) => onPrimaryPhotoUpdated?.(summary)}
                 onError={onPrimaryPhotoError}
               />
-              <div className={styles.titleBlockMobileText}>
-                {titleRow}
-                <div className={styles.detailHeaderIndustryRow}>{industryOrTrade}</div>
-              </div>
             </div>
+            <div className={styles.titleBlockMobileText}>{titleRow}</div>
             {assigneeControl ? (
               <div className={styles.titleBlockMobileAside}>{assigneeControl}</div>
-            ) : null}
+            ) : (
+              <span className={styles.detailHeaderMobileAsideSpacer} aria-hidden />
+            )}
+            <div className={styles.detailHeaderIndustryRow}>{industryOrTrade}</div>
+            {showMobileStageSummary ? (
+              <div className={styles.detailHeaderMobileAsideProgress}>
+                <ProjectDetailMobileStageEnd
+                  workflowTasks={mobileStageWorkflowTasks}
+                  manualStageCompletions={mobileStageCompletions}
+                />
+              </div>
+            ) : (
+              <span className={styles.detailHeaderMobileAsideSpacer} aria-hidden />
+            )}
           </div>
           {isInactive ? (
             <div className={styles.detailHeaderMobileInactiveBanner}>
               <ProjectDetailInactiveStatus project={project} variant="mobileBanner" />
             </div>
-          ) : showMobileStageSummary ? (
-            <ProjectDetailMobileHeaderProgress
-              workflowTasks={mobileStageWorkflowTasks}
-              manualStageCompletions={mobileStageCompletions}
-            />
           ) : null}
         </div>
       ) : (

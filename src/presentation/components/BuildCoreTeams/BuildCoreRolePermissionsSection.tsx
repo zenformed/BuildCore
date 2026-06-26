@@ -2,7 +2,7 @@
 
 import { useId, useState, type ReactElement, type ReactNode } from 'react';
 import type { BuildCorePermissionDomain } from '@/domain/buildcore/rolePermissions';
-import { BUILDCORE_PERMISSION_COLUMNS } from '@/domain/buildcore/rolePermissions';
+import { permissionColumnsForDomain } from '@/domain/buildcore/rolePermissions';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
 import { runtimeModes } from '@/infrastructure/config/runtimeModes';
 import { useBuildCoreRolePermissions } from '@/presentation/features/buildCoreTeams/useBuildCoreRolePermissions';
@@ -30,16 +30,19 @@ export type BuildCoreRolePermissionsSectionProps = {
 };
 
 function PermissionsSectionBody({
+  domain,
   copy,
   permissions,
   footer,
 }: {
+  domain: BuildCorePermissionDomain;
   copy: BuildCoreRolePermissionsSectionCopy;
   permissions: ReturnType<typeof useBuildCoreRolePermissions>;
   footer?: ReactNode;
 }): ReactElement {
   const isMobileLayout = useDashboardMobileLayout();
   const isDemoRuntime = runtimeModes.isDemoRuntime();
+  const columns = permissionColumnsForDomain(domain);
 
   return (
     <>
@@ -58,7 +61,7 @@ function PermissionsSectionBody({
         <>
           {isMobileLayout ? <p className={styles.permissionMobileHint}>{copy.hint}</p> : null}
           <BuildCorePermissionMatrix
-            columns={BUILDCORE_PERMISSION_COLUMNS}
+            columns={columns}
             rows={permissions.data.rows}
             canEditRow={permissions.canEditRow}
             onToggle={(roleKey, columnId, nextValue) => {
@@ -112,7 +115,12 @@ export function BuildCoreRolePermissionsSection({
           {copy.title}
         </h2>
         <div className={styles.permissionsTabPanelBody}>
-          <PermissionsSectionBody copy={copy} permissions={permissions} footer={footer} />
+          <PermissionsSectionBody
+            domain={domain}
+            copy={copy}
+            permissions={permissions}
+            footer={footer}
+          />
         </div>
       </section>
     );
@@ -131,7 +139,12 @@ export function BuildCoreRolePermissionsSection({
           {copy.title}
         </h2>
         <div className={styles.permissionsStackedCardBody}>
-          <PermissionsSectionBody copy={copy} permissions={permissions} footer={footer} />
+          <PermissionsSectionBody
+            domain={domain}
+            copy={copy}
+            permissions={permissions}
+            footer={footer}
+          />
         </div>
       </section>
     );
@@ -174,7 +187,12 @@ export function BuildCoreRolePermissionsSection({
 
       {expanded ? (
         <div id={panelId} className={styles.permissionsSectionBody}>
-          <PermissionsSectionBody copy={copy} permissions={permissions} footer={footer} />
+          <PermissionsSectionBody
+            domain={domain}
+            copy={copy}
+            permissions={permissions}
+            footer={footer}
+          />
         </div>
       ) : null}
     </section>

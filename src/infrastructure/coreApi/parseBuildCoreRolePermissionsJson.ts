@@ -34,7 +34,8 @@ export function parseBuildCoreRolePermissionsJson(
       typeof r.canApprove !== 'boolean' ||
       typeof r.canUpload !== 'boolean' ||
       typeof r.canDownload !== 'boolean' ||
-      typeof r.canSendFiles !== 'boolean'
+      typeof r.canSendFiles !== 'boolean' ||
+      typeof r.canViewAllStages !== 'boolean'
     ) {
       return null;
     }
@@ -48,6 +49,7 @@ export function parseBuildCoreRolePermissionsJson(
       canUpload: r.canUpload,
       canDownload: r.canDownload,
       canSendFiles: r.canSendFiles,
+      canViewAllStages: r.canViewAllStages,
     });
   }
 

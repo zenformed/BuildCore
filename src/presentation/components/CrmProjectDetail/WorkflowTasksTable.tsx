@@ -4,11 +4,11 @@ import type { ReactElement } from 'react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import type { CrmProjectDetail, CrmWorkflowTask, PipelineStageSlug } from '@/domain/crm';
-import { listEmptyIncompleteWorkflowStages } from '@/domain/crm';
 import { markCrmProjectStageCompleteManual } from '@/application/use-cases/crm/markCrmProjectStageCompleteManual';
 import { markCrmProjectEmptyStagesCompleteBatch } from '@/application/use-cases/crm/markCrmProjectEmptyStagesCompleteBatch';
 import { clearCrmProjectStageManualCompletion } from '@/application/use-cases/crm/clearCrmProjectStageManualCompletion';
 import { resolvePipelineStageScopeForProject } from '@/domain/buildcore/orgPipelineStages';
+import { shouldHideEmptyStageGroups } from '@/domain/buildcore/buildCoreMemberAssigneeVisibility';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
 import { crmRepositories } from '@/shared/di/container';
 import { ConfirmModal } from '@/presentation/components/ConfirmModal';
@@ -119,12 +119,16 @@ export function WorkflowTasksTable({
     return filterWorkflowTasksBySearch(byFilters, searchQuery, catalog);
   }, [catalog, filters, project.summary.priority, project.workflowTasks, searchQuery]);
 
+  const hideEmptyStages = shouldHideEmptyStageGroups({
+    canViewAllStages: permissions.canViewAllStages,
+  });
+
   const groups = useMemo(
     () =>
       groupOpsWorkflowTasksByStage(filteredTasks, currentStage, catalog, {
-        includeEmptyStages: !isNarrowingResults,
+        includeEmptyStages: !isNarrowingResults && !hideEmptyStages,
       }),
-    [catalog, filteredTasks, currentStage, isNarrowingResults]
+    [catalog, currentStage, filteredTasks, hideEmptyStages, isNarrowingResults]
   );
 
   const orderedGroups = useMemo(() => {
@@ -144,18 +148,6 @@ export function WorkflowTasksTable({
   const docCounts = countDocumentsByTaskId(project.documents);
   const showViewAllLink = !isFullLayout;
   const showWorkflowContent = groups.length > 0 || draftStageSlug != null;
-  const stageCompletionInput = useMemo(
-    () => ({
-      workflowTasks: project.workflowTasks,
-      manualStageCompletions: project.manualStageCompletions,
-      stages: catalog,
-    }),
-    [catalog, project.manualStageCompletions, project.workflowTasks]
-  );
-  const emptyIncompleteStages = useMemo(
-    () => listEmptyIncompleteWorkflowStages(stageCompletionInput),
-    [stageCompletionInput]
-  );
 
   useEffect(() => {
     if (draftStageSlug == null) return;
@@ -481,11 +473,6 @@ export function WorkflowTasksTable({
           void handleConfirmBatchComplete();
         }}
         title={wf.markAllEmptyStagesCompleteConfirmTitle}
-        message={
-          emptyIncompleteStages.length > 0
-            ? emptyIncompleteStages.map((stage) => stage.stageLabel).join(', ')
-            : undefined
-        }
         confirmLabel={wf.markAllEmptyStagesComplete}
         cancelLabel={wf.archiveTaskCancelLabel}
         variant="primary"

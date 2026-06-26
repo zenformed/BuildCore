@@ -35,9 +35,10 @@ export type BuildCorePermissionColumnId =
   | 'canDelete'
   | 'canUpload'
   | 'canDownload'
-  | 'canSendFiles';
+  | 'canSendFiles'
+  | 'canViewAllStages';
 
-export const BUILDCORE_PERMISSION_COLUMNS: readonly {
+export const BUILDCORE_BASE_PERMISSION_COLUMNS: readonly {
   readonly id: BuildCorePermissionColumnId;
   readonly label: string;
 }[] = [
@@ -51,7 +52,33 @@ export const BUILDCORE_PERMISSION_COLUMNS: readonly {
   { id: 'canSendFiles', label: 'Send Files' },
 ];
 
-export const BUILDCORE_WORKFLOW_TASK_PERMISSION_COLUMNS = BUILDCORE_PERMISSION_COLUMNS;
+export const BUILDCORE_VIEW_ALL_STAGES_COLUMN = {
+  id: 'canViewAllStages',
+  label: 'View All Stages',
+} as const;
+
+export const BUILDCORE_WORKFLOW_TASK_PERMISSION_COLUMNS = [
+  ...BUILDCORE_BASE_PERMISSION_COLUMNS,
+  BUILDCORE_VIEW_ALL_STAGES_COLUMN,
+] as const;
+
+export const BUILDCORE_PAYMENT_PERMISSION_COLUMNS = [
+  ...BUILDCORE_BASE_PERMISSION_COLUMNS,
+  BUILDCORE_VIEW_ALL_STAGES_COLUMN,
+] as const;
+
+export const BUILDCORE_BUDGET_PERMISSION_COLUMNS = BUILDCORE_BASE_PERMISSION_COLUMNS;
+
+/** @deprecated Use domain-specific column lists. */
+export const BUILDCORE_PERMISSION_COLUMNS = BUILDCORE_WORKFLOW_TASK_PERMISSION_COLUMNS;
+
+export function permissionColumnsForDomain(
+  domain: BuildCorePermissionDomain
+): readonly { readonly id: BuildCorePermissionColumnId; readonly label: string }[] {
+  if (domain === 'budget') return BUILDCORE_BUDGET_PERMISSION_COLUMNS;
+  if (domain === 'payments') return BUILDCORE_PAYMENT_PERMISSION_COLUMNS;
+  return BUILDCORE_WORKFLOW_TASK_PERMISSION_COLUMNS;
+}
 
 export type BuildCoreRolePermissionFlags = {
   readonly canView: boolean;
@@ -62,6 +89,7 @@ export type BuildCoreRolePermissionFlags = {
   readonly canUpload: boolean;
   readonly canDownload: boolean;
   readonly canSendFiles: boolean;
+  readonly canViewAllStages: boolean;
 };
 
 export type BuildCoreRolePermissionRow = BuildCoreRolePermissionFlags & {

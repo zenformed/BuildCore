@@ -61,6 +61,7 @@ export function workflowTaskPermissionFlagsFromAccess(
     canUpload: access.canUpload,
     canDownload: access.canDownload,
     canSendFiles: access.canSendFiles,
+    canViewAllStages: access.canViewAllStages,
   };
 }
 

@@ -3,6 +3,7 @@
 import type { ReactElement } from 'react';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
 import { BuildCoreRolePermissionsSection } from './BuildCoreRolePermissionsSection';
+import { BuildCorePaymentMemberVisibilitySetting } from './BuildCorePaymentMemberVisibilitySetting';
 
 export type BuildCorePaymentPermissionsSectionProps = {
   readonly enabled: boolean;
@@ -21,6 +22,7 @@ export function BuildCorePaymentPermissionsSection({
       headingId="teams-payment-permissions-heading"
       copy={copy}
       layout={layout}
+      footer={<BuildCorePaymentMemberVisibilitySetting enabled={enabled} />}
     />
   );
 }

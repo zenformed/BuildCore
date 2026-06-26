@@ -60,7 +60,8 @@ export function PaymentsRail({
   const [draftOpen, setDraftOpen] = useState(false);
   const isMobileLayout = useDashboardMobileLayout();
 
-  const showTable = canView && (filteredMilestones.length > 0 || draftOpen);
+  const showTable =
+    canView && (filteredMilestones.length > 0 || draftOpen || permissions.canViewAllStages);
 
   const searchInput = (
     <DetailPanelSectionSearch

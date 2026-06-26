@@ -1248,10 +1248,13 @@
 
 .detailHeaderIndustryRow {
   display: flex;
-  flex-wrap: wrap;
   align-items: center;
   gap: 0.5rem;
   min-width: 0;
+  padding-left: var(--title-block-indent);
+  grid-row: 2;
+  grid-column: 2;
+  align-self: center;
 }
 
 .detailHeader_mobile {
@@ -1296,12 +1299,50 @@
 }
 
 .detailHeaderMobileRow {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 0.5rem;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-rows: auto auto;
+  column-gap: 0.75rem;
+  row-gap: 0.125rem;
+  align-items: center;
   width: 100%;
   min-width: 0;
+}
+
+.detailHeaderMobilePhoto {
+  grid-row: 1 / 3;
+  grid-column: 1;
+  align-self: start;
+}
+
+.detailHeaderMobileRow .titleBlockMobileText {
+  grid-row: 1;
+  grid-column: 2;
+  align-self: center;
+}
+
+.detailHeaderMobileRow .titleBlockMobileAside {
+  grid-row: 1;
+  grid-column: 3;
+  align-self: start;
+  justify-self: end;
+}
+
+.detailHeaderMobileAsideProgress {
+  grid-row: 2;
+  grid-column: 3;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  justify-self: end;
+  min-width: 0;
+}
+
+.detailHeaderMobileAsideSpacer {
+  display: block;
+  width: 0;
+  height: 0;
+  overflow: hidden;
 }
 
 .detailHeaderMobileLead {
@@ -2771,6 +2812,12 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.detailHeaderIndustryRow .subtitle,
+.detailHeaderIndustryRow .headerTradeSubtitle {
+  width: auto;
+  max-width: 100%;
 }
 
 .titleBlockMobileText .headerIndustryEdit {

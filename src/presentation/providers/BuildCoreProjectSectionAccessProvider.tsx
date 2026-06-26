@@ -14,16 +14,16 @@ import {
 import {
   DENIED_BUILDCORE_WORKFLOW_TASK_PERMISSIONS,
   fullAdminBuildCoreRoleAccess,
-  type BuildCoreRoleAccess,
   type BuildCoreRolePermissionFlags,
 } from '@/domain/buildcore/rolePermissions';
+import type { BuildCorePaymentAccess, BuildCoreRoleAccess } from '@/domain/buildcore/roleAccessPermissions';
 import { fetchBuildCoreRoleAccessBff } from '@/infrastructure/coreApi/buildCoreRoleAccessBff';
 import { runSessionCached } from '@/infrastructure/coreApi/clientRequestDedupe';
 import { runtimeModes } from '@/infrastructure/config/runtimeModes';
 import { useBuildCoreDashboardContext } from '@/presentation/providers/BuildCoreDashboardProvider';
 
 type SectionAccessState = {
-  readonly access: BuildCoreRoleAccess | null;
+  readonly access: BuildCoreRoleAccess | BuildCorePaymentAccess | null;
   readonly permissions: BuildCoreRolePermissionFlags;
   readonly isLoading: boolean;
   readonly isReady: boolean;
@@ -31,7 +31,9 @@ type SectionAccessState = {
 };
 
 export type BuildCoreProjectSectionAccessContextValue = {
-  readonly payment: SectionAccessState;
+  readonly payment: SectionAccessState & {
+    readonly access: BuildCorePaymentAccess | BuildCoreRoleAccess | null;
+  };
   readonly budget: SectionAccessState;
   readonly refetch: () => Promise<void>;
 };
@@ -44,7 +46,7 @@ export type BuildCoreProjectSectionAccessProviderProps = {
 };
 
 function buildSectionState(
-  access: BuildCoreRoleAccess | null,
+  access: BuildCoreRoleAccess | BuildCorePaymentAccess | null,
   isLoading: boolean,
   loadError: string | null
 ): SectionAccessState {
@@ -62,7 +64,7 @@ export function BuildCoreProjectSectionAccessProvider({
   children,
 }: BuildCoreProjectSectionAccessProviderProps): ReactElement {
   const { getAccessToken } = useBuildCoreDashboardContext();
-  const [paymentAccess, setPaymentAccess] = useState<BuildCoreRoleAccess | null>(null);
+  const [paymentAccess, setPaymentAccess] = useState<BuildCorePaymentAccess | BuildCoreRoleAccess | null>(null);
   const [budgetAccess, setBudgetAccess] = useState<BuildCoreRoleAccess | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);

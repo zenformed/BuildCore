@@ -14,8 +14,8 @@ import {
 } from '@/domain/buildcore/workflowTaskMemberVisibility';
 import {
   loadActiveOrganizationMemberRole,
-  resolveBuildCoreWorkflowTaskMemberVisibilityInput,
 } from './buildCoreWorkflowTaskVisibilityService';
+import { resolveBuildCoreMemberTaskVisibilityInput } from './buildCorePaymentVisibilityService';
 import { resolveBuildCoreRoleAccessForUser } from './buildCoreRoleAccessService';
 import { resolveBuildCoreMemberProjectVisibilityScope } from './crmMemberProjectVisibilityService';
 
@@ -39,7 +39,7 @@ export async function scopeCrmProjectDetailForViewer(
     return null;
   }
 
-  const visibilityInput = await resolveBuildCoreWorkflowTaskMemberVisibilityInput(
+  const visibilityInput = await resolveBuildCoreMemberTaskVisibilityInput(
     supabase,
     organizationId,
     userId

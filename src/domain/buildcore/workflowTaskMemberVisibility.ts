@@ -2,14 +2,16 @@ import type { CrmBudgetEntry, CrmProjectDetail, CrmWorkflowTask } from '@/domain
 import { buildProjectBudgetSummary } from '@/domain/crm/budget';
 import { isPaymentWorkflowTask } from '@/domain/crm/paymentWorkflow';
 import { isWorkflowTaskContactAssigneeId } from '@/domain/crm/workflowTaskAssignee';
+import { isBuildCoreMemberAssigneeVisibleToViewer } from '@/domain/buildcore/buildCoreMemberAssigneeVisibility';
 
 export type BuildCoreWorkflowTaskMemberVisibilityInput = {
   readonly viewerUserId: string;
   readonly onlyAssignedUserCanView: boolean;
   readonly memberRoleUserIds: readonly string[];
+  readonly onlyAssignedUserCanViewPayments?: boolean;
   /**
-   * When true, include payment milestones assigned to `viewerUserId`.
-   * Controlled by Payment Permissions View — not the workflow task visibility toggle.
+   * When true, include payment milestones assigned per payment visibility rules.
+   * Controlled by Payment Permissions View — not the payment visibility toggle alone.
    */
   readonly includePaymentsAssignedToViewer?: boolean;
   /**
@@ -22,6 +24,9 @@ export type BuildCoreWorkflowTaskMemberVisibilityInput = {
 /** Fallback when an org has no saved visibility row: members see only self-assigned tasks. */
 export const DEFAULT_BUILDCORE_WORKFLOW_TASK_ONLY_ASSIGNED_USER_CAN_VIEW = true;
 
+/** Fallback when an org has no saved payment visibility row. */
+export const DEFAULT_BUILDCORE_PAYMENT_ONLY_ASSIGNED_USER_CAN_VIEW = true;
+
 function memberAssigneeIdFromRef(assignee: { readonly id: string } | null | undefined): string | null {
   const assigneeId = assignee?.id?.trim();
   if (!assigneeId || isWorkflowTaskContactAssigneeId(assigneeId)) return null;
@@ -32,6 +37,12 @@ function memberAssigneeId(task: CrmWorkflowTask): string | null {
   return memberAssigneeIdFromRef(task.assignedTo);
 }
 
+function resolvePaymentOnlyAssignedUserCanView(
+  input: BuildCoreWorkflowTaskMemberVisibilityInput
+): boolean {
+  return input.onlyAssignedUserCanViewPayments ?? DEFAULT_BUILDCORE_PAYMENT_ONLY_ASSIGNED_USER_CAN_VIEW;
+}
+
 /** Operational workflow tasks — uses workflow task member visibility settings. */
 export function isOpsWorkflowTaskVisibleToBuildCoreMember(
   task: CrmWorkflowTask,
@@ -39,28 +50,27 @@ export function isOpsWorkflowTaskVisibleToBuildCoreMember(
 ): boolean {
   if (isPaymentWorkflowTask(task)) return false;
 
-  const assigneeId = memberAssigneeId(task);
-  if (assigneeId == null) return false;
-
-  if (input.onlyAssignedUserCanView) {
-    return assigneeId === input.viewerUserId;
-  }
-
-  const memberIds = new Set(input.memberRoleUserIds);
-  return memberIds.has(assigneeId);
+  return isBuildCoreMemberAssigneeVisibleToViewer({
+    assigneeMemberId: memberAssigneeId(task),
+    viewerUserId: input.viewerUserId,
+    onlyAssignedUserCanView: input.onlyAssignedUserCanView,
+    memberRoleUserIds: input.memberRoleUserIds,
+  });
 }
 
-/** Payment milestones — only self-assigned rows; ignores workflow task visibility toggle. */
+/** Payment milestones — uses payment member visibility settings. */
 export function isPaymentWorkflowTaskVisibleToBuildCoreMember(
   task: CrmWorkflowTask,
-  input: Pick<BuildCoreWorkflowTaskMemberVisibilityInput, 'viewerUserId'>
+  input: BuildCoreWorkflowTaskMemberVisibilityInput
 ): boolean {
   if (!isPaymentWorkflowTask(task)) return false;
 
-  const assigneeId = memberAssigneeId(task);
-  if (assigneeId == null) return false;
-
-  return assigneeId === input.viewerUserId;
+  return isBuildCoreMemberAssigneeVisibleToViewer({
+    assigneeMemberId: memberAssigneeId(task),
+    viewerUserId: input.viewerUserId,
+    onlyAssignedUserCanView: resolvePaymentOnlyAssignedUserCanView(input),
+    memberRoleUserIds: input.memberRoleUserIds,
+  });
 }
 
 /** Budget — all rows or none; controlled by Budget Permissions View only. */

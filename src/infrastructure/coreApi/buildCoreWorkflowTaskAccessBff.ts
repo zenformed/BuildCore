@@ -16,7 +16,8 @@ export function parseBuildCoreWorkflowTaskAccessJson(json: unknown): BuildCoreWo
     typeof o.canApprove !== 'boolean' ||
     typeof o.canUpload !== 'boolean' ||
     typeof o.canDownload !== 'boolean' ||
-    typeof o.canSendFiles !== 'boolean'
+    typeof o.canSendFiles !== 'boolean' ||
+    typeof o.canViewAllStages !== 'boolean'
   ) {
     return null;
   }
@@ -48,6 +49,7 @@ export function parseBuildCoreWorkflowTaskAccessJson(json: unknown): BuildCoreWo
     canUpload: o.canUpload,
     canDownload: o.canDownload,
     canSendFiles: o.canSendFiles,
+    canViewAllStages: o.canViewAllStages,
     onlyAssignedUserCanView:
       typeof o.onlyAssignedUserCanView === 'boolean'
         ? o.onlyAssignedUserCanView

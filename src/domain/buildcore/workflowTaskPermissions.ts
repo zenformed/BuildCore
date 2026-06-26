@@ -27,6 +27,7 @@ export const DENIED_BUILDCORE_WORKFLOW_TASK_PERMISSIONS: BuildCoreRolePermission
   canUpload: false,
   canDownload: false,
   canSendFiles: false,
+  canViewAllStages: false,
 };
 
 /** Organization owners are not in the permission matrix and cannot be restricted. */
@@ -39,6 +40,7 @@ export const UNRESTRICTED_BUILDCORE_WORKFLOW_TASK_PERMISSIONS: BuildCoreRolePerm
   canUpload: true,
   canDownload: true,
   canSendFiles: true,
+  canViewAllStages: true,
 };
 
 export function isBuildCoreWorkflowTaskOwnerUnrestricted(
@@ -61,6 +63,7 @@ export function defaultBuildCoreRolePermissionFlags(
         canUpload: true,
         canDownload: true,
         canSendFiles: true,
+        canViewAllStages: true,
       };
     case 'coordinator':
       return {
@@ -72,6 +75,7 @@ export function defaultBuildCoreRolePermissionFlags(
         canUpload: true,
         canDownload: true,
         canSendFiles: true,
+        canViewAllStages: true,
       };
     case 'member':
       return {
@@ -83,6 +87,7 @@ export function defaultBuildCoreRolePermissionFlags(
         canUpload: true,
         canDownload: true,
         canSendFiles: false,
+        canViewAllStages: false,
       };
     default: {
       const _exhaustive: never = roleKey;
@@ -145,6 +150,7 @@ export function resolveBuildCoreWorkflowTaskPermissions(
     canUpload: flags.canUpload,
     canDownload: flags.canDownload,
     canSendFiles: flags.canSendFiles,
+    canViewAllStages: flags.canViewAllStages,
   };
 }
 
