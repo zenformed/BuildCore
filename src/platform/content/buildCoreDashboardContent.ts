@@ -928,6 +928,8 @@ export const buildCoreDashboardContent = {
       saveTask: 'Save task',
       cancelTask: 'Cancel',
       editTask: 'Edit task',
+      addNotes: 'Add notes',
+      editNotes: 'Edit notes',
       sendCustomerNotification: 'Notify Assigned',
       notifyAssigned: 'Notify Assigned',
       sendAttachment: 'Send Attachment',
@@ -997,6 +999,15 @@ export const buildCoreDashboardContent = {
         actions: 'Actions',
       },
       viewAll: 'View all Workflow Tasks',
+      viewMode: {
+        switchToCards: 'Show stages as cards',
+        switchToTable: 'Show stages as table',
+      },
+      usersColumn: 'Users',
+      usersColumnLoading: 'Loading users…',
+      usersColumnEmpty: 'No users',
+      usersColumnTaskCount: (count: number): string =>
+        `${count} ${count === 1 ? 'task' : 'tasks'}`,
       openDocuments: 'Documents',
       fields: {
         title: 'Task title',

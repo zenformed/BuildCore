@@ -1,11 +1,13 @@
 'use client';
 
-import type { ReactElement } from 'react';
+import type { MutableRefObject, ReactElement } from 'react';
+import { useRef } from 'react';
 import { WORKFLOW_TASK_STATUSES } from '@/domain/crm/workflowTaskStatuses';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
 import {
   formatShortDate,
   formatWorkflowStatus,
+  formatWorkflowTaskCompactTitle,
   formatWorkflowTaskNotesDisplay,
 } from '@/presentation/features/crmProjectDetail/crmProjectDetailFormatters';
 import { formatCentsAsUsd } from '@/presentation/features/crmProjects/crmProjectFormatters';
@@ -26,10 +28,16 @@ function statusBadgeClass(status: string): string {
 
 function WorkflowTaskRowActionsMenuSlot({
   model,
+  compact = false,
+  actionsButtonRef,
 }: {
   readonly model: WorkflowTaskInlineRowModel;
+  readonly compact?: boolean;
+  readonly actionsButtonRef?: MutableRefObject<HTMLButtonElement | null>;
 }): ReactElement | null {
   if (!model.showActionsMenu) return null;
+
+  const notesLabel = model.task.notes?.trim() ? model.wf.editNotes : model.wf.addNotes;
 
   return (
     <WorkflowTaskRowActionsMenu
@@ -39,9 +47,19 @@ function WorkflowTaskRowActionsMenuSlot({
       canDelete={model.canDelete}
       showSendAttachment={model.showSendAttachment}
       showAssignedNotification={model.showAssignedNotification}
+      showEditNotes={compact && model.canEdit}
+      editNotesLabel={notesLabel}
+      dotsOrientation={compact ? 'horizontal' : 'vertical'}
+      actionsButtonRef={actionsButtonRef}
       onEdit={() => {
         model.closeMenus();
         model.openEditWorkflowTask(model.task);
+      }}
+      onEditNotes={() => {
+        model.closeMenus();
+        model.setEditingTitle(false);
+        model.setNotesDraft(model.task.notes ?? '');
+        model.setEditingNotes(true);
       }}
       onDelete={
         model.onRequestArchiveTask
@@ -63,16 +81,104 @@ function WorkflowTaskRowActionsMenuSlot({
   );
 }
 
+function WorkflowTaskCompactNotesPopover({
+  model,
+  anchorRef,
+}: {
+  readonly model: WorkflowTaskInlineRowModel;
+  readonly anchorRef: MutableRefObject<HTMLButtonElement | null>;
+}): ReactElement | null {
+  const { editingNotes, canEdit, saving, notesDraft, task, wf } = model;
+
+  if (!editingNotes || !canEdit) {
+    return null;
+  }
+
+  return (
+    <WorkflowInlineMenu
+      open={editingNotes}
+      onClose={() => void model.saveNotes()}
+      anchorRef={anchorRef}
+      align="end"
+      sizeToContent
+      portalClassName={`${styles.inlineMenu_portal} ${styles.workflowTaskCompactNotes_portal}`}
+    >
+      <div className={styles.workflowTaskCompactNotesPanel}>
+        <label className={styles.workflowTaskCompactNotesPanelLabel} htmlFor={`task-notes-${task.id}`}>
+          {wf.columns.notes}
+        </label>
+        <textarea
+          id={`task-notes-${task.id}`}
+          className={styles.workflowTaskCompactNotesPanelInput}
+          value={notesDraft}
+          disabled={saving}
+          rows={4}
+          onChange={(e) => model.setNotesDraft(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Escape') {
+              model.setNotesDraft(task.notes ?? '');
+              model.setEditingNotes(false);
+            }
+          }}
+          autoFocus
+        />
+      </div>
+    </WorkflowInlineMenu>
+  );
+}
+
+function WorkflowTaskCompactCardBody({
+  model,
+  showAmount = false,
+}: {
+  readonly model: WorkflowTaskInlineRowModel;
+  readonly showAmount?: boolean;
+}): ReactElement {
+  const actionsButtonRef = useRef<HTMLButtonElement>(null);
+
+  return (
+    <>
+      <div className={styles.workflowTaskCompactRow1}>
+        <WorkflowTaskRowStatusField model={model} compact />
+        {model.showActionsMenu ? (
+          <div className={styles.workflowTaskCompactActions}>
+            <WorkflowTaskRowActionsMenuSlot
+              model={model}
+              compact
+              actionsButtonRef={actionsButtonRef}
+            />
+          </div>
+        ) : null}
+        <span className={styles.workflowTaskCompactRow1Spacer} aria-hidden />
+        <div className={styles.workflowTaskCompactRow1End}>
+          {showAmount ? <WorkflowTaskRowAmountField model={model} compact /> : null}
+          <WorkflowTaskRowDueField model={model} compact />
+          <WorkflowTaskRowDocumentsField model={model} compact />
+          <WorkflowTaskRowAssigneeField model={model} compact />
+        </div>
+      </div>
+      <div className={styles.workflowTaskCompactRow2}>
+        <WorkflowTaskRowTitleField model={model} compact />
+      </div>
+      <WorkflowTaskCompactNotesPopover model={model} anchorRef={actionsButtonRef} />
+    </>
+  );
+}
+
 function WorkflowTaskRowStatusField({
   model,
   mobile = false,
+  compact = false,
 }: {
   readonly model: WorkflowTaskInlineRowModel;
   readonly mobile?: boolean;
+  readonly compact?: boolean;
 }): ReactElement {
-  const wrapClass = mobile
-    ? styles.workflowTaskMobileCardControl
-    : `${styles.inlineCellWrap} ${styles.workflowStatusCell}`;
+  const wrapClass = compact
+    ? styles.workflowTaskCompactControl
+    : mobile
+      ? styles.workflowTaskMobileCardControl
+      : `${styles.inlineCellWrap} ${styles.workflowStatusCell}`;
 
   return (
     <span className={wrapClass} ref={model.statusRef}>
@@ -119,12 +225,16 @@ function WorkflowTaskRowTitleField({
   model,
   mobile = false,
   mobileHeader = false,
+  compact = false,
 }: {
   readonly model: WorkflowTaskInlineRowModel;
   readonly mobile?: boolean;
   readonly mobileHeader?: boolean;
+  readonly compact?: boolean;
 }): ReactElement {
   const { wf, task, saving, canEdit, editingTitle, titleDraft } = model;
+  const compactTitle = formatWorkflowTaskCompactTitle(task.title);
+  const showCompactTitleTooltip = compact && compactTitle !== task.title.trim();
 
   const titleContent =
     editingTitle && canEdit ? (
@@ -147,14 +257,16 @@ function WorkflowTaskRowTitleField({
       <button
         type="button"
         className={
-          mobileHeader
-            ? styles.workflowTaskMobileCardTitleBtn
-            : mobile
-              ? styles.workflowTaskMobileCardValueBtn
-              : styles.inlineCellBtn
+          compact
+            ? styles.workflowTaskCompactTitleBtn
+            : mobileHeader
+              ? styles.workflowTaskMobileCardTitleBtn
+              : mobile
+                ? styles.workflowTaskMobileCardValueBtn
+                : styles.inlineCellBtn
         }
         disabled={saving}
-        title={task.title}
+        title={showCompactTitleTooltip || !compact ? task.title : undefined}
         onClick={() => {
           model.closeMenus();
           model.setEditingNotes(false);
@@ -162,18 +274,36 @@ function WorkflowTaskRowTitleField({
           model.setEditingTitle(true);
         }}
       >
-        <span className={mobileHeader ? styles.workflowTaskMobileCardTitle : styles.taskTitleBtnText}>
-          {task.title}
+        <span
+          className={
+            compact
+              ? styles.workflowTaskCompactTitle
+              : mobileHeader
+                ? styles.workflowTaskMobileCardTitle
+                : styles.taskTitleBtnText
+          }
+        >
+          {compact ? compactTitle : task.title}
         </span>
       </button>
     ) : (
       <span
-        className={mobileHeader ? styles.workflowTaskMobileCardTitle : styles.taskTitleBtnText}
-        title={task.title}
+        className={
+          compact
+            ? styles.workflowTaskCompactTitle
+            : mobileHeader
+              ? styles.workflowTaskMobileCardTitle
+              : styles.taskTitleBtnText
+        }
+        title={showCompactTitleTooltip || !compact ? task.title : undefined}
       >
-        {task.title}
+        {compact ? compactTitle : task.title}
       </span>
     );
+
+  if (compact) {
+    return titleContent;
+  }
 
   if (mobileHeader) {
     return titleContent;
@@ -198,24 +328,32 @@ function WorkflowTaskRowTitleField({
 function WorkflowTaskRowNotesField({
   model,
   mobile = false,
+  compact = false,
 }: {
   readonly model: WorkflowTaskInlineRowModel;
   readonly mobile?: boolean;
+  readonly compact?: boolean;
 }): ReactElement {
   const { saving, canEdit, editingNotes, notesDraft, notesPreview, notesTitle, task } = model;
-  const notesClass = mobile
-    ? styles.workflowTaskMobileCardControl
-    : `${styles.workflowNotesCell} ${styles.workflowMetaCell}`;
+  const notesClass = compact
+    ? styles.workflowTaskCompactNotesWrap
+    : mobile
+      ? styles.workflowTaskMobileCardControl
+      : `${styles.workflowNotesCell} ${styles.workflowMetaCell}`;
   const notesDisplay = formatWorkflowTaskNotesDisplay(task.notes);
 
   return (
     <span className={notesClass}>
       {editingNotes && canEdit ? (
         <textarea
-          className={`${styles.inlineFieldInput} ${styles.workflowTaskMobileCardNotesInput}`}
+          className={`${styles.inlineFieldInput} ${
+            compact
+              ? styles.workflowTaskCompactNotesInput
+              : styles.workflowTaskMobileCardNotesInput
+          }`}
           value={notesDraft}
           disabled={saving}
-          rows={3}
+          rows={compact ? 2 : 3}
           onChange={(e) => model.setNotesDraft(e.target.value)}
           onBlur={() => void model.saveNotes()}
           onKeyDown={(e) => {
@@ -230,7 +368,11 @@ function WorkflowTaskRowNotesField({
         <button
           type="button"
           className={
-            mobile ? styles.workflowTaskMobileCardNotesBtn : styles.inlineCellBtn
+            compact
+              ? styles.workflowTaskCompactNotesBtn
+              : mobile
+                ? styles.workflowTaskMobileCardNotesBtn
+                : styles.inlineCellBtn
           }
           disabled={saving}
           title={notesTitle}
@@ -243,20 +385,28 @@ function WorkflowTaskRowNotesField({
         >
           <span
             className={
-              mobile ? styles.workflowTaskMobileCardNotesText : styles.workflowNotesPreview
+              compact
+                ? styles.workflowTaskCompactNotes
+                : mobile
+                  ? styles.workflowTaskMobileCardNotesText
+                  : styles.workflowNotesPreview
             }
           >
-            {mobile ? notesDisplay : notesPreview}
+            {compact || mobile ? notesDisplay : notesPreview}
           </span>
         </button>
       ) : (
         <span
           className={
-            mobile ? styles.workflowTaskMobileCardNotesText : styles.workflowNotesPreview
+            compact
+              ? styles.workflowTaskCompactNotes
+              : mobile
+                ? styles.workflowTaskMobileCardNotesText
+                : styles.workflowNotesPreview
           }
           title={notesTitle}
         >
-          {mobile ? notesDisplay : notesPreview}
+          {compact || mobile ? notesDisplay : notesPreview}
         </span>
       )}
     </span>
@@ -266,21 +416,31 @@ function WorkflowTaskRowNotesField({
 function WorkflowTaskRowDocumentsField({
   model,
   mobile = false,
+  compact = false,
 }: {
   readonly model: WorkflowTaskInlineRowModel;
   readonly mobile?: boolean;
+  readonly compact?: boolean;
 }): ReactElement {
-  const wrapClass = mobile
-    ? styles.workflowTaskMobileCardControl
-    : `${styles.inlineCellWrap} ${styles.workflowMetaCell}`;
+  const wrapClass = compact
+    ? styles.workflowTaskCompactControl
+    : mobile
+      ? styles.workflowTaskMobileCardControl
+      : `${styles.inlineCellWrap} ${styles.workflowMetaCell}`;
+  const documentsText = mobile || compact ? model.documentsMobileLabel : model.documentsLabel;
+  const compactDocumentsText =
+    compact && model.hasDocuments ? String(model.documentCount) : compact ? '' : documentsText;
 
   return (
     <span className={wrapClass} ref={model.documentsRef}>
       <button
         type="button"
-        className={`${styles.inlineCellBtn} ${styles.documentsCell}`}
+        className={`${styles.inlineCellBtn} ${styles.documentsCell}${
+          compact ? ` ${styles.workflowTaskCompactMetaBtn}` : ''
+        }`}
         disabled={model.saving || !model.canOpenDocumentsMenu}
         aria-expanded={model.documentsMenuOpen}
+        aria-label={compact && !compactDocumentsText ? model.wf.columns.documents : undefined}
         onClick={() => {
           model.setStatusMenuOpen(false);
           model.setAssigneeMenuOpen(false);
@@ -294,18 +454,24 @@ function WorkflowTaskRowDocumentsField({
           model.setDocumentsMenuOpen((open) => !open);
         }}
       >
-        {model.showDocumentsIcon ? <span className={styles.documentsIcon} aria-hidden /> : null}
-        <span
-          className={
-            mobile
-              ? styles.workflowTaskMobileCardValue
-              : !model.task.documentsRequired && !model.hasDocuments
-                ? styles.documentsNotRequired
-                : undefined
-          }
-        >
-          {mobile ? model.documentsMobileLabel : model.documentsLabel}
-        </span>
+        {compact || model.showDocumentsIcon ? (
+          <span className={styles.documentsIcon} aria-hidden />
+        ) : null}
+        {(compact ? compactDocumentsText : documentsText) ? (
+          <span
+            className={
+              compact
+                ? styles.workflowTaskCompactMeta
+                : mobile
+                  ? styles.workflowTaskMobileCardValue
+                  : !model.task.documentsRequired && !model.hasDocuments
+                    ? styles.documentsNotRequired
+                    : undefined
+            }
+          >
+            {compact ? compactDocumentsText : documentsText}
+          </span>
+        ) : null}
       </button>
       <input
         ref={model.documentActions.fileInputRef}
@@ -399,13 +565,17 @@ function WorkflowTaskRowDocumentsField({
 function WorkflowTaskRowAssigneeField({
   model,
   mobile = false,
+  compact = false,
 }: {
   readonly model: WorkflowTaskInlineRowModel;
   readonly mobile?: boolean;
+  readonly compact?: boolean;
 }): ReactElement {
-  const wrapClass = mobile
-    ? styles.workflowTaskMobileCardControl
-    : `${styles.inlineCellWrap} ${styles.workflowMetaCell}`;
+  const wrapClass = compact
+    ? styles.workflowTaskCompactAssignee
+    : mobile
+      ? styles.workflowTaskMobileCardControl
+      : `${styles.inlineCellWrap} ${styles.workflowMetaCell}`;
 
   const assigneeContent = model.task.assignedTo ? (
     <TeamMemberAvatar member={model.task.assignedTo} />
@@ -421,15 +591,17 @@ function WorkflowTaskRowAssigneeField({
 
   return (
     <span className={wrapClass} ref={model.assigneeRef}>
-        {mobile && !model.canEdit ? (
+        {(mobile || compact) && !model.canEdit ? (
           assigneeContent
         ) : (
           <button
             type="button"
             className={
-              mobile
-                ? `${styles.workflowTaskMobileCardValueBtn} ${styles.assignedCell}`
-                : `${styles.inlineCellBtn} ${styles.assignedCell}`
+              compact
+                ? styles.workflowTaskCompactAssigneeBtn
+                : mobile
+                  ? `${styles.workflowTaskMobileCardValueBtn} ${styles.assignedCell}`
+                  : `${styles.inlineCellBtn} ${styles.assignedCell}`
             }
             disabled={model.saving || !model.canEdit}
             aria-expanded={model.assigneeMenuOpen}
@@ -470,28 +642,49 @@ function WorkflowTaskRowAssigneeField({
 function WorkflowTaskRowDueField({
   model,
   mobile = false,
+  compact = false,
 }: {
   readonly model: WorkflowTaskInlineRowModel;
   readonly mobile?: boolean;
+  readonly compact?: boolean;
 }): ReactElement {
-  const dueClass = mobile
-    ? styles.workflowTaskMobileCardControl
-    : `${styles.inlineDueCell} ${styles.workflowMetaCell}`;
-  const dueDisplay = formatShortDate(model.task.dueAt);
+  const dueClass = compact
+    ? styles.workflowTaskCompactControl
+    : mobile
+      ? styles.workflowTaskMobileCardControl
+      : `${styles.inlineDueCell} ${styles.workflowMetaCell}`;
+  const dueDisplay = model.task.dueAt ? formatShortDate(model.task.dueAt) : '';
+  const dueLabel = model.wf.columns.due;
 
   return (
     <span className={dueClass}>
       <button
         type="button"
-        className={mobile ? styles.workflowTaskMobileCardValueBtn : styles.inlineCellBtn}
+        className={
+          compact
+            ? `${styles.inlineCellBtn} ${styles.workflowTaskCompactMetaBtn} ${styles.workflowTaskCompactDueBtn}`
+            : mobile
+              ? styles.workflowTaskMobileCardValueBtn
+              : styles.inlineCellBtn
+        }
         disabled={model.saving || !model.canEdit}
+        aria-label={compact ? dueLabel : undefined}
         onClick={() => {
           model.closeMenus();
           model.dueInputRef.current?.showPicker?.();
           model.dueInputRef.current?.click();
         }}
       >
-        <span className={mobile ? styles.workflowTaskMobileCardValue : undefined}>{dueDisplay}</span>
+        {compact ? (
+          <span className={styles.workflowTaskCompactDueContent}>
+            <span className={styles.dueIcon} aria-hidden />
+            {dueDisplay ? (
+              <span className={styles.workflowTaskCompactMeta}>{dueDisplay}</span>
+            ) : null}
+          </span>
+        ) : (
+          <span className={mobile ? styles.workflowTaskMobileCardValue : undefined}>{dueDisplay}</span>
+        )}
       </button>
       <input
         ref={model.dueInputRef}
@@ -510,14 +703,18 @@ function WorkflowTaskRowDueField({
 function WorkflowTaskRowAmountField({
   model,
   mobile = false,
+  compact = false,
 }: {
   readonly model: WorkflowTaskInlineRowModel;
   readonly mobile?: boolean;
+  readonly compact?: boolean;
 }): ReactElement {
   const { task, saving, canEdit, editingAmount, amountDraft } = model;
-  const wrapClass = mobile
-    ? styles.workflowTaskMobileCardControl
-    : `${styles.inlineAmountCell} ${styles.workflowMetaCell}`;
+  const wrapClass = compact
+    ? styles.workflowTaskCompactControl
+    : mobile
+      ? styles.workflowTaskMobileCardControl
+      : `${styles.inlineAmountCell} ${styles.workflowMetaCell}`;
   const amountDisplay = formatCentsAsUsd(task.amountCents ?? 0);
 
   return (
@@ -542,7 +739,13 @@ function WorkflowTaskRowAmountField({
       ) : canEdit ? (
         <button
           type="button"
-          className={mobile ? styles.workflowTaskMobileCardValueBtn : styles.inlineCellBtn}
+          className={
+            compact
+              ? styles.workflowTaskCompactMetaBtn
+              : mobile
+                ? styles.workflowTaskMobileCardValueBtn
+                : styles.inlineCellBtn
+          }
           disabled={saving}
           onClick={() => {
             model.closeMenus();
@@ -550,10 +753,16 @@ function WorkflowTaskRowAmountField({
             model.setEditingAmount(true);
           }}
         >
-          <span className={mobile ? styles.workflowTaskMobileCardValue : undefined}>{amountDisplay}</span>
+          <span className={compact || mobile ? styles.workflowTaskCompactMeta : undefined}>
+            {amountDisplay}
+          </span>
         </button>
       ) : (
-        <span className={mobile ? styles.workflowTaskMobileCardValue : styles.inlineCellBtn}>
+        <span
+          className={
+            compact || mobile ? styles.workflowTaskCompactMeta : styles.inlineCellBtn
+          }
+        >
           {amountDisplay}
         </span>
       )}
@@ -701,6 +910,70 @@ export function WorkflowTaskRowTableView({
         <span className={styles.taskDeleteCell} aria-hidden />
       )}
     </div>
+  );
+}
+
+export function WorkflowTaskRowCompactView({
+  model,
+}: {
+  readonly model: WorkflowTaskInlineRowModel;
+}): ReactElement {
+  if (model.showPaymentDates) {
+    return <WorkflowTaskRowPaymentCompactView model={model} />;
+  }
+
+  return <WorkflowTaskRowWorkflowCompactView model={model} />;
+}
+
+function WorkflowTaskRowWorkflowCompactView({
+  model,
+}: {
+  readonly model: WorkflowTaskInlineRowModel;
+}): ReactElement {
+  const { task, saving, documentActions, rowDragOver, rowDropHandlers } = model;
+  const cardClass = [
+    styles.card,
+    styles.workflowTaskCompactCard,
+    rowDragOver ? styles.workflowInlineRow_fileDragOver : '',
+  ]
+    .filter(Boolean)
+    .join(' ');
+
+  return (
+    <article
+      className={cardClass}
+      aria-label={task.title}
+      aria-busy={saving || documentActions.uploading}
+      {...rowDropHandlers}
+    >
+      <WorkflowTaskCompactCardBody model={model} />
+    </article>
+  );
+}
+
+function WorkflowTaskRowPaymentCompactView({
+  model,
+}: {
+  readonly model: WorkflowTaskInlineRowModel;
+}): ReactElement {
+  const { task, saving, documentActions, rowDragOver, rowDropHandlers } = model;
+  const cardClass = [
+    styles.card,
+    styles.workflowTaskCompactCard,
+    rowDragOver ? styles.workflowInlineRow_fileDragOver : '',
+  ]
+    .filter(Boolean)
+    .join(' ');
+
+  return (
+    <article
+      className={cardClass}
+      aria-label={task.title}
+      aria-busy={saving || documentActions.uploading}
+      {...rowDropHandlers}
+    >
+      <WorkflowTaskCompactCardBody model={model} showAmount />
+    </article>
   );
 }
 

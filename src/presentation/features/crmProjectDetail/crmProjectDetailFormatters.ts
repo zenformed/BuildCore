@@ -25,6 +25,14 @@ export function formatShortDate(iso: string | null): string {
 }
 
 const WORKFLOW_TASK_NOTES_PREVIEW_MAX = 120;
+const WORKFLOW_TASK_COMPACT_TITLE_MAX = 100;
+
+/** Single-line workflow task title for compact stage cards. */
+export function formatWorkflowTaskCompactTitle(title: string): string {
+  const trimmed = title.trim();
+  if (trimmed.length <= WORKFLOW_TASK_COMPACT_TITLE_MAX) return trimmed;
+  return `${trimmed.slice(0, WORKFLOW_TASK_COMPACT_TITLE_MAX)}…`;
+}
 
 /** Single-line workflow task note preview for table cells. */
 export function formatWorkflowTaskNotesPreview(notes: string | null | undefined): string {

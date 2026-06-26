@@ -1,6 +1,6 @@
 'use client';
 
-import type { ReactElement } from 'react';
+import type { MutableRefObject, ReactElement, RefObject } from 'react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
 import { WorkflowInlineMenu } from './WorkflowInlineMenu';
@@ -13,7 +13,12 @@ export type WorkflowTaskRowActionsMenuProps = {
   readonly canDelete?: boolean;
   readonly showSendAttachment?: boolean;
   readonly showAssignedNotification?: boolean;
+  readonly showEditNotes?: boolean;
+  readonly editNotesLabel?: string;
+  readonly dotsOrientation?: 'vertical' | 'horizontal';
+  readonly actionsButtonRef?: MutableRefObject<HTMLButtonElement | null>;
   readonly onEdit?: () => void;
+  readonly onEditNotes?: () => void;
   readonly onDelete?: () => void;
   readonly onSendAttachment?: () => void;
   readonly onNotifyAssigned?: () => void;
@@ -34,14 +39,26 @@ export function WorkflowTaskRowActionsMenu({
   canDelete = false,
   showSendAttachment = false,
   showAssignedNotification = false,
+  showEditNotes = false,
+  editNotesLabel,
+  dotsOrientation = 'vertical',
+  actionsButtonRef,
   onEdit,
+  onEditNotes,
   onDelete,
   onSendAttachment,
   onNotifyAssigned,
 }: WorkflowTaskRowActionsMenuProps): ReactElement | null {
   const wf = content.projectDetail.workflow;
   const [open, setOpen] = useState(false);
-  const anchorRef = useRef<HTMLButtonElement>(null);
+  const internalButtonRef = useRef<HTMLButtonElement | null>(null);
+
+  const setButtonRef = (element: HTMLButtonElement | null): void => {
+    internalButtonRef.current = element;
+    if (actionsButtonRef) {
+      actionsButtonRef.current = element;
+    }
+  };
 
   const menuItems = useMemo((): readonly WorkflowTaskRowMenuItem[] => {
     const items: WorkflowTaskRowMenuItem[] = [];
@@ -59,6 +76,14 @@ export function WorkflowTaskRowActionsMenu({
         label: wf.editTask,
         onSelect: onEdit,
         iconClass: styles.actionsMenuEditIcon,
+      });
+    }
+    if (showEditNotes && onEditNotes) {
+      items.push({
+        key: 'notes',
+        label: editNotesLabel ?? wf.addNotes,
+        onSelect: onEditNotes,
+        iconClass: styles.actionsMenuNotesIcon,
       });
     }
     if (showAssignedNotification && onNotifyAssigned) {
@@ -82,12 +107,16 @@ export function WorkflowTaskRowActionsMenu({
   }, [
     canDelete,
     canEdit,
+    editNotesLabel,
     onDelete,
     onEdit,
+    onEditNotes,
     onNotifyAssigned,
     onSendAttachment,
     showAssignedNotification,
+    showEditNotes,
     showSendAttachment,
+    wf.addNotes,
     wf.deleteTask,
     wf.editTask,
     wf.notifyAssigned,
@@ -114,7 +143,7 @@ export function WorkflowTaskRowActionsMenu({
   return (
     <>
       <button
-        ref={anchorRef}
+        ref={setButtonRef}
         type="button"
         className={styles.taskActionsBtn}
         aria-expanded={open}
@@ -127,14 +156,21 @@ export function WorkflowTaskRowActionsMenu({
           setOpen((value) => !value);
         }}
       >
-        <span className={styles.taskActionsDots} aria-hidden>
-          ⋮
+        <span
+          className={
+            dotsOrientation === 'horizontal'
+              ? styles.taskActionsDotsHorizontal
+              : styles.taskActionsDots
+          }
+          aria-hidden
+        >
+          {dotsOrientation === 'horizontal' ? '⋯' : '⋮'}
         </span>
       </button>
       <WorkflowInlineMenu
         open={open}
         onClose={closeMenu}
-        anchorRef={anchorRef}
+        anchorRef={internalButtonRef}
         align="end"
         sizeToContent
         portalClassName={`${styles.inlineMenu_portal} ${styles.actionsMenu_portal}`}

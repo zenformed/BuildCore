@@ -433,6 +433,7 @@ export function useWorkflowTaskInlineRow({
     showPaymentDates,
     documentsLabel,
     documentsMobileLabel,
+    documentCount: effectiveDocCount,
     showDocumentsIcon,
     canOpenDocumentsMenu,
     awaitingCustomerReview,

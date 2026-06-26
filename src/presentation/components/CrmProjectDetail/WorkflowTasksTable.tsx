@@ -46,6 +46,11 @@ import { WorkflowOpsTaskDraftRow } from './WorkflowOpsTaskDraftRow';
 import { WorkflowStageTaskGroup, type ManualStageCompletionToggleAction } from './WorkflowStageTaskGroup';
 import { WorkflowTaskStageAddButton } from './WorkflowTaskStageAddButton';
 import { WorkflowTasksBatchCompleteButton } from './WorkflowTasksBatchCompleteButton';
+import {
+  WorkflowTasksViewToggleButton,
+  type WorkflowTaskViewMode,
+} from './WorkflowTasksViewToggleButton';
+import { WorkflowUsersColumn } from './WorkflowUsersColumn';
 import styles from './ProjectDetail.module.css';
 
 export type WorkflowTasksTableLayout = 'preview' | 'full';
@@ -106,6 +111,9 @@ export function WorkflowTasksTable({
   const [batchCompleteConfirmOpen, setBatchCompleteConfirmOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [filters, setFilters] = useState<CrmProjectsListFilters>(EMPTY_CRM_PROJECTS_LIST_FILTERS);
+  const [taskViewMode, setTaskViewMode] = useState<WorkflowTaskViewMode>('table');
+  const isDesktopStageCardMode = !isMobileLayout && taskViewMode === 'cards';
+  const useCardTaskLayout = isMobileLayout || isDesktopStageCardMode;
   const isSearching = searchQuery.trim().length > 0;
   const filtersActive = isCrmProjectsListFiltersActive(filters);
   const isNarrowingResults = isSearching || filtersActive;
@@ -276,8 +284,15 @@ export function WorkflowTasksTable({
     .filter(Boolean)
     .join(' ');
 
-  const stackClass = [
+  const stageGroupsClass = [
     styles.stageGroupStack,
+    isDesktopStageCardMode ? styles.stageGroupStackDesktopCards : '',
+  ]
+    .filter(Boolean)
+    .join(' ');
+
+  const stackClass = [
+    isDesktopStageCardMode ? styles.stageGroupStackDesktopCardsLayout : styles.stageGroupStack,
     isFullLayout ? styles.stageGroupStackFull : styles.workflowPanelGrow,
   ]
     .filter(Boolean)
@@ -305,6 +320,14 @@ export function WorkflowTasksTable({
     />
   );
 
+  const viewToggleButton = !isMobileLayout ? (
+    <WorkflowTasksViewToggleButton
+      viewMode={taskViewMode}
+      disabled={draftStageSlug != null}
+      onToggle={() => setTaskViewMode((mode) => (mode === 'table' ? 'cards' : 'table'))}
+    />
+  ) : null;
+
   const searchInput = (
     <DetailPanelSectionSearch
       value={searchQuery}
@@ -328,6 +351,43 @@ export function WorkflowTasksTable({
       onSelectStage={handleSelectStage}
     />
   ) : null;
+
+  const stageGroupElements = displayGroups.map((group) => (
+    <WorkflowStageTaskGroup
+      key={group.collapseKey}
+      projectSlug={project.summary.slug}
+      projectDocuments={project.documents}
+      group={group}
+      manualStageCompletions={project.manualStageCompletions}
+      docCounts={docCounts}
+      isApiSource={isApiSource}
+      onTaskUpdated={onTaskUpdated}
+      onTaskError={onTaskError}
+      onRequestArchiveTask={canDelete ? onRequestArchiveTask : undefined}
+      onRequestToggleManualStageCompletion={
+        canCreate
+          ? (stageSlug, action, stageLabel) =>
+              setPendingStageToggle({ stageSlug, action, stageLabel })
+          : undefined
+      }
+      markStageCompleteBusy={markStageToggleBusy}
+      useCardLayout={useCardTaskLayout}
+      layoutAsStageCard={isDesktopStageCardMode}
+      forceExpanded={draftStageSlug === group.stageSlug}
+      draftRow={
+        draftStageSlug === group.stageSlug ? (
+          <WorkflowOpsTaskDraftRow
+            project={project}
+            stageSlug={group.stageSlug}
+            isApiSource={isApiSource}
+            useCardLayout={useCardTaskLayout}
+            onSaved={handleDraftSaved}
+            onCancel={handleCancelDraft}
+          />
+        ) : null
+      }
+    />
+  ));
 
   return (
     <>
@@ -363,6 +423,7 @@ export function WorkflowTasksTable({
         >
           <DetailPanelHeaderActions>
             {filterMenu}
+            {viewToggleButton}
             {searchInput}
             {refreshButton}
             {addButton}
@@ -383,39 +444,14 @@ export function WorkflowTasksTable({
         </div>
       ) : (
         <div className={stackClass}>
-          {displayGroups.map((group) => (
-            <WorkflowStageTaskGroup
-              key={group.collapseKey}
-              projectSlug={project.summary.slug}
-              projectDocuments={project.documents}
-              group={group}
-              manualStageCompletions={project.manualStageCompletions}
-              docCounts={docCounts}
-              isApiSource={isApiSource}
-              onTaskUpdated={onTaskUpdated}
-              onTaskError={onTaskError}
-              onRequestArchiveTask={canDelete ? onRequestArchiveTask : undefined}
-              onRequestToggleManualStageCompletion={
-                canCreate
-                  ? (stageSlug, action, stageLabel) =>
-                      setPendingStageToggle({ stageSlug, action, stageLabel })
-                  : undefined
-              }
-              markStageCompleteBusy={markStageToggleBusy}
-              forceExpanded={draftStageSlug === group.stageSlug}
-              draftRow={
-                draftStageSlug === group.stageSlug ? (
-                  <WorkflowOpsTaskDraftRow
-                    project={project}
-                    stageSlug={group.stageSlug}
-                    isApiSource={isApiSource}
-                    onSaved={handleDraftSaved}
-                    onCancel={handleCancelDraft}
-                  />
-                ) : null
-              }
-            />
-          ))}
+          {isDesktopStageCardMode ? (
+            <>
+              <div className={stageGroupsClass}>{stageGroupElements}</div>
+              <WorkflowUsersColumn tasks={filteredTasks} />
+            </>
+          ) : (
+            stageGroupElements
+          )}
         </div>
       )}
       {showViewAllLink ? (

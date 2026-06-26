@@ -6,12 +6,12 @@ import {
   useWorkflowTaskInlineRow,
   type UseWorkflowTaskInlineRowInput,
 } from '@/presentation/features/crmProjectDetail/useWorkflowTaskInlineRow';
-import { WorkflowTaskRowMobileView, WorkflowTaskRowTableView } from './WorkflowTaskRowView';
+import { WorkflowTaskRowCompactView, WorkflowTaskRowMobileView, WorkflowTaskRowTableView } from './WorkflowTaskRowView';
 
 export type { WorkflowTaskPermissionDomain } from '@/presentation/features/crmProjectDetail/workflowTaskInlineRowTypes';
 
 export type WorkflowTaskInlineRowProps = UseWorkflowTaskInlineRowInput & {
-  readonly variant?: 'table' | 'mobile';
+  readonly variant?: 'table' | 'mobile' | 'compact';
 };
 
 export function WorkflowTaskInlineRow({
@@ -20,6 +20,10 @@ export function WorkflowTaskInlineRow({
   ...input
 }: WorkflowTaskInlineRowProps): ReactElement {
   const model = useWorkflowTaskInlineRow(input);
+
+  if (variant === 'compact') {
+    return <WorkflowTaskRowCompactView model={model} />;
+  }
 
   if (variant === 'mobile') {
     return <WorkflowTaskRowMobileView model={model} />;

@@ -38,6 +38,10 @@ export type WorkflowStageTaskGroupProps = {
   collapsible?: boolean;
   /** Keep the stage expanded while composing an inline draft row. */
   forceExpanded?: boolean;
+  /** When true, render tasks as stacked cards instead of the desktop table grid. */
+  useCardLayout?: boolean;
+  /** Desktop stage-card mode: this stage sits in a kanban-style column card. */
+  layoutAsStageCard?: boolean;
   draftRow?: ReactElement | null;
 };
 
@@ -55,15 +59,20 @@ export function WorkflowStageTaskGroup({
   markStageCompleteBusy = false,
   collapsible = true,
   forceExpanded = false,
+  useCardLayout,
+  layoutAsStageCard = false,
   draftRow = null,
 }: WorkflowStageTaskGroupProps): ReactElement {
   const cols = content.projectDetail.workflow.columns;
   const wf = content.projectDetail.workflow;
   const isMobileLayout = useDashboardMobileLayout();
+  const showCardLayout = useCardLayout ?? isMobileLayout;
+  const taskRowVariant = layoutAsStageCard ? 'compact' : showCardLayout ? 'mobile' : 'table';
   const persisted = useWorkflowStageExpanded(projectSlug, group.collapseKey);
   const expanded = forceExpanded || (collapsible ? persisted.expanded : true);
   const groupClass = [
     styles.stageGroup,
+    layoutAsStageCard ? styles.stageGroup_stageCardColumn : '',
     collapsible && !expanded ? styles.stageGroup_collapsed : '',
   ]
     .filter(Boolean)
@@ -147,12 +156,12 @@ export function WorkflowStageTaskGroup({
     </span>
   );
 
-  const table = isMobileLayout ? (
+  const table = showCardLayout ? (
     <div id={panelId} className={styles.stageGroupMobileTaskList}>
       {group.tasks.map((task) => (
         <WorkflowTaskInlineRow
           key={task.id}
-          variant="mobile"
+          variant={taskRowVariant}
           projectSlug={projectSlug}
           task={task}
           docCount={docCounts.get(task.id) ?? 0}

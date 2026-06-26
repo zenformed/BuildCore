@@ -35,6 +35,8 @@ export type WorkflowOpsTaskDraftRowProps = {
   isApiSource: boolean;
   onSaved: (task: CrmWorkflowTask) => Promise<void>;
   onCancel: () => void;
+  /** When set, overrides the viewport breakpoint for card vs table draft layout. */
+  useCardLayout?: boolean;
 };
 
 type WorkflowOpsTaskDraftFieldsProps = {
@@ -234,10 +236,12 @@ export function WorkflowOpsTaskDraftRow({
   isApiSource,
   onSaved,
   onCancel,
+  useCardLayout,
 }: WorkflowOpsTaskDraftRowProps): ReactElement {
   const wf = content.projectDetail.workflow;
   const cols = wf.columns;
   const isMobileLayout = useDashboardMobileLayout();
+  const showCardLayout = useCardLayout ?? isMobileLayout;
   const dash = useBuildCoreDashboardContext();
   const { requestCustomerNotifyAfterAssigneeChange } = useProjectDetailShell();
   const assignmentCatalog = useAssignmentIdentityCatalog();
@@ -332,7 +336,7 @@ export function WorkflowOpsTaskDraftRow({
     updateField,
   };
 
-  if (isMobileLayout) {
+  if (showCardLayout) {
     return (
       <div className={styles.paymentDraftBlock}>
         <article
