@@ -44,6 +44,7 @@ import { DetailPanelSectionRefresh } from './DetailPanelSectionRefresh';
 import { DetailPanelSectionSearch } from './DetailPanelSectionSearch';
 import { WorkflowOpsTaskDraftRow } from './WorkflowOpsTaskDraftRow';
 import { WorkflowStageTaskGroup, type ManualStageCompletionToggleAction } from './WorkflowStageTaskGroup';
+import { WorkflowTasksTableColumnHeader } from './WorkflowTasksTableColumnHeader';
 import { WorkflowTaskStageAddButton } from './WorkflowTaskStageAddButton';
 import { WorkflowTasksBatchCompleteButton } from './WorkflowTasksBatchCompleteButton';
 import {
@@ -117,6 +118,7 @@ export function WorkflowTasksTable({
   const [taskViewMode, setTaskViewMode] = useState<WorkflowTaskViewMode>('table');
   const isDesktopStageCardMode = !isMobileLayout && taskViewMode === 'cards';
   const useCardTaskLayout = isMobileLayout || isDesktopStageCardMode;
+  const useUnifiedDesktopTable = !isMobileLayout && !isDesktopStageCardMode;
   const isSearching = searchQuery.trim().length > 0;
   const filtersActive = isCrmProjectsListFiltersActive(filters);
   const isNarrowingResults = isSearching || filtersActive;
@@ -355,6 +357,8 @@ export function WorkflowTasksTable({
     />
   ) : null;
 
+  const showUnifiedTableAmount = displayGroups.some((group) => group.isPaymentsGroup);
+
   const stageGroupElements = displayGroups.map((group) => (
     <WorkflowStageTaskGroup
       key={group.collapseKey}
@@ -376,6 +380,7 @@ export function WorkflowTasksTable({
       markStageCompleteBusy={markStageToggleBusy}
       useCardLayout={useCardTaskLayout}
       layoutAsStageCard={isDesktopStageCardMode}
+      unifiedDesktopTable={useUnifiedDesktopTable}
       forceExpanded={draftStageSlug === group.stageSlug}
       draftRow={
         draftStageSlug === group.stageSlug ? (
@@ -453,6 +458,11 @@ export function WorkflowTasksTable({
               <WorkflowUsersColumn tasks={filteredTasks} canAssignTasks={canAssignTasks} />
               <WorkflowAssigneeDragHeldIndicator />
             </WorkflowTaskAssigneeDragProvider>
+          ) : useUnifiedDesktopTable ? (
+            <div className={styles.workflowUnifiedTable}>
+              <WorkflowTasksTableColumnHeader showAmount={showUnifiedTableAmount} />
+              <div className={styles.workflowUnifiedTableBody}>{stageGroupElements}</div>
+            </div>
           ) : (
             stageGroupElements
           )}

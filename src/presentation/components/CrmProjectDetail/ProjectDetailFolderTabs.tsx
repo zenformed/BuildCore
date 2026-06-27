@@ -2,7 +2,6 @@
 
 import type { ReactElement } from 'react';
 import { useEffect, useMemo, useState } from 'react';
-import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
 import {
   buildProjectDetailFolderTabs,
   type ProjectDetailFolderTabId,
@@ -13,13 +12,9 @@ import { WorkflowTaskFileDragProvider } from '@/presentation/features/crmProject
 import { useGuardedWorkflowTaskDocumentDrop } from '@/presentation/features/crmProjectDetail/useGuardedWorkflowTaskDocumentDrop';
 import { useBuildCoreProjectSectionAccess } from '@/presentation/providers/BuildCoreProjectSectionAccessProvider';
 import { BudgetTable } from './BudgetTable';
-import { DetailPanelHeader } from './DetailPanelHeader';
-import { DetailPanelHeaderActions } from './DetailPanelHeaderActions';
-import { DetailPanelSectionRefresh } from './DetailPanelSectionRefresh';
-import { DetailPanelSectionSearch } from './DetailPanelSectionSearch';
 import { PaymentsRail } from './PaymentsRail';
 import { ProjectAccountabilityContent } from './ProjectAccountabilityPage';
-import { ProjectDocumentsPanelContent } from './ProjectDocumentsPanelContent';
+import { ProjectDocumentsTabPanel } from './ProjectDocumentsTabPanel';
 import { ProjectFinancialsContent } from './ProjectFinancialsPage';
 import {
   PROJECT_FOLDER_TAB_SELECT_LABEL_ID,
@@ -40,7 +35,6 @@ export function ProjectDetailFolderTabs(): ReactElement {
     handleTaskDocumentDrop,
     setArchiveConfirmTask,
     setToast,
-    onRefresh,
   } = useProjectDetailShell();
   const { payment, budget } = useBuildCoreProjectSectionAccess();
   const guardedTaskDocumentDrop = useGuardedWorkflowTaskDocumentDrop(
@@ -49,7 +43,6 @@ export function ProjectDetailFolderTabs(): ReactElement {
   );
   const isMobileLayout = useDashboardMobileLayout();
   const [selectedTab, setSelectedTab] = useState<ProjectDetailFolderTabId>('workflow');
-  const [documentsSearchQuery, setDocumentsSearchQuery] = useState('');
   const isReportsTabActive = selectedTab === 'financials';
 
   const tabs = useMemo(
@@ -75,14 +68,6 @@ export function ProjectDetailFolderTabs(): ReactElement {
       setSelectedTab('workflow');
     }
   }, [selectedTab, tabs]);
-
-  const handleDocumentsRefresh = async (): Promise<void> => {
-    try {
-      await onRefresh();
-    } catch {
-      setToast({ kind: 'error', message: content.projectDetail.saveError });
-    }
-  };
 
   const renderTabPanel = (): ReactElement => {
     switch (selectedTab) {
@@ -113,35 +98,9 @@ export function ProjectDetailFolderTabs(): ReactElement {
         );
       case 'documents':
         return (
-          <section
-            className={`${styles.paymentsPanel} ${styles.documentsTabPanel}`}
-            aria-labelledby="project-documents-tab-heading"
-          >
-            <DetailPanelHeader
-              title={content.projectDetail.sections.documents}
-              titleId="project-documents-tab-heading"
-            >
-              <DetailPanelHeaderActions>
-                <DetailPanelSectionSearch
-                  value={documentsSearchQuery}
-                  onChange={setDocumentsSearchQuery}
-                  placeholder={content.projectDetail.documents.searchPlaceholder}
-                  ariaLabel={content.projectDetail.documents.searchAriaLabel}
-                />
-                <DetailPanelSectionRefresh
-                  sectionLabel={content.projectDetail.sections.documents}
-                  onRefresh={handleDocumentsRefresh}
-                  onError={(message) => setToast({ kind: 'error', message })}
-                />
-              </DetailPanelHeaderActions>
-            </DetailPanelHeader>
-            <ProjectDocumentsPanelContent
-              project={project}
-              searchQuery={documentsSearchQuery}
-              onRefresh={handleDocumentsRefresh}
-              onError={(message) => setToast({ kind: 'error', message })}
-            />
-          </section>
+          <ProjectDocumentsTabPanel
+            onError={(message) => setToast({ kind: 'error', message })}
+          />
         );
       case 'financials':
         return <ProjectFinancialsContent />;

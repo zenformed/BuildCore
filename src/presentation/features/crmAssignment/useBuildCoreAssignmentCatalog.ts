@@ -9,11 +9,13 @@ import type { ZenformedCoreOrganizationAssignmentIdentitiesResponse } from '@/in
 import {
   buildAssignmentIdentityCatalogFromMembers,
   mergeAssignmentIdentityCatalog,
+  profilePartsFromUserMetadata,
   teamMemberRefFromSignedInUser,
 } from '@/presentation/features/crmAssignment/buildAssignmentIdentityCatalogFromMembers';
 import { mapOrganizationAssignmentIdentitiesToTeamMemberRefs } from '@/presentation/features/crmAssignment/mapOrganizationAssignmentIdentities';
 import type { AssignmentIdentityCatalog } from '@/presentation/features/crmAssignment/assignmentIdentityModel';
 import { useBuildCoreDashboardContext } from '@/presentation/providers/BuildCoreDashboardProvider';
+import { useSaaSProfile } from '@/presentation/hooks/useSaaSProfile';
 import { deferNonCriticalWork } from '@/presentation/utils/deferNonCriticalWork';
 
 type AssignmentIdentitiesRelayResponse = ZenformedCoreOrganizationAssignmentIdentitiesResponse & {
@@ -55,6 +57,7 @@ export function useBuildCoreAssignmentCatalog(): {
   loadError: string | null;
 } {
   const { getAccessToken, user } = useBuildCoreDashboardContext();
+  const { user: saasUser } = useSaaSProfile();
   const isApiSource = getCrmDataSource() === 'api';
   const [members, setMembers] = useState<readonly CrmTeamMemberRef[] | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -95,11 +98,15 @@ export function useBuildCoreAssignmentCatalog(): {
 
   const fallbackMember = useMemo(() => {
     if (user?.id == null) return null;
+    const fromMetadata = profilePartsFromUserMetadata(saasUser?.user_metadata);
     return teamMemberRefFromSignedInUser({
       userId: user.id,
       email: user.email,
+      displayName: fromMetadata.displayName ?? user.displayName ?? null,
+      firstName: fromMetadata.firstName,
+      lastName: fromMetadata.lastName,
     });
-  }, [user?.email, user?.id]);
+  }, [saasUser?.user_metadata, user?.displayName, user?.email, user?.id]);
 
   const catalog = useMemo(() => {
     if (!isApiSource) return null;

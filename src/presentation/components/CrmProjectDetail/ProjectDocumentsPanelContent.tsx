@@ -1,9 +1,8 @@
 'use client';
 
-import type { ChangeEvent, ReactElement } from 'react';
-import { useMemo, useRef, useState } from 'react';
+import type { ReactElement } from 'react';
+import { useMemo, useState } from 'react';
 import type { CrmProjectDetail, PipelineStageSlug, CrmDocumentMetadata } from '@/domain/crm';
-import { BUILDCORE_UPLOAD_ALLOWED_EXTENSIONS } from '@/domain/crm/buildCoreUploadPolicy';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
 import { formatWorkflowTaskStageLabel } from '@/presentation/features/crmProjectDetail/crmProjectDetailFormatters';
 import {
@@ -22,20 +21,14 @@ import {
   formatFileSize,
   formatShortDate,
 } from '@/presentation/features/crmProjectDetail/crmProjectDetailFormatters';
-import { performCrmDirectUpload } from '@/presentation/features/crmDirectUpload/performBuildCoreDirectUpload';
 import { useProjectDocumentModalActions } from '@/presentation/features/crmProjectDetail/useProjectDocumentModalActions';
 import { useProjectDetailShell } from '@/presentation/features/crmProjectDetail/ProjectDetailShellContext';
 import { WorkflowDocumentFileIcon } from './WorkflowDocumentFileIcon';
 import styles from './ProjectDetail.module.css';
 
-const FILTERS: readonly { id: DocumentPanelFilter; label: string }[] = [
-  { id: 'all', label: content.projectDetail.documents.filters.all },
-  { id: 'uploaded', label: content.projectDetail.documents.filters.uploaded },
-  { id: 'missing', label: content.projectDetail.documents.filters.missing },
-] as const;
-
 export type ProjectDocumentsPanelContentProps = {
   project: CrmProjectDetail;
+  filter: DocumentPanelFilter;
   searchQuery?: string;
   onRefresh: () => Promise<void>;
   onError?: (message: string) => void;
@@ -43,6 +36,7 @@ export type ProjectDocumentsPanelContentProps = {
 
 export function ProjectDocumentsPanelContent({
   project,
+  filter,
   searchQuery = '',
   onRefresh,
   onError,
@@ -54,10 +48,7 @@ export function ProjectDocumentsPanelContent({
   const docsContent = content.projectDetail.documents;
   const wf = content.projectDetail.workflow;
   const { setToast } = useProjectDetailShell();
-  const [filter, setFilter] = useState<DocumentPanelFilter>('all');
   const [busyDocId, setBusyDocId] = useState<string | null>(null);
-  const [uploading, setUploading] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { downloadDocument, deleteDocument } = useProjectDocumentModalActions({
     projectSlug: project.summary.slug,
@@ -118,57 +109,8 @@ export function ProjectDocumentsPanelContent({
     }
   };
 
-  const handleUploadSelected = async (event: ChangeEvent<HTMLInputElement>): Promise<void> => {
-    const file = event.target.files?.[0];
-    event.target.value = '';
-    if (!file) return;
-
-    setUploading(true);
-    try {
-      await performCrmDirectUpload(file, {
-        scope: 'project_media',
-        projectSlug: project.summary.slug,
-      });
-      await onRefresh();
-    } catch (err) {
-      onError?.(err instanceof Error ? err.message : wf.documentUploadFailed);
-    } finally {
-      setUploading(false);
-    }
-  };
-
   return (
     <div className={styles.documentsPanelContent}>
-      <div className={styles.docFilterRow} role="tablist" aria-label={docsContent.filterAriaLabel}>
-        {FILTERS.map((tab) => (
-          <button
-            key={tab.id}
-            type="button"
-            role="tab"
-            aria-selected={filter === tab.id}
-            className={filter === tab.id ? styles.docFilterTab_active : styles.docFilterTab}
-            onClick={() => setFilter(tab.id)}
-          >
-            {tab.label}
-          </button>
-        ))}
-        <button
-          type="button"
-          className={styles.docFilterTab}
-          disabled={uploading}
-          onClick={() => fileInputRef.current?.click()}
-        >
-          {uploading ? wf.taskSubmitting : wf.documentsUpload}
-        </button>
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept={BUILDCORE_UPLOAD_ALLOWED_EXTENSIONS.join(',')}
-          hidden
-          onChange={(event) => void handleUploadSelected(event)}
-        />
-      </div>
-      <p className={styles.subtitle}>{docsContent.uploadHint}</p>
       <div className={styles.documentsPanelScroll}>
       {items.length === 0 ? (
         <div className={styles.docEmptyState}>

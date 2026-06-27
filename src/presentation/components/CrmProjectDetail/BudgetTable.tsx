@@ -6,7 +6,6 @@ import type { CrmBudgetEntry } from '@/domain/crm';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
 import { ConfirmModal } from '@/presentation/components/ConfirmModal';
 import {
-  BUDGET_TABLE_FILTERS,
   filterBudgetEntries,
   type BudgetTableFilter,
 } from '@/presentation/features/crmProjectDetail/budgetFilterModel';
@@ -143,29 +142,13 @@ export function BudgetTable({ onError }: BudgetTableProps): ReactElement {
       ) : (
         <DetailPanelHeader title={b.tableTitle} titleId="budget-table-heading">
           <DetailPanelHeaderActions>
+            {categoryFilterMenu}
             {searchInput}
             {refreshButton}
             {addButton}
           </DetailPanelHeaderActions>
         </DetailPanelHeader>
       )}
-
-      {!isMobileLayout ? (
-        <div className={styles.docFilterRow} role="tablist" aria-label={b.filterAriaLabel}>
-          {BUDGET_TABLE_FILTERS.map((tab) => (
-            <button
-              key={tab.id}
-              type="button"
-              role="tab"
-              aria-selected={filter === tab.id}
-              className={filter === tab.id ? styles.docFilterTab_active : styles.docFilterTab}
-              onClick={() => setFilter(tab.id)}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </div>
-      ) : null}
 
       {!showTable ? (
         <p className={styles.subtitle}>{b.empty}</p>

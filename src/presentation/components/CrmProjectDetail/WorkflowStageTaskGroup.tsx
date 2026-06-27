@@ -42,6 +42,8 @@ export type WorkflowStageTaskGroupProps = {
   useCardLayout?: boolean;
   /** Desktop stage-card mode: this stage sits in a kanban-style column card. */
   layoutAsStageCard?: boolean;
+  /** Desktop unified table: column headers render once at the parent; stages are flat sections. */
+  unifiedDesktopTable?: boolean;
   draftRow?: ReactElement | null;
 };
 
@@ -61,6 +63,7 @@ export function WorkflowStageTaskGroup({
   forceExpanded = false,
   useCardLayout,
   layoutAsStageCard = false,
+  unifiedDesktopTable = false,
   draftRow = null,
 }: WorkflowStageTaskGroupProps): ReactElement {
   const cols = content.projectDetail.workflow.columns;
@@ -71,7 +74,7 @@ export function WorkflowStageTaskGroup({
   const persisted = useWorkflowStageExpanded(projectSlug, group.collapseKey);
   const expanded = forceExpanded || (collapsible ? persisted.expanded : true);
   const groupClass = [
-    styles.stageGroup,
+    unifiedDesktopTable ? styles.stageGroup_unifiedTableSection : styles.stageGroup,
     layoutAsStageCard ? styles.stageGroup_stageCardColumn : '',
     collapsible && !expanded ? styles.stageGroup_collapsed : '',
   ]
@@ -180,18 +183,20 @@ export function WorkflowStageTaskGroup({
     </div>
   ) : (
     <div id={panelId} className={styles.stageGroupTable}>
-      <div className={`${styles.tableHeader} ${gridClass}`} role="row">
-        <span role="columnheader">{cols.status}</span>
-        <span role="columnheader">{cols.task}</span>
-        {group.isPaymentsGroup ? <span role="columnheader">{cols.amount}</span> : null}
-        <span role="columnheader" className={styles.workflowNotesHeader}>
-          {cols.notes}
-        </span>
-        <span role="columnheader">{cols.documents}</span>
-        <span role="columnheader">{cols.assigned}</span>
-        <span role="columnheader">{cols.due}</span>
-        <span role="columnheader" className={styles.taskDeleteHeader} aria-hidden />
-      </div>
+      {!unifiedDesktopTable ? (
+        <div className={`${styles.tableHeader} ${gridClass}`} role="row">
+          <span role="columnheader">{cols.status}</span>
+          <span role="columnheader">{cols.task}</span>
+          {group.isPaymentsGroup ? <span role="columnheader">{cols.amount}</span> : null}
+          <span role="columnheader" className={styles.workflowNotesHeader}>
+            {cols.notes}
+          </span>
+          <span role="columnheader">{cols.documents}</span>
+          <span role="columnheader">{cols.assigned}</span>
+          <span role="columnheader">{cols.due}</span>
+          <span role="columnheader" className={styles.taskDeleteHeader} aria-hidden />
+        </div>
+      ) : null}
       {group.tasks.map((task) => (
         <WorkflowTaskInlineRow
           key={task.id}

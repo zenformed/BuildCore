@@ -1,6 +1,13 @@
 import type { CrmBudgetEntry, CrmDocumentMetadata, CrmProjectDetail, CrmWorkflowTask } from '@/domain/crm';
+import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
 
 export type DocumentPanelFilter = 'all' | 'uploaded' | 'missing';
+
+export const DOCUMENT_PANEL_FILTERS: readonly { id: DocumentPanelFilter; label: string }[] = [
+  { id: 'all', label: content.projectDetail.documents.filters.all },
+  { id: 'uploaded', label: content.projectDetail.documents.filters.uploaded },
+  { id: 'missing', label: content.projectDetail.documents.filters.missing },
+] as const;
 
 export type DocumentListItem =
   | { kind: 'document'; document: CrmDocumentMetadata }

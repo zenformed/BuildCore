@@ -182,6 +182,83 @@
   display: flex;
   flex-direction: column;
   min-width: 0;
+  border-radius: 0;
+  overflow: visible;
+  border: none;
+  box-shadow: none;
+}
+
+:global([data-theme='dark'])
+  .reportsFolderTabPanelInner[data-reports-tab='projectPerformance']
+  .detailPanelTableCard {
+  border-radius: 0;
+  overflow: visible;
+  border: none;
+  box-shadow: none;
+}
+
+:global([data-theme='dark'])
+  .reportsFolderTabPanelInner[data-reports-tab='projectPerformance']
+  .table {
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+:global([data-theme='dark'])
+  .reportsFolderTabPanelInner[data-reports-tab='projectPerformance']
+  .table
+  thead
+  tr {
+  box-shadow: 0 0 0 1px var(--theme-stage-group-border-color, #80808052);
+}
+
+:global([data-theme='dark'])
+  .reportsFolderTabPanelInner[data-reports-tab='projectPerformance']
+  .table
+  thead
+  th {
+  border-radius: 0;
+  border-bottom: none;
+}
+
+:global([data-theme='dark'])
+  .reportsFolderTabPanelInner[data-reports-tab='projectPerformance']
+  .table
+  tbody
+  tr {
+  background: #1d2029;
+  box-shadow: 0 0 0 1px var(--theme-stage-group-border-color, #80808052);
+}
+
+:global([data-theme='dark'])
+  .reportsFolderTabPanelInner[data-reports-tab='projectPerformance']
+  .table
+  tbody
+  tr:hover,
+:global([data-theme='dark'])
+  .reportsFolderTabPanelInner[data-reports-tab='projectPerformance']
+  .table
+  tbody
+  tr.projectPerformanceRow_child:hover {
+  background: #1d2029;
+}
+
+:global([data-theme='dark'])
+  .reportsFolderTabPanelInner[data-reports-tab='projectPerformance']
+  .table
+  tbody
+  tr
+  td {
+  border-bottom: none;
+}
+
+:global([data-theme='dark'])
+  .reportsFolderTabPanelInner[data-reports-tab='projectPerformance']
+  .card.projectPerformanceMobileCard {
+  background: #1d2029;
+  border: 1px solid var(--theme-stage-group-border-color, #80808052);
+  border-radius: 0;
+  box-shadow: none;
 }
 
 .reportsFolderTabPanelInner[data-reports-tab='projectPerformance'] .detailPanelTableCard .tableWrap,
@@ -219,6 +296,12 @@
   justify-content: center;
   min-height: 0;
   padding: 0.875rem 1rem 0.75rem;
+}
+
+@media (min-width: 768px) {
+  :global([data-theme='dark'] [data-crm-reports-page]) .kpiHero {
+    background: #1d2029;
+  }
 }
 
 .kpiHeroCluster {

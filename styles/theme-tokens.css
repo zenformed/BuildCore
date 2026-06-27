@@ -194,6 +194,12 @@
 
 
 
+  --theme-apps-launcher-tile-hover: rgba(0, 0, 0, 0.06);
+
+
+
+  --theme-tab-panel-bg: var(--theme-surface-main);
+
   /* ── Table & workflow stage headers (light) ── */
 
   --theme-table-header-bg: #5a7a9e;
@@ -219,6 +225,12 @@
   --theme-stage-group-border-color: transparent;
 
   --theme-stage-group-radius: 0;
+
+  --theme-workflow-unified-inset: 0.3125rem;
+
+  --theme-workflow-unified-canvas-bg: var(--theme-surface-main);
+
+  --theme-workflow-stage-table-bg: var(--theme-surface-muted);
 
   --theme-surface-list-item: transparent;
 
@@ -410,11 +422,13 @@
 
 
 
-  --theme-table-header-bg: #1d2029;
+  --theme-tab-panel-bg: #161922;
+
+  --theme-table-header-bg: #161922;
 
   --theme-table-header-text: #94a3b8;
 
-  --theme-stage-header-bg: #1d2029;
+  --theme-stage-header-bg: #161922;
 
   --theme-stage-header-text: #94a3b8;
 
@@ -433,6 +447,12 @@
   --theme-stage-group-border-color: #80808052;
 
   --theme-stage-group-radius: 2px;
+
+  --theme-workflow-unified-inset: 0.3125rem;
+
+  --theme-workflow-unified-canvas-bg: var(--theme-surface-card);
+
+  --theme-workflow-stage-table-bg: var(--theme-bg-shell);
 
   --theme-scrollbar-track: transparent;
 

@@ -362,6 +362,58 @@
   vertical-align: top;
 }
 
+@media (min-width: 768px) {
+  :global([data-theme='light'])
+    .membersTabPanel:not(.membersTabPanel_mobile)
+    .membersTable
+    tbody
+    td {
+    background: #f2f4f7;
+  }
+
+  :global([data-theme='light'])
+    .membersTabPanel:not(.membersTabPanel_mobile)
+    .membersTable
+    tbody
+    tr:hover
+    td {
+    background: #f2f4f7;
+  }
+
+  :global([data-theme='light']) .teamsPermissionsPanel .permissionsMatrix tbody td {
+    background: #f2f4f7;
+  }
+
+  :global([data-theme='light']) .teamsPermissionsPanel .permissionsMatrix tbody tr:hover td {
+    background: #f2f4f7;
+  }
+
+  :global([data-theme='dark'])
+    .membersTabPanel:not(.membersTabPanel_mobile)
+    .membersTable
+    tbody
+    td {
+    background: #1d2029;
+  }
+
+  :global([data-theme='dark'])
+    .membersTabPanel:not(.membersTabPanel_mobile)
+    .membersTable
+    tbody
+    tr:hover
+    td {
+    background: #1d2029;
+  }
+
+  :global([data-theme='dark']) .teamsPermissionsPanel .permissionsMatrix tbody td {
+    background: #1d2029;
+  }
+
+  :global([data-theme='dark']) .teamsPermissionsPanel .permissionsMatrix tbody tr:hover td {
+    background: #1d2029;
+  }
+}
+
 .membersTable tbody tr:hover td,
 .permissionsMatrix tbody tr:hover td {
   background-color: var(--color-muted, #f8fafc);
@@ -526,9 +578,31 @@
   gap: 0.75rem;
 }
 
+:global([data-theme='light']) .memberVisibilitySettingRow {
+  align-items: center;
+  background: #f2f4f7;
+  padding: 0.5rem 0.625rem;
+  border-radius: 0;
+}
+
+:global([data-theme='dark']) .memberVisibilitySettingRow {
+  align-items: center;
+  background: #1d2029;
+  padding: 0.5rem 0.625rem;
+  border-radius: 0;
+}
+
 .memberVisibilitySettingCopy {
   flex: 1;
   min-width: 0;
+}
+
+:global([data-theme='light']) .memberVisibilitySettingCopy p {
+  margin: 0;
+}
+
+:global([data-theme='dark']) .memberVisibilitySettingCopy p {
+  margin: 0;
 }
 
 .memberVisibilitySettingLabel {
@@ -600,9 +674,33 @@
   cursor: pointer;
   vertical-align: middle;
   transition: background-color 0.2s ease;
+  box-sizing: border-box;
+}
+
+:global([data-theme='light']) .teamsPermissionsPanel .permissionSwitch,
+:global([data-theme='light']) .permissionsTabPanel .permissionSwitch {
+  border: 1px solid var(--theme-border-main, #e2e8f0);
+  background: #ffffff;
+}
+
+:global([data-theme='light']) .teamsPermissionsPanel .permissionSwitch .permissionSwitchThumb,
+:global([data-theme='light']) .permissionsTabPanel .permissionSwitch .permissionSwitchThumb {
+  background: #f2f4f7;
+}
+
+:global([data-theme='light']) .teamsPermissionsPanel .permissionSwitch:disabled,
+:global([data-theme='light']) .teamsPermissionsPanel .permissionSwitch:disabled.permissionSwitchOn,
+:global([data-theme='light']) .permissionsTabPanel .permissionSwitch:disabled,
+:global([data-theme='light']) .permissionsTabPanel .permissionSwitch:disabled.permissionSwitchOn {
+  background: #ffffff;
 }
 
 .permissionSwitchOn {
+  background: var(--color-primary, #0ea5e9);
+}
+
+:global([data-theme='light']) .teamsPermissionsPanel .permissionSwitch.permissionSwitchOn,
+:global([data-theme='light']) .permissionsTabPanel .permissionSwitch.permissionSwitchOn {
   background: var(--color-primary, #0ea5e9);
 }
 

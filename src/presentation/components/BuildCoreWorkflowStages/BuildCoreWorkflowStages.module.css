@@ -90,6 +90,14 @@
   background: var(--theme-surface-card, var(--color-surface));
 }
 
+:global([data-theme='light'] [data-buildcore-workflow-settings-page]) .row {
+  background: #f2f4f7;
+}
+
+:global([data-theme='dark'] [data-buildcore-workflow-settings-page]) .row {
+  background: #1d2029;
+}
+
 .row_dragging {
   opacity: 0.55;
 }

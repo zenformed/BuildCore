@@ -5,22 +5,22 @@ import { useRef, useState } from 'react';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
 import { FilterIcon } from '@/platform/icons/buildCoreDashboardShellIcons';
 import {
-  BUDGET_TABLE_FILTERS,
-  type BudgetTableFilter,
-} from '@/presentation/features/crmProjectDetail/budgetFilterModel';
+  DOCUMENT_PANEL_FILTERS,
+  type DocumentPanelFilter,
+} from '@/presentation/features/crmProjectDetail/documentPanelModel';
 import { WorkflowInlineMenu } from './WorkflowInlineMenu';
 import projectStyles from '../CrmProjects/CrmProjects.module.css';
 
-export type BudgetCategoryFilterMenuProps = {
-  readonly filter: BudgetTableFilter;
-  readonly onChange: (filter: BudgetTableFilter) => void;
+export type DocumentPanelFilterMenuProps = {
+  readonly filter: DocumentPanelFilter;
+  readonly onChange: (filter: DocumentPanelFilter) => void;
 };
 
-export function BudgetCategoryFilterMenu({
+export function DocumentPanelFilterMenu({
   filter,
   onChange,
-}: BudgetCategoryFilterMenuProps): ReactElement {
-  const b = content.projectDetail.budget;
+}: DocumentPanelFilterMenuProps): ReactElement {
+  const docs = content.projectDetail.documents;
   const filterCopy = content.crm.filters;
   const [open, setOpen] = useState(false);
   const anchorRef = useRef<HTMLDivElement>(null);
@@ -37,7 +37,7 @@ export function BudgetCategoryFilterMenu({
         }
         aria-expanded={open}
         aria-haspopup="dialog"
-        aria-label={b.filterAriaLabel}
+        aria-label={docs.filterAriaLabel}
         title={filterCopy.openMenu}
         onClick={() => setOpen((isOpen) => !isOpen)}
       >
@@ -51,15 +51,15 @@ export function BudgetCategoryFilterMenu({
         sizeToContent
         portalClassName={projectStyles.projectsFilterMenuPortal}
       >
-        <div className={projectStyles.projectsFilterMenu} role="group" aria-label={b.filterAriaLabel}>
+        <div className={projectStyles.projectsFilterMenu} role="group" aria-label={docs.filterAriaLabel}>
           <fieldset className={projectStyles.projectsFilterFieldset}>
-            <legend className={projectStyles.projectsFilterLegend}>{b.columns.category}</legend>
+            <legend className={projectStyles.projectsFilterLegend}>{docs.columns.status}</legend>
             <div className={projectStyles.projectsFilterOptions}>
-              {BUDGET_TABLE_FILTERS.map((tab) => (
+              {DOCUMENT_PANEL_FILTERS.map((tab) => (
                 <label key={tab.id} className={projectStyles.projectsFilterOption}>
                   <input
                     type="radio"
-                    name="budget-category-filter"
+                    name="document-panel-filter"
                     checked={filter === tab.id}
                     onChange={() => {
                       onChange(tab.id);
