@@ -449,7 +449,7 @@
   :global([data-theme='dark'])
     .paymentsPanel.projectFinancialReport
     .projectFinancialKpiLabel {
-    background: #1d2029;
+    background: var(--theme-table-header-bg);
   }
 }
 
