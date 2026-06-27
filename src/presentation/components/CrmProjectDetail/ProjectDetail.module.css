@@ -5551,6 +5551,85 @@
   border-radius: 0;
 }
 
+@media (max-width: 767px) {
+  :global([data-theme='light'])
+    .folderTabPanelInner
+    .workflowPanel
+    .stageGroup:not(.stageGroup_stageCardColumn) {
+    border: 1px solid var(--theme-border-main, #e2e8f0);
+    border-radius: 0;
+    box-shadow: none;
+    overflow: hidden;
+  }
+
+  :global([data-theme='light'])
+    .folderTabPanelInner
+    .workflowPanel
+    .stageGroup:not(.stageGroup_stageCardColumn)
+    .stageGroupMobileTaskList {
+    gap: 0.375rem;
+    padding: 0.25rem 0.375rem 0.375rem;
+  }
+
+  :global([data-theme='light'])
+    .folderTabPanelInner
+    .workflowPanel
+    .stageGroup:not(.stageGroup_stageCardColumn)
+    .stageGroupMobileTaskList
+    > .workflowTaskCompactCard,
+  :global([data-theme='light'])
+    .folderTabPanelInner
+    .workflowPanel
+    .stageGroup:not(.stageGroup_stageCardColumn)
+    .stageGroupMobileTaskList
+    > .paymentDraftBlock
+    > .workflowTaskCompactCard {
+    background: #f2f4f7;
+    border: 1px solid var(--theme-border-main, #e2e8f0);
+    border-radius: 0;
+    box-shadow: none;
+  }
+
+  :global([data-theme='dark'])
+    .folderTabPanelInner
+    .workflowPanel
+    .stageGroup:not(.stageGroup_stageCardColumn) {
+    border: 1px solid var(--theme-stage-group-border-color, #80808052);
+    border-radius: 0;
+    box-shadow: none;
+    overflow: hidden;
+    background: #161922;
+  }
+
+  :global([data-theme='dark'])
+    .folderTabPanelInner
+    .workflowPanel
+    .stageGroup:not(.stageGroup_stageCardColumn)
+    .stageGroupMobileTaskList {
+    gap: 0.375rem;
+    padding: 0.25rem 0.375rem 0.375rem;
+  }
+
+  :global([data-theme='dark'])
+    .folderTabPanelInner
+    .workflowPanel
+    .stageGroup:not(.stageGroup_stageCardColumn)
+    .stageGroupMobileTaskList
+    > .workflowTaskCompactCard,
+  :global([data-theme='dark'])
+    .folderTabPanelInner
+    .workflowPanel
+    .stageGroup:not(.stageGroup_stageCardColumn)
+    .stageGroupMobileTaskList
+    > .paymentDraftBlock
+    > .workflowTaskCompactCard {
+    background: #1d2029;
+    border: 1px solid var(--theme-stage-group-border-color, #80808052);
+    border-radius: 0;
+    box-shadow: none;
+  }
+}
+
 .stageGroupStackDesktopCards .stageGroupMobileTaskList {
   flex: 1;
   min-height: 0;
@@ -7843,6 +7922,13 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+@media (max-width: 767px) {
+  :global([data-theme='dark']) .subprojectMobileCardFinancials,
+  :global([data-theme='dark']) .projectInfoMobileFinancials {
+    background: #1d2029;
+  }
 }
 
 .subprojectMobileCardHeaderRow {

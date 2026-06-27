@@ -49,7 +49,9 @@ export function ReportsProjectPerformanceMobileCard({
         </div>
         <span className={styles.projectPerformanceMobileStatus}>{row.statusLabel}</span>
       </div>
-      <div className={projectStyles.workflowTaskMobileCardGrid3}>
+      <div
+        className={`${projectStyles.workflowTaskMobileCardGrid3} ${styles.projectPerformanceMobileCardBody}`}
+      >
         <div className={projectStyles.workflowTaskMobileCardCell}>
           <span className={projectStyles.projectInfoMobileLabel}>{tableCopy.collected}</span>
           <span className={projectStyles.workflowTaskMobileCardValue}>

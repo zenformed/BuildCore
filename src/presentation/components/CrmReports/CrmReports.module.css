@@ -261,6 +261,17 @@
   box-shadow: none;
 }
 
+@media (max-width: 767px) {
+  :global([data-theme='light'])
+    .reportsFolderTabPanelInner[data-reports-tab='projectPerformance']
+    .projectPerformanceMobileCardBody,
+  :global([data-theme='light'])
+    .reportsFolderTabPanelInner[data-reports-tab='projectPerformance']
+    .projectPerformanceMobileMarginRow {
+    background: #f2f4f7;
+  }
+}
+
 .reportsFolderTabPanelInner[data-reports-tab='projectPerformance'] .detailPanelTableCard .tableWrap,
 .reportsFolderTabPanelInner[data-reports-tab='recentActivity'] .activityFeed {
   flex: 1 1 auto;
