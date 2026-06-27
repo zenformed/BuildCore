@@ -4933,6 +4933,16 @@
   border-radius: 0;
 }
 
+:global([data-theme='light'])
+  .folderTabPanelInner
+  .paymentsPanel.projectFinancialReport
+  .detailPanelTableCard.projectFinancialReportGraphCard,
+:global([data-theme='light'])
+  .paymentsPanel.projectFinancialReport
+  .detailPanelTableCard.projectFinancialReportGraphCard {
+  background: #f2f4f7;
+}
+
 :global([data-theme='dark'])
   .folderTabPanelInner
   .paymentsPanel.projectFinancialReport
