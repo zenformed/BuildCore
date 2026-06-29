@@ -1,8 +1,3 @@
-.widePanel {
-  width: min(58rem, calc(100vw - 2rem));
-  max-height: 90vh;
-}
-
 .modalBody {
   display: flex;
   flex-direction: column;
