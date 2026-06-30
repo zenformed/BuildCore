@@ -22,9 +22,14 @@ import {
   patchBuildCoreFieldLabelBff,
 } from '@/infrastructure/coreApi/buildCoreFieldLabelsBff';
 import type { BuildCoreFieldLabelsResponse } from '@/infrastructure/crm/server/buildCoreFieldLabelService';
+import {
+  getMockFieldLabelsResponse,
+  setMockFieldLabel,
+} from '@/infrastructure/crm/mock/mockFieldLabelsStore';
 import { runSessionCached } from '@/infrastructure/coreApi/clientRequestDedupe';
-import { runtimeModes } from '@/infrastructure/config/runtimeModes';
 import { env } from '@/infrastructure/config/env';
+import { usesClientSideOrganizationCustomization } from '@/infrastructure/runtime/usesClientSideOrganizationCustomization';
+import { DEMO_RESET_EVENT } from '@/presentation/providers/DemoModeProvider';
 import { useBuildCoreDashboardContext } from '@/presentation/providers/BuildCoreDashboardProvider';
 
 export type BuildCoreFieldLabelsContextValue = {
@@ -40,6 +45,9 @@ export type BuildCoreFieldLabelsContextValue = {
 const BuildCoreFieldLabelsContext = createContext<BuildCoreFieldLabelsContextValue | null>(null);
 
 function buildDefaultResponse(canEdit = true): BuildCoreFieldLabelsResponse {
+  if (usesClientSideOrganizationCustomization()) {
+    return getMockFieldLabelsResponse(canEdit);
+  }
   return {
     labels: {},
     defaults: buildDefaultBuildCoreFieldLabels(),
@@ -53,17 +61,9 @@ export function BuildCoreFieldLabelsProvider({
   readonly children: ReactNode;
 }): ReactElement {
   const { getAccessToken } = useBuildCoreDashboardContext();
-  const [state, setState] = useState<BuildCoreFieldLabelsResponse>(() => {
-    if (runtimeModes.isDemoRuntime()) {
-      return buildDefaultResponse(false);
-    }
-    if (!env.isSaasMode || runtimeModes.useMockAuth()) {
-      return buildDefaultResponse(true);
-    }
-    return buildDefaultResponse(false);
-  });
+  const [state, setState] = useState<BuildCoreFieldLabelsResponse>(() => buildDefaultResponse(true));
   const [isLoading, setIsLoading] = useState(
-    () => env.isSaasMode && !runtimeModes.useMockAuth() && !runtimeModes.isDemoRuntime()
+    () => env.isSaasMode && !usesClientSideOrganizationCustomization()
   );
   const [isSaving, setIsSaving] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -71,16 +71,8 @@ export function BuildCoreFieldLabelsProvider({
   const hasLoadedOnceRef = useRef(false);
 
   const load = useCallback(async () => {
-    if (runtimeModes.isDemoRuntime()) {
-      setState(buildDefaultResponse(false));
-      setLoadError(null);
-      setIsLoading(false);
-      hasLoadedOnceRef.current = true;
-      return;
-    }
-
-    if (!env.isSaasMode || runtimeModes.useMockAuth()) {
-      setState(buildDefaultResponse(true));
+    if (usesClientSideOrganizationCustomization()) {
+      setState(getMockFieldLabelsResponse(true));
       setLoadError(null);
       setIsLoading(false);
       hasLoadedOnceRef.current = true;
@@ -123,6 +115,15 @@ export function BuildCoreFieldLabelsProvider({
     void load();
   }, [load]);
 
+  useEffect(() => {
+    const onDemoReset = () => {
+      setState(getMockFieldLabelsResponse(true));
+      setLoadError(null);
+    };
+    window.addEventListener(DEMO_RESET_EVENT, onDemoReset);
+    return () => window.removeEventListener(DEMO_RESET_EVENT, onDemoReset);
+  }, []);
+
   const getFieldLabel = useCallback(
     (fieldKey: string): string => {
       if (!isRegisteredBuildCoreFieldKey(fieldKey)) return fieldKey;
@@ -134,7 +135,7 @@ export function BuildCoreFieldLabelsProvider({
 
   const updateFieldLabel = useCallback(
     async (fieldKey: string, label: string): Promise<boolean> => {
-      if (!state.canEdit || runtimeModes.isDemoRuntime()) return false;
+      if (!state.canEdit) return false;
       if (!isRegisteredBuildCoreFieldKey(fieldKey)) return false;
 
       const validated = validateBuildCoreFieldLabelValue(label);
@@ -147,7 +148,8 @@ export function BuildCoreFieldLabelsProvider({
       });
       setIsSaving(true);
 
-      if (!env.isSaasMode || runtimeModes.useMockAuth()) {
+      if (usesClientSideOrganizationCustomization()) {
+        setMockFieldLabel(fieldKey, validated.value);
         setIsSaving(false);
         return true;
       }

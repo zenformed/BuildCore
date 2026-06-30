@@ -13,6 +13,10 @@ import {
   resetDemoPipelineStagesStore,
   getDemoPipelineStageCatalog,
 } from '@/infrastructure/demo/demoPipelineStagesStore';
+import { resetMockFieldLabelsStore } from './mockFieldLabelsStore';
+import { resetMockWorkflowTaskCustomFieldsStore } from './mockWorkflowTaskCustomFieldsStore';
+import { resetMockWorkflowTaskTableColumnsStore } from './mockWorkflowTaskTableColumnsStore';
+import { resetMockPaymentTableColumnsStore } from './mockPaymentTableColumnsStore';
 
 const projectOverrides = new Map<string, CrmProjectDetail>();
 const archivedSlugs = new Set<string>();
@@ -145,4 +149,12 @@ export function clearDemoCrmSession(): void {
   clearDemoSessionStorage();
   resetMockCrmMutationStore();
   resetDemoPipelineStagesStore();
+  resetDemoOrganizationCustomizationStores();
+}
+
+function resetDemoOrganizationCustomizationStores(): void {
+  resetMockFieldLabelsStore();
+  resetMockWorkflowTaskCustomFieldsStore();
+  resetMockWorkflowTaskTableColumnsStore();
+  resetMockPaymentTableColumnsStore();
 }

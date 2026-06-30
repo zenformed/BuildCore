@@ -123,3 +123,9 @@ export function upsertMockWorkflowTaskCustomFieldValues(
   valuesByTaskId.set(taskId, taskValues);
   return getMockWorkflowTaskCustomFieldsForTask(taskId, scope);
 }
+
+export function resetMockWorkflowTaskCustomFieldsStore(): void {
+  definitions.length = 0;
+  valuesByTaskId.clear();
+  nextDefinitionId = 1;
+}

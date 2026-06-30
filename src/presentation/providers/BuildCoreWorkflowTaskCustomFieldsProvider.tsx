@@ -28,8 +28,9 @@ import {
   updateMockWorkflowTaskCustomFieldDefinition,
 } from '@/infrastructure/crm/mock/mockWorkflowTaskCustomFieldsStore';
 import { runSessionCached } from '@/infrastructure/coreApi/clientRequestDedupe';
-import { runtimeModes } from '@/infrastructure/config/runtimeModes';
 import { env } from '@/infrastructure/config/env';
+import { usesClientSideOrganizationCustomization } from '@/infrastructure/runtime/usesClientSideOrganizationCustomization';
+import { DEMO_RESET_EVENT } from '@/presentation/providers/DemoModeProvider';
 import { useBuildCoreDashboardContext } from '@/presentation/providers/BuildCoreDashboardProvider';
 
 export type BuildCoreWorkflowTaskCustomFieldsContextValue = {
@@ -61,7 +62,7 @@ const BuildCoreWorkflowTaskCustomFieldsContext =
   createContext<BuildCoreWorkflowTaskCustomFieldsContextValue | null>(null);
 
 function buildDefaultResponse(canManage = true): BuildCoreWorkflowTaskCustomFieldsResponse {
-  if (!env.isSaasMode || runtimeModes.useMockAuth()) {
+  if (usesClientSideOrganizationCustomization()) {
     return getMockWorkflowTaskCustomFieldsResponse(canManage);
   }
   return { definitions: [], canManage };
@@ -73,14 +74,11 @@ export function BuildCoreWorkflowTaskCustomFieldsProvider({
   readonly children: ReactNode;
 }): ReactElement {
   const { getAccessToken } = useBuildCoreDashboardContext();
-  const [state, setState] = useState<BuildCoreWorkflowTaskCustomFieldsResponse>(() => {
-    if (runtimeModes.isDemoRuntime()) {
-      return buildDefaultResponse(false);
-    }
-    return buildDefaultResponse(true);
-  });
+  const [state, setState] = useState<BuildCoreWorkflowTaskCustomFieldsResponse>(() =>
+    buildDefaultResponse(true)
+  );
   const [isLoading, setIsLoading] = useState(
-    () => env.isSaasMode && !runtimeModes.useMockAuth() && !runtimeModes.isDemoRuntime()
+    () => env.isSaasMode && !usesClientSideOrganizationCustomization()
   );
   const [isSaving, setIsSaving] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -88,15 +86,7 @@ export function BuildCoreWorkflowTaskCustomFieldsProvider({
   const hasLoadedOnceRef = useRef(false);
 
   const load = useCallback(async () => {
-    if (runtimeModes.isDemoRuntime()) {
-      setState(buildDefaultResponse(false));
-      setLoadError(null);
-      setIsLoading(false);
-      hasLoadedOnceRef.current = true;
-      return;
-    }
-
-    if (!env.isSaasMode || runtimeModes.useMockAuth()) {
+    if (usesClientSideOrganizationCustomization()) {
       setState(getMockWorkflowTaskCustomFieldsResponse(true));
       setLoadError(null);
       setIsLoading(false);
@@ -140,17 +130,26 @@ export function BuildCoreWorkflowTaskCustomFieldsProvider({
     void load();
   }, [load]);
 
+  useEffect(() => {
+    const onDemoReset = () => {
+      setState(getMockWorkflowTaskCustomFieldsResponse(true));
+      setLoadError(null);
+    };
+    window.addEventListener(DEMO_RESET_EVENT, onDemoReset);
+    return () => window.removeEventListener(DEMO_RESET_EVENT, onDemoReset);
+  }, []);
+
   const createDefinition = useCallback(
     async (
       label: string,
       scope: WorkflowTaskCustomFieldScope
     ): Promise<WorkflowTaskCustomFieldDefinition | null> => {
-      if (!state.canManage || runtimeModes.isDemoRuntime()) return null;
+      if (!state.canManage) return null;
 
       setIsSaving(true);
       const previous = state;
 
-      if (!env.isSaasMode || runtimeModes.useMockAuth()) {
+      if (usesClientSideOrganizationCustomization()) {
         try {
           const created = createMockWorkflowTaskCustomFieldDefinition(label, scope);
           const next = getMockWorkflowTaskCustomFieldsResponse(true);
@@ -193,12 +192,12 @@ export function BuildCoreWorkflowTaskCustomFieldsProvider({
       fieldKey: string,
       label: string
     ): Promise<boolean> => {
-      if (!state.canManage || runtimeModes.isDemoRuntime()) return false;
+      if (!state.canManage) return false;
 
       setIsSaving(true);
       const previous = state;
 
-      if (!env.isSaasMode || runtimeModes.useMockAuth()) {
+      if (usesClientSideOrganizationCustomization()) {
         try {
           updateMockWorkflowTaskCustomFieldDefinition(scope, fieldKey, { label });
           setState(getMockWorkflowTaskCustomFieldsResponse(true));
@@ -232,12 +231,12 @@ export function BuildCoreWorkflowTaskCustomFieldsProvider({
 
   const archiveDefinition = useCallback(
     async (scope: WorkflowTaskCustomFieldScope, fieldKey: string): Promise<boolean> => {
-      if (!state.canManage || runtimeModes.isDemoRuntime()) return false;
+      if (!state.canManage) return false;
 
       setIsSaving(true);
       const previous = state;
 
-      if (!env.isSaasMode || runtimeModes.useMockAuth()) {
+      if (usesClientSideOrganizationCustomization()) {
         try {
           updateMockWorkflowTaskCustomFieldDefinition(scope, fieldKey, { isArchived: true });
           setState(getMockWorkflowTaskCustomFieldsResponse(true));

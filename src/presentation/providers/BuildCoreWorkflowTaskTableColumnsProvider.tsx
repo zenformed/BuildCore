@@ -32,8 +32,9 @@ import {
   setMockWorkflowTaskTableColumn,
 } from '@/infrastructure/crm/mock/mockWorkflowTaskTableColumnsStore';
 import { runSessionCached } from '@/infrastructure/coreApi/clientRequestDedupe';
-import { runtimeModes } from '@/infrastructure/config/runtimeModes';
 import { env } from '@/infrastructure/config/env';
+import { usesClientSideOrganizationCustomization } from '@/infrastructure/runtime/usesClientSideOrganizationCustomization';
+import { DEMO_RESET_EVENT } from '@/presentation/providers/DemoModeProvider';
 import { useBuildCoreDashboardContext } from '@/presentation/providers/BuildCoreDashboardProvider';
 import { useBuildCoreWorkflowTaskCustomFieldsForScope } from '@/presentation/providers/BuildCoreWorkflowTaskCustomFieldsProvider';
 import styles from '@/presentation/components/CrmProjectDetail/ProjectDetail.module.css';
@@ -65,7 +66,7 @@ function gridClassForCustomColumnCount(count: 0 | 1 | 2): string {
 }
 
 function buildDefaultResponse(canManage = true): BuildCoreWorkflowTaskTableColumnsResponse {
-  if (!env.isSaasMode || runtimeModes.useMockAuth()) {
+  if (usesClientSideOrganizationCustomization()) {
     return getMockWorkflowTaskTableColumnsResponse(canManage);
   }
   return { slots: { slot1: null, slot2: null }, canManage };
@@ -79,14 +80,11 @@ export function BuildCoreWorkflowTaskTableColumnsProvider({
   const { getAccessToken } = useBuildCoreDashboardContext();
   const { definitions: workflowDefinitions, activeDefinitions } =
     useBuildCoreWorkflowTaskCustomFieldsForScope('workflow_task');
-  const [state, setState] = useState<BuildCoreWorkflowTaskTableColumnsResponse>(() => {
-    if (runtimeModes.isDemoRuntime()) {
-      return buildDefaultResponse(false);
-    }
-    return buildDefaultResponse(true);
-  });
+  const [state, setState] = useState<BuildCoreWorkflowTaskTableColumnsResponse>(() =>
+    buildDefaultResponse(true)
+  );
   const [isLoading, setIsLoading] = useState(
-    () => env.isSaasMode && !runtimeModes.useMockAuth() && !runtimeModes.isDemoRuntime()
+    () => env.isSaasMode && !usesClientSideOrganizationCustomization()
   );
   const [isSaving, setIsSaving] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -94,15 +92,7 @@ export function BuildCoreWorkflowTaskTableColumnsProvider({
   const hasLoadedOnceRef = useRef(false);
 
   const load = useCallback(async () => {
-    if (runtimeModes.isDemoRuntime()) {
-      setState(buildDefaultResponse(false));
-      setLoadError(null);
-      setIsLoading(false);
-      hasLoadedOnceRef.current = true;
-      return;
-    }
-
-    if (!env.isSaasMode || runtimeModes.useMockAuth()) {
+    if (usesClientSideOrganizationCustomization()) {
       setState(getMockWorkflowTaskTableColumnsResponse(true));
       setLoadError(null);
       setIsLoading(false);
@@ -146,17 +136,26 @@ export function BuildCoreWorkflowTaskTableColumnsProvider({
     void load();
   }, [load]);
 
+  useEffect(() => {
+    const onDemoReset = () => {
+      setState(getMockWorkflowTaskTableColumnsResponse(true));
+      setLoadError(null);
+    };
+    window.addEventListener(DEMO_RESET_EVENT, onDemoReset);
+    return () => window.removeEventListener(DEMO_RESET_EVENT, onDemoReset);
+  }, []);
+
   const setTableColumn = useCallback(
     async (
       position: WorkflowTaskTableColumnPosition,
       fieldKey: string | null
     ): Promise<boolean> => {
-      if (!state.canManage || runtimeModes.isDemoRuntime()) return false;
+      if (!state.canManage) return false;
 
       setIsSaving(true);
       const previous = state;
 
-      if (!env.isSaasMode || runtimeModes.useMockAuth()) {
+      if (usesClientSideOrganizationCustomization()) {
         try {
           const activeKeys = new Set(
             getMockActiveWorkflowTaskCustomFieldDefinitions('workflow_task').map((def) => def.fieldKey)
