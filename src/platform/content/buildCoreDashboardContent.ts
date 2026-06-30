@@ -1049,6 +1049,22 @@ export const buildCoreDashboardContent = {
         closeAriaLabel: 'Close add custom field dialog',
         unsupportedType: 'This field type is not supported yet.',
       },
+      tableColumns: {
+        addColumn: '+ Column',
+        addColumnAriaLabel: 'Add custom column',
+        pickerTitle: 'Show Custom Field',
+        createCustomField: '+ Create Custom Field',
+        noCustomFields: 'No custom fields yet. Create one first.',
+        menuAriaLabel: 'Column options',
+        replaceColumn: 'Replace Column…',
+        removeFromTable: 'Remove From Table',
+        renameField: 'Rename Field…',
+        archiveField: 'Archive Field…',
+        setColumnFailed: 'Could not update table column.',
+        renameFailed: 'Could not rename custom field.',
+        archiveFailed: 'Could not archive custom field.',
+        emptyValue: '—',
+      },
       assignedNotify: {
         title: 'Notify assigned?',
         messageWithEmail: (recipientName: string) =>

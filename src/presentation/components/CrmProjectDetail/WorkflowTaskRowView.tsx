@@ -29,6 +29,8 @@ import { TeamMemberAvatar } from './TeamMemberAvatar';
 import { WorkflowDocumentFileIcon } from './WorkflowDocumentFileIcon';
 import { WorkflowInlineMenu } from './WorkflowInlineMenu';
 import { WorkflowTaskRowActionsMenu } from './WorkflowTaskRowActionsMenu';
+import { WorkflowTaskTableCustomColumnCells, resolveWorkflowOpsGridClassName } from './WorkflowTaskTableCustomColumns';
+import { useBuildCoreWorkflowTaskTableColumns } from '@/presentation/providers/BuildCoreWorkflowTaskTableColumnsProvider';
 import styles from './ProjectDetail.module.css';
 
 function statusBadgeClass(status: string): string {
@@ -668,6 +670,25 @@ function WorkflowTaskRowDueField({
   const dueDisplay = model.task.dueAt ? formatShortDate(model.task.dueAt) : '';
   const { getFieldLabel } = useBuildCoreFieldLabels();
   const dueLabel = getFieldLabel(WORKFLOW_TASK_DUE_FIELD_KEY);
+  const dueAriaLabel =
+    compact || !dueDisplay
+      ? dueDisplay
+        ? `${dueLabel}: ${dueDisplay}`
+        : `${dueLabel}. Set due date.`
+      : undefined;
+
+  const dueButtonContent = dueDisplay ? (
+    compact ? (
+      <span className={styles.workflowTaskCompactDueContent}>
+        <span className={styles.dueIcon} aria-hidden />
+        <span className={styles.workflowTaskCompactMeta}>{dueDisplay}</span>
+      </span>
+    ) : (
+      <span className={mobile ? styles.workflowTaskMobileCardValue : undefined}>{dueDisplay}</span>
+    )
+  ) : (
+    <span className={styles.dueIcon} aria-hidden />
+  );
 
   return (
     <span className={dueClass}>
@@ -681,23 +702,14 @@ function WorkflowTaskRowDueField({
               : styles.inlineCellBtn
         }
         disabled={model.saving || !model.canEdit}
-        aria-label={compact ? dueLabel : undefined}
+        aria-label={dueAriaLabel}
         onClick={() => {
           model.closeMenus();
           model.dueInputRef.current?.showPicker?.();
           model.dueInputRef.current?.click();
         }}
       >
-        {compact ? (
-          <span className={styles.workflowTaskCompactDueContent}>
-            <span className={styles.dueIcon} aria-hidden />
-            {dueDisplay ? (
-              <span className={styles.workflowTaskCompactMeta}>{dueDisplay}</span>
-            ) : null}
-          </span>
-        ) : (
-          <span className={mobile ? styles.workflowTaskMobileCardValue : undefined}>{dueDisplay}</span>
-        )}
+        {dueButtonContent}
       </button>
       <input
         ref={model.dueInputRef}
@@ -883,17 +895,24 @@ function WorkflowTaskRowPaymentDateFields({
 export function WorkflowTaskRowTableView({
   model,
   showAmountColumn = false,
+  enableCustomColumns = false,
 }: {
   readonly model: WorkflowTaskInlineRowModel;
   readonly showAmountColumn?: boolean;
+  readonly enableCustomColumns?: boolean;
 }): ReactElement {
+  const { gridClassName } = useBuildCoreWorkflowTaskTableColumns();
   const showAmount = showAmountColumn || model.showAmount;
   const paymentGrid = model.showPaymentDates
     ? styles.workflowGridPaymentsWithDates
     : styles.workflowGridPayments;
+  const opsGridClass =
+    enableCustomColumns && !showAmount
+      ? resolveWorkflowOpsGridClassName(true, gridClassName)
+      : styles.workflowGrid;
   const rowClass = [
     styles.tableRow,
-    showAmount ? `${styles.workflowGrid} ${paymentGrid}` : styles.workflowGrid,
+    showAmount ? `${styles.workflowGrid} ${paymentGrid}` : opsGridClass,
     styles.workflowInlineRow,
     model.rowDragOver ? styles.workflowInlineRow_fileDragOver : '',
   ]
@@ -909,6 +928,7 @@ export function WorkflowTaskRowTableView({
     >
       <WorkflowTaskRowStatusField model={model} />
       <WorkflowTaskRowTitleField model={model} />
+      {enableCustomColumns && !showAmount ? <WorkflowTaskTableCustomColumnCells task={model.task} /> : null}
       {showAmount ? <WorkflowTaskRowAmountField model={model} /> : null}
       <WorkflowTaskRowNotesField model={model} />
       <WorkflowTaskRowDocumentsField model={model} />

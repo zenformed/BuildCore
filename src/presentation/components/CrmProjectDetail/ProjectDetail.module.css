@@ -75,7 +75,7 @@
 }
 
 .workflowPanelFull .workflowGrid {
-  grid-template-columns: 8.25rem minmax(0, 4fr) minmax(5rem, 1fr) 6rem 5.5rem 6.5rem 2rem;
+  grid-template-columns: 8.25rem minmax(0, 2fr) minmax(5rem, 1fr) 7rem 6.5rem 7.5rem 2rem;
 }
 
 .workflowPanelFull .workflowGridPayments {
@@ -3699,7 +3699,145 @@
 }
 
 .workflowGrid {
-  grid-template-columns: 6.25rem minmax(0, 4fr) minmax(5rem, 1fr) 5.5rem 4.5rem 6.25rem 1.75rem;
+  grid-template-columns: 6.25rem minmax(0, 2fr) minmax(5rem, 1fr) 6.5rem 5.5rem 7.25rem 1.75rem;
+}
+
+.workflowGridOps {
+  grid-template-columns: 6.25rem minmax(0, 2fr) minmax(5rem, 1fr) 6.5rem 5.5rem 7.25rem 1.75rem;
+}
+
+.workflowGridOpsCustom1 {
+  grid-template-columns:
+    6.25rem minmax(0, 2fr) minmax(0, 0.65fr) minmax(5rem, 1fr) 6.5rem 5.5rem 7.25rem 1.75rem;
+}
+
+.workflowGridOpsCustom2 {
+  grid-template-columns:
+    6.25rem minmax(0, 1.75fr) minmax(0, 0.65fr) minmax(0, 0.65fr) minmax(5rem, 1fr) 6.5rem 5.5rem 7.25rem 1.75rem;
+}
+
+.workflowGrid.workflowGridOpsCustom1 {
+  grid-template-columns:
+    6.25rem minmax(0, 2fr) minmax(0, 0.65fr) minmax(5rem, 1fr) 6.5rem 5.5rem 7.25rem 1.75rem;
+}
+
+.workflowGrid.workflowGridOpsCustom2 {
+  grid-template-columns:
+    6.25rem minmax(0, 1.75fr) minmax(0, 0.65fr) minmax(0, 0.65fr) minmax(5rem, 1fr) 6.5rem 5.5rem 7.25rem 1.75rem;
+}
+
+.workflowPanelFull .workflowGrid.workflowGridOpsCustom1 {
+  grid-template-columns:
+    8.25rem minmax(0, 2fr) minmax(0, 0.65fr) minmax(5rem, 1fr) 7rem 6.5rem 7.5rem 2rem;
+}
+
+.workflowPanelFull .workflowGrid.workflowGridOpsCustom2 {
+  grid-template-columns:
+    8.25rem minmax(0, 1.75fr) minmax(0, 0.65fr) minmax(0, 0.65fr) minmax(5rem, 1fr) 7rem 6.5rem 7.5rem 2rem;
+}
+
+.workflowCustomColumnHeader {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  min-width: 0;
+  text-align: left;
+  padding-inline: 0.25rem;
+  padding-inline-end: 1.25rem;
+}
+
+.workflowCustomColumnLabelBtn {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  justify-content: flex-start;
+  align-items: center;
+}
+
+.workflowCustomColumnHeader .workflowColumnHeaderLabelText,
+.workflowCustomColumnHeader .workflowColumnHeaderInput {
+  text-align: left;
+}
+
+.workflowCustomColumnMenuBtn {
+  position: absolute;
+  inset-inline-end: 0.375rem;
+  top: 50%;
+  transform: translateY(-50%);
+  border: none;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  padding: 0 0.125rem;
+  line-height: 1;
+  font-size: 0.875rem;
+}
+
+.workflowCustomColumnMenuBtn:hover:not(:disabled) {
+  color: var(--color-text, #0f172a);
+  background: rgb(15 23 42 / 0.04);
+  border-radius: 0.25rem;
+}
+
+.workflowCustomColumnAddBtn {
+  border: 1px dashed var(--theme-border-main, #cbd5e1);
+  background: transparent;
+  color: var(--color-text-muted, #64748b);
+  border-radius: var(--theme-radius-sm, 0.375rem);
+  padding: 0.125rem 0.375rem;
+  font-size: 0.75rem;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.workflowCustomColumnAddBtn:hover:not(:disabled) {
+  color: var(--color-text, #0f172a);
+  background: rgb(15 23 42 / 0.04);
+  border-color: var(--color-text-muted, #64748b);
+}
+
+:global([data-theme='dark']) .workflowCustomColumnAddBtn:hover:not(:disabled),
+:global([data-theme='dark']) .workflowCustomColumnMenuBtn:hover:not(:disabled) {
+  color: #f1f5f9;
+  background: rgb(255 255 255 / 0.06);
+  border-color: #64748b;
+}
+
+.workflowCustomColumnCell {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.8125rem;
+  color: var(--color-text, #0f172a);
+  text-align: left;
+  padding-inline: 0.25rem;
+}
+
+.workflowCustomColumnPickerTitle {
+  padding: 0.375rem 0.75rem 0.25rem;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--color-text-muted, #64748b);
+}
+
+.workflowCustomColumnPickerEmpty {
+  margin: 0;
+  padding: 0.375rem 0.75rem;
+  font-size: 0.8125rem;
+  color: var(--color-text-muted, #64748b);
+}
+
+.workflowCustomColumnPickerDivider {
+  height: 1px;
+  margin: 0.25rem 0;
+  background: var(--theme-border-main, #e2e8f0);
 }
 
 .workflowGridPayments {
@@ -3849,8 +3987,8 @@
   white-space: nowrap;
 }
 
-.workflowGrid.tableHeader > *:nth-child(n + 3):not(.taskDeleteHeader):not(.workflowNotesHeader),
-.workflowGridPayments.tableHeader > *:nth-child(n + 3):not(.taskDeleteHeader):not(.workflowNotesHeader) {
+.workflowGrid.tableHeader > *:nth-child(n + 3):not(.taskDeleteHeader):not(.workflowNotesHeader):not(.workflowCustomColumnHeader),
+.workflowGridPayments.tableHeader > *:nth-child(n + 3):not(.taskDeleteHeader):not(.workflowNotesHeader):not(.workflowCustomColumnHeader) {
   text-align: center;
 }
 
@@ -3880,6 +4018,10 @@
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+.workflowGrid.tableRow > .taskDeleteCell {
+  padding-inline-end: 0.375rem;
 }
 
 .taskActionsBtn {
@@ -5222,6 +5364,25 @@
   background: #ffffff;
   color: #64748b;
   border-bottom-color: var(--theme-border-main, var(--color-border, #e2e8f0));
+}
+
+/* Vertical dividers between workflow task column headers (not on the last column). */
+.workflowTaskTableHeader > * {
+  border-radius: 0;
+}
+
+.workflowTaskTableHeader > *:not(:last-child) {
+  border-right: 1px solid var(--theme-border-main, var(--color-border, #e2e8f0));
+}
+
+.workflowTaskTableHeader .workflowColumnHeaderLabelBtn,
+.workflowTaskTableHeader .workflowCustomColumnAddBtn,
+.workflowTaskTableHeader .workflowCustomColumnMenuBtn:hover:not(:disabled) {
+  border-radius: 0;
+}
+
+:global([data-theme='dark']) .workflowTaskTableHeader > *:not(:last-child) {
+  border-right-color: var(--theme-border-main, #3d3e4a);
 }
 
 .workflowColumnHeaderLabelBtn,
@@ -7616,7 +7777,7 @@
   }
 
   .workflowGrid {
-    grid-template-columns: 7.25rem minmax(0, 4fr) minmax(5rem, 1fr) 5.5rem 4.5rem 6.25rem 1.75rem;
+    grid-template-columns: 7.25rem minmax(0, 2fr) minmax(5rem, 1fr) 6.5rem 5.5rem 7.25rem 1.75rem;
   }
 
   .workflowGridPayments {
@@ -7624,11 +7785,31 @@
   }
 
   .workflowPanelFull .workflowGrid {
-    grid-template-columns: 8.25rem minmax(0, 4fr) minmax(5rem, 1fr) 6rem 5.5rem 6.5rem 2rem;
+    grid-template-columns: 8.25rem minmax(0, 2fr) minmax(5rem, 1fr) 7rem 6.5rem 7.5rem 2rem;
   }
 
   .workflowPanelFull .workflowGridPayments {
     grid-template-columns: 10.5rem minmax(0, 3.25fr) 5rem minmax(3.25rem, 0.55fr) 7rem 5.5rem 6.5rem 2rem;
+  }
+
+  .workflowGrid.workflowGridOpsCustom1 {
+    grid-template-columns:
+      7.25rem minmax(0, 2fr) minmax(0, 0.65fr) minmax(5rem, 1fr) 6.5rem 5.5rem 7.25rem 1.75rem;
+  }
+
+  .workflowGrid.workflowGridOpsCustom2 {
+    grid-template-columns:
+      7.25rem minmax(0, 1.75fr) minmax(0, 0.65fr) minmax(0, 0.65fr) minmax(5rem, 1fr) 6.5rem 5.5rem 7.25rem 1.75rem;
+  }
+
+  .workflowPanelFull .workflowGrid.workflowGridOpsCustom1 {
+    grid-template-columns:
+      8.25rem minmax(0, 2fr) minmax(0, 0.65fr) minmax(5rem, 1fr) 7rem 6.5rem 7.5rem 2rem;
+  }
+
+  .workflowPanelFull .workflowGrid.workflowGridOpsCustom2 {
+    grid-template-columns:
+      8.25rem minmax(0, 1.75fr) minmax(0, 0.65fr) minmax(0, 0.65fr) minmax(5rem, 1fr) 7rem 6.5rem 7.5rem 2rem;
   }
 
   .statusPill {
@@ -7704,7 +7885,7 @@
   }
 
   .workflowGrid {
-    grid-template-columns: 8.25rem minmax(0, 4fr) minmax(5rem, 1fr) 6rem 5rem 6.75rem 2rem;
+    grid-template-columns: 8.25rem minmax(0, 2fr) minmax(5rem, 1fr) 7rem 6rem 7.75rem 2rem;
   }
 
   .workflowGridPayments {
@@ -7712,11 +7893,31 @@
   }
 
   .workflowPanelFull .workflowGrid {
-    grid-template-columns: 8.25rem minmax(0, 4fr) minmax(5rem, 1fr) 6rem 5.5rem 6.5rem 2rem;
+    grid-template-columns: 8.25rem minmax(0, 2fr) minmax(5rem, 1fr) 7rem 6.5rem 7.5rem 2rem;
   }
 
   .workflowPanelFull .workflowGridPayments {
     grid-template-columns: 10.5rem minmax(0, 3.25fr) 5rem minmax(3.25rem, 0.55fr) 7rem 5.5rem 6.5rem 2rem;
+  }
+
+  .workflowGrid.workflowGridOpsCustom1 {
+    grid-template-columns:
+      8.25rem minmax(0, 2fr) minmax(0, 0.65fr) minmax(5rem, 1fr) 7rem 6rem 7.75rem 2rem;
+  }
+
+  .workflowGrid.workflowGridOpsCustom2 {
+    grid-template-columns:
+      8.25rem minmax(0, 1.75fr) minmax(0, 0.65fr) minmax(0, 0.65fr) minmax(5rem, 1fr) 7rem 6rem 7.75rem 2rem;
+  }
+
+  .workflowPanelFull .workflowGrid.workflowGridOpsCustom1 {
+    grid-template-columns:
+      8.25rem minmax(0, 2fr) minmax(0, 0.65fr) minmax(5rem, 1fr) 7rem 6.5rem 7.5rem 2rem;
+  }
+
+  .workflowPanelFull .workflowGrid.workflowGridOpsCustom2 {
+    grid-template-columns:
+      8.25rem minmax(0, 1.75fr) minmax(0, 0.65fr) minmax(0, 0.65fr) minmax(5rem, 1fr) 7rem 6.5rem 7.5rem 2rem;
   }
 
   .statusPill {

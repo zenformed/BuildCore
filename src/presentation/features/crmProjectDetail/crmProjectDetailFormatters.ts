@@ -24,7 +24,7 @@ export function formatShortDate(iso: string | null): string {
   return formatBuildCoreDisplayDate(iso);
 }
 
-const WORKFLOW_TASK_NOTES_PREVIEW_MAX = 120;
+const WORKFLOW_TASK_NOTES_PREVIEW_MAX = 60;
 const WORKFLOW_TASK_COMPACT_TITLE_MAX = 100;
 
 /** Single-line workflow task title for compact stage cards. */
@@ -40,7 +40,7 @@ export function formatWorkflowTaskNotesPreview(notes: string | null | undefined)
   const trimmed = notes.replace(/\s+/g, ' ').trim();
   if (!trimmed) return '—';
   if (trimmed.length <= WORKFLOW_TASK_NOTES_PREVIEW_MAX) return trimmed;
-  return `${trimmed.slice(0, WORKFLOW_TASK_NOTES_PREVIEW_MAX - 1)}…`;
+  return `${trimmed.slice(0, WORKFLOW_TASK_NOTES_PREVIEW_MAX)}…`;
 }
 
 /** Full workflow task notes for mobile cards (multi-line, no truncation). */

@@ -11,6 +11,7 @@ import { BuildCoreWorkflowTaskAccessProvider } from '@/presentation/providers/Bu
 import { CrmPaymentTasksIndexProvider } from '@/presentation/providers/CrmPaymentTasksIndexProvider';
 import { BuildCoreFieldLabelsProvider } from '@/presentation/providers/BuildCoreFieldLabelsProvider';
 import { BuildCoreWorkflowTaskCustomFieldsProvider } from '@/presentation/providers/BuildCoreWorkflowTaskCustomFieldsProvider';
+import { BuildCoreWorkflowTaskTableColumnsProvider } from '@/presentation/providers/BuildCoreWorkflowTaskTableColumnsProvider';
 import { BuildCorePipelineStagesProvider } from '@/presentation/providers/BuildCorePipelineStagesProvider';
 
 export default function DashboardGroupLayout({
@@ -27,7 +28,9 @@ export default function DashboardGroupLayout({
               <BuildCorePipelineStagesProvider>
                 <BuildCoreFieldLabelsProvider>
                   <BuildCoreWorkflowTaskCustomFieldsProvider>
-                    <BuildCorePersistentDashboardShell>{children}</BuildCorePersistentDashboardShell>
+                    <BuildCoreWorkflowTaskTableColumnsProvider>
+                      <BuildCorePersistentDashboardShell>{children}</BuildCorePersistentDashboardShell>
+                    </BuildCoreWorkflowTaskTableColumnsProvider>
                   </BuildCoreWorkflowTaskCustomFieldsProvider>
                 </BuildCoreFieldLabelsProvider>
               </BuildCorePipelineStagesProvider>

@@ -15,6 +15,11 @@ import { useWorkflowStageExpanded } from '@/presentation/features/crmProjectDeta
 import { CrmProjectStatusCircleIcon } from '@/presentation/components/crmShared/CrmProjectStatusCircleIcon';
 import { WorkflowTaskInlineRow } from './WorkflowTaskInlineRow';
 import { WorkflowTaskTableHeaderRow } from './WorkflowTaskTableHeaderRow';
+import {
+  WorkflowTaskTableCustomColumnEmptyCells,
+  resolveWorkflowOpsGridClassName,
+} from './WorkflowTaskTableCustomColumns';
+import { useBuildCoreWorkflowTaskTableColumns } from '@/presentation/providers/BuildCoreWorkflowTaskTableColumnsProvider';
 import styles from './ProjectDetail.module.css';
 
 export type ManualStageCompletionToggleAction = 'complete' | 'incomplete';
@@ -81,9 +86,13 @@ export function WorkflowStageTaskGroup({
     .filter(Boolean)
     .join(' ');
   const panelId = `workflow-stage-${projectSlug}-${group.collapseKey}`;
+  const { gridClassName } = useBuildCoreWorkflowTaskTableColumns();
+  const enableCustomColumns = !group.isPaymentsGroup && !showCardLayout;
   const gridClass = group.isPaymentsGroup
     ? `${styles.workflowGrid} ${styles.workflowGridPayments}`
-    : styles.workflowGrid;
+    : enableCustomColumns
+      ? resolveWorkflowOpsGridClassName(true, gridClassName)
+      : styles.workflowGrid;
   const stageIsComplete = isWorkflowStageGroupComplete(
     group.stageSlug,
     group.tasks,
@@ -170,6 +179,7 @@ export function WorkflowStageTaskGroup({
           docCount={docCounts.get(task.id) ?? 0}
           taskDocuments={projectDocuments.filter((doc) => doc.workflowTaskId === task.id)}
           showAmountColumn={group.isPaymentsGroup}
+          enableCustomColumns={enableCustomColumns}
           isApiSource={isApiSource}
           onUpdated={onTaskUpdated}
           onTaskError={onTaskError}
@@ -184,7 +194,11 @@ export function WorkflowStageTaskGroup({
   ) : (
     <div id={panelId} className={styles.stageGroupTable}>
       {!unifiedDesktopTable ? (
-        <WorkflowTaskTableHeaderRow showAmount={group.isPaymentsGroup} />
+        <WorkflowTaskTableHeaderRow
+          showAmount={group.isPaymentsGroup}
+          enableCustomColumns={enableCustomColumns}
+          gridClassName={enableCustomColumns ? gridClass : undefined}
+        />
       ) : null}
       {group.tasks.map((task) => (
         <WorkflowTaskInlineRow
@@ -194,6 +208,7 @@ export function WorkflowStageTaskGroup({
           docCount={docCounts.get(task.id) ?? 0}
           taskDocuments={projectDocuments.filter((doc) => doc.workflowTaskId === task.id)}
           showAmountColumn={group.isPaymentsGroup}
+          enableCustomColumns={enableCustomColumns}
           isApiSource={isApiSource}
           onUpdated={onTaskUpdated}
           onTaskError={onTaskError}
@@ -207,6 +222,7 @@ export function WorkflowStageTaskGroup({
         >
           <span className={styles.workflowStageEmptyCell} aria-hidden />
           <span className={styles.workflowStageEmptyMessage}>{wf.stageNoTasks}</span>
+          {enableCustomColumns ? <WorkflowTaskTableCustomColumnEmptyCells /> : null}
           {group.isPaymentsGroup ? <span className={styles.workflowStageEmptyCell} aria-hidden /> : null}
           <span className={styles.workflowStageEmptyCell} aria-hidden />
           <span className={styles.workflowStageEmptyCell} aria-hidden />

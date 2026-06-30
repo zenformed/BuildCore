@@ -15,12 +15,14 @@ import {
   EditableFieldLabelHeader,
   WorkflowTaskActionsColumnHeader,
 } from './EditableFieldLabelHeader';
+import { WorkflowTaskTableCustomColumnHeaders } from './WorkflowTaskTableCustomColumns';
 import styles from './ProjectDetail.module.css';
 
 export type WorkflowTaskTableHeaderRowProps = {
   readonly context?: BuildCoreFieldLabelContext;
   readonly showAmount?: boolean;
   readonly showNotes?: boolean;
+  readonly enableCustomColumns?: boolean;
   readonly trailingHeaders?: ReactNode;
   readonly rowClassName?: string;
   readonly gridClassName?: string;
@@ -30,6 +32,7 @@ export function WorkflowTaskTableHeaderRow({
   context = 'workflow',
   showAmount = false,
   showNotes = true,
+  enableCustomColumns = false,
   trailingHeaders = null,
   rowClassName,
   gridClassName,
@@ -41,7 +44,14 @@ export function WorkflowTaskTableHeaderRow({
       : showAmount
         ? `${styles.workflowGrid} ${styles.workflowGridPayments}`
         : styles.workflowGrid;
-  const rowClass = [styles.tableHeader, gridClass, rowClassName].filter(Boolean).join(' ');
+  const rowClass = [
+    styles.tableHeader,
+    !showAmount ? styles.workflowTaskTableHeader : '',
+    gridClass,
+    rowClassName,
+  ]
+    .filter(Boolean)
+    .join(' ');
 
   return (
     <div className={rowClass} role="row">
@@ -51,6 +61,7 @@ export function WorkflowTaskTableHeaderRow({
         align="center"
       />
       <EditableFieldLabelHeader fieldKey={WORKFLOW_TASK_TASK_FIELD_KEY} context={context} align="start" />
+      {enableCustomColumns ? <WorkflowTaskTableCustomColumnHeaders /> : null}
       {showAmount ? <span role="columnheader">{cols.amount}</span> : null}
       {showNotes ? (
         <EditableFieldLabelHeader
