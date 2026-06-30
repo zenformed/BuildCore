@@ -1065,6 +1065,28 @@ export const buildCoreDashboardContent = {
         archiveFailed: 'Could not archive custom field.',
         emptyValue: '—',
       },
+      preview: {
+        ariaLabel: (title: string): string => `Task preview for ${title}`,
+        showPreviewAriaLabel: (title: string): string => `Show preview for ${title}`,
+        hidePreviewAriaLabel: 'Hide task preview',
+        kindTask: 'Task',
+        kindPayment: 'Payment',
+        labels: {
+          stage: 'Stage',
+          amount: 'Amount',
+        },
+        documentsNa: 'N/A',
+        documentOneFile: '1 file',
+        documentFiles: (count: number): string => `${count} files`,
+        dateNa: 'N/A',
+        sections: {
+          overview: 'Overview',
+          details: 'Details',
+          notes: 'Notes',
+          customFields: 'Custom fields',
+        },
+        openDetails: 'Open details',
+      },
       assignedNotify: {
         title: 'Notify assigned?',
         messageWithEmail: (recipientName: string) =>
@@ -1137,6 +1159,28 @@ export const buildCoreDashboardContent = {
         renameFailed: 'Could not rename custom field.',
         archiveFailed: 'Could not archive custom field.',
         emptyValue: '—',
+      },
+      preview: {
+        ariaLabel: (title: string): string => `Payment preview for ${title}`,
+        showPreviewAriaLabel: (title: string): string => `Show preview for ${title}`,
+        hidePreviewAriaLabel: 'Hide payment preview',
+        kindTask: 'Task',
+        kindPayment: 'Payment',
+        labels: {
+          stage: 'Stage',
+          amount: 'Amount',
+        },
+        documentsNa: 'N/A',
+        documentOneFile: '1 file',
+        documentFiles: (count: number): string => `${count} files`,
+        dateNa: 'N/A',
+        sections: {
+          overview: 'Overview',
+          details: 'Details',
+          notes: 'Notes',
+          customFields: 'Custom fields',
+        },
+        openDetails: 'Open details',
       },
     },
     documents: {

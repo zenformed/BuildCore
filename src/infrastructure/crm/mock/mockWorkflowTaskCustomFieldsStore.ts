@@ -129,3 +129,9 @@ export function resetMockWorkflowTaskCustomFieldsStore(): void {
   valuesByTaskId.clear();
   nextDefinitionId = 1;
 }
+
+export function seedMockWorkflowTaskCustomFieldExamplesIfEmpty(): void {
+  if (definitions.length > 0) return;
+  createMockWorkflowTaskCustomFieldDefinition('Vendor', 'workflow_task');
+  createMockWorkflowTaskCustomFieldDefinition('Invoice #', 'payment');
+}

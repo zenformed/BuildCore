@@ -1,6 +1,6 @@
 'use client';
 
-import type { MutableRefObject, ReactElement } from 'react';
+import type { MutableRefObject, ReactElement, RefObject } from 'react';
 import { useRef } from 'react';
 import { WORKFLOW_TASK_STATUSES } from '@/domain/crm/workflowTaskStatuses';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
@@ -32,6 +32,14 @@ import { WorkflowTaskRowActionsMenu } from './WorkflowTaskRowActionsMenu';
 import { WorkflowTaskTableCustomColumnCells, resolveWorkflowOpsGridClassName } from './WorkflowTaskTableCustomColumns';
 import { PaymentTableCustomColumnCells } from './PaymentTableCustomColumns';
 import { useBuildCoreWorkflowTaskTableColumns } from '@/presentation/providers/BuildCoreWorkflowTaskTableColumnsProvider';
+import { useBuildCoreWorkflowTaskCustomFieldsForScope } from '@/presentation/providers/BuildCoreWorkflowTaskCustomFieldsProvider';
+import { useBuildCorePipelineStages } from '@/presentation/providers/BuildCorePipelineStagesProvider';
+import { useProjectDetailShell } from '@/presentation/features/crmProjectDetail/ProjectDetailShellContext';
+import { useDashboardMobileLayout } from '@/presentation/features/crmProjects/useDashboardMobileLayout';
+import { formatWorkflowStageLabel } from '@/presentation/features/crmProjectDetail/crmProjectDetailFormatters';
+import type { WorkflowTaskCustomFieldScope } from '@/domain/buildcore/workflowTaskCustomFields';
+import { useWorkflowTaskPreviewPopover } from './useWorkflowTaskPreviewPopover';
+import previewStyles from './WorkflowTaskPreviewCard.module.css';
 import styles from './ProjectDetail.module.css';
 
 function statusBadgeClass(status: string): string {
@@ -248,6 +256,34 @@ function WorkflowTaskRowTitleField({
   const { wf, task, saving, canEdit, editingTitle, titleDraft } = model;
   const compactTitle = formatWorkflowTaskCompactTitle(task.title);
   const showCompactTitleTooltip = compact && compactTitle !== task.title.trim();
+  const isMobileLayout = useDashboardMobileLayout();
+  const { project } = useProjectDetailShell();
+  const { catalogForProject } = useBuildCorePipelineStages();
+  const previewScope: WorkflowTaskCustomFieldScope =
+    model.showAmount || model.permissionDomain === 'payments' ? 'payment' : 'workflow_task';
+  const { activeDefinitions } = useBuildCoreWorkflowTaskCustomFieldsForScope(previewScope);
+  const stageLabel =
+    previewScope === 'workflow_task'
+      ? formatWorkflowStageLabel(
+          task.stageSlug,
+          catalogForProject({ parentProjectId: project.summary.parentProjectId })
+        )
+      : null;
+  const useTapPreview = isMobileLayout || mobile || mobileHeader;
+  const preview = useWorkflowTaskPreviewPopover({
+    task,
+    scope: previewScope,
+    customFieldDefinitions: activeDefinitions,
+    stageLabel,
+    documentCount: model.documentCount,
+    enabled: !editingTitle && !compact,
+    interactionMode: useTapPreview ? 'tap' : 'hover',
+    showOpenDetails: canEdit,
+    onOpenDetails: () => {
+      model.closeMenus();
+      model.openEditWorkflowTask(task);
+    },
+  });
 
   const titleContent =
     editingTitle && canEdit ? (
@@ -318,8 +354,32 @@ function WorkflowTaskRowTitleField({
     return titleContent;
   }
 
+  const titleWithPreview = (
+    <>
+      <div
+        ref={preview.anchorRef as RefObject<HTMLDivElement>}
+        className={[
+          previewStyles.previewTitleAnchor,
+          !useTapPreview ? previewStyles.previewTitleAnchor_focusable : '',
+        ]
+          .filter(Boolean)
+          .join(' ')}
+        tabIndex={!useTapPreview && !editingTitle ? 0 : undefined}
+        {...preview.anchorHandlers}
+      >
+        {titleContent}
+        {preview.toggleButtonProps ? (
+          <button {...preview.toggleButtonProps}>
+            <span className={previewStyles.previewInfoIcon} aria-hidden />
+          </button>
+        ) : null}
+      </div>
+      {preview.menu}
+    </>
+  );
+
   if (mobileHeader) {
-    return titleContent;
+    return titleWithPreview;
   }
 
   return (
@@ -333,7 +393,7 @@ function WorkflowTaskRowTitleField({
           <span className={styles.taskOpenIcon} title={wf.taskOpenIndicator} aria-label={wf.taskOpenIndicator} />
         )
       ) : null}
-      {titleContent}
+      {titleWithPreview}
     </span>
   );
 }

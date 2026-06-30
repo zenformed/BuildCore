@@ -139,6 +139,8 @@ export type WorkflowInlineMenuProps = {
     onMouseEnter?: () => void;
     onMouseLeave?: () => void;
   };
+  /** When true, the portal does not scroll; the child panel owns overflow. */
+  disablePortalScroll?: boolean;
 };
 
 export function WorkflowInlineMenu({
@@ -151,6 +153,7 @@ export function WorkflowInlineMenu({
   sizeToContent = false,
   menuGapPx = MENU_GAP_PX,
   portalHandlers,
+  disablePortalScroll = false,
 }: WorkflowInlineMenuProps): ReactElement | null {
   const menuRef = useRef<HTMLDivElement>(null);
   const [position, setPosition] = useState<MenuPosition | null>(null);
@@ -195,8 +198,9 @@ export function WorkflowInlineMenu({
   const menuStyle: CSSProperties = {
     top: resolvedPosition.top,
     left: resolvedPosition.left,
-    maxHeight: resolvedPosition.maxHeight,
-    overflowY: 'auto',
+    ...(disablePortalScroll
+      ? { overflow: 'visible' }
+      : { maxHeight: resolvedPosition.maxHeight, overflowY: 'auto' }),
     ...(sizeToContent ? {} : { minWidth: resolvedPosition.minWidth }),
     transform: resolvedPosition.effectiveAlign === 'end' ? 'translateX(-100%)' : undefined,
   };

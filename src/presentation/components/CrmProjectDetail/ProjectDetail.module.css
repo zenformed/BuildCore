@@ -6752,6 +6752,11 @@
   max-width: 100%;
 }
 
+.taskTitleCell .previewTitleAnchor {
+  flex: 1;
+  min-width: 0;
+}
+
 .taskTitleCell .inlineFieldInput {
   flex: 1;
   min-width: 0;
