@@ -336,13 +336,13 @@ export function WorkflowTaskModal({
               <div className={styles.formScroll}>
                 <div
                   className={[
-                    styles.rowTaskPrimary,
-                    showAssignee ? '' : styles.rowTaskPrimaryNoAssignee,
+                    styles.taskFieldGrid,
+                    showAssignee ? '' : styles.taskFieldGridNoAssignee,
                   ]
                     .filter(Boolean)
                     .join(' ')}
                 >
-                  <div className={`${formStyles.field} ${styles.rowField}`}>
+                  <div className={`${formStyles.field} ${styles.areaTitle}`}>
                     <label className={formStyles.label} htmlFor="workflow-task-title">
                       {wf.fields.title} *
                     </label>
@@ -357,7 +357,7 @@ export function WorkflowTaskModal({
                   </div>
 
                   {isPaymentTask ? (
-                    <div className={`${formStyles.field} ${styles.rowField}`}>
+                    <div className={`${formStyles.field} ${styles.areaStage}`}>
                       <label className={formStyles.label} htmlFor="workflow-task-amount">
                         {wf.fields.amountUsd} *
                       </label>
@@ -372,7 +372,7 @@ export function WorkflowTaskModal({
                       />
                     </div>
                   ) : (
-                    <div className={`${formStyles.field} ${styles.rowField}`}>
+                    <div className={`${formStyles.field} ${styles.areaStage}`}>
                       <label className={formStyles.label} htmlFor="workflow-task-stage">
                         {wf.fields.stage}
                       </label>
@@ -398,7 +398,7 @@ export function WorkflowTaskModal({
                   )}
 
                   {showAssignee ? (
-                    <div className={`${formStyles.fieldAssigneeCompact} ${styles.rowField}`}>
+                    <div className={`${formStyles.fieldAssigneeCompact} ${styles.areaAssignee}`}>
                       <span className={formStyles.label}>{createCopy.fields.assignedShort}</span>
                       <CreateFormAssigneePicker
                         value={form.assignedMemberId}
@@ -410,10 +410,8 @@ export function WorkflowTaskModal({
                       />
                     </div>
                   ) : null}
-                </div>
 
-                <div className={styles.rowTaskSecondary}>
-                  <div className={`${formStyles.field} ${styles.rowField}`}>
+                  <div className={`${formStyles.field} ${styles.areaStatus}`}>
                     <label className={formStyles.label}>{wf.fields.status}</label>
                     <WorkflowStatusPillPicker
                       value={form.status}
@@ -422,7 +420,7 @@ export function WorkflowTaskModal({
                       isStatusDisabled={isStatusDisabled}
                     />
                   </div>
-                  <div className={`${formStyles.field} ${styles.rowField}`}>
+                  <div className={`${formStyles.field} ${styles.areaDocs}`}>
                     <label className={formStyles.label} htmlFor="workflow-task-documents-required">
                       {wf.fields.documentsRequired}
                     </label>
@@ -442,7 +440,7 @@ export function WorkflowTaskModal({
                       <option value="no">{wf.fields.documentsRequiredNo}</option>
                     </select>
                   </div>
-                  <div className={`${formStyles.field} ${styles.rowField}`}>
+                  <div className={`${formStyles.field} ${styles.areaDue}`}>
                     <label className={formStyles.label} htmlFor="workflow-task-due">
                       {wf.fields.due}
                     </label>

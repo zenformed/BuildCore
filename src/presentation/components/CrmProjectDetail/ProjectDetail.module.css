@@ -79,7 +79,7 @@
 }
 
 .workflowPanelFull .workflowGridPayments {
-  grid-template-columns: 10.5rem minmax(0, 3.25fr) 5rem minmax(3.25rem, 0.55fr) 7rem 5.5rem 6.5rem 2rem;
+  grid-template-columns: 10.5rem minmax(0, 3.25fr) minmax(3.25rem, 0.55fr) 7rem 5.5rem 5rem 6.5rem 2rem;
 }
 
 .workflowPanel.documentsPagePanel {
@@ -3841,12 +3841,12 @@
 }
 
 .workflowGridPayments {
-  grid-template-columns: 8.5rem minmax(0, 3.25fr) 4.5rem minmax(3.25rem, 0.55fr) 6.75rem 4.5rem 6.25rem 1.75rem;
+  grid-template-columns: 8.5rem minmax(0, 3.25fr) minmax(3.25rem, 0.55fr) 6.75rem 4.5rem 4.5rem 6.25rem 1.75rem;
 }
 
 .workflowGridPaymentsWithDates {
   grid-template-columns:
-    8rem minmax(0, 3.25fr) 4.25rem minmax(3.25rem, 0.55fr) 6rem 4.25rem 5rem 3.5rem 3.5rem 1.75rem;
+    8rem minmax(0, 3.25fr) minmax(3.25rem, 0.55fr) 6rem 4.25rem 4.25rem 5rem 3.5rem 3.5rem 1.75rem;
 }
 
 .paymentDatePlaceholder {
@@ -4854,9 +4854,9 @@
 
 .paymentsTableGridShell {
   --payments-grid-gap: 0.625rem;
-  /* Status | Task | Amount | Notes | Docs | Assigned | Due | Invoiced | Paid | Actions */
+  /* Status | Task | Notes | Docs | Assigned | Amount | Due | Invoiced | Paid | Actions */
   --payments-grid-columns:
-    8rem minmax(6.25rem, 1.15fr) 4.75rem minmax(3.25rem, 0.55fr) 6rem 4.25rem 7.25rem 7.25rem 7.25rem
+    8rem minmax(5.75rem, 1fr) minmax(2.75rem, 0.4fr) 6rem 4.25rem 4.75rem 7.25rem 7.25rem 7.25rem
     3.25rem;
   --payments-table-min-width: 57.625rem;
   display: grid;
@@ -4864,6 +4864,22 @@
   column-gap: var(--payments-grid-gap);
   width: 100%;
   min-width: 100%;
+}
+
+/* Status | Task | Custom1 | Notes | Docs | Assigned | Amount | Due | Invoiced | Paid | Actions */
+.paymentsTableGridShellCustom1 {
+  --payments-grid-columns:
+    8rem minmax(4.75rem, 0.85fr) minmax(8.75rem, 11rem) minmax(2.75rem, 0.4fr) 6rem 4.25rem 4.75rem 7.25rem
+    7.25rem 7.25rem 3.25rem;
+  --payments-table-min-width: 65.625rem;
+}
+
+/* Status | Task | Custom1 | Custom2 | Notes | Docs | Assigned | Amount | Due | Invoiced | Paid | Actions */
+.paymentsTableGridShellCustom2 {
+  --payments-grid-columns:
+    8rem minmax(4rem, 0.75fr) minmax(8.75rem, 11rem) minmax(8.75rem, 11rem) minmax(2.75rem, 0.4fr) 6rem 4.25rem
+    4.75rem 7.25rem 7.25rem 7.25rem 3.25rem;
+  --payments-table-min-width: 73.625rem;
 }
 
 @media (max-width: 1100px) {
@@ -4933,7 +4949,7 @@
   text-align: left;
 }
 
-.paymentsTableGridShell .tableHeader > *:nth-child(n + 3):not(.taskDeleteHeader):not(.workflowNotesHeader) {
+.paymentsTableGridShell .tableHeader > *:nth-child(n + 3):not(.taskDeleteHeader):not(.workflowNotesHeader):not(.workflowCustomColumnHeader) {
   text-align: center;
 }
 
@@ -6703,10 +6719,10 @@
   grid-template-columns:
     8rem
     minmax(6.25rem, 1.15fr)
-    4.75rem
     minmax(3.25rem, 0.55fr)
     6rem
     4.25rem
+    4.75rem
     7.25rem
     7.25rem
     7.25rem
@@ -7781,7 +7797,7 @@
   }
 
   .workflowGridPayments {
-    grid-template-columns: 9.5rem minmax(0, 3.25fr) 4.5rem minmax(3.25rem, 0.55fr) 6.75rem 4.5rem 6.25rem 1.75rem;
+    grid-template-columns: 9.5rem minmax(0, 3.25fr) minmax(3.25rem, 0.55fr) 6.75rem 4.5rem 4.5rem 6.25rem 1.75rem;
   }
 
   .workflowPanelFull .workflowGrid {
@@ -7789,7 +7805,7 @@
   }
 
   .workflowPanelFull .workflowGridPayments {
-    grid-template-columns: 10.5rem minmax(0, 3.25fr) 5rem minmax(3.25rem, 0.55fr) 7rem 5.5rem 6.5rem 2rem;
+    grid-template-columns: 10.5rem minmax(0, 3.25fr) minmax(3.25rem, 0.55fr) 7rem 5.5rem 5rem 6.5rem 2rem;
   }
 
   .workflowGrid.workflowGridOpsCustom1 {
@@ -7889,7 +7905,7 @@
   }
 
   .workflowGridPayments {
-    grid-template-columns: 10.5rem minmax(0, 3.25fr) 5rem minmax(3.25rem, 0.55fr) 7rem 5rem 7rem 2rem;
+    grid-template-columns: 10.5rem minmax(0, 3.25fr) minmax(3.25rem, 0.55fr) 7rem 5rem 5rem 7rem 2rem;
   }
 
   .workflowPanelFull .workflowGrid {
@@ -7897,7 +7913,7 @@
   }
 
   .workflowPanelFull .workflowGridPayments {
-    grid-template-columns: 10.5rem minmax(0, 3.25fr) 5rem minmax(3.25rem, 0.55fr) 7rem 5.5rem 6.5rem 2rem;
+    grid-template-columns: 10.5rem minmax(0, 3.25fr) minmax(3.25rem, 0.55fr) 7rem 5.5rem 5rem 6.5rem 2rem;
   }
 
   .workflowGrid.workflowGridOpsCustom1 {

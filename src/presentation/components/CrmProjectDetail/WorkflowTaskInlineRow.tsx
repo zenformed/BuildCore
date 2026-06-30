@@ -13,12 +13,14 @@ export type { WorkflowTaskPermissionDomain } from '@/presentation/features/crmPr
 export type WorkflowTaskInlineRowProps = UseWorkflowTaskInlineRowInput & {
   readonly variant?: 'table' | 'mobile' | 'compact';
   readonly enableCustomColumns?: boolean;
+  readonly enablePaymentCustomColumns?: boolean;
 };
 
 export function WorkflowTaskInlineRow({
   variant = 'table',
   showAmountColumn,
   enableCustomColumns = false,
+  enablePaymentCustomColumns = false,
   ...input
 }: WorkflowTaskInlineRowProps): ReactElement {
   const model = useWorkflowTaskInlineRow(input);
@@ -36,6 +38,7 @@ export function WorkflowTaskInlineRow({
       model={model}
       showAmountColumn={showAmountColumn}
       enableCustomColumns={enableCustomColumns}
+      enablePaymentCustomColumns={enablePaymentCustomColumns}
     />
   );
 }

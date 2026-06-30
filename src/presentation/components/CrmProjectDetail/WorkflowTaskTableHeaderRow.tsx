@@ -16,6 +16,7 @@ import {
   WorkflowTaskActionsColumnHeader,
 } from './EditableFieldLabelHeader';
 import { WorkflowTaskTableCustomColumnHeaders } from './WorkflowTaskTableCustomColumns';
+import { PaymentTableCustomColumnHeaders } from './PaymentTableCustomColumns';
 import styles from './ProjectDetail.module.css';
 
 export type WorkflowTaskTableHeaderRowProps = {
@@ -23,6 +24,7 @@ export type WorkflowTaskTableHeaderRowProps = {
   readonly showAmount?: boolean;
   readonly showNotes?: boolean;
   readonly enableCustomColumns?: boolean;
+  readonly enablePaymentCustomColumns?: boolean;
   readonly trailingHeaders?: ReactNode;
   readonly rowClassName?: string;
   readonly gridClassName?: string;
@@ -33,6 +35,7 @@ export function WorkflowTaskTableHeaderRow({
   showAmount = false,
   showNotes = true,
   enableCustomColumns = false,
+  enablePaymentCustomColumns = false,
   trailingHeaders = null,
   rowClassName,
   gridClassName,
@@ -46,7 +49,7 @@ export function WorkflowTaskTableHeaderRow({
         : styles.workflowGrid;
   const rowClass = [
     styles.tableHeader,
-    !showAmount ? styles.workflowTaskTableHeader : '',
+    styles.workflowTaskTableHeader,
     gridClass,
     rowClassName,
   ]
@@ -62,7 +65,7 @@ export function WorkflowTaskTableHeaderRow({
       />
       <EditableFieldLabelHeader fieldKey={WORKFLOW_TASK_TASK_FIELD_KEY} context={context} align="start" />
       {enableCustomColumns ? <WorkflowTaskTableCustomColumnHeaders /> : null}
-      {showAmount ? <span role="columnheader">{cols.amount}</span> : null}
+      {enablePaymentCustomColumns ? <PaymentTableCustomColumnHeaders /> : null}
       {showNotes ? (
         <EditableFieldLabelHeader
           fieldKey={WORKFLOW_TASK_NOTES_FIELD_KEY}
@@ -81,6 +84,7 @@ export function WorkflowTaskTableHeaderRow({
         context={context}
         align="center"
       />
+      {showAmount ? <span role="columnheader">{cols.amount}</span> : null}
       <EditableFieldLabelHeader fieldKey={WORKFLOW_TASK_DUE_FIELD_KEY} context={context} align="center" />
       {trailingHeaders}
       <WorkflowTaskActionsColumnHeader context={context} />

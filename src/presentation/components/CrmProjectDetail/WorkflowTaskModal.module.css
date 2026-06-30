@@ -95,37 +95,58 @@
   -webkit-overflow-scrolling: touch;
 }
 
-.rowTaskPrimary {
+.taskFieldGrid {
   display: grid;
   grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr) minmax(3.5rem, auto);
   gap: 0.75rem;
   align-items: start;
   margin-bottom: 1rem;
+  grid-template-areas:
+    'title stage assignee'
+    'status docs due';
 }
 
-.rowTaskPrimary > *,
-.rowTaskSecondary > * {
-  min-width: 0;
-}
-
-.rowTaskPrimaryNoAssignee {
+.taskFieldGridNoAssignee {
   grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+  grid-template-areas:
+    'title stage'
+    'status docs due';
 }
 
-.rowTaskSecondary {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 0.75rem;
-  align-items: start;
-  margin-bottom: 1rem;
-}
-
-.rowTaskSecondary > * {
+.taskFieldGrid > * {
   min-width: 0;
 }
 
-.rowTaskPrimary .rowField,
-.rowTaskSecondary .rowField,
+.areaTitle {
+  grid-area: title;
+}
+
+.areaStage {
+  grid-area: stage;
+}
+
+.areaAssignee {
+  grid-area: assignee;
+}
+
+.areaStatus {
+  grid-area: status;
+}
+
+.areaDocs {
+  grid-area: docs;
+}
+
+.areaDue {
+  grid-area: due;
+}
+
+.taskFieldGrid .areaTitle,
+.taskFieldGrid .areaStage,
+.taskFieldGrid .areaAssignee,
+.taskFieldGrid .areaStatus,
+.taskFieldGrid .areaDocs,
+.taskFieldGrid .areaDue,
 .rowPaymentDates .rowField {
   margin-bottom: 0;
 }
@@ -152,9 +173,26 @@
 }
 
 @media (max-width: 640px) {
-  .rowTaskPrimary,
-  .rowTaskPrimaryNoAssignee,
-  .rowTaskSecondary,
+  .taskFieldGrid {
+    grid-template-columns: minmax(0, 3fr) minmax(0, 1fr);
+    grid-template-areas:
+      'title title'
+      'stage stage'
+      'status assignee'
+      'docs docs'
+      'due due';
+  }
+
+  .taskFieldGridNoAssignee {
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      'title'
+      'stage'
+      'status'
+      'docs'
+      'due';
+  }
+
   .rowPaymentDates {
     grid-template-columns: 1fr;
   }

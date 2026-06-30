@@ -12,6 +12,7 @@ import { CrmPaymentTasksIndexProvider } from '@/presentation/providers/CrmPaymen
 import { BuildCoreFieldLabelsProvider } from '@/presentation/providers/BuildCoreFieldLabelsProvider';
 import { BuildCoreWorkflowTaskCustomFieldsProvider } from '@/presentation/providers/BuildCoreWorkflowTaskCustomFieldsProvider';
 import { BuildCoreWorkflowTaskTableColumnsProvider } from '@/presentation/providers/BuildCoreWorkflowTaskTableColumnsProvider';
+import { BuildCorePaymentTableColumnsProvider } from '@/presentation/providers/BuildCorePaymentTableColumnsProvider';
 import { BuildCorePipelineStagesProvider } from '@/presentation/providers/BuildCorePipelineStagesProvider';
 
 export default function DashboardGroupLayout({
@@ -29,7 +30,9 @@ export default function DashboardGroupLayout({
                 <BuildCoreFieldLabelsProvider>
                   <BuildCoreWorkflowTaskCustomFieldsProvider>
                     <BuildCoreWorkflowTaskTableColumnsProvider>
-                      <BuildCorePersistentDashboardShell>{children}</BuildCorePersistentDashboardShell>
+                      <BuildCorePaymentTableColumnsProvider>
+                        <BuildCorePersistentDashboardShell>{children}</BuildCorePersistentDashboardShell>
+                      </BuildCorePaymentTableColumnsProvider>
                     </BuildCoreWorkflowTaskTableColumnsProvider>
                   </BuildCoreWorkflowTaskCustomFieldsProvider>
                 </BuildCoreFieldLabelsProvider>

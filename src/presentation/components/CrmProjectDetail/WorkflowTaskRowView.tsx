@@ -30,6 +30,7 @@ import { WorkflowDocumentFileIcon } from './WorkflowDocumentFileIcon';
 import { WorkflowInlineMenu } from './WorkflowInlineMenu';
 import { WorkflowTaskRowActionsMenu } from './WorkflowTaskRowActionsMenu';
 import { WorkflowTaskTableCustomColumnCells, resolveWorkflowOpsGridClassName } from './WorkflowTaskTableCustomColumns';
+import { PaymentTableCustomColumnCells } from './PaymentTableCustomColumns';
 import { useBuildCoreWorkflowTaskTableColumns } from '@/presentation/providers/BuildCoreWorkflowTaskTableColumnsProvider';
 import styles from './ProjectDetail.module.css';
 
@@ -896,10 +897,12 @@ export function WorkflowTaskRowTableView({
   model,
   showAmountColumn = false,
   enableCustomColumns = false,
+  enablePaymentCustomColumns = false,
 }: {
   readonly model: WorkflowTaskInlineRowModel;
   readonly showAmountColumn?: boolean;
   readonly enableCustomColumns?: boolean;
+  readonly enablePaymentCustomColumns?: boolean;
 }): ReactElement {
   const { gridClassName } = useBuildCoreWorkflowTaskTableColumns();
   const showAmount = showAmountColumn || model.showAmount;
@@ -929,10 +932,13 @@ export function WorkflowTaskRowTableView({
       <WorkflowTaskRowStatusField model={model} />
       <WorkflowTaskRowTitleField model={model} />
       {enableCustomColumns && !showAmount ? <WorkflowTaskTableCustomColumnCells task={model.task} /> : null}
-      {showAmount ? <WorkflowTaskRowAmountField model={model} /> : null}
+      {enablePaymentCustomColumns && showAmount ? (
+        <PaymentTableCustomColumnCells task={model.task} />
+      ) : null}
       <WorkflowTaskRowNotesField model={model} />
       <WorkflowTaskRowDocumentsField model={model} />
       <WorkflowTaskRowAssigneeField model={model} />
+      {showAmount ? <WorkflowTaskRowAmountField model={model} /> : null}
       <WorkflowTaskRowDueField model={model} />
       {model.showPaymentDates ? <WorkflowTaskRowPaymentDateFields model={model} /> : null}
       {model.showActionsMenu ? (

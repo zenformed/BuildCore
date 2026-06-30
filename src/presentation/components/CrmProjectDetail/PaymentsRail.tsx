@@ -17,6 +17,7 @@ import { DetailPanelSectionRefresh } from './DetailPanelSectionRefresh';
 import { DetailPanelSectionSearch } from './DetailPanelSectionSearch';
 import { WorkflowTaskInlineRow } from './WorkflowTaskInlineRow';
 import { WorkflowTaskTableHeaderRow } from './WorkflowTaskTableHeaderRow';
+import { useBuildCorePaymentTableColumns } from '@/presentation/providers/BuildCorePaymentTableColumnsProvider';
 import styles from './ProjectDetail.module.css';
 
 export type PaymentsRailProps = {
@@ -57,6 +58,7 @@ export function PaymentsRail({
   const docCounts = countDocumentsByTaskId(project.documents);
   const payCols = content.projectDetail.payments.columns;
   const isMobileLayout = useDashboardMobileLayout();
+  const { shellClassName } = useBuildCorePaymentTableColumns();
 
   const showTable = canView && (filteredMilestones.length > 0 || permissions.canViewAllStages);
 
@@ -145,10 +147,13 @@ export function PaymentsRail({
       ) : (
         <div className={styles.detailPanelTableCard}>
           <div className={styles.paymentsTableScroll}>
-            <div className={styles.paymentsTableGridShell}>
+            <div
+              className={[styles.paymentsTableGridShell, shellClassName].filter(Boolean).join(' ')}
+            >
             <WorkflowTaskTableHeaderRow
               context="payments"
               showAmount
+              enablePaymentCustomColumns
               rowClassName={styles.paymentsTableHeader}
               gridClassName=""
               trailingHeaders={
@@ -166,6 +171,7 @@ export function PaymentsRail({
                 docCount={docCounts.get(task.id) ?? 0}
                 taskDocuments={project.documents.filter((doc) => doc.workflowTaskId === task.id)}
                 showAmountColumn
+                enablePaymentCustomColumns
                 permissionDomain="payments"
                 isApiSource={isApiSource}
                 onUpdated={onTaskUpdated}
