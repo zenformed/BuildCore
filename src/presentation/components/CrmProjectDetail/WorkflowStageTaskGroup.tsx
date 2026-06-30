@@ -14,6 +14,7 @@ import {
 import { useWorkflowStageExpanded } from '@/presentation/features/crmProjectDetail/useWorkflowStageExpanded';
 import { CrmProjectStatusCircleIcon } from '@/presentation/components/crmShared/CrmProjectStatusCircleIcon';
 import { WorkflowTaskInlineRow } from './WorkflowTaskInlineRow';
+import { WorkflowTaskTableHeaderRow } from './WorkflowTaskTableHeaderRow';
 import styles from './ProjectDetail.module.css';
 
 export type ManualStageCompletionToggleAction = 'complete' | 'incomplete';
@@ -66,7 +67,6 @@ export function WorkflowStageTaskGroup({
   unifiedDesktopTable = false,
   draftRow = null,
 }: WorkflowStageTaskGroupProps): ReactElement {
-  const cols = content.projectDetail.workflow.columns;
   const wf = content.projectDetail.workflow;
   const isMobileLayout = useDashboardMobileLayout();
   const showCardLayout = useCardLayout ?? isMobileLayout;
@@ -184,18 +184,7 @@ export function WorkflowStageTaskGroup({
   ) : (
     <div id={panelId} className={styles.stageGroupTable}>
       {!unifiedDesktopTable ? (
-        <div className={`${styles.tableHeader} ${gridClass}`} role="row">
-          <span role="columnheader">{cols.status}</span>
-          <span role="columnheader">{cols.task}</span>
-          {group.isPaymentsGroup ? <span role="columnheader">{cols.amount}</span> : null}
-          <span role="columnheader" className={styles.workflowNotesHeader}>
-            {cols.notes}
-          </span>
-          <span role="columnheader">{cols.documents}</span>
-          <span role="columnheader">{cols.assigned}</span>
-          <span role="columnheader">{cols.due}</span>
-          <span role="columnheader" className={styles.taskDeleteHeader} aria-hidden />
-        </div>
+        <WorkflowTaskTableHeaderRow showAmount={group.isPaymentsGroup} />
       ) : null}
       {group.tasks.map((task) => (
         <WorkflowTaskInlineRow

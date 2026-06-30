@@ -17,6 +17,7 @@ import { DetailPanelHeaderButton } from './DetailPanelHeaderButton';
 import { DetailPanelSectionRefresh } from './DetailPanelSectionRefresh';
 import { DetailPanelSectionSearch } from './DetailPanelSectionSearch';
 import { WorkflowTaskInlineRow } from './WorkflowTaskInlineRow';
+import { WorkflowTaskTableHeaderRow } from './WorkflowTaskTableHeaderRow';
 import styles from './ProjectDetail.module.css';
 
 export type PaymentsRailProps = {
@@ -45,7 +46,6 @@ export function PaymentsRail({
   const canView = isReady && permissions.canView;
   const canCreate = isReady && permissions.canCreate;
   const canDelete = isReady && permissions.canDelete;
-  const cols = content.projectDetail.workflow.columns;
   const milestones = useMemo(
     () => listPaymentMilestones(project.workflowTasks),
     [project.workflowTasks]
@@ -158,20 +158,18 @@ export function PaymentsRail({
         <div className={styles.detailPanelTableCard}>
           <div className={styles.paymentsTableScroll}>
             <div className={styles.paymentsTableGridShell}>
-            <div className={`${styles.tableHeader} ${styles.paymentsTableHeader}`} role="row">
-              <span role="columnheader">{cols.status}</span>
-              <span role="columnheader">{cols.task}</span>
-              <span role="columnheader">{cols.amount}</span>
-              <span role="columnheader" className={styles.workflowNotesHeader}>
-                {cols.notes}
-              </span>
-              <span role="columnheader">{cols.documents}</span>
-              <span role="columnheader">{cols.assigned}</span>
-              <span role="columnheader">{cols.due}</span>
-              <span role="columnheader">{payCols.invoiced}</span>
-              <span role="columnheader">{payCols.paid}</span>
-              <span role="columnheader" className={styles.taskDeleteHeader} aria-hidden />
-            </div>
+            <WorkflowTaskTableHeaderRow
+              context="payments"
+              showAmount
+              rowClassName={styles.paymentsTableHeader}
+              gridClassName=""
+              trailingHeaders={
+                <>
+                  <span role="columnheader">{payCols.invoiced}</span>
+                  <span role="columnheader">{payCols.paid}</span>
+                </>
+              }
+            />
             {filteredMilestones.map((task) => (
               <WorkflowTaskInlineRow
                 key={task.id}

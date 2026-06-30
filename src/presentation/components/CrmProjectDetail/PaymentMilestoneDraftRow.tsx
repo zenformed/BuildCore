@@ -25,6 +25,14 @@ import { crmRepositories } from '@/shared/di/container';
 import shared from '@/presentation/components/crmShared/crmShared.module.css';
 import { TeamMemberAvatar } from './TeamMemberAvatar';
 import { WorkflowInlineMenu } from './WorkflowInlineMenu';
+import { WorkflowFieldLabelText } from './EditableFieldLabelHeader';
+import {
+  WORKFLOW_TASK_ASSIGNED_FIELD_KEY,
+  WORKFLOW_TASK_DOCUMENTS_FIELD_KEY,
+  WORKFLOW_TASK_DUE_FIELD_KEY,
+  WORKFLOW_TASK_STATUS_FIELD_KEY,
+} from '@/domain/buildcore/fieldLabels';
+import { useBuildCoreFieldLabels } from '@/presentation/providers/BuildCoreFieldLabelsProvider';
 import styles from './ProjectDetail.module.css';
 
 function statusBadgeClass(status: WorkflowTaskStatus): string {
@@ -93,6 +101,7 @@ export function PaymentMilestoneDraftRow({
   const payments = content.projectDetail.payments;
   const cols = wf.columns;
   const payCols = payments.columns;
+  const { getFieldLabel } = useBuildCoreFieldLabels();
   const isMobileLayout = useDashboardMobileLayout();
   const dash = useBuildCoreDashboardContext();
   const { requestCustomerNotifyAfterAssigneeChange } = useProjectDetailShell();
@@ -205,7 +214,10 @@ export function PaymentMilestoneDraftRow({
           <div className={styles.workflowTaskMobileCardBody}>
           <div className={styles.workflowTaskMobileCardGrid2}>
             <div className={styles.workflowTaskMobileCardCell}>
-              <span className={styles.projectInfoMobileLabel}>{cols.status}</span>
+              <WorkflowFieldLabelText
+                fieldKey={WORKFLOW_TASK_STATUS_FIELD_KEY}
+                className={styles.projectInfoMobileLabel}
+              />
               <div className={styles.workflowTaskMobileCardControl} ref={statusRef}>
                 <button
                   type="button"
@@ -246,7 +258,10 @@ export function PaymentMilestoneDraftRow({
               </div>
             </div>
             <div className={`${styles.workflowTaskMobileCardCell} ${styles.workflowTaskMobileCardCell_right}`}>
-              <span className={styles.projectInfoMobileLabel}>{cols.assigned}</span>
+              <WorkflowFieldLabelText
+                fieldKey={WORKFLOW_TASK_ASSIGNED_FIELD_KEY}
+                className={styles.projectInfoMobileLabel}
+              />
               <div className={styles.workflowTaskMobileCardControl} ref={assigneeRef}>
                 <button
                   type="button"
@@ -297,7 +312,10 @@ export function PaymentMilestoneDraftRow({
           </div>
           <div className={styles.workflowTaskMobileCardGrid2}>
             <div className={styles.workflowTaskMobileCardCell}>
-              <span className={styles.projectInfoMobileLabel}>{cols.documents}</span>
+              <WorkflowFieldLabelText
+                fieldKey={WORKFLOW_TASK_DOCUMENTS_FIELD_KEY}
+                className={styles.projectInfoMobileLabel}
+              />
               <select
                 className={`${styles.paymentDraftSelect} ${styles.workflowTaskMobileDraftField}`}
                 value={form.documentsRequired}
@@ -333,13 +351,16 @@ export function PaymentMilestoneDraftRow({
           </div>
           <div className={styles.workflowTaskMobileCardGrid3}>
             <div className={styles.workflowTaskMobileCardCell}>
-              <span className={styles.projectInfoMobileLabel}>{cols.due}</span>
+              <WorkflowFieldLabelText
+                fieldKey={WORKFLOW_TASK_DUE_FIELD_KEY}
+                className={styles.projectInfoMobileLabel}
+              />
               <input
                 type="date"
                 className={`${styles.paymentDraftDateInput} ${styles.workflowTaskMobileDraftField}`}
                 value={form.dueAt}
                 disabled={saving}
-                aria-label={cols.due}
+                aria-label={getFieldLabel(WORKFLOW_TASK_DUE_FIELD_KEY)}
                 onChange={(e) => updateField('dueAt', e.target.value)}
               />
             </div>

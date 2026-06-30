@@ -14,6 +14,15 @@ import { formatCentsAsUsd } from '@/presentation/features/crmProjects/crmProject
 import { workflowTaskDueToInputValue } from '@/presentation/features/crmProjectDetail/workflowTaskInlineUtils';
 import { centsToUsdInput } from '@/presentation/features/crmProjectDetail/workflowTaskFormModel';
 import type { WorkflowTaskInlineRowModel } from '@/presentation/features/crmProjectDetail/useWorkflowTaskInlineRow';
+import {
+  WORKFLOW_TASK_ASSIGNED_FIELD_KEY,
+  WORKFLOW_TASK_DOCUMENTS_FIELD_KEY,
+  WORKFLOW_TASK_DUE_FIELD_KEY,
+  WORKFLOW_TASK_NOTES_FIELD_KEY,
+  WORKFLOW_TASK_STATUS_FIELD_KEY,
+} from '@/domain/buildcore/fieldLabels';
+import { useBuildCoreFieldLabels } from '@/presentation/providers/BuildCoreFieldLabelsProvider';
+import { WorkflowFieldLabelText } from './EditableFieldLabelHeader';
 import { AssigneeMenuOptionLabel } from '@/presentation/features/crmAssignment/AssigneeMenuOptionLabel';
 import shared from '@/presentation/components/crmShared/crmShared.module.css';
 import { TeamMemberAvatar } from './TeamMemberAvatar';
@@ -88,7 +97,8 @@ function WorkflowTaskCompactNotesPopover({
   readonly model: WorkflowTaskInlineRowModel;
   readonly anchorRef: MutableRefObject<HTMLButtonElement | null>;
 }): ReactElement | null {
-  const { editingNotes, canEdit, saving, notesDraft, task, wf } = model;
+  const { editingNotes, canEdit, saving, notesDraft, task } = model;
+  const { getFieldLabel } = useBuildCoreFieldLabels();
 
   if (!editingNotes || !canEdit) {
     return null;
@@ -105,7 +115,7 @@ function WorkflowTaskCompactNotesPopover({
     >
       <div className={styles.workflowTaskCompactNotesPanel}>
         <label className={styles.workflowTaskCompactNotesPanelLabel} htmlFor={`task-notes-${task.id}`}>
-          {wf.columns.notes}
+          {getFieldLabel(WORKFLOW_TASK_NOTES_FIELD_KEY)}
         </label>
         <textarea
           id={`task-notes-${task.id}`}
@@ -430,6 +440,8 @@ function WorkflowTaskRowDocumentsField({
   const documentsText = mobile || compact ? model.documentsMobileLabel : model.documentsLabel;
   const compactDocumentsText =
     compact && model.hasDocuments ? String(model.documentCount) : compact ? '' : documentsText;
+  const { getFieldLabel } = useBuildCoreFieldLabels();
+  const documentsFieldLabel = getFieldLabel(WORKFLOW_TASK_DOCUMENTS_FIELD_KEY);
 
   return (
     <span className={wrapClass} ref={model.documentsRef}>
@@ -440,7 +452,7 @@ function WorkflowTaskRowDocumentsField({
         }`}
         disabled={model.saving || !model.canOpenDocumentsMenu}
         aria-expanded={model.documentsMenuOpen}
-        aria-label={compact && !compactDocumentsText ? model.wf.columns.documents : undefined}
+        aria-label={compact && !compactDocumentsText ? documentsFieldLabel : undefined}
         onClick={() => {
           model.setStatusMenuOpen(false);
           model.setAssigneeMenuOpen(false);
@@ -654,7 +666,8 @@ function WorkflowTaskRowDueField({
       ? styles.workflowTaskMobileCardControl
       : `${styles.inlineDueCell} ${styles.workflowMetaCell}`;
   const dueDisplay = model.task.dueAt ? formatShortDate(model.task.dueAt) : '';
-  const dueLabel = model.wf.columns.due;
+  const { getFieldLabel } = useBuildCoreFieldLabels();
+  const dueLabel = getFieldLabel(WORKFLOW_TASK_DUE_FIELD_KEY);
 
   return (
     <span className={dueClass}>
@@ -1022,26 +1035,41 @@ function WorkflowTaskRowWorkflowMobileView({
       </div>
       <div className={styles.workflowTaskMobileCardGrid2}>
         <div className={styles.workflowTaskMobileCardCell}>
-          <span className={styles.projectInfoMobileLabel}>{cols.status}</span>
+          <WorkflowFieldLabelText
+            fieldKey={WORKFLOW_TASK_STATUS_FIELD_KEY}
+            className={styles.projectInfoMobileLabel}
+          />
           <WorkflowTaskRowStatusField model={model} mobile />
         </div>
         <div className={`${styles.workflowTaskMobileCardCell} ${styles.workflowTaskMobileCardCell_right}`}>
-          <span className={styles.projectInfoMobileLabel}>{cols.assigned}</span>
+          <WorkflowFieldLabelText
+            fieldKey={WORKFLOW_TASK_ASSIGNED_FIELD_KEY}
+            className={styles.projectInfoMobileLabel}
+          />
           <WorkflowTaskRowAssigneeField model={model} mobile />
         </div>
       </div>
       <div className={styles.workflowTaskMobileCardGrid2}>
         <div className={styles.workflowTaskMobileCardCell}>
-          <span className={styles.projectInfoMobileLabel}>{cols.documents}</span>
+          <WorkflowFieldLabelText
+            fieldKey={WORKFLOW_TASK_DOCUMENTS_FIELD_KEY}
+            className={styles.projectInfoMobileLabel}
+          />
           <WorkflowTaskRowDocumentsField model={model} mobile />
         </div>
         <div className={`${styles.workflowTaskMobileCardCell} ${styles.workflowTaskMobileCardCell_right}`}>
-          <span className={styles.projectInfoMobileLabel}>{cols.due}</span>
+          <WorkflowFieldLabelText
+            fieldKey={WORKFLOW_TASK_DUE_FIELD_KEY}
+            className={styles.projectInfoMobileLabel}
+          />
           <WorkflowTaskRowDueField model={model} mobile />
         </div>
       </div>
       <div className={styles.workflowTaskMobileCardNotes}>
-        <span className={styles.projectInfoMobileLabel}>{cols.notes}</span>
+        <WorkflowFieldLabelText
+          fieldKey={WORKFLOW_TASK_NOTES_FIELD_KEY}
+          className={styles.projectInfoMobileLabel}
+        />
         <WorkflowTaskRowNotesField model={model} mobile />
       </div>
     </article>
@@ -1083,17 +1111,26 @@ function WorkflowTaskRowPaymentMobileView({
       <div className={styles.workflowTaskMobileCardBody}>
       <div className={styles.workflowTaskMobileCardGrid2}>
         <div className={styles.workflowTaskMobileCardCell}>
-          <span className={styles.projectInfoMobileLabel}>{cols.status}</span>
+          <WorkflowFieldLabelText
+            fieldKey={WORKFLOW_TASK_STATUS_FIELD_KEY}
+            className={styles.projectInfoMobileLabel}
+          />
           <WorkflowTaskRowStatusField model={model} mobile />
         </div>
         <div className={`${styles.workflowTaskMobileCardCell} ${styles.workflowTaskMobileCardCell_right}`}>
-          <span className={styles.projectInfoMobileLabel}>{cols.assigned}</span>
+          <WorkflowFieldLabelText
+            fieldKey={WORKFLOW_TASK_ASSIGNED_FIELD_KEY}
+            className={styles.projectInfoMobileLabel}
+          />
           <WorkflowTaskRowAssigneeField model={model} mobile />
         </div>
       </div>
       <div className={styles.workflowTaskMobileCardGrid2}>
         <div className={styles.workflowTaskMobileCardCell}>
-          <span className={styles.projectInfoMobileLabel}>{cols.documents}</span>
+          <WorkflowFieldLabelText
+            fieldKey={WORKFLOW_TASK_DOCUMENTS_FIELD_KEY}
+            className={styles.projectInfoMobileLabel}
+          />
           <WorkflowTaskRowDocumentsField model={model} mobile />
         </div>
         <div className={`${styles.workflowTaskMobileCardCell} ${styles.workflowTaskMobileCardCell_right}`}>
@@ -1103,7 +1140,10 @@ function WorkflowTaskRowPaymentMobileView({
       </div>
       <div className={styles.workflowTaskMobileCardGrid3}>
         <div className={styles.workflowTaskMobileCardCell}>
-          <span className={styles.projectInfoMobileLabel}>{cols.due}</span>
+          <WorkflowFieldLabelText
+            fieldKey={WORKFLOW_TASK_DUE_FIELD_KEY}
+            className={styles.projectInfoMobileLabel}
+          />
           <WorkflowTaskRowDueField model={model} mobile />
         </div>
         <div className={`${styles.workflowTaskMobileCardCell} ${styles.workflowTaskMobileCardCell_center}`}>
@@ -1116,7 +1156,10 @@ function WorkflowTaskRowPaymentMobileView({
         </div>
       </div>
       <div className={styles.workflowTaskMobileCardNotes}>
-        <span className={styles.projectInfoMobileLabel}>{cols.notes}</span>
+        <WorkflowFieldLabelText
+          fieldKey={WORKFLOW_TASK_NOTES_FIELD_KEY}
+          className={styles.projectInfoMobileLabel}
+        />
         <WorkflowTaskRowNotesField model={model} mobile />
       </div>
       </div>

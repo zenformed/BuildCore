@@ -26,6 +26,11 @@ import { crmRepositories } from '@/shared/di/container';
 import shared from '@/presentation/components/crmShared/crmShared.module.css';
 import { TeamMemberAvatar } from './TeamMemberAvatar';
 import { WorkflowInlineMenu } from './WorkflowInlineMenu';
+import {
+  WORKFLOW_TASK_DOCUMENTS_FIELD_KEY,
+  WORKFLOW_TASK_DUE_FIELD_KEY,
+} from '@/domain/buildcore/fieldLabels';
+import { useBuildCoreFieldLabels } from '@/presentation/providers/BuildCoreFieldLabelsProvider';
 import styles from './ProjectDetail.module.css';
 
 function statusBadgeClass(status: WorkflowTaskStatus): string {
@@ -265,6 +270,7 @@ function WorkflowOpsTaskDraftCompactDueField({
   const dueDisplay = form.dueAt.trim()
     ? formatShortDate(`${form.dueAt.trim()}T12:00:00.000Z`)
     : '';
+  const { getFieldLabel } = useBuildCoreFieldLabels();
 
   return (
     <span className={styles.workflowTaskCompactControl}>
@@ -272,7 +278,7 @@ function WorkflowOpsTaskDraftCompactDueField({
         type="button"
         className={`${styles.inlineCellBtn} ${styles.workflowTaskCompactMetaBtn} ${styles.workflowTaskCompactDueBtn}`}
         disabled={saving}
-        aria-label={wf.columns.due}
+        aria-label={getFieldLabel(WORKFLOW_TASK_DUE_FIELD_KEY)}
         onClick={() => {
           onCloseMenus();
           dueInputRef.current?.showPicker?.();
@@ -319,6 +325,8 @@ function WorkflowOpsTaskDraftCompactDocumentsField({
   readonly onCloseMenus: () => void;
   readonly updateField: WorkflowOpsTaskDraftFieldsProps['updateField'];
 }): ReactElement {
+  const { getFieldLabel } = useBuildCoreFieldLabels();
+
   return (
     <span className={styles.workflowTaskCompactControl} ref={documentsRef}>
       <button
@@ -326,7 +334,7 @@ function WorkflowOpsTaskDraftCompactDocumentsField({
         className={`${styles.inlineCellBtn} ${styles.documentsCell} ${styles.workflowTaskCompactMetaBtn}`}
         disabled={saving}
         aria-expanded={documentsMenuOpen}
-        aria-label={wf.columns.documents}
+        aria-label={getFieldLabel(WORKFLOW_TASK_DOCUMENTS_FIELD_KEY)}
         onClick={() => {
           onCloseMenus();
           onDocumentsMenuOpenChange(!documentsMenuOpen);
