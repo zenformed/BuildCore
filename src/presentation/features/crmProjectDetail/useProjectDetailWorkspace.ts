@@ -1,8 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import type { CrmBudgetEntry, CrmDocumentMetadata, CrmProjectDetail, CrmWorkflowTask } from '@/domain/crm';
-import { isPaymentWorkflowTask } from '@/domain/crm';
+import type { CrmBudgetEntry, CrmDocumentMetadata, CrmProjectDetail, CrmWorkflowTask, PipelineStageSlug } from '@/domain/crm';
 import { archiveCrmWorkflowTask } from '@/application/use-cases/crm';
 import { listWorkflowTaskDocuments } from '@/application/use-cases/crm/listWorkflowTaskDocuments';
 import { validateWorkflowTaskDocumentUpload } from '@/domain/crm/documentUpload';
@@ -11,7 +10,8 @@ import { performCrmDirectUpload } from '@/presentation/features/crmDirectUpload/
 import { useProjectSummaryPatch } from '@/presentation/features/crmProjectDetail/useProjectSummaryPatch';
 import { useBudgetSection } from '@/presentation/features/crmProjectDetail/useBudgetSection';
 import { useWorkflowTasksSection } from '@/presentation/features/crmProjectDetail/useWorkflowTasksSection';
-import type { WorkflowTaskDrawerContext } from '@/presentation/components/CrmProjectDetail/WorkflowTaskDrawer';
+import type { WorkflowTaskModalContext } from '@/presentation/components/CrmProjectDetail/WorkflowTaskModal';
+import { isPaymentWorkflowTask } from '@/domain/crm';
 import { crmRepositories } from '@/shared/di/container';
 import { useWorkflowTaskAssignedNotifyPrompt } from '@/presentation/features/crmProjectDetail/useWorkflowTaskCustomerNotifyPrompt';
 import { useSendAttachmentDialog } from '@/presentation/features/communications/useSendAttachmentDialog';
@@ -29,12 +29,19 @@ export function useProjectDetailWorkspace(initialProject: CrmProjectDetail) {
   const [project, setProject] = useState(initialProject);
   const [toast, setToast] = useState<ProjectDetailToast | null>(null);
   const [documentsOpen, setDocumentsOpen] = useState(false);
-  const [taskDrawer, setTaskDrawer] = useState<{
+  const [taskModal, setTaskModal] = useState<{
     open: boolean;
     mode: 'create' | 'edit';
-    context: WorkflowTaskDrawerContext;
+    context: WorkflowTaskModalContext;
     task: CrmWorkflowTask | null;
-  }>({ open: false, mode: 'create', context: 'workflow', task: null });
+    defaultStageSlug: PipelineStageSlug | null;
+  }>({
+    open: false,
+    mode: 'create',
+    context: 'workflow',
+    task: null,
+    defaultStageSlug: null,
+  });
   const [archiveConfirmTask, setArchiveConfirmTask] = useState<CrmWorkflowTask | null>(null);
   const [documentUploadConfirm, setDocumentUploadConfirm] = useState<{
     task: CrmWorkflowTask;
@@ -211,21 +218,37 @@ export function useProjectDetailWorkspace(initialProject: CrmProjectDetail) {
     wf.archiveTaskSuccess,
   ]);
 
-  const openCreateTask = useCallback((context: WorkflowTaskDrawerContext) => {
-    setTaskDrawer({ open: true, mode: 'create', context, task: null });
-  }, []);
+  const openCreateWorkflowTask = useCallback(
+    (input: { context: WorkflowTaskModalContext; stageSlug?: PipelineStageSlug }) => {
+      setTaskModal({
+        open: true,
+        mode: 'create',
+        context: input.context,
+        task: null,
+        defaultStageSlug: input.stageSlug ?? null,
+      });
+    },
+    []
+  );
 
   const openEditWorkflowTask = useCallback((task: CrmWorkflowTask) => {
-    setTaskDrawer({
+    setTaskModal({
       open: true,
       mode: 'edit',
       context: isPaymentWorkflowTask(task) ? 'payment' : 'workflow',
       task,
+      defaultStageSlug: null,
     });
   }, []);
 
-  const closeTaskDrawer = useCallback(() => {
-    setTaskDrawer({ open: false, mode: 'create', context: 'workflow', task: null });
+  const closeTaskModal = useCallback(() => {
+    setTaskModal({
+      open: false,
+      mode: 'create',
+      context: 'workflow',
+      task: null,
+      defaultStageSlug: null,
+    });
   }, []);
 
   const openSendAttachmentDialogForTask = useCallback(
@@ -285,7 +308,7 @@ export function useProjectDetailWorkspace(initialProject: CrmProjectDetail) {
     setToast,
     documentsOpen,
     setDocumentsOpen,
-    taskDrawer,
+    taskModal,
     archiveConfirmTask,
     setArchiveConfirmTask,
     documentUploadConfirm,
@@ -308,9 +331,9 @@ export function useProjectDetailWorkspace(initialProject: CrmProjectDetail) {
     handleTaskDocumentDrop,
     handleConfirmDocumentUpload,
     handleConfirmArchiveTask,
-    openCreateTask,
+    openCreateWorkflowTask,
     openEditWorkflowTask,
-    closeTaskDrawer,
+    closeTaskModal,
     wf,
     assignedNotifyPrompt: assignedNotify.assignedNotifyPrompt,
     assignedNotifySending: assignedNotify.assignedNotifySending,

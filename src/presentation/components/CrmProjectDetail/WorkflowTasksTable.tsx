@@ -1,7 +1,7 @@
 'use client';
 
 import type { ReactElement } from 'react';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import type { CrmProjectDetail, CrmWorkflowTask, PipelineStageSlug } from '@/domain/crm';
 import { markCrmProjectStageCompleteManual } from '@/application/use-cases/crm/markCrmProjectStageCompleteManual';
@@ -30,11 +30,9 @@ import {
   groupOpsWorkflowTasksByStage,
   limitWorkflowTaskGroups,
   limitWorkflowTaskStageGroups,
-  promoteWorkflowStageGroup,
   WORKFLOW_STAGES_PREVIEW_LIMIT,
   WORKFLOW_TASKS_PREVIEW_LIMIT,
 } from '@/presentation/features/crmProjectDetail/workflowTaskGroups';
-import { writeWorkflowStageExpanded } from '@/presentation/features/crmProjectDetail/workflowStageCollapseStorage';
 import { useBuildCoreWorkflowTaskAccess } from '@/presentation/providers/BuildCoreWorkflowTaskAccessProvider';
 import { useBuildCorePipelineStages } from '@/presentation/providers/BuildCorePipelineStagesProvider';
 import { useDashboardMobileLayout } from '@/presentation/features/crmProjects/useDashboardMobileLayout';
@@ -42,7 +40,6 @@ import { DetailPanelHeader } from './DetailPanelHeader';
 import { DetailPanelHeaderActions } from './DetailPanelHeaderActions';
 import { DetailPanelSectionRefresh } from './DetailPanelSectionRefresh';
 import { DetailPanelSectionSearch } from './DetailPanelSectionSearch';
-import { WorkflowOpsTaskDraftRow } from './WorkflowOpsTaskDraftRow';
 import { WorkflowStageTaskGroup, type ManualStageCompletionToggleAction } from './WorkflowStageTaskGroup';
 import { WorkflowTasksTableColumnHeader } from './WorkflowTasksTableColumnHeader';
 import { WorkflowTaskStageAddButton } from './WorkflowTaskStageAddButton';
@@ -89,6 +86,7 @@ export function WorkflowTasksTable({
     showCompletionActions,
     parentRouteSlug,
     subSlug,
+    openCreateWorkflowTask,
   } = useProjectDetailShell();
   const projectRouteScope = useMemo(
     () => (subSlug != null ? { parentSlug: parentRouteSlug } : undefined),
@@ -105,7 +103,6 @@ export function WorkflowTasksTable({
   const isFullLayout = layout === 'full';
   const isMobileLayout = useDashboardMobileLayout();
   const currentStage = project.summary.currentStageSlug;
-  const [draftStageSlug, setDraftStageSlug] = useState<PipelineStageSlug | null>(null);
   const [pendingStageToggle, setPendingStageToggle] = useState<{
     stageSlug: PipelineStageSlug;
     stageLabel: string;
@@ -144,46 +141,24 @@ export function WorkflowTasksTable({
     [catalog, currentStage, filteredTasks, hideEmptyStages, isNarrowingResults]
   );
 
-  const orderedGroups = useMemo(() => {
-    if (draftStageSlug == null || isDesktopStageCardMode) return groups;
-    return promoteWorkflowStageGroup(groups, draftStageSlug, catalog);
-  }, [catalog, draftStageSlug, groups, isDesktopStageCardMode]);
-
+  const orderedGroups = groups;
   const totalTasks = countWorkflowTasksInGroups(groups);
   const previewStageGroups = isFullLayout
     ? orderedGroups
     : limitWorkflowTaskStageGroups(orderedGroups, WORKFLOW_STAGES_PREVIEW_LIMIT);
-  const shouldLimitTaskRows =
-    !isFullLayout && draftStageSlug == null && totalTasks > WORKFLOW_TASKS_PREVIEW_LIMIT;
+  const shouldLimitTaskRows = !isFullLayout && totalTasks > WORKFLOW_TASKS_PREVIEW_LIMIT;
   const displayGroups = shouldLimitTaskRows
     ? limitWorkflowTaskGroups(previewStageGroups, WORKFLOW_TASKS_PREVIEW_LIMIT)
     : previewStageGroups;
   const docCounts = countDocumentsByTaskId(project.documents);
   const showViewAllLink = !isFullLayout;
-  const showWorkflowContent = groups.length > 0 || draftStageSlug != null;
+  const showWorkflowContent = groups.length > 0;
 
-  useEffect(() => {
-    if (draftStageSlug == null) return;
-    writeWorkflowStageExpanded(project.summary.slug, draftStageSlug, true);
-  }, [draftStageSlug, project.summary.slug]);
-
-  const handleSelectStage = useCallback((stageSlug: PipelineStageSlug) => {
-    setDraftStageSlug(stageSlug);
-  }, []);
-
-  const handleCancelDraft = useCallback(() => {
-    setDraftStageSlug(null);
-  }, []);
-
-  const handleDraftSaved = useCallback(
-    async (task: CrmWorkflowTask) => {
-      try {
-        await onTaskAdded?.(task);
-      } catch {
-        onTaskError?.(content.projectDetail.saveError);
-      }
+  const handleSelectStage = useCallback(
+    (stageSlug: PipelineStageSlug) => {
+      openCreateWorkflowTask({ context: 'workflow', stageSlug });
     },
-    [onTaskAdded, onTaskError]
+    [openCreateWorkflowTask]
   );
 
   const handleConfirmStageToggle = useCallback(async () => {
@@ -309,7 +284,7 @@ export function WorkflowTasksTable({
         workflowTasks={project.workflowTasks}
         manualStageCompletions={project.manualStageCompletions}
         stages={catalog}
-        disabled={draftStageSlug != null}
+        disabled={markStageToggleBusy}
         busy={markStageToggleBusy}
         onClick={() => setBatchCompleteConfirmOpen(true)}
       />
@@ -328,7 +303,6 @@ export function WorkflowTasksTable({
   const viewToggleButton = !isMobileLayout ? (
     <WorkflowTasksViewToggleButton
       viewMode={taskViewMode}
-      disabled={draftStageSlug != null}
       onToggle={() => setTaskViewMode((mode) => (mode === 'table' ? 'cards' : 'table'))}
     />
   ) : null;
@@ -351,10 +325,7 @@ export function WorkflowTasksTable({
   );
 
   const addButton = canCreate ? (
-    <WorkflowTaskStageAddButton
-      disabled={draftStageSlug != null}
-      onSelectStage={handleSelectStage}
-    />
+    <WorkflowTaskStageAddButton onSelectStage={handleSelectStage} />
   ) : null;
 
   const showUnifiedTableAmount = displayGroups.some((group) => group.isPaymentsGroup);
@@ -381,19 +352,6 @@ export function WorkflowTasksTable({
       useCardLayout={useCardTaskLayout}
       layoutAsStageCard={isDesktopStageCardMode}
       unifiedDesktopTable={useUnifiedDesktopTable}
-      forceExpanded={draftStageSlug === group.stageSlug}
-      draftRow={
-        draftStageSlug === group.stageSlug ? (
-          <WorkflowOpsTaskDraftRow
-            project={project}
-            stageSlug={group.stageSlug}
-            isApiSource={isApiSource}
-            useCompactLayout={useCardTaskLayout}
-            onSaved={handleDraftSaved}
-            onCancel={handleCancelDraft}
-          />
-        ) : null
-      }
     />
   ));
 

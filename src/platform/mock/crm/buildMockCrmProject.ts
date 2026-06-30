@@ -132,6 +132,7 @@ function defaultWorkflowTasks(
     amountCents: null,
     invoicedAt: null,
     paidAt: null,
+    customFields: {},
   });
 
   return [
@@ -173,6 +174,7 @@ function defaultPaymentMilestoneTasks(
       invoicedAt:
         status === 'in_progress' || status === 'done' ? '2026-05-01T12:00:00.000Z' : null,
       paidAt: status === 'done' ? completedAt : null,
+      customFields: {},
     };
   };
 

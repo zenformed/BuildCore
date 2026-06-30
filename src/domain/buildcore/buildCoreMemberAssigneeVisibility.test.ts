@@ -41,6 +41,7 @@ function opsTask(assigneeId: string | null, id = 'task-1'): CrmWorkflowTask {
     paidAt: null,
     invoicedAt: null,
     completedAt: null,
+    customFields: {},
   };
 }
 

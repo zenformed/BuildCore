@@ -15,6 +15,7 @@ export type CreateCrmWorkflowTaskInput = {
   readonly amountCents?: number | null;
   readonly invoicedAt?: string | null;
   readonly paidAt?: string | null;
+  readonly customFieldValues?: Readonly<Record<string, string | null>>;
 };
 
 export type UpdateCrmWorkflowTaskInput = {
@@ -29,4 +30,5 @@ export type UpdateCrmWorkflowTaskInput = {
   readonly amountCents?: number | null;
   readonly invoicedAt?: string | null;
   readonly paidAt?: string | null;
+  readonly customFieldValues?: Readonly<Record<string, string | null>>;
 };

@@ -469,6 +469,9 @@ export class ApiCrmWorkflowTasksRepository implements ICrmWorkflowTasksRepositor
               paidAt: input.paidAt ?? null,
             }
           : {}),
+        ...(input.customFieldValues !== undefined
+          ? { customFieldValues: input.customFieldValues }
+          : {}),
 
       }
 
@@ -505,6 +508,9 @@ export class ApiCrmWorkflowTasksRepository implements ICrmWorkflowTasksRepositor
         ...(input.amountCents !== undefined ? { amountCents: input.amountCents } : {}),
         ...(input.invoicedAt !== undefined ? { invoicedAt: input.invoicedAt } : {}),
         ...(input.paidAt !== undefined ? { paidAt: input.paidAt } : {}),
+        ...(input.customFieldValues !== undefined
+          ? { customFieldValues: input.customFieldValues }
+          : {}),
 
       }
 

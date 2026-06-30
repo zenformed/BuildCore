@@ -28,4 +28,6 @@ export type CrmWorkflowTask = {
   readonly invoicedAt: string | null;
   /** Payment milestone: when amount was collected/paid (reporting). */
   readonly paidAt: string | null;
+  /** Organization-defined custom field values keyed by stable field_key. */
+  readonly customFields: Readonly<Record<string, string | null>>;
 };

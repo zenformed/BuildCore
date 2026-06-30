@@ -111,6 +111,7 @@ function toProgressWorkflowTask(
     sortOrder: index,
     invoicedAt: null,
     paidAt: null,
+    customFields: {},
   };
 }
 

@@ -21,6 +21,14 @@ import {
   type DbCrmProjectRow,
 } from '@/infrastructure/crm/mappers/mapCrmFromDb';
 import { resolveWorkflowTaskAssigneeDbColumns } from './workflowTaskAssigneePersistence';
+import {
+  attachCustomFieldsToWorkflowTask,
+  attachCustomFieldsToWorkflowTasks,
+  buildWorkflowTaskCustomFieldLoadTaskRef,
+  loadWorkflowTaskCustomFieldsMapForTaskIds,
+  upsertWorkflowTaskCustomFieldValuesForTask,
+} from './buildCoreWorkflowTaskCustomFieldService';
+import { resolveWorkflowTaskCustomFieldScopeForTask } from '@/domain/buildcore/workflowTaskCustomFields';
 
 const TASK_SELECT =
   'id, project_id, title, stage_slug, status, documents_required, notes, due_at, completed_at, assigned_member_id, assigned_contact_id, completed_by_member_id, sort_order, amount_cents, invoiced_at, paid_at';
@@ -60,7 +68,11 @@ async function mapTaskRow(
     loadCrmMemberMap(supabase, ids, { organizationId }),
     loadProjectContactById(supabase, row.project_id),
   ]);
-  return mapDbWorkflowTask(row, memberById, contactById);
+  const task = mapDbWorkflowTask(row, memberById, contactById);
+  const valuesByTaskId = await loadWorkflowTaskCustomFieldsMapForTaskIds(supabase, organizationId, [
+    buildWorkflowTaskCustomFieldLoadTaskRef(task),
+  ]);
+  return attachCustomFieldsToWorkflowTask(task, valuesByTaskId.get(row.id) ?? {});
 }
 
 async function getTaskForOrg(
@@ -118,7 +130,13 @@ export async function listCrmWorkflowTasksForOrg(
   const memberById = await loadCrmMemberMap(supabase, memberIds, { organizationId });
   const contactById =
     rows.length > 0 ? await loadProjectContactById(supabase, rows[0]!.project_id) : new Map();
-  return rows.map((row) => mapDbWorkflowTask(row, memberById, contactById));
+  const tasks = rows.map((row) => mapDbWorkflowTask(row, memberById, contactById));
+  const valuesByTaskId = await loadWorkflowTaskCustomFieldsMapForTaskIds(
+    supabase,
+    organizationId,
+    tasks.map((task) => buildWorkflowTaskCustomFieldLoadTaskRef(task))
+  );
+  return attachCustomFieldsToWorkflowTasks(tasks, valuesByTaskId);
 }
 
 export async function createCrmWorkflowTaskForOrg(
@@ -218,7 +236,21 @@ export async function createCrmWorkflowTaskForOrg(
     );
   }
 
-  return mapTaskRow(supabase, organizationId, data as DbCrmWorkflowTaskRow);
+  let task = await mapTaskRow(supabase, organizationId, data as DbCrmWorkflowTaskRow);
+  if (input.customFieldValues !== undefined) {
+    const scope = resolveWorkflowTaskCustomFieldScopeForTask({
+      amountCents: input.amountCents ?? null,
+    });
+    const customFields = await upsertWorkflowTaskCustomFieldValuesForTask(
+      supabase,
+      organizationId,
+      data.id,
+      scope,
+      input.customFieldValues
+    );
+    task = attachCustomFieldsToWorkflowTask(task, customFields);
+  }
+  return task;
 }
 
 export async function updateCrmWorkflowTaskForOrg(
@@ -288,16 +320,20 @@ export async function updateCrmWorkflowTaskForOrg(
     if (input.paidAt !== undefined) patch.paid_at = input.paidAt;
   }
 
-  const { data, error } = await supabase
-    .from('crm_workflow_tasks')
-    .update(patch)
-    .eq('id', input.taskId)
-    .eq('organization_id', organizationId)
-    .select(TASK_SELECT)
-    .single();
+  const { data, error } =
+    Object.keys(patch).length > 0
+      ? await supabase
+          .from('crm_workflow_tasks')
+          .update(patch)
+          .eq('id', input.taskId)
+          .eq('organization_id', organizationId)
+          .select(TASK_SELECT)
+          .single()
+      : { data: existing, error: null };
 
   if (error || !data) throw new Error(error?.message ?? 'Failed to update workflow task');
 
+  if (Object.keys(patch).length > 0) {
   if (wasPayment || willBePayment) {
     if (amountChanged) {
       await appendCrmAccountabilityEvent(supabase, {
@@ -353,6 +389,7 @@ export async function updateCrmWorkflowTaskForOrg(
       workflowTaskId: data.id,
     });
   }
+  }
 
   await supabase
     .from('crm_projects')
@@ -368,7 +405,19 @@ export async function updateCrmWorkflowTaskForOrg(
     );
   }
 
-  return mapTaskRow(supabase, organizationId, data as DbCrmWorkflowTaskRow);
+  let task = await mapTaskRow(supabase, organizationId, data as DbCrmWorkflowTaskRow);
+  if (input.customFieldValues !== undefined) {
+    const scope = resolveWorkflowTaskCustomFieldScopeForTask({ amountCents: nextAmount });
+    const customFields = await upsertWorkflowTaskCustomFieldValuesForTask(
+      supabase,
+      organizationId,
+      input.taskId,
+      scope,
+      input.customFieldValues
+    );
+    task = attachCustomFieldsToWorkflowTask(task, customFields);
+  }
+  return task;
 }
 
 export async function archiveCrmWorkflowTaskForOrg(

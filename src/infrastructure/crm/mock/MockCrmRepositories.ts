@@ -45,6 +45,11 @@ import type {
 } from '@/domain/crm';
 
 import { buildProjectBudgetSummary, listEmptyIncompleteWorkflowStages, resolvePaymentTimingFields } from '@/domain/crm';
+import { resolveWorkflowTaskCustomFieldScopeForTask } from '@/domain/buildcore/workflowTaskCustomFields';
+import {
+  getMockWorkflowTaskCustomFieldsForTask,
+  upsertMockWorkflowTaskCustomFieldValues,
+} from './mockWorkflowTaskCustomFieldsStore';
 import {
   primaryContactEmail,
   primaryContactPhone,
@@ -518,9 +523,18 @@ export class MockCrmWorkflowTasksRepository implements ICrmWorkflowTasksReposito
       now,
     });
 
+    const taskId = `wf-mock-${Date.now()}`;
+    const customFieldScope = resolveWorkflowTaskCustomFieldScopeForTask({
+      amountCents: input.amountCents ?? null,
+    });
+    const customFields =
+      input.customFieldValues !== undefined
+        ? upsertMockWorkflowTaskCustomFieldValues(taskId, customFieldScope, input.customFieldValues)
+        : {};
+
     const task: CrmWorkflowTask = {
 
-      id: `wf-mock-${Date.now()}`,
+      id: taskId,
 
       title: input.title,
 
@@ -547,6 +561,8 @@ export class MockCrmWorkflowTasksRepository implements ICrmWorkflowTasksReposito
       invoicedAt: isPayment ? timing.invoicedAt : null,
 
       paidAt: isPayment ? timing.paidAt : null,
+
+      customFields,
 
     };
 
@@ -614,6 +630,16 @@ export class MockCrmWorkflowTasksRepository implements ICrmWorkflowTasksReposito
       now,
     });
 
+    const customFieldScope = resolveWorkflowTaskCustomFieldScopeForTask({ amountCents: nextAmount });
+    const customFields =
+      input.customFieldValues !== undefined
+        ? upsertMockWorkflowTaskCustomFieldValues(
+            input.taskId,
+            customFieldScope,
+            input.customFieldValues
+          )
+        : getMockWorkflowTaskCustomFieldsForTask(found.task.id, customFieldScope);
+
     const next: CrmWorkflowTask = {
 
       ...found.task,
@@ -650,9 +676,9 @@ export class MockCrmWorkflowTasksRepository implements ICrmWorkflowTasksReposito
 
       paidAt: isPayment ? timing.paidAt : null,
 
+      customFields,
+
     };
-
-
 
     const tasks = found.detail.workflowTasks.map((t) => (t.id === input.taskId ? next : t));
 

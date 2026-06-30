@@ -1,5 +1,6 @@
 import type { CreateCrmWorkflowTaskInput, UpdateCrmWorkflowTaskInput } from '@/domain/crm';
 import { isInternalWorkflowStageSlug } from '@/domain/buildcore/orgPipelineStages';
+import { parseWorkflowTaskCustomFieldValuesInput } from '@/domain/buildcore/workflowTaskCustomFields';
 import {
   PAYMENT_WORKFLOW_STAGE_SLUG,
   pipelineStageSlugSet,
@@ -60,6 +61,13 @@ type ParsedAmountCents =
   | { kind: 'value'; value: number }
   | { kind: 'invalid' };
 
+function parseCustomFieldValues(
+  body: WorkflowTaskBody
+): CreateCrmWorkflowTaskInput['customFieldValues'] | undefined {
+  if (!('customFieldValues' in body)) return undefined;
+  return parseWorkflowTaskCustomFieldValuesInput(body.customFieldValues) ?? undefined;
+}
+
 function parseAmountCents(body: WorkflowTaskBody): ParsedAmountCents {
   if (!('amountCents' in body)) return { kind: 'absent' };
   const raw = body.amountCents;
@@ -110,6 +118,15 @@ export function validateCreateWorkflowTaskBody(
     return { ok: false, message: 'Documents required must be true or false.' };
   }
 
+  let customFieldValues: CreateCrmWorkflowTaskInput['customFieldValues'];
+  if ('customFieldValues' in body) {
+    const parsed = parseWorkflowTaskCustomFieldValuesInput(body.customFieldValues);
+    if (parsed == null) {
+      return { ok: false, message: 'Custom field values are invalid.' };
+    }
+    customFieldValues = parsed;
+  }
+
   return {
     ok: true,
     input: {
@@ -127,6 +144,7 @@ export function validateCreateWorkflowTaskBody(
             paidAt: asIsoOrNull(body.paidAt),
           }
         : {}),
+      ...(customFieldValues !== undefined ? { customFieldValues } : {}),
     },
   };
 }
@@ -147,6 +165,7 @@ export function validateUpdateWorkflowTaskBody(
     amountCents?: number | null;
     invoicedAt?: string | null;
     paidAt?: string | null;
+    customFieldValues?: Readonly<Record<string, string | null>>;
   } = {};
 
   if ('title' in body) {
@@ -194,6 +213,13 @@ export function validateUpdateWorkflowTaskBody(
   }
   if ('invoicedAt' in body) patch.invoicedAt = asIsoOrNull(body.invoicedAt);
   if ('paidAt' in body) patch.paidAt = asIsoOrNull(body.paidAt);
+  if ('customFieldValues' in body) {
+    const customFieldValues = parseWorkflowTaskCustomFieldValuesInput(body.customFieldValues);
+    if (customFieldValues == null) {
+      return { ok: false, message: 'Custom field values are invalid.' };
+    }
+    patch.customFieldValues = customFieldValues;
+  }
 
   if (Object.keys(patch).length === 0) {
     return { ok: false, message: 'No fields to update.' };

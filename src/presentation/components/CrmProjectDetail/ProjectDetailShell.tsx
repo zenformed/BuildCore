@@ -43,7 +43,7 @@ import { ProjectPriorityToggle } from './ProjectPriorityToggle';
 import { ProjectDetailShellModals } from './ProjectDetailShellModals';
 import { CreateCrmProjectModal } from '@/presentation/components/CrmProjects/CreateCrmProjectModal';
 import { MarkInactiveDialog } from '@/presentation/components/CrmProjects/MarkInactiveDialog';
-import { WorkflowTaskDrawer } from './WorkflowTaskDrawer';
+import { WorkflowTaskModal } from './WorkflowTaskModal';
 import styles from './ProjectDetail.module.css';
 
 export type { ProjectDetailPageContext } from '@/presentation/features/crmProjectDetail/projectDetailPageContext';
@@ -397,17 +397,17 @@ function ProjectDetailShellBody({
               onClose={() => setEditProjectOpen(false)}
               onUpdated={workspace.onProjectSaved}
             />
-            <WorkflowTaskDrawer
-              open={workspace.taskDrawer.open}
-              mode={workspace.taskDrawer.mode}
-              drawerContext={workspace.taskDrawer.context}
+            <WorkflowTaskModal
+              open={workspace.taskModal.open}
+              mode={workspace.taskModal.mode}
+              modalContext={workspace.taskModal.context}
+              defaultStageSlug={workspace.taskModal.defaultStageSlug}
               project={workspace.project}
-              task={workspace.taskDrawer.task}
+              task={workspace.taskModal.task}
               isApiSource={isApiSource}
-              onClose={workspace.closeTaskDrawer}
-              onSaved={() => {
-                void workspace.refreshWorkflowTasks();
-              }}
+              onClose={workspace.closeTaskModal}
+              onCreated={(task) => void workspace.handleWorkflowTaskCreated(task)}
+              onUpdated={(task) => void workspace.handleWorkflowTaskPatched(task)}
             />
           </>
         ) : null}

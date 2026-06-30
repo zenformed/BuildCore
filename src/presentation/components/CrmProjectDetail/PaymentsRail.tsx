@@ -9,7 +9,6 @@ import { listPaymentMilestones } from '@/presentation/features/crmProjectDetail/
 import { filterPaymentMilestonesBySearch } from '@/presentation/features/crmProjectDetail/projectSectionSearchModel';
 import { useBuildCoreProjectSectionAccess } from '@/presentation/providers/BuildCoreProjectSectionAccessProvider';
 import { useDashboardMobileLayout } from '@/presentation/features/crmProjects/useDashboardMobileLayout';
-import { PaymentMilestoneDraftRow } from './PaymentMilestoneDraftRow';
 import { useProjectDetailShell } from '@/presentation/features/crmProjectDetail/ProjectDetailShellContext';
 import { DetailPanelHeader } from './DetailPanelHeader';
 import { DetailPanelHeaderActions } from './DetailPanelHeaderActions';
@@ -40,7 +39,7 @@ export function PaymentsRail({
   const payments = content.projectDetail.payments;
   const paymentPermissionsCopy = content.teams.paymentPermissions;
   const wf = content.projectDetail.workflow;
-  const { refreshWorkflowTasks, setToast } = useProjectDetailShell();
+  const { refreshWorkflowTasks, setToast, openCreateWorkflowTask } = useProjectDetailShell();
   const { payment } = useBuildCoreProjectSectionAccess();
   const { permissions, isLoading, isReady } = payment;
   const canView = isReady && permissions.canView;
@@ -57,11 +56,9 @@ export function PaymentsRail({
   );
   const docCounts = countDocumentsByTaskId(project.documents);
   const payCols = content.projectDetail.payments.columns;
-  const [draftOpen, setDraftOpen] = useState(false);
   const isMobileLayout = useDashboardMobileLayout();
 
-  const showTable =
-    canView && (filteredMilestones.length > 0 || draftOpen || permissions.canViewAllStages);
+  const showTable = canView && (filteredMilestones.length > 0 || permissions.canViewAllStages);
 
   const searchInput = (
     <DetailPanelSectionSearch
@@ -83,9 +80,8 @@ export function PaymentsRail({
   const addButton = canCreate ? (
     <DetailPanelHeaderButton
       variant="add"
-      disabled={draftOpen}
       title={payments.addMilestone}
-      onClick={() => setDraftOpen(true)}
+      onClick={() => openCreateWorkflowTask({ context: 'payment' })}
     />
   ) : null;
 
@@ -145,14 +141,6 @@ export function PaymentsRail({
               onRequestArchiveTask={canDelete ? onRequestArchiveTask : undefined}
             />
           ))}
-          {draftOpen ? (
-            <PaymentMilestoneDraftRow
-              project={project}
-              isApiSource={isApiSource}
-              onSaved={onTaskCreated ?? onTaskUpdated}
-              onCancel={() => setDraftOpen(false)}
-            />
-          ) : null}
         </div>
       ) : (
         <div className={styles.detailPanelTableCard}>
@@ -185,14 +173,6 @@ export function PaymentsRail({
                 onRequestArchiveTask={canDelete ? onRequestArchiveTask : undefined}
               />
             ))}
-            {draftOpen ? (
-              <PaymentMilestoneDraftRow
-                project={project}
-                isApiSource={isApiSource}
-                onSaved={onTaskCreated ?? onTaskUpdated}
-                onCancel={() => setDraftOpen(false)}
-              />
-            ) : null}
           </div>
         </div>
         </div>

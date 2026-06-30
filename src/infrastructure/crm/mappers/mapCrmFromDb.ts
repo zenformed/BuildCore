@@ -446,6 +446,7 @@ export function mapDbWorkflowTask(
     amountCents: row.amount_cents != null ? Number(row.amount_cents) : null,
     invoicedAt: row.invoiced_at ?? null,
     paidAt: row.paid_at ?? null,
+    customFields: {},
   };
 }
 

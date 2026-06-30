@@ -21,6 +21,7 @@ const task: CrmWorkflowTask = {
   amountCents: null,
   invoicedAt: null,
   paidAt: null,
+  customFields: {},
 };
 
 const paymentTask: CrmWorkflowTask = {

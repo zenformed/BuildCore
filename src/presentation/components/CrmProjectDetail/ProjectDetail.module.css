@@ -4531,7 +4531,7 @@
 
 .formStatusPickerMenuPortal {
   position: fixed;
-  z-index: 120;
+  z-index: 10050;
   display: flex;
   flex-direction: column;
   gap: 0.25rem;

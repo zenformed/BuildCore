@@ -28,6 +28,11 @@ import {
   getCrmProjectIndustrySchemaMode,
 } from './crmProjectIndustrySchema';
 import { loadOrganizationPipelineStageCatalog } from './pipelineStageService';
+import {
+  attachCustomFieldsToWorkflowTasks,
+  buildWorkflowTaskCustomFieldLoadTaskRef,
+  loadWorkflowTaskCustomFieldsMapForTaskIds,
+} from './buildCoreWorkflowTaskCustomFieldService';
 import { logCrmProjectDetailPerf, startCrmReadPerfTimer } from './crmReadPerf';
 
 function buildProjectSummarySelect(mode: Awaited<ReturnType<typeof getCrmProjectIndustrySchemaMode>>): string {
@@ -483,7 +488,7 @@ export async function getCrmProjectDetailBySlugForOrg(
   timings.memberMapMs = endTimer();
   logCrmProjectDetailPerf(slug, timings);
 
-  return mapDbProjectDetail({
+  const detail = mapDbProjectDetail({
     project,
     workflowTasks,
     manualStageCompletions,
@@ -494,6 +499,17 @@ export async function getCrmProjectDetailBySlugForOrg(
     memberById,
     pipelineStages,
   });
+
+  const valuesByTaskId = await loadWorkflowTaskCustomFieldsMapForTaskIds(
+    supabase,
+    organizationId,
+    detail.workflowTasks.map((task) => buildWorkflowTaskCustomFieldLoadTaskRef(task))
+  );
+
+  return {
+    ...detail,
+    workflowTasks: attachCustomFieldsToWorkflowTasks(detail.workflowTasks, valuesByTaskId),
+  };
 }
 
 export async function listCrmProjectChildSummariesForOrg(
