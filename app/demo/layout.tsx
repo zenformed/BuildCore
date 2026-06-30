@@ -10,6 +10,10 @@ import { AssignmentIdentityProvider } from '@/presentation/providers/AssignmentI
 import { BuildCoreProjectSectionAccessProvider } from '@/presentation/providers/BuildCoreProjectSectionAccessProvider';
 import { BuildCoreWorkflowTaskAccessProvider } from '@/presentation/providers/BuildCoreWorkflowTaskAccessProvider';
 import { CrmPaymentTasksIndexProvider } from '@/presentation/providers/CrmPaymentTasksIndexProvider';
+import { BuildCoreFieldLabelsProvider } from '@/presentation/providers/BuildCoreFieldLabelsProvider';
+import { BuildCoreWorkflowTaskCustomFieldsProvider } from '@/presentation/providers/BuildCoreWorkflowTaskCustomFieldsProvider';
+import { BuildCoreWorkflowTaskTableColumnsProvider } from '@/presentation/providers/BuildCoreWorkflowTaskTableColumnsProvider';
+import { BuildCorePaymentTableColumnsProvider } from '@/presentation/providers/BuildCorePaymentTableColumnsProvider';
 import { BuildCorePipelineStagesProvider } from '@/presentation/providers/BuildCorePipelineStagesProvider';
 
 export default function DemoLayout({ children }: { children: ReactNode }): ReactElement {
@@ -21,7 +25,15 @@ export default function DemoLayout({ children }: { children: ReactNode }): React
             <BuildCoreProjectSectionAccessProvider>
               <CrmPaymentTasksIndexProvider>
                 <BuildCorePipelineStagesProvider>
-                  <BuildCorePersistentDashboardShell>{children}</BuildCorePersistentDashboardShell>
+                  <BuildCoreFieldLabelsProvider>
+                    <BuildCoreWorkflowTaskCustomFieldsProvider>
+                      <BuildCoreWorkflowTaskTableColumnsProvider>
+                        <BuildCorePaymentTableColumnsProvider>
+                          <BuildCorePersistentDashboardShell>{children}</BuildCorePersistentDashboardShell>
+                        </BuildCorePaymentTableColumnsProvider>
+                      </BuildCoreWorkflowTaskTableColumnsProvider>
+                    </BuildCoreWorkflowTaskCustomFieldsProvider>
+                  </BuildCoreFieldLabelsProvider>
                 </BuildCorePipelineStagesProvider>
               </CrmPaymentTasksIndexProvider>
             </BuildCoreProjectSectionAccessProvider>
