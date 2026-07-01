@@ -21,7 +21,7 @@ import { CrmProjectCompleteIcon } from '@/presentation/components/crmShared/CrmP
 import { CrmProjectPriorityIcon } from '@/presentation/components/crmShared/CrmProjectPriorityIcon';
 import { CrmProjectInactiveIcon, CrmProjectInactiveInlineLabel } from '@/presentation/components/CrmProjects/CrmProjectInactiveBadge';
 import { CrmProjectTableRowActionsMenu } from '@/presentation/components/CrmProjects/CrmProjectTableRowActionsMenu';
-import { CrmProjectTableContactCell } from '@/presentation/components/CrmProjects/CrmProjectTableContactCell';
+import { SubprojectMobileContactValue } from '@/presentation/components/CrmProjectDetail/SubprojectMobileContactValue';
 import { ProjectPreviewNameAnchor } from '@/presentation/components/CrmProjects/ProjectPreviewNameAnchor';
 import shared from '@/presentation/components/crmShared/crmShared.module.css';
 import styles from './ProjectDetail.module.css';
@@ -190,22 +190,23 @@ export function SubprojectMobileCard({
               <span className={styles.subprojectMobileCardValue}>
                 {project.contact.name || '—'}
               </span>
-              <CrmProjectTableContactCell
+              <SubprojectMobileContactValue
                 kind="email"
                 values={contactEmails}
                 displayValue={displayEmail}
                 formatDisplayValue={formatEmailPopoverValue}
                 getCopyValue={getEmailCopyValue}
                 onCopied={onContactCopied}
-                title={displayEmail}
+                isMemberRole={isMemberRole}
               />
-              <CrmProjectTableContactCell
+              <SubprojectMobileContactValue
                 kind="phone"
                 values={contactPhones}
                 displayValue={displayPhone}
                 formatDisplayValue={formatPhonePopoverValue}
                 getCopyValue={getPhoneCopyValue}
                 onCopied={onContactCopied}
+                isMemberRole={isMemberRole}
               />
             </div>
           </div>

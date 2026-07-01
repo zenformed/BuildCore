@@ -1700,6 +1700,11 @@
   background: var(--color-muted, #f1f5f9);
 }
 
+.summaryContactPopoverRow_link {
+  text-decoration: none;
+  color: inherit;
+}
+
 :global([data-theme='dark']) .summaryContactPopoverRow:hover {
   background: #34384a;
 }
@@ -8485,6 +8490,28 @@
 
 .subprojectMobileCardColRight .subprojectMobileCardValue {
   color: var(--color-text, #0f172a);
+}
+
+.subprojectMobileCardContactButton {
+  display: block;
+  width: 100%;
+  padding: 0;
+  margin: 0;
+  border: none;
+  background: none;
+  text-align: right;
+  cursor: pointer;
+}
+
+.subprojectMobileCardContactLink {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+}
+
+.subprojectMobileCardContactLink:active,
+.subprojectMobileCardContactButton:active {
+  opacity: 0.72;
 }
 
 :global([data-theme='dark']) .subprojectMobileCardColRight .subprojectMobileCardValue {

@@ -10,6 +10,7 @@ const HIDE_DELAY_MS = 200;
 
 export type SummaryContactValuesPopoverKind = 'email' | 'phone';
 export type ContactPopoverInteractionMode = 'hover' | 'tap';
+export type ContactPopoverTapTrigger = 'toggle' | 'value';
 
 export type UseSummaryContactValuesPopoverOptions = {
   readonly kind: SummaryContactValuesPopoverKind;
@@ -19,6 +20,8 @@ export type UseSummaryContactValuesPopoverOptions = {
   readonly onCopied: (message: string) => void;
   readonly enabled?: boolean;
   readonly interactionMode?: ContactPopoverInteractionMode;
+  readonly tapTrigger?: ContactPopoverTapTrigger;
+  readonly getRowHref?: (value: string) => string | null;
 };
 
 export type SummaryContactValuesToggleButtonProps = {
@@ -36,6 +39,7 @@ export type SummaryContactValuesPopoverAnchor = {
     readonly onMouseLeave?: () => void;
     readonly onFocus?: () => void;
     readonly onBlur?: (event: FocusEvent<HTMLDivElement>) => void;
+    readonly onClick?: (event: MouseEvent<HTMLDivElement>) => void;
   };
   readonly toggleButtonProps: SummaryContactValuesToggleButtonProps | null;
   readonly open: boolean;
@@ -50,6 +54,8 @@ export function useSummaryContactValuesPopover({
   onCopied,
   enabled = true,
   interactionMode = 'hover',
+  tapTrigger = 'toggle',
+  getRowHref,
 }: UseSummaryContactValuesPopoverOptions): SummaryContactValuesPopoverAnchor {
   const anchorRef = useRef<HTMLDivElement>(null);
   const hideTimerRef = useRef<number | null>(null);
@@ -81,7 +87,7 @@ export function useSummaryContactValuesPopover({
   }, [clearHideTimer]);
 
   const toggle = useCallback(
-    (event: MouseEvent<HTMLButtonElement>) => {
+    (event: MouseEvent<HTMLButtonElement | HTMLDivElement>) => {
       event.stopPropagation();
       event.preventDefault();
       if (!isActive) return;
@@ -172,6 +178,22 @@ export function useSummaryContactValuesPopover({
           {values.map((value, index) => {
             const display = formatDisplayValue(value);
             if (!display.trim()) return null;
+            const rowHref = getRowHref?.(value) ?? null;
+            if (rowHref) {
+              return (
+                <a
+                  key={`${index}-${value}`}
+                  href={rowHref}
+                  className={`${styles.summaryContactPopoverRow} ${styles.summaryContactPopoverRow_link}`}
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    hide();
+                  }}
+                >
+                  <span className={styles.summaryContactPopoverValue}>{display}</span>
+                </a>
+              );
+            }
             const copyAriaLabel =
               kind === 'email'
                 ? copyContent.copyEmailAriaLabel(display)
@@ -196,7 +218,9 @@ export function useSummaryContactValuesPopover({
     ) : null;
 
   const anchorHandlers = isTapMode
-    ? {}
+    ? tapTrigger === 'value'
+      ? { onClick: toggle }
+      : {}
     : {
         onMouseEnter: show,
         onMouseLeave: scheduleHide,
@@ -205,7 +229,7 @@ export function useSummaryContactValuesPopover({
       };
 
   const toggleButtonProps: SummaryContactValuesToggleButtonProps | null =
-    isActive && isTapMode
+    isActive && isTapMode && tapTrigger === 'toggle'
       ? {
           type: 'button',
           'aria-expanded': open,
