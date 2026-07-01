@@ -46,6 +46,18 @@ export function SubprojectMobileContactValue({
     [getCopyValue, isMemberRole, kind]
   );
 
+  const contactPopover = useSummaryContactValuesPopover({
+    kind,
+    values: popoverValues,
+    formatDisplayValue,
+    getCopyValue,
+    onCopied: onCopied ?? (() => undefined),
+    interactionMode: 'tap',
+    tapTrigger: 'value',
+    getRowHref,
+    enabled: popoverValues.length > 1,
+  });
+
   if (popoverValues.length === 0) {
     return <span className={valueClassName}>{displayText}</span>;
   }
@@ -67,17 +79,6 @@ export function SubprojectMobileContactValue({
     }
     return <span className={valueClassName}>{label}</span>;
   }
-
-  const contactPopover = useSummaryContactValuesPopover({
-    kind,
-    values: popoverValues,
-    formatDisplayValue,
-    getCopyValue,
-    onCopied: onCopied ?? (() => undefined),
-    interactionMode: 'tap',
-    tapTrigger: 'value',
-    getRowHref,
-  });
 
   const handleClick = (event: MouseEvent<HTMLDivElement>): void => {
     event.stopPropagation();
