@@ -398,6 +398,7 @@ export function mapDbProjectSummary(
     inactiveReasonCustom: row.inactive_reason_custom ?? null,
     inactiveAt: row.inactive_at ?? null,
     inactiveBy,
+    customFields: {},
   };
 }
 

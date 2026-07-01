@@ -41,7 +41,6 @@ import { ProjectDetailHeaderActions } from './ProjectDetailHeaderActions';
 import { ProjectDetailHeaderProgress } from './ProjectDetailHeaderProgress';
 import { ProjectPriorityToggle } from './ProjectPriorityToggle';
 import { ProjectDetailShellModals } from './ProjectDetailShellModals';
-import { CreateCrmProjectModal } from '@/presentation/components/CrmProjects/CreateCrmProjectModal';
 import { MarkInactiveDialog } from '@/presentation/components/CrmProjects/MarkInactiveDialog';
 import { WorkflowTaskModal } from './WorkflowTaskModal';
 import styles from './ProjectDetail.module.css';
@@ -81,7 +80,6 @@ function ProjectDetailShellBody({
   const router = useRouter();
   const nav = useBuildCoreNavigation();
   const canMutateProjects = canMutateCrmProjectsInCurrentRuntime();
-  const [editProjectOpen, setEditProjectOpen] = useState(false);
   const [qrDialogOpen, setQrDialogOpen] = useState(false);
   const { organizationMembershipContext } = useSaaSProfile();
   const showCompletionActions = pageContext === 'detail' && !isMemberRole;
@@ -340,7 +338,6 @@ function ProjectDetailShellBody({
           savingField={workspace.savingField}
           patchField={workspace.patchField}
           patchIndustry={workspace.patchIndustry}
-          onEditProject={isMemberRole ? undefined : () => setEditProjectOpen(true)}
           scrollBody={isMobileDetailOverview ? children : undefined}
         />
 
@@ -390,13 +387,7 @@ function ProjectDetailShellBody({
                 }}
               />
             ) : null}
-            <CreateCrmProjectModal
-              open={editProjectOpen}
-              mode="edit"
-              project={workspace.project}
-              onClose={() => setEditProjectOpen(false)}
-              onUpdated={workspace.onProjectSaved}
-            />
+
             <WorkflowTaskModal
               open={workspace.taskModal.open}
               mode={workspace.taskModal.mode}

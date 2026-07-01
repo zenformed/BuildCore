@@ -4,8 +4,6 @@ import { getFirstPipelineStageSlug } from '@/domain/crm/pipelineStage';
 import { titleCasePersonOrEntityName } from '@/domain/crm/titleCaseName';
 import { US_STATE_CODES } from '@/domain/crm/usStates';
 import {
-  contactValuesToFormFields,
-  contactPhonesToFormFields,
   validateContactEmailValues,
   validateContactPhoneValues,
 } from '@/domain/crm/contactMultiValue';
@@ -65,14 +63,9 @@ export function createSubprojectFormDefaultsFromParent(
   return {
     ...base,
     name: summary.name,
+    industry: summary.industry,
+    customIndustry: summary.customIndustry ?? '',
     contactName: summary.contact.name,
-    emails: contactValuesToFormFields(summary.contact.emails),
-    phones: contactPhonesToFormFields(summary.contact.phones),
-    addressLine1: summary.address.addressLine1 ?? '',
-    addressLine2: summary.address.addressLine2 ?? '',
-    city: summary.address.city ?? '',
-    state: summary.address.state ?? '',
-    postalCode: summary.address.postalCode ?? '',
   };
 }
 

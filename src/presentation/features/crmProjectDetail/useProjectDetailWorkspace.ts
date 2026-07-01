@@ -296,7 +296,8 @@ export function useProjectDetailWorkspace(initialProject: CrmProjectDetail) {
     [assignmentCatalog, project, sendAttachment]
   );
 
-  const { savingField, patchField, patchIndustry } = useProjectSummaryPatch(
+  const { savingField, customFieldSavingKey, patchField, patchIndustry, patchCustomFieldValue } =
+    useProjectSummaryPatch(
     project,
     handleProjectSaved,
     (message) => setToast({ kind: 'error', message })
@@ -314,8 +315,10 @@ export function useProjectDetailWorkspace(initialProject: CrmProjectDetail) {
     documentUploadConfirm,
     setDocumentUploadConfirm,
     savingField,
+    customFieldSavingKey,
     patchField,
     patchIndustry,
+    patchCustomFieldValue,
     handleWorkflowTaskPatched,
     handleWorkflowTaskCreated,
     refreshWorkflowTasks,

@@ -1,10 +1,11 @@
 'use client';
 
-import type { KeyboardEvent, ReactElement } from 'react';
+import { useCallback, type KeyboardEvent, type ReactElement } from 'react';
 import type { CrmProjectSummary } from '@/domain/crm';
 import type { ProjectPaymentFinancials } from '@/domain/crm/projectPaymentValue';
 import type { CrmProjectWorkflowProgressInputIndex } from '@/domain/crm/projectWorkflowProgressInput';
 import { isCrmProjectComplete, isCrmProjectInactive } from '@/domain/crm';
+import { nonEmptyContactValues } from '@/domain/crm/contactMultiValue';
 import { isProjectPriorityUrgent } from '@/domain/crm/projectPriorityToggle';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
 import {
@@ -20,6 +21,8 @@ import { CrmProjectCompleteIcon } from '@/presentation/components/crmShared/CrmP
 import { CrmProjectPriorityIcon } from '@/presentation/components/crmShared/CrmProjectPriorityIcon';
 import { CrmProjectInactiveIcon, CrmProjectInactiveInlineLabel } from '@/presentation/components/CrmProjects/CrmProjectInactiveBadge';
 import { CrmProjectTableRowActionsMenu } from '@/presentation/components/CrmProjects/CrmProjectTableRowActionsMenu';
+import { CrmProjectTableContactCell } from '@/presentation/components/CrmProjects/CrmProjectTableContactCell';
+import { ProjectPreviewNameAnchor } from '@/presentation/components/CrmProjects/ProjectPreviewNameAnchor';
 import shared from '@/presentation/components/crmShared/crmShared.module.css';
 import styles from './ProjectDetail.module.css';
 
@@ -41,6 +44,7 @@ export type SubprojectMobileCardProps = {
   readonly workflowProgressInputIndex?: CrmProjectWorkflowProgressInputIndex;
   readonly isWorkflowProgressLoading?: boolean;
   readonly bulkSelection?: BulkSelectionBindings;
+  readonly onContactCopied?: (message: string) => void;
 };
 
 export function SubprojectMobileCard({
@@ -61,6 +65,7 @@ export function SubprojectMobileCard({
   workflowProgressInputIndex,
   isWorkflowProgressLoading = false,
   bulkSelection,
+  onContactCopied,
 }: SubprojectMobileCardProps): ReactElement {
   const tableCopy = content.crm.table;
   const fields = content.projectDetail.fields;
@@ -72,6 +77,22 @@ export function SubprojectMobileCard({
   const isInactive = isCrmProjectInactive(project);
   const displayEmail = formatContactEmailDisplay(project.contact.email, { maskForMember: isMemberRole });
   const displayPhone = formatPhoneDisplay(project.contact.phone);
+  const contactEmails = nonEmptyContactValues(project.contact.emails);
+  const contactPhones = nonEmptyContactValues(project.contact.phones);
+  const formatEmailPopoverValue = useCallback(
+    (email: string) => formatContactEmailDisplay(email, { maskForMember: isMemberRole }),
+    [isMemberRole]
+  );
+  const getEmailCopyValue = useCallback(
+    (email: string) =>
+      isMemberRole ? formatContactEmailDisplay(email, { maskForMember: true }) : email.trim(),
+    [isMemberRole]
+  );
+  const formatPhonePopoverValue = useCallback((phone: string) => formatPhoneDisplay(phone), []);
+  const getPhoneCopyValue = useCallback(
+    (phone: string) => formatPhoneDisplay(phone) || phone.trim(),
+    []
+  );
   const financialDisplay = (cents: number): string =>
     financialsLoading ? '…' : formatCentsAsUsd(cents);
 
@@ -126,7 +147,16 @@ export function SubprojectMobileCard({
                   <CrmProjectCompleteIcon ariaLabel={tableCopy.completionCheckAriaLabel} />
                 ) : null}
                 <span className={styles.subprojectMobileCardNameGroup}>
-                  <span className={styles.subprojectMobileCardName}>{project.name}</span>
+                  <ProjectPreviewNameAnchor
+                    project={project}
+                    financials={financials}
+                    stageLabel={
+                      derivedStageSlug != null ? formatStageLabel(derivedStageSlug, catalog) : null
+                    }
+                    progressPercent={progress?.textPercent ?? null}
+                  >
+                    <span className={styles.subprojectMobileCardName}>{project.name}</span>
+                  </ProjectPreviewNameAnchor>
                   {isInactive ? <CrmProjectInactiveInlineLabel project={project} /> : null}
                 </span>
               </span>
@@ -160,10 +190,23 @@ export function SubprojectMobileCard({
               <span className={styles.subprojectMobileCardValue}>
                 {project.contact.name || '—'}
               </span>
-              <span className={styles.subprojectMobileCardValue} title={displayEmail}>
-                {displayEmail || '—'}
-              </span>
-              <span className={styles.subprojectMobileCardValue}>{displayPhone || '—'}</span>
+              <CrmProjectTableContactCell
+                kind="email"
+                values={contactEmails}
+                displayValue={displayEmail}
+                formatDisplayValue={formatEmailPopoverValue}
+                getCopyValue={getEmailCopyValue}
+                onCopied={onContactCopied}
+                title={displayEmail}
+              />
+              <CrmProjectTableContactCell
+                kind="phone"
+                values={contactPhones}
+                displayValue={displayPhone}
+                formatDisplayValue={formatPhonePopoverValue}
+                getCopyValue={getPhoneCopyValue}
+                onCopied={onContactCopied}
+              />
             </div>
           </div>
         </div>

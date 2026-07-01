@@ -22,6 +22,7 @@ import type { CrmClient } from '@/domain/crm/client';
 import type { CrmContact } from '@/domain/crm/contact';
 import type { CrmTeamMemberRef } from '@/domain/crm/teamMember';
 import { getMockCrmTeamMember } from './teamMembers';
+import { getMockProjectCustomFieldsForProject } from '@/infrastructure/crm/mock/mockProjectCustomFieldsStore';
 
 export type BuildMockCrmProjectInput = {
   readonly id: string;
@@ -360,6 +361,7 @@ export function buildMockCrmProjectDetail(input: BuildMockCrmProjectInput): CrmP
     inactiveReasonCustom: null,
     inactiveAt: null,
     inactiveBy: null,
+    customFields: getMockProjectCustomFieldsForProject(input.id, input.parentProjectId ?? null),
   };
 
   const milestonePayment =

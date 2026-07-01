@@ -50,6 +50,8 @@ export type CrmProjectSummary = {
   readonly inactiveReasonCustom: string | null;
   readonly inactiveAt: string | null;
   readonly inactiveBy: CrmTeamMemberRef | null;
+  /** Org-defined custom field values keyed by field_key. */
+  readonly customFields: Readonly<Record<string, string | null>>;
 };
 
 export type CrmStageProgress = {

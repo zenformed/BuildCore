@@ -13,6 +13,7 @@ import { BuildCoreFieldLabelsProvider } from '@/presentation/providers/BuildCore
 import { BuildCoreWorkflowTaskCustomFieldsProvider } from '@/presentation/providers/BuildCoreWorkflowTaskCustomFieldsProvider';
 import { BuildCoreWorkflowTaskTableColumnsProvider } from '@/presentation/providers/BuildCoreWorkflowTaskTableColumnsProvider';
 import { BuildCorePaymentTableColumnsProvider } from '@/presentation/providers/BuildCorePaymentTableColumnsProvider';
+import { BuildCoreProjectCustomFieldsProvider } from '@/presentation/providers/BuildCoreProjectCustomFieldsProvider';
 import { BuildCorePipelineStagesProvider } from '@/presentation/providers/BuildCorePipelineStagesProvider';
 
 export default function DashboardGroupLayout({
@@ -31,7 +32,9 @@ export default function DashboardGroupLayout({
                   <BuildCoreWorkflowTaskCustomFieldsProvider>
                     <BuildCoreWorkflowTaskTableColumnsProvider>
                       <BuildCorePaymentTableColumnsProvider>
-                        <BuildCorePersistentDashboardShell>{children}</BuildCorePersistentDashboardShell>
+                        <BuildCoreProjectCustomFieldsProvider>
+                          <BuildCorePersistentDashboardShell>{children}</BuildCorePersistentDashboardShell>
+                        </BuildCoreProjectCustomFieldsProvider>
                       </BuildCorePaymentTableColumnsProvider>
                     </BuildCoreWorkflowTaskTableColumnsProvider>
                   </BuildCoreWorkflowTaskCustomFieldsProvider>

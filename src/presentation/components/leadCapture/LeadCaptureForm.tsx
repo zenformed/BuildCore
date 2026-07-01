@@ -214,6 +214,7 @@ export function LeadCaptureForm({
             addButtonLabel={copy.addEmail}
             addAriaLabel={copy.addEmail}
             removeAriaLabel={copy.removeEmail}
+            removeConfirmCopy={copy.removeEmailConfirm}
             onChange={(emails) => {
               updateField('emails', emails);
               clearContactFieldError('email');
@@ -236,6 +237,7 @@ export function LeadCaptureForm({
             addButtonLabel={copy.addPhone}
             addAriaLabel={copy.addPhone}
             removeAriaLabel={copy.removePhone}
+            removeConfirmCopy={copy.removePhoneConfirm}
             onChange={(phones) => {
               updateField('phones', phones);
               clearContactFieldError('phone');

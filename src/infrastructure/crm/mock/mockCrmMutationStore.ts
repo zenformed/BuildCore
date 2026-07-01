@@ -17,6 +17,10 @@ import { resetMockFieldLabelsStore } from './mockFieldLabelsStore';
 import { resetMockWorkflowTaskCustomFieldsStore, seedMockWorkflowTaskCustomFieldExamplesIfEmpty } from './mockWorkflowTaskCustomFieldsStore';
 import { resetMockWorkflowTaskTableColumnsStore } from './mockWorkflowTaskTableColumnsStore';
 import { resetMockPaymentTableColumnsStore } from './mockPaymentTableColumnsStore';
+import {
+  resetMockProjectCustomFieldsStore,
+  seedMockProjectCustomFieldExamplesIfEmpty,
+} from './mockProjectCustomFieldsStore';
 
 const projectOverrides = new Map<string, CrmProjectDetail>();
 const archivedSlugs = new Set<string>();
@@ -157,5 +161,7 @@ function resetDemoOrganizationCustomizationStores(): void {
   resetMockWorkflowTaskCustomFieldsStore();
   resetMockWorkflowTaskTableColumnsStore();
   resetMockPaymentTableColumnsStore();
+  resetMockProjectCustomFieldsStore();
   seedMockWorkflowTaskCustomFieldExamplesIfEmpty();
+  seedMockProjectCustomFieldExamplesIfEmpty();
 }

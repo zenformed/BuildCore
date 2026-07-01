@@ -50,6 +50,7 @@ export type CrmProjectsTableProps = {
   emptyMessage?: string;
   deleteLabels?: CrmProjectsTableDeleteLabels;
   bulkSelection?: BulkSelectionBindings;
+  onContactCopied?: (message: string) => void;
 };
 
 export function CrmProjectsTable({
@@ -81,6 +82,7 @@ export function CrmProjectsTable({
   projectColumnLabel,
   emptyMessage,
   bulkSelection,
+  onContactCopied,
 }: CrmProjectsTableProps): ReactElement {
   const displayRoots = useMemo(
     () => (enableSubprojectExpansion ? (rootRows ?? []) : (rows ?? [])),
@@ -211,6 +213,7 @@ export function CrmProjectsTable({
                     workflowProgressInputIndex={workflowProgressInputIndex}
                     isWorkflowProgressLoading={isWorkflowProgressLoading}
                     bulkSelection={bulkSelection}
+                    onContactCopied={onContactCopied}
                   />
                 ))
               )}

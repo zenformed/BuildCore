@@ -51,6 +51,10 @@ import {
   upsertMockWorkflowTaskCustomFieldValues,
 } from './mockWorkflowTaskCustomFieldsStore';
 import {
+  getMockProjectCustomFieldsForProject,
+  upsertMockProjectCustomFieldValues,
+} from './mockProjectCustomFieldsStore';
+import {
   primaryContactEmail,
   primaryContactPhone,
 } from '@/domain/crm/contactMultiValue';
@@ -176,7 +180,7 @@ function applyProjectUpdate(detail: CrmProjectDetail, input: UpdateCrmProjectInp
     lastUpdatedAt: now,
     completedAt: detail.summary.completedAt,
     completedBy: detail.summary.completedBy,
-
+    customFields: detail.summary.customFields,
   };
 
   const accountability: CrmAccountabilityAction = {
@@ -193,18 +197,26 @@ function applyProjectUpdate(detail: CrmProjectDetail, input: UpdateCrmProjectInp
 
   };
 
-  return saveAndReturn(detail.summary.slug, {
-
+  let updated = saveAndReturn(detail.summary.slug, {
     ...detail,
-
     summary,
-
     notes: input.notes,
-
     accountabilityLog: [accountability, ...detail.accountabilityLog],
-
   });
 
+  if (input.customFieldValues != null) {
+    const customFields = upsertMockProjectCustomFieldValues(
+      updated.summary.id,
+      updated.summary.parentProjectId,
+      input.customFieldValues
+    );
+    updated = saveAndReturn(updated.summary.slug, {
+      ...updated,
+      summary: { ...updated.summary, customFields },
+    });
+  }
+
+  return updated;
 }
 
 

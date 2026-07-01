@@ -23,6 +23,10 @@ import { MOCK_CRM_PROJECT_DETAILS } from '@/platform/mock/crm';
 import { buildMockCrmProjectDetail } from '@/platform/mock/crm/buildMockCrmProject';
 import { resolveMockCrmTeamMember } from '@/platform/mock/crm/teamMembers';
 import {
+  getMockProjectCustomFieldsForProject,
+  upsertMockProjectCustomFieldValues,
+} from './mockProjectCustomFieldsStore';
+import {
   archiveMockProjectSlug,
   getEffectiveMockProjectDetailById,
   getEffectiveMockProjectDetailBySlug,
@@ -150,7 +154,20 @@ export function mockCreateCrmProject(input: CreateCrmProjectInput): CreateCrmPro
   };
 
   const saved = saveMockProjectDetail(slug, { ...detail, summary });
-  return { id: saved.summary.id, slug: saved.summary.slug, summary: saved.summary };
+  const result = { id: saved.summary.id, slug: saved.summary.slug, summary: saved.summary };
+
+  if (input.customFieldValues != null && Object.keys(input.customFieldValues).length > 0) {
+    const customFields = upsertMockProjectCustomFieldValues(
+      saved.summary.id,
+      saved.summary.parentProjectId,
+      input.customFieldValues
+    );
+    const withCustomFields = { ...saved.summary, customFields };
+    saveMockProjectDetail(slug, { ...saved, summary: withCustomFields });
+    return { ...result, summary: withCustomFields };
+  }
+
+  return result;
 }
 
 export function mockArchiveCrmProject(slug: string): boolean {

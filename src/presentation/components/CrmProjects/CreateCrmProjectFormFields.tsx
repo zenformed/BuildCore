@@ -129,6 +129,7 @@ export function CreateCrmProjectFormFields({
             addButtonLabel={create.fields.addEmail}
             addAriaLabel={create.fields.addEmail}
             removeAriaLabel={create.fields.removeEmail}
+            removeConfirmCopy={create.fields.removeEmailConfirm}
             onChange={(emails) => updateField('emails', emails)}
           />
         </div>
@@ -143,6 +144,7 @@ export function CreateCrmProjectFormFields({
             addButtonLabel={create.fields.addPhone}
             addAriaLabel={create.fields.addPhone}
             removeAriaLabel={create.fields.removePhone}
+            removeConfirmCopy={create.fields.removePhoneConfirm}
             onChange={(phones) => updateField('phones', phones)}
           />
         </div>

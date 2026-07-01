@@ -1,10 +1,11 @@
 'use client';
 
-import { type KeyboardEvent, type ReactElement } from 'react';
+import { useCallback, type KeyboardEvent, type ReactElement } from 'react';
 import type { CrmProjectSummary } from '@/domain/crm';
 import type { ProjectPaymentFinancials } from '@/domain/crm/projectPaymentValue';
 import type { CrmProjectWorkflowProgressInputIndex } from '@/domain/crm/projectWorkflowProgressInput';
 import { isCrmProjectComplete, isCrmProjectInactive } from '@/domain/crm';
+import { nonEmptyContactValues } from '@/domain/crm/contactMultiValue';
 import { formatCrmProjectAddressLine } from '@/domain/crm/projectAddress';
 import { isProjectPriorityUrgent } from '@/domain/crm/projectPriorityToggle';
 import { ProjectProgressPercent } from '@/presentation/components/CrmProjectDetail/ProjectProgressPercent';
@@ -23,6 +24,8 @@ import type { BulkSelectionBindings } from '@/presentation/features/bulkSelectio
 import { BulkSelectCheckbox } from '@/presentation/components/BulkSelection';
 import { TeamMemberAvatar } from '@/presentation/components/CrmProjectDetail/TeamMemberAvatar';
 import { CrmProjectTableRowActionsMenu } from './CrmProjectTableRowActionsMenu';
+import { CrmProjectTableContactCell } from './CrmProjectTableContactCell';
+import { ProjectPreviewNameAnchor } from './ProjectPreviewNameAnchor';
 import { CrmProjectInactiveIcon, CrmProjectInactiveInlineLabel } from './CrmProjectInactiveBadge';
 import shared from '@/presentation/components/crmShared/crmShared.module.css';
 import styles from './CrmProjects.module.css';
@@ -54,6 +57,7 @@ export type CrmProjectTableRowProps = {
   workflowProgressInputIndex?: CrmProjectWorkflowProgressInputIndex;
   isWorkflowProgressLoading?: boolean;
   bulkSelection?: BulkSelectionBindings;
+  onContactCopied?: (message: string) => void;
 };
 
 export function CrmProjectTableRow({
@@ -79,6 +83,7 @@ export function CrmProjectTableRow({
   workflowProgressInputIndex,
   isWorkflowProgressLoading = false,
   bulkSelection,
+  onContactCopied,
 }: CrmProjectTableRowProps): ReactElement {
   const tableCopy = content.crm.table;
   const { catalog, industrySubtitle, progress, derivedStageSlug } = useCrmProjectRowPresentation(
@@ -95,6 +100,23 @@ export function CrmProjectTableRow({
   const displayValueLabel =
     valueLabel ?? (isChild ? valueLabels.subValueLabel : valueLabels.projectValueLabel);
   const displayEmail = formatContactEmailDisplay(project.contact.email, { maskForMember: isMemberRole });
+  const displayPhone = formatPhoneDisplay(project.contact.phone);
+  const contactEmails = nonEmptyContactValues(project.contact.emails);
+  const contactPhones = nonEmptyContactValues(project.contact.phones);
+  const formatEmailPopoverValue = useCallback(
+    (email: string) => formatContactEmailDisplay(email, { maskForMember: isMemberRole }),
+    [isMemberRole]
+  );
+  const getEmailCopyValue = useCallback(
+    (email: string) =>
+      isMemberRole ? formatContactEmailDisplay(email, { maskForMember: true }) : email.trim(),
+    [isMemberRole]
+  );
+  const formatPhonePopoverValue = useCallback((phone: string) => formatPhoneDisplay(phone), []);
+  const getPhoneCopyValue = useCallback(
+    (phone: string) => formatPhoneDisplay(phone) || phone.trim(),
+    []
+  );
   const formattedAddress = formatCrmProjectAddressLine(project.address);
   const rowAriaLabel = isChild
     ? tableCopy.subprojectRowAriaLabel(project.name)
@@ -147,7 +169,16 @@ export function CrmProjectTableRow({
             <CrmProjectCompleteIcon ariaLabel={tableCopy.completionCheckAriaLabel} />
           ) : null}
           <span className={styles.projectNameGroup}>
-            <span className={styles.projectName}>{project.name}</span>
+            <ProjectPreviewNameAnchor
+              project={project}
+              financials={financials ?? null}
+              stageLabel={
+                derivedStageSlug != null ? formatStageLabel(derivedStageSlug, catalog) : null
+              }
+              progressPercent={progress?.textPercent ?? null}
+            >
+              <span className={styles.projectName}>{project.name}</span>
+            </ProjectPreviewNameAnchor>
           </span>
           {!isChild && hasChildren ? (
             <button
@@ -195,15 +226,26 @@ export function CrmProjectTableRow({
       <span className={`${styles.gridCell} ${styles.gridCellAlignCenter}`} role="cell">
         {project.contact.name}
       </span>
-      <span
-        className={`${styles.gridCell} ${styles.gridCellAlignCenter}`}
-        role="cell"
-        title={displayEmail}
-      >
-        {displayEmail || '—'}
+      <span className={`${styles.gridCell} ${styles.gridCellAlignCenter}`} role="cell">
+        <CrmProjectTableContactCell
+          kind="email"
+          values={contactEmails}
+          displayValue={displayEmail}
+          formatDisplayValue={formatEmailPopoverValue}
+          getCopyValue={getEmailCopyValue}
+          onCopied={onContactCopied}
+          title={displayEmail}
+        />
       </span>
       <span className={`${styles.gridCell} ${styles.gridCellAlignCenter}`} role="cell">
-        {formatPhoneDisplay(project.contact.phone) || '—'}
+        <CrmProjectTableContactCell
+          kind="phone"
+          values={contactPhones}
+          displayValue={displayPhone}
+          formatDisplayValue={formatPhonePopoverValue}
+          getCopyValue={getPhoneCopyValue}
+          onCopied={onContactCopied}
+        />
       </span>
       <span
         className={`${styles.gridCell} ${styles.gridCellAlignCenter}`}

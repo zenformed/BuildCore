@@ -63,6 +63,13 @@ import centerDialogStyles from '@/presentation/components/CenterConfirmDialog/Ce
 import { crmRepositories } from '@/shared/di/container';
 
 import { CreateCrmProjectFormFields } from './CreateCrmProjectFormFields';
+import {
+  ProjectCustomFieldsSection,
+  buildProjectCustomFieldDraftFromSummary,
+  buildProjectCustomFieldValuesPayload,
+} from './ProjectCustomFieldsSection';
+import { AddProjectCustomFieldDialog } from './AddProjectCustomFieldDialog';
+import { useBuildCoreProjectCustomFieldsForScope } from '@/presentation/providers/BuildCoreProjectCustomFieldsProvider';
 
 import formStyles from './CreateCrmProjectDrawer.module.css';
 
@@ -151,7 +158,13 @@ export function CreateCrmProjectModal({
   const modalTitle = !isEditMode && createTitle ? createTitle : copy.title;
 
   const templateScope: BuildCoreProjectTemplateScope =
-    parentProjectId != null ? 'subproject' : 'project';
+    isEditMode && project != null
+      ? project.summary.parentProjectId != null
+        ? 'subproject'
+        : 'project'
+      : parentProjectId != null
+        ? 'subproject'
+        : 'project';
 
   const canManageTemplates = useMemo(
 
@@ -170,6 +183,13 @@ export function CreateCrmProjectModal({
   const [templateRefreshKey, setTemplateRefreshKey] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [customFieldDraft, setCustomFieldDraft] = useState<Record<string, string>>({});
+  const [addCustomFieldOpen, setAddCustomFieldOpen] = useState(false);
+  const {
+    activeDefinitions,
+    createDefinition,
+    isSaving: customFieldsSaving,
+  } = useBuildCoreProjectCustomFieldsForScope(templateScope);
 
   const handleTemplateToast = useCallback(
     (kind: 'success' | 'error', message: string) => {
@@ -204,6 +224,9 @@ export function CreateCrmProjectModal({
     if (isEditMode && project != null) {
 
       setForm(projectDetailToFormState(project));
+      setCustomFieldDraft(
+        buildProjectCustomFieldDraftFromSummary(activeDefinitions, project.summary.customFields)
+      );
 
     } else {
 
@@ -221,7 +244,7 @@ export function CreateCrmProjectModal({
       setTemplateDraft(null);
       setSelectedTemplateId('');
       setTemplateRefreshKey(0);
-
+      setCustomFieldDraft(buildProjectCustomFieldDraftFromSummary(activeDefinitions, {}));
     }
 
 
@@ -230,7 +253,7 @@ export function CreateCrmProjectModal({
 
     setSaving(false);
 
-  }, [canMutateProjects, dash.user?.id, isEditMode, open, parentProjectForDefaults, parentProjectId, project]);
+  }, [activeDefinitions, canMutateProjects, dash.user?.id, isEditMode, open, parentProjectForDefaults, parentProjectId, project]);
 
 
 
@@ -257,6 +280,19 @@ export function CreateCrmProjectModal({
   );
 
 
+
+  const customFieldValues = useMemo(
+    () => buildProjectCustomFieldValuesPayload(activeDefinitions, customFieldDraft),
+    [activeDefinitions, customFieldDraft]
+  );
+
+  const handleCreateCustomField = useCallback(
+    async (label: string): Promise<boolean> => {
+      const created = await createDefinition(label, templateScope);
+      return created != null;
+    },
+    [createDefinition, templateScope]
+  );
 
   const handleSubmit = useCallback(
 
@@ -312,7 +348,7 @@ export function CreateCrmProjectModal({
 
             project.summary.slug,
 
-            validated.input
+            { ...validated.input, customFieldValues }
 
           );
 
@@ -371,6 +407,8 @@ export function CreateCrmProjectModal({
             ? templateDraft
 
             : null,
+
+          customFieldValues,
 
         });
 
@@ -449,6 +487,10 @@ export function CreateCrmProjectModal({
 
       templateDraft,
 
+      nav.routes,
+
+      customFieldValues,
+
     ]
 
   );
@@ -478,6 +520,23 @@ export function CreateCrmProjectModal({
                 saving={saving}
                 assigneeOptions={assigneeOptions}
                 updateField={updateField}
+              />
+
+              <ProjectCustomFieldsSection
+                scope={templateScope}
+                values={customFieldDraft}
+                disabled={saving}
+                onValueChange={(fieldKey, value) =>
+                  setCustomFieldDraft((current) => ({ ...current, [fieldKey]: value }))
+                }
+                onAddField={() => setAddCustomFieldOpen(true)}
+                onFieldDeleted={(fieldKey) =>
+                  setCustomFieldDraft((current) => {
+                    const next = { ...current };
+                    delete next[fieldKey];
+                    return next;
+                  })
+                }
               />
 
               {!isEditMode && canManageTemplates && isApiSource ? (
@@ -538,6 +597,13 @@ export function CreateCrmProjectModal({
           onCloseList={handleCloseTemplateManage}
         />
       ) : null}
+
+      <AddProjectCustomFieldDialog
+        isOpen={addCustomFieldOpen}
+        saving={customFieldsSaving}
+        onClose={() => setAddCustomFieldOpen(false)}
+        onCreate={handleCreateCustomField}
+      />
 
     </>
 

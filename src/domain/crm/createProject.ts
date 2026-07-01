@@ -25,6 +25,8 @@ export type CreateCrmProjectInput = {
   readonly initialTemplateBlueprints?: BuildCoreProjectTemplateBlueprints | null;
   /** When set, creates a subproject under the given parent project id. */
   readonly parentProjectId?: string | null;
+  /** Custom field values keyed by field_key; null clears a value. */
+  readonly customFieldValues?: Readonly<Record<string, string | null>>;
 };
 
 export type CreateCrmProjectResult = {

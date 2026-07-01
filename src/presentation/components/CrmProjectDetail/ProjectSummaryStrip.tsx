@@ -1,9 +1,18 @@
 'use client';
 
-import type { KeyboardEvent, ReactElement, ReactNode, Ref } from 'react';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type KeyboardEvent,
+  type ReactElement,
+  type ReactNode,
+  type Ref,
+} from 'react';
 import { projectHasPaymentMilestones, type CrmProjectDetail } from '@/domain/crm';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
+import { CreateCrmProjectModal } from '@/presentation/components/CrmProjects/CreateCrmProjectModal';
 import {
   formatCentsAsUsd,
   formatContactEmailDisplay,
@@ -267,7 +276,6 @@ export type ProjectSummaryStripProps = {
   readOnly?: boolean;
   savingField: SummaryEditableField | null;
   patchField: (field: SummaryEditableField, value: string) => Promise<boolean>;
-  onEditClick?: () => void;
 };
 
 export function ProjectSummaryStrip({
@@ -276,16 +284,16 @@ export function ProjectSummaryStrip({
   readOnly = false,
   savingField,
   patchField,
-  onEditClick,
 }: ProjectSummaryStripProps): ReactElement {
   const { summary } = project;
-  const { childSummaries, setToast } = useProjectDetailShell();
+  const { childSummaries, setToast, onProjectSaved } = useProjectDetailShell();
+  const [editModalOpen, setEditModalOpen] = useState(false);
   const paymentFinancials = useProjectDetailPaymentFinancials({
     project,
     childSummaries: childSummaries?.allRows ?? null,
   });
+  const fullDetailsCopy = content.projectDetail.fullDetails;
   const fields = content.projectDetail.fields;
-  const edit = content.projectDetail.edit;
   const hasPaymentMilestones = projectHasPaymentMilestones(project);
   const isSubproject = summary.parentProjectId != null;
   const valueLabel = isSubproject ? fields.subValue : fields.value;
@@ -324,7 +332,6 @@ export function ProjectSummaryStrip({
           readOnly={readOnly}
           savingField={savingField}
           patchField={patchField}
-          onEditClick={onEditClick}
         />
       </div>
     );
@@ -409,26 +416,33 @@ export function ProjectSummaryStrip({
             >
               <span
                 className={styles.summaryText}
-                title={hasPaymentMilestones ? edit.fields.balanceDerivedHint : undefined}
+                title={hasPaymentMilestones ? content.projectDetail.edit.fields.balanceDerivedHint : undefined}
               >
                 {formatCentsAsUsd(paymentFinancials.balanceCents)}
               </span>
             </SummaryMetric>
           </>
         )}
-        {onEditClick ? (
+        {!readOnly ? (
           <div className={styles.summaryStripEditAction}>
             <button
               type="button"
-              className={styles.summaryStripEditBtn}
-              onClick={onEditClick}
-              aria-label={edit.title}
+              className={styles.summaryStripViewEditBtn}
+              onClick={() => setEditModalOpen(true)}
+              aria-label={fullDetailsCopy.viewEdit}
             >
-              <span className={styles.summaryStripEditIcon} aria-hidden />
+              {fullDetailsCopy.viewEdit}
             </button>
           </div>
         ) : null}
       </div>
+      <CreateCrmProjectModal
+        open={editModalOpen}
+        mode="edit"
+        project={project}
+        onClose={() => setEditModalOpen(false)}
+        onUpdated={onProjectSaved}
+      />
     </section>
   );
 }

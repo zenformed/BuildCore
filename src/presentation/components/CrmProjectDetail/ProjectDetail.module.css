@@ -1997,6 +1997,25 @@
   border-right: none;
 }
 
+.summaryStripViewEditBtn {
+  display: inline;
+  margin: 0;
+  padding: 0;
+  font-size: 0.75rem;
+  font-weight: 500;
+  line-height: 1.35;
+  color: var(--color-text-muted, #64748b);
+  background: none;
+  border: none;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: color 0.12s ease;
+}
+
+.summaryStripViewEditBtn:hover:not(:disabled) {
+  color: var(--color-text, #0f172a);
+}
+
 .summaryStripEditBtn {
   display: inline-flex;
   align-items: center;
@@ -2055,6 +2074,17 @@
   width: 100%;
   padding: 0.625rem 0.75rem;
   box-sizing: border-box;
+}
+
+.projectInfoMobileCardFooter {
+  display: flex;
+  justify-content: flex-end;
+  padding: 0.5rem 0.75rem 0.625rem;
+  border-top: 1px solid var(--theme-border-main, #e2e8f0);
+}
+
+:global([data-theme='dark']) .projectInfoMobileCardFooter {
+  border-top-color: var(--theme-stage-group-border-color, #80808052);
 }
 
 .projectInfoMobileCard .workflowTaskMobileCardGrid2 {
@@ -2275,6 +2305,10 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+:global([data-theme='dark']) .summaryStripViewEditBtn:hover:not(:disabled) {
+  color: var(--color-text-primary, #f8fafc);
 }
 
 :global([data-theme='dark']) .summaryStripEditBtn:hover:not(:disabled) {

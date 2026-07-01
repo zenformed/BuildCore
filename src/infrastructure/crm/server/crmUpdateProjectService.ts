@@ -8,6 +8,7 @@ import {
 } from './crmProjectIndustrySchema';
 import { getCrmProjectDetailBySlugForOrg } from './crmReadService';
 import { buildCrmContactDbWritePayload } from '@/domain/crm/contactMultiValue';
+import { upsertProjectCustomFieldValuesForProject } from './buildCoreProjectCustomFieldService';
 
 export async function updateCrmProjectBySlugForOrg(
   supabase: SupabaseClient,
@@ -67,6 +68,18 @@ export async function updateCrmProjectBySlugForOrg(
     .eq('organization_id', organizationId);
 
   if (projectError) throw new Error(projectError.message);
+
+  if (input.customFieldValues != null) {
+    await upsertProjectCustomFieldValuesForProject(
+      supabase,
+      organizationId,
+      {
+        id: existing.summary.id,
+        parentProjectId: existing.summary.parentProjectId,
+      },
+      input.customFieldValues
+    );
+  }
 
   await appendCrmAccountabilityEvent(supabase, {
     organizationId,

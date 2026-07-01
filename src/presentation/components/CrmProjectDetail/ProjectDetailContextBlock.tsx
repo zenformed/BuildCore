@@ -32,7 +32,6 @@ export type ProjectDetailContextBlockProps = {
   savingField: SummaryEditableField | null;
   patchField: (field: SummaryEditableField, value: string) => Promise<boolean>;
   patchIndustry: (industry: CrmIndustry, customIndustry: string) => Promise<boolean>;
-  onEditProject?: () => void;
   /** Overview body (tabs, subprojects) — composed into the mobile scroll region when on detail page. */
   scrollBody?: ReactNode;
 };
@@ -51,7 +50,6 @@ export function ProjectDetailContextBlock({
   savingField,
   patchField,
   patchIndustry,
-  onEditProject,
   scrollBody,
 }: ProjectDetailContextBlockProps): ReactElement {
   const readOnly = isMemberRole;
@@ -113,7 +111,6 @@ export function ProjectDetailContextBlock({
       readOnly={readOnly}
       savingField={savingField}
       patchField={patchField}
-      onEditClick={onEditProject}
     />
   );
 

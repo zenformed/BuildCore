@@ -1,9 +1,18 @@
 'use client';
 
-import type { ReactElement } from 'react';
+import { useCallback, useState, type ReactElement } from 'react';
 import { MAX_CONTACT_EMAILS, MAX_CONTACT_PHONES } from '@/domain/crm/contactMultiValue';
 import { formatUsPhoneInput } from '@/domain/crm/phoneFormat';
+import { CenterConfirmDialog } from '@/presentation/components/CenterConfirmDialog';
 import formStyles from '@/presentation/components/CrmProjects/CreateCrmProjectDrawer.module.css';
+
+export type ContactMultiValueRemoveConfirmCopy = {
+  readonly title: string;
+  readonly body: string;
+  readonly confirm: string;
+  readonly cancel: string;
+  readonly closeAriaLabel: string;
+};
 
 export type ContactMultiValueFieldsProps = {
   readonly label: string;
@@ -15,6 +24,7 @@ export type ContactMultiValueFieldsProps = {
   readonly addButtonLabel: string;
   readonly addAriaLabel: string;
   readonly removeAriaLabel: string;
+  readonly removeConfirmCopy: ContactMultiValueRemoveConfirmCopy;
   readonly onChange: (values: string[]) => void;
 };
 
@@ -40,8 +50,10 @@ export function ContactMultiValueFields({
   addButtonLabel,
   addAriaLabel,
   removeAriaLabel,
+  removeConfirmCopy,
   onChange,
 }: ContactMultiValueFieldsProps): ReactElement {
+  const [pendingRemoveIndex, setPendingRemoveIndex] = useState<number | null>(null);
   const canAdd = values.length < maxCount && !disabled;
 
   const updateValue = (index: number, nextValue: string) => {
@@ -55,62 +67,87 @@ export function ContactMultiValueFields({
     onChange([...values, '']);
   };
 
-  const removeValue = (index: number) => {
-    if (index <= 0 || values.length <= 1) return;
-    onChange(values.filter((_, valueIndex) => valueIndex !== index));
-  };
+  const removeValue = useCallback(
+    (index: number) => {
+      if (index <= 0 || values.length <= 1) return;
+      onChange(values.filter((_, valueIndex) => valueIndex !== index));
+    },
+    [onChange, values]
+  );
+
+  const handleCloseRemove = useCallback(() => {
+    setPendingRemoveIndex(null);
+  }, []);
+
+  const handleConfirmRemove = useCallback(() => {
+    if (pendingRemoveIndex == null) return;
+    removeValue(pendingRemoveIndex);
+    setPendingRemoveIndex(null);
+  }, [pendingRemoveIndex, removeValue]);
 
   return (
-    <div className={formStyles.contactMultiSection}>
-      <div className={formStyles.contactMultiHeader}>
-        <span className={formStyles.label}>{label}</span>
-        {canAdd ? (
-          <button
-            type="button"
-            className={formStyles.contactMultiAddOutlineBtn}
-            onClick={addValue}
-            disabled={disabled}
-            aria-label={addAriaLabel}
-          >
-            {addButtonLabel}
-          </button>
-        ) : null}
-      </div>
-      {values.map((value, index) => {
-        const isExtra = index > 0;
+    <>
+      <div className={formStyles.contactMultiSection}>
+        <div className={formStyles.contactMultiHeader}>
+          <span className={formStyles.label}>{label}</span>
+          {canAdd ? (
+            <button
+              type="button"
+              className={formStyles.contactMultiAddOutlineBtn}
+              onClick={addValue}
+              disabled={disabled}
+              aria-label={addAriaLabel}
+            >
+              {addButtonLabel}
+            </button>
+          ) : null}
+        </div>
+        {values.map((value, index) => {
+          const isExtra = index > 0;
 
-        return (
-          <div
-            key={`${idPrefix}-${index}`}
-            className={`${formStyles.contactMultiFieldRow}${isExtra ? ` ${formStyles.contactMultiFieldRowExtra}` : ''}`}
-          >
-            <div className={formStyles.contactMultiFieldRowInner}>
-              <input
-                id={`${idPrefix}-${index}`}
-                type={inputType}
-                className={formStyles.input}
-                value={inputType === 'tel' ? formatUsPhoneInput(value) : value}
-                disabled={disabled}
-                inputMode={inputType === 'tel' ? 'tel' : undefined}
-                autoComplete={inputType === 'tel' ? 'tel' : undefined}
-                onChange={(event) => updateValue(index, event.target.value)}
-              />
-              {isExtra ? (
-                <button
-                  type="button"
-                  className={formStyles.contactMultiRemoveBtn}
-                  onClick={() => removeValue(index)}
+          return (
+            <div
+              key={`${idPrefix}-${index}`}
+              className={`${formStyles.contactMultiFieldRow}${isExtra ? ` ${formStyles.contactMultiFieldRowExtra}` : ''}`}
+            >
+              <div className={formStyles.contactMultiFieldRowInner}>
+                <input
+                  id={`${idPrefix}-${index}`}
+                  type={inputType}
+                  className={formStyles.input}
+                  value={inputType === 'tel' ? formatUsPhoneInput(value) : value}
                   disabled={disabled}
-                  aria-label={removeAriaLabel}
-                >
-                  <ContactRemoveIcon />
-                </button>
-              ) : null}
+                  inputMode={inputType === 'tel' ? 'tel' : undefined}
+                  autoComplete={inputType === 'tel' ? 'tel' : undefined}
+                  onChange={(event) => updateValue(index, event.target.value)}
+                />
+                {isExtra ? (
+                  <button
+                    type="button"
+                    className={formStyles.contactMultiRemoveBtn}
+                    onClick={() => setPendingRemoveIndex(index)}
+                    disabled={disabled}
+                    aria-label={removeAriaLabel}
+                  >
+                    <ContactRemoveIcon />
+                  </button>
+                ) : null}
+              </div>
             </div>
-          </div>
-        );
-      })}
-    </div>
+          );
+        })}
+      </div>
+      <CenterConfirmDialog
+        isOpen={pendingRemoveIndex != null}
+        title={removeConfirmCopy.title}
+        message={removeConfirmCopy.body}
+        cancelLabel={removeConfirmCopy.cancel}
+        confirmLabel={removeConfirmCopy.confirm}
+        onClose={handleCloseRemove}
+        onConfirm={handleConfirmRemove}
+        closeAriaLabel={removeConfirmCopy.closeAriaLabel}
+      />
+    </>
   );
 }
 

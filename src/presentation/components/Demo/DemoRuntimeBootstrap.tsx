@@ -3,6 +3,7 @@
 import { useLayoutEffect, useState, type ReactElement, type ReactNode } from 'react';
 import { hydrateMockCrmStateFromDemoSession } from '@/infrastructure/crm/mock/mockCrmMutationStore';
 import { seedMockWorkflowTaskCustomFieldExamplesIfEmpty } from '@/infrastructure/crm/mock/mockWorkflowTaskCustomFieldsStore';
+import { seedMockProjectCustomFieldExamplesIfEmpty } from '@/infrastructure/crm/mock/mockProjectCustomFieldsStore';
 import { resetCrmRepositoriesCache } from '@/infrastructure/crm/crmRepositories';
 import { loadOrCreateDemoSessionStore } from '@/infrastructure/demo/demoSessionStore';
 
@@ -25,6 +26,7 @@ export function DemoRuntimeBootstrap({
     const store = loadOrCreateDemoSessionStore();
     hydrateMockCrmStateFromDemoSession(store);
     seedMockWorkflowTaskCustomFieldExamplesIfEmpty();
+    seedMockProjectCustomFieldExamplesIfEmpty();
     onSessionReady(store.sessionId);
     setReady(true);
   }, [onSessionReady]);

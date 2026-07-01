@@ -1,5 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { CrmBudgetEntry, CrmProjectDetail, CrmProjectSummary, WorkflowTaskStatus } from '@/domain/crm';
+import type { CrmProjectPreview } from '@/domain/crm/projectPreview';
 import type { CrmProjectBudgetEntriesIndex } from '@/domain/crm/projectBudgetRollup';
 import type { CrmProjectPaymentTasksIndex } from '@/domain/crm/projectPaymentValue';
 import type { CrmProjectWorkflowTaskStatusIndex } from '@/domain/crm/projectWorkflowTaskStatusIndex';
@@ -33,6 +34,11 @@ import {
   buildWorkflowTaskCustomFieldLoadTaskRef,
   loadWorkflowTaskCustomFieldsMapForTaskIds,
 } from './buildCoreWorkflowTaskCustomFieldService';
+import {
+  attachCustomFieldsToProjectSummary,
+  buildProjectCustomFieldLoadProjectRef,
+  loadProjectCustomFieldsMapForProjectIds,
+} from './buildCoreProjectCustomFieldService';
 import { logCrmProjectDetailPerf, startCrmReadPerfTimer } from './crmReadPerf';
 
 function buildProjectSummarySelect(mode: Awaited<ReturnType<typeof getCrmProjectIndustrySchemaMode>>): string {
@@ -379,6 +385,42 @@ export async function getCrmProjectSummaryBySlugForOrg(
   return mapDbProjectSummary(project, memberById);
 }
 
+export async function getCrmProjectPreviewBySlugForOrg(
+  supabase: SupabaseClient,
+  organizationId: string,
+  slug: string
+): Promise<CrmProjectPreview | null> {
+  const industrySchemaMode = await getCrmProjectIndustrySchemaMode(supabase);
+  const projectSelect = buildProjectSummarySelect(industrySchemaMode);
+  const { data: projectData, error: projectError } = await supabase
+    .from('crm_projects')
+    .select(`${projectSelect}, notes`)
+    .eq('organization_id', organizationId)
+    .eq('slug', slug)
+    .is('archived_at', null)
+    .maybeSingle();
+
+  if (projectError) {
+    throw new Error(projectError.message);
+  }
+  if (!projectData) return null;
+
+  const project = projectData as unknown as DbCrmProjectRow & { notes: string | null };
+  const memberById = await loadCrmMemberMap(supabase, collectMemberIds({ projects: [project] }), {
+    organizationId,
+  });
+  const summary = mapDbProjectSummary(project, memberById);
+  const valuesByProjectId = await loadProjectCustomFieldsMapForProjectIds(supabase, organizationId, [
+    buildProjectCustomFieldLoadProjectRef(summary),
+  ]);
+  const customFields = valuesByProjectId.get(summary.id) ?? {};
+
+  return {
+    summary: attachCustomFieldsToProjectSummary(summary, customFields),
+    notes: project.notes,
+  };
+}
+
 export async function getCrmProjectDetailBySlugForOrg(
   supabase: SupabaseClient,
   organizationId: string,
@@ -506,8 +548,14 @@ export async function getCrmProjectDetailBySlugForOrg(
     detail.workflowTasks.map((task) => buildWorkflowTaskCustomFieldLoadTaskRef(task))
   );
 
+  const valuesByProjectId = await loadProjectCustomFieldsMapForProjectIds(supabase, organizationId, [
+    buildProjectCustomFieldLoadProjectRef(detail.summary),
+  ]);
+  const customFields = valuesByProjectId.get(detail.summary.id) ?? {};
+
   return {
     ...detail,
+    summary: attachCustomFieldsToProjectSummary(detail.summary, customFields),
     workflowTasks: attachCustomFieldsToWorkflowTasks(detail.workflowTasks, valuesByTaskId),
   };
 }

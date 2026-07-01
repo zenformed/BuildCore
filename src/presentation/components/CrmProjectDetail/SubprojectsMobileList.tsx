@@ -31,6 +31,7 @@ export type SubprojectsMobileListProps = {
   readonly emptyMessage: string;
   readonly onRowClick: (project: CrmProjectSummary) => void;
   readonly bulkSelection?: BulkSelectionBindings;
+  readonly onContactCopied?: (message: string) => void;
 };
 
 export function SubprojectsMobileList({
@@ -53,6 +54,7 @@ export function SubprojectsMobileList({
   emptyMessage,
   onRowClick,
   bulkSelection,
+  onContactCopied,
 }: SubprojectsMobileListProps): ReactElement {
   const showList = rows.length > 0 || isLoading;
 
@@ -97,6 +99,7 @@ export function SubprojectsMobileList({
                 workflowProgressInputIndex={workflowProgressInputIndex}
                 isWorkflowProgressLoading={isWorkflowProgressLoading}
                 bulkSelection={bulkSelection}
+                onContactCopied={onContactCopied}
               />
             </li>
           ))}

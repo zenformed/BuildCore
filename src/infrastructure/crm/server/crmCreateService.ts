@@ -11,6 +11,7 @@ import { loadOrganizationPipelineStageCatalog } from './pipelineStageService';
 import { ensureUniqueProjectSlug, slugifyProjectName } from './crmSlug';
 import { generateCrmProjectLeadToken } from '@/infrastructure/lead/generateLeadToken';
 import { buildCrmContactDbWritePayload } from '@/domain/crm/contactMultiValue';
+import { upsertProjectCustomFieldValuesForProject } from './buildCoreProjectCustomFieldService';
 
 export type CrmClientContactParty = {
   readonly clientId: string;
@@ -220,6 +221,23 @@ export async function createCrmProjectForOrg(
   const summary = await getCrmProjectSummaryBySlugForOrg(supabase, organizationId, projectRow.slug);
   if (summary == null) {
     throw new Error('Failed to load created project summary.');
+  }
+
+  if (input.customFieldValues != null && Object.keys(input.customFieldValues).length > 0) {
+    const customFields = await upsertProjectCustomFieldValuesForProject(
+      supabase,
+      organizationId,
+      {
+        id: projectRow.id,
+        parentProjectId: input.parentProjectId ?? null,
+      },
+      input.customFieldValues
+    );
+    return {
+      id: projectRow.id,
+      slug: projectRow.slug,
+      summary: { ...summary, customFields },
+    };
   }
 
   return { id: projectRow.id, slug: projectRow.slug, summary };

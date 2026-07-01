@@ -14,6 +14,7 @@ import {
   validateContactEmailValues,
   validateContactPhoneValues,
 } from '@/domain/crm/contactMultiValue';
+import { parseProjectCustomFieldValuesInput } from '@/domain/buildcore/projectCustomFields';
 import {
   validateOptionalCity,
   validateOptionalPostalCode,
@@ -44,6 +45,7 @@ export type CreateCrmProjectBody = {
   postalCode?: unknown;
   initialTemplateBlueprints?: unknown;
   parentProjectId?: unknown;
+  customFieldValues?: unknown;
 };
 
 export type ValidateCreateCrmProjectResult =
@@ -240,6 +242,15 @@ export function validateCreateCrmProjectBody(
     return notesValidated;
   }
 
+  let customFieldValues: CreateCrmProjectInput['customFieldValues'];
+  if (body.customFieldValues !== undefined) {
+    const parsed = parseProjectCustomFieldValuesInput(body.customFieldValues);
+    if (parsed == null) {
+      return { ok: false, message: 'Custom field values are invalid.' };
+    }
+    customFieldValues = parsed;
+  }
+
   return {
     ok: true,
     input: {
@@ -262,6 +273,7 @@ export function validateCreateCrmProjectBody(
       postalCode: postalValidated.postalCode,
       initialTemplateBlueprints,
       ...(parentProjectId !== undefined ? { parentProjectId } : {}),
+      ...(customFieldValues !== undefined ? { customFieldValues } : {}),
     },
   };
 }

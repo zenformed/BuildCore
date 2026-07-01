@@ -1,10 +1,10 @@
 'use client';
 
-import type { ReactElement, ReactNode } from 'react';
-import { useCallback } from 'react';
+import { useCallback, useState, type ReactElement, type ReactNode } from 'react';
 import { projectHasPaymentMilestones, type CrmProjectDetail } from '@/domain/crm';
 import { nonEmptyContactValues } from '@/domain/crm/contactMultiValue';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
+import { CreateCrmProjectModal } from '@/presentation/components/CrmProjects/CreateCrmProjectModal';
 import {
   formatCentsAsUsd,
   formatContactEmailDisplay,
@@ -23,7 +23,6 @@ export type ProjectSummaryMobileCardProps = {
   readonly readOnly?: boolean;
   readonly savingField: SummaryEditableField | null;
   readonly patchField: (field: SummaryEditableField, value: string) => Promise<boolean>;
-  readonly onEditClick?: () => void;
 };
 
 function ProjectInfoMobileFieldCell({
@@ -54,15 +53,16 @@ export function ProjectSummaryMobileCard({
   readOnly = false,
   savingField,
   patchField,
-  onEditClick,
 }: ProjectSummaryMobileCardProps): ReactElement {
   const { summary } = project;
-  const { childSummaries, setToast } = useProjectDetailShell();
+  const { childSummaries, setToast, onProjectSaved } = useProjectDetailShell();
+  const [editModalOpen, setEditModalOpen] = useState(false);
   const paymentFinancials = useProjectDetailPaymentFinancials({
     project,
     childSummaries: childSummaries?.allRows ?? null,
   });
   const fields = content.projectDetail.fields;
+  const fullDetailsCopy = content.projectDetail.fullDetails;
   const edit = content.projectDetail.edit;
   const hasPaymentMilestones = projectHasPaymentMilestones(project);
   const isSubproject = summary.parentProjectId != null;
@@ -92,123 +92,129 @@ export function ProjectSummaryMobileCard({
     []
   );
   const mobileValueClass = `${styles.summaryText} ${styles.projectInfoMobileValue}`;
-  const editAction = onEditClick ? (
-    <button
-      type="button"
-      className={styles.summaryStripEditBtn}
-      onClick={onEditClick}
-      aria-label={edit.title}
-    >
-      <span className={styles.summaryStripEditIcon} aria-hidden />
-    </button>
-  ) : null;
 
   return (
-    <article
-      className={`${styles.card} ${styles.projectInfoMobileCard}`}
-      aria-label={content.projectDetail.sections.projectInformation}
-    >
-      <div className={styles.projectInfoMobileCardBody}>
-        <div className={styles.workflowTaskMobileCardGrid2}>
-          <ProjectInfoMobileFieldCell label={fields.customer}>
-            <SummaryInlineText
-              hideLabel
-              fieldKey="name"
-              label={fields.customer}
-              value={summary.name}
-              savingField={savingField}
-              disabled={readOnly}
-              valueClassName={mobileValueClass}
-              onPatch={patchField}
-            />
-          </ProjectInfoMobileFieldCell>
-          <ProjectInfoMobileFieldCell label={fields.contact} align="right">
-            <SummaryInlineText
-              hideLabel
-              fieldKey="contactName"
-              label={fields.contact}
-              value={summary.contact.name}
-              savingField={savingField}
-              disabled={readOnly}
-              valueClassName={mobileValueClass}
-              onPatch={patchField}
-            />
-          </ProjectInfoMobileFieldCell>
+    <>
+      <article
+        className={`${styles.card} ${styles.projectInfoMobileCard}`}
+        aria-label={content.projectDetail.sections.projectInformation}
+      >
+        <div className={styles.projectInfoMobileCardBody}>
+          <div className={styles.workflowTaskMobileCardGrid2}>
+            <ProjectInfoMobileFieldCell label={fields.customer}>
+              <SummaryInlineText
+                hideLabel
+                fieldKey="name"
+                label={fields.customer}
+                value={summary.name}
+                savingField={savingField}
+                disabled={readOnly}
+                valueClassName={mobileValueClass}
+                onPatch={patchField}
+              />
+            </ProjectInfoMobileFieldCell>
+            <ProjectInfoMobileFieldCell label={fields.contact} align="right">
+              <SummaryInlineText
+                hideLabel
+                fieldKey="contactName"
+                label={fields.contact}
+                value={summary.contact.name}
+                savingField={savingField}
+                disabled={readOnly}
+                valueClassName={mobileValueClass}
+                onPatch={patchField}
+              />
+            </ProjectInfoMobileFieldCell>
+          </div>
+          <div className={styles.workflowTaskMobileCardGrid2}>
+            <ProjectInfoMobileFieldCell label={fields.email}>
+              <SummaryInlineText
+                hideLabel
+                fieldKey="email"
+                label={fields.email}
+                value={summary.contact.email}
+                displayValue={displayEmail}
+                savingField={savingField}
+                disabled={readOnly}
+                inputType="email"
+                displayClassName={styles.summaryLink}
+                valueClassName={`${styles.summaryLink} ${styles.projectInfoMobileValue}`}
+                onPatch={patchField}
+                contactPopoverValues={contactEmails}
+                contactPopoverKind="email"
+                formatContactPopoverValue={formatEmailPopoverValue}
+                getContactCopyValue={getEmailCopyValue}
+                onContactCopied={onContactCopied}
+              />
+            </ProjectInfoMobileFieldCell>
+            <ProjectInfoMobileFieldCell label={fields.phone} align="right">
+              <SummaryInlineText
+                hideLabel
+                fieldKey="phone"
+                label={fields.phone}
+                value={summary.contact.phone}
+                displayValue={formatPhoneDisplay(summary.contact.phone)}
+                savingField={savingField}
+                disabled={readOnly}
+                inputType="tel"
+                displayClassName={styles.summaryLink}
+                valueClassName={`${styles.summaryLink} ${styles.projectInfoMobileValue}`}
+                onPatch={patchField}
+                contactPopoverValues={contactPhones}
+                contactPopoverKind="phone"
+                formatContactPopoverValue={formatPhonePopoverValue}
+                getContactCopyValue={getPhoneCopyValue}
+                onContactCopied={onContactCopied}
+              />
+            </ProjectInfoMobileFieldCell>
+          </div>
+          <ProjectSummaryAddress address={summary.address} label={fields.address} layout="mobile" />
         </div>
-        <div className={styles.workflowTaskMobileCardGrid2}>
-          <ProjectInfoMobileFieldCell label={fields.email}>
-            <SummaryInlineText
-              hideLabel
-              fieldKey="email"
-              label={fields.email}
-              value={summary.contact.email}
-              displayValue={displayEmail}
-              savingField={savingField}
-              disabled={readOnly}
-              inputType="email"
-              displayClassName={styles.summaryLink}
-              valueClassName={`${styles.summaryLink} ${styles.projectInfoMobileValue}`}
-              onPatch={patchField}
-              contactPopoverValues={contactEmails}
-              contactPopoverKind="email"
-              formatContactPopoverValue={formatEmailPopoverValue}
-              getContactCopyValue={getEmailCopyValue}
-              onContactCopied={onContactCopied}
-            />
-          </ProjectInfoMobileFieldCell>
-          <ProjectInfoMobileFieldCell label={fields.phone} align="right">
-            <SummaryInlineText
-              hideLabel
-              fieldKey="phone"
-              label={fields.phone}
-              value={summary.contact.phone}
-              displayValue={formatPhoneDisplay(summary.contact.phone)}
-              savingField={savingField}
-              disabled={readOnly}
-              inputType="tel"
-              displayClassName={styles.summaryLink}
-              valueClassName={`${styles.summaryLink} ${styles.projectInfoMobileValue}`}
-              onPatch={patchField}
-              contactPopoverValues={contactPhones}
-              contactPopoverKind="phone"
-              formatContactPopoverValue={formatPhonePopoverValue}
-              getContactCopyValue={getPhoneCopyValue}
-              onContactCopied={onContactCopied}
-            />
-          </ProjectInfoMobileFieldCell>
-        </div>
-        <ProjectSummaryAddress
-          address={summary.address}
-          label={fields.address}
-          layout="mobile"
-          editAction={editAction}
-        />
-      </div>
-      {memberView ? null : (
-        <div className={styles.projectInfoMobileFinancials} aria-label={content.projectDetail.sections.financials}>
-          <span className={styles.projectInfoMobileFinancialItem} title={valueLabel}>
-            <span className={styles.projectInfoMobileFinancialLabel}>{valueLabel}</span>
-            <span className={styles.projectInfoMobileFinancialValue}>
-              {formatCentsAsUsd(paymentFinancials.valueCents)}
+        {memberView ? null : (
+          <div className={styles.projectInfoMobileFinancials} aria-label={content.projectDetail.sections.financials}>
+            <span className={styles.projectInfoMobileFinancialItem} title={valueLabel}>
+              <span className={styles.projectInfoMobileFinancialLabel}>{valueLabel}</span>
+              <span className={styles.projectInfoMobileFinancialValue}>
+                {formatCentsAsUsd(paymentFinancials.valueCents)}
+              </span>
             </span>
-          </span>
-          <span className={styles.projectInfoMobileFinancialItem} title={fields.collected}>
-            <span className={styles.projectInfoMobileFinancialLabel}>{fields.collected}</span>
-            <span className={styles.projectInfoMobileFinancialValue}>
-              {formatCentsAsUsd(paymentFinancials.collectedCents)}
+            <span className={styles.projectInfoMobileFinancialItem} title={fields.collected}>
+              <span className={styles.projectInfoMobileFinancialLabel}>{fields.collected}</span>
+              <span className={styles.projectInfoMobileFinancialValue}>
+                {formatCentsAsUsd(paymentFinancials.collectedCents)}
+              </span>
             </span>
-          </span>
-          <span
-            className={styles.projectInfoMobileFinancialItem}
-            title={hasPaymentMilestones ? edit.fields.balanceDerivedHint : fields.balance}
-          >
-            <span className={styles.projectInfoMobileFinancialLabel}>{fields.balance}</span>
-            <span className={styles.projectInfoMobileFinancialValue}>
-              {formatCentsAsUsd(paymentFinancials.balanceCents)}
+            <span
+              className={styles.projectInfoMobileFinancialItem}
+              title={hasPaymentMilestones ? edit.fields.balanceDerivedHint : fields.balance}
+            >
+              <span className={styles.projectInfoMobileFinancialLabel}>{fields.balance}</span>
+              <span className={styles.projectInfoMobileFinancialValue}>
+                {formatCentsAsUsd(paymentFinancials.balanceCents)}
+              </span>
             </span>
-          </span>
-        </div>
-      )}
-    </article>
+          </div>
+        )}
+        {!readOnly ? (
+          <footer className={styles.projectInfoMobileCardFooter}>
+            <button
+              type="button"
+              className={styles.summaryStripViewEditBtn}
+              onClick={() => setEditModalOpen(true)}
+              aria-label={fullDetailsCopy.viewEdit}
+            >
+              {fullDetailsCopy.viewEdit}
+            </button>
+          </footer>
+        ) : null}
+      </article>
+      <CreateCrmProjectModal
+        open={editModalOpen}
+        mode="edit"
+        project={project}
+        onClose={() => setEditModalOpen(false)}
+        onUpdated={onProjectSaved}
+      />
+    </>
   );
 }

@@ -16,6 +16,7 @@ import {
 } from '@/presentation/features/crmProjects/crmProjectFormatters';
 import { useCrmProjectRowPresentation } from '@/presentation/features/crmProjects/useCrmProjectRowPresentation';
 import { CrmProjectTableRowActionsMenu } from './CrmProjectTableRowActionsMenu';
+import { ProjectPreviewNameAnchor } from './ProjectPreviewNameAnchor';
 import { CrmProjectInactiveIcon, CrmProjectInactiveInlineLabel } from './CrmProjectInactiveBadge';
 import projectStyles from '@/presentation/components/CrmProjectDetail/ProjectDetail.module.css';
 import shared from '@/presentation/components/crmShared/crmShared.module.css';
@@ -126,7 +127,16 @@ export function CrmProjectMobileCard({
               {isCrmProjectComplete(project) ? (
                 <CrmProjectCompleteIcon ariaLabel={tableCopy.completionCheckAriaLabel} />
               ) : null}
-              <span className={styles.mobileCardTitle}>{project.name}</span>
+              <ProjectPreviewNameAnchor
+                project={project}
+                financials={financials ?? null}
+                stageLabel={
+                  derivedStageSlug != null ? formatStageLabel(derivedStageSlug, catalog) : null
+                }
+                progressPercent={progress?.textPercent ?? null}
+              >
+                <span className={styles.mobileCardTitle}>{project.name}</span>
+              </ProjectPreviewNameAnchor>
             </span>
             {industrySubtitle ? (
               <span className={styles.mobileCardIndustry}>{industrySubtitle}</span>

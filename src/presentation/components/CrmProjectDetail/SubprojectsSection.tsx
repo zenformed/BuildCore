@@ -385,6 +385,11 @@ function SubprojectsSectionContent(): ReactElement {
     resolveStagesForProject,
   });
 
+  const onContactCopied = useCallback(
+    (message: string) => setToast({ kind: 'success', message }),
+    []
+  );
+
   const panelClass = [
     styles.subprojectsPanel,
     expanded ? '' : styles.subprojectsPanel_collapsed,
@@ -503,6 +508,7 @@ function SubprojectsSectionContent(): ReactElement {
               emptyMessage={subprojectsEmptyMessage}
               onRowClick={handleSubprojectRowClick}
               bulkSelection={bulkSelectionBindings}
+              onContactCopied={onContactCopied}
             />
           ) : (
             <div className={`${tableStyles.pipeline} ${tableStyles.pipelineFitContent}`}>
@@ -527,6 +533,7 @@ function SubprojectsSectionContent(): ReactElement {
                 emptyMessage={subprojectsEmptyMessage}
                 onRowClick={handleSubprojectRowClick}
                 bulkSelection={bulkSelectionBindings}
+                onContactCopied={onContactCopied}
               />
             </div>
           )}

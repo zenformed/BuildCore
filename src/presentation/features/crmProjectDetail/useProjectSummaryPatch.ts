@@ -19,10 +19,13 @@ export function useProjectSummaryPatch(
   onError: (message: string) => void
 ): {
   savingField: SummaryEditableField | null;
+  customFieldSavingKey: string | null;
   patchField: (field: SummaryEditableField, value: string) => Promise<boolean>;
   patchIndustry: (industry: CrmIndustry, customIndustry: string) => Promise<boolean>;
+  patchCustomFieldValue: (fieldKey: string, value: string) => Promise<boolean>;
 } {
   const [savingField, setSavingField] = useState<SummaryEditableField | null>(null);
+  const [customFieldSavingKey, setCustomFieldSavingKey] = useState<string | null>(null);
   const edit = content.projectDetail.edit;
 
   const saveForm = useCallback(
@@ -84,5 +87,41 @@ export function useProjectSummaryPatch(
     [project, saveForm]
   );
 
-  return { savingField, patchField, patchIndustry };
+  const patchCustomFieldValue = useCallback(
+    async (fieldKey: string, value: string): Promise<boolean> => {
+      const trimmed = value.trim();
+      const current = (project.summary.customFields?.[fieldKey] ?? '').trim();
+      if (trimmed === current) {
+        return true;
+      }
+
+      setCustomFieldSavingKey(fieldKey);
+      try {
+        const form = projectDetailToFormState(project);
+        const validated = validateProjectDetailForm(form, project);
+        if (!validated.ok) {
+          onError(validated.message);
+          return false;
+        }
+        const updated = await updateCrmProject(crmRepositories, project.summary.slug, {
+          ...validated.input,
+          customFieldValues: { [fieldKey]: trimmed || null },
+        });
+        if (updated == null) {
+          onError(edit.notFound);
+          return false;
+        }
+        onSaved(updated);
+        return true;
+      } catch (err) {
+        onError(err instanceof Error ? err.message : edit.submitFailed);
+        return false;
+      } finally {
+        setCustomFieldSavingKey(null);
+      }
+    },
+    [edit.notFound, edit.submitFailed, onError, onSaved, project.summary.customFields, project.summary.slug]
+  );
+
+  return { savingField, customFieldSavingKey, patchField, patchIndustry, patchCustomFieldValue };
 }
