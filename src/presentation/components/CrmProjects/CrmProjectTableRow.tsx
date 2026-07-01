@@ -58,6 +58,8 @@ export type CrmProjectTableRowProps = {
   isWorkflowProgressLoading?: boolean;
   bulkSelection?: BulkSelectionBindings;
   onContactCopied?: (message: string) => void;
+  showParentProjectColumn?: boolean;
+  parentProjectName?: string;
 };
 
 export function CrmProjectTableRow({
@@ -84,6 +86,8 @@ export function CrmProjectTableRow({
   isWorkflowProgressLoading = false,
   bulkSelection,
   onContactCopied,
+  showParentProjectColumn = false,
+  parentProjectName,
 }: CrmProjectTableRowProps): ReactElement {
   const tableCopy = content.crm.table;
   const { catalog, industrySubtitle, progress, derivedStageSlug } = useCrmProjectRowPresentation(
@@ -91,7 +95,7 @@ export function CrmProjectTableRow({
     workflowProgressInputIndex,
     isWorkflowProgressLoading
   );
-  const isChild = variant === 'child';
+  const isChild = variant === 'child' && !showParentProjectColumn;
   const isInactive = isCrmProjectInactive(project);
   const displayFinancials = financials ?? { valueCents: 0, collectedCents: 0, balanceCents: 0 };
   const financialDisplay = (cents: number): string =>
@@ -223,6 +227,15 @@ export function CrmProjectTableRow({
           </span>
         ) : null}
       </span>
+      {showParentProjectColumn ? (
+        <span
+          className={`${styles.gridCell} ${styles.gridCellParentProject} ${styles.gridCellAlignCenter}`}
+          role="cell"
+          title={parentProjectName ?? undefined}
+        >
+          {parentProjectName ?? '—'}
+        </span>
+      ) : null}
       <span className={`${styles.gridCell} ${styles.gridCellAlignCenter}`} role="cell">
         {project.contact.name}
       </span>

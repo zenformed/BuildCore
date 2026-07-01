@@ -51,6 +51,8 @@ export type CrmProjectsTableProps = {
   deleteLabels?: CrmProjectsTableDeleteLabels;
   bulkSelection?: BulkSelectionBindings;
   onContactCopied?: (message: string) => void;
+  showParentProjectColumn?: boolean;
+  parentById?: ReadonlyMap<string, CrmProjectSummary>;
 };
 
 export function CrmProjectsTable({
@@ -83,6 +85,8 @@ export function CrmProjectsTable({
   emptyMessage,
   bulkSelection,
   onContactCopied,
+  showParentProjectColumn = false,
+  parentById,
 }: CrmProjectsTableProps): ReactElement {
   const displayRoots = useMemo(
     () => (enableSubprojectExpansion ? (rootRows ?? []) : (rows ?? [])),
@@ -104,6 +108,7 @@ export function CrmProjectsTable({
   const tableInnerClass = [
     isMemberRole ? `${styles.tableInner} ${styles.tableInnerMember}` : styles.tableInner,
     bulkSelection?.mode ? styles.tableInnerWithBulkSelection : '',
+    showParentProjectColumn ? styles.tableInnerWithParentColumn : '',
   ]
     .filter(Boolean)
     .join(' ');
@@ -117,6 +122,7 @@ export function CrmProjectsTable({
       expandedParentIds,
       allChildrenByParentId,
       visibleChildrenByParentId,
+      parentById,
       paymentTasksIndex: resolvedPaymentTasksIndex,
       projectValueLabel: valueLabels.projectValueLabel,
       subValueLabel: valueLabels.subValueLabel,
@@ -136,6 +142,7 @@ export function CrmProjectsTable({
     valueLabels.projectValueLabel,
     valueLabels.subValueLabel,
     visibleChildrenByParentId,
+    parentById,
   ]);
 
   return (
@@ -157,6 +164,9 @@ export function CrmProjectsTable({
                 </span>
               ) : null}
               <span role="columnheader">{projectHeader}</span>
+              {showParentProjectColumn ? (
+                <span role="columnheader">{content.crm.panel.listView.parentProjectColumn}</span>
+              ) : null}
               <span role="columnheader">{COLUMNS.contact}</span>
               <span role="columnheader">{COLUMNS.email}</span>
               <span role="columnheader">{COLUMNS.phone}</span>
@@ -214,6 +224,8 @@ export function CrmProjectsTable({
                     isWorkflowProgressLoading={isWorkflowProgressLoading}
                     bulkSelection={bulkSelection}
                     onContactCopied={onContactCopied}
+                    showParentProjectColumn={showParentProjectColumn}
+                    parentProjectName={row.parentProjectName}
                   />
                 ))
               )}

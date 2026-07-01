@@ -1,17 +1,21 @@
 'use client';
 
-import type { KeyboardEvent, ReactElement } from 'react';
+import { useCallback, type KeyboardEvent, type ReactElement } from 'react';
 import type { CrmProjectSummary } from '@/domain/crm';
 import type { ProjectPaymentFinancials } from '@/domain/crm/projectPaymentValue';
 import type { CrmProjectWorkflowProgressInputIndex } from '@/domain/crm/projectWorkflowProgressInput';
 import { isCrmProjectComplete, isCrmProjectInactive } from '@/domain/crm';
+import { nonEmptyContactValues } from '@/domain/crm/contactMultiValue';
 import { isProjectPriorityUrgent } from '@/domain/crm/projectPriorityToggle';
 import { CrmProjectCompleteIcon } from '@/presentation/components/crmShared/CrmProjectCompleteIcon';
 import { CrmProjectPriorityIcon } from '@/presentation/components/crmShared/CrmProjectPriorityIcon';
 import { TeamMemberAvatar } from '@/presentation/components/CrmProjectDetail/TeamMemberAvatar';
+import { SubprojectMobileContactValue } from '@/presentation/components/CrmProjectDetail/SubprojectMobileContactValue';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
 import {
   formatCentsAsUsd,
+  formatContactEmailDisplay,
+  formatPhoneDisplay,
   formatStageLabel,
 } from '@/presentation/features/crmProjects/crmProjectFormatters';
 import { useCrmProjectRowPresentation } from '@/presentation/features/crmProjects/useCrmProjectRowPresentation';
@@ -44,6 +48,8 @@ export type CrmProjectMobileCardProps = {
   readonly onToggleExpand?: () => void;
   readonly workflowProgressInputIndex?: CrmProjectWorkflowProgressInputIndex;
   readonly isWorkflowProgressLoading?: boolean;
+  readonly parentProjectName?: string;
+  readonly showContactInfo?: boolean;
 };
 
 export function CrmProjectMobileCard({
@@ -68,10 +74,12 @@ export function CrmProjectMobileCard({
   onToggleExpand,
   workflowProgressInputIndex,
   isWorkflowProgressLoading = false,
+  parentProjectName,
+  showContactInfo = false,
 }: CrmProjectMobileCardProps): ReactElement {
   const tableCopy = content.crm.table;
   const valueLabels = tableCopy.columns;
-  const isChild = variant === 'child';
+  const isChild = variant === 'child' && parentProjectName == null;
   const isInactive = isCrmProjectInactive(project);
   const { catalog, industrySubtitle, progress, derivedStageSlug } = useCrmProjectRowPresentation(
     project,
@@ -86,6 +94,52 @@ export function CrmProjectMobileCard({
   const rowAriaLabel = isChild
     ? tableCopy.subprojectRowAriaLabel(project.name)
     : tableCopy.rowAriaLabel(project.name);
+  const displayEmail = formatContactEmailDisplay(project.contact.email, { maskForMember: isMemberRole });
+  const displayPhone = formatPhoneDisplay(project.contact.phone);
+  const contactEmails = nonEmptyContactValues(project.contact.emails);
+  const contactPhones = nonEmptyContactValues(project.contact.phones);
+  const formatEmailPopoverValue = useCallback(
+    (email: string) => formatContactEmailDisplay(email, { maskForMember: isMemberRole }),
+    [isMemberRole]
+  );
+  const getEmailCopyValue = useCallback(
+    (email: string) =>
+      isMemberRole ? formatContactEmailDisplay(email, { maskForMember: true }) : email.trim(),
+    [isMemberRole]
+  );
+  const formatPhonePopoverValue = useCallback((phone: string) => formatPhoneDisplay(phone), []);
+  const getPhoneCopyValue = useCallback(
+    (phone: string) => formatPhoneDisplay(phone) || phone.trim(),
+    []
+  );
+
+  const stageMetaRow =
+    !isMemberRole && (isInactive || derivedStageSlug != null || progress != null) ? (
+      <div className={showContactInfo ? styles.mobileCardStageRow : styles.mobileCardMetaRow}>
+        {isInactive ? (
+          <CrmProjectInactiveInlineLabel project={project} />
+        ) : (
+          <span className={projectStyles.subprojectMobileCardStageRow}>
+            {derivedStageSlug != null ? (
+              <span
+                className={`${shared.stagePill} ${styles.projectMetaStagePill}`}
+                title={formatStageLabel(derivedStageSlug, catalog)}
+              >
+                {formatStageLabel(derivedStageSlug, catalog)}
+              </span>
+            ) : null}
+            {progress != null ? (
+              <span
+                className={projectStyles.subprojectMobileCardProgressPercent}
+                aria-label={`Project progress ${progress.textPercent}%`}
+              >
+                {progress.textPercent}%
+              </span>
+            ) : null}
+          </span>
+        )}
+      </div>
+    ) : null;
 
   const handleKeyDown = (event: KeyboardEvent<HTMLElement>): void => {
     if (event.key === 'Enter' || event.key === ' ') {
@@ -118,7 +172,14 @@ export function CrmProjectMobileCard({
       >
         <div className={styles.mobileCardHeader}>
           <div className={styles.mobileCardTitleBlock}>
-            <span className={styles.mobileCardTitleRow}>
+            <span
+              className={[
+                styles.mobileCardTitleRow,
+                showContactInfo ? styles.mobileCardTitleRow_withContact : '',
+              ]
+                .filter(Boolean)
+                .join(' ')}
+            >
               {isInactive ? (
                 <CrmProjectInactiveIcon ariaLabel={tableCopy.inactiveBadge} />
               ) : isProjectPriorityUrgent(project.priority) ? (
@@ -134,12 +195,16 @@ export function CrmProjectMobileCard({
                   derivedStageSlug != null ? formatStageLabel(derivedStageSlug, catalog) : null
                 }
                 progressPercent={progress?.textPercent ?? null}
+                className={showContactInfo ? styles.mobileCardPreviewAnchor : undefined}
               >
                 <span className={styles.mobileCardTitle}>{project.name}</span>
               </ProjectPreviewNameAnchor>
             </span>
-            {industrySubtitle ? (
+            {!showContactInfo && industrySubtitle ? (
               <span className={styles.mobileCardIndustry}>{industrySubtitle}</span>
+            ) : null}
+            {!showContactInfo && parentProjectName ? (
+              <span className={styles.mobileCardParentProject}>{parentProjectName}</span>
             ) : null}
           </div>
           <div className={styles.mobileCardHeaderEnd}>
@@ -176,32 +241,46 @@ export function CrmProjectMobileCard({
           </div>
         </div>
 
-        {!isMemberRole && (isInactive || derivedStageSlug != null || progress != null) ? (
-          <div className={styles.mobileCardMetaRow}>
-            {isInactive ? (
-              <CrmProjectInactiveInlineLabel project={project} />
-            ) : (
-              <span className={projectStyles.subprojectMobileCardStageRow}>
-                {derivedStageSlug != null ? (
-                  <span
-                    className={`${shared.stagePill} ${styles.projectMetaStagePill}`}
-                    title={formatStageLabel(derivedStageSlug, catalog)}
-                  >
-                    {formatStageLabel(derivedStageSlug, catalog)}
-                  </span>
-                ) : null}
-                {progress != null ? (
-                  <span
-                    className={projectStyles.subprojectMobileCardProgressPercent}
-                    aria-label={`Project progress ${progress.textPercent}%`}
-                  >
-                    {progress.textPercent}%
-                  </span>
-                ) : null}
+        {showContactInfo ? (
+          <div className={styles.mobileCardDetailsGrid}>
+            <div className={styles.mobileCardDetailsCol}>
+              {industrySubtitle ? (
+                <span className={styles.mobileCardIndustry}>{industrySubtitle}</span>
+              ) : (
+                <span className={styles.mobileCardIndustry}>—</span>
+              )}
+              {parentProjectName ? (
+                <span className={styles.mobileCardParentProject}>{parentProjectName}</span>
+              ) : null}
+              {stageMetaRow}
+            </div>
+            <div className={styles.mobileCardDetailsColRight}>
+              <span className={styles.mobileCardContactValue}>
+                {project.contact.name || '—'}
               </span>
-            )}
+              <SubprojectMobileContactValue
+                kind="email"
+                values={contactEmails}
+                displayValue={displayEmail}
+                formatDisplayValue={formatEmailPopoverValue}
+                getCopyValue={getEmailCopyValue}
+                isMemberRole={isMemberRole}
+                valueClassName={styles.mobileCardContactValue}
+              />
+              <SubprojectMobileContactValue
+                kind="phone"
+                values={contactPhones}
+                displayValue={displayPhone}
+                formatDisplayValue={formatPhonePopoverValue}
+                getCopyValue={getPhoneCopyValue}
+                isMemberRole={isMemberRole}
+                valueClassName={styles.mobileCardContactValue}
+              />
+            </div>
           </div>
-        ) : null}
+        ) : (
+          stageMetaRow
+        )}
       </div>
 
       {!isMemberRole ? (

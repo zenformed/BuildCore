@@ -11,12 +11,15 @@ import { CrmProjectMobileCard } from './CrmProjectMobileCard';
 import styles from './CrmProjects.module.css';
 
 export type CrmProjectsMobileListProps = {
+  rows?: readonly CrmProjectSummary[];
   rootRows?: readonly CrmProjectSummary[];
   allChildrenByParentId?: ReadonlyMap<string, readonly CrmProjectSummary[]>;
   visibleChildrenByParentId?: ReadonlyMap<string, readonly CrmProjectSummary[]>;
+  parentById?: ReadonlyMap<string, CrmProjectSummary>;
   paymentTasksIndex?: CrmProjectPaymentTasksIndex;
   workflowProgressInputIndex?: CrmProjectWorkflowProgressInputIndex;
   isWorkflowProgressLoading?: boolean;
+  enableSubprojectExpansion?: boolean;
   autoExpandParentsWithSubprojects?: boolean;
   expandedParentIds?: ReadonlySet<string>;
   onExpandedParentIdsChange?: React.Dispatch<React.SetStateAction<ReadonlySet<string>>>;
@@ -38,12 +41,15 @@ export type CrmProjectsMobileListProps = {
 };
 
 export function CrmProjectsMobileList({
+  rows,
   rootRows = [],
   allChildrenByParentId,
   visibleChildrenByParentId,
+  parentById,
   paymentTasksIndex,
   workflowProgressInputIndex,
   isWorkflowProgressLoading = false,
+  enableSubprojectExpansion = false,
   autoExpandParentsWithSubprojects = false,
   expandedParentIds: expandedParentIdsProp,
   onExpandedParentIdsChange,
@@ -63,26 +69,28 @@ export function CrmProjectsMobileList({
   showActions = true,
   emptyMessage,
 }: CrmProjectsMobileListProps): ReactElement {
+  const displayRoots = enableSubprojectExpansion ? rootRows : (rows ?? []);
   const { expandedParentIds, toggleExpanded } = useDashboardSubprojectExpansion({
     expandedParentIds: expandedParentIdsProp,
     onExpandedParentIdsChange,
-    displayRoots: rootRows,
+    displayRoots,
     allChildrenByParentId,
-    enableSubprojectExpansion: true,
+    enableSubprojectExpansion,
     autoExpandParentsWithSubprojects,
   });
 
-  const showList = rootRows.length > 0 || isLoading;
+  const showList = displayRoots.length > 0 || isLoading;
   const valueLabels = content.crm.table.columns;
 
   const rowModels = useMemo(() => {
     const resolvedPaymentTasksIndex = paymentTasksIndex ?? new Map<string, never>();
     return buildCrmProjectsDashboardRowModels({
-      displayRoots: rootRows,
-      enableSubprojectExpansion: true,
+      displayRoots,
+      enableSubprojectExpansion,
       expandedParentIds,
       allChildrenByParentId,
       visibleChildrenByParentId,
+      parentById,
       paymentTasksIndex: resolvedPaymentTasksIndex,
       projectValueLabel: valueLabels.projectValueLabel,
       subValueLabel: valueLabels.subValueLabel,
@@ -92,11 +100,13 @@ export function CrmProjectsMobileList({
     });
   }, [
     allChildrenByParentId,
+    displayRoots,
+    enableSubprojectExpansion,
     expandedParentIds,
     onRowClick,
     onSubprojectRowClick,
+    parentById,
     paymentTasksIndex,
-    rootRows,
     toggleExpanded,
     valueLabels.projectValueLabel,
     valueLabels.subValueLabel,
@@ -131,6 +141,8 @@ export function CrmProjectsMobileList({
                 hasChildren={row.hasChildren}
                 isExpanded={row.isExpanded}
                 onToggleExpand={row.onToggleExpand}
+                parentProjectName={row.parentProjectName}
+                showContactInfo={!enableSubprojectExpansion}
                 workflowProgressInputIndex={workflowProgressInputIndex}
                 isWorkflowProgressLoading={isWorkflowProgressLoading}
               />

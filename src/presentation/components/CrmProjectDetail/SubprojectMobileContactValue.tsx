@@ -17,6 +17,7 @@ export type SubprojectMobileContactValueProps = {
   readonly getCopyValue: (value: string) => string;
   readonly onCopied?: (message: string) => void;
   readonly isMemberRole?: boolean;
+  readonly valueClassName?: string;
 };
 
 export function SubprojectMobileContactValue({
@@ -27,6 +28,7 @@ export function SubprojectMobileContactValue({
   getCopyValue,
   onCopied,
   isMemberRole = false,
+  valueClassName = styles.subprojectMobileCardValue,
 }: SubprojectMobileContactValueProps): ReactElement {
   const popoverValues = nonEmptyContactValues(values);
   const displayText = displayValue || '—';
@@ -45,7 +47,7 @@ export function SubprojectMobileContactValue({
   );
 
   if (popoverValues.length === 0) {
-    return <span className={styles.subprojectMobileCardValue}>{displayText}</span>;
+    return <span className={valueClassName}>{displayText}</span>;
   }
 
   if (popoverValues.length === 1) {
@@ -56,14 +58,14 @@ export function SubprojectMobileContactValue({
       return (
         <a
           href={href}
-          className={`${styles.subprojectMobileCardValue} ${styles.subprojectMobileCardContactLink}`}
+          className={`${valueClassName} ${styles.subprojectMobileCardContactLink}`}
           onClick={(event) => event.stopPropagation()}
         >
           {label}
         </a>
       );
     }
-    return <span className={styles.subprojectMobileCardValue}>{label}</span>;
+    return <span className={valueClassName}>{label}</span>;
   }
 
   const contactPopover = useSummaryContactValuesPopover({
@@ -88,7 +90,7 @@ export function SubprojectMobileContactValue({
         ref={contactPopover.anchorRef as Ref<HTMLDivElement>}
         role="button"
         tabIndex={0}
-        className={`${styles.subprojectMobileCardValue} ${styles.subprojectMobileCardContactButton}`}
+        className={`${valueClassName} ${styles.subprojectMobileCardContactButton}`}
         aria-expanded={contactPopover.open}
         aria-haspopup="dialog"
         onClick={handleClick}

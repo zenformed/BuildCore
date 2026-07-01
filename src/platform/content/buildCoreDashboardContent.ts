@@ -341,6 +341,14 @@ export const buildCoreDashboardContent = {
       searchAriaLabel: 'Search projects',
       expandAllSubprojects: 'Expand all subprojects',
       collapseAllSubprojects: 'Collapse all subprojects',
+      listView: {
+        toggleAriaLabel: 'Switch list view',
+        menuAriaLabel: 'Dashboard list view',
+        projects: 'Projects',
+        subprojects: 'Subprojects',
+        parentProjectColumn: 'Project',
+        parentProjectLabel: (name: string): string => `Project: ${name}`,
+      },
     },
     filters: {
       openMenu: 'Filter projects',

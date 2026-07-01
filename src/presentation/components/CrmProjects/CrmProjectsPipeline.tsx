@@ -31,8 +31,13 @@ import { useBuildCorePipelineStages } from '@/presentation/providers/BuildCorePi
 import { useCrmProjectTableRowActions } from '@/presentation/features/crmProjects/useCrmProjectTableRowActions';
 import { useCrmProjectInactiveActions } from '@/presentation/features/crmProjects/useCrmProjectInactiveActions';
 import { useDashboardMobileLayout } from '@/presentation/features/crmProjects/useDashboardMobileLayout';
+import {
+  DEFAULT_DASHBOARD_LIST_VIEW_MODE,
+  type DashboardListViewMode,
+} from '@/presentation/features/crmProjects/dashboardListViewMode';
 import { CrmProjectsFilterMenu } from './CrmProjectsFilterMenu';
 import { CrmProjectsExpandAllButton } from './CrmProjectsExpandAllButton';
+import { CrmProjectsListViewMenu } from './CrmProjectsListViewMenu';
 import { CrmProjectsTable } from './CrmProjectsTable';
 import { CrmProjectsMobileList } from './CrmProjectsMobileList';
 import { MarkInactiveDialog } from './MarkInactiveDialog';
@@ -64,11 +69,14 @@ export function CrmProjectsPipeline({
   const [expandedParentIds, setExpandedParentIds] = useState<ReadonlySet<string>>(
     () => new Set()
   );
+  const [listView, setListView] = useState<DashboardListViewMode>(DEFAULT_DASHBOARD_LIST_VIEW_MODE);
   const [createOpen, setCreateOpen] = useState(false);
   const {
     rootRows,
     allChildrenByParentId,
     visibleChildrenByParentId,
+    parentById,
+    subprojectRows,
     paymentTasksIndex,
     workflowProgressInputIndex,
     totalCount,
@@ -190,6 +198,9 @@ export function CrmProjectsPipeline({
   );
 
   const priorityFilterActive = filters.priorities.length > 0;
+  const isProjectsView = listView === 'projects';
+  const isSubprojectsView = listView === 'subprojects';
+  const subprojectColumnLabel = content.projectDetail.subprojects.projectColumn;
 
   const expandableParentIds = useMemo(() => {
     const ids = new Set<string>();
@@ -236,12 +247,15 @@ export function CrmProjectsPipeline({
       onRadiusFilterChange={setRadiusFilter}
     />
   );
-  const expandAllButton = (
+  const expandAllButton = isProjectsView ? (
     <CrmProjectsExpandAllButton
       allExpanded={allSubprojectsExpanded}
       disabled={expandableParentIds.size === 0}
       onToggle={handleToggleExpandAllSubprojects}
     />
+  ) : null;
+  const listViewMenu = (
+    <CrmProjectsListViewMenu viewMode={listView} onChange={setListView} />
   );
   const searchInput = (
     <input
@@ -294,9 +308,12 @@ export function CrmProjectsPipeline({
         {isMobileLayout ? (
           <>
             <div className={styles.projectsPanelHeaderRow}>
-              <h2 id="crm-projects-heading" className={styles.projectsPanelTitle}>
-                {panelCopy.title}
-              </h2>
+              <div className={styles.projectsPanelTitleRow}>
+                <h2 id="crm-projects-heading" className={styles.projectsPanelTitle}>
+                  {panelCopy.title}
+                </h2>
+                {listViewMenu}
+              </div>
               <div className={styles.projectsPanelHeaderRowActions}>
                 {filterMenu}
                 {expandAllButton}
@@ -312,9 +329,12 @@ export function CrmProjectsPipeline({
           </>
         ) : (
           <>
-            <h2 id="crm-projects-heading" className={styles.projectsPanelTitle}>
-              {panelCopy.title}
-            </h2>
+            <div className={styles.projectsPanelTitleRow}>
+              <h2 id="crm-projects-heading" className={styles.projectsPanelTitle}>
+                {panelCopy.title}
+              </h2>
+              {listViewMenu}
+            </div>
             <div className={styles.projectsPanelHeaderTools}>
               {filterMenu}
               {expandAllButton}
@@ -325,9 +345,69 @@ export function CrmProjectsPipeline({
           </>
         )}
       </div>
-      <div className={`${styles.pipeline} ${styles.projectsPanelBody}`}>
+      <div
+        className={[
+          styles.pipeline,
+          styles.projectsPanelBody,
+          isSubprojectsView ? styles.pipelineSubprojectsView : '',
+        ]
+          .filter(Boolean)
+          .join(' ')}
+      >
         {isMobileLayout ? (
-          <CrmProjectsMobileList
+          isProjectsView ? (
+            <CrmProjectsMobileList
+              enableSubprojectExpansion
+              autoExpandParentsWithSubprojects={priorityFilterActive}
+              expandedParentIds={expandedParentIds}
+              onExpandedParentIdsChange={setExpandedParentIds}
+              rootRows={rootRows}
+              allChildrenByParentId={allChildrenByParentId}
+              visibleChildrenByParentId={visibleChildrenByParentId}
+              paymentTasksIndex={paymentTasksIndex}
+              workflowProgressInputIndex={workflowProgressInputIndex}
+              isWorkflowProgressLoading={isWorkflowProgressLoading}
+              isLoading={listIsLoading}
+              isPaymentFinancialsLoading={isPaymentFinancialsLoading}
+              onRowClick={onProjectRowClick}
+              onSubprojectRowClick={handleSubprojectRowClick}
+              isMemberRole={isMemberRole}
+              canDelete={canDelete && !isMemberRole}
+              deletingProjectId={deletingProjectId}
+              busyProjectId={rowActionsBusyProjectId}
+              onRequestDelete={setPendingDeleteProject}
+              onTogglePriority={togglePriority}
+              onRequestCompletionChange={requestCompletionChange}
+              onRequestMarkInactive={handleRequestMarkInactive}
+              onRequestMarkActive={handleRequestMarkActive}
+              emptyMessage={tableEmptyMessage}
+            />
+          ) : (
+            <CrmProjectsMobileList
+              rows={subprojectRows}
+              parentById={parentById}
+              paymentTasksIndex={paymentTasksIndex}
+              workflowProgressInputIndex={workflowProgressInputIndex}
+              isWorkflowProgressLoading={isWorkflowProgressLoading}
+              isLoading={listIsLoading}
+              isPaymentFinancialsLoading={isPaymentFinancialsLoading}
+              onRowClick={onProjectRowClick}
+              onSubprojectRowClick={handleSubprojectRowClick}
+              isMemberRole={isMemberRole}
+              canDelete={canDelete && !isMemberRole}
+              deletingProjectId={deletingProjectId}
+              busyProjectId={rowActionsBusyProjectId}
+              onRequestDelete={setPendingDeleteProject}
+              onTogglePriority={togglePriority}
+              onRequestCompletionChange={requestCompletionChange}
+              onRequestMarkInactive={handleRequestMarkInactive}
+              onRequestMarkActive={handleRequestMarkActive}
+              emptyMessage={content.projectDetail.subprojects.empty}
+            />
+          )
+        ) : isProjectsView ? (
+          <CrmProjectsTable
+            enableSubprojectExpansion
             autoExpandParentsWithSubprojects={priorityFilterActive}
             expandedParentIds={expandedParentIds}
             onExpandedParentIdsChange={setExpandedParentIds}
@@ -354,13 +434,10 @@ export function CrmProjectsPipeline({
           />
         ) : (
           <CrmProjectsTable
-            enableSubprojectExpansion
-            autoExpandParentsWithSubprojects={priorityFilterActive}
-            expandedParentIds={expandedParentIds}
-            onExpandedParentIdsChange={setExpandedParentIds}
-            rootRows={rootRows}
-            allChildrenByParentId={allChildrenByParentId}
-            visibleChildrenByParentId={visibleChildrenByParentId}
+            rows={subprojectRows}
+            parentById={parentById}
+            showParentProjectColumn
+            projectColumnLabel={subprojectColumnLabel}
             paymentTasksIndex={paymentTasksIndex}
             workflowProgressInputIndex={workflowProgressInputIndex}
             isWorkflowProgressLoading={isWorkflowProgressLoading}
@@ -377,7 +454,7 @@ export function CrmProjectsPipeline({
             onRequestCompletionChange={requestCompletionChange}
             onRequestMarkInactive={handleRequestMarkInactive}
             onRequestMarkActive={handleRequestMarkActive}
-            emptyMessage={tableEmptyMessage}
+            emptyMessage={content.projectDetail.subprojects.empty}
           />
         )}
       </div>

@@ -11,6 +11,7 @@ export type CrmProjectsDashboardRowModel = {
   readonly variant: 'root' | 'child';
   readonly financials: ProjectPaymentFinancials;
   readonly valueLabel: string;
+  readonly parentProjectName?: string;
   readonly hasChildren: boolean;
   readonly isExpanded: boolean;
   readonly onToggleExpand: (() => void) | undefined;
@@ -23,6 +24,7 @@ export type BuildCrmProjectsDashboardRowModelsInput = {
   readonly expandedParentIds: ReadonlySet<string>;
   readonly allChildrenByParentId?: ReadonlyMap<string, readonly CrmProjectSummary[]>;
   readonly visibleChildrenByParentId?: ReadonlyMap<string, readonly CrmProjectSummary[]>;
+  readonly parentById?: ReadonlyMap<string, CrmProjectSummary>;
   readonly paymentTasksIndex: CrmProjectPaymentTasksIndex;
   readonly projectValueLabel: string;
   readonly subValueLabel: string;
@@ -40,6 +42,7 @@ export function buildCrmProjectsDashboardRowModels(
     expandedParentIds,
     allChildrenByParentId,
     visibleChildrenByParentId,
+    parentById,
     paymentTasksIndex,
     projectValueLabel,
     subValueLabel,
@@ -54,6 +57,8 @@ export function buildCrmProjectsDashboardRowModels(
     const isExpanded = expandedParentIds.has(project.id);
     const visibleChildren = visibleChildrenByParentId?.get(project.id) ?? [];
     const isStandaloneChild = !enableSubprojectExpansion && project.parentProjectId != null;
+    const parent =
+      project.parentProjectId != null ? parentById?.get(project.parentProjectId) : undefined;
     const rowFinancials = isStandaloneChild
       ? resolveDashboardChildRowFinancials(project, paymentTasksIndex)
       : resolveDashboardRootRowFinancials(project, visibleChildren, paymentTasksIndex);
@@ -66,10 +71,17 @@ export function buildCrmProjectsDashboardRowModels(
       variant: rowVariant,
       financials: rowFinancials,
       valueLabel: rowValueLabel,
+      parentProjectName: parent?.name,
       hasChildren,
       isExpanded,
       onToggleExpand: hasChildren ? () => toggleExpanded(project.id) : undefined,
-      onRowClick: () => onRowClick(project),
+      onRowClick: () => {
+        if (isStandaloneChild && parent != null && onSubprojectRowClick) {
+          onSubprojectRowClick(parent, project);
+          return;
+        }
+        onRowClick(project);
+      },
     };
 
     if (!enableSubprojectExpansion || !isExpanded || visibleChildren.length === 0) {
@@ -82,6 +94,7 @@ export function buildCrmProjectsDashboardRowModels(
       variant: 'child' as const,
       financials: resolveDashboardChildRowFinancials(child, paymentTasksIndex),
       valueLabel: subValueLabel,
+      parentProjectName: project.name,
       hasChildren: false,
       isExpanded: false,
       onToggleExpand: undefined,

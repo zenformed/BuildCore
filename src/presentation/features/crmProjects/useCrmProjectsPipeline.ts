@@ -18,7 +18,9 @@ import {
   EMPTY_CRM_PROJECTS_LIST_FILTERS,
   EMPTY_CRM_PROJECTS_DASHBOARD_VIEW,
   applyRadiusFilterToDashboardView,
+  buildDashboardParentSummariesById,
   collectDashboardRadiusFilterCandidates,
+  collectDashboardSubprojectRows,
   filterDashboardProjectSummaries,
   partitionCrmProjectSummaries,
   type CrmProjectListFilterContext,
@@ -54,6 +56,8 @@ export function useCrmProjectsPipeline(
   refetch: () => Promise<void>;
   removeProject: (projectId: string) => void;
   patchProjectSummary: (summary: CrmProjectSummary) => void;
+  parentById: Map<string, CrmProjectSummary>;
+  subprojectRows: CrmProjectSummary[];
 } {
   const isApiSource = getCrmDataSource() === 'api';
   const demoMode = useOptionalDemoMode();
@@ -150,6 +154,13 @@ export function useCrmProjectsPipeline(
     [summaries]
   );
 
+  const parentById = useMemo(() => buildDashboardParentSummariesById(summaries), [summaries]);
+
+  const subprojectRows = useMemo(
+    () => collectDashboardSubprojectRows(dashboardView),
+    [dashboardView]
+  );
+
   const removeProject = useCallback((projectId: string) => {
     setAllSummaries((current) =>
       current == null ? current : current.filter((project) => project.id !== projectId)
@@ -181,6 +192,8 @@ export function useCrmProjectsPipeline(
     refetch,
     removeProject,
     patchProjectSummary,
+    parentById,
+    subprojectRows,
   };
 }
 

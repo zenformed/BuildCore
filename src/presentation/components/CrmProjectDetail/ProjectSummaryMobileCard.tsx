@@ -14,6 +14,7 @@ import type { SummaryEditableField } from '@/presentation/features/crmProjectDet
 import { useProjectDetailShell } from '@/presentation/features/crmProjectDetail/ProjectDetailShellContext';
 import { useProjectDetailPaymentFinancials } from '@/presentation/features/crmProjectDetail/useProjectDetailPaymentFinancials';
 import { ProjectSummaryAddress } from './ProjectSummaryAddress';
+import { SubprojectMobileContactValue } from './SubprojectMobileContactValue';
 import { SummaryInlineText } from './ProjectSummaryStrip';
 import styles from './ProjectDetail.module.css';
 
@@ -92,6 +93,7 @@ export function ProjectSummaryMobileCard({
     []
   );
   const mobileValueClass = `${styles.summaryText} ${styles.projectInfoMobileValue}`;
+  const mobileContactValueClass = `${styles.summaryLink} ${styles.projectInfoMobileContactValue}`;
 
   return (
     <>
@@ -128,43 +130,27 @@ export function ProjectSummaryMobileCard({
           </div>
           <div className={styles.workflowTaskMobileCardGrid2}>
             <ProjectInfoMobileFieldCell label={fields.email}>
-              <SummaryInlineText
-                hideLabel
-                fieldKey="email"
-                label={fields.email}
-                value={summary.contact.email}
+              <SubprojectMobileContactValue
+                kind="email"
+                values={contactEmails}
                 displayValue={displayEmail}
-                savingField={savingField}
-                disabled={readOnly}
-                inputType="email"
-                displayClassName={styles.summaryLink}
-                valueClassName={`${styles.summaryLink} ${styles.projectInfoMobileValue}`}
-                onPatch={patchField}
-                contactPopoverValues={contactEmails}
-                contactPopoverKind="email"
-                formatContactPopoverValue={formatEmailPopoverValue}
-                getContactCopyValue={getEmailCopyValue}
-                onContactCopied={onContactCopied}
+                formatDisplayValue={formatEmailPopoverValue}
+                getCopyValue={getEmailCopyValue}
+                onCopied={onContactCopied}
+                isMemberRole={memberView}
+                valueClassName={mobileContactValueClass}
               />
             </ProjectInfoMobileFieldCell>
             <ProjectInfoMobileFieldCell label={fields.phone} align="right">
-              <SummaryInlineText
-                hideLabel
-                fieldKey="phone"
-                label={fields.phone}
-                value={summary.contact.phone}
+              <SubprojectMobileContactValue
+                kind="phone"
+                values={contactPhones}
                 displayValue={formatPhoneDisplay(summary.contact.phone)}
-                savingField={savingField}
-                disabled={readOnly}
-                inputType="tel"
-                displayClassName={styles.summaryLink}
-                valueClassName={`${styles.summaryLink} ${styles.projectInfoMobileValue}`}
-                onPatch={patchField}
-                contactPopoverValues={contactPhones}
-                contactPopoverKind="phone"
-                formatContactPopoverValue={formatPhonePopoverValue}
-                getContactCopyValue={getPhoneCopyValue}
-                onContactCopied={onContactCopied}
+                formatDisplayValue={formatPhonePopoverValue}
+                getCopyValue={getPhoneCopyValue}
+                onCopied={onContactCopied}
+                isMemberRole={memberView}
+                valueClassName={mobileContactValueClass}
               />
             </ProjectInfoMobileFieldCell>
           </div>

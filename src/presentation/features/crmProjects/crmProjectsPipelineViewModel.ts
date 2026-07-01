@@ -250,6 +250,28 @@ export function collectDashboardRadiusFilterCandidates(
   return projects;
 }
 
+export function buildDashboardParentSummariesById(
+  summaries: readonly CrmProjectSummary[]
+): Map<string, CrmProjectSummary> {
+  const parentById = new Map<string, CrmProjectSummary>();
+  for (const project of summaries) {
+    if (project.parentProjectId == null) {
+      parentById.set(project.id, project);
+    }
+  }
+  return parentById;
+}
+
+export function collectDashboardSubprojectRows(
+  view: CrmProjectsDashboardView
+): CrmProjectSummary[] {
+  const rows: CrmProjectSummary[] = [];
+  for (const children of view.visibleChildrenByParentId.values()) {
+    rows.push(...children);
+  }
+  return sortCrmProjectSummaries(rows);
+}
+
 export function applyRadiusFilterToDashboardView(
   view: CrmProjectsDashboardView,
   matchingProjectIds: ReadonlySet<string>
