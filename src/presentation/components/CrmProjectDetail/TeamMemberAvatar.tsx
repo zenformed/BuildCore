@@ -46,8 +46,6 @@ export function TeamMemberAvatar({ member, title }: TeamMemberAvatarProps): Reac
         alt=""
         className={`${shared.avatar} ${shared.avatarPhoto}`}
         title={tooltip}
-        width={24}
-        height={24}
         onError={() => setImageFailed(true)}
       />
     );

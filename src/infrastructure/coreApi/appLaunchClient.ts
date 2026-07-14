@@ -2,7 +2,7 @@ import { env } from '@/infrastructure/config/env';
 import type { CoreApiResult } from '@/infrastructure/coreApi/types';
 import type { BuildCoreLaunchTargetApp } from '@/platform/appDefinitions/zenformedApps';
 
-const DEFAULT_TIMEOUT_MS = 5_000;
+const DEFAULT_TIMEOUT_MS = 10_000;
 const BUILDCORE_LAUNCH_TARGET = 'buildcore';
 
 export type AppLaunchMintResponse = {

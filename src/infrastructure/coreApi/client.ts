@@ -34,7 +34,8 @@ import type {
   ZenformedCoreUserSettingsPatchRequest,
 } from '@/infrastructure/coreApi/types';
 
-const DEFAULT_TIMEOUT_MS = 5_000;
+/** Match organization/workspace relays — local → Railway often exceeds 5s on connect. */
+const DEFAULT_TIMEOUT_MS = 10_000;
 
 function normalizeBaseUrl(raw: string): string {
   return raw.replace(/\/+$/, '');

@@ -86,6 +86,7 @@ function WorkflowOpsTaskDraftStatusField({
     : mobile
       ? styles.workflowTaskMobileCardControl
       : `${styles.inlineCellWrap} ${styles.workflowStatusCell}`;
+  const useDotStatus = !mobile;
 
   return (
     <div className={wrapClass} ref={statusRef}>
@@ -99,9 +100,16 @@ function WorkflowOpsTaskDraftStatusField({
           onStatusMenuOpenChange(!statusMenuOpen);
         }}
       >
-        <span className={`${styles.statusPill} ${statusBadgeClass(form.status)}`}>
-          {formatWorkflowStatus(form.status)}
-        </span>
+        {useDotStatus ? (
+          <span className={`${styles.statusDotIndicator} ${statusBadgeClass(form.status)}`}>
+            <span className={styles.statusDot} aria-hidden />
+            <span className={styles.statusDotText}>{formatWorkflowStatus(form.status)}</span>
+          </span>
+        ) : (
+          <span className={`${styles.statusPill} ${statusBadgeClass(form.status)}`}>
+            {formatWorkflowStatus(form.status)}
+          </span>
+        )}
       </button>
       <WorkflowInlineMenu
         open={statusMenuOpen}
@@ -119,9 +127,16 @@ function WorkflowOpsTaskDraftStatusField({
               onStatusMenuOpenChange(false);
             }}
           >
-            <span className={`${styles.statusPill} ${statusBadgeClass(status)}`}>
-              {formatWorkflowStatus(status)}
-            </span>
+            {useDotStatus ? (
+              <span className={`${styles.statusDotIndicator} ${statusBadgeClass(status)}`}>
+                <span className={styles.statusDot} aria-hidden />
+                <span className={styles.statusDotText}>{formatWorkflowStatus(status)}</span>
+              </span>
+            ) : (
+              <span className={`${styles.statusPill} ${statusBadgeClass(status)}`}>
+                {formatWorkflowStatus(status)}
+              </span>
+            )}
           </button>
         ))}
       </WorkflowInlineMenu>
@@ -391,8 +406,8 @@ function WorkflowOpsTaskDraftCompactMenuPlaceholder({
         aria-label={wf.taskActionsMenuAriaLabel(wf.fields.title)}
         tabIndex={-1}
       >
-        <span className={styles.taskActionsDotsHorizontal} aria-hidden>
-          ⋯
+        <span className={styles.taskActionsDots} aria-hidden>
+          ⋮
         </span>
       </button>
     </div>
@@ -522,7 +537,21 @@ export function WorkflowOpsTaskDraftRow({
           aria-busy={saving}
         >
           <div className={styles.workflowTaskCompactRow1}>
-            <WorkflowOpsTaskDraftStatusField {...fieldProps} compact />
+            <div className={styles.workflowTaskCompactTitleWrap}>
+              <input
+                className={styles.workflowTaskCompactDraftTitleInput}
+                value={form.title}
+                disabled={saving}
+                placeholder={wf.fields.title}
+                aria-label={wf.fields.title}
+                onChange={(e) => updateField('title', e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') void handleSave();
+                  if (e.key === 'Escape') onCancel();
+                }}
+                autoFocus
+              />
+            </div>
             <WorkflowOpsTaskDraftActions
               wf={wf}
               saving={saving}
@@ -531,8 +560,11 @@ export function WorkflowOpsTaskDraftRow({
               onCancel={onCancel}
             />
             <WorkflowOpsTaskDraftCompactMenuPlaceholder wf={wf} saving={saving} />
-            <span className={styles.workflowTaskCompactRow1Spacer} aria-hidden />
-            <div className={styles.workflowTaskCompactRow1End}>
+          </div>
+          <div className={styles.workflowTaskCompactRow2}>
+            <WorkflowOpsTaskDraftStatusField {...fieldProps} compact />
+            <span className={styles.workflowTaskCompactRow2Spacer} aria-hidden />
+            <div className={styles.workflowTaskCompactRow2End}>
               <WorkflowOpsTaskDraftCompactDueField
                 wf={wf}
                 form={form}
@@ -552,21 +584,6 @@ export function WorkflowOpsTaskDraftRow({
               />
               <WorkflowOpsTaskDraftAssigneeField {...fieldProps} compact />
             </div>
-          </div>
-          <div className={styles.workflowTaskCompactRow2}>
-            <input
-              className={styles.workflowTaskCompactDraftTitleInput}
-              value={form.title}
-              disabled={saving}
-              placeholder={wf.fields.title}
-              aria-label={wf.fields.title}
-              onChange={(e) => updateField('title', e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') void handleSave();
-                if (e.key === 'Escape') onCancel();
-              }}
-              autoFocus
-            />
           </div>
         </article>
         {error ? <p className={styles.paymentDraftError}>{error}</p> : null}

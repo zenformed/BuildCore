@@ -6134,7 +6134,7 @@
 
 .stageGroupStackDesktopCards {
   display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 0.75rem;
   align-items: stretch;
 }
@@ -6593,15 +6593,19 @@
   border: none;
   background: transparent;
   font: inherit;
-  font-size: 0.75rem;
-  font-weight: 400;
+  font-size: 0.875rem;
+  font-weight: 500;
   line-height: 1.35;
   color: var(--color-text, #0f172a);
   outline: none;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .workflowTaskCompactDraftTitleInput::placeholder {
   color: var(--color-text-muted, #64748b);
+  font-weight: 400;
 }
 
 :global([data-theme='dark']) .workflowTaskCompactDraftTitleInput {
@@ -6632,32 +6636,15 @@
   align-items: center;
   gap: 0.25rem;
   min-width: 0;
-  min-height: 1.375rem;
 }
 
-.workflowTaskCompactRow1End {
-  display: flex;
-  flex-shrink: 0;
-  align-items: center;
-  gap: 0.375rem;
-  min-width: 0;
-}
-
-.workflowTaskCompactRow1End > :not(:first-child) {
-  margin-left: 0.25rem;
-}
-
-.workflowTaskCompactRow1Spacer {
+.workflowTaskCompactTitleWrap {
   flex: 1 1 auto;
-  min-width: 0.25rem;
-}
-
-.workflowTaskCompactRow2 {
   min-width: 0;
-  margin-top: 0.5rem;
+  overflow: hidden;
 }
 
-.workflowTaskCompactRow2 .workflowTaskCompactTitleBtn {
+.workflowTaskCompactRow1 .workflowTaskCompactTitleBtn {
   display: block;
   width: 100%;
   min-width: 0;
@@ -6669,80 +6656,39 @@
   font: inherit;
   text-align: left;
   cursor: pointer;
+  overflow: hidden;
 }
 
-.workflowTaskCompactRow2 .workflowTaskCompactTitle {
+.workflowTaskCompactRow1 .workflowTaskCompactTitle {
   display: block;
   width: 100%;
   min-width: 0;
   margin: 0;
   padding: 0;
   font: inherit;
-  font-size: 0.75rem;
-  font-weight: 400;
+  font-size: 0.875rem;
+  font-weight: 500;
   line-height: 1.35;
-  color: var(--color-text-muted, #64748b);
-  white-space: normal;
-  overflow-wrap: anywhere;
+  color: var(--color-text, #0f172a);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-:global([data-theme='dark']) .workflowTaskCompactRow2 .workflowTaskCompactTitle,
-:global([data-theme='dark']) .workflowTaskCompactRow2 .workflowTaskCompactTitleBtn {
-  color: #94a3b8;
+:global([data-theme='dark']) .workflowTaskCompactRow1 .workflowTaskCompactTitle,
+:global([data-theme='dark']) .workflowTaskCompactRow1 .workflowTaskCompactTitleBtn {
+  color: #f1f5f9;
 }
 
-.workflowTaskCompactRow2 .workflowTaskCompactTitleBtn:disabled {
+.workflowTaskCompactRow1 .workflowTaskCompactTitleBtn:disabled {
   cursor: default;
 }
 
-.workflowTaskCompactRow2 .inlineFieldInput {
+.workflowTaskCompactRow1 .inlineFieldInput {
   width: 100%;
   box-sizing: border-box;
-}
-
-.workflowTaskCompactRow1 .statusPill {
-  font-size: 0.6875rem;
-  padding: 0.125rem 0.375rem;
-}
-
-.workflowTaskCompactRow1 .inlinePillBtn {
-  display: inline-flex;
-  align-items: center;
-  padding: 0;
-  line-height: 1;
-}
-
-.workflowTaskCompactRow1 .workflowTaskCompactControl {
-  display: inline-flex;
-  align-items: center;
-  flex-shrink: 0;
-  min-width: 0;
-}
-
-.workflowTaskCompactRow1 .inlineCellBtn,
-.workflowTaskCompactRow1 .workflowTaskCompactMetaBtn {
-  display: inline-flex;
-  align-items: center;
-  line-height: 1.25;
-}
-
-.workflowTaskCompactRow1 .documentsCell {
-  font-size: 0.75rem;
-  line-height: 1.25;
-  color: var(--color-text-muted, #64748b);
-}
-
-.workflowTaskCompactRow1 .workflowTaskCompactMeta {
-  font-size: 0.75rem;
-  line-height: 1.25;
-  color: var(--color-text-muted, #64748b);
-}
-
-:global([data-theme='dark']) .workflowTaskCompactRow1 .workflowTaskCompactMeta,
-:global([data-theme='dark']) .workflowTaskCompactRow1 .documentsCell,
-:global([data-theme='dark']) .workflowTaskCompactRow1 .workflowTaskCompactDueContent,
-:global([data-theme='dark']) .workflowTaskCompactRow1 .workflowTaskCompactMetaBtn {
-  color: #94a3b8;
+  font-size: 0.875rem;
+  font-weight: 500;
 }
 
 .workflowTaskCompactActions {
@@ -6754,6 +6700,91 @@
 .workflowTaskCompactActions .taskActionsBtn {
   width: 1.375rem;
   height: 1.375rem;
+}
+
+.workflowTaskCompactRow2 {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  min-width: 0;
+  min-height: 1.375rem;
+  margin-top: 0.375rem;
+}
+
+.workflowTaskCompactRow2End {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 0.375rem;
+  min-width: 0;
+}
+
+.workflowTaskCompactRow2End > :not(:first-child) {
+  margin-left: 0.25rem;
+}
+
+.workflowTaskCompactRow2Spacer {
+  flex: 1 1 auto;
+  min-width: 0.25rem;
+}
+
+.workflowTaskCompactRow2 .statusPill {
+  font-size: 0.6875rem;
+  padding: 0.125rem 0.375rem;
+}
+
+.workflowTaskCompactRow2 .statusDotIndicator {
+  font-size: 0.75rem;
+}
+
+.workflowTaskCompactRow2 .statusDotText {
+  font-size: 0.75rem;
+  font-weight: 400;
+  color: var(--color-text-muted, #64748b);
+}
+
+:global([data-theme='dark']) .workflowTaskCompactRow2 .statusDotText {
+  color: #94a3b8;
+}
+
+.workflowTaskCompactRow2 .inlinePillBtn {
+  display: inline-flex;
+  align-items: center;
+  padding: 0;
+  line-height: 1;
+}
+
+.workflowTaskCompactRow2 .workflowTaskCompactControl {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  min-width: 0;
+}
+
+.workflowTaskCompactRow2 .inlineCellBtn,
+.workflowTaskCompactRow2 .workflowTaskCompactMetaBtn {
+  display: inline-flex;
+  align-items: center;
+  line-height: 1.25;
+}
+
+.workflowTaskCompactRow2 .documentsCell {
+  font-size: 0.75rem;
+  line-height: 1.25;
+  color: var(--color-text-muted, #64748b);
+}
+
+.workflowTaskCompactRow2 .workflowTaskCompactMeta {
+  font-size: 0.75rem;
+  line-height: 1.25;
+  color: var(--color-text-muted, #64748b);
+}
+
+:global([data-theme='dark']) .workflowTaskCompactRow2 .workflowTaskCompactMeta,
+:global([data-theme='dark']) .workflowTaskCompactRow2 .documentsCell,
+:global([data-theme='dark']) .workflowTaskCompactRow2 .workflowTaskCompactDueContent,
+:global([data-theme='dark']) .workflowTaskCompactRow2 .workflowTaskCompactMetaBtn {
+  color: #94a3b8;
 }
 
 .workflowTaskCompactAssignee,
@@ -6780,12 +6811,11 @@
   background: transparent;
 }
 
-.workflowTaskCompactAssignee .avatar,
-.workflowTaskCompactAssigneeBtn .avatar,
-.workflowTaskCompactAssignee .avatarPhoto,
-.workflowTaskCompactAssigneeBtn .avatarPhoto {
-  width: 1.375rem;
-  height: 1.375rem;
+/* Double local class so this beats crmShared `.avatar.avatarPhoto` (cross-module hashes). */
+.workflowTaskCompactAssignee.workflowTaskCompactAssignee > :global(*),
+.workflowTaskCompactAssigneeBtn.workflowTaskCompactAssigneeBtn > :global(*) {
+  width: 1.25rem;
+  height: 1.25rem;
   font-size: 0.5625rem;
 }
 

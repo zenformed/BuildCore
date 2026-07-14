@@ -80,7 +80,7 @@ function WorkflowTaskRowActionsMenuSlot({
       showAssignedNotification={model.showAssignedNotification}
       showEditNotes={compact && model.canEdit}
       editNotesLabel={notesLabel}
-      dotsOrientation={compact ? 'horizontal' : 'vertical'}
+      dotsOrientation="vertical"
       actionsButtonRef={actionsButtonRef}
       onEdit={() => {
         model.closeMenus();
@@ -172,7 +172,9 @@ function WorkflowTaskCompactCardBody({
   return (
     <>
       <div className={styles.workflowTaskCompactRow1}>
-        <WorkflowTaskRowStatusField model={model} compact />
+        <div className={styles.workflowTaskCompactTitleWrap}>
+          <WorkflowTaskRowTitleField model={model} compact />
+        </div>
         {model.showActionsMenu ? (
           <div className={styles.workflowTaskCompactActions}>
             <WorkflowTaskRowActionsMenuSlot
@@ -182,16 +184,16 @@ function WorkflowTaskCompactCardBody({
             />
           </div>
         ) : null}
-        <span className={styles.workflowTaskCompactRow1Spacer} aria-hidden />
-        <div className={styles.workflowTaskCompactRow1End}>
+      </div>
+      <div className={styles.workflowTaskCompactRow2}>
+        <WorkflowTaskRowStatusField model={model} compact />
+        <span className={styles.workflowTaskCompactRow2Spacer} aria-hidden />
+        <div className={styles.workflowTaskCompactRow2End}>
           {showAmount ? <WorkflowTaskRowAmountField model={model} compact /> : null}
           <WorkflowTaskRowDueField model={model} compact />
           <WorkflowTaskRowDocumentsField model={model} compact />
           <WorkflowTaskRowAssigneeField model={model} compact />
         </div>
-      </div>
-      <div className={styles.workflowTaskCompactRow2}>
-        <WorkflowTaskRowTitleField model={model} compact />
       </div>
       <WorkflowTaskCompactNotesPopover model={model} anchorRef={actionsButtonRef} />
     </>
@@ -212,7 +214,7 @@ function WorkflowTaskRowStatusField({
     : mobile
       ? styles.workflowTaskMobileCardControl
       : `${styles.inlineCellWrap} ${styles.workflowStatusCell}`;
-  const useDotStatus = isDesktopWorkflowTableRow(model, mobile, compact);
+  const useDotStatus = !mobile;
   const statusLabel = formatWorkflowStatus(model.task.status);
 
   return (
@@ -284,7 +286,6 @@ function WorkflowTaskRowTitleField({
 }): ReactElement {
   const { task, saving, canEdit, editingTitle, titleDraft } = model;
   const compactTitle = formatWorkflowTaskCompactTitle(task.title);
-  const showCompactTitleTooltip = compact && compactTitle !== task.title.trim();
   const isMobileLayout = useDashboardMobileLayout();
   const { project } = useProjectDetailShell();
   const { catalogForProject } = useBuildCorePipelineStages();
@@ -346,7 +347,7 @@ function WorkflowTaskRowTitleField({
                 : styles.inlineCellBtn
         }
         disabled={saving}
-        title={showCompactTitleTooltip || !compact ? task.title : undefined}
+        title={task.title}
         onClick={() => {
           model.closeMenus();
           model.setEditingNotes(false);
@@ -376,7 +377,7 @@ function WorkflowTaskRowTitleField({
               ? styles.workflowTaskMobileCardTitle
               : styles.taskTitleBtnText
         }
-        title={showCompactTitleTooltip || !compact ? task.title : undefined}
+        title={task.title}
       >
         {compact ? compactTitle : task.title}
       </span>
