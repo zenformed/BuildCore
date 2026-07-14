@@ -15,6 +15,7 @@ import cardStyles from './WorkflowTaskPreviewCard.module.css';
 const HIDE_DELAY_MS = 200;
 
 export type WorkflowTaskPreviewInteractionMode = 'hover' | 'tap';
+export type WorkflowTaskPreviewTrigger = 'title' | 'icon';
 
 export type UseWorkflowTaskPreviewPopoverOptions = {
   readonly task: CrmWorkflowTask;
@@ -24,6 +25,8 @@ export type UseWorkflowTaskPreviewPopoverOptions = {
   readonly documentCount: number;
   readonly enabled?: boolean;
   readonly interactionMode?: WorkflowTaskPreviewInteractionMode;
+  /** Hover: `'title'` hovers the name; `'icon'` uses a card icon before the name. Tap always uses the icon. */
+  readonly previewTrigger?: WorkflowTaskPreviewTrigger;
   readonly showOpenDetails?: boolean;
   readonly onOpenDetails?: () => void;
 };
@@ -35,11 +38,17 @@ export type WorkflowTaskPreviewToggleButtonProps = {
   readonly 'aria-haspopup': 'dialog';
   readonly 'aria-controls': string;
   readonly 'aria-label': string;
-  readonly onClick: (event: MouseEvent<HTMLButtonElement>) => void;
+  readonly onClick?: (event: MouseEvent<HTMLButtonElement>) => void;
+  readonly onMouseEnter?: () => void;
+  readonly onMouseLeave?: () => void;
+  readonly onFocus?: () => void;
+  readonly onBlur?: (event: FocusEvent<HTMLButtonElement>) => void;
 };
 
 export type WorkflowTaskPreviewPopoverAnchor = {
-  readonly anchorRef: RefObject<HTMLDivElement | null>;
+  readonly anchorRef: RefObject<HTMLElement | null>;
+  readonly titleAnchorRef: RefObject<HTMLDivElement | null>;
+  readonly iconAnchorRef: RefObject<HTMLButtonElement | null>;
   readonly anchorHandlers: {
     readonly onMouseEnter?: () => void;
     readonly onMouseLeave?: () => void;
@@ -47,6 +56,7 @@ export type WorkflowTaskPreviewPopoverAnchor = {
     readonly onBlur?: (event: FocusEvent<HTMLDivElement>) => void;
   };
   readonly toggleButtonProps: WorkflowTaskPreviewToggleButtonProps | null;
+  readonly menuAlign: 'start' | 'end';
   readonly open: boolean;
   readonly menu: ReactElement | null;
 };
@@ -59,10 +69,12 @@ export function useWorkflowTaskPreviewPopover({
   documentCount,
   enabled = true,
   interactionMode = 'hover',
+  previewTrigger = 'title',
   showOpenDetails = false,
   onOpenDetails,
 }: UseWorkflowTaskPreviewPopoverOptions): WorkflowTaskPreviewPopoverAnchor {
-  const anchorRef = useRef<HTMLDivElement>(null);
+  const titleAnchorRef = useRef<HTMLDivElement>(null);
+  const iconAnchorRef = useRef<HTMLButtonElement>(null);
   const hideTimerRef = useRef<number | null>(null);
   const [open, setOpen] = useState(false);
   const popoverId = useId();
@@ -72,6 +84,8 @@ export function useWorkflowTaskPreviewPopover({
       : content.projectDetail.workflow.preview;
   const isActive = enabled;
   const isTapMode = interactionMode === 'tap';
+  const useIconTrigger = isTapMode || previewTrigger === 'icon';
+  const anchorRef = (useIconTrigger ? iconAnchorRef : titleAnchorRef) as RefObject<HTMLElement | null>;
 
   const clearHideTimer = useCallback(() => {
     if (hideTimerRef.current != null) {
@@ -111,26 +125,41 @@ export function useWorkflowTaskPreviewPopover({
     }, HIDE_DELAY_MS);
   }, [clearHideTimer, isTapMode]);
 
-  const handleBlur = useCallback(
+  const isInsidePreview = useCallback(
+    (node: Node | null) => {
+      if (!(node instanceof Node)) return false;
+      if (titleAnchorRef.current?.contains(node)) return true;
+      if (iconAnchorRef.current?.contains(node)) return true;
+      const popover = document.getElementById(popoverId);
+      return popover?.contains(node) ?? false;
+    },
+    [popoverId]
+  );
+
+  const handleTitleBlur = useCallback(
     (event: FocusEvent<HTMLDivElement>) => {
-      if (isTapMode) return;
+      if (isTapMode || useIconTrigger) return;
       const next = event.relatedTarget;
       window.setTimeout(() => {
-        const active = document.activeElement;
-        if (active instanceof Node) {
-          if (anchorRef.current?.contains(active)) return;
-          const popover = document.getElementById(popoverId);
-          if (popover?.contains(active)) return;
-        }
-        if (next instanceof Node) {
-          if (anchorRef.current?.contains(next)) return;
-          const popover = document.getElementById(popoverId);
-          if (popover?.contains(next)) return;
-        }
+        if (isInsidePreview(document.activeElement)) return;
+        if (isInsidePreview(next instanceof Node ? next : null)) return;
         setOpen(false);
       }, 0);
     },
-    [isTapMode, popoverId]
+    [isInsidePreview, isTapMode, useIconTrigger]
+  );
+
+  const handleIconBlur = useCallback(
+    (event: FocusEvent<HTMLButtonElement>) => {
+      if (isTapMode) return;
+      const next = event.relatedTarget;
+      window.setTimeout(() => {
+        if (isInsidePreview(document.activeElement)) return;
+        if (isInsidePreview(next instanceof Node ? next : null)) return;
+        setOpen(false);
+      }, 0);
+    },
+    [isInsidePreview, isTapMode]
   );
 
   const handleOpenDetails = useCallback(() => {
@@ -152,7 +181,7 @@ export function useWorkflowTaskPreviewPopover({
       <WorkflowInlineMenu
         open
         onClose={hide}
-        anchorRef={anchorRef as RefObject<HTMLElement | null>}
+        anchorRef={anchorRef}
         portalClassName={cardStyles.previewPortal}
         sizeToContent
         align="start"
@@ -180,34 +209,47 @@ export function useWorkflowTaskPreviewPopover({
       </WorkflowInlineMenu>
     ) : null;
 
-  const anchorHandlers = isTapMode
-    ? {}
-    : {
-        onMouseEnter: show,
-        onMouseLeave: scheduleHide,
-        onFocus: show,
-        onBlur: handleBlur,
-      };
+  const titleHoverHandlers =
+    !isTapMode && !useIconTrigger
+      ? {
+          onMouseEnter: show,
+          onMouseLeave: scheduleHide,
+          onFocus: show,
+          onBlur: handleTitleBlur,
+        }
+      : {};
+
+  const iconClassName = cardStyles.previewInfoBtn;
 
   const toggleButtonProps: WorkflowTaskPreviewToggleButtonProps | null =
-    isActive && isTapMode
+    isActive && useIconTrigger
       ? {
           type: 'button',
-          className: cardStyles.previewInfoBtn,
+          className: iconClassName,
           'aria-expanded': open,
           'aria-haspopup': 'dialog',
           'aria-controls': popoverId,
           'aria-label': open
             ? previewCopy.hidePreviewAriaLabel
             : previewCopy.showPreviewAriaLabel(task.title),
-          onClick: toggle,
+          ...(isTapMode
+            ? { onClick: toggle }
+            : {
+                onMouseEnter: show,
+                onMouseLeave: scheduleHide,
+                onFocus: show,
+                onBlur: handleIconBlur,
+              }),
         }
       : null;
 
   return {
     anchorRef,
-    anchorHandlers,
+    titleAnchorRef,
+    iconAnchorRef,
+    anchorHandlers: titleHoverHandlers,
     toggleButtonProps,
+    menuAlign: 'start' as const,
     open,
     menu,
   };

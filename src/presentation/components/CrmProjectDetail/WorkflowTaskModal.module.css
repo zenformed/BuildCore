@@ -95,6 +95,24 @@
   -webkit-overflow-scrolling: touch;
 }
 
+.drawerFormWrap {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  height: 100%;
+}
+
+.formScrollDrawer {
+  flex: 1;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 1.25rem 1.25rem 1rem;
+  -webkit-overflow-scrolling: touch;
+}
+
 .taskFieldGrid {
   display: grid;
   grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr) minmax(3.5rem, auto);
@@ -111,6 +129,76 @@
   grid-template-areas:
     'title stage'
     'status docs due';
+}
+
+.drawerTitleField {
+  margin-bottom: 0.75rem;
+}
+
+.taskFieldGridDrawerRow2 {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+  align-items: start;
+  margin-bottom: 0.75rem;
+}
+
+.taskFieldGridDrawerRow3 {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.85fr) minmax(0, 1.35fr);
+  gap: 0.75rem;
+  align-items: start;
+  margin-bottom: 0.75rem;
+}
+
+.taskFieldGridDrawerRow2 > *,
+.taskFieldGridDrawerRow3 > * {
+  min-width: 0;
+  margin-bottom: 0;
+}
+
+.customFieldLabelSlot {
+  display: flex;
+  align-items: center;
+  min-height: 1.375rem;
+  margin-bottom: 0.375rem;
+}
+
+.customFieldLabelPlain {
+  margin-bottom: 0;
+}
+
+.customFieldLabelEdit {
+  display: block;
+  width: 25%;
+  max-width: 100%;
+  min-width: 6rem;
+  height: 1.375rem;
+  margin: 0;
+  padding: 0 0.125rem;
+  box-sizing: border-box;
+  border: none;
+  border-radius: 0.125rem;
+  background: transparent;
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 500;
+  line-height: 1.375rem;
+  color: var(--color-text, #0f172a);
+  outline: none;
+}
+
+:global([data-theme='dark']) .customFieldLabelEdit {
+  color: #f1f5f9;
+}
+
+.customFieldLabelEdit:focus {
+  background: color-mix(in srgb, var(--color-primary, #2563eb) 18%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-primary, #2563eb) 55%, transparent);
+}
+
+.customFieldLabelEdit:disabled {
+  opacity: 0.65;
 }
 
 .taskFieldGrid > * {
@@ -206,6 +294,15 @@
   margin-top: 0;
   padding-top: 1rem;
   border-top: 1px solid var(--theme-border-main, #e2e8f0);
+}
+
+.drawerFormWrap .formFooter {
+  padding: 1rem 1.25rem calc(1rem + env(safe-area-inset-bottom, 0px));
+  background: var(--theme-bg-app, var(--color-bg, #fff));
+}
+
+:global([data-theme='dark']) .drawerFormWrap .formFooter {
+  background: var(--theme-surface-card, #161922);
 }
 
 @media (max-width: 640px) {

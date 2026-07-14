@@ -53,6 +53,8 @@ export type CrmProjectsTableProps = {
   onContactCopied?: (message: string) => void;
   showParentProjectColumn?: boolean;
   parentById?: ReadonlyMap<string, CrmProjectSummary>;
+  /** Project-detail subprojects use calm progress blue; dashboard keeps success green. */
+  progressTone?: 'success' | 'progress';
 };
 
 export function CrmProjectsTable({
@@ -87,6 +89,7 @@ export function CrmProjectsTable({
   onContactCopied,
   showParentProjectColumn = false,
   parentById,
+  progressTone = 'success',
 }: CrmProjectsTableProps): ReactElement {
   const displayRoots = useMemo(
     () => (enableSubprojectExpansion ? (rootRows ?? []) : (rows ?? [])),
@@ -226,6 +229,7 @@ export function CrmProjectsTable({
                     onContactCopied={onContactCopied}
                     showParentProjectColumn={showParentProjectColumn}
                     parentProjectName={row.parentProjectName}
+                    progressTone={progressTone}
                   />
                 ))
               )}

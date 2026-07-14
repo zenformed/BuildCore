@@ -2,6 +2,7 @@
 
 import type { ReactElement } from 'react';
 import { useMemo } from 'react';
+import { BsCheckLg } from 'react-icons/bs';
 import type {
   CrmProjectStageCompletion,
   CrmWorkflowTask,
@@ -12,7 +13,6 @@ import {
   listEmptyIncompleteWorkflowStages,
 } from '@/domain/crm';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
-import { CrmProjectStatusCircleIcon } from '@/presentation/components/crmShared/CrmProjectStatusCircleIcon';
 import styles from './ProjectDetail.module.css';
 
 export type WorkflowTasksBatchCompleteButtonProps = {
@@ -62,7 +62,15 @@ export function WorkflowTasksBatchCompleteButton({
       aria-busy={busy || undefined}
       onClick={onClick}
     >
-      <CrmProjectStatusCircleIcon kind="complete" active={allComplete} size={18} />
+      <BsCheckLg
+        className={
+          allComplete
+            ? styles.detailPanelHeaderCompleteCheck_done
+            : styles.detailPanelHeaderCompleteCheck_pending
+        }
+        size={17}
+        aria-hidden
+      />
     </button>
   );
 }

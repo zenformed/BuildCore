@@ -146,6 +146,9 @@
 
   --color-success: #16a34a;
 
+  /* Calm progress (distinct from success green / primary action blue) */
+  --color-progress: #6f9fbd;
+
   --color-info: var(--color-primary);
 
   --color-info-bg: var(--theme-accent-surface);
@@ -373,6 +376,9 @@
   --color-warning-bg: #422006;
 
   --color-success: #4ade80;
+
+  /* Calm progress (distinct from success green / primary action blue) */
+  --color-progress: #7eb6d4;
 
   --color-info: #60a5fa;
 

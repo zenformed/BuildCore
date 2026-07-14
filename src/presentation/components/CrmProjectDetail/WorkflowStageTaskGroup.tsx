@@ -12,7 +12,7 @@ import {
   type WorkflowTaskStageGroup,
 } from '@/presentation/features/crmProjectDetail/workflowTaskGroups';
 import { useWorkflowStageExpanded } from '@/presentation/features/crmProjectDetail/useWorkflowStageExpanded';
-import { CrmProjectStatusCircleIcon } from '@/presentation/components/crmShared/CrmProjectStatusCircleIcon';
+import { BsCheckLg } from 'react-icons/bs';
 import { WorkflowTaskInlineRow } from './WorkflowTaskInlineRow';
 import { WorkflowTaskTableHeaderRow } from './WorkflowTaskTableHeaderRow';
 import {
@@ -127,7 +127,15 @@ export function WorkflowStageTaskGroup({
   };
 
   const completeIcon = (
-    <CrmProjectStatusCircleIcon kind="complete" active={stageIsComplete} size={16} />
+    <BsCheckLg
+      className={
+        stageIsComplete
+          ? styles.stageGroupCompleteCheck_done
+          : styles.stageGroupCompleteCheck_pending
+      }
+      size={17}
+      aria-hidden
+    />
   );
 
   const completeIconControl = canToggleManualStageCompletion ? (

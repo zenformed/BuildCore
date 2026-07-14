@@ -346,6 +346,15 @@
   color: #16a34a;
 }
 
+.projectCompleteCheck {
+  color: var(--color-success, #16a34a);
+  display: block;
+}
+
+:global([data-theme='dark']) .projectCompleteCheck {
+  color: var(--color-success, #4ade80);
+}
+
 .statusCircleIcon_incomplete {
   color: #dc2626;
 }

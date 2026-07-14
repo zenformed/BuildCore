@@ -108,6 +108,8 @@ export function useWorkflowTaskInlineRow({
   const [titleDraft, setTitleDraft] = useState(task.title);
   const [editingNotes, setEditingNotes] = useState(false);
   const [notesDraft, setNotesDraft] = useState(task.notes ?? '');
+  const [editingCustomFieldKey, setEditingCustomFieldKey] = useState<string | null>(null);
+  const [customFieldDraft, setCustomFieldDraft] = useState('');
   const [editingAmount, setEditingAmount] = useState(false);
   const [amountDraft, setAmountDraft] = useState(centsToUsdInput(task.amountCents));
   const [statusMenuOpen, setStatusMenuOpen] = useState(false);
@@ -190,6 +192,55 @@ export function useWorkflowTaskInlineRow({
       reportError(err);
     }
   }, [canEdit, notesDraft, patchTask, reportError, task.id, task.notes]);
+
+  const beginEditCustomField = useCallback(
+    (fieldKey: string) => {
+      if (!canEdit) return;
+      closeMenus();
+      setEditingTitle(false);
+      setEditingNotes(false);
+      setEditingAmount(false);
+      setCustomFieldDraft(task.customFields?.[fieldKey] ?? '');
+      setEditingCustomFieldKey(fieldKey);
+    },
+    [canEdit, closeMenus, task.customFields]
+  );
+
+  const cancelEditCustomField = useCallback(() => {
+    setEditingCustomFieldKey(null);
+    setCustomFieldDraft('');
+  }, []);
+
+  const saveCustomFieldValue = useCallback(async () => {
+    if (!canEdit || editingCustomFieldKey == null) return;
+    const fieldKey = editingCustomFieldKey;
+    const next = customFieldDraft.trim();
+    const current = (task.customFields?.[fieldKey] ?? '').trim();
+    setEditingCustomFieldKey(null);
+    if (next === current) {
+      setCustomFieldDraft('');
+      return;
+    }
+    try {
+      await patchTask({
+        taskId: task.id,
+        customFieldValues: { [fieldKey]: next || null },
+      });
+      setCustomFieldDraft('');
+    } catch (err) {
+      setCustomFieldDraft(task.customFields?.[fieldKey] ?? '');
+      setEditingCustomFieldKey(fieldKey);
+      reportError(err);
+    }
+  }, [
+    canEdit,
+    customFieldDraft,
+    editingCustomFieldKey,
+    patchTask,
+    reportError,
+    task.customFields,
+    task.id,
+  ]);
 
   const saveStatus = useCallback(
     async (status: WorkflowTaskStatus) => {
@@ -422,6 +473,12 @@ export function useWorkflowTaskInlineRow({
     setEditingNotes,
     notesDraft,
     setNotesDraft,
+    editingCustomFieldKey,
+    customFieldDraft,
+    setCustomFieldDraft,
+    beginEditCustomField,
+    cancelEditCustomField,
+    saveCustomFieldValue,
     editingAmount,
     setEditingAmount,
     amountDraft,

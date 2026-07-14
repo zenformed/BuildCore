@@ -73,7 +73,9 @@ export function BudgetTable({ onError }: BudgetTableProps): ReactElement {
     return { cost, budget, diff: budget - cost };
   }, [filtered]);
 
-  const showTable = filtered.length > 0 || draftOpen;
+  const showMobileList = filtered.length > 0 || draftOpen;
+  const showDesktopTable = filtered.length > 0 || draftOpen || canCreate;
+  const showTable = isMobileLayout ? showMobileList : showDesktopTable;
 
   const searchInput = (
     <DetailPanelSectionSearch
@@ -92,7 +94,7 @@ export function BudgetTable({ onError }: BudgetTableProps): ReactElement {
     />
   );
 
-  const addButton = canCreate ? (
+  const mobileAddButton = canCreate ? (
     <DetailPanelHeaderButton
       variant="add"
       disabled={draftOpen}
@@ -110,6 +112,11 @@ export function BudgetTable({ onError }: BudgetTableProps): ReactElement {
     const entryId = deleteConfirmEntry.id;
     setDeleteConfirmEntry(null);
     await deleteEntry(entryId);
+  };
+
+  const handleDraftSave = async (draft: Parameters<typeof createEntry>[0]) => {
+    await createEntry(draft);
+    setDraftOpen(false);
   };
 
   return (
@@ -135,7 +142,7 @@ export function BudgetTable({ onError }: BudgetTableProps): ReactElement {
             <div className={styles.detailPanelSearchWrap}>{searchInput}</div>
             <div className={styles.detailPanelHeaderRowActions}>
               {refreshButton}
-              {addButton}
+              {mobileAddButton}
             </div>
           </div>
         </div>
@@ -145,7 +152,6 @@ export function BudgetTable({ onError }: BudgetTableProps): ReactElement {
             {categoryFilterMenu}
             {searchInput}
             {refreshButton}
-            {addButton}
           </DetailPanelHeaderActions>
         </DetailPanelHeader>
       )}
@@ -167,13 +173,7 @@ export function BudgetTable({ onError }: BudgetTableProps): ReactElement {
             />
           ))}
           {draftOpen ? (
-            <BudgetDraftRow
-              onSave={async (draft) => {
-                await createEntry(draft);
-                setDraftOpen(false);
-              }}
-              onCancel={() => setDraftOpen(false)}
-            />
+            <BudgetDraftRow onSave={handleDraftSave} onCancel={() => setDraftOpen(false)} />
           ) : null}
           <article
             className={`${styles.card} ${styles.workflowTaskMobileCard} ${styles.budgetMobileTotalsCard}`}
@@ -211,59 +211,66 @@ export function BudgetTable({ onError }: BudgetTableProps): ReactElement {
       ) : (
         <div className={styles.detailPanelTableCard}>
           <div className={styles.paymentsList}>
-          <div
-            className={`${styles.tableHeader} ${styles.budgetGrid} ${styles.budgetTableHeader}`}
-            role="row"
-          >
-            <span role="columnheader">{b.columns.itemName}</span>
-            <span role="columnheader">{b.columns.category}</span>
-            <span role="columnheader">{b.columns.cost}</span>
-            <span role="columnheader">{b.columns.budget}</span>
-            <span role="columnheader">{b.columns.remaining}</span>
-            <span role="columnheader">{b.columns.costDate}</span>
-            <span role="columnheader">{b.columns.documents}</span>
-            <span role="columnheader" className={styles.taskDeleteHeader} aria-hidden />
-          </div>
-          {filtered.map((entry) => (
-            <BudgetInlineRow
-              key={entry.id}
-              projectSlug={project.summary.slug}
-              entry={entry}
-              entryDocuments={project.documents.filter((doc) => doc.budgetEntryId === entry.id)}
-              onSave={updateEntry}
-              onError={onError}
-              onRequestDelete={canDelete ? () => setDeleteConfirmEntry(entry) : undefined}
-            />
-          ))}
-          {draftOpen ? (
-            <BudgetDraftRow
-              onSave={async (draft) => {
-                await createEntry(draft);
-                setDraftOpen(false);
-              }}
-              onCancel={() => setDraftOpen(false)}
-            />
-          ) : null}
-          <div
-            className={`${styles.tableRow} ${styles.budgetGrid} ${styles.budgetTotalsRow}`}
-            role="row"
-          >
-            <span className={styles.budgetTotalsLabel}>{b.totalsLabel}</span>
-            <span aria-hidden />
-            <span className={styles.budgetTotalsValue}>{formatCentsAsUsd(totals.cost)}</span>
-            <span className={styles.budgetTotalsValue}>{formatCentsAsUsd(totals.budget)}</span>
-            <span
-              className={`${styles.budgetTotalsValue} ${
-                totals.diff >= 0 ? styles.budgetRemainingUnder : styles.budgetRemainingOver
-              }`}
+            <div
+              className={`${styles.tableHeader} ${styles.budgetGrid} ${styles.budgetTableHeader}`}
+              role="row"
             >
-              {formatCentsAsUsd(totals.diff)}
-            </span>
-            <span aria-hidden />
-            <span aria-hidden />
-            <span className={styles.taskDeleteCell} aria-hidden />
+              <span role="columnheader">{b.columns.itemName}</span>
+              <span role="columnheader">{b.columns.category}</span>
+              <span role="columnheader">{b.columns.cost}</span>
+              <span role="columnheader">{b.columns.budget}</span>
+              <span role="columnheader">{b.columns.remaining}</span>
+              <span role="columnheader">{b.columns.costDate}</span>
+              <span role="columnheader">{b.columns.documents}</span>
+              <span role="columnheader" className={styles.taskDeleteHeader} aria-hidden />
+            </div>
+            {draftOpen ? (
+              <BudgetDraftRow onSave={handleDraftSave} onCancel={() => setDraftOpen(false)} />
+            ) : canCreate ? (
+              <button
+                type="button"
+                className={`${styles.budgetAddPromptRow} ${styles.budgetGrid} ${styles.budgetDraftSwap}`}
+                onClick={() => setDraftOpen(true)}
+              >
+                <span className={styles.budgetAddPromptLabel}>
+                  <span className={styles.budgetAddPromptPlusBtn} aria-hidden>
+                    +
+                  </span>
+                  {b.addItemRowLabel}
+                </span>
+              </button>
+            ) : null}
+            {filtered.map((entry) => (
+              <BudgetInlineRow
+                key={entry.id}
+                projectSlug={project.summary.slug}
+                entry={entry}
+                entryDocuments={project.documents.filter((doc) => doc.budgetEntryId === entry.id)}
+                onSave={updateEntry}
+                onError={onError}
+                onRequestDelete={canDelete ? () => setDeleteConfirmEntry(entry) : undefined}
+              />
+            ))}
+            <div
+              className={`${styles.tableRow} ${styles.budgetGrid} ${styles.budgetTotalsRow}`}
+              role="row"
+            >
+              <span className={styles.budgetTotalsLabel}>{b.totalsLabel}</span>
+              <span aria-hidden />
+              <span className={styles.budgetTotalsValue}>{formatCentsAsUsd(totals.cost)}</span>
+              <span className={styles.budgetTotalsValue}>{formatCentsAsUsd(totals.budget)}</span>
+              <span
+                className={`${styles.budgetTotalsValue} ${
+                  totals.diff >= 0 ? styles.budgetRemainingUnder : styles.budgetRemainingOver
+                }`}
+              >
+                {formatCentsAsUsd(totals.diff)}
+              </span>
+              <span aria-hidden />
+              <span aria-hidden />
+              <span className={styles.taskDeleteCell} aria-hidden />
+            </div>
           </div>
-        </div>
         </div>
       )}
 

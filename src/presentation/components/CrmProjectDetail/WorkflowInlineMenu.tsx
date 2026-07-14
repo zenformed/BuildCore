@@ -199,7 +199,7 @@ export function WorkflowInlineMenu({
     top: resolvedPosition.top,
     left: resolvedPosition.left,
     ...(disablePortalScroll
-      ? { overflow: 'visible' }
+      ? { overflowX: 'hidden', overflowY: 'visible' }
       : { maxHeight: resolvedPosition.maxHeight, overflowY: 'auto' }),
     ...(sizeToContent ? {} : { minWidth: resolvedPosition.minWidth }),
     transform: resolvedPosition.effectiveAlign === 'end' ? 'translateX(-100%)' : undefined,

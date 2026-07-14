@@ -61,7 +61,7 @@ export function WorkflowTaskTableHeaderRow({
       <EditableFieldLabelHeader
         fieldKey={WORKFLOW_TASK_STATUS_FIELD_KEY}
         context={context}
-        align="center"
+        align="start"
       />
       <EditableFieldLabelHeader fieldKey={WORKFLOW_TASK_TASK_FIELD_KEY} context={context} align="start" />
       {enableCustomColumns ? <WorkflowTaskTableCustomColumnHeaders /> : null}

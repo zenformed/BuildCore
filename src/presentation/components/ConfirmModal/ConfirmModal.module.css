@@ -4,7 +4,7 @@
   bottom: 0;
   left: 0;
   right: 0;
-  z-index: 9999;
+  z-index: 10050;
   padding: 1rem 1.5rem;
   background: var(--color-surface, #fff);
   border-top: 1px solid var(--color-border, #e2e8f0);

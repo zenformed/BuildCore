@@ -1,0 +1,106 @@
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10001;
+  display: flex;
+  justify-content: flex-end;
+  background: rgba(15, 23, 42, 0.22);
+}
+
+:global([data-theme='dark']) .overlay {
+  background: rgba(0, 0, 0, 0.28);
+}
+
+.drawer {
+  display: flex;
+  flex-direction: column;
+  width: min(600px, 42vw);
+  min-width: min(28rem, 100%);
+  max-width: 100%;
+  height: 100%;
+  max-height: 100dvh;
+  background: var(--theme-bg-app, var(--color-bg, #fff));
+  border-left: 1px solid var(--theme-border-main, var(--color-border, #e2e8f0));
+  box-shadow: -8px 0 28px rgba(0, 0, 0, 0.14);
+  animation: rightSideDrawerIn 200ms ease-out;
+}
+
+:global([data-theme='dark']) .drawer {
+  background: var(--theme-surface-card, #161922);
+  border-left-color: #334155;
+  box-shadow: -10px 0 32px rgba(0, 0, 0, 0.4);
+}
+
+@keyframes rightSideDrawerIn {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .drawer {
+    animation: none;
+  }
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-shrink: 0;
+  padding: 0.875rem 1rem 0.875rem 1.25rem;
+  background-color: var(--theme-table-header-bg);
+  color: var(--theme-table-header-text);
+  border-bottom: 1px solid var(--theme-border-main, var(--color-border, #e2e8f0));
+}
+
+.title {
+  margin: 0;
+  font-size: 1.125rem;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.close {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  border: none;
+  border-radius: 0.375rem;
+  background: transparent;
+  color: inherit;
+  font-size: 1.5rem;
+  line-height: 1;
+  cursor: pointer;
+  opacity: 0.85;
+}
+
+.close:hover:not(:disabled) {
+  opacity: 1;
+  background: rgba(0, 0, 0, 0.06);
+}
+
+:global([data-theme='dark']) .close:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.close:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.body {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}

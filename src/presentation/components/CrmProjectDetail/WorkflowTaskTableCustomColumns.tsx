@@ -408,10 +408,27 @@ export function WorkflowTaskTableCustomColumnHeaders(): ReactElement | null {
 
 export function WorkflowTaskTableCustomColumnCells({
   task,
+  canEdit = false,
+  saving = false,
+  editingFieldKey = null,
+  draft = '',
+  onDraftChange,
+  onBeginEdit,
+  onSave,
+  onCancel,
 }: {
   readonly task: CrmWorkflowTask;
+  readonly canEdit?: boolean;
+  readonly saving?: boolean;
+  readonly editingFieldKey?: string | null;
+  readonly draft?: string;
+  readonly onDraftChange?: (value: string) => void;
+  readonly onBeginEdit?: (fieldKey: string) => void;
+  readonly onSave?: () => void;
+  readonly onCancel?: () => void;
 }): ReactElement | null {
-  const { slotViews, customColumnCount } = useBuildCoreWorkflowTaskTableColumns();
+  const { slotViews, customColumnCount, getDefinitionForFieldKey } =
+    useBuildCoreWorkflowTaskTableColumns();
 
   if (customColumnCount === 0) return null;
 
@@ -421,18 +438,64 @@ export function WorkflowTaskTableCustomColumnCells({
         if (slot.isPlaceholder) {
           return <span key={`empty-${slot.position}`} className={styles.workflowCustomColumnCell} aria-hidden />;
         }
-        const value = task.customFields?.[slot.fieldKey!] ?? null;
+        const fieldKey = slot.fieldKey!;
+        const fieldLabel = getDefinitionForFieldKey(fieldKey)?.label ?? fieldKey;
+        const value = task.customFields?.[fieldKey] ?? null;
         const rawValue = value != null && value.trim().length > 0 ? value.trim() : null;
         const display = rawValue ?? tableCopy.emptyValue;
         const visibleValue =
           rawValue != null ? truncateWorkflowTaskTableCustomColumnText(rawValue) : display;
+        const isEditing = canEdit && editingFieldKey === fieldKey;
+
+        if (isEditing) {
+          return (
+            <span key={fieldKey} className={styles.workflowCustomColumnCell}>
+              <input
+                className={styles.inlineFieldInput}
+                value={draft}
+                disabled={saving}
+                aria-label={fieldLabel}
+                onChange={(event) => onDraftChange?.(event.target.value)}
+                onBlur={() => onSave?.()}
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter') {
+                    event.preventDefault();
+                    onSave?.();
+                  } else if (event.key === 'Escape') {
+                    event.preventDefault();
+                    onCancel?.();
+                  }
+                }}
+                autoFocus
+              />
+            </span>
+          );
+        }
+
+        if (canEdit) {
+          return (
+            <span key={fieldKey} className={styles.workflowCustomColumnCell}>
+              <button
+                type="button"
+                className={styles.inlineCellBtn}
+                disabled={saving}
+                title={rawValue != null ? workflowTaskTableCustomColumnTextTitle(rawValue) : undefined}
+                aria-label={`${fieldLabel}: ${display}`}
+                onClick={() => onBeginEdit?.(fieldKey)}
+              >
+                <span className={styles.workflowCustomColumnCellText}>{visibleValue}</span>
+              </button>
+            </span>
+          );
+        }
+
         return (
           <span
-            key={slot.fieldKey!}
+            key={fieldKey}
             className={styles.workflowCustomColumnCell}
             title={rawValue != null ? workflowTaskTableCustomColumnTextTitle(rawValue) : undefined}
           >
-            {visibleValue}
+            <span className={styles.workflowCustomColumnCellText}>{visibleValue}</span>
           </span>
         );
       })}

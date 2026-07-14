@@ -39,11 +39,22 @@ import { useDashboardMobileLayout } from '@/presentation/features/crmProjects/us
 import { formatWorkflowStageLabel } from '@/presentation/features/crmProjectDetail/crmProjectDetailFormatters';
 import type { WorkflowTaskCustomFieldScope } from '@/domain/buildcore/workflowTaskCustomFields';
 import { useWorkflowTaskPreviewPopover } from './useWorkflowTaskPreviewPopover';
+import { useCellHoverPreview } from './useCellHoverPreview';
 import previewStyles from './WorkflowTaskPreviewCard.module.css';
 import styles from './ProjectDetail.module.css';
 
+const DOCUMENTS_PREVIEW_NAME_LIMIT = 5;
+
 function statusBadgeClass(status: string): string {
   return shared[`statusBadge_${status}`] ?? shared.statusBadge_pending;
+}
+
+function isDesktopWorkflowTableRow(
+  _model: WorkflowTaskInlineRowModel,
+  mobile: boolean,
+  compact: boolean
+): boolean {
+  return !mobile && !compact;
 }
 
 function WorkflowTaskRowActionsMenuSlot({
@@ -78,6 +89,7 @@ function WorkflowTaskRowActionsMenuSlot({
       onEditNotes={() => {
         model.closeMenus();
         model.setEditingTitle(false);
+        model.cancelEditCustomField();
         model.setNotesDraft(model.task.notes ?? '');
         model.setEditingNotes(true);
       }}
@@ -200,6 +212,8 @@ function WorkflowTaskRowStatusField({
     : mobile
       ? styles.workflowTaskMobileCardControl
       : `${styles.inlineCellWrap} ${styles.workflowStatusCell}`;
+  const useDotStatus = isDesktopWorkflowTableRow(model, mobile, compact);
+  const statusLabel = formatWorkflowStatus(model.task.status);
 
   return (
     <span className={wrapClass} ref={model.statusRef}>
@@ -208,15 +222,23 @@ function WorkflowTaskRowStatusField({
         className={styles.inlinePillBtn}
         disabled={model.saving || !model.canChangeStatus}
         aria-expanded={model.statusMenuOpen}
+        aria-label={statusLabel}
         onClick={() => {
           model.setDocumentsMenuOpen(false);
           model.setAssigneeMenuOpen(false);
           model.setStatusMenuOpen((open) => !open);
         }}
       >
-        <span className={`${styles.statusPill} ${statusBadgeClass(model.task.status)}`}>
-          {formatWorkflowStatus(model.task.status)}
-        </span>
+        {useDotStatus ? (
+          <span className={`${styles.statusDotIndicator} ${statusBadgeClass(model.task.status)}`}>
+            <span className={styles.statusDot} aria-hidden />
+            <span className={styles.statusDotText}>{statusLabel}</span>
+          </span>
+        ) : (
+          <span className={`${styles.statusPill} ${statusBadgeClass(model.task.status)}`}>
+            {statusLabel}
+          </span>
+        )}
       </button>
       <WorkflowInlineMenu
         open={model.statusMenuOpen}
@@ -232,9 +254,16 @@ function WorkflowTaskRowStatusField({
             title={status === 'done' && !model.canApprove ? model.wf.statusDoneNotAllowed : undefined}
             onClick={() => void model.saveStatus(status)}
           >
-            <span className={`${styles.statusPill} ${statusBadgeClass(status)}`}>
-              {formatWorkflowStatus(status)}
-            </span>
+            {useDotStatus ? (
+              <span className={`${styles.statusDotIndicator} ${statusBadgeClass(status)}`}>
+                <span className={styles.statusDot} aria-hidden />
+                <span className={styles.statusDotText}>{formatWorkflowStatus(status)}</span>
+              </span>
+            ) : (
+              <span className={`${styles.statusPill} ${statusBadgeClass(status)}`}>
+                {formatWorkflowStatus(status)}
+              </span>
+            )}
           </button>
         ))}
       </WorkflowInlineMenu>
@@ -253,7 +282,7 @@ function WorkflowTaskRowTitleField({
   readonly mobileHeader?: boolean;
   readonly compact?: boolean;
 }): ReactElement {
-  const { wf, task, saving, canEdit, editingTitle, titleDraft } = model;
+  const { task, saving, canEdit, editingTitle, titleDraft } = model;
   const compactTitle = formatWorkflowTaskCompactTitle(task.title);
   const showCompactTitleTooltip = compact && compactTitle !== task.title.trim();
   const isMobileLayout = useDashboardMobileLayout();
@@ -278,12 +307,14 @@ function WorkflowTaskRowTitleField({
     documentCount: model.documentCount,
     enabled: !editingTitle && !compact,
     interactionMode: useTapPreview ? 'tap' : 'hover',
+    previewTrigger: 'icon',
     showOpenDetails: canEdit,
     onOpenDetails: () => {
       model.closeMenus();
       model.openEditWorkflowTask(task);
     },
   });
+  const useCardPreviewIcon = !useTapPreview;
 
   const titleContent =
     editingTitle && canEdit ? (
@@ -319,6 +350,7 @@ function WorkflowTaskRowTitleField({
         onClick={() => {
           model.closeMenus();
           model.setEditingNotes(false);
+          model.cancelEditCustomField();
           model.setTitleDraft(task.title);
           model.setEditingTitle(true);
         }}
@@ -354,25 +386,33 @@ function WorkflowTaskRowTitleField({
     return titleContent;
   }
 
+  const titleHoverFocusable =
+    !useTapPreview && !editingTitle && preview.toggleButtonProps == null;
+
   const titleWithPreview = (
     <>
       <div
-        ref={preview.anchorRef as RefObject<HTMLDivElement>}
+        ref={preview.titleAnchorRef as RefObject<HTMLDivElement>}
         className={[
           previewStyles.previewTitleAnchor,
-          !useTapPreview ? previewStyles.previewTitleAnchor_focusable : '',
+          titleHoverFocusable ? previewStyles.previewTitleAnchor_focusable : '',
         ]
           .filter(Boolean)
           .join(' ')}
-        tabIndex={!useTapPreview && !editingTitle ? 0 : undefined}
+        tabIndex={titleHoverFocusable ? 0 : undefined}
         {...preview.anchorHandlers}
       >
-        {titleContent}
         {preview.toggleButtonProps ? (
-          <button {...preview.toggleButtonProps}>
-            <span className={previewStyles.previewInfoIcon} aria-hidden />
+          <button ref={preview.iconAnchorRef as RefObject<HTMLButtonElement>} {...preview.toggleButtonProps}>
+            <span
+              className={
+                useCardPreviewIcon ? previewStyles.previewCardIcon : previewStyles.previewInfoIcon
+              }
+              aria-hidden
+            />
           </button>
         ) : null}
+        {titleContent}
       </div>
       {preview.menu}
     </>
@@ -384,15 +424,6 @@ function WorkflowTaskRowTitleField({
 
   return (
     <span className={mobile ? styles.workflowTaskMobileCardControl : styles.taskTitleCell}>
-      {!mobile ? (
-        task.status === 'done' ? (
-          <span className={styles.taskDoneIcon} title={wf.taskDoneIndicator} aria-label={wf.taskDoneIndicator}>
-            ✓
-          </span>
-        ) : (
-          <span className={styles.taskOpenIcon} title={wf.taskOpenIndicator} aria-label={wf.taskOpenIndicator} />
-        )
-      ) : null}
       {titleWithPreview}
     </span>
   );
@@ -407,13 +438,32 @@ function WorkflowTaskRowNotesField({
   readonly mobile?: boolean;
   readonly compact?: boolean;
 }): ReactElement {
-  const { saving, canEdit, editingNotes, notesDraft, notesPreview, notesTitle, task } = model;
+  const { saving, canEdit, editingNotes, notesDraft, notesPreview, notesTitle, task, wf } = model;
   const notesClass = compact
     ? styles.workflowTaskCompactNotesWrap
     : mobile
       ? styles.workflowTaskMobileCardControl
       : `${styles.workflowNotesCell} ${styles.workflowMetaCell}`;
   const notesDisplay = formatWorkflowTaskNotesDisplay(task.notes);
+  const fullNotes = task.notes?.trim() ?? '';
+  const useNotesHoverPreview =
+    isDesktopWorkflowTableRow(model, mobile, compact) &&
+    !editingNotes &&
+    fullNotes.length > 0 &&
+    notesPreview !== '—';
+
+  const notesPreviewPopover = useCellHoverPreview({
+    enabled: useNotesHoverPreview,
+    ariaLabel: wf.notesFullPreviewAriaLabel,
+    panelClassName: `${styles.cellHoverPreviewPanel} ${styles.cellHoverPreviewNotes}`,
+    children: fullNotes,
+  });
+
+  const previewTextClass = compact
+    ? styles.workflowTaskCompactNotes
+    : mobile
+      ? styles.workflowTaskMobileCardNotesText
+      : styles.workflowNotesPreview;
 
   return (
     <span className={notesClass}>
@@ -438,49 +488,52 @@ function WorkflowTaskRowNotesField({
           autoFocus
         />
       ) : canEdit ? (
-        <button
-          type="button"
-          className={
-            compact
-              ? styles.workflowTaskCompactNotesBtn
-              : mobile
-                ? styles.workflowTaskMobileCardNotesBtn
-                : styles.inlineCellBtn
-          }
-          disabled={saving}
-          title={notesTitle}
-          onClick={() => {
-            model.closeMenus();
-            model.setEditingTitle(false);
-            model.setNotesDraft(task.notes ?? '');
-            model.setEditingNotes(true);
-          }}
-        >
-          <span
+        <>
+          <button
+            type="button"
+            ref={(node) => {
+              (notesPreviewPopover.anchorRef as MutableRefObject<HTMLElement | null>).current = node;
+            }}
             className={
               compact
-                ? styles.workflowTaskCompactNotes
+                ? styles.workflowTaskCompactNotesBtn
                 : mobile
-                  ? styles.workflowTaskMobileCardNotesText
-                  : styles.workflowNotesPreview
+                  ? styles.workflowTaskMobileCardNotesBtn
+                  : styles.inlineCellBtn
             }
+            disabled={saving}
+            title={useNotesHoverPreview ? undefined : notesTitle}
+            {...notesPreviewPopover.anchorHandlers}
+            onClick={() => {
+              notesPreviewPopover.hide();
+              model.closeMenus();
+              model.setEditingTitle(false);
+              model.cancelEditCustomField();
+              model.setNotesDraft(task.notes ?? '');
+              model.setEditingNotes(true);
+            }}
+          >
+            <span className={previewTextClass}>
+              {compact || mobile ? notesDisplay : notesPreview}
+            </span>
+          </button>
+          {notesPreviewPopover.menu}
+        </>
+      ) : (
+        <>
+          <span
+            ref={(node) => {
+              (notesPreviewPopover.anchorRef as MutableRefObject<HTMLElement | null>).current = node;
+            }}
+            className={previewTextClass}
+            title={useNotesHoverPreview ? undefined : notesTitle}
+            tabIndex={useNotesHoverPreview ? 0 : undefined}
+            {...notesPreviewPopover.anchorHandlers}
           >
             {compact || mobile ? notesDisplay : notesPreview}
           </span>
-        </button>
-      ) : (
-        <span
-          className={
-            compact
-              ? styles.workflowTaskCompactNotes
-              : mobile
-                ? styles.workflowTaskMobileCardNotesText
-                : styles.workflowNotesPreview
-          }
-          title={notesTitle}
-        >
-          {compact || mobile ? notesDisplay : notesPreview}
-        </span>
+          {notesPreviewPopover.menu}
+        </>
       )}
     </span>
   );
@@ -500,23 +553,75 @@ function WorkflowTaskRowDocumentsField({
     : mobile
       ? styles.workflowTaskMobileCardControl
       : `${styles.inlineCellWrap} ${styles.workflowMetaCell}`;
-  const documentsText = mobile || compact ? model.documentsMobileLabel : model.documentsLabel;
+  const useDesktopWorkflowDocs = isDesktopWorkflowTableRow(model, mobile, compact);
+  const documentsText = mobile || compact
+    ? model.documentsMobileLabel
+    : useDesktopWorkflowDocs && model.hasDocuments
+      ? String(model.documentCount)
+      : model.documentsLabel;
   const compactDocumentsText =
     compact && model.hasDocuments ? String(model.documentCount) : compact ? '' : documentsText;
   const { getFieldLabel } = useBuildCoreFieldLabels();
   const documentsFieldLabel = getFieldLabel(WORKFLOW_TASK_DOCUMENTS_FIELD_KEY);
+  const documentsAriaLabel =
+    useDesktopWorkflowDocs && model.hasDocuments
+      ? model.wf.documentsCountAriaLabel(model.documentCount)
+      : compact && !compactDocumentsText
+        ? documentsFieldLabel
+        : undefined;
+
+  const previewNames = model.taskDocuments.slice(0, DOCUMENTS_PREVIEW_NAME_LIMIT);
+  const previewMoreCount = Math.max(0, model.taskDocuments.length - previewNames.length);
+  const docsHoverEnabled =
+    useDesktopWorkflowDocs && model.hasDocuments && !model.documentsMenuOpen;
+
+  const documentsPreviewPopover = useCellHoverPreview({
+    enabled: docsHoverEnabled,
+    ariaLabel: model.wf.documentsCountAriaLabel(model.documentCount),
+    panelClassName: `${styles.cellHoverPreviewPanel} ${styles.cellHoverPreviewDocuments}`,
+    children: (
+      <>
+        <p className={styles.cellHoverPreviewDocsHeading}>
+          {model.wf.documentsPreviewHeading(model.documentCount)}
+        </p>
+        {previewNames.length > 0 ? (
+          <ul className={styles.cellHoverPreviewDocsList}>
+            {previewNames.map((doc) => (
+              <li key={doc.id}>
+                <span className={styles.cellHoverPreviewDocName} title={doc.name}>
+                  {doc.name}
+                </span>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className={styles.cellHoverPreviewDocsHint}>{model.wf.documentsPreviewOpenHint}</p>
+        )}
+        {previewMoreCount > 0 ? (
+          <p className={styles.cellHoverPreviewDocsMore}>
+            {model.wf.documentsPreviewMore(previewMoreCount)}
+          </p>
+        ) : null}
+      </>
+    ),
+  });
 
   return (
     <span className={wrapClass} ref={model.documentsRef}>
       <button
         type="button"
+        ref={(node) => {
+          (documentsPreviewPopover.anchorRef as MutableRefObject<HTMLElement | null>).current = node;
+        }}
         className={`${styles.inlineCellBtn} ${styles.documentsCell}${
           compact ? ` ${styles.workflowTaskCompactMetaBtn}` : ''
         }`}
         disabled={model.saving || !model.canOpenDocumentsMenu}
         aria-expanded={model.documentsMenuOpen}
-        aria-label={compact && !compactDocumentsText ? documentsFieldLabel : undefined}
+        aria-label={documentsAriaLabel}
+        {...documentsPreviewPopover.anchorHandlers}
         onClick={() => {
+          documentsPreviewPopover.hide();
           model.setStatusMenuOpen(false);
           model.setAssigneeMenuOpen(false);
           if (
@@ -548,6 +653,7 @@ function WorkflowTaskRowDocumentsField({
           </span>
         ) : null}
       </button>
+      {documentsPreviewPopover.menu}
       <input
         ref={model.documentActions.fileInputRef}
         type="file"
@@ -835,6 +941,7 @@ function WorkflowTaskRowAmountField({
           disabled={saving}
           onClick={() => {
             model.closeMenus();
+            model.cancelEditCustomField();
             model.setAmountDraft(centsToUsdInput(task.amountCents));
             model.setEditingAmount(true);
           }}
@@ -863,35 +970,42 @@ function WorkflowTaskRowInvoicedField({
   readonly model: WorkflowTaskInlineRowModel;
   readonly mobile?: boolean;
 }): ReactElement {
-  const { task, saving } = model;
+  const { task, saving, canEdit } = model;
   const payCols = content.projectDetail.payments.columns;
   const wrapClass = mobile
     ? styles.workflowTaskMobileCardControl
     : `${styles.inlineDueCell} ${styles.workflowMetaCell}`;
-  const invoicedDisplay = formatShortDate(task.invoicedAt);
+  const invoicedDisplay = task.invoicedAt ? formatShortDate(task.invoicedAt) : '';
+  const invoicedAriaLabel = invoicedDisplay
+    ? `${payCols.invoiced}: ${invoicedDisplay}`
+    : `${payCols.invoiced}. Set invoiced date.`;
 
   return (
     <span className={wrapClass}>
       <button
         type="button"
         className={mobile ? styles.workflowTaskMobileCardValueBtn : styles.inlineCellBtn}
-        disabled={saving}
-        title={payCols.invoiced}
+        disabled={saving || !canEdit}
+        aria-label={invoicedAriaLabel}
         onClick={(e) => {
           const input = e.currentTarget.nextElementSibling as HTMLInputElement | null;
           input?.showPicker?.();
           input?.click();
         }}
       >
-        <span className={mobile ? styles.workflowTaskMobileCardValue : undefined}>{invoicedDisplay}</span>
+        {invoicedDisplay ? (
+          <span className={mobile ? styles.workflowTaskMobileCardValue : undefined}>{invoicedDisplay}</span>
+        ) : (
+          <span className={styles.dueIcon} aria-hidden />
+        )}
       </button>
       <input
         type="date"
         className={styles.inlineDateInput}
         value={workflowTaskDueToInputValue(task.invoicedAt)}
-        disabled={saving}
+        disabled={saving || !canEdit}
         tabIndex={-1}
-        aria-label={payCols.invoiced}
+        aria-hidden
         onChange={(e) => void model.saveInvoiced(e.target.value)}
       />
     </span>
@@ -905,35 +1019,42 @@ function WorkflowTaskRowPaidField({
   readonly model: WorkflowTaskInlineRowModel;
   readonly mobile?: boolean;
 }): ReactElement {
-  const { task, saving } = model;
+  const { task, saving, canEdit } = model;
   const payCols = content.projectDetail.payments.columns;
   const wrapClass = mobile
     ? styles.workflowTaskMobileCardControl
     : `${styles.inlineDueCell} ${styles.workflowMetaCell}`;
-  const paidDisplay = formatShortDate(task.paidAt);
+  const paidDisplay = task.paidAt ? formatShortDate(task.paidAt) : '';
+  const paidAriaLabel = paidDisplay
+    ? `${payCols.paid}: ${paidDisplay}`
+    : `${payCols.paid}. Set paid date.`;
 
   return (
     <span className={wrapClass}>
       <button
         type="button"
         className={mobile ? styles.workflowTaskMobileCardValueBtn : styles.inlineCellBtn}
-        disabled={saving}
-        title={payCols.paid}
+        disabled={saving || !canEdit}
+        aria-label={paidAriaLabel}
         onClick={(e) => {
           const input = e.currentTarget.nextElementSibling as HTMLInputElement | null;
           input?.showPicker?.();
           input?.click();
         }}
       >
-        <span className={mobile ? styles.workflowTaskMobileCardValue : undefined}>{paidDisplay}</span>
+        {paidDisplay ? (
+          <span className={mobile ? styles.workflowTaskMobileCardValue : undefined}>{paidDisplay}</span>
+        ) : (
+          <span className={styles.dueIcon} aria-hidden />
+        )}
       </button>
       <input
         type="date"
         className={styles.inlineDateInput}
         value={workflowTaskDueToInputValue(task.paidAt)}
-        disabled={saving}
+        disabled={saving || !canEdit}
         tabIndex={-1}
-        aria-label={payCols.paid}
+        aria-hidden
         onChange={(e) => void model.savePaid(e.target.value)}
       />
     </span>
@@ -991,9 +1112,31 @@ export function WorkflowTaskRowTableView({
     >
       <WorkflowTaskRowStatusField model={model} />
       <WorkflowTaskRowTitleField model={model} />
-      {enableCustomColumns && !showAmount ? <WorkflowTaskTableCustomColumnCells task={model.task} /> : null}
+      {enableCustomColumns && !showAmount ? (
+        <WorkflowTaskTableCustomColumnCells
+          task={model.task}
+          canEdit={model.canEdit}
+          saving={model.saving}
+          editingFieldKey={model.editingCustomFieldKey}
+          draft={model.customFieldDraft}
+          onDraftChange={model.setCustomFieldDraft}
+          onBeginEdit={model.beginEditCustomField}
+          onSave={() => void model.saveCustomFieldValue()}
+          onCancel={model.cancelEditCustomField}
+        />
+      ) : null}
       {enablePaymentCustomColumns && showAmount ? (
-        <PaymentTableCustomColumnCells task={model.task} />
+        <PaymentTableCustomColumnCells
+          task={model.task}
+          canEdit={model.canEdit}
+          saving={model.saving}
+          editingFieldKey={model.editingCustomFieldKey}
+          draft={model.customFieldDraft}
+          onDraftChange={model.setCustomFieldDraft}
+          onBeginEdit={model.beginEditCustomField}
+          onSave={() => void model.saveCustomFieldValue()}
+          onCancel={model.cancelEditCustomField}
+        />
       ) : null}
       <WorkflowTaskRowNotesField model={model} />
       <WorkflowTaskRowDocumentsField model={model} />

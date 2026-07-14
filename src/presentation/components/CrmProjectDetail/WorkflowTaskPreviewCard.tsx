@@ -1,7 +1,7 @@
 'use client';
 
 import type { ReactElement, ReactNode } from 'react';
-import type { CrmWorkflowTask } from '@/domain/crm';
+import type { CrmTeamMemberRef, CrmWorkflowTask } from '@/domain/crm';
 import type {
   WorkflowTaskCustomFieldDefinition,
   WorkflowTaskCustomFieldScope,
@@ -19,8 +19,11 @@ import {
   WORKFLOW_TASK_DUE_FIELD_KEY,
   WORKFLOW_TASK_NOTES_FIELD_KEY,
   WORKFLOW_TASK_STATUS_FIELD_KEY,
+  WORKFLOW_TASK_TASK_FIELD_KEY,
 } from '@/domain/buildcore/fieldLabels';
+import { TeamMemberAvatar } from './TeamMemberAvatar';
 import shared from '@/presentation/components/crmShared/crmShared.module.css';
+import detailStyles from './ProjectDetail.module.css';
 import cardStyles from './WorkflowTaskPreviewCard.module.css';
 
 const PREVIEW_CUSTOM_FIELD_VALUE_MAX_LENGTH = 55;
@@ -61,6 +64,7 @@ function PreviewMetaColumn({
 }): ReactElement {
   const columnClass = [
     cardStyles.metaColumn,
+    cardStyles.metaColumn_labelsFirst,
     align === 'center' ? cardStyles.metaColumn_center : '',
     align === 'end' ? cardStyles.metaColumn_end : '',
   ]
@@ -69,23 +73,75 @@ function PreviewMetaColumn({
 
   return (
     <div className={columnClass}>
-      <div className={cardStyles.metaValue}>{value}</div>
       <div className={cardStyles.metaLabel}>{label}</div>
+      <div className={cardStyles.metaValue}>{value}</div>
     </div>
   );
 }
 
-function PreviewStatusPill({ status }: { readonly status: string }): ReactElement {
+function PreviewStatusDot({ status }: { readonly status: string }): ReactElement {
   return (
-    <span className={`${shared.statusBadge} ${statusBadgeClass(status)} ${cardStyles.statusPill}`}>
-      {formatWorkflowStatus(status)}
+    <span className={`${detailStyles.statusDotIndicator} ${statusBadgeClass(status)}`}>
+      <span className={detailStyles.statusDot} aria-hidden />
+      <span className={detailStyles.statusDotText}>{formatWorkflowStatus(status)}</span>
     </span>
   );
 }
 
-function formatPreviewDocuments(count: number, naLabel: string, oneFile: string, files: (n: number) => string): string {
-  if (count <= 0) return naLabel;
-  return count === 1 ? oneFile : files(count);
+function PreviewAssigneeValue({
+  assignedTo,
+  unassignedLabel,
+}: {
+  readonly assignedTo: CrmTeamMemberRef | null | undefined;
+  readonly unassignedLabel: string;
+}): ReactElement {
+  if (assignedTo == null) {
+    return (
+      <span className={shared.assigneeMenuRow}>
+        <span className={shared.assigneeMenuAvatar}>
+          <span
+            className={`${shared.avatar} ${shared.avatarUnassigned}`}
+            title={unassignedLabel}
+            aria-label={unassignedLabel}
+          >
+            —
+          </span>
+        </span>
+        <span className={shared.assigneeMenuLabel}>{unassignedLabel}</span>
+      </span>
+    );
+  }
+
+  return (
+    <span className={shared.assigneeMenuRow}>
+      <span className={shared.assigneeMenuAvatar}>
+        <TeamMemberAvatar member={assignedTo} />
+      </span>
+      <span className={shared.assigneeMenuLabel}>{assignedTo.displayName}</span>
+    </span>
+  );
+}
+
+function PreviewDocumentsValue({
+  documentCount,
+  emptyLabel,
+}: {
+  readonly documentCount: number;
+  readonly emptyLabel: string;
+}): ReactElement {
+  if (documentCount <= 0) {
+    return <span>{emptyLabel}</span>;
+  }
+
+  return (
+    <span
+      className={cardStyles.previewDocumentsValue}
+      aria-label={content.projectDetail.workflow.documentsCountAriaLabel(documentCount)}
+    >
+      <span className={detailStyles.documentsIcon} aria-hidden />
+      <span>{documentCount}</span>
+    </span>
+  );
 }
 
 function formatPreviewDate(iso: string | null | undefined, naLabel: string, emptyValue: string): string {
@@ -111,12 +167,6 @@ export function WorkflowTaskPreviewCard({
 
   const assignedDisplay = task.assignedTo?.displayName?.trim() || wf.unassigned;
   const dueDisplay = formatPreviewDate(task.dueAt, previewCopy.dateNa, emptyValue);
-  const documentsDisplay = formatPreviewDocuments(
-    documentCount,
-    previewCopy.documentsNa,
-    previewCopy.documentOneFile,
-    previewCopy.documentFiles
-  );
   const notesText = task.notes?.trim() ?? '';
   const invoicedDisplay = formatPreviewDate(task.invoicedAt, previewCopy.dateNa, emptyValue);
   const paidDisplay = formatPreviewDate(task.paidAt, previewCopy.dateNa, emptyValue);
@@ -129,10 +179,14 @@ export function WorkflowTaskPreviewCard({
       className={cardStyles.previewCard}
     >
       <header className={cardStyles.previewHeader}>
-        <h3 className={cardStyles.previewTitle}>{task.title}</h3>
         <p className={cardStyles.previewKind}>
-          {isPayment ? previewCopy.kindPayment : previewCopy.kindTask}
+          {isPayment ? (
+            previewCopy.kindPayment
+          ) : (
+            <WorkflowFieldLabelText fieldKey={WORKFLOW_TASK_TASK_FIELD_KEY} />
+          )}
         </p>
+        <h3 className={cardStyles.previewTitle}>{task.title}</h3>
       </header>
 
       <div className={cardStyles.previewBody}>
@@ -142,12 +196,7 @@ export function WorkflowTaskPreviewCard({
               <>
                 <PreviewMetaColumn
                   label={<WorkflowFieldLabelText fieldKey={WORKFLOW_TASK_STATUS_FIELD_KEY} />}
-                  value={<PreviewStatusPill status={task.status} />}
-                  align="center"
-                />
-                <PreviewMetaColumn
-                  label={previewCopy.labels.amount}
-                  value={formatCentsAsUsd(task.amountCents ?? 0)}
+                  value={<PreviewStatusDot status={task.status} />}
                 />
                 <PreviewMetaColumn
                   label={<WorkflowFieldLabelText fieldKey={WORKFLOW_TASK_DUE_FIELD_KEY} />}
@@ -163,7 +212,7 @@ export function WorkflowTaskPreviewCard({
                 />
                 <PreviewMetaColumn
                   label={<WorkflowFieldLabelText fieldKey={WORKFLOW_TASK_STATUS_FIELD_KEY} />}
-                  value={<PreviewStatusPill status={task.status} />}
+                  value={<PreviewStatusDot status={task.status} />}
                   align="center"
                 />
                 <PreviewMetaColumn
@@ -177,18 +226,36 @@ export function WorkflowTaskPreviewCard({
           <div className={`${cardStyles.metaRow} ${cardStyles.metaRow_spaced}`}>
             <PreviewMetaColumn
               label={<WorkflowFieldLabelText fieldKey={WORKFLOW_TASK_ASSIGNED_FIELD_KEY} />}
-              value={assignedDisplay}
+              value={
+                <PreviewAssigneeValue
+                  assignedTo={task.assignedTo}
+                  unassignedLabel={assignedDisplay}
+                />
+              }
             />
             <PreviewMetaColumn
               label={<WorkflowFieldLabelText fieldKey={WORKFLOW_TASK_DOCUMENTS_FIELD_KEY} />}
-              value={documentsDisplay}
+              value={
+                <PreviewDocumentsValue
+                  documentCount={documentCount}
+                  emptyLabel={previewCopy.documentsNa}
+                />
+              }
               align="end"
             />
           </div>
           {isPayment ? (
             <div className={`${cardStyles.metaRow} ${cardStyles.metaRow_spaced}`}>
-              <PreviewMetaColumn label={payments.columns.invoiced} value={invoicedDisplay} />
-              <PreviewMetaColumn label={payments.columns.paid} value={paidDisplay} />
+              <PreviewMetaColumn
+                label={previewCopy.labels.amount}
+                value={formatCentsAsUsd(task.amountCents ?? 0)}
+              />
+              <PreviewMetaColumn
+                label={payments.columns.invoiced}
+                value={invoicedDisplay}
+                align="center"
+              />
+              <PreviewMetaColumn label={payments.columns.paid} value={paidDisplay} align="end" />
             </div>
           ) : null}
         </section>

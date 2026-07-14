@@ -217,7 +217,7 @@
 
 .assigneePickerMenuPortal {
   position: fixed;
-  z-index: 10050;
+  z-index: 10060;
   display: flex;
   flex-direction: column;
   gap: 0.125rem;

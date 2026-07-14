@@ -28,6 +28,7 @@ import { canMarkWorkflowTaskDone } from '@/presentation/features/crmProjectDetai
 import { countDocumentsByTaskId } from '@/presentation/features/crmProjectDetail/workflowDocumentCounts';
 import { crmRepositories } from '@/shared/di/container';
 import { ConfirmModal } from '@/presentation/components/ConfirmModal';
+import { RightSideDrawer } from '@/presentation/components/RightSideDrawer';
 import formStyles from '../CrmProjects/CreateCrmProjectDrawer.module.css';
 import { CreateFormAssigneePicker } from '@/presentation/components/crmShared/CreateFormAssigneePicker';
 import { WorkflowStatusPillPicker } from './WorkflowStatusPillPicker';
@@ -39,6 +40,7 @@ import {
 } from './WorkflowTaskCustomFieldsSection';
 import { resolveWorkflowTaskCustomFieldScopeFromModalContext } from '@/domain/buildcore/workflowTaskCustomFields';
 import { useBuildCoreWorkflowTaskCustomFieldsForScope } from '@/presentation/providers/BuildCoreWorkflowTaskCustomFieldsProvider';
+import { useDashboardMobileLayout } from '@/presentation/features/crmProjects/useDashboardMobileLayout';
 import styles from './WorkflowTaskModal.module.css';
 
 export type WorkflowTaskModalContext = 'workflow' | 'payment';
@@ -91,6 +93,7 @@ export function WorkflowTaskModal({
   onCreated,
   onUpdated,
 }: WorkflowTaskModalProps): ReactElement | null {
+  const isMobileLayout = useDashboardMobileLayout();
   const assignmentCatalog = useAssignmentIdentityCatalog();
   const dash = useBuildCoreDashboardContext();
   const { catalogForProject } = useBuildCorePipelineStages();
@@ -262,14 +265,15 @@ export function WorkflowTaskModal({
   if (!open) return null;
 
   const assigneeOptions = (() => {
+    // Keep the current selection in the option list so the field trigger can resolve a label.
     const options = getWorkflowTaskAssigneeOptions(
       isApiSource,
       assignmentCatalog,
       project.summary.contact,
       dash.user?.id,
-      mode === 'edit' ? null : form.assignedMemberId
+      null
     );
-    if (mode !== 'edit' || task?.assignedTo == null || !form.assignedMemberId) {
+    if (task?.assignedTo == null || !form.assignedMemberId) {
       return options;
     }
     if (options.some((option) => option.id === form.assignedMemberId)) {
@@ -302,232 +306,393 @@ export function WorkflowTaskModal({
     status === 'done' && documentsRequired && !canSelectDone;
   const showAssignee = assigneeOptions.length > 0;
   const createCopy = content.crm.create;
+  const useDesktopDrawer = !isMobileLayout;
+  const titleId = 'workflow-task-modal-title';
 
-  return (
+  const formFields = useDesktopDrawer ? (
+    <>
+      <div className={`${formStyles.field} ${styles.drawerTitleField}`}>
+        <label className={formStyles.label} htmlFor="workflow-task-title">
+          {wf.fields.title} *
+        </label>
+        <input
+          id="workflow-task-title"
+          className={formStyles.input}
+          value={form.title}
+          disabled={saving}
+          autoFocus
+          onChange={(e) => updateField('title', e.target.value)}
+        />
+      </div>
+
+      <div className={styles.taskFieldGridDrawerRow2}>
+        <div className={formStyles.field}>
+          <label className={formStyles.label}>{wf.fields.status}</label>
+          <WorkflowStatusPillPicker
+            value={form.status}
+            onChange={(status) => updateField('status', status)}
+            disabled={saving}
+            isStatusDisabled={isStatusDisabled}
+          />
+        </div>
+        {isPaymentTask ? (
+          <div className={formStyles.field}>
+            <label className={formStyles.label} htmlFor="workflow-task-amount">
+              {wf.fields.amountUsd} *
+            </label>
+            <input
+              id="workflow-task-amount"
+              className={formStyles.input}
+              inputMode="decimal"
+              value={form.amountUsd}
+              disabled={saving}
+              onChange={(e) => updateField('amountUsd', e.target.value)}
+              placeholder="0.00"
+            />
+          </div>
+        ) : (
+          <div className={formStyles.field}>
+            <label className={formStyles.label} htmlFor="workflow-task-stage">
+              {wf.fields.stage}
+            </label>
+            <select
+              id="workflow-task-stage"
+              className={formStyles.select}
+              value={form.stageSlug}
+              disabled={saving || opsStages.length === 0}
+              onChange={(e) =>
+                updateField('stageSlug', e.target.value as WorkflowTaskFormState['stageSlug'])
+              }
+            >
+              {opsStages.map((stage) => (
+                <option key={stage.slug} value={stage.slug}>
+                  {formatWorkflowStageLabel(stage.slug, catalog)}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
+      </div>
+
+      <div className={styles.taskFieldGridDrawerRow3}>
+        <div className={formStyles.field}>
+          <label className={formStyles.label} htmlFor="workflow-task-documents-required">
+            {wf.fields.documentsRequired}
+          </label>
+          <select
+            id="workflow-task-documents-required"
+            className={formStyles.select}
+            value={form.documentsRequired}
+            disabled={saving}
+            onChange={(e) =>
+              updateField(
+                'documentsRequired',
+                e.target.value as WorkflowTaskFormState['documentsRequired']
+              )
+            }
+          >
+            <option value="yes">{wf.fields.documentsRequiredYes}</option>
+            <option value="no">{wf.fields.documentsRequiredNo}</option>
+          </select>
+        </div>
+
+        <div className={formStyles.field}>
+          <label className={formStyles.label} htmlFor="workflow-task-due">
+            {wf.fields.due}
+          </label>
+          <input
+            id="workflow-task-due"
+            type="date"
+            className={formStyles.input}
+            value={form.dueAt}
+            disabled={saving}
+            onChange={(e) => updateField('dueAt', e.target.value)}
+          />
+        </div>
+
+        {showAssignee ? (
+          <div className={formStyles.field}>
+            <span className={formStyles.label}>{createCopy.fields.assignedShort}</span>
+            <CreateFormAssigneePicker
+              value={form.assignedMemberId}
+              options={assigneeOptions}
+              disabled={saving}
+              unassignedLabel={wf.customFields.selectMember}
+              ariaLabel={wf.fields.assigned}
+              variant="field"
+              onChange={(memberId) => updateField('assignedMemberId', memberId)}
+            />
+          </div>
+        ) : (
+          <div aria-hidden />
+        )}
+      </div>
+
+      {isPaymentTask ? (
+        <div className={styles.rowPaymentDates}>
+          <div className={`${formStyles.field} ${styles.rowField}`}>
+            <label className={formStyles.label} htmlFor="workflow-task-invoiced">
+              {payments.columns.invoiced}
+            </label>
+            <input
+              id="workflow-task-invoiced"
+              type="date"
+              className={formStyles.input}
+              value={form.invoicedAt}
+              disabled={saving}
+              onChange={(e) => updateField('invoicedAt', e.target.value)}
+            />
+          </div>
+          <div className={`${formStyles.field} ${styles.rowField}`}>
+            <label className={formStyles.label} htmlFor="workflow-task-paid">
+              {payments.columns.paid}
+            </label>
+            <input
+              id="workflow-task-paid"
+              type="date"
+              className={formStyles.input}
+              value={form.paidAt}
+              disabled={saving}
+              onChange={(e) => updateField('paidAt', e.target.value)}
+            />
+          </div>
+        </div>
+      ) : null}
+
+      <div className={`${formStyles.field} ${styles.rowNotes}`}>
+        <label className={formStyles.label} htmlFor="workflow-task-notes">
+          {wf.fields.notes}
+        </label>
+        <textarea
+          id="workflow-task-notes"
+          className={formStyles.textarea}
+          value={form.notes}
+          disabled={saving}
+          onChange={(e) => updateField('notes', e.target.value)}
+        />
+      </div>
+
+      <WorkflowTaskCustomFieldsSection
+        scope={customFieldScope}
+        values={customFieldDraft}
+        disabled={saving}
+        inlineManage
+        onValueChange={handleCustomFieldValueChange}
+        onAddField={() => setAddCustomFieldOpen(true)}
+        onFieldDeleted={(fieldKey) => {
+          setCustomFieldDraft((prev) => {
+            if (!(fieldKey in prev)) return prev;
+            const { [fieldKey]: _, ...rest } = prev;
+            return rest;
+          });
+        }}
+      />
+
+      {error ? <p className={formStyles.error}>{error}</p> : null}
+    </>
+  ) : (
     <>
       <div
-        className={styles.overlay}
-        onClick={handleRequestClose}
-        role="presentation"
+        className={[
+          styles.taskFieldGrid,
+          showAssignee ? '' : styles.taskFieldGridNoAssignee,
+        ]
+          .filter(Boolean)
+          .join(' ')}
       >
-        <div
-          className={styles.panel}
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="workflow-task-modal-title"
-          onClick={(e) => e.stopPropagation()}
-        >
-          <div className={styles.modalHeader}>
-            <h2 id="workflow-task-modal-title" className={styles.modalTitle}>
-              {title}
-            </h2>
-            <button
-              type="button"
-              className={styles.modalClose}
-              onClick={handleRequestClose}
+        <div className={`${formStyles.field} ${styles.areaTitle}`}>
+          <label className={formStyles.label} htmlFor="workflow-task-title">
+            {wf.fields.title} *
+          </label>
+          <input
+            id="workflow-task-title"
+            className={formStyles.input}
+            value={form.title}
+            disabled={saving}
+            autoFocus
+            onChange={(e) => updateField('title', e.target.value)}
+          />
+        </div>
+
+        {isPaymentTask ? (
+          <div className={`${formStyles.field} ${styles.areaStage}`}>
+            <label className={formStyles.label} htmlFor="workflow-task-amount">
+              {wf.fields.amountUsd} *
+            </label>
+            <input
+              id="workflow-task-amount"
+              className={formStyles.input}
+              inputMode="decimal"
+              value={form.amountUsd}
               disabled={saving}
-              aria-label={wf.taskModalCloseAriaLabel}
+              onChange={(e) => updateField('amountUsd', e.target.value)}
+              placeholder="0.00"
+            />
+          </div>
+        ) : (
+          <div className={`${formStyles.field} ${styles.areaStage}`}>
+            <label className={formStyles.label} htmlFor="workflow-task-stage">
+              {wf.fields.stage}
+            </label>
+            <select
+              id="workflow-task-stage"
+              className={formStyles.select}
+              value={form.stageSlug}
+              disabled={saving || opsStages.length === 0}
+              onChange={(e) =>
+                updateField('stageSlug', e.target.value as WorkflowTaskFormState['stageSlug'])
+              }
             >
-              ×
-            </button>
+              {opsStages.map((stage) => (
+                <option key={stage.slug} value={stage.slug}>
+                  {formatWorkflowStageLabel(stage.slug, catalog)}
+                </option>
+              ))}
+            </select>
           </div>
-          <div className={styles.modalBody}>
-            <form className={styles.form} onSubmit={(e) => void handleSubmit(e)}>
-              <div className={styles.formScroll}>
-                <div
-                  className={[
-                    styles.taskFieldGrid,
-                    showAssignee ? '' : styles.taskFieldGridNoAssignee,
-                  ]
-                    .filter(Boolean)
-                    .join(' ')}
-                >
-                  <div className={`${formStyles.field} ${styles.areaTitle}`}>
-                    <label className={formStyles.label} htmlFor="workflow-task-title">
-                      {wf.fields.title} *
-                    </label>
-                    <input
-                      id="workflow-task-title"
-                      className={formStyles.input}
-                      value={form.title}
-                      disabled={saving}
-                      autoFocus
-                      onChange={(e) => updateField('title', e.target.value)}
-                    />
-                  </div>
+        )}
 
-                  {isPaymentTask ? (
-                    <div className={`${formStyles.field} ${styles.areaStage}`}>
-                      <label className={formStyles.label} htmlFor="workflow-task-amount">
-                        {wf.fields.amountUsd} *
-                      </label>
-                      <input
-                        id="workflow-task-amount"
-                        className={formStyles.input}
-                        inputMode="decimal"
-                        value={form.amountUsd}
-                        disabled={saving}
-                        onChange={(e) => updateField('amountUsd', e.target.value)}
-                        placeholder="0.00"
-                      />
-                    </div>
-                  ) : (
-                    <div className={`${formStyles.field} ${styles.areaStage}`}>
-                      <label className={formStyles.label} htmlFor="workflow-task-stage">
-                        {wf.fields.stage}
-                      </label>
-                      <select
-                        id="workflow-task-stage"
-                        className={formStyles.select}
-                        value={form.stageSlug}
-                        disabled={saving || opsStages.length === 0}
-                        onChange={(e) =>
-                          updateField(
-                            'stageSlug',
-                            e.target.value as WorkflowTaskFormState['stageSlug']
-                          )
-                        }
-                      >
-                        {opsStages.map((stage) => (
-                          <option key={stage.slug} value={stage.slug}>
-                            {formatWorkflowStageLabel(stage.slug, catalog)}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                  )}
-
-                  {showAssignee ? (
-                    <div className={`${formStyles.fieldAssigneeCompact} ${styles.areaAssignee}`}>
-                      <span className={formStyles.label}>{createCopy.fields.assignedShort}</span>
-                      <CreateFormAssigneePicker
-                        value={form.assignedMemberId}
-                        options={assigneeOptions}
-                        disabled={saving}
-                        unassignedLabel={content.projectDetail.edit.assigneeUnassigned}
-                        ariaLabel={wf.fields.assigned}
-                        onChange={(memberId) => updateField('assignedMemberId', memberId)}
-                      />
-                    </div>
-                  ) : null}
-
-                  <div className={`${formStyles.field} ${styles.areaStatus}`}>
-                    <label className={formStyles.label}>{wf.fields.status}</label>
-                    <WorkflowStatusPillPicker
-                      value={form.status}
-                      onChange={(status) => updateField('status', status)}
-                      disabled={saving}
-                      isStatusDisabled={isStatusDisabled}
-                    />
-                  </div>
-                  <div className={`${formStyles.field} ${styles.areaDocs}`}>
-                    <label className={formStyles.label} htmlFor="workflow-task-documents-required">
-                      {wf.fields.documentsRequired}
-                    </label>
-                    <select
-                      id="workflow-task-documents-required"
-                      className={formStyles.select}
-                      value={form.documentsRequired}
-                      disabled={saving}
-                      onChange={(e) =>
-                        updateField(
-                          'documentsRequired',
-                          e.target.value as WorkflowTaskFormState['documentsRequired']
-                        )
-                      }
-                    >
-                      <option value="yes">{wf.fields.documentsRequiredYes}</option>
-                      <option value="no">{wf.fields.documentsRequiredNo}</option>
-                    </select>
-                  </div>
-                  <div className={`${formStyles.field} ${styles.areaDue}`}>
-                    <label className={formStyles.label} htmlFor="workflow-task-due">
-                      {wf.fields.due}
-                    </label>
-                    <input
-                      id="workflow-task-due"
-                      type="date"
-                      className={formStyles.input}
-                      value={form.dueAt}
-                      disabled={saving}
-                      onChange={(e) => updateField('dueAt', e.target.value)}
-                    />
-                  </div>
-                </div>
-
-                <div className={`${formStyles.field} ${styles.rowNotes}`}>
-                  <label className={formStyles.label} htmlFor="workflow-task-notes">
-                    {wf.fields.notes}
-                  </label>
-                  <textarea
-                    id="workflow-task-notes"
-                    className={formStyles.textarea}
-                    value={form.notes}
-                    disabled={saving}
-                    onChange={(e) => updateField('notes', e.target.value)}
-                  />
-                </div>
-
-                {isPaymentTask ? (
-                  <div className={styles.rowPaymentDates}>
-                    <div className={`${formStyles.field} ${styles.rowField}`}>
-                      <label className={formStyles.label} htmlFor="workflow-task-invoiced">
-                        {payments.columns.invoiced}
-                      </label>
-                      <input
-                        id="workflow-task-invoiced"
-                        type="date"
-                        className={formStyles.input}
-                        value={form.invoicedAt}
-                        disabled={saving}
-                        onChange={(e) => updateField('invoicedAt', e.target.value)}
-                      />
-                    </div>
-                    <div className={`${formStyles.field} ${styles.rowField}`}>
-                      <label className={formStyles.label} htmlFor="workflow-task-paid">
-                        {payments.columns.paid}
-                      </label>
-                      <input
-                        id="workflow-task-paid"
-                        type="date"
-                        className={formStyles.input}
-                        value={form.paidAt}
-                        disabled={saving}
-                        onChange={(e) => updateField('paidAt', e.target.value)}
-                      />
-                    </div>
-                  </div>
-                ) : null}
-
-                <WorkflowTaskCustomFieldsSection
-                  scope={customFieldScope}
-                  values={customFieldDraft}
-                  disabled={saving}
-                  onValueChange={handleCustomFieldValueChange}
-                  onAddField={() => setAddCustomFieldOpen(true)}
-                />
-
-                {error ? <p className={formStyles.error}>{error}</p> : null}
-              </div>
-
-              <div className={styles.formFooter}>
-                <button
-                  type="button"
-                  className={formStyles.cancelButton}
-                  onClick={handleRequestClose}
-                  disabled={saving}
-                >
-                  {content.projectDetail.edit.cancel}
-                </button>
-                <button type="submit" className={formStyles.submitButton} disabled={saving}>
-                  {saving ? wf.taskSubmitting : submitLabel}
-                </button>
-              </div>
-            </form>
+        {showAssignee ? (
+          <div className={`${formStyles.fieldAssigneeCompact} ${styles.areaAssignee}`}>
+            <span className={formStyles.label}>{createCopy.fields.assignedShort}</span>
+            <CreateFormAssigneePicker
+              value={form.assignedMemberId}
+              options={assigneeOptions}
+              disabled={saving}
+              unassignedLabel={content.projectDetail.edit.assigneeUnassigned}
+              ariaLabel={wf.fields.assigned}
+              onChange={(memberId) => updateField('assignedMemberId', memberId)}
+            />
           </div>
+        ) : null}
+
+        <div className={`${formStyles.field} ${styles.areaStatus}`}>
+          <label className={formStyles.label}>{wf.fields.status}</label>
+          <WorkflowStatusPillPicker
+            value={form.status}
+            onChange={(status) => updateField('status', status)}
+            disabled={saving}
+            isStatusDisabled={isStatusDisabled}
+          />
+        </div>
+        <div className={`${formStyles.field} ${styles.areaDocs}`}>
+          <label className={formStyles.label} htmlFor="workflow-task-documents-required">
+            {wf.fields.documentsRequired}
+          </label>
+          <select
+            id="workflow-task-documents-required"
+            className={formStyles.select}
+            value={form.documentsRequired}
+            disabled={saving}
+            onChange={(e) =>
+              updateField(
+                'documentsRequired',
+                e.target.value as WorkflowTaskFormState['documentsRequired']
+              )
+            }
+          >
+            <option value="yes">{wf.fields.documentsRequiredYes}</option>
+            <option value="no">{wf.fields.documentsRequiredNo}</option>
+          </select>
+        </div>
+        <div className={`${formStyles.field} ${styles.areaDue}`}>
+          <label className={formStyles.label} htmlFor="workflow-task-due">
+            {wf.fields.due}
+          </label>
+          <input
+            id="workflow-task-due"
+            type="date"
+            className={formStyles.input}
+            value={form.dueAt}
+            disabled={saving}
+            onChange={(e) => updateField('dueAt', e.target.value)}
+          />
         </div>
       </div>
 
+      <div className={`${formStyles.field} ${styles.rowNotes}`}>
+        <label className={formStyles.label} htmlFor="workflow-task-notes">
+          {wf.fields.notes}
+        </label>
+        <textarea
+          id="workflow-task-notes"
+          className={formStyles.textarea}
+          value={form.notes}
+          disabled={saving}
+          onChange={(e) => updateField('notes', e.target.value)}
+        />
+      </div>
+
+      {isPaymentTask ? (
+        <div className={styles.rowPaymentDates}>
+          <div className={`${formStyles.field} ${styles.rowField}`}>
+            <label className={formStyles.label} htmlFor="workflow-task-invoiced">
+              {payments.columns.invoiced}
+            </label>
+            <input
+              id="workflow-task-invoiced"
+              type="date"
+              className={formStyles.input}
+              value={form.invoicedAt}
+              disabled={saving}
+              onChange={(e) => updateField('invoicedAt', e.target.value)}
+            />
+          </div>
+          <div className={`${formStyles.field} ${styles.rowField}`}>
+            <label className={formStyles.label} htmlFor="workflow-task-paid">
+              {payments.columns.paid}
+            </label>
+            <input
+              id="workflow-task-paid"
+              type="date"
+              className={formStyles.input}
+              value={form.paidAt}
+              disabled={saving}
+              onChange={(e) => updateField('paidAt', e.target.value)}
+            />
+          </div>
+        </div>
+      ) : null}
+
+      <WorkflowTaskCustomFieldsSection
+        scope={customFieldScope}
+        values={customFieldDraft}
+        disabled={saving}
+        onValueChange={handleCustomFieldValueChange}
+        onAddField={() => setAddCustomFieldOpen(true)}
+      />
+
+      {error ? <p className={formStyles.error}>{error}</p> : null}
+    </>
+  );
+
+  const formFooter = (
+    <div className={styles.formFooter}>
+      <button
+        type="button"
+        className={formStyles.cancelButton}
+        onClick={handleRequestClose}
+        disabled={saving}
+      >
+        {content.projectDetail.edit.cancel}
+      </button>
+      <button type="submit" className={formStyles.submitButton} disabled={saving}>
+        {saving ? wf.taskSubmitting : submitLabel}
+      </button>
+    </div>
+  );
+
+  const formElement = (
+    <form className={styles.form} onSubmit={(e) => void handleSubmit(e)}>
+      <div className={useDesktopDrawer ? styles.formScrollDrawer : styles.formScroll}>
+        {formFields}
+      </div>
+      {formFooter}
+    </form>
+  );
+
+  const nestedDialogs = (
+    <>
       <AddWorkflowTaskCustomFieldDialog
         isOpen={addCustomFieldOpen}
         saving={isSavingCustomFieldDefinition}
@@ -546,6 +711,55 @@ export function WorkflowTaskModal({
         cancelLabel={content.projectDetail.edit.cancel}
         variant="primary"
       />
+    </>
+  );
+
+  if (useDesktopDrawer) {
+    return (
+      <>
+        <RightSideDrawer
+          open={open}
+          title={title}
+          titleId={titleId}
+          onClose={handleRequestClose}
+          closeAriaLabel={wf.taskModalCloseAriaLabel}
+          closeDisabled={saving}
+        >
+          <div className={styles.drawerFormWrap}>{formElement}</div>
+        </RightSideDrawer>
+        {nestedDialogs}
+      </>
+    );
+  }
+
+  return (
+    <>
+      <div className={styles.overlay} onClick={handleRequestClose} role="presentation">
+        <div
+          className={styles.panel}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby={titleId}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className={styles.modalHeader}>
+            <h2 id={titleId} className={styles.modalTitle}>
+              {title}
+            </h2>
+            <button
+              type="button"
+              className={styles.modalClose}
+              onClick={handleRequestClose}
+              disabled={saving}
+              aria-label={wf.taskModalCloseAriaLabel}
+            >
+              ×
+            </button>
+          </div>
+          <div className={styles.modalBody}>{formElement}</div>
+        </div>
+      </div>
+      {nestedDialogs}
     </>
   );
 }

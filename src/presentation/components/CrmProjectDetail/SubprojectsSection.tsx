@@ -534,6 +534,7 @@ function SubprojectsSectionContent(): ReactElement {
                 onRowClick={handleSubprojectRowClick}
                 bulkSelection={bulkSelectionBindings}
                 onContactCopied={onContactCopied}
+                progressTone="progress"
               />
             </div>
           )}

@@ -224,7 +224,7 @@
 
 .previewTitle {
   margin: 0;
-  font-size: 0.9375rem;
+  font-size: 1.0625rem;
   font-weight: 600;
   line-height: 1.35;
   word-break: break-word;
@@ -337,18 +337,18 @@
 }
 
 .metaValue {
-  font-size: 0.8125rem;
+  font-size: 0.75rem;
   font-weight: 500;
   line-height: 1.35;
   word-break: break-word;
-  min-height: 1.125rem;
+  min-height: 1.0625rem;
   width: 100%;
   min-width: 0;
 }
 
 .metaValueMultiline {
   display: block;
-  font-size: 0.8125rem;
+  font-size: 0.75rem;
   font-weight: 500;
   line-height: 1.35;
   white-space: pre-wrap;
@@ -365,7 +365,7 @@
 
 .metaStackedListItem {
   display: block;
-  font-size: 0.8125rem;
+  font-size: 0.75rem;
   font-weight: 500;
   line-height: 1.35;
   overflow-wrap: anywhere;
@@ -402,6 +402,13 @@
   display: flex;
   width: 100%;
   justify-content: flex-start;
+}
+
+.previewDocumentsValue {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.25rem;
 }
 
 .metaColumn_center .previewMetaAssigneeValue {
@@ -471,7 +478,7 @@
 
 .customFieldValue {
   margin: 0;
-  font-size: 0.8125rem;
+  font-size: 0.75rem;
   font-weight: 500;
   line-height: 1.35;
   word-break: break-word;
@@ -528,7 +535,7 @@
   justify-content: center;
   width: 1.625rem;
   height: 1.625rem;
-  margin-inline-start: 0.25rem;
+  margin-inline-end: 0;
   padding: 0;
   border: none;
   border-radius: 0.375rem;
@@ -571,11 +578,44 @@
   line-height: 1;
 }
 
+.previewCardIcon {
+  display: block;
+  width: 0.8125rem;
+  height: 1rem;
+  border: 1.5px solid currentColor;
+  border-radius: 0.1875rem;
+  position: relative;
+  box-sizing: border-box;
+}
+
+.previewCardIcon::before,
+.previewCardIcon::after {
+  content: '';
+  position: absolute;
+  left: 0.125rem;
+  right: 0.125rem;
+  height: 1px;
+  background: currentColor;
+  opacity: 0.85;
+}
+
+.previewCardIcon::before {
+  top: 0.28rem;
+}
+
+.previewCardIcon::after {
+  top: 0.52rem;
+  width: 55%;
+  right: auto;
+}
+
 .previewTitleAnchor {
   display: flex;
   align-items: center;
   min-width: 0;
   flex: 1 1 auto;
+  width: 100%;
+  gap: 0.1rem;
 }
 
 .previewTitleAnchor_focusable {

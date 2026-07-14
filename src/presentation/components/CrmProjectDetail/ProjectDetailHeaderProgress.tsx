@@ -28,5 +28,5 @@ export function ProjectDetailHeaderProgress(): ReactElement | null {
     return null;
   }
 
-  return <ProjectProgressPercent progress={progress} />;
+  return <ProjectProgressPercent progress={progress} tone="progress" />;
 }

@@ -1,7 +1,7 @@
 'use client';
 
 import type { ReactElement } from 'react';
-import { CrmProjectStatusCircleIcon } from './CrmProjectStatusCircleIcon';
+import { BsCheckLg } from 'react-icons/bs';
 import styles from './crmShared.module.css';
 
 export type CrmProjectCompleteIconProps = {
@@ -11,7 +11,7 @@ export type CrmProjectCompleteIconProps = {
 export function CrmProjectCompleteIcon({ ariaLabel }: CrmProjectCompleteIconProps): ReactElement {
   return (
     <span className={styles.statusCircleIconSlot} aria-label={ariaLabel} title={ariaLabel} role="img">
-      <CrmProjectStatusCircleIcon kind="complete" active size={16} />
+      <BsCheckLg className={styles.projectCompleteCheck} size={15} aria-hidden />
     </span>
   );
 }

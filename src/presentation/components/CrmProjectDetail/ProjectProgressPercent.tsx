@@ -10,17 +10,23 @@ import styles from './ProjectDetail.module.css';
 export type ProjectProgressPercentProps = {
   progress: ProjectProgressDisplay;
   variant?: 'default' | 'compact';
+  /** `progress` uses calm light-blue; `success` keeps legacy green (e.g. dashboard tables). */
+  tone?: 'success' | 'progress';
 };
 
 export function ProjectProgressPercent({
   progress,
   variant = 'default',
+  tone = 'success',
 }: ProjectProgressPercentProps): ReactElement {
   const { textPercent, litSegmentCount } = progress;
-  const rootClass =
-    variant === 'compact'
-      ? `${styles.projectProgressPercent} ${styles.projectProgressPercent_compact}`
-      : styles.projectProgressPercent;
+  const rootClass = [
+    styles.projectProgressPercent,
+    variant === 'compact' ? styles.projectProgressPercent_compact : '',
+    tone === 'progress' ? styles.projectProgressPercent_toneProgress : '',
+  ]
+    .filter(Boolean)
+    .join(' ');
 
   return (
     <div
