@@ -13,6 +13,15 @@ function statusBadgeClass(status: WorkflowTaskStatus): string {
   return shared[`statusBadge_${status}`] ?? shared.statusBadge_pending;
 }
 
+function StatusDotLabel({ status }: { readonly status: WorkflowTaskStatus }): ReactElement {
+  return (
+    <span className={`${styles.statusDotIndicator} ${statusBadgeClass(status)}`}>
+      <span className={styles.statusDot} aria-hidden />
+      <span className={styles.statusDotText}>{formatWorkflowStatus(status)}</span>
+    </span>
+  );
+}
+
 export type WorkflowStatusPillPickerProps = {
   value: WorkflowTaskStatus;
   onChange: (status: WorkflowTaskStatus) => void;
@@ -39,9 +48,7 @@ export function WorkflowStatusPillPicker({
         aria-haspopup="listbox"
         onClick={() => setOpen((isOpen) => !isOpen)}
       >
-        <span className={`${styles.statusPill} ${statusBadgeClass(value)}`}>
-          {formatWorkflowStatus(value)}
-        </span>
+        <StatusDotLabel status={value} />
         <span className={styles.formStatusPickerCaret} aria-hidden />
       </button>
       <WorkflowInlineMenu
@@ -66,9 +73,7 @@ export function WorkflowStatusPillPicker({
                 setOpen(false);
               }}
             >
-              <span className={`${styles.statusPill} ${statusBadgeClass(status)}`}>
-                {formatWorkflowStatus(status)}
-              </span>
+              <StatusDotLabel status={status} />
             </button>
           );
           })}
