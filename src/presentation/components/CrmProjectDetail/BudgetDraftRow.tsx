@@ -305,6 +305,7 @@ export function BudgetDraftRow({ onSave, onCancel }: BudgetDraftRowProps): React
   return (
     <div className={styles.paymentDraftBlock}>
       <div className={rowClass} role="row" aria-busy={saving}>
+        <span className={styles.workflowSelectCell} aria-hidden />
         <span className={styles.taskTitleCell}>
           <input
             className={styles.inlineFieldInput}
