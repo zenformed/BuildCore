@@ -346,6 +346,8 @@ export const buildCoreDashboardContent = {
         menuAriaLabel: 'Dashboard list view',
         projects: 'Projects',
         subprojects: 'Subprojects',
+        showProjects: 'Show projects',
+        showSubprojects: 'Show subprojects',
         parentProjectColumn: 'Project',
         parentProjectLabel: (name: string): string => `Project: ${name}`,
       },

@@ -89,7 +89,7 @@ export function CrmProjectTableRow({
   onContactCopied,
   showParentProjectColumn = false,
   parentProjectName,
-  progressTone = 'success',
+  progressTone = 'progress',
 }: CrmProjectTableRowProps): ReactElement {
   const tableCopy = content.crm.table;
   const { catalog, industrySubtitle, progress, derivedStageSlug } = useCrmProjectRowPresentation(
@@ -209,6 +209,9 @@ export function CrmProjectTableRow({
             </button>
           ) : null}
         </span>
+        {showParentProjectColumn && parentProjectName ? (
+          <span className={styles.projectParentName}>{parentProjectName}</span>
+        ) : null}
         {industrySubtitle ? <span className={styles.projectMeta}>{industrySubtitle}</span> : null}
         {!isMemberRole ? (
           <span className={styles.projectProgressRow}>
@@ -233,15 +236,6 @@ export function CrmProjectTableRow({
           </span>
         ) : null}
       </span>
-      {showParentProjectColumn ? (
-        <span
-          className={`${styles.gridCell} ${styles.gridCellParentProject} ${styles.gridCellAlignCenter}`}
-          role="cell"
-          title={parentProjectName ?? undefined}
-        >
-          {parentProjectName ?? '—'}
-        </span>
-      ) : null}
       <span className={`${styles.gridCell} ${styles.gridCellAlignCenter}`} role="cell">
         {project.contact.name}
       </span>

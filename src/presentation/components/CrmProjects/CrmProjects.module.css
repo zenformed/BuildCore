@@ -43,6 +43,50 @@
   min-width: 0;
 }
 
+.projectsExpandAllCaretBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 1.25rem;
+  height: 1.25rem;
+  padding: 0;
+  margin: 0;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  color: var(--color-text-muted, #64748b);
+  cursor: pointer;
+}
+
+.projectsExpandAllCaretBtn:hover:not(:disabled) {
+  color: var(--color-text, #0f172a);
+}
+
+.projectsExpandAllCaretBtn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.projectsExpandAllCaretIcon {
+  display: block;
+  width: 0.5625rem;
+  height: 0.5625rem;
+  transition: transform 0.12s ease;
+}
+
+.projectsExpandAllCaretIcon_up {
+  transform: rotate(180deg);
+}
+
+:global([data-theme='dark']) .projectsExpandAllCaretBtn {
+  color: #94a3b8;
+}
+
+:global([data-theme='dark']) .projectsExpandAllCaretBtn:hover:not(:disabled) {
+  color: #f1f5f9;
+}
+
 .projectsListViewWrap {
   display: inline-flex;
   align-items: center;
@@ -122,6 +166,9 @@
 }
 
 .projectsPanelSearchWrap {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
   flex: 1;
   min-width: 0;
 }
@@ -130,6 +177,7 @@
   min-width: 12rem;
   max-width: 18rem;
   width: 100%;
+  flex: 1 1 auto;
   padding: 0.25rem 0.625rem;
   border: 1px solid var(--border-subtle, #d8dee8);
   border-radius: 0.375rem;
@@ -221,7 +269,7 @@
   padding: 0;
   /* Separate the filter triangle from refresh / bulk icons beside it. */
   margin: 0;
-  margin-inline-end: 0.45rem;
+  margin-inline-end: 0.875rem;
   border: none;
   border-radius: 0;
   background: transparent;
@@ -436,7 +484,7 @@
   overflow-x: auto;
   overflow-y: auto;
   border: 1px solid var(--theme-border-main, var(--color-border, #e2e8f0));
-  border-radius: 0.5rem;
+  border-radius: 0;
   background-color: var(--theme-surface-main, var(--color-surface, #fff));
 }
 
@@ -509,24 +557,27 @@
   box-sizing: border-box;
   padding-inline: 0.375rem 0;
   justify-content: center;
-  /* Pull name/primary tight against the checkbox like workflow. */
-  margin-inline-end: -0.15rem;
+  margin-inline-end: 0;
 }
 
 .tableInnerWithInlineSelection .gridHeaderPrimary {
   display: inline-flex;
   align-items: center;
   justify-content: flex-start;
-  gap: 0.15rem;
+  gap: 0;
   min-width: 0;
   text-transform: none;
   letter-spacing: 0;
+  /* Keep caret tight to the select column. */
   padding-inline: 0.125rem var(--theme-table-cell-padding-inline);
 }
 
-.tableInnerWithInlineSelection.tableInnerWithBulkSelection .gridHeader > :nth-child(2),
-.tableInnerWithInlineSelection.tableInnerWithBulkSelection .gridRow > :nth-child(2) {
+.tableInnerWithInlineSelection.tableInnerWithBulkSelection .gridHeader > .gridHeaderPrimary {
   padding-inline-start: 0.125rem;
+}
+
+.tableInnerWithInlineSelection.tableInnerWithBulkSelection .gridRow > :nth-child(2) {
+  padding-inline-start: 0.625rem;
 }
 
 .tableGridShell {
@@ -760,6 +811,22 @@
 .projectName {
   font-weight: 600;
   min-width: 0;
+}
+
+.projectParentName {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 500;
+  line-height: 1.25;
+  color: var(--color-text-muted, #64748b);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+:global([data-theme='dark']) .projectParentName {
+  color: var(--theme-text-muted, #94a3b8);
 }
 
 .projectNameGroup {

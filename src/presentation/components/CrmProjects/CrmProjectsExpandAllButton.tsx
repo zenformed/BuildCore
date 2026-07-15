@@ -2,10 +2,7 @@
 
 import type { ReactElement } from 'react';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
-import {
-  CollapseAllIcon,
-  ExpandAllIcon,
-} from '@/platform/icons/buildCoreDashboardShellIcons';
+import { CaretDownIcon } from '@/platform/icons/buildCoreDashboardShellIcons';
 import styles from './CrmProjects.module.css';
 
 export type CrmProjectsExpandAllButtonProps = {
@@ -14,6 +11,7 @@ export type CrmProjectsExpandAllButtonProps = {
   readonly onToggle: () => void;
 };
 
+/** Solid triangle caret — down to expand all, up to collapse all. */
 export function CrmProjectsExpandAllButton({
   allExpanded,
   disabled = false,
@@ -25,17 +23,20 @@ export function CrmProjectsExpandAllButton({
   return (
     <button
       type="button"
-      className={styles.projectsFilterBtn}
+      className={styles.projectsExpandAllCaretBtn}
       title={label}
       aria-label={label}
+      aria-expanded={allExpanded}
       disabled={disabled}
       onClick={onToggle}
     >
-      {allExpanded ? (
-        <CollapseAllIcon className={styles.projectsFilterBtnIcon} />
-      ) : (
-        <ExpandAllIcon className={styles.projectsFilterBtnIcon} />
-      )}
+      <CaretDownIcon
+        className={
+          allExpanded
+            ? `${styles.projectsExpandAllCaretIcon} ${styles.projectsExpandAllCaretIcon_up}`
+            : styles.projectsExpandAllCaretIcon
+        }
+      />
     </button>
   );
 }

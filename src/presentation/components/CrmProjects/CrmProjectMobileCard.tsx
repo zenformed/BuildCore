@@ -200,11 +200,11 @@ export function CrmProjectMobileCard({
                 <span className={styles.mobileCardTitle}>{project.name}</span>
               </ProjectPreviewNameAnchor>
             </span>
-            {!showContactInfo && industrySubtitle ? (
-              <span className={styles.mobileCardIndustry}>{industrySubtitle}</span>
-            ) : null}
             {!showContactInfo && parentProjectName ? (
               <span className={styles.mobileCardParentProject}>{parentProjectName}</span>
+            ) : null}
+            {!showContactInfo && industrySubtitle ? (
+              <span className={styles.mobileCardIndustry}>{industrySubtitle}</span>
             ) : null}
           </div>
           <div className={styles.mobileCardHeaderEnd}>
@@ -244,14 +244,14 @@ export function CrmProjectMobileCard({
         {showContactInfo ? (
           <div className={styles.mobileCardDetailsGrid}>
             <div className={styles.mobileCardDetailsCol}>
+              {parentProjectName ? (
+                <span className={styles.mobileCardParentProject}>{parentProjectName}</span>
+              ) : null}
               {industrySubtitle ? (
                 <span className={styles.mobileCardIndustry}>{industrySubtitle}</span>
               ) : (
                 <span className={styles.mobileCardIndustry}>—</span>
               )}
-              {parentProjectName ? (
-                <span className={styles.mobileCardParentProject}>{parentProjectName}</span>
-              ) : null}
               {stageMetaRow}
             </div>
             <div className={styles.mobileCardDetailsColRight}>

@@ -52,9 +52,13 @@ export type CrmProjectsTableProps = {
   deleteLabels?: CrmProjectsTableDeleteLabels;
   bulkSelection?: BulkSelectionBindings;
   onContactCopied?: (message: string) => void;
+  /**
+   * Flat subprojects list: show parent project name under the subproject title
+   * (same column count as projects view — no separate Project column).
+   */
   showParentProjectColumn?: boolean;
   parentById?: ReadonlyMap<string, CrmProjectSummary>;
-  /** Project-detail subprojects use calm progress blue; dashboard keeps success green. */
+  /** `progress` = calm light-blue (default); `success` = legacy green. */
   progressTone?: 'success' | 'progress';
   /**
    * Always-on Gmail-style chrome: select | unlabeled primary (filter/refresh/bulk) | Contact…
@@ -100,7 +104,7 @@ export function CrmProjectsTable({
   onContactCopied,
   showParentProjectColumn = false,
   parentById,
-  progressTone = 'success',
+  progressTone = 'progress',
   inlineSelectionChrome = false,
   leadingFilter = null,
   onRefresh,
@@ -130,7 +134,6 @@ export function CrmProjectsTable({
     isMemberRole ? `${styles.tableInner} ${styles.tableInnerMember}` : styles.tableInner,
     showSelectColumn ? styles.tableInnerWithBulkSelection : '',
     showInlineChrome ? styles.tableInnerWithInlineSelection : '',
-    showParentProjectColumn ? styles.tableInnerWithParentColumn : '',
   ]
     .filter(Boolean)
     .join(' ');
@@ -204,9 +207,6 @@ export function CrmProjectsTable({
               ) : (
                 <span role="columnheader">{projectHeader}</span>
               )}
-              {showParentProjectColumn ? (
-                <span role="columnheader">{content.crm.panel.listView.parentProjectColumn}</span>
-              ) : null}
               <span role="columnheader">{COLUMNS.contact}</span>
               <span role="columnheader">{COLUMNS.email}</span>
               <span role="columnheader">{COLUMNS.phone}</span>
