@@ -528,7 +528,7 @@ function SubprojectsSectionContent(): ReactElement {
             {subprojectAveragePercent != null ? (
               <span
                 className={`${shared.stagePill} ${styles.subprojectsAveragePill}`}
-                title={`Subproject average ${subprojectAveragePercent}`}
+                title={`${copy.projectColumn} average ${subprojectAveragePercent}`}
               >
                 {subprojectAveragePercent}
               </span>

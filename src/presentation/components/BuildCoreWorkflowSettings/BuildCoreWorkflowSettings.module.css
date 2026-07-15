@@ -372,3 +372,78 @@
 :global([data-theme='dark']) .frequencyPickerLabel {
   color: #94a3b8;
 }
+
+.entityHeadingDisplay {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  min-width: 0;
+}
+
+.entityHeadingTitle {
+  margin: 0;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--color-text, #0f172a);
+}
+
+.entityHeadingMenuBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 1.5rem;
+  height: 1.5rem;
+  padding: 0;
+  border: none;
+  border-radius: 0.25rem;
+  background: transparent;
+  color: var(--color-text-muted, #64748b);
+  cursor: pointer;
+  line-height: 1;
+  font-size: 1rem;
+}
+
+.entityHeadingMenuBtn:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--color-text-muted, #64748b) 12%, transparent);
+  color: var(--color-text, #0f172a);
+}
+
+.entityHeadingMenuBtn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.entityHeadingEdit {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  min-width: 0;
+}
+
+.entityHeadingInput {
+  min-width: 6rem;
+  max-width: 12rem;
+  width: 100%;
+  margin: 0;
+  padding: 0.2rem 0.4rem;
+  border: 1px solid var(--theme-border-main, var(--color-border, #cbd5e1));
+  border-radius: 0.25rem;
+  background: var(--theme-surface-main, var(--color-surface, #fff));
+  color: var(--color-text, #0f172a);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  line-height: 1.25;
+}
+
+.entityHeadingInput:focus {
+  outline: 2px solid #3b82f6;
+  outline-offset: 1px;
+}
+
+.entityHeadingSuffix {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--color-text, #0f172a);
+  white-space: nowrap;
+}

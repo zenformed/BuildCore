@@ -13,6 +13,7 @@ import {
   validateProjectNotes,
 } from '@/domain/crm/projectFormFieldValidation';
 import { normalizeAssigneeMemberIdForSave } from '@/presentation/features/crmAssignment/buildAssigneeOptions';
+import { getBuildCoreDashboardContent } from '@/platform/content/buildCoreDashboardContent';
 
 export type CreateCrmProjectFormState = {
   name: string;
@@ -84,7 +85,10 @@ export function validateCreateCrmProjectForm(
 ): { ok: true; input: CreateCrmProjectInput } | { ok: false; message: string } {
   const name = titleCasePersonOrEntityName(form.name);
   if (!name) {
-    return { ok: false, message: 'Project / customer name is required.' };
+    return {
+      ok: false,
+      message: `${getBuildCoreDashboardContent().crm.create.fields.name} is required.`,
+    };
   }
 
   const contactName = titleCasePersonOrEntityName(form.contactName);

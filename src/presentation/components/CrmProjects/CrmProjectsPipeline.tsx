@@ -741,7 +741,11 @@ export function CrmProjectsPipeline({
       />
       <CrmProjectDeleteWorkflowDialog
         pendingProject={pendingDeleteProject}
-        workflowCopy={content.crm.delete.workflow}
+        workflowCopy={
+          pendingDeleteProject?.parentProjectId != null
+            ? content.projectDetail.subprojects.delete.workflow
+            : content.crm.delete.workflow
+        }
         confirmDisabled={deletingProjectId != null}
         onClose={() => setPendingDeleteProject(null)}
         onConfirm={() => void handleConfirmDelete()}

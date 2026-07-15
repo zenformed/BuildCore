@@ -8,6 +8,7 @@ import {
 } from '@/domain/crm';
 import { US_STATE_CODES } from '@/domain/crm/usStates';
 import { parseProjectTemplateBlueprintsFromUnknown } from '@/infrastructure/crm/mappers/mapProjectTemplateFromDb';
+import { getBuildCoreDashboardContent } from '@/platform/content/buildCoreDashboardContent';
 import {
   MAX_CONTACT_EMAILS,
   MAX_CONTACT_PHONES,
@@ -141,7 +142,10 @@ export function validateCreateCrmProjectBody(
   const allowedStageSlugs = options?.allowedStageSlugs ?? pipelineStageSlugSet();
   const name = asNonEmptyString(body.name, 'name');
   if (!name) {
-    return { ok: false, message: 'Project / customer name is required.' };
+    return {
+      ok: false,
+      message: `${getBuildCoreDashboardContent().crm.create.fields.name} is required.`,
+    };
   }
 
   const contactName = asNonEmptyString(body.contactName, 'contactName');

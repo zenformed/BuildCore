@@ -53,7 +53,7 @@ export function ProjectDetailActionsMenu({
 }: ProjectDetailActionsMenuProps): ReactElement {
   const router = useRouter();
   const detail = content.projectDetail;
-  const deleteCopy = content.crm.delete;
+  const deleteCopy = isSubproject ? detail.subprojects.delete : content.crm.delete;
   const inactiveCopy = content.projectDetail.subprojects.markInactive;
   const activeCopy = content.projectDetail.subprojects.markActive;
   const wf = detail.workflow;

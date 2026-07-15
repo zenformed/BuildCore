@@ -11,6 +11,7 @@ import { BuildCoreProjectSectionAccessProvider } from '@/presentation/providers/
 import { BuildCoreWorkflowTaskAccessProvider } from '@/presentation/providers/BuildCoreWorkflowTaskAccessProvider';
 import { CrmPaymentTasksIndexProvider } from '@/presentation/providers/CrmPaymentTasksIndexProvider';
 import { BuildCoreFieldLabelsProvider } from '@/presentation/providers/BuildCoreFieldLabelsProvider';
+import { BuildCoreEntityTerminologyProvider } from '@/presentation/providers/BuildCoreEntityTerminologyProvider';
 import { BuildCoreWorkflowTaskCustomFieldsProvider } from '@/presentation/providers/BuildCoreWorkflowTaskCustomFieldsProvider';
 import { BuildCoreWorkflowTaskTableColumnsProvider } from '@/presentation/providers/BuildCoreWorkflowTaskTableColumnsProvider';
 import { BuildCorePaymentTableColumnsProvider } from '@/presentation/providers/BuildCorePaymentTableColumnsProvider';
@@ -27,15 +28,17 @@ export default function DemoLayout({ children }: { children: ReactNode }): React
               <CrmPaymentTasksIndexProvider>
                 <BuildCorePipelineStagesProvider>
                   <BuildCoreFieldLabelsProvider>
-                    <BuildCoreWorkflowTaskCustomFieldsProvider>
-                      <BuildCoreWorkflowTaskTableColumnsProvider>
-                        <BuildCorePaymentTableColumnsProvider>
-                          <BuildCoreProjectCustomFieldsProvider>
-                            <BuildCorePersistentDashboardShell>{children}</BuildCorePersistentDashboardShell>
-                          </BuildCoreProjectCustomFieldsProvider>
-                        </BuildCorePaymentTableColumnsProvider>
-                      </BuildCoreWorkflowTaskTableColumnsProvider>
-                    </BuildCoreWorkflowTaskCustomFieldsProvider>
+                    <BuildCoreEntityTerminologyProvider>
+                      <BuildCoreWorkflowTaskCustomFieldsProvider>
+                        <BuildCoreWorkflowTaskTableColumnsProvider>
+                          <BuildCorePaymentTableColumnsProvider>
+                            <BuildCoreProjectCustomFieldsProvider>
+                              <BuildCorePersistentDashboardShell>{children}</BuildCorePersistentDashboardShell>
+                            </BuildCoreProjectCustomFieldsProvider>
+                          </BuildCorePaymentTableColumnsProvider>
+                        </BuildCoreWorkflowTaskTableColumnsProvider>
+                      </BuildCoreWorkflowTaskCustomFieldsProvider>
+                    </BuildCoreEntityTerminologyProvider>
                   </BuildCoreFieldLabelsProvider>
                 </BuildCorePipelineStagesProvider>
               </CrmPaymentTasksIndexProvider>

@@ -63,7 +63,10 @@ export function ProjectDetailShellModals({
   deleteConfirmDisabled = false,
 }: ProjectDetailShellModalsProps): ReactElement {
   const detail = content.projectDetail;
-  const deleteWorkflowCopy = content.crm.delete.workflow;
+  const deleteWorkflowCopy =
+    pendingDeleteProject?.parentProjectId != null
+      ? detail.subprojects.delete.workflow
+      : content.crm.delete.workflow;
   const {
     archiveConfirmTask,
     setArchiveConfirmTask,
@@ -167,7 +170,7 @@ export function ProjectDetailShellModals({
         title={wf.archiveTaskConfirmTitle}
         message={
           archiveConfirmTask
-            ? `“${archiveConfirmTask.title}” will be removed from this project.`
+            ? `“${archiveConfirmTask.title}” will be removed from this ${content.projectDetail.pageTitleFallback.toLocaleLowerCase('en-US')}.`
             : undefined
         }
         confirmLabel={wf.archiveTaskConfirmLabel}

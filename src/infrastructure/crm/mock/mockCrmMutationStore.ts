@@ -14,6 +14,7 @@ import {
   getDemoPipelineStageCatalog,
 } from '@/infrastructure/demo/demoPipelineStagesStore';
 import { resetMockFieldLabelsStore } from './mockFieldLabelsStore';
+import { resetMockEntityTerminologyStore } from './mockEntityTerminologyStore';
 import { resetMockWorkflowTaskCustomFieldsStore, seedMockWorkflowTaskCustomFieldExamplesIfEmpty } from './mockWorkflowTaskCustomFieldsStore';
 import { resetMockWorkflowTaskTableColumnsStore } from './mockWorkflowTaskTableColumnsStore';
 import { resetMockPaymentTableColumnsStore } from './mockPaymentTableColumnsStore';
@@ -158,6 +159,7 @@ export function clearDemoCrmSession(): void {
 
 function resetDemoOrganizationCustomizationStores(): void {
   resetMockFieldLabelsStore();
+  resetMockEntityTerminologyStore();
   resetMockWorkflowTaskCustomFieldsStore();
   resetMockWorkflowTaskTableColumnsStore();
   resetMockPaymentTableColumnsStore();

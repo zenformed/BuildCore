@@ -1,4 +1,5 @@
 import type { CrmProjectSummary } from '@/domain/crm';
+import { getBuildCoreDashboardContent } from '@/platform/content/buildCoreDashboardContent';
 
 export type BulkSubprojectSendRecipientStatus = 'ready' | 'missing_email';
 
@@ -26,7 +27,9 @@ export function resolveBulkSubprojectSendRecipients(
     const contactName = subproject.contact.name.trim() || 'Customer';
     return {
       subprojectId: subproject.id,
-      subprojectName: subproject.name.trim() || 'Subproject',
+      subprojectName:
+        subproject.name.trim() ||
+        getBuildCoreDashboardContent().projectDetail.subprojects.projectColumn,
       contactName,
       email: email.length > 0 ? email : null,
       contactId: subproject.contact.id,
@@ -45,6 +48,7 @@ export function resolveBulkSubprojectSendRecipients(
 }
 
 export function buildBulkSubprojectSendDefaultSubject(parentProjectName: string): string {
-  const name = parentProjectName.trim() || 'Project';
-  return `Documents for ${name} subprojects`;
+  const content = getBuildCoreDashboardContent();
+  const name = parentProjectName.trim() || content.projectDetail.pageTitleFallback;
+  return `Documents for ${name} ${content.projectDetail.subprojects.subprojectPlural}`;
 }

@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo, useState, type DragEvent, type ReactElement } from 'react';
+import type { BuildCoreEntityTerminologyKey } from '@/domain/buildcore/entityTerminology';
 import type { OrgPipelineStageRecord, PipelineStageScope } from '@/domain/buildcore/orgPipelineStages';
 import { isReservedPipelineStageSlug } from '@/domain/buildcore/orgPipelineStages';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
@@ -8,6 +9,7 @@ import { ConfirmModal } from '@/presentation/components/ConfirmModal';
 import { DetailPanelHeaderButton } from '@/presentation/components/CrmProjectDetail/DetailPanelHeaderButton';
 import { DetailToast } from '@/presentation/components/CrmProjectDetail/DetailToast';
 import detailStyles from '@/presentation/components/CrmProjectDetail/ProjectDetail.module.css';
+import { WorkflowStagesEntityHeading } from '@/presentation/components/BuildCoreWorkflowSettings/WorkflowStagesEntityHeading';
 import { useBuildCorePipelineStages } from '@/presentation/providers/BuildCorePipelineStagesProvider';
 import { useBuildCoreWorkflowStagesPage } from '@/presentation/features/buildCoreWorkflowStages/useBuildCoreWorkflowStagesPage';
 import styles from './BuildCoreWorkflowStages.module.css';
@@ -23,6 +25,7 @@ export type BuildCoreWorkflowStagesListProps = {
   readonly embeddedInTab?: boolean;
   readonly listTitle?: string;
   readonly headingId?: string;
+  readonly entityTerminologyKey?: BuildCoreEntityTerminologyKey;
 };
 
 export function BuildCoreWorkflowStagesList({
@@ -30,6 +33,7 @@ export function BuildCoreWorkflowStagesList({
   embeddedInTab = false,
   listTitle,
   headingId = 'workflow-stages-heading',
+  entityTerminologyKey,
 }: BuildCoreWorkflowStagesListProps): ReactElement {
   const copy = content.workflowStages;
   const panelTitle = listTitle ?? copy.listTitle;
@@ -241,9 +245,16 @@ export function BuildCoreWorkflowStagesList({
         />
       ) : null}
       <div className={styles.panelHeader}>
-        <h2 id={headingId} className={styles.panelTitle}>
-          {panelTitle}
-        </h2>
+        {entityTerminologyKey != null ? (
+          <WorkflowStagesEntityHeading
+            entityKey={entityTerminologyKey}
+            headingId={headingId}
+          />
+        ) : (
+          <h2 id={headingId} className={styles.panelTitle}>
+            {panelTitle}
+          </h2>
+        )}
         {canManage ? (
           <DetailPanelHeaderButton
             variant="add"

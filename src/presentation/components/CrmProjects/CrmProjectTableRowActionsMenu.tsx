@@ -33,7 +33,10 @@ export function CrmProjectTableRowActionsMenu({
   onRequestMarkActive,
 }: CrmProjectTableRowActionsMenuProps): ReactElement {
   const tableCopy = content.crm.table;
-  const deleteCopy = content.crm.delete;
+  const deleteCopy =
+    project.parentProjectId != null
+      ? content.projectDetail.subprojects.delete
+      : content.crm.delete;
   const inactiveCopy = content.projectDetail.subprojects.markInactive;
   const activeCopy = content.projectDetail.subprojects.markActive;
   const [open, setOpen] = useState(false);

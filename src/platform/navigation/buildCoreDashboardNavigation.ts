@@ -1,4 +1,8 @@
 import { buildcoreAppDefinition } from '@/platform/appDefinitions/buildcore';
+import type { ResolvedEntityTerminology } from '@/domain/buildcore/entityTerminology';
+import { resolveEntityTerminology } from '@/domain/buildcore/entityTerminology';
+import { ENTITY_TERM_TOKEN } from '@/platform/content/resolveEntityTerminologyTokens';
+import { deepResolveEntityTerminologyTokens } from '@/platform/content/resolveEntityTerminologyTokens';
 import {
   buildProjectDetailRoutes,
   type ProjectDetailRouteParams,
@@ -14,7 +18,9 @@ export const buildCoreDashboardSettingsTab = {
   about: buildCoreDashboardSettingsSections[0],
 } as const;
 
-export const buildCoreDashboardNavigation = {
+const T = ENTITY_TERM_TOKEN;
+
+const buildCoreDashboardNavigationSource = {
   apis: {
     branding: '/api/branding',
     usersMeSettings: '/api/internal/users-me-settings',
@@ -51,7 +57,7 @@ export const buildCoreDashboardNavigation = {
   sidebar: {
     ariaLabel: 'Primary navigation',
     items: [
-      { id: 'projects' as const, label: 'Projects', title: 'All projects' },
+      { id: 'projects' as const, label: T.projects, title: `All ${T.projectsLc}` },
       { id: 'reports' as const, label: 'Reports', title: 'CRM reports' },
       { id: 'teams' as const, label: 'Teams', title: 'Teams' },
       { id: 'workflowStages' as const, label: 'Workflow Settings', title: 'Workflow settings' },
@@ -63,12 +69,12 @@ export const buildCoreDashboardNavigation = {
       popoverAriaLabel: 'Zenformed apps',
     },
     search: {
-      placeholder: 'Search projects…',
-      ariaLabel: 'Search projects',
+      placeholder: `Search ${T.projectsLc}…`,
+      ariaLabel: `Search ${T.projectsLc}`,
     },
     newProject: {
-      title: 'New project',
-      ariaLabel: 'New project',
+      title: `New ${T.project}`,
+      ariaLabel: `New ${T.project}`,
     },
     account: {
       menuTriggerAriaLabel: 'Account menu',
@@ -106,3 +112,41 @@ export const buildCoreDashboardNavigation = {
     },
   },
 } as const;
+
+export type BuildCoreDashboardNavigation = ReturnType<typeof createBuildCoreDashboardNavigation>;
+
+export function createBuildCoreDashboardNavigation(
+  terms: ResolvedEntityTerminology = resolveEntityTerminology()
+) {
+  return deepResolveEntityTerminologyTokens(buildCoreDashboardNavigationSource, terms);
+}
+
+let activeDashboardNavigation = createBuildCoreDashboardNavigation();
+
+export function bindBuildCoreDashboardNavigation(terms: ResolvedEntityTerminology): void {
+  activeDashboardNavigation = createBuildCoreDashboardNavigation(terms);
+}
+
+export function getBuildCoreDashboardNavigation() {
+  return activeDashboardNavigation;
+}
+
+export const buildCoreDashboardNavigation = new Proxy(
+  {} as ReturnType<typeof createBuildCoreDashboardNavigation>,
+  {
+    get(_target, prop, receiver) {
+      const current = activeDashboardNavigation;
+      const value = Reflect.get(current as object, prop, receiver);
+      return typeof value === 'function' ? (value as Function).bind(current) : value;
+    },
+    ownKeys() {
+      return Reflect.ownKeys(activeDashboardNavigation as object);
+    },
+    getOwnPropertyDescriptor(_target, prop) {
+      return Reflect.getOwnPropertyDescriptor(activeDashboardNavigation as object, prop);
+    },
+    has(_target, prop) {
+      return Reflect.has(activeDashboardNavigation as object, prop);
+    },
+  }
+);
