@@ -8,7 +8,7 @@
   margin: 0;
   flex-shrink: 0;
   box-sizing: border-box;
-  border: 1.5px solid var(--theme-border-main, var(--color-border, #cbd5e1));
+  border: 1.5px solid #94a3b8;
   border-radius: 0.2rem;
   background: var(--theme-surface-card, #fff);
   color: #fff;
@@ -30,7 +30,7 @@
 
 .bulkSelectCheckbox:checked {
   background: var(--color-primary, #2563eb);
-  border-color: var(--color-primary, #2563eb);
+  border-color: #94a3b8;
 }
 
 .bulkSelectCheckbox:checked::before {
@@ -39,7 +39,7 @@
 
 .bulkSelectCheckbox:indeterminate {
   background: var(--color-primary, #2563eb);
-  border-color: var(--color-primary, #2563eb);
+  border-color: #94a3b8;
 }
 
 .bulkSelectCheckbox:indeterminate::before {

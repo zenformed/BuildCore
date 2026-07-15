@@ -225,30 +225,25 @@
   border: none;
   border-radius: 0;
   background: transparent;
-  color: var(--color-text-muted, #64748b);
+  /* Inherit header / toolbar color so carets stay visible on dark table headers. */
+  color: inherit;
+  opacity: 0.9;
   cursor: pointer;
 }
 
 .projectsFilterCaretBtn:hover:not(:disabled) {
-  color: var(--color-text, #0f172a);
+  opacity: 1;
 }
 
 .projectsFilterCaretBtn_active {
   color: var(--color-primary, #2563eb);
+  opacity: 1;
 }
 
 .projectsFilterCaretIcon {
   display: block;
   width: 0.5rem;
   height: 0.5rem;
-}
-
-:global([data-theme='dark']) .projectsFilterCaretBtn {
-  color: #94a3b8;
-}
-
-:global([data-theme='dark']) .projectsFilterCaretBtn:hover:not(:disabled) {
-  color: #f1f5f9;
 }
 
 :global([data-theme='dark']) .projectsFilterCaretBtn_active {
@@ -677,6 +672,20 @@
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+/* Dark table headers: keep select boxes readable against navy. */
+.gridHeaderBulkSelect :global(input) {
+  background: transparent;
+  border-color: color-mix(in srgb, var(--theme-table-header-text) 88%, transparent);
+}
+
+.gridHeaderBulkSelect :global(input:checked),
+.gridHeaderBulkSelect :global(input:indeterminate) {
+  background: var(--color-primary, #2563eb);
+  /* Keep a light edge so the filled check doesn't blend into the header. */
+  border-color: color-mix(in srgb, var(--theme-table-header-text) 92%, transparent);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--theme-table-header-text) 55%, transparent);
 }
 
 .gridRow::after {

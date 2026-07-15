@@ -3895,6 +3895,52 @@
   letter-spacing: 0;
 }
 
+/*
+ * Navy column headers (payments / budget / subprojects): light edge on blue fill.
+ * Workflow unified header is white — do not use header-text (white) borders there.
+ */
+.tableHeader:not(.workflowTaskTableHeader) .workflowSelectHeader :global(input) {
+  background: transparent;
+  border-color: color-mix(in srgb, var(--theme-table-header-text) 88%, transparent);
+}
+
+.tableHeader:not(.workflowTaskTableHeader) .workflowSelectHeader :global(input:checked),
+.tableHeader:not(.workflowTaskTableHeader) .workflowSelectHeader :global(input:indeterminate) {
+  background: var(--color-primary, #2563eb);
+  border-color: color-mix(in srgb, var(--theme-table-header-text) 92%, transparent);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--theme-table-header-text) 55%, transparent);
+}
+
+/* White workflow header + light-mode row selects: soft gray outline. */
+.workflowTaskTableHeader .workflowSelectHeader :global(input),
+.workflowSelectCell :global(input) {
+  background: #fff;
+  border: 1.5px solid #94a3b8;
+}
+
+.workflowTaskTableHeader .workflowSelectHeader :global(input:checked),
+.workflowTaskTableHeader .workflowSelectHeader :global(input:indeterminate),
+.workflowSelectCell :global(input:checked),
+.workflowSelectCell :global(input:indeterminate) {
+  background: var(--color-primary, #2563eb);
+  border-color: #94a3b8;
+  box-shadow: none;
+}
+
+:global([data-theme='dark']) .workflowTaskTableHeader .workflowSelectHeader :global(input),
+:global([data-theme='dark']) .workflowSelectCell :global(input) {
+  background: #1a1d26;
+  border-color: #6b7280;
+}
+
+:global([data-theme='dark']) .workflowTaskTableHeader .workflowSelectHeader :global(input:checked),
+:global([data-theme='dark']) .workflowTaskTableHeader .workflowSelectHeader :global(input:indeterminate),
+:global([data-theme='dark']) .workflowSelectCell :global(input:checked),
+:global([data-theme='dark']) .workflowSelectCell :global(input:indeterminate) {
+  background: var(--color-primary, #2563eb);
+  border-color: var(--color-primary, #2563eb);
+}
+
 .workflowStatusIconRefreshBtn {
   display: inline-flex;
   align-items: center;
@@ -3906,16 +3952,18 @@
   border: none;
   border-radius: 0;
   background: transparent;
-  color: var(--color-text-muted, #64748b);
+  color: inherit;
+  opacity: 0.9;
   cursor: pointer;
 }
 
 .workflowStatusIconRefreshBtn:hover:not(:disabled) {
-  color: var(--color-text, #0f172a);
+  opacity: 1;
 }
 
 .workflowStatusIconRefreshBtn_busy {
   color: var(--color-primary, #2563eb);
+  opacity: 1;
   cursor: wait;
 }
 
@@ -3923,14 +3971,6 @@
   display: block;
   width: 0.875rem;
   height: 0.875rem;
-}
-
-:global([data-theme='dark']) .workflowStatusIconRefreshBtn {
-  color: #94a3b8;
-}
-
-:global([data-theme='dark']) .workflowStatusIconRefreshBtn:hover:not(:disabled) {
-  color: #f1f5f9;
 }
 
 .workflowStatusIconBtn {
@@ -4011,16 +4051,17 @@
   border: none;
   border-radius: 0;
   background: transparent;
-  color: var(--color-text-muted, #64748b);
+  color: inherit;
+  opacity: 0.9;
   cursor: pointer;
 }
 
 .workflowBulkActionBtn:hover:not(:disabled) {
-  color: var(--color-text, #0f172a);
+  opacity: 1;
 }
 
 .workflowBulkActionBtn:disabled {
-  opacity: 0.55;
+  opacity: 0.45;
   cursor: wait;
 }
 
@@ -4028,14 +4069,6 @@
   display: block;
   width: 0.875rem;
   height: 0.875rem;
-}
-
-:global([data-theme='dark']) .workflowBulkActionBtn {
-  color: #94a3b8;
-}
-
-:global([data-theme='dark']) .workflowBulkActionBtn:hover:not(:disabled) {
-  color: #f1f5f9;
 }
 
 .workflowStatusLabelCell {
@@ -9049,6 +9082,7 @@
   gap: 0.5rem;
   min-width: 0;
   flex-wrap: wrap;
+  color: var(--color-text, #0f172a);
 }
 
 .subprojectsMobileBulkCount {
