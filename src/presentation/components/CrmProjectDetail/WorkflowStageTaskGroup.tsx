@@ -15,11 +15,9 @@ import { useWorkflowStageExpanded } from '@/presentation/features/crmProjectDeta
 import { BsCheckLg } from 'react-icons/bs';
 import { WorkflowTaskInlineRow } from './WorkflowTaskInlineRow';
 import { WorkflowTaskTableHeaderRow } from './WorkflowTaskTableHeaderRow';
-import {
-  WorkflowTaskTableCustomColumnEmptyCells,
-  resolveWorkflowOpsGridClassName,
-} from './WorkflowTaskTableCustomColumns';
+import { WorkflowTaskTableCustomColumnEmptyCells, resolveWorkflowOpsGridClassName } from './WorkflowTaskTableCustomColumns';
 import { useBuildCoreWorkflowTaskTableColumns } from '@/presentation/providers/BuildCoreWorkflowTaskTableColumnsProvider';
+import { useWorkflowTaskRowSelection } from '@/presentation/features/crmProjectDetail/workflowTaskRowSelectionContext';
 import styles from './ProjectDetail.module.css';
 
 export type ManualStageCompletionToggleAction = 'complete' | 'incomplete';
@@ -87,6 +85,8 @@ export function WorkflowStageTaskGroup({
     .join(' ');
   const panelId = `workflow-stage-${projectSlug}-${group.collapseKey}`;
   const { gridClassName } = useBuildCoreWorkflowTaskTableColumns();
+  const rowSelection = useWorkflowTaskRowSelection();
+  const showRowSelect = rowSelection != null && !group.isPaymentsGroup;
   const enableCustomColumns = !group.isPaymentsGroup && !showCardLayout;
   const gridClass = group.isPaymentsGroup
     ? `${styles.workflowGrid} ${styles.workflowGridPayments}`
@@ -205,6 +205,7 @@ export function WorkflowStageTaskGroup({
         <WorkflowTaskTableHeaderRow
           showAmount={group.isPaymentsGroup}
           enableCustomColumns={enableCustomColumns}
+          showStatusRefresh={!group.isPaymentsGroup}
           gridClassName={enableCustomColumns ? gridClass : undefined}
         />
       ) : null}
@@ -228,6 +229,12 @@ export function WorkflowStageTaskGroup({
           className={`${styles.tableRow} ${gridClass} ${styles.workflowStageEmptyRow}`}
           role="row"
         >
+          {showRowSelect ? (
+            <span className={styles.workflowSelectCell} aria-hidden />
+          ) : null}
+          {!group.isPaymentsGroup ? (
+            <span className={styles.workflowStatusIconCell} aria-hidden />
+          ) : null}
           <span className={styles.workflowStageEmptyCell} aria-hidden />
           <span className={styles.workflowStageEmptyMessage}>{wf.stageNoTasks}</span>
           {enableCustomColumns ? <WorkflowTaskTableCustomColumnEmptyCells /> : null}

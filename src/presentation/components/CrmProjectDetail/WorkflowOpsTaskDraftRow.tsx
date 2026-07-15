@@ -31,6 +31,7 @@ import {
   WORKFLOW_TASK_DUE_FIELD_KEY,
 } from '@/domain/buildcore/fieldLabels';
 import { useBuildCoreFieldLabels } from '@/presentation/providers/BuildCoreFieldLabelsProvider';
+import { useWorkflowTaskRowSelection } from '@/presentation/features/crmProjectDetail/workflowTaskRowSelectionContext';
 import styles from './ProjectDetail.module.css';
 
 function statusBadgeClass(status: WorkflowTaskStatus): string {
@@ -80,13 +81,43 @@ function WorkflowOpsTaskDraftStatusField({
   updateField,
   mobile = false,
   compact = false,
-}: WorkflowOpsTaskDraftFieldsProps): ReactElement {
-  const wrapClass = compact
-    ? styles.workflowTaskCompactControl
-    : mobile
-      ? styles.workflowTaskMobileCardControl
-      : `${styles.inlineCellWrap} ${styles.workflowStatusCell}`;
+  layout = 'combined',
+}: WorkflowOpsTaskDraftFieldsProps & {
+  readonly layout?: 'combined' | 'dot' | 'label';
+}): ReactElement {
+  const wrapClass =
+    layout === 'dot'
+      ? styles.workflowStatusIconCell
+      : layout === 'label'
+        ? `${styles.inlineCellWrap} ${styles.workflowStatusLabelCell}`
+        : compact
+          ? styles.workflowTaskCompactControl
+          : mobile
+            ? styles.workflowTaskMobileCardControl
+            : `${styles.inlineCellWrap} ${styles.workflowStatusCell}`;
   const useDotStatus = !mobile;
+  const openMenu = () => {
+    onAssigneeMenuOpenChange(false);
+    onStatusMenuOpenChange(!statusMenuOpen);
+  };
+
+  if (layout === 'dot') {
+    return (
+      <div className={wrapClass}>
+        <button
+          type="button"
+          className={styles.workflowStatusIconBtn}
+          disabled={saving}
+          aria-expanded={statusMenuOpen}
+          onClick={openMenu}
+        >
+          <span className={`${styles.statusDotIndicator} ${statusBadgeClass(form.status)}`}>
+            <span className={styles.statusDot} aria-hidden />
+          </span>
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className={wrapClass} ref={statusRef}>
@@ -95,12 +126,11 @@ function WorkflowOpsTaskDraftStatusField({
         className={styles.inlinePillBtn}
         disabled={saving}
         aria-expanded={statusMenuOpen}
-        onClick={() => {
-          onAssigneeMenuOpenChange(false);
-          onStatusMenuOpenChange(!statusMenuOpen);
-        }}
+        onClick={openMenu}
       >
-        {useDotStatus ? (
+        {layout === 'label' ? (
+          <span className={styles.statusDotText}>{formatWorkflowStatus(form.status)}</span>
+        ) : useDotStatus ? (
           <span className={`${styles.statusDotIndicator} ${statusBadgeClass(form.status)}`}>
             <span className={styles.statusDot} aria-hidden />
             <span className={styles.statusDotText}>{formatWorkflowStatus(form.status)}</span>
@@ -591,12 +621,18 @@ export function WorkflowOpsTaskDraftRow({
     );
   }
 
+  const rowSelection = useWorkflowTaskRowSelection();
+  const showRowSelect = rowSelection != null;
   const rowClass = `${styles.tableRow} ${styles.workflowGrid} ${styles.workflowInlineRow} ${styles.paymentDraftRow}`;
 
   return (
     <div className={styles.paymentDraftBlock}>
       <div className={rowClass} role="row" aria-busy={saving}>
-        <WorkflowOpsTaskDraftStatusField {...fieldProps} />
+        {showRowSelect ? (
+          <span className={styles.workflowSelectCell} aria-hidden />
+        ) : null}
+        <WorkflowOpsTaskDraftStatusField {...fieldProps} layout="dot" />
+        <WorkflowOpsTaskDraftStatusField {...fieldProps} layout="label" />
         <span className={styles.taskTitleCell}>
           <input
             className={styles.inlineFieldInput}

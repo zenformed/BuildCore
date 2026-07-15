@@ -35,9 +35,11 @@ import { useBuildCoreWorkflowTaskTableColumns } from '@/presentation/providers/B
 import { useBuildCoreWorkflowTaskCustomFieldsForScope } from '@/presentation/providers/BuildCoreWorkflowTaskCustomFieldsProvider';
 import { useBuildCorePipelineStages } from '@/presentation/providers/BuildCorePipelineStagesProvider';
 import { useProjectDetailShell } from '@/presentation/features/crmProjectDetail/ProjectDetailShellContext';
+import { useWorkflowTaskRowSelection } from '@/presentation/features/crmProjectDetail/workflowTaskRowSelectionContext';
 import { useDashboardMobileLayout } from '@/presentation/features/crmProjects/useDashboardMobileLayout';
 import { formatWorkflowStageLabel } from '@/presentation/features/crmProjectDetail/crmProjectDetailFormatters';
 import type { WorkflowTaskCustomFieldScope } from '@/domain/buildcore/workflowTaskCustomFields';
+import { BulkSelectCheckbox } from '@/presentation/components/BulkSelection/BulkSelectCheckbox';
 import { useWorkflowTaskPreviewPopover } from './useWorkflowTaskPreviewPopover';
 import { useCellHoverPreview } from './useCellHoverPreview';
 import previewStyles from './WorkflowTaskPreviewCard.module.css';
@@ -204,71 +206,108 @@ function WorkflowTaskRowStatusField({
   model,
   mobile = false,
   compact = false,
+  layout = 'combined',
 }: {
   readonly model: WorkflowTaskInlineRowModel;
   readonly mobile?: boolean;
   readonly compact?: boolean;
+  /** Desktop table: split color-dot and status word into separate grid cells. */
+  readonly layout?: 'combined' | 'dot' | 'label';
 }): ReactElement {
-  const wrapClass = compact
-    ? styles.workflowTaskCompactControl
-    : mobile
-      ? styles.workflowTaskMobileCardControl
-      : `${styles.inlineCellWrap} ${styles.workflowStatusCell}`;
+  const wrapClass =
+    layout === 'dot'
+      ? styles.workflowStatusIconCell
+      : layout === 'label'
+        ? `${styles.inlineCellWrap} ${styles.workflowStatusLabelCell}`
+        : compact
+          ? styles.workflowTaskCompactControl
+          : mobile
+            ? styles.workflowTaskMobileCardControl
+            : `${styles.inlineCellWrap} ${styles.workflowStatusCell}`;
   const useDotStatus = !mobile;
   const statusLabel = formatWorkflowStatus(model.task.status);
+  const openStatusMenu = () => {
+    model.setDocumentsMenuOpen(false);
+    model.setAssigneeMenuOpen(false);
+    model.setStatusMenuOpen((open) => !open);
+  };
+
+  if (layout === 'dot') {
+    return (
+      <span className={wrapClass} role="cell">
+        <button
+          type="button"
+          className={styles.workflowStatusIconBtn}
+          disabled={model.saving || !model.canChangeStatus}
+          aria-expanded={model.statusMenuOpen}
+          aria-label={statusLabel}
+          onClick={openStatusMenu}
+        >
+          <span className={`${styles.statusDotIndicator} ${statusBadgeClass(model.task.status)}`}>
+            <span className={styles.statusDot} aria-hidden />
+          </span>
+        </button>
+      </span>
+    );
+  }
+
+  const triggerContent =
+    layout === 'label' || useDotStatus ? (
+      layout === 'label' ? (
+        <span className={styles.statusDotText}>{statusLabel}</span>
+      ) : (
+        <span className={`${styles.statusDotIndicator} ${statusBadgeClass(model.task.status)}`}>
+          <span className={styles.statusDot} aria-hidden />
+          <span className={styles.statusDotText}>{statusLabel}</span>
+        </span>
+      )
+    ) : (
+      <span className={`${styles.statusPill} ${statusBadgeClass(model.task.status)}`}>
+        {statusLabel}
+      </span>
+    );
 
   return (
-    <span className={wrapClass} ref={model.statusRef}>
+    <span className={wrapClass} ref={layout === 'label' || layout === 'combined' ? model.statusRef : undefined}>
       <button
         type="button"
         className={styles.inlinePillBtn}
         disabled={model.saving || !model.canChangeStatus}
         aria-expanded={model.statusMenuOpen}
         aria-label={statusLabel}
-        onClick={() => {
-          model.setDocumentsMenuOpen(false);
-          model.setAssigneeMenuOpen(false);
-          model.setStatusMenuOpen((open) => !open);
-        }}
+        onClick={openStatusMenu}
       >
-        {useDotStatus ? (
-          <span className={`${styles.statusDotIndicator} ${statusBadgeClass(model.task.status)}`}>
-            <span className={styles.statusDot} aria-hidden />
-            <span className={styles.statusDotText}>{statusLabel}</span>
-          </span>
-        ) : (
-          <span className={`${styles.statusPill} ${statusBadgeClass(model.task.status)}`}>
-            {statusLabel}
-          </span>
-        )}
+        {triggerContent}
       </button>
-      <WorkflowInlineMenu
-        open={model.statusMenuOpen}
-        onClose={() => model.setStatusMenuOpen(false)}
-        anchorRef={model.statusRef}
-      >
-        {WORKFLOW_TASK_STATUSES.map((status) => (
-          <button
-            key={status}
-            type="button"
-            className={styles.inlineMenuPillOption}
-            disabled={model.saving || status === model.task.status || model.isStatusDisabled(status)}
-            title={status === 'done' && !model.canApprove ? model.wf.statusDoneNotAllowed : undefined}
-            onClick={() => void model.saveStatus(status)}
-          >
-            {useDotStatus ? (
-              <span className={`${styles.statusDotIndicator} ${statusBadgeClass(status)}`}>
-                <span className={styles.statusDot} aria-hidden />
-                <span className={styles.statusDotText}>{formatWorkflowStatus(status)}</span>
-              </span>
-            ) : (
-              <span className={`${styles.statusPill} ${statusBadgeClass(status)}`}>
-                {formatWorkflowStatus(status)}
-              </span>
-            )}
-          </button>
-        ))}
-      </WorkflowInlineMenu>
+      {layout !== 'dot' ? (
+        <WorkflowInlineMenu
+          open={model.statusMenuOpen}
+          onClose={() => model.setStatusMenuOpen(false)}
+          anchorRef={model.statusRef}
+        >
+          {WORKFLOW_TASK_STATUSES.map((status) => (
+            <button
+              key={status}
+              type="button"
+              className={styles.inlineMenuPillOption}
+              disabled={model.saving || status === model.task.status || model.isStatusDisabled(status)}
+              title={status === 'done' && !model.canApprove ? model.wf.statusDoneNotAllowed : undefined}
+              onClick={() => void model.saveStatus(status)}
+            >
+              {useDotStatus ? (
+                <span className={`${styles.statusDotIndicator} ${statusBadgeClass(status)}`}>
+                  <span className={styles.statusDot} aria-hidden />
+                  <span className={styles.statusDotText}>{formatWorkflowStatus(status)}</span>
+                </span>
+              ) : (
+                <span className={`${styles.statusPill} ${statusBadgeClass(status)}`}>
+                  {formatWorkflowStatus(status)}
+                </span>
+              )}
+            </button>
+          ))}
+        </WorkflowInlineMenu>
+      ) : null}
     </span>
   );
 }
@@ -1095,11 +1134,16 @@ export function WorkflowTaskRowTableView({
     enableCustomColumns && !showAmount
       ? resolveWorkflowOpsGridClassName(true, gridClassName)
       : styles.workflowGrid;
+  const rowSelection = useWorkflowTaskRowSelection();
+  const showRowSelect = rowSelection != null && !showAmount;
+  const isSelected =
+    rowSelection != null && !showAmount && rowSelection.selectedIds.has(model.task.id);
   const rowClass = [
     styles.tableRow,
     showAmount ? `${styles.workflowGrid} ${paymentGrid}` : opsGridClass,
     styles.workflowInlineRow,
     model.rowDragOver ? styles.workflowInlineRow_fileDragOver : '',
+    isSelected ? styles.tableRow_selected : '',
   ]
     .filter(Boolean)
     .join(' ');
@@ -1109,9 +1153,20 @@ export function WorkflowTaskRowTableView({
       className={rowClass}
       role="row"
       aria-busy={model.saving || model.documentActions.uploading}
+      aria-selected={showRowSelect ? isSelected : undefined}
       {...model.rowDropHandlers}
     >
-      <WorkflowTaskRowStatusField model={model} />
+      {rowSelection != null && !showAmount ? (
+        <span className={styles.workflowSelectCell} role="cell">
+          <BulkSelectCheckbox
+            checked={isSelected}
+            ariaLabel={rowSelection.selectItemAriaLabel(model.task.title)}
+            onChange={() => rowSelection.onToggle(model.task.id)}
+          />
+        </span>
+      ) : null}
+      {!showAmount ? <WorkflowTaskRowStatusField model={model} layout="dot" /> : null}
+      <WorkflowTaskRowStatusField model={model} layout={showAmount ? 'combined' : 'label'} />
       <WorkflowTaskRowTitleField model={model} />
       {enableCustomColumns && !showAmount ? (
         <WorkflowTaskTableCustomColumnCells

@@ -1,18 +1,76 @@
 .bulkSelectCheckbox {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
+  appearance: none;
+  -webkit-appearance: none;
+  display: inline-grid;
+  place-content: center;
   width: 1rem;
   height: 1rem;
   margin: 0;
   flex-shrink: 0;
-  accent-color: var(--color-primary, #2563eb);
+  box-sizing: border-box;
+  border: 1.5px solid var(--theme-border-main, var(--color-border, #cbd5e1));
+  border-radius: 0.2rem;
+  background: var(--theme-surface-card, #fff);
+  color: #fff;
   cursor: pointer;
+  transition:
+    background-color 0.12s ease,
+    border-color 0.12s ease;
+}
+
+.bulkSelectCheckbox::before {
+  content: '';
+  width: 0.55rem;
+  height: 0.32rem;
+  border-inline-start: 2px solid currentColor;
+  border-bottom: 2px solid currentColor;
+  transform: rotate(-45deg) translateY(-0.05rem);
+  opacity: 0;
+}
+
+.bulkSelectCheckbox:checked {
+  background: var(--color-primary, #2563eb);
+  border-color: var(--color-primary, #2563eb);
+}
+
+.bulkSelectCheckbox:checked::before {
+  opacity: 1;
+}
+
+.bulkSelectCheckbox:indeterminate {
+  background: var(--color-primary, #2563eb);
+  border-color: var(--color-primary, #2563eb);
+}
+
+.bulkSelectCheckbox:indeterminate::before {
+  width: 0.5rem;
+  height: 0;
+  border-inline-start: none;
+  border-bottom: 2px solid currentColor;
+  transform: none;
+  opacity: 1;
+}
+
+.bulkSelectCheckbox:focus-visible {
+  outline: 2px solid var(--color-primary, #2563eb);
+  outline-offset: 2px;
 }
 
 .bulkSelectCheckbox:disabled {
   cursor: not-allowed;
   opacity: 0.55;
+}
+
+:global([data-theme='dark']) .bulkSelectCheckbox {
+  background: #1a1d26;
+  border-color: #4b5563;
+  color: #fff;
+}
+
+:global([data-theme='dark']) .bulkSelectCheckbox:checked,
+:global([data-theme='dark']) .bulkSelectCheckbox:indeterminate {
+  background: var(--color-primary, #2563eb);
+  border-color: var(--color-primary, #2563eb);
 }
 
 .bulkSelectionToolbar {

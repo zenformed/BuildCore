@@ -51,6 +51,7 @@ import {
 import { WorkflowUsersColumn } from './WorkflowUsersColumn';
 import { WorkflowAssigneeDragHeldIndicator } from './WorkflowAssigneeDragHeldIndicator';
 import { WorkflowTaskAssigneeDragProvider } from '@/presentation/features/crmProjectDetail/workflowTaskAssigneeDragContext';
+import { WorkflowTaskRowSelectionProvider } from '@/presentation/features/crmProjectDetail/workflowTaskRowSelectionContext';
 import styles from './ProjectDetail.module.css';
 
 export type WorkflowTasksTableLayout = 'preview' | 'full';
@@ -323,12 +324,17 @@ export function WorkflowTasksTable({
       onError={(message) => setToast({ kind: 'error', message })}
     />
   );
+  const showPanelRefresh = useCardTaskLayout || isMobileLayout;
 
   const addButton = canCreate ? (
     <WorkflowTaskStageAddButton onSelectStage={handleSelectStage} />
   ) : null;
 
   const showUnifiedTableAmount = displayGroups.some((group) => group.isPaymentsGroup);
+  const visibleTaskIds = useMemo(
+    () => displayGroups.flatMap((group) => group.tasks.map((task) => task.id)),
+    [displayGroups]
+  );
 
   const stageGroupElements = displayGroups.map((group) => (
     <WorkflowStageTaskGroup
@@ -355,6 +361,32 @@ export function WorkflowTasksTable({
     />
   ));
 
+  const tableBody = useCardTaskLayout ? (
+    isDesktopStageCardMode ? (
+      <WorkflowTaskAssigneeDragProvider>
+        <div className={stageGroupsClass}>{stageGroupElements}</div>
+        <WorkflowUsersColumn tasks={filteredTasks} canAssignTasks={canAssignTasks} />
+        <WorkflowAssigneeDragHeldIndicator />
+      </WorkflowTaskAssigneeDragProvider>
+    ) : (
+      stageGroupElements
+    )
+  ) : (
+    <WorkflowTaskRowSelectionProvider visibleTaskIds={visibleTaskIds}>
+      {useUnifiedDesktopTable ? (
+        <div className={styles.workflowUnifiedTable}>
+          <WorkflowTasksTableColumnHeader
+            showAmount={showUnifiedTableAmount}
+            showStatusRefresh
+          />
+          <div className={styles.workflowUnifiedTableBody}>{stageGroupElements}</div>
+        </div>
+      ) : (
+        stageGroupElements
+      )}
+    </WorkflowTaskRowSelectionProvider>
+  );
+
   return (
     <>
       <section className={panelClass} aria-labelledby="workflow-tasks-heading">
@@ -376,7 +408,7 @@ export function WorkflowTasksTable({
           <div className={styles.detailPanelHeaderRow}>
             <div className={styles.detailPanelSearchWrap}>{searchInput}</div>
             <div className={styles.detailPanelHeaderRowActions}>
-              {refreshButton}
+              {showPanelRefresh ? refreshButton : null}
               {addButton}
             </div>
           </div>
@@ -391,7 +423,7 @@ export function WorkflowTasksTable({
             {filterMenu}
             {viewToggleButton}
             {searchInput}
-            {refreshButton}
+            {showPanelRefresh ? refreshButton : null}
             {addButton}
           </DetailPanelHeaderActions>
         </DetailPanelHeader>
@@ -410,20 +442,7 @@ export function WorkflowTasksTable({
         </div>
       ) : (
         <div className={stackClass}>
-          {isDesktopStageCardMode ? (
-            <WorkflowTaskAssigneeDragProvider>
-              <div className={stageGroupsClass}>{stageGroupElements}</div>
-              <WorkflowUsersColumn tasks={filteredTasks} canAssignTasks={canAssignTasks} />
-              <WorkflowAssigneeDragHeldIndicator />
-            </WorkflowTaskAssigneeDragProvider>
-          ) : useUnifiedDesktopTable ? (
-            <div className={styles.workflowUnifiedTable}>
-              <WorkflowTasksTableColumnHeader showAmount={showUnifiedTableAmount} />
-              <div className={styles.workflowUnifiedTableBody}>{stageGroupElements}</div>
-            </div>
-          ) : (
-            stageGroupElements
-          )}
+          {tableBody}
         </div>
       )}
       {showViewAllLink ? (
