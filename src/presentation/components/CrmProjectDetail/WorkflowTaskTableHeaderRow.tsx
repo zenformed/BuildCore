@@ -33,7 +33,7 @@ export type WorkflowTaskTableHeaderRowProps = {
   readonly trailingHeaders?: ReactNode;
   readonly rowClassName?: string;
   readonly gridClassName?: string;
-  /** Ops workflow: select | unlabeled primary (status dot + task; refresh in that header). */
+  /** Ops/payments: select | unlabeled primary (status+task; refresh ↔ bulk). */
   readonly showStatusRefresh?: boolean;
   /** Gmail-style filter caret shown between select and refresh/bulk actions. */
   readonly leadingFilter?: ReactNode;
@@ -54,7 +54,7 @@ export function WorkflowTaskTableHeaderRow({
   const cols = content.projectDetail.workflow.columns;
   const rowSelection = useWorkflowTaskRowSelection();
   const { refreshWorkflowTasks, setToast } = useProjectDetailShell();
-  const showOpsLeading = showStatusRefresh && !showAmount;
+  const showSelectionChrome = showStatusRefresh;
   const hasSelection = (rowSelection?.selectedCount ?? 0) > 0;
   const bulk = rowSelection?.bulkActions;
   const showBulkChrome =
@@ -81,7 +81,7 @@ export function WorkflowTaskTableHeaderRow({
 
   return (
     <div className={rowClass} role="row">
-      {rowSelection != null && !showAmount ? (
+      {rowSelection != null && showSelectionChrome ? (
         <span role="columnheader" className={styles.workflowSelectHeader}>
           <BulkSelectCheckbox
             checked={rowSelection.allVisibleSelected}
@@ -91,7 +91,7 @@ export function WorkflowTaskTableHeaderRow({
           />
         </span>
       ) : null}
-      {showOpsLeading ? (
+      {showSelectionChrome ? (
         <span
           role="columnheader"
           className={styles.workflowPrimaryHeader}

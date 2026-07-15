@@ -579,6 +579,9 @@ export function WorkflowOpsTaskDraftRow({
     updateField,
   };
 
+  const rowSelection = useWorkflowTaskRowSelection();
+  const showRowSelect = rowSelection != null;
+
   if (showCompactLayout) {
     return (
       <div className={styles.paymentDraftBlock}>
@@ -641,8 +644,6 @@ export function WorkflowOpsTaskDraftRow({
     );
   }
 
-  const rowSelection = useWorkflowTaskRowSelection();
-  const showRowSelect = rowSelection != null;
   const rowClass = `${styles.tableRow} ${styles.workflowGrid} ${styles.workflowInlineRow} ${styles.paymentDraftRow}`;
 
   return (

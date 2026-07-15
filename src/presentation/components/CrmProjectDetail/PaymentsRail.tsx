@@ -7,6 +7,7 @@ import { buildCoreDashboardContent as content } from '@/platform/content/buildCo
 import { countDocumentsByTaskId } from '@/presentation/features/crmProjectDetail/workflowDocumentCounts';
 import { listPaymentMilestones } from '@/presentation/features/crmProjectDetail/workflowTaskGroups';
 import { filterPaymentMilestonesBySearch } from '@/presentation/features/crmProjectDetail/projectSectionSearchModel';
+import { WorkflowTaskRowSelectionProvider } from '@/presentation/features/crmProjectDetail/workflowTaskRowSelectionContext';
 import { useBuildCoreProjectSectionAccess } from '@/presentation/providers/BuildCoreProjectSectionAccessProvider';
 import { useDashboardMobileLayout } from '@/presentation/features/crmProjects/useDashboardMobileLayout';
 import { useProjectDetailShell } from '@/presentation/features/crmProjectDetail/ProjectDetailShellContext';
@@ -59,6 +60,38 @@ export function PaymentsRail({
   const payCols = content.projectDetail.payments.columns;
   const isMobileLayout = useDashboardMobileLayout();
   const { shellClassName } = useBuildCorePaymentTableColumns();
+  const visibleTaskIds = useMemo(
+    () => filteredMilestones.map((task) => task.id),
+    [filteredMilestones]
+  );
+  const tasksById = useMemo(() => {
+    const map = new Map<string, CrmWorkflowTask>();
+    for (const task of filteredMilestones) {
+      map.set(task.id, task);
+    }
+    return map;
+  }, [filteredMilestones]);
+  const selectionBulkActions = useMemo(
+    () => ({
+      canDelete,
+      canApprove: permissions.canApprove,
+      canChangeNonDoneStatus: permissions.canView,
+      canNotifyAssigned: permissions.canEdit && isApiSource,
+      tasksById,
+      docCountByTaskId: docCounts,
+      onTaskUpdated,
+    }),
+    [
+      canDelete,
+      docCounts,
+      isApiSource,
+      onTaskUpdated,
+      permissions.canApprove,
+      permissions.canEdit,
+      permissions.canView,
+      tasksById,
+    ]
+  );
 
   const showTable = canView && (filteredMilestones.length > 0 || permissions.canViewAllStages);
 
@@ -114,7 +147,6 @@ export function PaymentsRail({
         <DetailPanelHeader title={payments.title} titleId="payments-rail-heading">
           <DetailPanelHeaderActions>
             {searchInput}
-            {refreshButton}
             {addButton}
           </DetailPanelHeaderActions>
         </DetailPanelHeader>
@@ -145,43 +177,53 @@ export function PaymentsRail({
           ))}
         </div>
       ) : (
-        <div className={styles.detailPanelTableCard}>
-          <div className={styles.paymentsTableScroll}>
-            <div
-              className={[styles.paymentsTableGridShell, shellClassName].filter(Boolean).join(' ')}
-            >
-            <WorkflowTaskTableHeaderRow
-              context="payments"
-              showAmount
-              enablePaymentCustomColumns
-              rowClassName={styles.paymentsTableHeader}
-              gridClassName=""
-              trailingHeaders={
-                <>
-                  <span role="columnheader">{payCols.invoiced}</span>
-                  <span role="columnheader">{payCols.paid}</span>
-                </>
-              }
-            />
-            {filteredMilestones.map((task) => (
-              <WorkflowTaskInlineRow
-                key={task.id}
-                projectSlug={project.summary.slug}
-                task={task}
-                docCount={docCounts.get(task.id) ?? 0}
-                taskDocuments={project.documents.filter((doc) => doc.workflowTaskId === task.id)}
-                showAmountColumn
-                enablePaymentCustomColumns
-                permissionDomain="payments"
-                isApiSource={isApiSource}
-                onUpdated={onTaskUpdated}
-                onTaskError={onTaskError}
-                onRequestArchiveTask={canDelete ? onRequestArchiveTask : undefined}
-              />
-            ))}
+        <WorkflowTaskRowSelectionProvider
+          visibleTaskIds={visibleTaskIds}
+          bulkActions={selectionBulkActions}
+        >
+          <div className={styles.detailPanelTableCard}>
+            <div className={styles.paymentsTableScroll}>
+              <div
+                className={[styles.paymentsTableGridShell, shellClassName]
+                  .filter(Boolean)
+                  .join(' ')}
+              >
+                <WorkflowTaskTableHeaderRow
+                  context="payments"
+                  showAmount
+                  enablePaymentCustomColumns
+                  showStatusRefresh
+                  rowClassName={styles.paymentsTableHeader}
+                  gridClassName=""
+                  trailingHeaders={
+                    <>
+                      <span role="columnheader">{payCols.invoiced}</span>
+                      <span role="columnheader">{payCols.paid}</span>
+                    </>
+                  }
+                />
+                {filteredMilestones.map((task) => (
+                  <WorkflowTaskInlineRow
+                    key={task.id}
+                    projectSlug={project.summary.slug}
+                    task={task}
+                    docCount={docCounts.get(task.id) ?? 0}
+                    taskDocuments={project.documents.filter(
+                      (doc) => doc.workflowTaskId === task.id
+                    )}
+                    showAmountColumn
+                    enablePaymentCustomColumns
+                    permissionDomain="payments"
+                    isApiSource={isApiSource}
+                    onUpdated={onTaskUpdated}
+                    onTaskError={onTaskError}
+                    onRequestArchiveTask={canDelete ? onRequestArchiveTask : undefined}
+                  />
+                ))}
+              </div>
+            </div>
           </div>
-        </div>
-        </div>
+        </WorkflowTaskRowSelectionProvider>
       )}
     </section>
   );

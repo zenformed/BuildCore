@@ -1191,9 +1191,9 @@ export function WorkflowTaskRowTableView({
       ? resolveWorkflowOpsGridClassName(true, gridClassName)
       : styles.workflowGrid;
   const rowSelection = useWorkflowTaskRowSelection();
-  const showRowSelect = rowSelection != null && !showAmount;
-  const isSelected =
-    rowSelection != null && !showAmount && rowSelection.selectedIds.has(model.task.id);
+  const usePrimaryLeading = !showAmount || rowSelection != null;
+  const showRowSelect = rowSelection != null;
+  const isSelected = showRowSelect && rowSelection.selectedIds.has(model.task.id);
   const rowClass = [
     styles.tableRow,
     showAmount ? `${styles.workflowGrid} ${paymentGrid}` : opsGridClass,
@@ -1212,7 +1212,7 @@ export function WorkflowTaskRowTableView({
       aria-selected={showRowSelect ? isSelected : undefined}
       {...model.rowDropHandlers}
     >
-      {rowSelection != null && !showAmount ? (
+      {showRowSelect ? (
         <span className={styles.workflowSelectCell} role="cell">
           <BulkSelectCheckbox
             checked={isSelected}
@@ -1221,7 +1221,7 @@ export function WorkflowTaskRowTableView({
           />
         </span>
       ) : null}
-      {!showAmount ? (
+      {usePrimaryLeading ? (
         <WorkflowTaskRowPrimaryField model={model} />
       ) : (
         <>

@@ -5316,11 +5316,11 @@
 
 .paymentsTableGridShell {
   --payments-grid-gap: 0.625rem;
-  /* Status | Task | Notes | Docs | Assigned | Amount | Due | Invoiced | Paid | Actions */
+  /* Select | Primary (status+task) | Notes | Docs | Assigned | Amount | Due | Invoiced | Paid | Actions */
   --payments-grid-columns:
-    8rem minmax(5.75rem, 1fr) minmax(2.75rem, 0.4fr) 6rem 4.25rem 4.75rem 7.25rem 7.25rem 7.25rem
+    1.125rem minmax(0, 1.65fr) minmax(2.75rem, 0.4fr) 6rem 4.25rem 4.75rem 7.25rem 7.25rem 7.25rem
     3.25rem;
-  --payments-table-min-width: 57.625rem;
+  --payments-table-min-width: 52rem;
   display: grid;
   grid-template-columns: var(--payments-grid-columns);
   column-gap: var(--payments-grid-gap);
@@ -5328,20 +5328,20 @@
   min-width: 100%;
 }
 
-/* Status | Task | Custom1 | Notes | Docs | Assigned | Amount | Due | Invoiced | Paid | Actions */
+/* Select | Primary | Custom1 | Notes | Docs | Assigned | Amount | Due | Invoiced | Paid | Actions */
 .paymentsTableGridShellCustom1 {
   --payments-grid-columns:
-    8rem minmax(4.75rem, 0.85fr) minmax(8.75rem, 11rem) minmax(2.75rem, 0.4fr) 6rem 4.25rem 4.75rem 7.25rem
+    1.125rem minmax(0, 1.4fr) minmax(8.75rem, 11rem) minmax(2.75rem, 0.4fr) 6rem 4.25rem 4.75rem 7.25rem
     7.25rem 7.25rem 3.25rem;
-  --payments-table-min-width: 65.625rem;
+  --payments-table-min-width: 60rem;
 }
 
-/* Status | Task | Custom1 | Custom2 | Notes | Docs | Assigned | Amount | Due | Invoiced | Paid | Actions */
+/* Select | Primary | Custom1 | Custom2 | Notes | Docs | Assigned | Amount | Due | Invoiced | Paid | Actions */
 .paymentsTableGridShellCustom2 {
   --payments-grid-columns:
-    8rem minmax(4rem, 0.75fr) minmax(8.75rem, 11rem) minmax(8.75rem, 11rem) minmax(2.75rem, 0.4fr) 6rem 4.25rem
+    1.125rem minmax(0, 1.25fr) minmax(8.75rem, 11rem) minmax(8.75rem, 11rem) minmax(2.75rem, 0.4fr) 6rem 4.25rem
     4.75rem 7.25rem 7.25rem 7.25rem 3.25rem;
-  --payments-table-min-width: 73.625rem;
+  --payments-table-min-width: 68rem;
 }
 
 @media (max-width: 1100px) {
@@ -5408,17 +5408,19 @@
   padding-inline: 0.625rem;
 }
 
-.paymentsTableGridShell .tableHeader > *:first-child,
-.paymentsTableGridShell .tableRow > *:first-child {
+.paymentsTableGridShell .tableHeader > .workflowSelectHeader,
+.paymentsTableGridShell .tableRow > .workflowSelectCell {
   text-align: center;
+  justify-content: center;
 }
 
-.paymentsTableGridShell .tableHeader > *:nth-child(2),
+.paymentsTableGridShell .tableHeader > .workflowPrimaryHeader,
+.paymentsTableGridShell .tableRow > .workflowPrimaryCell,
 .paymentsTableGridShell .tableRow .taskTitleCell {
   text-align: left;
 }
 
-.paymentsTableGridShell .tableHeader > *:nth-child(n + 3):not(.taskDeleteHeader):not(.workflowNotesHeader):not(.workflowCustomColumnHeader) {
+.paymentsTableGridShell .tableHeader > *:nth-child(n + 3):not(.taskDeleteHeader):not(.workflowNotesHeader):not(.workflowCustomColumnHeader):not(.workflowSelectHeader):not(.workflowPrimaryHeader) {
   text-align: center;
 }
 
