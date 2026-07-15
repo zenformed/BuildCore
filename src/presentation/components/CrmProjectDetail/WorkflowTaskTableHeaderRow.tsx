@@ -63,6 +63,7 @@ export function WorkflowTaskTableHeaderRow({
     (bulk.canDelete ||
       bulk.canApprove ||
       bulk.canChangeNonDoneStatus ||
+      bulk.canAssign ||
       bulk.canNotifyAssigned);
   const gridClass =
     gridClassName !== undefined

@@ -16,6 +16,8 @@ export type WorkflowTaskRowSelectionBulkActions = {
   readonly canDelete: boolean;
   readonly canApprove: boolean;
   readonly canChangeNonDoneStatus: boolean;
+  /** Edit permission: bulk multi-assign is available for selected tasks. */
+  readonly canAssign: boolean;
   /** API + edit permission: notify-assigned is available for assigned tasks. */
   readonly canNotifyAssigned: boolean;
   readonly tasksById: ReadonlyMap<string, CrmWorkflowTask>;

@@ -527,10 +527,14 @@ export const buildCoreDashboardContent = {
       removePriority: 'Remove Priority',
       markComplete: 'Mark Complete',
       markIncomplete: 'Mark Incomplete',
+      multiAssign: 'Multi assign',
       inactiveBadge: 'Inactive',
       makePrioritySuccess: 'Project marked as priority.',
       removePrioritySuccess: 'Project priority removed.',
       makePriorityFailed: 'Could not update project priority.',
+      multiAssignSuccess: (count: number): string =>
+        count === 1 ? 'Assigned 1 selected item.' : `Assigned ${count} selected items.`,
+      multiAssignFailed: 'Could not update assignee.',
     },
     delete: {
       action: 'Delete project',

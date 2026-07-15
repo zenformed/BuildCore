@@ -4,7 +4,19 @@ import { useCallback, useEffect, useId, useMemo, useState, type ReactElement } f
 import { resolvePipelineStageScopeForProject } from '@/domain/buildcore/orgPipelineStages';
 import { useRouter } from 'next/navigation';
 import { isBuildCoreMemberRole } from '@/domain/buildcore/memberRole';
-import type { CrmProjectSummary } from '@/domain/crm';
+import {
+  isCrmProjectComplete,
+  isCrmProjectInactive,
+  isProjectPriorityUrgent,
+  type CrmProjectSummary,
+} from '@/domain/crm';
+import {
+  computeSubprojectAverageProgressPercent,
+  formatSubprojectAverageProgressPercent,
+  listWorkflowStageCompletionStatuses,
+} from '@/domain/buildcore/projectPipelineProgress';
+import { getCrmProjectDetailBySlug, setCrmProjectCompletion } from '@/application/use-cases/crm';
+import { crmRepositories } from '@/shared/di/container';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
 import { CrmProjectDeleteWorkflowDialog } from '@/presentation/components/CrmProjects/CrmProjectDeleteWorkflowDialog';
 import { CreateCrmProjectModal } from '@/presentation/components/CrmProjects/CreateCrmProjectModal';
@@ -23,12 +35,10 @@ import { useCrmProjectBulkDeleteActions } from '@/presentation/features/crmProje
 import { useCrmProjectInactiveActions } from '@/presentation/features/crmProjects/useCrmProjectInactiveActions';
 import { formatCrmProjectDeleteWorkflowItemLabel } from '@/presentation/features/crmProjects/crmProjectDeleteWorkflow';
 import { useCrmProjectTableRowActions } from '@/presentation/features/crmProjects/useCrmProjectTableRowActions';
+import { assignCrmProjectMember } from '@/presentation/features/crmProjects/assignCrmProjectMember';
+import { getCrmProjectAssigneeOptions } from '@/presentation/features/crmProjects/crmProjectAssigneeOptions';
 import { useCrmProjectPaymentTasksIndex } from '@/presentation/features/crmProjects/useCrmProjectPaymentTasksIndex';
 import { useCrmPaymentTasksIndexContext } from '@/presentation/providers/CrmPaymentTasksIndexProvider';
-import {
-  computeSubprojectAverageProgressPercent,
-  formatSubprojectAverageProgressPercent,
-} from '@/domain/buildcore/projectPipelineProgress';
 import { useProjectDetailShell } from '@/presentation/features/crmProjectDetail/ProjectDetailShellContext';
 import { useSaaSProfile } from '@/presentation/hooks/useSaaSProfile';
 import { useBulkSelection } from '@/presentation/features/bulkSelection/useBulkSelection';
@@ -36,8 +46,15 @@ import type { BulkSelectionBindings } from '@/presentation/features/bulkSelectio
 import { DestructiveConfirmationWorkflowDialog } from '@/presentation/components/DestructiveConfirmationWorkflow';
 import { BulkSendAttachmentDialog } from '@/presentation/components/communications/BulkSendAttachmentDialog';
 import { MarkInactiveDialog } from '@/presentation/components/CrmProjects/MarkInactiveDialog';
+import { CrmProjectsFilterMenu } from '@/presentation/components/CrmProjects/CrmProjectsFilterMenu';
 import { useBulkSendAttachmentDialog } from '@/presentation/features/communications/useBulkSendAttachmentDialog';
+import {
+  useAssignmentIdentityCatalog,
+  useAssignmentIdentityState,
+} from '@/presentation/providers/AssignmentIdentityProvider';
+import { useBuildCoreDashboardContext } from '@/presentation/providers/BuildCoreDashboardProvider';
 import { SubprojectsListToolbar } from './SubprojectsListToolbar';
+import { SubprojectsTableBulkActions } from './SubprojectsTableBulkActions';
 import shared from '@/presentation/components/crmShared/crmShared.module.css';
 import styles from './ProjectDetail.module.css';
 import tableStyles from '../CrmProjects/CrmProjects.module.css';
@@ -66,8 +83,15 @@ function SubprojectsSectionContent(): ReactElement {
   const bulkDeleteCopy = content.bulkDelete;
   const destructiveWorkflowCopy = content.destructiveConfirmationWorkflow;
   const detailCopy = content.projectDetail;
-  const { project, routes, parentRouteSlug, isMemberRole, childSummaries } =
+  const { project, routes, parentRouteSlug, isMemberRole, childSummaries, isApiSource } =
     useProjectDetailShell();
+  const dash = useBuildCoreDashboardContext();
+  const assignmentCatalog = useAssignmentIdentityCatalog();
+  const { isLoading: identitiesLoading } = useAssignmentIdentityState();
+  const assigneeOptions = useMemo(
+    () => getCrmProjectAssigneeOptions(isApiSource, assignmentCatalog, dash.user?.id),
+    [assignmentCatalog, dash.user?.id, isApiSource]
+  );
   const { organizationMembershipContext } = useSaaSProfile();
   const canManage = !isMemberRole && !isBuildCoreMemberRole(organizationMembershipContext?.role);
   const [expanded, setExpanded] = useState(true);
@@ -201,10 +225,29 @@ function SubprojectsSectionContent(): ReactElement {
     () => selectedProjects.filter((project) => project.subprojectStatus !== 'inactive'),
     [selectedProjects]
   );
+  const selectedPriorityEligible = useMemo(
+    () =>
+      selectedProjects.filter(
+        (project) =>
+          !isCrmProjectComplete(project) &&
+          !isCrmProjectInactive(project) &&
+          !isProjectPriorityUrgent(project.priority)
+      ),
+    [selectedProjects]
+  );
+  const selectedCompleteEligible = useMemo(
+    () =>
+      selectedProjects.filter(
+        (project) => !isCrmProjectComplete(project) && !isCrmProjectInactive(project)
+      ),
+    [selectedProjects]
+  );
   const canUseBulkActions = canDelete && !isMemberRole;
+  const [pendingBulkComplete, setPendingBulkComplete] = useState(false);
+  const [bulkActionBusy, setBulkActionBusy] = useState(false);
 
   const bulkSelectionBindings = useMemo<BulkSelectionBindings | undefined>(() => {
-    if (!bulkSelection.selectionMode) return undefined;
+    if (!canUseBulkActions) return undefined;
     return {
       mode: true,
       selectedIds: bulkSelection.selectedIds,
@@ -221,17 +264,13 @@ function SubprojectsSectionContent(): ReactElement {
       selectItemAriaLabel: bulkSelectionCopy.selectItemAriaLabel,
       selectAllAriaLabel: bulkSelectionCopy.selectAllAriaLabel,
     };
-  }, [bulkSelection, bulkSelectionCopy.selectAllAriaLabel, bulkSelectionCopy.selectItemAriaLabel, visibleIds]);
+  }, [bulkSelection, bulkSelectionCopy.selectAllAriaLabel, bulkSelectionCopy.selectItemAriaLabel, canUseBulkActions, visibleIds]);
 
   const handleSubprojectRowClick = useCallback(
     (child: CrmProjectSummary) => {
-      if (bulkSelection.selectionMode) {
-        bulkSelection.toggle(child.id);
-        return;
-      }
       router.push(routes.subproject(child.slug));
     },
-    [bulkSelection, router, routes]
+    [router, routes]
   );
 
   const { deleting: bulkDeleting, deleteProjects: deleteSelectedProjects } =
@@ -244,7 +283,7 @@ function SubprojectsSectionContent(): ReactElement {
           kind: 'success',
           message: bulkDeleteCopy.success(deletedCount, bulkDeleteItemLabel),
         });
-        bulkSelection.exitSelectionMode();
+        bulkSelection.clearSelection();
         setBulkDeleteOpen(false);
       },
       onError: (message) => setToast({ kind: 'error', message }),
@@ -254,7 +293,7 @@ function SubprojectsSectionContent(): ReactElement {
     const ok = await deleteSelectedProjects(selectedProjects);
     if (ok) {
       setBulkDeleteOpen(false);
-      bulkSelection.exitSelectionMode();
+      bulkSelection.clearSelection();
     }
   }, [bulkSelection, deleteSelectedProjects, selectedProjects]);
 
@@ -263,11 +302,9 @@ function SubprojectsSectionContent(): ReactElement {
     openMarkInactive,
     closeMarkInactive,
     submitting: markingInactive,
-    markingActive,
     markingActiveProjectId,
     submitMarkInactive,
     markProjectActive,
-    markProjectsActive,
   } = useCrmProjectInactiveActions({
     onProjectsUpdated: () => {
       void refetch();
@@ -277,17 +314,22 @@ function SubprojectsSectionContent(): ReactElement {
         kind: 'success',
         message: markInactiveCopy.bulkSuccess(updatedCount),
       });
-      bulkSelection.exitSelectionMode();
+      bulkSelection.clearSelection();
     },
     onMarkActiveSuccess: (updatedCount) => {
       setToast({
         kind: 'success',
         message: markActiveCopy.bulkSuccess(updatedCount),
       });
-      bulkSelection.exitSelectionMode();
+      bulkSelection.clearSelection();
     },
     onError: (message) => setToast({ kind: 'error', message }),
   });
+
+  const handleOpenBulkMarkInactive = useCallback(() => {
+    if (selectedActiveProjects.length === 0) return;
+    openMarkInactive({ mode: 'bulk', projects: selectedActiveProjects });
+  }, [openMarkInactive, selectedActiveProjects]);
 
   const handleRequestMarkInactive = useCallback(
     (childProject: CrmProjectSummary) => {
@@ -301,72 +343,6 @@ function SubprojectsSectionContent(): ReactElement {
       void markProjectActive(childProject);
     },
     [markProjectActive]
-  );
-
-  const handleOpenBulkMarkInactive = useCallback(() => {
-    if (selectedActiveProjects.length === 0) return;
-    openMarkInactive({ mode: 'bulk', projects: selectedActiveProjects });
-  }, [openMarkInactive, selectedActiveProjects]);
-
-  const handleBulkMarkActive = useCallback(() => {
-    void markProjectsActive(selectedInactiveProjects);
-  }, [markProjectsActive, selectedInactiveProjects]);
-
-  const bulkSubprojectActions = useMemo(
-    () => [
-      {
-        id: 'mark-inactive',
-        label: markInactiveCopy.bulkMenuAction,
-        iconClass: styles.actionsMenuMarkInactiveIcon,
-        disabled:
-          bulkSelection.selectedCount === 0 ||
-          markingInactive ||
-          selectedActiveProjects.length === 0,
-        onClick: handleOpenBulkMarkInactive,
-      },
-      {
-        id: 'mark-active',
-        label: markActiveCopy.bulkMenuAction,
-        iconClass: styles.actionsMenuMarkActiveIcon,
-        disabled:
-          bulkSelection.selectedCount === 0 ||
-          markingActive ||
-          selectedInactiveProjects.length === 0,
-        onClick: handleBulkMarkActive,
-      },
-      {
-        id: 'send-attachment',
-        label: bulkSelectionCopy.sendAttachment,
-        iconClass: styles.actionsMenuAttachmentIcon,
-        disabled: bulkSelection.selectedCount === 0,
-        onClick: () => bulkSendAttachment.openBulkSendAttachmentDialog(selectedProjects),
-        // Bulk subproject send is CRM-scoped (canUseBulkActions), not task/payment/budget Send Files.
-      },
-      {
-        id: 'delete',
-        label: bulkSelectionCopy.deleteSelected,
-        variant: 'danger' as const,
-        iconClass: styles.actionsMenuDeleteIcon,
-        disabled: bulkDeleting || bulkSelection.selectedCount === 0,
-        onClick: () => setBulkDeleteOpen(true),
-      },
-    ],
-    [
-      bulkDeleting,
-      bulkSelection.selectedCount,
-      bulkSelectionCopy.deleteSelected,
-      bulkSelectionCopy.sendAttachment,
-      bulkSendAttachment,
-      handleBulkMarkActive,
-      handleOpenBulkMarkInactive,
-      markActiveCopy.bulkMenuAction,
-      markInactiveCopy.bulkMenuAction,
-      markingActive,
-      markingInactive,
-      selectedActiveProjects.length,
-      selectedInactiveProjects.length,
-      selectedProjects,
-    ]
   );
 
   const {
@@ -384,6 +360,130 @@ function SubprojectsSectionContent(): ReactElement {
     onError: (message) => setToast({ kind: 'error', message }),
     resolveStagesForProject,
   });
+
+  const handleBulkMakePriority = useCallback(async () => {
+    if (selectedPriorityEligible.length === 0 || bulkActionBusy) return;
+    setBulkActionBusy(true);
+    try {
+      for (const project of selectedPriorityEligible) {
+        await togglePriority(project);
+      }
+      bulkSelection.clearSelection();
+    } finally {
+      setBulkActionBusy(false);
+    }
+  }, [bulkActionBusy, bulkSelection, selectedPriorityEligible, togglePriority]);
+
+  const handleBulkMarkComplete = useCallback(() => {
+    if (selectedCompleteEligible.length === 0) return;
+    setPendingBulkComplete(true);
+  }, [selectedCompleteEligible.length]);
+
+  const confirmBulkMarkComplete = useCallback(async () => {
+    if (selectedCompleteEligible.length === 0) {
+      setPendingBulkComplete(false);
+      return;
+    }
+    setPendingBulkComplete(false);
+    setBulkActionBusy(true);
+    let updatedCount = 0;
+    let blocked = false;
+    try {
+      for (const project of selectedCompleteEligible) {
+        try {
+          const detail = await getCrmProjectDetailBySlug(crmRepositories, project.slug);
+          if (detail == null) continue;
+          const stageStatuses = listWorkflowStageCompletionStatuses({
+            workflowTasks: detail.workflowTasks,
+            stages: resolveStagesForProject(project),
+            manualStageCompletions: detail.manualStageCompletions,
+          });
+          if (stageStatuses.some((stage) => !stage.isComplete)) {
+            setCompletionBlockedStageStatuses(stageStatuses);
+            blocked = true;
+            break;
+          }
+          const updated = await setCrmProjectCompletion(crmRepositories, project.slug, true);
+          if (updated == null) continue;
+          patchChildProjectSummary(updated.summary);
+          updatedCount += 1;
+        } catch {
+          // Continue remaining selections; toast failure summary below.
+        }
+      }
+      if (updatedCount > 0) {
+        setToast({
+          kind: 'success',
+          message: detailCopy.markCompleteSuccess,
+        });
+        bulkSelection.clearSelection();
+      } else if (!blocked) {
+        setToast({ kind: 'error', message: detailCopy.markCompleteFailed });
+      }
+    } finally {
+      setBulkActionBusy(false);
+    }
+  }, [
+    bulkSelection,
+    detailCopy.markCompleteFailed,
+    detailCopy.markCompleteSuccess,
+    patchChildProjectSummary,
+    resolveStagesForProject,
+    selectedCompleteEligible,
+    setCompletionBlockedStageStatuses,
+  ]);
+
+  const handleBulkAssign = useCallback(
+    async (assignedMemberId: string) => {
+      if (selectedProjects.length === 0 || bulkActionBusy) return;
+      setBulkActionBusy(true);
+      const tableCopy = content.crm.table;
+      let updatedCount = 0;
+      try {
+        for (const selected of selectedProjects) {
+          try {
+            const updated = await assignCrmProjectMember(selected, assignedMemberId);
+            if (updated == null) continue;
+            patchChildProjectSummary(updated);
+            updatedCount += 1;
+          } catch {
+            // Continue remaining selections; toast failure summary below.
+          }
+        }
+        if (updatedCount > 0) {
+          setToast({
+            kind: 'success',
+            message: tableCopy.multiAssignSuccess(updatedCount),
+          });
+          bulkSelection.clearSelection();
+        } else {
+          setToast({ kind: 'error', message: tableCopy.multiAssignFailed });
+        }
+      } finally {
+        setBulkActionBusy(false);
+      }
+    },
+    [bulkActionBusy, bulkSelection, patchChildProjectSummary, selectedProjects]
+  );
+
+  const selectionBulkActions = (
+    <SubprojectsTableBulkActions
+      busy={bulkActionBusy || busyProjectId != null || markingInactive || identitiesLoading}
+      canMakePriority={selectedPriorityEligible.length > 0}
+      canMarkInactive={selectedActiveProjects.length > 0}
+      canMarkComplete={selectedCompleteEligible.length > 0}
+      canAssign={selectedProjects.length > 0 && !identitiesLoading}
+      assigneeOptions={assigneeOptions}
+      onMakePriority={() => {
+        void handleBulkMakePriority();
+      }}
+      onMarkInactive={handleOpenBulkMarkInactive}
+      onMarkComplete={handleBulkMarkComplete}
+      onAssign={(assignedMemberId) => {
+        void handleBulkAssign(assignedMemberId);
+      }}
+    />
+  );
 
   const onContactCopied = useCallback(
     (message: string) => setToast({ kind: 'success', message }),
@@ -409,7 +509,7 @@ function SubprojectsSectionContent(): ReactElement {
       <div
         className={[
           styles.subprojectsPanelHeader,
-          bulkSelection.selectionMode && canUseBulkActions
+          isMobileLayout && bulkSelection.selectedCount > 0 && canUseBulkActions
             ? 'subprojectsPanelHeader_selectionMode'
             : '',
         ]
@@ -444,7 +544,7 @@ function SubprojectsSectionContent(): ReactElement {
         <div
           className={[
             styles.subprojectsPanelHeaderTools,
-            bulkSelection.selectionMode && canUseBulkActions
+            isMobileLayout && bulkSelection.selectedCount > 0 && canUseBulkActions
               ? styles.subprojectsPanelHeaderTools_selectionMode
               : '',
           ]
@@ -465,22 +565,18 @@ function SubprojectsSectionContent(): ReactElement {
             newSubprojectTitle={copy.newSubprojectTitle}
             newSubprojectAriaLabel={copy.newSubprojectAriaLabel}
             onCreateOpen={() => setCreateOpen(true)}
-            canUseBulkActions={canUseBulkActions}
-            selectLabel={bulkSelectionCopy.select}
-            onEnterSelectionMode={() => bulkSelection.enterSelectionMode()}
             listFilters={listFilters}
             onListFiltersChange={setListFilters}
             radiusFilter={radiusFilter}
             onRadiusFilterChange={setRadiusFilter}
-            selectionMode={bulkSelection.selectionMode && canUseBulkActions}
-            selectedCount={bulkSelection.selectedCount}
+            showMobileBulkToolbar={
+              isMobileLayout && bulkSelection.selectedCount > 0 && canUseBulkActions
+            }
             selectedCountLabel={bulkSelectionCopy.selectedCount(bulkSelection.selectedCount)}
             bulkToolbarAriaLabel={bulkSelectionCopy.toolbarAriaLabel}
             bulkCancelLabel={bulkSelectionCopy.cancel}
-            onExitSelectionMode={() => bulkSelection.exitSelectionMode()}
-            bulkActionsLayout="menu"
-            bulkActionsMenuAriaLabel={bulkSelectionCopy.actionsMenuAriaLabel}
-            bulkActions={bulkSubprojectActions}
+            onClearSelection={() => bulkSelection.clearSelection()}
+            mobileBulkActions={selectionBulkActions}
           />
         </div>
       </div>
@@ -535,6 +631,25 @@ function SubprojectsSectionContent(): ReactElement {
                 bulkSelection={bulkSelectionBindings}
                 onContactCopied={onContactCopied}
                 progressTone="progress"
+                inlineSelectionChrome
+                leadingFilter={
+                  <CrmProjectsFilterMenu
+                    filters={listFilters}
+                    onChange={setListFilters}
+                    stageScopeMode="subproject"
+                    radiusFilter={radiusFilter}
+                    onRadiusFilterChange={setRadiusFilter}
+                    triggerVariant="caret"
+                    menuAlign="start"
+                  />
+                }
+                onRefresh={refetch}
+                onRefreshError={(message) => setToast({ kind: 'error', message })}
+                bulkHeaderActions={
+                  canUseBulkActions && bulkSelection.selectedCount > 0
+                    ? selectionBulkActions
+                    : null
+                }
               />
             </div>
           )}
@@ -614,7 +729,7 @@ function SubprojectsSectionContent(): ReactElement {
               const wasCompleted = bulkSendAttachment.completed;
               bulkSendAttachment.closeDialog();
               if (wasCompleted) {
-                bulkSelection.exitSelectionMode();
+                bulkSelection.clearSelection();
               }
             }}
             onSend={() => {
@@ -655,6 +770,19 @@ function SubprojectsSectionContent(): ReactElement {
                 ? detailCopy.markComplete
                 : detailCopy.markIncomplete
             }
+            cancelLabel={detailCopy.workflow.archiveTaskCancelLabel}
+            variant="primary"
+            hideIcon
+          />
+          <ConfirmModal
+            isOpen={pendingBulkComplete}
+            onClose={() => setPendingBulkComplete(false)}
+            onConfirm={() => {
+              void confirmBulkMarkComplete();
+            }}
+            title={detailCopy.markCompleteConfirmTitle}
+            message={detailCopy.markCompleteConfirmMessage}
+            confirmLabel={detailCopy.markComplete}
             cancelLabel={detailCopy.workflow.archiveTaskCancelLabel}
             variant="primary"
             hideIcon

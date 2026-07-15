@@ -96,6 +96,7 @@ export function PaymentsRail({
       canDelete,
       canApprove: permissions.canApprove,
       canChangeNonDoneStatus: permissions.canView,
+      canAssign: permissions.canEdit,
       canNotifyAssigned: permissions.canEdit && isApiSource,
       tasksById,
       docCountByTaskId: docCounts,

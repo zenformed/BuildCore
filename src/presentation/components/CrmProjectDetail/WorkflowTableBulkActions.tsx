@@ -15,7 +15,15 @@ import { useWorkflowTaskRowSelection } from '@/presentation/features/crmProjectD
 import { validateWorkflowTaskStatusChange } from '@/presentation/features/crmProjectDetail/workflowTaskDocumentsValidation';
 import { formatWorkflowStatus } from '@/presentation/features/crmProjectDetail/crmProjectDetailFormatters';
 import { workflowTaskAssignedNotifyPromptFromTask } from '@/presentation/features/crmProjectDetail/workflowTaskCustomerNotify';
+import { getWorkflowTaskAssigneeOptions } from '@/presentation/features/crmProjectDetail/workflowTaskAssigneeOptions';
+import { normalizeWorkflowTaskAssigneeIdForSave } from '@/presentation/features/crmAssignment/buildWorkflowTaskAssigneeOptions';
 import { useProjectDetailShell } from '@/presentation/features/crmProjectDetail/ProjectDetailShellContext';
+import {
+  useAssignmentIdentityCatalog,
+  useAssignmentIdentityState,
+} from '@/presentation/providers/AssignmentIdentityProvider';
+import { useBuildCoreDashboardContext } from '@/presentation/providers/BuildCoreDashboardProvider';
+import { BulkAssignMemberMenu } from '@/presentation/components/crmShared/BulkAssignMemberMenu';
 import shared from '@/presentation/components/crmShared/crmShared.module.css';
 import { WorkflowInlineMenu } from './WorkflowInlineMenu';
 import styles from './ProjectDetail.module.css';
@@ -101,8 +109,13 @@ function resolveSelectedTasks(
 /** Gmail-style bulk actions shown in the primary header when rows are selected. */
 export function WorkflowTableBulkActions(): ReactElement | null {
   const rowSelection = useWorkflowTaskRowSelection();
-  const { project, refreshWorkflowTasks, refreshRollupIndexes, setToast } = useProjectDetailShell();
+  const { project, isApiSource, refreshWorkflowTasks, refreshRollupIndexes, setToast } =
+    useProjectDetailShell();
+  const dash = useBuildCoreDashboardContext();
+  const assignmentCatalog = useAssignmentIdentityCatalog();
+  const { isLoading: identitiesLoading } = useAssignmentIdentityState();
   const wf = content.projectDetail.workflow;
+  const tableCopy = content.crm.table;
   const bulkCopy = content.bulkSelection;
   const bulkDeleteCopy = content.bulkDelete;
   const [statusMenuOpen, setStatusMenuOpen] = useState(false);
@@ -121,14 +134,26 @@ export function WorkflowTableBulkActions(): ReactElement | null {
     [bulkActions, rowSelection]
   );
 
+  const assigneeOptions = useMemo(
+    () =>
+      getWorkflowTaskAssigneeOptions(
+        isApiSource,
+        assignmentCatalog,
+        project.summary.contact,
+        dash.user?.id
+      ),
+    [assignmentCatalog, dash.user?.id, isApiSource, project.summary.contact]
+  );
+
   const canChangeAnyStatus =
     bulkActions != null && (bulkActions.canApprove || bulkActions.canChangeNonDoneStatus);
+  const canAssign = bulkActions?.canAssign === true && selectedCount > 0 && !identitiesLoading;
   const canNotify = bulkActions?.canNotifyAssigned === true;
   const showChrome =
     rowSelection != null &&
     selectedCount > 0 &&
     bulkActions != null &&
-    (bulkActions.canDelete || canChangeAnyStatus || canNotify);
+    (bulkActions.canDelete || canChangeAnyStatus || canAssign || canNotify);
 
   const isStatusOptionDisabled = useCallback(
     (status: WorkflowTaskStatus) => {
@@ -191,6 +216,56 @@ export function WorkflowTableBulkActions(): ReactElement | null {
       }
     },
     [bulkActions, isStatusOptionDisabled, rowSelection, selectedTasks, setToast, wf]
+  );
+
+  const handleBulkAssign = useCallback(
+    async (assignedMemberId: string) => {
+      if (rowSelection == null || bulkActions == null || selectedTasks.length === 0) return;
+      if (!bulkActions.canAssign) return;
+      setBusy(true);
+      const normalized = normalizeWorkflowTaskAssigneeIdForSave(assignedMemberId);
+      let updatedCount = 0;
+      let skippedCount = 0;
+      let failedCount = 0;
+      try {
+        for (const task of selectedTasks) {
+          const current = task.assignedTo?.id ?? '';
+          const next = normalized ?? '';
+          if (next === current) {
+            skippedCount += 1;
+            continue;
+          }
+          try {
+            const updated = await updateCrmWorkflowTask(crmRepositories, {
+              taskId: task.id,
+              assignedMemberId: normalized,
+            });
+            if (updated == null) {
+              failedCount += 1;
+              continue;
+            }
+            await bulkActions.onTaskUpdated(updated);
+            updatedCount += 1;
+          } catch {
+            failedCount += 1;
+          }
+        }
+        if (failedCount > 0 && updatedCount === 0) {
+          setToast({ kind: 'error', message: tableCopy.multiAssignFailed });
+        } else if (updatedCount > 0) {
+          setToast({
+            kind: 'success',
+            message: tableCopy.multiAssignSuccess(updatedCount),
+          });
+          rowSelection.clearSelection();
+        } else if (skippedCount > 0) {
+          setToast({ kind: 'error', message: tableCopy.multiAssignFailed });
+        }
+      } finally {
+        setBusy(false);
+      }
+    },
+    [bulkActions, rowSelection, selectedTasks, setToast, tableCopy]
   );
 
   const handleConfirmDelete = useCallback(async () => {
@@ -341,6 +416,16 @@ export function WorkflowTableBulkActions(): ReactElement | null {
               ))}
             </WorkflowInlineMenu>
           </span>
+        ) : null}
+        {canAssign ? (
+          <BulkAssignMemberMenu
+            busy={busy}
+            title={tableCopy.multiAssign}
+            options={assigneeOptions}
+            onAssign={(assignedMemberId) => {
+              void handleBulkAssign(assignedMemberId);
+            }}
+          />
         ) : null}
         {canNotify ? (
           <button

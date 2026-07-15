@@ -6074,8 +6074,8 @@
   z-index: 2;
   flex-shrink: 0;
   border-radius: 0;
-  /* Match task rows: section inset + indented row padding */
-  padding-inline: calc(1.125rem + var(--theme-workflow-unified-inset, 0.3125rem)) 0;
+  /* Align with stage section inset; select lives in the grid, not as header padding. */
+  padding-inline: var(--theme-workflow-unified-inset, 0.3125rem) 0;
   padding-bottom: 0;
   background: #ffffff;
   color: #64748b;
@@ -6341,11 +6341,12 @@
 .stageGroup_unifiedTableSection .stageGroupTable .tableRow,
 .stageGroup_unifiedTableSection .stageGroupTable .paymentDraftRow,
 .stageGroup_unifiedTableSection .stageGroupTable .paymentDraftBlock .paymentDraftRow {
-  padding-inline: 1.125rem 0;
+  /* Select is its own 1.125rem grid track — do not pad again or it opens a dead column. */
+  padding-inline: 0;
 }
 
 .stageGroup_unifiedTableSection .stageGroupTable .tableHeader {
-  padding-inline: 1.125rem 0;
+  padding-inline: 0;
 }
 
 .stageGroupStackDesktopCardsLayout {
@@ -9040,6 +9041,21 @@
   display: block;
   width: 0.9375rem;
   height: 0.9375rem;
+}
+
+.subprojectsMobileBulkToolbar {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+  flex-wrap: wrap;
+}
+
+.subprojectsMobileBulkCount {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--color-text-muted, #64748b);
+  white-space: nowrap;
 }
 
 @media (max-width: 767px) {

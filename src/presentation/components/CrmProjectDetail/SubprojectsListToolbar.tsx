@@ -1,11 +1,8 @@
 'use client';
 
-import type { ReactElement } from 'react';
-import type { BulkSelectionToolbarAction } from '@/presentation/components/BulkSelection';
-import { BulkSelectionToolbar } from '@/presentation/components/BulkSelection';
-import bulkSelectionStyles from '@/presentation/components/BulkSelection/BulkSelection.module.css';
+import type { ReactElement, ReactNode } from 'react';
+import { CloseIcon } from '@/platform/icons/buildCoreDashboardShellIcons';
 import { CrmProjectsFilterMenu } from '@/presentation/components/CrmProjects/CrmProjectsFilterMenu';
-import { SelectItemsIcon } from '@/platform/icons/buildCoreDashboardShellIcons';
 import type { CrmProjectsListFilters } from '@/presentation/features/crmProjects/crmProjectsPipelineViewModel';
 import type { RadiusFilterState } from '@/presentation/features/filters/radiusFilterModel';
 import { DetailPanelHeaderButton } from './DetailPanelHeaderButton';
@@ -26,22 +23,18 @@ export type SubprojectsListToolbarProps = {
   readonly newSubprojectTitle: string;
   readonly newSubprojectAriaLabel: string;
   readonly onCreateOpen: () => void;
-  readonly canUseBulkActions: boolean;
-  readonly selectLabel: string;
-  readonly onEnterSelectionMode: () => void;
   readonly listFilters: CrmProjectsListFilters;
   readonly onListFiltersChange: (filters: CrmProjectsListFilters) => void;
   readonly radiusFilter: RadiusFilterState;
   readonly onRadiusFilterChange: (filter: RadiusFilterState) => void;
-  readonly selectionMode?: boolean;
-  readonly selectedCount?: number;
+  /** Mobile: show bulk chrome when rows are selected. */
+  readonly showMobileBulkToolbar?: boolean;
   readonly selectedCountLabel?: string;
   readonly bulkToolbarAriaLabel?: string;
   readonly bulkCancelLabel?: string;
-  readonly onExitSelectionMode?: () => void;
-  readonly bulkActions?: readonly BulkSelectionToolbarAction[];
-  readonly bulkActionsLayout?: 'inline' | 'menu';
-  readonly bulkActionsMenuAriaLabel?: string;
+  readonly onClearSelection?: () => void;
+  readonly mobileBulkActions?: ReactNode;
+  readonly trailingActions?: ReactNode;
 };
 
 export function SubprojectsListToolbar({
@@ -58,45 +51,43 @@ export function SubprojectsListToolbar({
   newSubprojectTitle,
   newSubprojectAriaLabel,
   onCreateOpen,
-  canUseBulkActions,
-  selectLabel,
-  onEnterSelectionMode,
   listFilters,
   onListFiltersChange,
   radiusFilter,
   onRadiusFilterChange,
-  selectionMode = false,
-  selectedCount = 0,
+  showMobileBulkToolbar = false,
   selectedCountLabel = '',
   bulkToolbarAriaLabel = '',
   bulkCancelLabel = '',
-  onExitSelectionMode,
-  bulkActions = [],
-  bulkActionsLayout = 'inline',
-  bulkActionsMenuAriaLabel,
+  onClearSelection,
+  mobileBulkActions = null,
+  trailingActions = null,
 }: SubprojectsListToolbarProps): ReactElement {
-  if (selectionMode && canUseBulkActions) {
+  if (showMobileBulkToolbar) {
     return (
-      <BulkSelectionToolbar
-        variant="header"
-        className={
-          isMobileLayout ? bulkSelectionStyles.bulkSelectionToolbar_headerStacked : undefined
-        }
-        selectedCount={selectedCount}
-        selectedCountLabel={selectedCountLabel}
-        ariaLabel={bulkToolbarAriaLabel}
-        cancelLabel={bulkCancelLabel}
-        onCancel={onExitSelectionMode ?? (() => undefined)}
-        actions={bulkActions}
-        actionsLayout={bulkActionsLayout}
-        actionsMenuAriaLabel={bulkActionsMenuAriaLabel ?? bulkToolbarAriaLabel}
-      />
+      <div
+        className={styles.subprojectsMobileBulkToolbar}
+        role="toolbar"
+        aria-label={bulkToolbarAriaLabel}
+      >
+        <span className={styles.subprojectsMobileBulkCount}>{selectedCountLabel}</span>
+        {mobileBulkActions}
+        <button
+          type="button"
+          className={styles.workflowBulkActionBtn}
+          aria-label={bulkCancelLabel}
+          title={bulkCancelLabel}
+          onClick={onClearSelection}
+        >
+          <CloseIcon className={styles.workflowBulkActionGlyph} />
+        </button>
+      </div>
     );
   }
 
   return (
     <>
-      {expanded ? (
+      {expanded && isMobileLayout ? (
         <CrmProjectsFilterMenu
           filters={listFilters}
           onChange={onListFiltersChange}
@@ -115,22 +106,14 @@ export function SubprojectsListToolbar({
           className={styles.subprojectsSearch}
         />
       ) : null}
-      <DetailPanelSectionRefresh
-        sectionLabel={sectionLabel}
-        onRefresh={onRefresh}
-        onError={onRefreshError}
-      />
-      {canUseBulkActions ? (
-        <button
-          type="button"
-          className={styles.subprojectsSelectBtn}
-          title={selectLabel}
-          aria-label={selectLabel}
-          onClick={onEnterSelectionMode}
-        >
-          <SelectItemsIcon className={styles.subprojectsSelectBtnIcon} />
-        </button>
+      {expanded && isMobileLayout ? (
+        <DetailPanelSectionRefresh
+          sectionLabel={sectionLabel}
+          onRefresh={onRefresh}
+          onError={onRefreshError}
+        />
       ) : null}
+      {trailingActions}
       {canManage ? (
         <DetailPanelHeaderButton
           variant="add"

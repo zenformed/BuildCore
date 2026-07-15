@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, type ReactElement } from 'react';
+import { useMemo, type ReactElement, type ReactNode } from 'react';
 import type { CrmProjectSummary } from '@/domain/crm';
 import type { CrmProjectPaymentTasksIndex } from '@/domain/crm/projectPaymentValue';
 import type { CrmProjectWorkflowProgressInputIndex } from '@/domain/crm/projectWorkflowProgressInput';
@@ -9,6 +9,7 @@ import { buildCrmProjectsDashboardRowModels } from '@/presentation/features/crmP
 import { useDashboardSubprojectExpansion } from '@/presentation/features/crmProjects/useDashboardSubprojectExpansion';
 import type { BulkSelectionBindings } from '@/presentation/features/bulkSelection/BulkSelectionBindings';
 import { BulkSelectCheckbox } from '@/presentation/components/BulkSelection';
+import { WorkflowTableStatusRefresh } from '@/presentation/components/CrmProjectDetail/WorkflowTableStatusRefresh';
 import { CrmProjectTableRow } from './CrmProjectTableRow';
 import styles from './CrmProjects.module.css';
 
@@ -55,6 +56,16 @@ export type CrmProjectsTableProps = {
   parentById?: ReadonlyMap<string, CrmProjectSummary>;
   /** Project-detail subprojects use calm progress blue; dashboard keeps success green. */
   progressTone?: 'success' | 'progress';
+  /**
+   * Always-on Gmail-style chrome: select | unlabeled primary (filter/refresh/bulk) | Contact…
+   * Hides the project/subproject column header label.
+   */
+  readonly inlineSelectionChrome?: boolean;
+  readonly leadingFilter?: ReactNode;
+  readonly onRefresh?: () => Promise<void>;
+  readonly onRefreshError?: (message: string) => void;
+  /** Shown in the primary header instead of refresh when rows are selected. */
+  readonly bulkHeaderActions?: ReactNode;
 };
 
 export function CrmProjectsTable({
@@ -90,6 +101,11 @@ export function CrmProjectsTable({
   showParentProjectColumn = false,
   parentById,
   progressTone = 'success',
+  inlineSelectionChrome = false,
+  leadingFilter = null,
+  onRefresh,
+  onRefreshError,
+  bulkHeaderActions = null,
 }: CrmProjectsTableProps): ReactElement {
   const displayRoots = useMemo(
     () => (enableSubprojectExpansion ? (rootRows ?? []) : (rows ?? [])),
@@ -108,9 +124,12 @@ export function CrmProjectsTable({
   const showTable = displayRoots.length > 0 || isLoading;
   const tableCopy = content.crm.table;
   const valueLabels = tableCopy.columns;
+  const showSelectColumn = bulkSelection?.mode === true;
+  const showInlineChrome = inlineSelectionChrome;
   const tableInnerClass = [
     isMemberRole ? `${styles.tableInner} ${styles.tableInnerMember}` : styles.tableInner,
-    bulkSelection?.mode ? styles.tableInnerWithBulkSelection : '',
+    showSelectColumn ? styles.tableInnerWithBulkSelection : '',
+    showInlineChrome ? styles.tableInnerWithInlineSelection : '',
     showParentProjectColumn ? styles.tableInnerWithParentColumn : '',
   ]
     .filter(Boolean)
@@ -154,7 +173,7 @@ export function CrmProjectsTable({
         <div className={tableInnerClass}>
           <div className={styles.tableGridShell}>
             <div className={styles.gridHeader} role="row">
-              {bulkSelection?.mode ? (
+              {showSelectColumn && bulkSelection != null ? (
                 <span role="columnheader" className={styles.gridHeaderBulkSelect}>
                   <BulkSelectCheckbox
                     checked={bulkSelection.allVisibleSelected}
@@ -166,7 +185,25 @@ export function CrmProjectsTable({
                   />
                 </span>
               ) : null}
-              <span role="columnheader">{projectHeader}</span>
+              {showInlineChrome ? (
+                <span
+                  role="columnheader"
+                  className={styles.gridHeaderPrimary}
+                  aria-label={bulkHeaderActions != null ? undefined : projectHeader}
+                >
+                  {leadingFilter}
+                  {bulkHeaderActions != null ? (
+                    bulkHeaderActions
+                  ) : onRefresh != null ? (
+                    <WorkflowTableStatusRefresh
+                      onRefresh={onRefresh}
+                      onError={onRefreshError}
+                    />
+                  ) : null}
+                </span>
+              ) : (
+                <span role="columnheader">{projectHeader}</span>
+              )}
               {showParentProjectColumn ? (
                 <span role="columnheader">{content.crm.panel.listView.parentProjectColumn}</span>
               ) : null}
