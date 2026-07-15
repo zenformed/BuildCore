@@ -3,7 +3,12 @@
 import type { ReactElement } from 'react';
 import { useCallback, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import type { CrmProjectDetail, CrmWorkflowTask, PipelineStageSlug } from '@/domain/crm';
+import {
+  isPaymentWorkflowTask,
+  type CrmProjectDetail,
+  type CrmWorkflowTask,
+  type PipelineStageSlug,
+} from '@/domain/crm';
 import { markCrmProjectStageCompleteManual } from '@/application/use-cases/crm/markCrmProjectStageCompleteManual';
 import { markCrmProjectEmptyStagesCompleteBatch } from '@/application/use-cases/crm/markCrmProjectEmptyStagesCompleteBatch';
 import { clearCrmProjectStageManualCompletion } from '@/application/use-cases/crm/clearCrmProjectStageManualCompletion';
@@ -15,6 +20,7 @@ import { ConfirmModal } from '@/presentation/components/ConfirmModal';
 import confirmModalStyles from '@/presentation/components/ConfirmModal/ConfirmModal.module.css';
 import { countDocumentsByTaskId } from '@/presentation/features/crmProjectDetail/workflowDocumentCounts';
 import {
+  buildCrmAssigneeFilterOptionsFromTasks,
   filterWorkflowTasksByListFilters,
   filterWorkflowTasksBySearch,
 } from '@/presentation/features/crmProjectDetail/projectSectionSearchModel';
@@ -122,6 +128,14 @@ export function WorkflowTasksTable({
   const isNarrowingResults = isSearching || filtersActive;
   const stageFilterSlugs = filters.stageSlugs;
   const stageFilterActive = stageFilterSlugs.length > 0;
+  const assigneeFilterOptions = useMemo(
+    () =>
+      buildCrmAssigneeFilterOptionsFromTasks(
+        project.workflowTasks.filter((task) => !isPaymentWorkflowTask(task)),
+        content.projectDetail.edit.assigneeUnassigned
+      ),
+    [project.workflowTasks]
+  );
 
   const filteredTasks = useMemo(() => {
     const byFilters = filterWorkflowTasksByListFilters(
@@ -312,6 +326,8 @@ export function WorkflowTasksTable({
       stageScopeMode={resolvePipelineStageScopeForProject({
         parentProjectId: project.summary.parentProjectId,
       })}
+      sections={['stage', 'priority', 'status', 'assigned', 'documentsRequired']}
+      assigneeFilterOptions={assigneeFilterOptions}
     />
   );
   const tableFilterCaret = (
@@ -321,6 +337,8 @@ export function WorkflowTasksTable({
       stageScopeMode={resolvePipelineStageScopeForProject({
         parentProjectId: project.summary.parentProjectId,
       })}
+      sections={['stage', 'priority', 'status', 'assigned', 'documentsRequired']}
+      assigneeFilterOptions={assigneeFilterOptions}
       triggerVariant="caret"
       menuAlign="start"
     />

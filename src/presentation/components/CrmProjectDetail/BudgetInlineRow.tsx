@@ -18,10 +18,12 @@ import {
   formatCostDateDisplay,
 } from '@/presentation/features/crmProjectDetail/budgetCostDate';
 import { useProjectDetailShell } from '@/presentation/features/crmProjectDetail/ProjectDetailShellContext';
+import { useBudgetEntryRowSelection } from '@/presentation/features/crmProjectDetail/budgetEntryRowSelectionContext';
 import { projectSupportsSendAttachment } from '@/presentation/features/communications/sendAttachmentEligibility';
 import { useAssignmentIdentityCatalog } from '@/presentation/providers/AssignmentIdentityProvider';
 import { useBuildCoreProjectSectionAccess } from '@/presentation/providers/BuildCoreProjectSectionAccessProvider';
 import { useBudgetEntryDocumentActions } from '@/presentation/features/crmProjectDetail/useBudgetEntryDocumentActions';
+import { BulkSelectCheckbox } from '@/presentation/components/BulkSelection/BulkSelectCheckbox';
 import { WorkflowDocumentFileIcon } from './WorkflowDocumentFileIcon';
 import { BudgetRowActionsMenu } from './BudgetRowActionsMenu';
 import { WorkflowInlineMenu } from './WorkflowInlineMenu';
@@ -203,7 +205,17 @@ export function BudgetInlineRow({
       : wf.documentsNone;
   const showDocumentsIcon = hasDocuments || entry.documentsRequired;
 
-  const rowClass = `${styles.tableRow} ${styles.budgetGrid} ${styles.workflowInlineRow}`;
+  const rowSelection = useBudgetEntryRowSelection();
+  const showRowSelect = variant === 'table' && rowSelection != null;
+  const isSelected = showRowSelect && rowSelection.selectedIds.has(entry.id);
+  const rowClass = [
+    styles.tableRow,
+    styles.budgetGrid,
+    styles.workflowInlineRow,
+    isSelected ? styles.tableRow_selected : '',
+  ]
+    .filter(Boolean)
+    .join(' ');
 
   const remainingClass =
     remainingCents > 0
@@ -581,7 +593,23 @@ export function BudgetInlineRow({
   }
 
   return (
-    <div className={rowClass} role="row" aria-busy={saving}>
+    <div
+      className={rowClass}
+      role="row"
+      aria-busy={saving}
+      aria-selected={showRowSelect ? isSelected : undefined}
+    >
+      {showRowSelect ? (
+        <span className={styles.workflowSelectCell} role="cell">
+          <BulkSelectCheckbox
+            checked={isSelected}
+            ariaLabel={rowSelection.selectItemAriaLabel(entry.itemName)}
+            onChange={() => rowSelection.onToggle(entry.id)}
+          />
+        </span>
+      ) : (
+        <span className={styles.workflowSelectCell} aria-hidden />
+      )}
       <span className={styles.taskTitleCell}>
         {editingName ? (
           <input

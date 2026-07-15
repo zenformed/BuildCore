@@ -28,16 +28,25 @@ export function buildMixedPipelineStageFilterGroups(input: {
   ];
 }
 
+/** Sentinel id for “Unassigned” in assignee list filters. */
+export const CRM_LIST_FILTER_UNASSIGNED_ASSIGNEE_ID = '__unassigned__';
+
+export type CrmDocumentsRequiredFilterValue = 'yes' | 'no';
+
 export type CrmProjectsListFilters = {
   readonly stageSlugs: readonly PipelineStageSlug[];
   readonly priorities: readonly CrmPriority[];
   readonly workflowTaskStatuses: readonly WorkflowTaskStatus[];
+  readonly assignedMemberIds: readonly string[];
+  readonly documentsRequired: readonly CrmDocumentsRequiredFilterValue[];
 };
 
 export const EMPTY_CRM_PROJECTS_LIST_FILTERS: CrmProjectsListFilters = {
   stageSlugs: [],
   priorities: [],
   workflowTaskStatuses: [],
+  assignedMemberIds: [],
+  documentsRequired: [],
 };
 
 export type CrmProjectListFilterContext = {
@@ -59,7 +68,9 @@ export function isCrmProjectsListFiltersActive(filters: CrmProjectsListFilters):
   return (
     filters.stageSlugs.length > 0 ||
     filters.priorities.length > 0 ||
-    filters.workflowTaskStatuses.length > 0
+    filters.workflowTaskStatuses.length > 0 ||
+    filters.assignedMemberIds.length > 0 ||
+    filters.documentsRequired.length > 0
   );
 }
 

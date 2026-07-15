@@ -149,23 +149,34 @@
 
 .budgetGrid {
   grid-template-columns:
-    minmax(8rem, 1.15fr) 9.75rem 5rem 5rem 5.25rem 7.5rem 5.75rem 3.25rem;
+    1.125rem minmax(8rem, 1.15fr) 9.75rem 5rem 5rem 5.25rem 7.5rem 5.75rem 3.25rem;
 }
 
-.budgetTableHeader > *:nth-child(1),
-.budgetTableHeader > *:nth-child(2) {
+.budgetTableHeader > .workflowPrimaryHeader,
+.budgetTableHeader > *:nth-child(3) {
   text-align: left;
 }
 
-.budgetTableHeader > *:nth-child(3),
 .budgetTableHeader > *:nth-child(4),
 .budgetTableHeader > *:nth-child(5),
-.budgetTableHeader > *:nth-child(6) {
+.budgetTableHeader > *:nth-child(6),
+.budgetTableHeader > *:nth-child(7) {
   text-align: right;
 }
 
-.budgetTableHeader > *:nth-child(7):not(.taskDeleteHeader) {
+.budgetTableHeader > *:nth-child(8):not(.taskDeleteHeader) {
   text-align: center;
+}
+
+.budgetTableHeader > .workflowSelectHeader,
+.budgetGrid.tableRow > .workflowSelectCell,
+.budgetDraftRow > .workflowSelectCell,
+.budgetTotalsRow > .workflowSelectCell {
+  margin-inline-end: 0;
+}
+
+.budgetTableHeader > .workflowPrimaryHeader {
+  gap: 0.15rem;
 }
 
 .budgetMutedCell {
@@ -208,14 +219,14 @@
   min-width: 0;
 }
 
-.budgetTotalsRow > :first-child,
-.budgetTotalsRow > :nth-child(2) {
+.budgetTotalsRow > :nth-child(2),
+.budgetTotalsRow > :nth-child(3) {
   justify-content: flex-start;
 }
 
-.budgetTotalsRow > :nth-child(3),
 .budgetTotalsRow > :nth-child(4),
-.budgetTotalsRow > :nth-child(5) {
+.budgetTotalsRow > :nth-child(5),
+.budgetTotalsRow > :nth-child(6) {
   justify-content: flex-end;
 }
 
@@ -4256,15 +4267,15 @@
 }
 
 /* Budget rows: override workflow center alignment on data cells */
-.budgetGrid.tableRow > :nth-child(2),
+.budgetGrid.tableRow > :nth-child(3),
 .budgetGrid .budgetCategoryCell {
   justify-content: flex-start;
 }
 
-.budgetGrid.tableRow > :nth-child(3),
 .budgetGrid.tableRow > :nth-child(4),
 .budgetGrid.tableRow > :nth-child(5),
 .budgetGrid.tableRow > :nth-child(6),
+.budgetGrid.tableRow > :nth-child(7),
 .budgetGrid .budgetAmountCell,
 .budgetGrid .budgetRemainingCell,
 .budgetGrid .budgetCostDateCell {
@@ -5318,7 +5329,7 @@
   --payments-grid-gap: 0.625rem;
   /* Select | Primary (status+task) | Notes | Docs | Assigned | Amount | Due | Invoiced | Paid | Actions */
   --payments-grid-columns:
-    1.125rem minmax(0, 1.65fr) minmax(2.75rem, 0.4fr) 6rem 4.25rem 4.75rem 7.25rem 7.25rem 7.25rem
+    1.5rem minmax(0, 1.65fr) minmax(2.75rem, 0.4fr) 6rem 4.25rem 4.75rem 7.25rem 7.25rem 7.25rem
     3.25rem;
   --payments-table-min-width: 52rem;
   display: grid;
@@ -5331,7 +5342,7 @@
 /* Select | Primary | Custom1 | Notes | Docs | Assigned | Amount | Due | Invoiced | Paid | Actions */
 .paymentsTableGridShellCustom1 {
   --payments-grid-columns:
-    1.125rem minmax(0, 1.4fr) minmax(8.75rem, 11rem) minmax(2.75rem, 0.4fr) 6rem 4.25rem 4.75rem 7.25rem
+    1.5rem minmax(0, 1.4fr) minmax(8.75rem, 11rem) minmax(2.75rem, 0.4fr) 6rem 4.25rem 4.75rem 7.25rem
     7.25rem 7.25rem 3.25rem;
   --payments-table-min-width: 60rem;
 }
@@ -5339,7 +5350,7 @@
 /* Select | Primary | Custom1 | Custom2 | Notes | Docs | Assigned | Amount | Due | Invoiced | Paid | Actions */
 .paymentsTableGridShellCustom2 {
   --payments-grid-columns:
-    1.125rem minmax(0, 1.25fr) minmax(8.75rem, 11rem) minmax(8.75rem, 11rem) minmax(2.75rem, 0.4fr) 6rem 4.25rem
+    1.5rem minmax(0, 1.25fr) minmax(8.75rem, 11rem) minmax(8.75rem, 11rem) minmax(2.75rem, 0.4fr) 6rem 4.25rem
     4.75rem 7.25rem 7.25rem 7.25rem 3.25rem;
   --payments-table-min-width: 68rem;
 }
@@ -5412,6 +5423,13 @@
 .paymentsTableGridShell .tableRow > .workflowSelectCell {
   text-align: center;
   justify-content: center;
+  /* Don't use the ops caret-tightening margin — it collapses select→dot gap here. */
+  margin-inline-end: 0;
+}
+
+.paymentsTableGridShell .tableHeader > .workflowPrimaryHeader,
+.paymentsTableGridShell .tableRow > .workflowPrimaryCell {
+  padding-inline-start: 0.125rem;
 }
 
 .paymentsTableGridShell .tableHeader > .workflowPrimaryHeader,

@@ -6,11 +6,21 @@ import type { CrmProjectDetail, CrmWorkflowTask } from '@/domain/crm';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
 import { countDocumentsByTaskId } from '@/presentation/features/crmProjectDetail/workflowDocumentCounts';
 import { listPaymentMilestones } from '@/presentation/features/crmProjectDetail/workflowTaskGroups';
-import { filterPaymentMilestonesBySearch } from '@/presentation/features/crmProjectDetail/projectSectionSearchModel';
+import {
+  buildCrmAssigneeFilterOptionsFromTasks,
+  filterPaymentMilestonesByListFilters,
+  filterPaymentMilestonesBySearch,
+} from '@/presentation/features/crmProjectDetail/projectSectionSearchModel';
 import { WorkflowTaskRowSelectionProvider } from '@/presentation/features/crmProjectDetail/workflowTaskRowSelectionContext';
+import {
+  EMPTY_CRM_PROJECTS_LIST_FILTERS,
+  isCrmProjectsListFiltersActive,
+  type CrmProjectsListFilters,
+} from '@/presentation/features/crmProjects/crmProjectsPipelineViewModel';
 import { useBuildCoreProjectSectionAccess } from '@/presentation/providers/BuildCoreProjectSectionAccessProvider';
 import { useDashboardMobileLayout } from '@/presentation/features/crmProjects/useDashboardMobileLayout';
 import { useProjectDetailShell } from '@/presentation/features/crmProjectDetail/ProjectDetailShellContext';
+import { CrmProjectsFilterMenu } from '@/presentation/components/CrmProjects/CrmProjectsFilterMenu';
 import { DetailPanelHeader } from './DetailPanelHeader';
 import { DetailPanelHeaderActions } from './DetailPanelHeaderActions';
 import { DetailPanelHeaderButton } from './DetailPanelHeaderButton';
@@ -52,10 +62,20 @@ export function PaymentsRail({
     [project.workflowTasks]
   );
   const [searchQuery, setSearchQuery] = useState('');
-  const filteredMilestones = useMemo(
-    () => filterPaymentMilestonesBySearch(milestones, searchQuery),
-    [milestones, searchQuery]
+  const [filters, setFilters] = useState<CrmProjectsListFilters>(EMPTY_CRM_PROJECTS_LIST_FILTERS);
+  const filtersActive = isCrmProjectsListFiltersActive(filters);
+  const assigneeFilterOptions = useMemo(
+    () =>
+      buildCrmAssigneeFilterOptionsFromTasks(
+        milestones,
+        content.projectDetail.edit.assigneeUnassigned
+      ),
+    [milestones]
   );
+  const filteredMilestones = useMemo(() => {
+    const byFilters = filterPaymentMilestonesByListFilters(milestones, filters);
+    return filterPaymentMilestonesBySearch(byFilters, searchQuery);
+  }, [filters, milestones, searchQuery]);
   const docCounts = countDocumentsByTaskId(project.documents);
   const payCols = content.projectDetail.payments.columns;
   const isMobileLayout = useDashboardMobileLayout();
@@ -93,7 +113,23 @@ export function PaymentsRail({
     ]
   );
 
-  const showTable = canView && (filteredMilestones.length > 0 || permissions.canViewAllStages);
+  const showTable =
+    canView &&
+    (milestones.length > 0 ||
+      permissions.canViewAllStages ||
+      filtersActive ||
+      searchQuery.trim().length > 0);
+
+  const statusFilterCaret = (
+    <CrmProjectsFilterMenu
+      filters={filters}
+      onChange={setFilters}
+      sections={['status', 'assigned', 'documentsRequired']}
+      assigneeFilterOptions={assigneeFilterOptions}
+      triggerVariant="caret"
+      menuAlign="start"
+    />
+  );
 
   const searchInput = (
     <DetailPanelSectionSearch
@@ -134,6 +170,7 @@ export function PaymentsRail({
                 {payments.title}
               </h3>
             </div>
+            <div className={styles.detailPanelHeaderRowActions}>{statusFilterCaret}</div>
           </div>
           <div className={styles.detailPanelHeaderRow}>
             <div className={styles.detailPanelSearchWrap}>{searchInput}</div>
@@ -159,6 +196,9 @@ export function PaymentsRail({
         <p className={styles.subtitle}>{payments.empty}</p>
       ) : isMobileLayout ? (
         <div className={styles.paymentsMobileList}>
+          {filteredMilestones.length === 0 ? (
+            <p className={styles.subtitle}>{payments.empty}</p>
+          ) : null}
           {filteredMilestones.map((task) => (
             <WorkflowTaskInlineRow
               key={task.id}
@@ -193,6 +233,7 @@ export function PaymentsRail({
                   showAmount
                   enablePaymentCustomColumns
                   showStatusRefresh
+                  leadingFilter={statusFilterCaret}
                   rowClassName={styles.paymentsTableHeader}
                   gridClassName=""
                   trailingHeaders={
@@ -202,6 +243,14 @@ export function PaymentsRail({
                     </>
                   }
                 />
+                {filteredMilestones.length === 0 ? (
+                  <div className={`${styles.tableRow} ${styles.workflowGrid}`} role="row">
+                    <span className={styles.workflowSelectCell} aria-hidden />
+                    <span className={styles.workflowPrimaryCell}>
+                      <span className={styles.workflowStageEmptyMessage}>{payments.empty}</span>
+                    </span>
+                  </div>
+                ) : null}
                 {filteredMilestones.map((task) => (
                   <WorkflowTaskInlineRow
                     key={task.id}

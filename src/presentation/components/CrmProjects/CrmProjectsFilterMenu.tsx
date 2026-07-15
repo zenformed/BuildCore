@@ -19,9 +19,10 @@ import { WorkflowInlineMenu } from '@/presentation/components/CrmProjectDetail/W
 import {
   buildMixedPipelineStageFilterGroups,
   EMPTY_CRM_PROJECTS_LIST_FILTERS,
-  isCrmProjectsListFiltersActive,
+  type CrmDocumentsRequiredFilterValue,
   type CrmProjectsListFilters,
 } from '@/presentation/features/crmProjects/crmProjectsPipelineViewModel';
+import type { CrmAssigneeFilterOption } from '@/presentation/features/crmProjectDetail/projectSectionSearchModel';
 import { RadiusFilterSection } from '@/presentation/components/filters/RadiusFilterSection';
 import {
   EMPTY_RADIUS_FILTER,
@@ -34,6 +35,18 @@ const PRIORITY_LABELS: Record<CrmPriorityFilterValue, string> = {
   normal: 'Normal',
   urgent: 'Urgent',
 };
+
+const DOCUMENTS_REQUIRED_FILTER_VALUES: readonly CrmDocumentsRequiredFilterValue[] = [
+  'yes',
+  'no',
+];
+
+export type CrmProjectsFilterMenuSection =
+  | 'stage'
+  | 'priority'
+  | 'status'
+  | 'assigned'
+  | 'documentsRequired';
 
 export type CrmProjectsFilterMenuTriggerVariant = 'filter' | 'caret';
 
@@ -49,7 +62,17 @@ export type CrmProjectsFilterMenuProps = {
   readonly menuAlign?: 'start' | 'end';
   readonly className?: string;
   readonly triggerClassName?: string;
+  /** Which filter groups to show. Defaults to stage + priority + status. */
+  readonly sections?: readonly CrmProjectsFilterMenuSection[];
+  /** Required when `sections` includes `assigned`. */
+  readonly assigneeFilterOptions?: readonly CrmAssigneeFilterOption[];
 };
+
+const DEFAULT_FILTER_SECTIONS: readonly CrmProjectsFilterMenuSection[] = [
+  'stage',
+  'priority',
+  'status',
+];
 
 export function CrmProjectsFilterMenu({
   filters,
@@ -61,11 +84,19 @@ export function CrmProjectsFilterMenu({
   menuAlign = 'end',
   className,
   triggerClassName,
+  sections = DEFAULT_FILTER_SECTIONS,
+  assigneeFilterOptions = [],
 }: CrmProjectsFilterMenuProps): ReactElement {
   const copy = content.crm.filters;
   const stageColumnCopy = content.workflowSettings.stageColumns;
   const { getCatalog } = useBuildCorePipelineStages();
+  const showStage = sections.includes('stage');
+  const showPriority = sections.includes('priority');
+  const showStatus = sections.includes('status');
+  const showAssigned = sections.includes('assigned');
+  const showDocumentsRequired = sections.includes('documentsRequired');
   const stageFilterGroups = useMemo(() => {
+    if (!showStage) return [];
     if (stageScopeMode === 'mixed') {
       return buildMixedPipelineStageFilterGroups({
         projectStages: getCatalog('project'),
@@ -87,12 +118,23 @@ export function CrmProjectsFilterMenu({
         stages: getCatalog(stageScopeMode),
       },
     ];
-  }, [getCatalog, stageColumnCopy.projectStages, stageColumnCopy.subprojectStages, stageScopeMode, copy.stageLabel]);
+  }, [
+    copy.stageLabel,
+    getCatalog,
+    showStage,
+    stageColumnCopy.projectStages,
+    stageColumnCopy.subprojectStages,
+    stageScopeMode,
+  ]);
   const [open, setOpen] = useState(false);
   const anchorRef = useRef<HTMLDivElement>(null);
   const showRadiusFilter = radiusFilter != null && onRadiusFilterChange != null;
   const active =
-    isCrmProjectsListFiltersActive(filters) ||
+    (showStage && filters.stageSlugs.length > 0) ||
+    (showPriority && filters.priorities.length > 0) ||
+    (showStatus && filters.workflowTaskStatuses.length > 0) ||
+    (showAssigned && filters.assignedMemberIds.length > 0) ||
+    (showDocumentsRequired && filters.documentsRequired.length > 0) ||
     (showRadiusFilter && isRadiusFilterActive(radiusFilter));
   const isCaret = triggerVariant === 'caret';
 
@@ -116,6 +158,23 @@ export function CrmProjectsFilterMenu({
       : [...filters.workflowTaskStatuses, status];
     onChange({ ...filters, workflowTaskStatuses: next });
   };
+
+  const toggleAssignedMember = (memberId: string): void => {
+    const next = filters.assignedMemberIds.includes(memberId)
+      ? filters.assignedMemberIds.filter((value) => value !== memberId)
+      : [...filters.assignedMemberIds, memberId];
+    onChange({ ...filters, assignedMemberIds: next });
+  };
+
+  const toggleDocumentsRequired = (value: CrmDocumentsRequiredFilterValue): void => {
+    const next = filters.documentsRequired.includes(value)
+      ? filters.documentsRequired.filter((entry) => entry !== value)
+      : [...filters.documentsRequired, value];
+    onChange({ ...filters, documentsRequired: next });
+  };
+
+  const documentsRequiredLabel = (value: CrmDocumentsRequiredFilterValue): string =>
+    value === 'yes' ? copy.documentsRequiredYes : copy.documentsRequiredNo;
 
   const triggerBtnClass = [
     isCaret ? styles.projectsFilterCaretBtn : styles.projectsFilterBtn,
@@ -175,36 +234,74 @@ export function CrmProjectsFilterMenu({
               </div>
             </fieldset>
           ))}
-          <fieldset className={styles.projectsFilterFieldset}>
-            <legend className={styles.projectsFilterLegend}>{copy.priorityLabel}</legend>
-            <div className={styles.projectsFilterOptions}>
-              {CRM_PRIORITY_FILTER_VALUES.map((priority) => (
-                <label key={priority} className={styles.projectsFilterOption}>
-                  <input
-                    type="checkbox"
-                    checked={filters.priorities.includes(priority)}
-                    onChange={() => togglePriority(priority)}
-                  />
-                  <span>{PRIORITY_LABELS[priority]}</span>
-                </label>
-              ))}
-            </div>
-          </fieldset>
-          <fieldset className={styles.projectsFilterFieldset}>
-            <legend className={styles.projectsFilterLegend}>{copy.statusLabel}</legend>
-            <div className={styles.projectsFilterOptions}>
-              {WORKFLOW_TASK_STATUSES.map((status) => (
-                <label key={status} className={styles.projectsFilterOption}>
-                  <input
-                    type="checkbox"
-                    checked={filters.workflowTaskStatuses.includes(status)}
-                    onChange={() => toggleWorkflowTaskStatus(status)}
-                  />
-                  <span>{WORKFLOW_TASK_STATUS_LABELS[status]}</span>
-                </label>
-              ))}
-            </div>
-          </fieldset>
+          {showPriority ? (
+            <fieldset className={styles.projectsFilterFieldset}>
+              <legend className={styles.projectsFilterLegend}>{copy.priorityLabel}</legend>
+              <div className={styles.projectsFilterOptions}>
+                {CRM_PRIORITY_FILTER_VALUES.map((priority) => (
+                  <label key={priority} className={styles.projectsFilterOption}>
+                    <input
+                      type="checkbox"
+                      checked={filters.priorities.includes(priority)}
+                      onChange={() => togglePriority(priority)}
+                    />
+                    <span>{PRIORITY_LABELS[priority]}</span>
+                  </label>
+                ))}
+              </div>
+            </fieldset>
+          ) : null}
+          {showStatus ? (
+            <fieldset className={styles.projectsFilterFieldset}>
+              <legend className={styles.projectsFilterLegend}>{copy.statusLabel}</legend>
+              <div className={styles.projectsFilterOptions}>
+                {WORKFLOW_TASK_STATUSES.map((status) => (
+                  <label key={status} className={styles.projectsFilterOption}>
+                    <input
+                      type="checkbox"
+                      checked={filters.workflowTaskStatuses.includes(status)}
+                      onChange={() => toggleWorkflowTaskStatus(status)}
+                    />
+                    <span>{WORKFLOW_TASK_STATUS_LABELS[status]}</span>
+                  </label>
+                ))}
+              </div>
+            </fieldset>
+          ) : null}
+          {showAssigned && assigneeFilterOptions.length > 0 ? (
+            <fieldset className={styles.projectsFilterFieldset}>
+              <legend className={styles.projectsFilterLegend}>{copy.assignedLabel}</legend>
+              <div className={styles.projectsFilterOptions}>
+                {assigneeFilterOptions.map((option) => (
+                  <label key={option.id} className={styles.projectsFilterOption}>
+                    <input
+                      type="checkbox"
+                      checked={filters.assignedMemberIds.includes(option.id)}
+                      onChange={() => toggleAssignedMember(option.id)}
+                    />
+                    <span>{option.label}</span>
+                  </label>
+                ))}
+              </div>
+            </fieldset>
+          ) : null}
+          {showDocumentsRequired ? (
+            <fieldset className={styles.projectsFilterFieldset}>
+              <legend className={styles.projectsFilterLegend}>{copy.documentsRequiredLabel}</legend>
+              <div className={styles.projectsFilterOptions}>
+                {DOCUMENTS_REQUIRED_FILTER_VALUES.map((value) => (
+                  <label key={value} className={styles.projectsFilterOption}>
+                    <input
+                      type="checkbox"
+                      checked={filters.documentsRequired.includes(value)}
+                      onChange={() => toggleDocumentsRequired(value)}
+                    />
+                    <span>{documentsRequiredLabel(value)}</span>
+                  </label>
+                ))}
+              </div>
+            </fieldset>
+          ) : null}
           {showRadiusFilter ? (
             <RadiusFilterSection filter={radiusFilter} onChange={onRadiusFilterChange} />
           ) : null}

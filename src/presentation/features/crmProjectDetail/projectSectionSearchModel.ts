@@ -7,7 +7,11 @@ import type {
 import { isPaymentWorkflowTask } from '@/domain/crm';
 import type { PipelineStage } from '@/domain/crm/pipelineStage';
 import { projectMatchesPriorityListFilter } from '@/domain/crm/projectPriorityToggle';
-import type { CrmProjectsListFilters } from '@/presentation/features/crmProjects/crmProjectsPipelineViewModel';
+import {
+  CRM_LIST_FILTER_UNASSIGNED_ASSIGNEE_ID,
+  type CrmDocumentsRequiredFilterValue,
+  type CrmProjectsListFilters,
+} from '@/presentation/features/crmProjects/crmProjectsPipelineViewModel';
 import { formatBudgetCategory } from './budgetCategoryLabels';
 import {
   formatDocumentKind,
@@ -31,13 +35,51 @@ function joinHaystack(values: readonly (string | null | undefined)[]): string {
   return values.filter((value): value is string => typeof value === 'string' && value.length > 0).join(' ');
 }
 
+export type CrmAssigneeFilterOption = {
+  readonly id: string;
+  readonly label: string;
+};
+
+export function buildCrmAssigneeFilterOptionsFromTasks(
+  tasks: readonly Pick<CrmWorkflowTask, 'assignedTo'>[],
+  unassignedLabel: string
+): readonly CrmAssigneeFilterOption[] {
+  const byId = new Map<string, string>();
+  for (const task of tasks) {
+    if (task.assignedTo == null) continue;
+    byId.set(task.assignedTo.id, task.assignedTo.displayName);
+  }
+  return [
+    { id: CRM_LIST_FILTER_UNASSIGNED_ASSIGNEE_ID, label: unassignedLabel },
+    ...[...byId.entries()]
+      .sort((a, b) => a[1].localeCompare(b[1]))
+      .map(([id, label]) => ({ id, label })),
+  ];
+}
+
+export function workflowTaskMatchesAssigneeAndDocsFilters(
+  task: Pick<CrmWorkflowTask, 'assignedTo' | 'documentsRequired'>,
+  filters: Pick<CrmProjectsListFilters, 'assignedMemberIds' | 'documentsRequired'>
+): boolean {
+  if (filters.assignedMemberIds.length > 0) {
+    const id = task.assignedTo?.id ?? CRM_LIST_FILTER_UNASSIGNED_ASSIGNEE_ID;
+    if (!filters.assignedMemberIds.includes(id)) return false;
+  }
+  if (filters.documentsRequired.length > 0) {
+    const value: CrmDocumentsRequiredFilterValue = task.documentsRequired ? 'yes' : 'no';
+    if (!filters.documentsRequired.includes(value)) return false;
+  }
+  return true;
+}
+
 /** Same stage / priority / status rules as dashboard project list, applied to one project's tasks. */
 export function filterWorkflowTasksByListFilters(
   tasks: readonly CrmWorkflowTask[],
   filters: CrmProjectsListFilters,
   projectPriority: CrmPriority
 ): CrmWorkflowTask[] {
-  const { stageSlugs, priorities, workflowTaskStatuses } = filters;
+  const { stageSlugs, priorities, workflowTaskStatuses, assignedMemberIds, documentsRequired } =
+    filters;
 
   if (priorities.length > 0 && !projectMatchesPriorityListFilter(projectPriority, priorities)) {
     return [];
@@ -45,7 +87,9 @@ export function filterWorkflowTasksByListFilters(
 
   if (
     stageSlugs.length === 0 &&
-    workflowTaskStatuses.length === 0
+    workflowTaskStatuses.length === 0 &&
+    assignedMemberIds.length === 0 &&
+    documentsRequired.length === 0
   ) {
     return tasks.filter((task) => !isPaymentWorkflowTask(task));
   }
@@ -61,7 +105,31 @@ export function filterWorkflowTasksByListFilters(
     ) {
       return false;
     }
-    return true;
+    return workflowTaskMatchesAssigneeAndDocsFilters(task, filters);
+  });
+}
+
+export function filterPaymentMilestonesByListFilters(
+  milestones: readonly CrmWorkflowTask[],
+  filters: CrmProjectsListFilters
+): CrmWorkflowTask[] {
+  const { workflowTaskStatuses, assignedMemberIds, documentsRequired } = filters;
+  if (
+    workflowTaskStatuses.length === 0 &&
+    assignedMemberIds.length === 0 &&
+    documentsRequired.length === 0
+  ) {
+    return [...milestones];
+  }
+
+  return milestones.filter((task) => {
+    if (
+      workflowTaskStatuses.length > 0 &&
+      !workflowTaskStatuses.includes(task.status)
+    ) {
+      return false;
+    }
+    return workflowTaskMatchesAssigneeAndDocsFilters(task, filters);
   });
 }
 

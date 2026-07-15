@@ -3,20 +3,26 @@
 import type { ReactElement } from 'react';
 import { useMemo, useState } from 'react';
 import type { CrmBudgetEntry } from '@/domain/crm';
+import { deleteCrmBudgetEntry } from '@/application/use-cases/crm/deleteCrmBudgetEntry';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
 import { ConfirmModal } from '@/presentation/components/ConfirmModal';
 import {
-  filterBudgetEntries,
-  type BudgetTableFilter,
+  EMPTY_BUDGET_LIST_FILTERS,
+  filterBudgetEntriesByListFilters,
+  isBudgetListFiltersActive,
+  type BudgetListFilters,
 } from '@/presentation/features/crmProjectDetail/budgetFilterModel';
 import { filterBudgetEntriesBySearch } from '@/presentation/features/crmProjectDetail/projectSectionSearchModel';
 import { useBudgetEntryActions } from '@/presentation/features/crmProjectDetail/useBudgetEntryActions';
+import { BudgetEntryRowSelectionProvider } from '@/presentation/features/crmProjectDetail/budgetEntryRowSelectionContext';
 import { useProjectDetailShell } from '@/presentation/features/crmProjectDetail/ProjectDetailShellContext';
 import { useBuildCoreProjectSectionAccess } from '@/presentation/providers/BuildCoreProjectSectionAccessProvider';
 import { formatCentsAsUsd } from '@/presentation/features/crmProjects/crmProjectFormatters';
+import { crmRepositories } from '@/shared/di/container';
 import { BudgetCategoryFilterMenu } from './BudgetCategoryFilterMenu';
 import { BudgetDraftRow } from './BudgetDraftRow';
 import { BudgetInlineRow } from './BudgetInlineRow';
+import { BudgetTableHeaderRow } from './BudgetTableHeaderRow';
 import { DetailPanelHeader } from './DetailPanelHeader';
 import { DetailPanelHeaderActions } from './DetailPanelHeaderActions';
 import { DetailPanelHeaderButton } from './DetailPanelHeaderButton';
@@ -43,11 +49,12 @@ export function BudgetTable({ onError }: BudgetTableProps): ReactElement {
   const canCreate = isReady && permissions.canCreate;
   const canDelete = isReady && permissions.canDelete;
   const b = content.projectDetail.budget;
-  const [filter, setFilter] = useState<BudgetTableFilter>('all');
+  const [filters, setFilters] = useState<BudgetListFilters>(EMPTY_BUDGET_LIST_FILTERS);
   const [searchQuery, setSearchQuery] = useState('');
   const [draftOpen, setDraftOpen] = useState(false);
   const [deleteConfirmEntry, setDeleteConfirmEntry] = useState<CrmBudgetEntry | null>(null);
   const isMobileLayout = useDashboardMobileLayout();
+  const filtersActive = isBudgetListFiltersActive(filters);
 
   const { createEntry, updateEntry, deleteEntry } = useBudgetEntryActions({
     projectId: project.summary.id,
@@ -59,9 +66,39 @@ export function BudgetTable({ onError }: BudgetTableProps): ReactElement {
   });
 
   const filtered = useMemo(() => {
-    const byCategory = filterBudgetEntries(project.budget.entries, filter);
-    return filterBudgetEntriesBySearch(byCategory, searchQuery);
-  }, [filter, project.budget.entries, searchQuery]);
+    const byFilters = filterBudgetEntriesByListFilters(project.budget.entries, filters);
+    return filterBudgetEntriesBySearch(byFilters, searchQuery);
+  }, [filters, project.budget.entries, searchQuery]);
+
+  const visibleEntryIds = useMemo(() => filtered.map((entry) => entry.id), [filtered]);
+
+  const selectionBulkActions = useMemo(
+    () => ({
+      canDelete,
+      onDeleteEntries: async (entryIds: readonly string[]) => {
+        let deletedCount = 0;
+        let failedCount = 0;
+        for (const entryId of entryIds) {
+          try {
+            const deleted = await deleteCrmBudgetEntry(crmRepositories, {
+              entryId,
+              projectSlug: project.summary.slug,
+            });
+            if (!deleted) {
+              failedCount += 1;
+              continue;
+            }
+            handleBudgetEntryDeleted(entryId);
+            deletedCount += 1;
+          } catch {
+            failedCount += 1;
+          }
+        }
+        return { deletedCount, failedCount };
+      },
+    }),
+    [canDelete, handleBudgetEntryDeleted, project.summary.slug]
+  );
 
   const totals = useMemo(() => {
     let cost = 0;
@@ -73,8 +110,13 @@ export function BudgetTable({ onError }: BudgetTableProps): ReactElement {
     return { cost, budget, diff: budget - cost };
   }, [filtered]);
 
-  const showMobileList = filtered.length > 0 || draftOpen;
-  const showDesktopTable = filtered.length > 0 || draftOpen || canCreate;
+  const showMobileList = filtered.length > 0 || draftOpen || filtersActive || searchQuery.trim().length > 0;
+  const showDesktopTable =
+    filtered.length > 0 ||
+    draftOpen ||
+    canCreate ||
+    filtersActive ||
+    searchQuery.trim().length > 0;
   const showTable = isMobileLayout ? showMobileList : showDesktopTable;
 
   const searchInput = (
@@ -104,7 +146,16 @@ export function BudgetTable({ onError }: BudgetTableProps): ReactElement {
   ) : null;
 
   const categoryFilterMenu = (
-    <BudgetCategoryFilterMenu filter={filter} onChange={setFilter} />
+    <BudgetCategoryFilterMenu filters={filters} onChange={setFilters} />
+  );
+
+  const filterCaret = (
+    <BudgetCategoryFilterMenu
+      filters={filters}
+      onChange={setFilters}
+      triggerVariant="caret"
+      menuAlign="start"
+    />
   );
 
   const handleConfirmDelete = async () => {
@@ -148,11 +199,7 @@ export function BudgetTable({ onError }: BudgetTableProps): ReactElement {
         </div>
       ) : (
         <DetailPanelHeader title={b.tableTitle} titleId="budget-table-heading">
-          <DetailPanelHeaderActions>
-            {categoryFilterMenu}
-            {searchInput}
-            {refreshButton}
-          </DetailPanelHeaderActions>
+          <DetailPanelHeaderActions>{searchInput}</DetailPanelHeaderActions>
         </DetailPanelHeader>
       )}
 
@@ -160,6 +207,7 @@ export function BudgetTable({ onError }: BudgetTableProps): ReactElement {
         <p className={styles.subtitle}>{b.empty}</p>
       ) : isMobileLayout ? (
         <div className={styles.budgetMobileList}>
+          {filtered.length === 0 ? <p className={styles.subtitle}>{b.empty}</p> : null}
           {filtered.map((entry) => (
             <BudgetInlineRow
               key={entry.id}
@@ -209,69 +257,71 @@ export function BudgetTable({ onError }: BudgetTableProps): ReactElement {
           </article>
         </div>
       ) : (
-        <div className={styles.detailPanelTableCard}>
-          <div className={styles.paymentsList}>
-            <div
-              className={`${styles.tableHeader} ${styles.budgetGrid} ${styles.budgetTableHeader}`}
-              role="row"
-            >
-              <span role="columnheader">{b.columns.itemName}</span>
-              <span role="columnheader">{b.columns.category}</span>
-              <span role="columnheader">{b.columns.cost}</span>
-              <span role="columnheader">{b.columns.budget}</span>
-              <span role="columnheader">{b.columns.remaining}</span>
-              <span role="columnheader">{b.columns.costDate}</span>
-              <span role="columnheader">{b.columns.documents}</span>
-              <span role="columnheader" className={styles.taskDeleteHeader} aria-hidden />
-            </div>
-            {draftOpen ? (
-              <BudgetDraftRow onSave={handleDraftSave} onCancel={() => setDraftOpen(false)} />
-            ) : canCreate ? (
-              <button
-                type="button"
-                className={`${styles.budgetAddPromptRow} ${styles.budgetGrid} ${styles.budgetDraftSwap}`}
-                onClick={() => setDraftOpen(true)}
-              >
-                <span className={styles.budgetAddPromptLabel}>
-                  <span className={styles.budgetAddPromptPlusBtn} aria-hidden>
-                    +
+        <BudgetEntryRowSelectionProvider
+          visibleEntryIds={visibleEntryIds}
+          bulkActions={selectionBulkActions}
+        >
+          <div className={styles.detailPanelTableCard}>
+            <div className={styles.paymentsList}>
+              <BudgetTableHeaderRow leadingFilter={filterCaret} />
+              {draftOpen ? (
+                <BudgetDraftRow onSave={handleDraftSave} onCancel={() => setDraftOpen(false)} />
+              ) : canCreate ? (
+                <button
+                  type="button"
+                  className={`${styles.budgetAddPromptRow} ${styles.budgetGrid} ${styles.budgetDraftSwap}`}
+                  onClick={() => setDraftOpen(true)}
+                >
+                  <span className={styles.budgetAddPromptLabel}>
+                    <span className={styles.budgetAddPromptPlusBtn} aria-hidden>
+                      +
+                    </span>
+                    {b.addItemRowLabel}
                   </span>
-                  {b.addItemRowLabel}
-                </span>
-              </button>
-            ) : null}
-            {filtered.map((entry) => (
-              <BudgetInlineRow
-                key={entry.id}
-                projectSlug={project.summary.slug}
-                entry={entry}
-                entryDocuments={project.documents.filter((doc) => doc.budgetEntryId === entry.id)}
-                onSave={updateEntry}
-                onError={onError}
-                onRequestDelete={canDelete ? () => setDeleteConfirmEntry(entry) : undefined}
-              />
-            ))}
-            <div
-              className={`${styles.tableRow} ${styles.budgetGrid} ${styles.budgetTotalsRow}`}
-              role="row"
-            >
-              <span className={styles.budgetTotalsLabel}>{b.totalsLabel}</span>
-              <span aria-hidden />
-              <span className={styles.budgetTotalsValue}>{formatCentsAsUsd(totals.cost)}</span>
-              <span className={styles.budgetTotalsValue}>{formatCentsAsUsd(totals.budget)}</span>
-              <span
-                className={`${styles.budgetTotalsValue} ${
-                  totals.diff >= 0 ? styles.budgetRemainingUnder : styles.budgetRemainingOver
-                }`}
+                </button>
+              ) : null}
+              {filtered.length === 0 && !draftOpen ? (
+                <div className={`${styles.tableRow} ${styles.budgetGrid}`} role="row">
+                  <span className={styles.workflowSelectCell} aria-hidden />
+                  <span className={styles.taskTitleCell}>
+                    <span className={styles.workflowStageEmptyMessage}>{b.empty}</span>
+                  </span>
+                </div>
+              ) : null}
+              {filtered.map((entry) => (
+                <BudgetInlineRow
+                  key={entry.id}
+                  projectSlug={project.summary.slug}
+                  entry={entry}
+                  entryDocuments={project.documents.filter((doc) => doc.budgetEntryId === entry.id)}
+                  onSave={updateEntry}
+                  onError={onError}
+                  onRequestDelete={canDelete ? () => setDeleteConfirmEntry(entry) : undefined}
+                />
+              ))}
+              <div
+                className={`${styles.tableRow} ${styles.budgetGrid} ${styles.budgetTotalsRow}`}
+                role="row"
               >
-                {formatCentsAsUsd(totals.diff)}
-              </span>
-              <span aria-hidden />
-              <span aria-hidden />
-              <span className={styles.taskDeleteCell} aria-hidden />
+                <span className={styles.workflowSelectCell} aria-hidden />
+                <span className={styles.budgetTotalsLabel}>{b.totalsLabel}</span>
+                <span aria-hidden />
+                <span className={styles.budgetTotalsValue}>{formatCentsAsUsd(totals.cost)}</span>
+                <span className={styles.budgetTotalsValue}>{formatCentsAsUsd(totals.budget)}</span>
+                <span
+                  className={`${styles.budgetTotalsValue} ${
+                    totals.diff >= 0 ? styles.budgetRemainingUnder : styles.budgetRemainingOver
+                  }`}
+                >
+                  {formatCentsAsUsd(totals.diff)}
+                </span>
+                <span aria-hidden />
+                <span aria-hidden />
+                <span className={styles.taskDeleteCell} aria-hidden />
+              </div>
             </div>
           </div>
-        </div>
+        </BudgetEntryRowSelectionProvider>
       )}
 
       <ConfirmModal

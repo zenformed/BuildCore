@@ -357,6 +357,10 @@ export const buildCoreDashboardContent = {
       stageLabel: 'Stage',
       priorityLabel: 'Priority',
       statusLabel: 'Status',
+      assignedLabel: 'Assigned',
+      documentsRequiredLabel: 'Documents required',
+      documentsRequiredYes: 'Yes',
+      documentsRequiredNo: 'No',
       radius: {
         sectionLabel: 'Radius',
         zipCodeLabel: 'ZIP Code',
@@ -1380,7 +1384,7 @@ export const buildCoreDashboardContent = {
       documentsAdd: 'Add',
       documentsUploadAfterSave: 'Save the budget item to upload documents',
       empty: 'No budget items yet.',
-      filterAriaLabel: 'Filter budget by category',
+      filterAriaLabel: 'Filter budget',
       itemNameRequired: 'Item name is required.',
       itemNamePlaceholder: 'Item name',
       saveItem: 'Save budget item',
@@ -1391,6 +1395,9 @@ export const buildCoreDashboardContent = {
       deleteItemCancelLabel: 'Cancel',
       deleteItemSuccess: 'Budget item deleted.',
       deleteItemFailed: 'Could not delete budget item.',
+      bulkDeleteItemLabel: 'budget item',
+      bulkDeleteConfirmTitle: (count: number): string =>
+        `Delete ${count} budget item${count === 1 ? '' : 's'}?`,
       totalsLabel: 'Totals',
       columns: {
         itemName: 'Item Name',
