@@ -1039,6 +1039,30 @@ export const buildCoreDashboardContent = {
       archiveTaskCancelLabel: 'Cancel',
       archiveTaskSuccess: 'Task deleted.',
       archiveTaskFailed: 'Could not delete task.',
+      bulkDeleteItemLabel: 'task',
+      bulkChangeStatus: 'Change status',
+      bulkArchiveConfirmTitle: (count: number): string =>
+        count === 1 ? 'Delete selected task?' : `Delete ${count} selected tasks?`,
+      bulkStatusChangeSuccess: (count: number): string =>
+        count === 1 ? 'Updated status for 1 task.' : `Updated status for ${count} tasks.`,
+      bulkStatusChangePartial: (updatedCount: number, skippedCount: number): string =>
+        `Updated ${updatedCount} task${updatedCount === 1 ? '' : 's'}; ${skippedCount} skipped.`,
+      bulkStatusChangeFailed: 'Could not update status for selected tasks.',
+      bulkNotifyAssigned: 'Notify assigned',
+      bulkNotifyConfirmTitle: (count: number): string =>
+        count === 1
+          ? 'Notify the assignee for the selected task?'
+          : `Notify assignees for ${count} selected tasks?`,
+      bulkNotifyConfirmLabel: 'Send emails',
+      bulkNotifySuccess: (count: number): string =>
+        count === 1
+          ? 'Sent notification for 1 task.'
+          : `Sent notifications for ${count} tasks.`,
+      bulkNotifyPartial: (sentCount: number, skippedCount: number): string =>
+        `Sent ${sentCount}; skipped ${skippedCount} (unassigned or no email).`,
+      bulkNotifyFailed: 'Could not send notifications for selected tasks.',
+      bulkNotifyNoneEligible:
+        'None of the selected tasks have an assignee with an email address.',
       documentsNone: '—',
       documentsReview: 'Review files',
       documentsMarkRequired: 'Required',

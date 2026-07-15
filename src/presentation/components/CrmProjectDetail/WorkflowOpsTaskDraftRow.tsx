@@ -83,18 +83,16 @@ function WorkflowOpsTaskDraftStatusField({
   compact = false,
   layout = 'combined',
 }: WorkflowOpsTaskDraftFieldsProps & {
-  readonly layout?: 'combined' | 'dot' | 'label';
+  readonly layout?: 'combined' | 'dot';
 }): ReactElement {
   const wrapClass =
     layout === 'dot'
-      ? styles.workflowStatusIconCell
-      : layout === 'label'
-        ? `${styles.inlineCellWrap} ${styles.workflowStatusLabelCell}`
-        : compact
-          ? styles.workflowTaskCompactControl
-          : mobile
-            ? styles.workflowTaskMobileCardControl
-            : `${styles.inlineCellWrap} ${styles.workflowStatusCell}`;
+      ? styles.workflowPrimaryStatusLead
+      : compact
+        ? styles.workflowTaskCompactControl
+        : mobile
+          ? styles.workflowTaskMobileCardControl
+          : `${styles.inlineCellWrap} ${styles.workflowStatusCell}`;
   const useDotStatus = !mobile;
   const openMenu = () => {
     onAssigneeMenuOpenChange(false);
@@ -103,18 +101,42 @@ function WorkflowOpsTaskDraftStatusField({
 
   if (layout === 'dot') {
     return (
-      <div className={wrapClass}>
+      <div className={wrapClass} ref={statusRef}>
         <button
           type="button"
           className={styles.workflowStatusIconBtn}
           disabled={saving}
           aria-expanded={statusMenuOpen}
+          aria-label={formatWorkflowStatus(form.status)}
           onClick={openMenu}
         >
           <span className={`${styles.statusDotIndicator} ${statusBadgeClass(form.status)}`}>
             <span className={styles.statusDot} aria-hidden />
           </span>
         </button>
+        <WorkflowInlineMenu
+          open={statusMenuOpen}
+          onClose={() => onStatusMenuOpenChange(false)}
+          anchorRef={statusRef}
+        >
+          {WORKFLOW_TASK_STATUSES.map((status) => (
+            <button
+              key={status}
+              type="button"
+              className={styles.inlineMenuPillOption}
+              disabled={saving || status === form.status}
+              onClick={() => {
+                updateField('status', status);
+                onStatusMenuOpenChange(false);
+              }}
+            >
+              <span className={`${styles.statusDotIndicator} ${statusBadgeClass(status)}`}>
+                <span className={styles.statusDot} aria-hidden />
+                <span className={styles.statusDotText}>{formatWorkflowStatus(status)}</span>
+              </span>
+            </button>
+          ))}
+        </WorkflowInlineMenu>
       </div>
     );
   }
@@ -128,9 +150,7 @@ function WorkflowOpsTaskDraftStatusField({
         aria-expanded={statusMenuOpen}
         onClick={openMenu}
       >
-        {layout === 'label' ? (
-          <span className={styles.statusDotText}>{formatWorkflowStatus(form.status)}</span>
-        ) : useDotStatus ? (
+        {useDotStatus ? (
           <span className={`${styles.statusDotIndicator} ${statusBadgeClass(form.status)}`}>
             <span className={styles.statusDot} aria-hidden />
             <span className={styles.statusDotText}>{formatWorkflowStatus(form.status)}</span>
@@ -631,21 +651,22 @@ export function WorkflowOpsTaskDraftRow({
         {showRowSelect ? (
           <span className={styles.workflowSelectCell} aria-hidden />
         ) : null}
-        <WorkflowOpsTaskDraftStatusField {...fieldProps} layout="dot" />
-        <WorkflowOpsTaskDraftStatusField {...fieldProps} layout="label" />
-        <span className={styles.taskTitleCell}>
-          <input
-            className={styles.inlineFieldInput}
-            value={form.title}
-            disabled={saving}
-            placeholder={wf.fields.title}
-            onChange={(e) => updateField('title', e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') void handleSave();
-              if (e.key === 'Escape') onCancel();
-            }}
-            autoFocus
-          />
+        <span className={styles.workflowPrimaryCell}>
+          <WorkflowOpsTaskDraftStatusField {...fieldProps} layout="dot" />
+          <span className={styles.taskTitleCell}>
+            <input
+              className={styles.inlineFieldInput}
+              value={form.title}
+              disabled={saving}
+              placeholder={wf.fields.title}
+              onChange={(e) => updateField('title', e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') void handleSave();
+                if (e.key === 'Escape') onCancel();
+              }}
+              autoFocus
+            />
+          </span>
         </span>
         <span className={`${styles.workflowNotesCell} ${styles.workflowMetaCell}`} aria-hidden>
           <span className={styles.workflowNotesPreview}>—</span>

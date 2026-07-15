@@ -19,6 +19,7 @@ import {
   WorkflowTaskActionsColumnHeader,
 } from './EditableFieldLabelHeader';
 import { WorkflowTableStatusRefresh } from './WorkflowTableStatusRefresh';
+import { WorkflowTableBulkActions } from './WorkflowTableBulkActions';
 import { WorkflowTaskTableCustomColumnHeaders } from './WorkflowTaskTableCustomColumns';
 import { PaymentTableCustomColumnHeaders } from './PaymentTableCustomColumns';
 import styles from './ProjectDetail.module.css';
@@ -32,8 +33,10 @@ export type WorkflowTaskTableHeaderRowProps = {
   readonly trailingHeaders?: ReactNode;
   readonly rowClassName?: string;
   readonly gridClassName?: string;
-  /** Ops workflow: separate select | status-icon (refresh) | status-label columns. */
+  /** Ops workflow: select | unlabeled primary (status dot + task; refresh in that header). */
   readonly showStatusRefresh?: boolean;
+  /** Gmail-style filter caret shown between select and refresh/bulk actions. */
+  readonly leadingFilter?: ReactNode;
 };
 
 export function WorkflowTaskTableHeaderRow({
@@ -46,11 +49,21 @@ export function WorkflowTaskTableHeaderRow({
   rowClassName,
   gridClassName,
   showStatusRefresh = false,
+  leadingFilter = null,
 }: WorkflowTaskTableHeaderRowProps): ReactElement {
   const cols = content.projectDetail.workflow.columns;
   const rowSelection = useWorkflowTaskRowSelection();
   const { refreshWorkflowTasks, setToast } = useProjectDetailShell();
-  const showSplitStatusLeading = showStatusRefresh && !showAmount;
+  const showOpsLeading = showStatusRefresh && !showAmount;
+  const hasSelection = (rowSelection?.selectedCount ?? 0) > 0;
+  const bulk = rowSelection?.bulkActions;
+  const showBulkChrome =
+    hasSelection &&
+    bulk != null &&
+    (bulk.canDelete ||
+      bulk.canApprove ||
+      bulk.canChangeNonDoneStatus ||
+      bulk.canNotifyAssigned);
   const gridClass =
     gridClassName !== undefined
       ? gridClassName
@@ -78,21 +91,37 @@ export function WorkflowTaskTableHeaderRow({
           />
         </span>
       ) : null}
-      {showSplitStatusLeading ? (
-        <span role="columnheader" className={styles.workflowStatusIconHeader}>
-          <WorkflowTableStatusRefresh
-            onRefresh={refreshWorkflowTasks}
-            onError={(message) => setToast({ kind: 'error', message })}
-          />
+      {showOpsLeading ? (
+        <span
+          role="columnheader"
+          className={styles.workflowPrimaryHeader}
+          aria-label={showBulkChrome ? undefined : `${cols.task}, ${cols.status}`}
+        >
+          {leadingFilter}
+          {showBulkChrome ? (
+            <WorkflowTableBulkActions />
+          ) : (
+            <WorkflowTableStatusRefresh
+              onRefresh={refreshWorkflowTasks}
+              onError={(message) => setToast({ kind: 'error', message })}
+            />
+          )}
         </span>
-      ) : null}
-      <EditableFieldLabelHeader
-        fieldKey={WORKFLOW_TASK_STATUS_FIELD_KEY}
-        context={context}
-        align="start"
-        className={styles.workflowStatusLabelHeader}
-      />
-      <EditableFieldLabelHeader fieldKey={WORKFLOW_TASK_TASK_FIELD_KEY} context={context} align="start" />
+      ) : (
+        <>
+          <EditableFieldLabelHeader
+            fieldKey={WORKFLOW_TASK_STATUS_FIELD_KEY}
+            context={context}
+            align="start"
+            className={styles.workflowStatusLabelHeader}
+          />
+          <EditableFieldLabelHeader
+            fieldKey={WORKFLOW_TASK_TASK_FIELD_KEY}
+            context={context}
+            align="start"
+          />
+        </>
+      )}
       {enableCustomColumns ? <WorkflowTaskTableCustomColumnHeaders /> : null}
       {enablePaymentCustomColumns ? <PaymentTableCustomColumnHeaders /> : null}
       {showNotes ? (

@@ -7,20 +7,38 @@ import {
   type ReactElement,
   type ReactNode,
 } from 'react';
+import type { CrmWorkflowTask } from '@/domain/crm';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
 import type { BulkSelectionBindings } from '@/presentation/features/bulkSelection/BulkSelectionBindings';
 import { useBulkSelection } from '@/presentation/features/bulkSelection/useBulkSelection';
 
-export type WorkflowTaskRowSelectionContextValue = BulkSelectionBindings;
+export type WorkflowTaskRowSelectionBulkActions = {
+  readonly canDelete: boolean;
+  readonly canApprove: boolean;
+  readonly canChangeNonDoneStatus: boolean;
+  /** API + edit permission: notify-assigned is available for assigned tasks. */
+  readonly canNotifyAssigned: boolean;
+  readonly tasksById: ReadonlyMap<string, CrmWorkflowTask>;
+  readonly docCountByTaskId: ReadonlyMap<string, number>;
+  readonly onTaskUpdated: (task: CrmWorkflowTask) => Promise<void>;
+};
+
+export type WorkflowTaskRowSelectionContextValue = BulkSelectionBindings & {
+  readonly selectedCount: number;
+  readonly clearSelection: () => void;
+  readonly bulkActions: WorkflowTaskRowSelectionBulkActions | null;
+};
 
 const WorkflowTaskRowSelectionContext =
   createContext<WorkflowTaskRowSelectionContextValue | null>(null);
 
 export function WorkflowTaskRowSelectionProvider({
   visibleTaskIds,
+  bulkActions = null,
   children,
 }: {
   readonly visibleTaskIds: readonly string[];
+  readonly bulkActions?: WorkflowTaskRowSelectionBulkActions | null;
   readonly children: ReactNode;
 }): ReactElement {
   const bulk = useBulkSelection<string>();
@@ -30,6 +48,8 @@ export function WorkflowTaskRowSelectionProvider({
     () => ({
       mode: true,
       selectedIds: bulk.selectedIds,
+      selectedCount: bulk.selectedCount,
+      clearSelection: bulk.clearSelection,
       onToggle: bulk.toggle,
       allVisibleSelected: bulk.allVisibleSelected(visibleTaskIds),
       someVisibleSelected: bulk.someVisibleSelected(visibleTaskIds),
@@ -42,8 +62,9 @@ export function WorkflowTaskRowSelectionProvider({
       },
       selectItemAriaLabel: bulkCopy.selectItemAriaLabel,
       selectAllAriaLabel: bulkCopy.selectAllAriaLabel,
+      bulkActions,
     }),
-    [bulk, bulkCopy.selectAllAriaLabel, bulkCopy.selectItemAriaLabel, visibleTaskIds]
+    [bulk, bulkActions, bulkCopy.selectAllAriaLabel, bulkCopy.selectItemAriaLabel, visibleTaskIds]
   );
 
   return (

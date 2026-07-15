@@ -120,6 +120,8 @@ export function WorkflowTasksTable({
   const isSearching = searchQuery.trim().length > 0;
   const filtersActive = isCrmProjectsListFiltersActive(filters);
   const isNarrowingResults = isSearching || filtersActive;
+  const stageFilterSlugs = filters.stageSlugs;
+  const stageFilterActive = stageFilterSlugs.length > 0;
 
   const filteredTasks = useMemo(() => {
     const byFilters = filterWorkflowTasksByListFilters(
@@ -134,13 +136,25 @@ export function WorkflowTasksTable({
     canViewAllStages: permissions.canViewAllStages,
   });
 
-  const groups = useMemo(
-    () =>
-      groupOpsWorkflowTasksByStage(filteredTasks, currentStage, catalog, {
-        includeEmptyStages: !isNarrowingResults && !hideEmptyStages,
-      }),
-    [catalog, currentStage, filteredTasks, hideEmptyStages, isNarrowingResults]
-  );
+  const groups = useMemo(() => {
+    // Stage filters should still show the selected stage shell(s) even with zero tasks,
+    // so table chrome (select + headers) stays available to clear/adjust the filter.
+    const includeEmptyStages =
+      stageFilterActive || (!isNarrowingResults && !hideEmptyStages);
+    const grouped = groupOpsWorkflowTasksByStage(filteredTasks, currentStage, catalog, {
+      includeEmptyStages,
+    });
+    if (!stageFilterActive) return grouped;
+    return grouped.filter((group) => stageFilterSlugs.includes(group.stageSlug));
+  }, [
+    catalog,
+    currentStage,
+    filteredTasks,
+    hideEmptyStages,
+    isNarrowingResults,
+    stageFilterActive,
+    stageFilterSlugs,
+  ]);
 
   const orderedGroups = groups;
   const totalTasks = countWorkflowTasksInGroups(groups);
@@ -300,6 +314,17 @@ export function WorkflowTasksTable({
       })}
     />
   );
+  const tableFilterCaret = (
+    <CrmProjectsFilterMenu
+      filters={filters}
+      onChange={setFilters}
+      stageScopeMode={resolvePipelineStageScopeForProject({
+        parentProjectId: project.summary.parentProjectId,
+      })}
+      triggerVariant="caret"
+      menuAlign="start"
+    />
+  );
 
   const viewToggleButton = !isMobileLayout ? (
     <WorkflowTasksViewToggleButton
@@ -334,6 +359,34 @@ export function WorkflowTasksTable({
   const visibleTaskIds = useMemo(
     () => displayGroups.flatMap((group) => group.tasks.map((task) => task.id)),
     [displayGroups]
+  );
+  const tasksById = useMemo(() => {
+    const map = new Map<string, (typeof filteredTasks)[number]>();
+    for (const task of filteredTasks) {
+      map.set(task.id, task);
+    }
+    return map;
+  }, [filteredTasks]);
+  const selectionBulkActions = useMemo(
+    () => ({
+      canDelete,
+      canApprove: permissions.canApprove,
+      canChangeNonDoneStatus: permissions.canView,
+      canNotifyAssigned: permissions.canEdit && isApiSource,
+      tasksById,
+      docCountByTaskId: docCounts,
+      onTaskUpdated,
+    }),
+    [
+      canDelete,
+      docCounts,
+      isApiSource,
+      onTaskUpdated,
+      permissions.canApprove,
+      permissions.canEdit,
+      permissions.canView,
+      tasksById,
+    ]
   );
 
   const stageGroupElements = displayGroups.map((group) => (
@@ -372,12 +425,16 @@ export function WorkflowTasksTable({
       stageGroupElements
     )
   ) : (
-    <WorkflowTaskRowSelectionProvider visibleTaskIds={visibleTaskIds}>
+    <WorkflowTaskRowSelectionProvider
+      visibleTaskIds={visibleTaskIds}
+      bulkActions={selectionBulkActions}
+    >
       {useUnifiedDesktopTable ? (
         <div className={styles.workflowUnifiedTable}>
           <WorkflowTasksTableColumnHeader
             showAmount={showUnifiedTableAmount}
             showStatusRefresh
+            leadingFilter={tableFilterCaret}
           />
           <div className={styles.workflowUnifiedTableBody}>{stageGroupElements}</div>
         </div>
@@ -420,7 +477,7 @@ export function WorkflowTasksTable({
           leading={batchCompleteLeading}
         >
           <DetailPanelHeaderActions>
-            {filterMenu}
+            {useUnifiedDesktopTable ? null : filterMenu}
             {viewToggleButton}
             {searchInput}
             {showPanelRefresh ? refreshButton : null}

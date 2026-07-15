@@ -14,7 +14,7 @@ import {
 } from '@/domain/crm/workflowTaskStatuses';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
 import { useBuildCorePipelineStages } from '@/presentation/providers/BuildCorePipelineStagesProvider';
-import { FilterIcon } from '@/platform/icons/buildCoreDashboardShellIcons';
+import { CaretDownIcon, FilterIcon } from '@/platform/icons/buildCoreDashboardShellIcons';
 import { WorkflowInlineMenu } from '@/presentation/components/CrmProjectDetail/WorkflowInlineMenu';
 import {
   buildMixedPipelineStageFilterGroups,
@@ -35,6 +35,8 @@ const PRIORITY_LABELS: Record<CrmPriorityFilterValue, string> = {
   urgent: 'Urgent',
 };
 
+export type CrmProjectsFilterMenuTriggerVariant = 'filter' | 'caret';
+
 export type CrmProjectsFilterMenuProps = {
   readonly filters: CrmProjectsListFilters;
   readonly onChange: (filters: CrmProjectsListFilters) => void;
@@ -42,6 +44,11 @@ export type CrmProjectsFilterMenuProps = {
   readonly stageScopeMode?: 'mixed' | PipelineStageScope;
   readonly radiusFilter?: RadiusFilterState;
   readonly onRadiusFilterChange?: (filter: RadiusFilterState) => void;
+  /** Default filter funnels icon; caret is Gmail-style compact trigger. */
+  readonly triggerVariant?: CrmProjectsFilterMenuTriggerVariant;
+  readonly menuAlign?: 'start' | 'end';
+  readonly className?: string;
+  readonly triggerClassName?: string;
 };
 
 export function CrmProjectsFilterMenu({
@@ -50,6 +57,10 @@ export function CrmProjectsFilterMenu({
   stageScopeMode = 'mixed',
   radiusFilter,
   onRadiusFilterChange,
+  triggerVariant = 'filter',
+  menuAlign = 'end',
+  className,
+  triggerClassName,
 }: CrmProjectsFilterMenuProps): ReactElement {
   const copy = content.crm.filters;
   const stageColumnCopy = content.workflowSettings.stageColumns;
@@ -83,6 +94,7 @@ export function CrmProjectsFilterMenu({
   const active =
     isCrmProjectsListFiltersActive(filters) ||
     (showRadiusFilter && isRadiusFilterActive(radiusFilter));
+  const isCaret = triggerVariant === 'caret';
 
   const toggleStage = (slug: PipelineStageSlug): void => {
     const next = filters.stageSlugs.includes(slug)
@@ -105,28 +117,43 @@ export function CrmProjectsFilterMenu({
     onChange({ ...filters, workflowTaskStatuses: next });
   };
 
+  const triggerBtnClass = [
+    isCaret ? styles.projectsFilterCaretBtn : styles.projectsFilterBtn,
+    active
+      ? isCaret
+        ? styles.projectsFilterCaretBtn_active
+        : styles.projectsFilterBtn_active
+      : '',
+    triggerClassName,
+  ]
+    .filter(Boolean)
+    .join(' ');
+
   return (
-    <div ref={anchorRef} className={styles.projectsFilterWrap}>
+    <div
+      ref={anchorRef}
+      className={[styles.projectsFilterWrap, className].filter(Boolean).join(' ')}
+    >
       <button
         type="button"
-        className={
-          active
-            ? `${styles.projectsFilterBtn} ${styles.projectsFilterBtn_active}`
-            : styles.projectsFilterBtn
-        }
+        className={triggerBtnClass}
         aria-expanded={open}
         aria-haspopup="dialog"
         aria-label={copy.menuAriaLabel}
         title={copy.openMenu}
         onClick={() => setOpen((isOpen) => !isOpen)}
       >
-        <FilterIcon className={styles.projectsFilterBtnIcon} />
+        {isCaret ? (
+          <CaretDownIcon className={styles.projectsFilterCaretIcon} />
+        ) : (
+          <FilterIcon className={styles.projectsFilterBtnIcon} />
+        )}
       </button>
       <WorkflowInlineMenu
         open={open}
         onClose={() => setOpen(false)}
         anchorRef={anchorRef}
-        align="end"
+        align={menuAlign}
         sizeToContent
         portalClassName={styles.projectsFilterMenuPortal}
       >

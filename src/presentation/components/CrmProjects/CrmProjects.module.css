@@ -211,6 +211,48 @@
   height: 0.9375rem;
 }
 
+.projectsFilterCaretBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 0.875rem;
+  height: 1.25rem;
+  padding: 0;
+  margin: 0;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  color: var(--color-text-muted, #64748b);
+  cursor: pointer;
+}
+
+.projectsFilterCaretBtn:hover:not(:disabled) {
+  color: var(--color-text, #0f172a);
+}
+
+.projectsFilterCaretBtn_active {
+  color: var(--color-primary, #2563eb);
+}
+
+.projectsFilterCaretIcon {
+  display: block;
+  width: 0.75rem;
+  height: 0.75rem;
+}
+
+:global([data-theme='dark']) .projectsFilterCaretBtn {
+  color: #94a3b8;
+}
+
+:global([data-theme='dark']) .projectsFilterCaretBtn:hover:not(:disabled) {
+  color: #f1f5f9;
+}
+
+:global([data-theme='dark']) .projectsFilterCaretBtn_active {
+  color: var(--color-primary, #60a5fa);
+}
+
 .projectsFilterMenuPortal {
   position: fixed;
   z-index: 10050;

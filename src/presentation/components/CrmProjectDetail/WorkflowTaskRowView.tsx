@@ -279,7 +279,64 @@ function WorkflowTaskRowStatusField({
       >
         {triggerContent}
       </button>
-      {layout !== 'dot' ? (
+      <WorkflowInlineMenu
+        open={model.statusMenuOpen}
+        onClose={() => model.setStatusMenuOpen(false)}
+        anchorRef={model.statusRef}
+      >
+        {WORKFLOW_TASK_STATUSES.map((status) => (
+          <button
+            key={status}
+            type="button"
+            className={styles.inlineMenuPillOption}
+            disabled={model.saving || status === model.task.status || model.isStatusDisabled(status)}
+            title={status === 'done' && !model.canApprove ? model.wf.statusDoneNotAllowed : undefined}
+            onClick={() => void model.saveStatus(status)}
+          >
+            {useDotStatus ? (
+              <span className={`${styles.statusDotIndicator} ${statusBadgeClass(status)}`}>
+                <span className={styles.statusDot} aria-hidden />
+                <span className={styles.statusDotText}>{formatWorkflowStatus(status)}</span>
+              </span>
+            ) : (
+              <span className={`${styles.statusPill} ${statusBadgeClass(status)}`}>
+                {formatWorkflowStatus(status)}
+              </span>
+            )}
+          </button>
+        ))}
+      </WorkflowInlineMenu>
+    </span>
+  );
+}
+
+function WorkflowTaskRowPrimaryField({
+  model,
+}: {
+  readonly model: WorkflowTaskInlineRowModel;
+}): ReactElement {
+  const statusLabel = formatWorkflowStatus(model.task.status);
+  const openStatusMenu = () => {
+    model.setDocumentsMenuOpen(false);
+    model.setAssigneeMenuOpen(false);
+    model.setStatusMenuOpen((open) => !open);
+  };
+
+  return (
+    <span className={styles.workflowPrimaryCell} role="cell">
+      <span className={styles.workflowPrimaryStatusLead} ref={model.statusRef}>
+        <button
+          type="button"
+          className={styles.workflowStatusIconBtn}
+          disabled={model.saving || !model.canChangeStatus}
+          aria-expanded={model.statusMenuOpen}
+          aria-label={statusLabel}
+          onClick={openStatusMenu}
+        >
+          <span className={`${styles.statusDotIndicator} ${statusBadgeClass(model.task.status)}`}>
+            <span className={styles.statusDot} aria-hidden />
+          </span>
+        </button>
         <WorkflowInlineMenu
           open={model.statusMenuOpen}
           onClose={() => model.setStatusMenuOpen(false)}
@@ -290,24 +347,23 @@ function WorkflowTaskRowStatusField({
               key={status}
               type="button"
               className={styles.inlineMenuPillOption}
-              disabled={model.saving || status === model.task.status || model.isStatusDisabled(status)}
-              title={status === 'done' && !model.canApprove ? model.wf.statusDoneNotAllowed : undefined}
+              disabled={
+                model.saving || status === model.task.status || model.isStatusDisabled(status)
+              }
+              title={
+                status === 'done' && !model.canApprove ? model.wf.statusDoneNotAllowed : undefined
+              }
               onClick={() => void model.saveStatus(status)}
             >
-              {useDotStatus ? (
-                <span className={`${styles.statusDotIndicator} ${statusBadgeClass(status)}`}>
-                  <span className={styles.statusDot} aria-hidden />
-                  <span className={styles.statusDotText}>{formatWorkflowStatus(status)}</span>
-                </span>
-              ) : (
-                <span className={`${styles.statusPill} ${statusBadgeClass(status)}`}>
-                  {formatWorkflowStatus(status)}
-                </span>
-              )}
+              <span className={`${styles.statusDotIndicator} ${statusBadgeClass(status)}`}>
+                <span className={styles.statusDot} aria-hidden />
+                <span className={styles.statusDotText}>{formatWorkflowStatus(status)}</span>
+              </span>
             </button>
           ))}
         </WorkflowInlineMenu>
-      ) : null}
+      </span>
+      <WorkflowTaskRowTitleField model={model} />
     </span>
   );
 }
@@ -1165,9 +1221,14 @@ export function WorkflowTaskRowTableView({
           />
         </span>
       ) : null}
-      {!showAmount ? <WorkflowTaskRowStatusField model={model} layout="dot" /> : null}
-      <WorkflowTaskRowStatusField model={model} layout={showAmount ? 'combined' : 'label'} />
-      <WorkflowTaskRowTitleField model={model} />
+      {!showAmount ? (
+        <WorkflowTaskRowPrimaryField model={model} />
+      ) : (
+        <>
+          <WorkflowTaskRowStatusField model={model} />
+          <WorkflowTaskRowTitleField model={model} />
+        </>
+      )}
       {enableCustomColumns && !showAmount ? (
         <WorkflowTaskTableCustomColumnCells
           task={model.task}

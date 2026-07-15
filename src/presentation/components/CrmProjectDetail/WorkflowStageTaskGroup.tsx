@@ -233,10 +233,13 @@ export function WorkflowStageTaskGroup({
             <span className={styles.workflowSelectCell} aria-hidden />
           ) : null}
           {!group.isPaymentsGroup ? (
-            <span className={styles.workflowStatusIconCell} aria-hidden />
-          ) : null}
-          <span className={styles.workflowStageEmptyCell} aria-hidden />
-          <span className={styles.workflowStageEmptyMessage}>{wf.stageNoTasks}</span>
+            <span className={styles.workflowStageEmptyMessage}>{wf.stageNoTasks}</span>
+          ) : (
+            <>
+              <span className={styles.workflowStageEmptyCell} aria-hidden />
+              <span className={styles.workflowStageEmptyMessage}>{wf.stageNoTasks}</span>
+            </>
+          )}
           {enableCustomColumns ? <WorkflowTaskTableCustomColumnEmptyCells /> : null}
           {group.isPaymentsGroup ? <span className={styles.workflowStageEmptyCell} aria-hidden /> : null}
           <span className={styles.workflowStageEmptyCell} aria-hidden />
