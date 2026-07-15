@@ -29,6 +29,10 @@ const buildCoreDashboardNavigationSource = {
     organizationMemberRole: '/api/internal/organization/members',
     organizationInvites: '/api/internal/organization/invites',
     organizationSeats: '/api/internal/organization/seats',
+    notificationsLatest: '/api/internal/notifications/latest',
+    notifications: '/api/internal/notifications',
+    notificationsUnreadCount: '/api/internal/notifications/unread-count',
+    notificationsReadAll: '/api/internal/notifications/read-all',
     organizationAppEntitlements: '/api/internal/apps/entitlements',
     cancelAppSubscription: '/api/internal/billing/subscriptions/cancel',
     reactivateAppSubscription: '/api/internal/billing/subscriptions/reactivate',
@@ -44,6 +48,7 @@ const buildCoreDashboardNavigationSource = {
     reports: '/reports',
     teams: '/teams',
     workflowStages: '/workflow-settings',
+    notifications: '/notifications',
     home: '/',
     projectDetail: (slug: string): string => `/projects/${slug}`,
     projectSubDetail: (parentSlug: string, subSlug: string): string =>

@@ -61,6 +61,7 @@ export function createDemoOrganizationMembershipContext(): OrganizationMembershi
     hasActiveMembership: true,
     hasNonPersonalOrganizationMembership: true,
     membershipKind: 'organization_bootstrap_owner',
+    organizationId: DEMO_ORGANIZATION_ID,
     role: 'owner',
     permissions: resolveOrganizationPermissionsFromRole('owner'),
   };

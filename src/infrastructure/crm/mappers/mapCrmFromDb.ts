@@ -106,6 +106,8 @@ export type DbCrmWorkflowTaskRow = {
   completed_at: string | null;
   assigned_member_id: string | null;
   assigned_contact_id: string | null;
+  /** Present after migration 00059; optional on older rows until backfilled. */
+  assigned_at?: string | null;
   completed_by_member_id: string | null;
   sort_order: number;
   documents_required: boolean;

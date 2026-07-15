@@ -39,6 +39,7 @@ import {
 import type { BuildCoreSidebarNavId } from './BuildCoreSidebar';
 import styles from '../../../../app/(dashboard)/dashboard/dashboard.module.css';
 import appsStyles from './buildCorePlatformApps.module.css';
+import { useBuildCoreNotificationsConfig } from '@/presentation/features/notifications/useBuildCoreNotificationsConfig';
 
 const headerShellClassNames = pickHeaderShellClassNames(styles);
 const appsLauncherClassNames = pickAppsLauncherClassNames(appsStyles);
@@ -106,6 +107,7 @@ export function BuildCoreDashboardHeader({
     launchApiUrl: '/api/internal/app-launch',
     getAccessToken: () => session?.access_token ?? null,
   });
+  const notifications = useBuildCoreNotificationsConfig(getAccessToken);
 
   const appIconNavMenu = isMobileShell ? (
     <ZenformedAppIconNavMenu
@@ -184,6 +186,7 @@ export function BuildCoreDashboardHeader({
       onRequestSignOutConfirm={onRequestSignOutConfirm}
       onRequestProfilePhotoModal={onRequestProfilePhotoModal}
       profilePhotoChangeEnabled={false}
+      notifications={notifications}
       settingsIcon={<SettingsIcon className={headerShellClassNames.accountMenuBtnIcon} />}
       signOutIcon={<SignOutIcon className={headerShellClassNames.accountMenuBtnIcon} />}
       profilePhotoCameraIcon={<CameraIcon />}

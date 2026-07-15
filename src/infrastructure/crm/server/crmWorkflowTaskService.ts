@@ -31,7 +31,7 @@ import {
 import { resolveWorkflowTaskCustomFieldScopeForTask } from '@/domain/buildcore/workflowTaskCustomFields';
 
 const TASK_SELECT =
-  'id, project_id, title, stage_slug, status, documents_required, notes, due_at, completed_at, assigned_member_id, assigned_contact_id, completed_by_member_id, sort_order, amount_cents, invoiced_at, paid_at';
+  'id, project_id, title, stage_slug, status, documents_required, notes, due_at, completed_at, assigned_member_id, assigned_contact_id, assigned_at, completed_by_member_id, sort_order, amount_cents, invoiced_at, paid_at';
 
 async function loadProjectContactById(
   supabase: SupabaseClient,
@@ -174,6 +174,8 @@ export async function createCrmWorkflowTaskForOrg(
     input.projectId,
     input.assignedMemberId
   );
+  const assignedAt =
+    assigneeColumns.assigned_member_id != null ? new Date().toISOString() : null;
 
   const { data, error } = await supabase
     .from('crm_workflow_tasks')
@@ -187,6 +189,7 @@ export async function createCrmWorkflowTaskForOrg(
       notes: input.notes,
       due_at: input.dueAt,
       ...assigneeColumns,
+      assigned_at: assignedAt,
       sort_order: sortOrder,
       amount_cents: input.amountCents ?? null,
       invoiced_at: isPayment ? timing.invoicedAt : null,
@@ -281,10 +284,17 @@ export async function updateCrmWorkflowTaskForOrg(
   if (input.notes !== undefined) patch.notes = input.notes;
   if (input.documentsRequired !== undefined) patch.documents_required = input.documentsRequired;
   if (input.assignedMemberId !== undefined) {
-    Object.assign(
-      patch,
-      await resolveWorkflowTaskAssigneeDbColumns(supabase, existing.project_id, input.assignedMemberId)
+    const assigneeColumns = await resolveWorkflowTaskAssigneeDbColumns(
+      supabase,
+      existing.project_id,
+      input.assignedMemberId
     );
+    Object.assign(patch, assigneeColumns);
+    const previousMemberId = existing.assigned_member_id ?? null;
+    const nextMemberId = assigneeColumns.assigned_member_id ?? null;
+    if (previousMemberId !== nextMemberId) {
+      patch.assigned_at = nextMemberId != null ? now : null;
+    }
   }
   if (input.amountCents !== undefined) {
     patch.amount_cents = input.amountCents;

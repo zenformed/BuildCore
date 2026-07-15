@@ -27,6 +27,7 @@ import {
   dispatchWorkflowTaskStatusTransitionNotifications,
   resolvePreviousWorkflowTaskStatusForPatch,
 } from '@/infrastructure/crm/server/workflowTaskStatusTransitionNotifications';
+import { dispatchWorkflowTaskAssignedInAppNotification } from '@/infrastructure/crm/server/dispatchWorkflowTaskAssignedInAppNotification';
 
 export const dynamic = 'force-dynamic';
 
@@ -53,7 +54,7 @@ export async function PATCH(
 
   const { data: taskRow, error: taskError } = await auth.context.supabase
     .from('crm_workflow_tasks')
-    .select('project_id')
+    .select('project_id, assigned_member_id')
     .eq('organization_id', auth.context.organizationId)
     .eq('id', taskId)
     .is('archived_at', null)
@@ -111,6 +112,11 @@ export async function PATCH(
       validated.patch.status
     );
 
+    const previousAssignedMemberId =
+      typeof (taskRow as { assigned_member_id?: unknown }).assigned_member_id === 'string'
+        ? (taskRow as { assigned_member_id: string }).assigned_member_id
+        : null;
+
     const task = await updateCrmWorkflowTaskForOrg(
       auth.context.supabase,
       auth.context.organizationId,
@@ -129,6 +135,21 @@ export async function PATCH(
       previousStatus,
       nextStatus: task.status,
     });
+
+    if (validated.patch.assignedMemberId !== undefined) {
+      const accessToken = auth.context.authHeader.slice('Bearer '.length).trim();
+      await dispatchWorkflowTaskAssignedInAppNotification({
+        supabase: auth.context.supabase,
+        accessToken,
+        organizationId: auth.context.organizationId,
+        actorUserId: auth.context.user.id,
+        projectId: (taskRow as { project_id: string }).project_id,
+        taskId: task.id,
+        taskTitle: task.title,
+        previousAssignedMemberId,
+        nextAssignedMemberId: validated.patch.assignedMemberId,
+      });
+    }
 
     return NextResponse.json(task);
   } catch (err) {

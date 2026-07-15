@@ -24,6 +24,7 @@ import {
   workflowTaskPermissionForbiddenResponse,
 } from '@/infrastructure/crm/server/buildCoreWorkflowTaskPermissionService';
 import { assertWorkflowTaskCreateAllowed } from '@/domain/buildcore/rolePermissions';
+import { dispatchWorkflowTaskAssignedInAppNotification } from '@/infrastructure/crm/server/dispatchWorkflowTaskAssignedInAppNotification';
 
 export const dynamic = 'force-dynamic';
 
@@ -150,6 +151,20 @@ export async function POST(
       auth.context.user.id,
       { projectId, projectSlug: slug, ...validated.input }
     );
+
+    const accessToken = auth.context.authHeader.slice('Bearer '.length).trim();
+    await dispatchWorkflowTaskAssignedInAppNotification({
+      supabase: auth.context.supabase,
+      accessToken,
+      organizationId: auth.context.organizationId,
+      actorUserId: auth.context.user.id,
+      projectId,
+      taskId: task.id,
+      taskTitle: task.title,
+      previousAssignedMemberId: null,
+      nextAssignedMemberId: validated.input.assignedMemberId,
+    });
+
     return NextResponse.json(task, { status: 201 });
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Failed to create workflow task';
