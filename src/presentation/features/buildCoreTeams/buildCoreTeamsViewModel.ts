@@ -11,8 +11,10 @@ type OrganizationMember = ZenformedCoreOrganizationMembersResponse['members'][nu
 
 export type BuildCoreTeamMemberRow = {
   readonly id: string;
+  readonly userId: string;
   readonly name: string;
   readonly email: string | null;
+  readonly organizationRole: OrganizationMember['role'];
   readonly organizationRoleLabel: string;
   readonly membershipStatus: OrganizationMember['status'];
   readonly buildCoreAccessStatus: 'enabled' | 'not_configured';
@@ -78,8 +80,10 @@ export function buildBuildCoreTeamsPageModel(
     const access = resolveBuildCoreAccessForMember(member, appAccess, subscriptionActive);
     return {
       id: member.id,
+      userId: member.userId,
       name: member.displayName.trim() || 'Member',
       email: member.email,
+      organizationRole: member.role,
       organizationRoleLabel: formatOrganizationRoleLabel(member.role) ?? member.role,
       membershipStatus: member.status,
       ...access,

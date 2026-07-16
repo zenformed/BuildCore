@@ -14,27 +14,43 @@ import shellStyles from '../../../../app/(dashboard)/dashboard/dashboard.module.
 type DemoDisabledAppsLauncherProps = {
   readonly classNames: ZenformedAppsLauncherClassNames;
   readonly appsIcon: ReactNode;
+  readonly renderTrigger?: (state: {
+    readonly open: boolean;
+    readonly onClick: () => void;
+    readonly ariaLabel: string;
+  }) => ReactNode;
 };
 
 export function DemoDisabledAppsLauncher({
   classNames,
   appsIcon,
+  renderTrigger,
 }: DemoDisabledAppsLauncherProps): ReactElement {
   const title = content.demo.shell.appLauncherDisabledTitle;
 
   return (
     <div className={classNames.appsLauncherWrap}>
-      <button
-        type="button"
-        className={`${classNames.appsLauncherTrigger} ${appsStyles.appsLauncherTriggerDisabled}`}
-        disabled
-        title={title}
-        aria-label={title}
-      >
-        <span className={classNames.appsLauncherIcon} aria-hidden>
-          {appsIcon}
+      {renderTrigger ? (
+        <span title={title} aria-label={title} aria-disabled="true" style={{ opacity: 0.55 }}>
+          {renderTrigger({
+            open: false,
+            onClick: () => undefined,
+            ariaLabel: title,
+          })}
         </span>
-      </button>
+      ) : (
+        <button
+          type="button"
+          className={`${classNames.appsLauncherTrigger} ${appsStyles.appsLauncherTriggerDisabled}`}
+          disabled
+          title={title}
+          aria-label={title}
+        >
+          <span className={classNames.appsLauncherIcon} aria-hidden>
+            {appsIcon}
+          </span>
+        </button>
+      )}
     </div>
   );
 }

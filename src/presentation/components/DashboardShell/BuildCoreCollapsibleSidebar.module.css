@@ -1,0 +1,160 @@
+.iconWithCog {
+  position: relative;
+  display: inline-flex;
+  width: 1.25rem;
+  height: 1.25rem;
+  align-items: center;
+  justify-content: center;
+}
+
+.iconWithCog :global(svg) {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+.cogOverlay {
+  position: absolute;
+  right: -0.35rem;
+  bottom: -0.3rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 0.75rem;
+  height: 0.75rem;
+  border-radius: 999px;
+  /* Match navy rail so the badge doesn’t flash white */
+  background: var(--theme-nav-sidebar-bg, #102741);
+  color: var(--theme-nav-sidebar-text-muted, #94a3b8);
+  box-shadow: 0 0 0 1px var(--theme-nav-sidebar-border, rgba(255, 255, 255, 0.2));
+}
+
+.cogOverlayIcon {
+  width: 0.55rem !important;
+  height: 0.55rem !important;
+}
+
+.teamList {
+  list-style: none;
+  margin: 0;
+  padding: 0.1rem 0 0.25rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.15rem;
+  max-height: calc(5 * 2.35rem);
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+:global([data-zenformed-sidebar-expanded='true']) .teamList {
+  align-items: stretch;
+  max-height: calc(5 * 3.1rem);
+}
+
+.teamRow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  min-height: 2.5rem;
+  width: 2.5rem;
+  padding: 0;
+  border-radius: 0.5rem;
+  box-sizing: border-box;
+}
+
+:global([data-zenformed-sidebar-expanded='true']) .teamRow {
+  width: 100%;
+  justify-content: flex-start;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.35rem 0.5rem;
+  min-height: 2.75rem;
+}
+
+.teamAvatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 999px;
+  color: #fff;
+  font-size: 0.65rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.teamMeta {
+  display: none;
+  min-width: 0;
+  flex: 1;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.15rem;
+}
+
+:global([data-zenformed-sidebar-expanded='true']) .teamMeta {
+  display: flex;
+}
+
+.teamName {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 0.8125rem;
+  font-weight: 550;
+  line-height: 1.2;
+  color: var(--theme-nav-sidebar-text, var(--color-text, #0f172a));
+}
+
+.teamRolePill {
+  display: inline-flex;
+  align-items: center;
+  max-width: 100%;
+  padding: 0.1rem 0.45rem;
+  border-radius: 999px;
+  font-size: 0.625rem;
+  font-weight: 650;
+  line-height: 1.2;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  background: color-mix(in srgb, #64748b 16%, transparent);
+  color: #475569;
+}
+
+.teamRolePill[data-role='owner'] {
+  background: color-mix(in srgb, #ca8a04 18%, transparent);
+  color: #a16207;
+}
+
+.teamRolePill[data-role='admin'] {
+  background: color-mix(in srgb, #2563eb 16%, transparent);
+  color: #1d4ed8;
+}
+
+.teamRolePill[data-role='coordinator'] {
+  background: color-mix(in srgb, #0d9488 16%, transparent);
+  color: #0f766e;
+}
+
+.teamRolePill[data-role='member'] {
+  background: color-mix(in srgb, #64748b 16%, transparent);
+  color: #475569;
+}
+
+.teamHint {
+  display: none;
+  margin: 0.25rem 0.4rem;
+  font-size: 0.75rem;
+  color: var(--theme-nav-sidebar-text-muted, var(--color-text-muted, #64748b));
+}
+
+:global([data-zenformed-sidebar-expanded='true']) .teamHint {
+  display: block;
+}

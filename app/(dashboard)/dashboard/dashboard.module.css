@@ -236,6 +236,7 @@
 .mainContent {
   flex: 1;
   min-width: 0;
+  min-height: 0;
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -246,6 +247,7 @@
 .listViewWrap {
   background: transparent;
   border: none;
+  flex: 1;
   min-height: 0;
   display: flex;
   flex-direction: column;
@@ -935,6 +937,7 @@
 
 .accountMenuWrap {
   position: relative;
+  overflow: visible;
 }
 
 .accountMenuTrigger {
@@ -998,6 +1001,93 @@
   flex-direction: column;
   align-items: center;
   gap: 0.75rem;
+}
+
+/* Collapsible sidebar: account menu opens upward with horizontal identity header */
+:global([data-zenformed-collapsible-sidebar-shell]) .accountMenuDropdown {
+  z-index: 330;
+  align-items: stretch;
+  gap: 0.35rem;
+  padding: 0.65rem 0.55rem;
+  min-width: 0;
+  border-radius: 0.75rem;
+}
+
+:global([data-zenformed-collapsible-sidebar-shell]) .accountMenuSidebarHeader {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 0.65rem;
+  width: 100%;
+  padding: 0.25rem 0.35rem 0.45rem;
+  box-sizing: border-box;
+}
+
+:global([data-zenformed-collapsible-sidebar-shell]) .accountMenuSidebarIdentity {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.1rem;
+  min-width: 0;
+  flex: 1;
+  text-align: left;
+}
+
+:global([data-zenformed-collapsible-sidebar-shell]) .accountMenuSidebarDivider {
+  width: 100%;
+  height: 1px;
+  margin: 0.15rem 0 0.35rem;
+  background: var(--color-border, #e2e8f0);
+}
+
+:global([data-theme='dark']) :global([data-zenformed-collapsible-sidebar-shell]) .accountMenuSidebarDivider {
+  background: #3d3e4a;
+}
+
+:global([data-zenformed-collapsible-sidebar-shell]) .accountMenuPhotoWrap {
+  width: 2.25rem;
+  height: 2.25rem;
+  flex-shrink: 0;
+}
+
+:global([data-zenformed-collapsible-sidebar-shell]) .accountMenuAvatar,
+:global([data-zenformed-collapsible-sidebar-shell]) .accountMenuPhotoImg {
+  width: 2.25rem;
+  height: 2.25rem;
+  font-size: 0.75rem;
+  border-radius: 0.45rem;
+}
+
+:global([data-zenformed-collapsible-sidebar-shell]) .accountMenuPhotoCircle {
+  border-radius: 0.45rem;
+}
+
+:global([data-zenformed-collapsible-sidebar-shell]) .accountMenuShopName {
+  margin: 0;
+  font-size: 0.875rem;
+  font-weight: 650;
+  line-height: 1.2;
+  text-align: left;
+  width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+:global([data-zenformed-collapsible-sidebar-shell]) .accountMenuEmail {
+  margin: 0;
+  font-size: 0.75rem;
+  line-height: 1.2;
+  text-align: left;
+  width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+:global([data-zenformed-collapsible-sidebar-shell]) .accountMenuBtn {
+  width: 100%;
+  justify-content: flex-start;
 }
 
 .accountMenuDropdown .badgeRow {
@@ -1090,6 +1180,18 @@
   font-size: 0.9375rem;
   font-weight: 600;
   color: var(--color-text, #0f172a);
+}
+
+.accountMenuSidebarHeader {
+  display: contents;
+}
+
+.accountMenuSidebarIdentity {
+  display: contents;
+}
+
+.accountMenuSidebarDivider {
+  display: none;
 }
 
 .accountMenuActions {

@@ -187,6 +187,33 @@
 
 
 
+  /* Dashboard collapsible nav rail (navy in light mode) */
+
+  --theme-nav-sidebar-bg: #102741;
+
+  --theme-nav-sidebar-text: #f1f5f9;
+
+  --theme-nav-sidebar-text-muted: #94a3b8;
+
+  --theme-nav-sidebar-border: rgba(255, 255, 255, 0.12);
+
+  --theme-nav-sidebar-hover: rgba(255, 255, 255, 0.08);
+
+  --theme-nav-sidebar-active: rgba(90, 122, 158, 0.35);
+
+  /* Menus match the rail exactly */
+  --theme-nav-sidebar-menu-bg: var(--theme-nav-sidebar-bg);
+
+  --theme-nav-sidebar-menu-text: #f1f5f9;
+
+  --theme-nav-sidebar-menu-text-muted: #94a3b8;
+
+  --theme-nav-sidebar-menu-border: rgba(255, 255, 255, 0.14);
+
+  --theme-nav-sidebar-menu-hover: rgba(255, 255, 255, 0.08);
+
+
+
   /* Apps launcher popover (header grid menu) */
 
   --theme-apps-launcher-bg: #ffffff;
@@ -415,6 +442,32 @@
   --theme-settings-sidebar-border: #3d3e4a;
 
   --theme-settings-sidebar-input-bg: var(--theme-form-input-bg);
+
+
+
+  /* Dashboard collapsible nav rail — same surface as before (#161922) */
+
+  --theme-nav-sidebar-bg: var(--theme-surface-card);
+
+  --theme-nav-sidebar-text: #f1f5f9;
+
+  --theme-nav-sidebar-text-muted: #94a3b8;
+
+  --theme-nav-sidebar-border: var(--theme-border-card);
+
+  --theme-nav-sidebar-hover: var(--theme-surface-hover);
+
+  --theme-nav-sidebar-active: rgba(90, 122, 158, 0.35);
+
+  --theme-nav-sidebar-menu-bg: var(--theme-nav-sidebar-bg);
+
+  --theme-nav-sidebar-menu-text: #f1f5f9;
+
+  --theme-nav-sidebar-menu-text-muted: #94a3b8;
+
+  --theme-nav-sidebar-menu-border: var(--theme-border-card);
+
+  --theme-nav-sidebar-menu-hover: var(--theme-surface-hover);
 
 
 

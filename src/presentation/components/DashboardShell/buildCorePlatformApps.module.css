@@ -99,6 +99,7 @@
 
 .appsLauncherWrap {
   position: relative;
+  overflow: visible;
 }
 
 .appsLauncherTrigger {
@@ -170,10 +171,52 @@
   z-index: 50;
 }
 
+/* Collapsible sidebar: absolute overlay — trigger stays in flow (no layout shift) */
+:global([data-zenformed-collapsible-sidebar-shell]) .appsLauncherWrap {
+  position: relative !important;
+  z-index: 320;
+  width: 100% !important;
+  max-width: 100%;
+}
+
+:global([data-zenformed-collapsible-sidebar-shell])
+  .appsLauncherWrap[data-zenformed-apps-overlay='true'] {
+  z-index: 400;
+}
+
+:global([data-zenformed-collapsible-sidebar-shell]) .appsPopover {
+  position: absolute !important;
+  top: 0.35rem !important;
+  left: 0.35rem !important;
+  right: 0.35rem !important;
+  margin: 0 !important;
+  width: auto !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  height: auto !important;
+  min-height: 0 !important;
+  max-height: min(70vh, 28rem) !important;
+  padding: 0.35rem 0 !important;
+  border-radius: 0.5rem !important;
+  border: 1px solid var(--theme-nav-sidebar-menu-border, rgba(255, 255, 255, 0.14)) !important;
+  box-shadow: none !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+  z-index: 400 !important;
+  background: var(--theme-nav-sidebar-menu-bg, var(--theme-nav-sidebar-bg, #102741)) !important;
+  color: var(--theme-nav-sidebar-menu-text, #f1f5f9) !important;
+  --color-text: var(--theme-nav-sidebar-menu-text, #f1f5f9);
+  --color-text-muted: var(--theme-nav-sidebar-menu-text-muted, #94a3b8);
+}
+
 .appsPopoverList {
   display: flex;
   flex-direction: column;
   gap: 0.875rem;
+}
+
+:global([data-zenformed-collapsible-sidebar-shell]) .appsPopoverList {
+  gap: 0;
 }
 
 .appsPopoverAppsPanel {
@@ -203,6 +246,12 @@
   text-transform: none;
   text-align: left;
   color: var(--color-text);
+}
+
+.appsPopoverSidebarList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
 }
 
 .appsTileGrid {
@@ -256,6 +305,14 @@
   display: block;
 }
 
+:global([data-zenformed-collapsible-sidebar-shell]) .appsTileIcon,
+:global([data-zenformed-collapsible-sidebar-shell]) .appsTileIconFallback {
+  width: 2rem;
+  height: 2rem;
+  flex-shrink: 0;
+  border-radius: 0.45rem;
+}
+
 .appsTileIconFallback {
   display: flex;
   align-items: center;
@@ -297,6 +354,20 @@
   transition: background 0.15s;
 }
 
+/* Sidebar list: icon | name/tier stack | optional check */
+:global([data-zenformed-collapsible-sidebar-shell]) .appsPopoverRow {
+  flex-direction: row;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.5rem calc(var(--zenformed-sidebar-pad-x, 0.75rem) + 0.5rem);
+  border-radius: 0;
+}
+
+:global([data-zenformed-collapsible-sidebar-shell]) .appsPopoverRow:hover:not(.appsPopoverRowDisabled) {
+  border-radius: 0;
+  background: var(--theme-nav-sidebar-menu-hover, rgba(255, 255, 255, 0.08));
+}
+
 .appsPopoverRow:disabled {
   cursor: default;
   opacity: 0.85;
@@ -312,16 +383,57 @@
 
 .appsPopoverRowDisabled {
   cursor: default;
-  opacity: 0.75;
+  opacity: 0.45;
+  filter: grayscale(0.25);
+  pointer-events: none;
+}
+
+.appsPopoverRowCurrent {
+  background: var(--theme-apps-launcher-row-current, rgba(99, 102, 241, 0.14));
+}
+
+:global([data-zenformed-collapsible-sidebar-shell]) .appsPopoverRowCurrent {
+  background: var(--theme-nav-sidebar-active, rgba(90, 122, 158, 0.35));
+}
+
+:global([data-theme='dark']) .appsPopoverRowCurrent {
+  background: rgba(129, 140, 248, 0.18);
+}
+
+:global([data-theme='dark'])
+  :global([data-zenformed-collapsible-sidebar-shell])
+  .appsPopoverRowCurrent {
+  background: var(--theme-nav-sidebar-active, rgba(90, 122, 158, 0.35));
+}
+
+.appsPopoverRowText {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.1rem;
+  min-width: 0;
+  flex: 1;
+  text-align: left;
 }
 
 .appsPopoverRowName {
   font-size: 0.875rem;
   font-weight: 600;
+  line-height: 1.2;
+  color: var(--color-text);
 }
 
 .appsPopoverRowDescription,
 .appsPopoverRowMeta {
   font-size: 0.75rem;
   color: var(--color-text-muted, #64748b);
+  line-height: 1.2;
+}
+
+.appsPopoverRowCheck {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: var(--color-primary, #6366f1);
 }
