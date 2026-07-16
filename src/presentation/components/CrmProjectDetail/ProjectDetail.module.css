@@ -255,6 +255,57 @@
   overflow: hidden;
 }
 
+/* Reports header: icon-only refresh/download (no bordered boxes) */
+.projectFinancialReport .detailPanelHeaderActions > button.detailPanelHeaderBtn_refresh,
+.projectFinancialReport .detailPanelHeaderActions > button.detailPanelHeaderBtn_download {
+  background: transparent;
+  border: none;
+  color: var(--color-text-muted, #64748b);
+}
+
+.projectFinancialReport
+  .detailPanelHeaderActions
+  > button.detailPanelHeaderBtn_refresh:hover:not(:disabled),
+.projectFinancialReport
+  .detailPanelHeaderActions
+  > button.detailPanelHeaderBtn_download:hover:not(:disabled) {
+  background: transparent;
+  border: none;
+  color: var(--color-text, #0f172a);
+  opacity: 0.9;
+}
+
+.projectFinancialReport .detailPanelHeaderActions > button.detailPanelHeaderBtn_refreshing {
+  background: transparent;
+  border: none;
+}
+
+:global([data-theme='dark'])
+  .projectFinancialReport
+  .detailPanelHeaderActions
+  > button.detailPanelHeaderBtn_refresh,
+:global([data-theme='dark'])
+  .projectFinancialReport
+  .detailPanelHeaderActions
+  > button.detailPanelHeaderBtn_download {
+  background: transparent;
+  border: none;
+  color: #94a3b8;
+}
+
+:global([data-theme='dark'])
+  .projectFinancialReport
+  .detailPanelHeaderActions
+  > button.detailPanelHeaderBtn_refresh:hover:not(:disabled),
+:global([data-theme='dark'])
+  .projectFinancialReport
+  .detailPanelHeaderActions
+  > button.detailPanelHeaderBtn_download:hover:not(:disabled) {
+  background: transparent;
+  border: none;
+  color: #e2e8f0;
+}
+
 @media (min-width: 1101px) {
   .paymentsPanel.projectFinancialReport {
     height: var(--project-financial-report-height);
@@ -8805,6 +8856,12 @@
   flex-wrap: wrap;
 }
 
+.subprojectsPanelHeader_mobile {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.5rem;
+}
+
 .subprojectsPanelHeaderToggle {
   display: inline-flex;
   align-items: center;
@@ -8845,7 +8902,11 @@
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  color: inherit;
+  color: var(--color-text-muted, #64748b);
+}
+
+:global([data-theme='dark']) .subprojectsPanelTitle {
+  color: #94a3b8;
 }
 
 .subprojectsAveragePill {
@@ -9098,6 +9159,55 @@
     gap: 0.375rem;
     flex: 1 1 auto;
     min-width: 0;
+    margin-left: 0;
+    width: 100%;
+  }
+
+  .subprojectsPanelHeader_mobile .detailPanelHeaderTitleGroup {
+    color: var(--color-text-muted, #64748b);
+  }
+
+  .subprojectsPanelHeader_mobile .detailPanelHeaderRowActions {
+    gap: 0;
+    align-items: center;
+  }
+
+  .subprojectsPanelHeader_mobile .detailPanelHeaderRowActions > button.detailPanelHeaderBtn_refresh {
+    width: 1.75rem;
+    margin-inline-end: -0.125rem;
+  }
+
+  .subprojectsPanelHeader_mobile .subprojectsPanelHeaderToggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.75rem;
+    height: 2.125rem;
+    flex-shrink: 0;
+    line-height: 0;
+  }
+
+  .subprojectsPanelHeader_mobile .subprojectsPanelHeaderToggle .stageGroupChevronWrap {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-left: 0;
+    width: 1rem;
+    height: 1rem;
+  }
+
+  /*
+   * translateY BEFORE rotate so the nudge is screen-vertical.
+   * Up/down carets need different optical centers after rotation.
+   */
+  .subprojectsPanelHeader_mobile .subprojectsPanelHeaderToggle .stageGroupChevron {
+    transform: translateY(0) rotate(45deg);
+  }
+
+  .subprojectsPanelHeader_mobile
+    .subprojectsPanelHeaderToggle
+    .stageGroupChevron_expanded {
+    transform: translateY(3px) rotate(-135deg);
   }
 
   .subprojectsSearch {
@@ -9105,6 +9215,10 @@
     max-width: none;
     flex: 1 1 4rem;
     width: auto;
+    min-height: 2.125rem;
+    padding: 0.375rem 0.5rem;
+    font-size: 0.8125rem;
+    box-sizing: border-box;
   }
 }
 
@@ -9346,8 +9460,13 @@
     box-sizing: border-box;
   }
 
+  /*
+   * Do not add horizontal padding here — `.mainContent` already provides
+   * mobile inset (0.5rem). Extra L/R pad double-indents panels vs the
+   * customer/project info card, which only uses the shell padding.
+   */
   .pageShell:has([data-project-detail-page]) .detailMobileScroll {
-    padding: 0.5rem 0.5rem var(--project-detail-mobile-scroll-buffer);
+    padding: 0.5rem 0 var(--project-detail-mobile-scroll-buffer);
   }
 
   .pageBodySubpage {
@@ -9388,6 +9507,54 @@
     box-sizing: border-box;
   }
 
+  .detailPanelHeader_mobile .detailPanelHeaderTitleGroup {
+    flex: 1;
+    min-width: 0;
+  }
+
+  /* Icon-only refresh on the title row — no bordered box */
+  .detailPanelHeader_mobile
+    .detailPanelHeaderRowActions
+    > button.detailPanelHeaderBtn_refresh {
+    background: transparent;
+    border: none;
+    color: var(--color-text-muted, #64748b);
+  }
+
+  .detailPanelHeader_mobile
+    .detailPanelHeaderRowActions
+    > button.detailPanelHeaderBtn_refresh:hover:not(:disabled) {
+    background: transparent;
+    border: none;
+    color: var(--color-text, #0f172a);
+    opacity: 0.9;
+  }
+
+  .detailPanelHeader_mobile
+    .detailPanelHeaderRowActions
+    > button.detailPanelHeaderBtn_refreshing {
+    border: none;
+    background: transparent;
+  }
+
+  :global([data-theme='dark'])
+    .detailPanelHeader_mobile
+    .detailPanelHeaderRowActions
+    > button.detailPanelHeaderBtn_refresh {
+    background: transparent;
+    border: none;
+    color: #94a3b8;
+  }
+
+  :global([data-theme='dark'])
+    .detailPanelHeader_mobile
+    .detailPanelHeaderRowActions
+    > button.detailPanelHeaderBtn_refresh:hover:not(:disabled) {
+    background: transparent;
+    border: none;
+    color: #e2e8f0;
+  }
+
   .detailPanelHeader_mobile .detailPanelHeaderRowActions > button,
   .detailPanelHeader_mobile
     .detailPanelHeaderRowActions
@@ -9396,6 +9563,14 @@
   .detailPanelHeader_mobile .detailPanelHeaderRowActions .projectsFilterBtn {
     width: 2.125rem;
     height: 2.125rem;
+  }
+
+  /* Workflow header was full-bleed with negative margins for desktop table align;
+     on mobile that made search sit flush against the viewport edge. */
+  .folderTabPanelInner .workflowPanel.workflowPanelFull > .detailPanelHeader {
+    margin-inline: 0;
+    width: 100%;
+    padding-inline: 0;
   }
 
   .pageShell:has([data-project-detail-page]) .folderTabsRoot.folderTabsRootReportsActive,

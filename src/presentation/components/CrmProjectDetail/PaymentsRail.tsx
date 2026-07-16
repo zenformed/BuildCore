@@ -170,15 +170,13 @@ export function PaymentsRail({
               <h3 id="payments-rail-heading" className={styles.detailPanelTitle}>
                 {payments.title}
               </h3>
+              {statusFilterCaret}
             </div>
-            <div className={styles.detailPanelHeaderRowActions}>{statusFilterCaret}</div>
+            <div className={styles.detailPanelHeaderRowActions}>{refreshButton}</div>
           </div>
           <div className={styles.detailPanelHeaderRow}>
             <div className={styles.detailPanelSearchWrap}>{searchInput}</div>
-            <div className={styles.detailPanelHeaderRowActions}>
-              {refreshButton}
-              {addButton}
-            </div>
+            <div className={styles.detailPanelHeaderRowActions}>{addButton}</div>
           </div>
         </div>
       ) : (

@@ -47,6 +47,15 @@ export function ProjectDocumentsTabPanel({
 
   const filterMenu = <DocumentPanelFilterMenu filter={filter} onChange={setFilter} />;
 
+  const filterCaret = (
+    <DocumentPanelFilterMenu
+      filter={filter}
+      onChange={setFilter}
+      triggerVariant="caret"
+      menuAlign="start"
+    />
+  );
+
   const searchInput = (
     <DetailPanelSectionSearch
       value={searchQuery}
@@ -85,15 +94,13 @@ export function ProjectDocumentsTabPanel({
               <h3 id={titleId} className={styles.detailPanelTitle}>
                 {content.projectDetail.sections.documents}
               </h3>
+              {filterCaret}
             </div>
-            <div className={styles.detailPanelHeaderRowActions}>{filterMenu}</div>
+            <div className={styles.detailPanelHeaderRowActions}>{refreshButton}</div>
           </div>
           <div className={styles.detailPanelHeaderRow}>
             <div className={styles.detailPanelSearchWrap}>{searchInput}</div>
-            <div className={styles.detailPanelHeaderRowActions}>
-              {refreshButton}
-              {uploadButton}
-            </div>
+            <div className={styles.detailPanelHeaderRowActions}>{uploadButton}</div>
           </div>
         </div>
       ) : (

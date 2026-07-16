@@ -55,6 +55,7 @@ import {
 import { useBuildCoreDashboardContext } from '@/presentation/providers/BuildCoreDashboardProvider';
 import { SubprojectsListToolbar } from './SubprojectsListToolbar';
 import { SubprojectsTableBulkActions } from './SubprojectsTableBulkActions';
+import { DetailPanelSectionRefresh } from './DetailPanelSectionRefresh';
 import shared from '@/presentation/components/crmShared/crmShared.module.css';
 import styles from './ProjectDetail.module.css';
 import tableStyles from '../CrmProjects/CrmProjects.module.css';
@@ -509,6 +510,8 @@ function SubprojectsSectionContent(): ReactElement {
       <div
         className={[
           styles.subprojectsPanelHeader,
+          isMobileLayout ? styles.subprojectsPanelHeader_mobile : '',
+          isMobileLayout ? styles.detailPanelHeader_mobile : '',
           isMobileLayout && bulkSelection.selectedCount > 0 && canUseBulkActions
             ? 'subprojectsPanelHeader_selectionMode'
             : '',
@@ -516,69 +519,135 @@ function SubprojectsSectionContent(): ReactElement {
           .filter(Boolean)
           .join(' ')}
       >
-        <button
-          type="button"
-          className={styles.subprojectsPanelHeaderToggle}
-          aria-expanded={expanded}
-          aria-controls={panelId}
-          aria-label={`${expanded ? copy.collapse : copy.expand}: ${copy.title}`}
-          onClick={() => setExpanded((open) => !open)}
-        >
-          <span className={styles.subprojectsPanelHeaderTitle}>
-            {subprojectAveragePercent != null ? (
-              <span
-                className={`${shared.stagePill} ${styles.subprojectsAveragePill}`}
-                title={`${copy.projectColumn} average ${subprojectAveragePercent}`}
+        {isMobileLayout ? (
+          <>
+            <div className={styles.detailPanelHeaderRow}>
+              <div className={styles.detailPanelHeaderTitleGroup}>
+                {subprojectAveragePercent != null ? (
+                  <span
+                    className={`${shared.stagePill} ${styles.subprojectsAveragePill}`}
+                    title={`${copy.projectColumn} average ${subprojectAveragePercent}`}
+                  >
+                    {subprojectAveragePercent}
+                  </span>
+                ) : null}
+                <span id={sectionId} className={styles.subprojectsPanelTitle}>
+                  {copy.title}
+                </span>
+                <CrmProjectsFilterMenu
+                  filters={listFilters}
+                  onChange={setListFilters}
+                  stageScopeMode="subproject"
+                  radiusFilter={radiusFilter}
+                  onRadiusFilterChange={setRadiusFilter}
+                  triggerVariant="caret"
+                  menuAlign="start"
+                />
+              </div>
+              <div className={styles.detailPanelHeaderRowActions}>
+                <DetailPanelSectionRefresh
+                  sectionLabel={copy.title}
+                  onRefresh={refetch}
+                  onError={(message) => setToast({ kind: 'error', message })}
+                />
+                <button
+                  type="button"
+                  className={styles.subprojectsPanelHeaderToggle}
+                  aria-expanded={expanded}
+                  aria-controls={panelId}
+                  aria-label={`${expanded ? copy.collapse : copy.expand}: ${copy.title}`}
+                  onClick={() => setExpanded((open) => !open)}
+                >
+                  <span className={styles.stageGroupChevronWrap} aria-hidden>
+                    <span
+                      className={
+                        expanded ? styles.stageGroupChevron_expanded : styles.stageGroupChevron
+                      }
+                    />
+                  </span>
+                </button>
+              </div>
+            </div>
+            {expanded || (bulkSelection.selectedCount > 0 && canUseBulkActions) ? (
+              <div
+                className={[
+                  styles.detailPanelHeaderRow,
+                  styles.subprojectsPanelHeaderTools,
+                  bulkSelection.selectedCount > 0 && canUseBulkActions
+                    ? styles.subprojectsPanelHeaderTools_selectionMode
+                    : '',
+                ]
+                  .filter(Boolean)
+                  .join(' ')}
               >
-                {subprojectAveragePercent}
-              </span>
+                <SubprojectsListToolbar
+                  expanded={expanded}
+                  searchQuery={searchQuery}
+                  searchPlaceholder={copy.searchPlaceholder}
+                  searchAriaLabel={copy.searchAriaLabel}
+                  onSearchQueryChange={setSearchQuery}
+                  canManage={canManage}
+                  newSubprojectTitle={copy.newSubprojectTitle}
+                  newSubprojectAriaLabel={copy.newSubprojectAriaLabel}
+                  onCreateOpen={() => setCreateOpen(true)}
+                  showMobileBulkToolbar={
+                    bulkSelection.selectedCount > 0 && canUseBulkActions
+                  }
+                  selectedCountLabel={bulkSelectionCopy.selectedCount(bulkSelection.selectedCount)}
+                  bulkToolbarAriaLabel={bulkSelectionCopy.toolbarAriaLabel}
+                  bulkCancelLabel={bulkSelectionCopy.cancel}
+                  onClearSelection={() => bulkSelection.clearSelection()}
+                  mobileBulkActions={selectionBulkActions}
+                />
+              </div>
             ) : null}
-            <span id={sectionId} className={styles.subprojectsPanelTitle}>
-              {copy.title}
-            </span>
-            <span className={styles.stageGroupChevronWrap} aria-hidden>
-              <span className={expanded ? styles.stageGroupChevron_expanded : styles.stageGroupChevron} />
-            </span>
-          </span>
-        </button>
-        <div
-          className={[
-            styles.subprojectsPanelHeaderTools,
-            isMobileLayout && bulkSelection.selectedCount > 0 && canUseBulkActions
-              ? styles.subprojectsPanelHeaderTools_selectionMode
-              : '',
-          ]
-            .filter(Boolean)
-            .join(' ')}
-        >
-          <SubprojectsListToolbar
-            expanded={expanded}
-            isMobileLayout={isMobileLayout}
-            searchQuery={searchQuery}
-            searchPlaceholder={copy.searchPlaceholder}
-            searchAriaLabel={copy.searchAriaLabel}
-            onSearchQueryChange={setSearchQuery}
-            sectionLabel={copy.title}
-            onRefresh={refetch}
-            onRefreshError={(message) => setToast({ kind: 'error', message })}
-            canManage={canManage}
-            newSubprojectTitle={copy.newSubprojectTitle}
-            newSubprojectAriaLabel={copy.newSubprojectAriaLabel}
-            onCreateOpen={() => setCreateOpen(true)}
-            listFilters={listFilters}
-            onListFiltersChange={setListFilters}
-            radiusFilter={radiusFilter}
-            onRadiusFilterChange={setRadiusFilter}
-            showMobileBulkToolbar={
-              isMobileLayout && bulkSelection.selectedCount > 0 && canUseBulkActions
-            }
-            selectedCountLabel={bulkSelectionCopy.selectedCount(bulkSelection.selectedCount)}
-            bulkToolbarAriaLabel={bulkSelectionCopy.toolbarAriaLabel}
-            bulkCancelLabel={bulkSelectionCopy.cancel}
-            onClearSelection={() => bulkSelection.clearSelection()}
-            mobileBulkActions={selectionBulkActions}
-          />
-        </div>
+          </>
+        ) : (
+          <>
+            <button
+              type="button"
+              className={styles.subprojectsPanelHeaderToggle}
+              aria-expanded={expanded}
+              aria-controls={panelId}
+              aria-label={`${expanded ? copy.collapse : copy.expand}: ${copy.title}`}
+              onClick={() => setExpanded((open) => !open)}
+            >
+              <span className={styles.subprojectsPanelHeaderTitle}>
+                {subprojectAveragePercent != null ? (
+                  <span
+                    className={`${shared.stagePill} ${styles.subprojectsAveragePill}`}
+                    title={`${copy.projectColumn} average ${subprojectAveragePercent}`}
+                  >
+                    {subprojectAveragePercent}
+                  </span>
+                ) : null}
+                <span id={sectionId} className={styles.subprojectsPanelTitle}>
+                  {copy.title}
+                </span>
+                <span className={styles.stageGroupChevronWrap} aria-hidden>
+                  <span
+                    className={
+                      expanded ? styles.stageGroupChevron_expanded : styles.stageGroupChevron
+                    }
+                  />
+                </span>
+              </span>
+            </button>
+            <div className={styles.subprojectsPanelHeaderTools}>
+              <SubprojectsListToolbar
+                expanded={expanded}
+                searchQuery={searchQuery}
+                searchPlaceholder={copy.searchPlaceholder}
+                searchAriaLabel={copy.searchAriaLabel}
+                onSearchQueryChange={setSearchQuery}
+                canManage={canManage}
+                newSubprojectTitle={copy.newSubprojectTitle}
+                newSubprojectAriaLabel={copy.newSubprojectAriaLabel}
+                onCreateOpen={() => setCreateOpen(true)}
+              />
+            </div>
+          </>
+        )}
       </div>
 
       {expanded ? (

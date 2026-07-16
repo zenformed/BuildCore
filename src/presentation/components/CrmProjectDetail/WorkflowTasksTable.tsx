@@ -478,15 +478,15 @@ export function WorkflowTasksTable({
               <h3 id="workflow-tasks-heading" className={styles.detailPanelTitle}>
                 {content.projectDetail.sections.workflow}
               </h3>
+              {tableFilterCaret}
             </div>
-            <div className={styles.detailPanelHeaderRowActions}>{filterMenu}</div>
+            {showPanelRefresh ? (
+              <div className={styles.detailPanelHeaderRowActions}>{refreshButton}</div>
+            ) : null}
           </div>
           <div className={styles.detailPanelHeaderRow}>
             <div className={styles.detailPanelSearchWrap}>{searchInput}</div>
-            <div className={styles.detailPanelHeaderRowActions}>
-              {showPanelRefresh ? refreshButton : null}
-              {addButton}
-            </div>
+            <div className={styles.detailPanelHeaderRowActions}>{addButton}</div>
           </div>
         </div>
       ) : (

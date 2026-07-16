@@ -145,10 +145,6 @@ export function BudgetTable({ onError }: BudgetTableProps): ReactElement {
     />
   ) : null;
 
-  const categoryFilterMenu = (
-    <BudgetCategoryFilterMenu filters={filters} onChange={setFilters} />
-  );
-
   const filterCaret = (
     <BudgetCategoryFilterMenu
       filters={filters}
@@ -186,15 +182,13 @@ export function BudgetTable({ onError }: BudgetTableProps): ReactElement {
               <h3 id="budget-table-heading" className={styles.detailPanelTitle}>
                 {b.tableTitle}
               </h3>
+              {filterCaret}
             </div>
-            <div className={styles.detailPanelHeaderRowActions}>{categoryFilterMenu}</div>
+            <div className={styles.detailPanelHeaderRowActions}>{refreshButton}</div>
           </div>
           <div className={styles.detailPanelHeaderRow}>
             <div className={styles.detailPanelSearchWrap}>{searchInput}</div>
-            <div className={styles.detailPanelHeaderRowActions}>
-              {refreshButton}
-              {mobileAddButton}
-            </div>
+            <div className={styles.detailPanelHeaderRowActions}>{mobileAddButton}</div>
           </div>
         </div>
       ) : (
