@@ -16,7 +16,7 @@ import {
   type ZenformedAccountMenuLabels,
   type ZenformedAppRegistryEntry,
 } from '@zenformed/core/dashboard-shell';
-import { formatPlanDisplayName } from '@zenformed/core/organization-settings';
+import { formatPlanDisplayName, resolveAppEntitlementBadges } from '@zenformed/core/organization-settings';
 import { buildCoreAppIconSrc } from '@/platform/assets/buildCoreAppIcon';
 import { buildcoreAppDefinition } from '@/platform/appDefinitions/buildcore';
 import { BUILDCORE_ZENFORMED_APPS } from '@/platform/appDefinitions/zenformedApps';
@@ -152,18 +152,52 @@ export function BuildCoreDashboardShell({
     return formatPlanDisplayName('buildcore', snap.planSlugNormalized);
   }, [dash.entitlementSnapshot]);
 
+  const appTriggerBadges = useMemo(() => {
+    const snap = dash.entitlementSnapshot;
+    if (snap?.subscriptionActive && snap.planSlugNormalized?.trim()) {
+      return resolveAppEntitlementBadges(
+        'buildcore',
+        snap.planSlugNormalized,
+        snap.entitlementStatus?.trim() || 'active'
+      );
+    }
+    if (appTierLabel) {
+      return {
+        planLabel: appTierLabel,
+        planBadgeVariant: 'default' as const,
+        statusLabel: 'Active',
+        statusBadgeVariant: 'active' as const,
+      };
+    }
+    return null;
+  }, [appTierLabel, dash.entitlementSnapshot]);
+
   const launcherApps = useMemo((): readonly ZenformedAppRegistryEntry[] => {
     return BUILDCORE_ZENFORMED_APPS.map((app) => {
-      if (app.id === 'buildcore' && appTierLabel) {
-        return {
-          ...app,
-          entitlementBadges: {
-            planLabel: appTierLabel,
-            planBadgeVariant: 'default',
-            statusLabel: 'Active',
-            statusBadgeVariant: 'active',
-          },
-        };
+      if (app.id === 'buildcore') {
+        const snap = dash.entitlementSnapshot;
+        if (snap?.subscriptionActive && snap.planSlugNormalized?.trim()) {
+          return {
+            ...app,
+            entitlementBadges: resolveAppEntitlementBadges(
+              'buildcore',
+              snap.planSlugNormalized,
+              snap.entitlementStatus?.trim() || 'active'
+            ),
+          };
+        }
+        if (appTierLabel) {
+          return {
+            ...app,
+            entitlementBadges: {
+              planLabel: appTierLabel,
+              planBadgeVariant: 'default',
+              statusLabel: 'Active',
+              statusBadgeVariant: 'active',
+            },
+          };
+        }
+        return app;
       }
       if (app.id === 'platform') {
         return {
@@ -178,7 +212,7 @@ export function BuildCoreDashboardShell({
       }
       return app;
     });
-  }, [appTierLabel]);
+  }, [appTierLabel, dash.entitlementSnapshot]);
 
   const appsTrigger = ({
     open,
@@ -203,6 +237,7 @@ export function BuildCoreDashboardShell({
         open={open}
         appName={appDisplayName}
         appTier={appTierLabel}
+        appBadges={appTriggerBadges}
         appIcon={
           // eslint-disable-next-line @next/next/no-img-element
           <img src={appIconSrc} alt="" width={32} height={32} />
