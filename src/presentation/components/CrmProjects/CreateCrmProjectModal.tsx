@@ -58,8 +58,6 @@ import { useSaaSProfile } from '@/presentation/hooks/useSaaSProfile';
 
 import { CenterConfirmDialog } from '@/presentation/components/CenterConfirmDialog';
 
-import centerDialogStyles from '@/presentation/components/CenterConfirmDialog/CenterConfirmDialog.module.css';
-
 import { crmRepositories } from '@/shared/di/container';
 
 import { CreateCrmProjectFormFields } from './CreateCrmProjectFormFields';
@@ -584,7 +582,9 @@ export function CreateCrmProjectModal({
 
         closeAriaLabel={copy.closeAriaLabel}
 
-        panelClassName={centerDialogStyles.panelWide}
+        overlayClassName={styles.createProjectOverlay}
+
+        panelClassName={styles.createProjectPanel}
 
         bodyClassName={styles.modalBody}
 

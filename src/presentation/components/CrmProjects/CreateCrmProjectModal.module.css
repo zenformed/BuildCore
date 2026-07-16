@@ -1,3 +1,21 @@
+.createProjectPanel {
+  width: min(62rem, calc(100vw - 3rem));
+  max-height: 90vh;
+}
+
+@media (max-width: 767px) {
+  /* Match dashboard mainContent / projects table horizontal inset (0.5rem) */
+  .createProjectOverlay {
+    padding: 0.75rem 0.5rem;
+  }
+
+  .createProjectPanel {
+    width: 100%;
+    max-width: none;
+    max-height: calc(100dvh - 1.5rem);
+  }
+}
+
 .modalBody {
   display: flex;
   flex-direction: column;
