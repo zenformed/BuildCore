@@ -29,6 +29,7 @@ import {
   SignOutIcon,
 } from '@/platform/icons/buildCoreDashboardShellIcons';
 import { ThemeToggle } from '@/presentation/components/ThemeToggle';
+import { useTheme } from '@/presentation/providers/ThemeProvider';
 import { useBuildCoreDashboardContext } from '@/presentation/providers/BuildCoreDashboardProvider';
 import { useOptionalDemoMode } from '@/presentation/providers/DemoModeProvider';
 import { CurrentUserAvatarProvider } from '@/presentation/providers/CurrentUserAvatarContext';
@@ -84,9 +85,11 @@ export function BuildCoreDashboardShell({
 }: BuildCoreDashboardShellProps): ReactElement {
   const dash = useBuildCoreDashboardContext();
   const demoMode = useOptionalDemoMode();
+  const { theme } = useTheme();
   const { session, user: saasUser } = useSaaSProfile();
   const [appsOpen, setAppsOpen] = useState(false);
   const notifications = useBuildCoreNotificationsConfig(dash.getAccessToken);
+  const themeLabel = theme === 'dark' ? 'Light Mode' : 'Dark Mode';
   const { launchApp, launchingAppId, launchError } = useZenformedAppLaunch({
     launchApiUrl: '/api/internal/app-launch',
     getAccessToken: () => session?.access_token ?? null,
@@ -263,7 +266,7 @@ export function BuildCoreDashboardShell({
         sections={sections}
         notifications={demoMode != null ? null : notifications}
         themeControl={<ThemeToggle />}
-        themeLabel="Light/Dark Mode"
+        themeLabel={themeLabel}
         otherSectionLabel="Other"
         otherSectionCollapsedLabel="OTHER"
         holdExpanded={appsOpen}

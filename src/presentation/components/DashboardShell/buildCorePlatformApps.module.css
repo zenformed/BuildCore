@@ -184,7 +184,10 @@
   z-index: 400;
 }
 
-:global([data-zenformed-collapsible-sidebar-shell]) .appsPopover {
+/* Desktop sidebar apps overlay (unchanged) */
+:global([data-zenformed-collapsible-sidebar-shell])
+  .appsLauncherWrap:not([data-zenformed-apps-inline='true'])
+  .appsPopover {
   position: absolute !important;
   top: 0.35rem !important;
   left: 0.35rem !important;
@@ -207,6 +210,29 @@
   color: var(--theme-nav-sidebar-menu-text, #f1f5f9) !important;
   --color-text: var(--theme-nav-sidebar-menu-text, #f1f5f9);
   --color-text-muted: var(--theme-nav-sidebar-menu-text-muted, #94a3b8);
+}
+
+/* Inline apps list inside the mobile drawer (not a floating overlay) */
+:global([data-zenformed-apps-inline='true']) .appsPopover {
+  position: static !important;
+  top: auto !important;
+  left: auto !important;
+  right: auto !important;
+  height: auto !important;
+  max-height: none !important;
+  width: 100% !important;
+  margin: 0 !important;
+  border: none !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  overflow: visible !important;
+  background: transparent !important;
+  padding: 0.15rem 0 0.25rem !important;
+}
+
+:global([data-zenformed-apps-inline='true']) .appsPopoverRow {
+  padding-left: calc(var(--zenformed-sidebar-pad-x, 0.75rem) + 0.5rem) !important;
+  padding-right: calc(var(--zenformed-sidebar-pad-x, 0.75rem) + 0.5rem) !important;
 }
 
 .appsPopoverList {

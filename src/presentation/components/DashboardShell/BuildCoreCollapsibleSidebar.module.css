@@ -51,6 +51,14 @@
   max-height: calc(5 * 3.1rem);
 }
 
+@media (max-width: 767px) {
+  .teamList,
+  :global([data-zenformed-sidebar-expanded='true']) .teamList {
+    max-height: none;
+    overflow: visible;
+  }
+}
+
 .teamRow {
   display: flex;
   align-items: center;
