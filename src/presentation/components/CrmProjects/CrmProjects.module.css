@@ -48,8 +48,8 @@
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  width: 1.25rem;
-  height: 1.25rem;
+  width: 1.75rem;
+  height: 1.75rem;
   padding: 0;
   margin: 0;
   border: none;
@@ -57,6 +57,7 @@
   background: transparent;
   color: var(--color-text-muted, #64748b);
   cursor: pointer;
+  line-height: 0;
 }
 
 .projectsExpandAllCaretBtn:hover:not(:disabled) {
@@ -68,15 +69,28 @@
   cursor: default;
 }
 
-.projectsExpandAllCaretIcon {
-  display: block;
-  width: 0.5625rem;
-  height: 0.5625rem;
-  transition: transform 0.12s ease;
+.projectsExpandAllChevronWrap {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 1rem;
+  height: 1rem;
 }
 
-.projectsExpandAllCaretIcon_up {
-  transform: rotate(180deg);
+.projectsExpandAllChevron,
+.projectsExpandAllChevron_expanded {
+  display: block;
+  width: 0.4375rem;
+  height: 0.4375rem;
+  border-right: 2px solid currentColor;
+  border-bottom: 2px solid currentColor;
+  transform: translateY(0) rotate(45deg);
+  transition: transform 0.15s ease;
+}
+
+.projectsExpandAllChevron_expanded {
+  transform: translateY(3px) rotate(-135deg);
 }
 
 :global([data-theme='dark']) .projectsExpandAllCaretBtn {
@@ -1471,10 +1485,83 @@
     box-sizing: border-box;
   }
 
-  .projectsPanelHeader_mobile .projectsFilterBtn,
-  .projectsFilterBtn {
+  .projectsPanelHeader_mobile .projectsPanelTitleRow {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .projectsPanelHeader_mobile .projectsPanelHeaderRowActions {
+    gap: 0.125rem;
+  }
+
+  .projectsPanelHeader_mobile .projectsPanelHeaderRowActions .projectsExpandAllCaretBtn {
     width: 2.125rem;
     height: 2.125rem;
+  }
+
+  /* Icon-only refresh + list-view swap on the title row */
+  .projectsPanelHeader_mobile .projectsPanelHeaderRowActions .projectsFilterBtn {
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    width: 2.125rem;
+    height: 2.125rem;
+  }
+
+  .projectsPanelHeader_mobile .projectsPanelHeaderRowActions .projectsFilterBtn:hover:not(:disabled) {
+    background: transparent;
+    border: none;
+    color: var(--color-text, #0f172a);
+  }
+
+  :global([data-theme='dark'])
+    .projectsPanelHeader_mobile
+    .projectsPanelHeaderRowActions
+    .projectsFilterBtn {
+    background: transparent;
+    border: none;
+    color: #94a3b8;
+  }
+
+  :global([data-theme='dark'])
+    .projectsPanelHeader_mobile
+    .projectsPanelHeaderRowActions
+    .projectsFilterBtn:hover:not(:disabled) {
+    background: transparent;
+    border: none;
+    color: #e2e8f0;
+  }
+
+  .projectsPanelHeader_mobile
+    .projectsPanelHeaderRowActions
+    :global([class*='detailPanelHeaderBtn_refresh']) {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    width: 2.125rem;
+    height: 2.125rem;
+  }
+
+  .projectsPanelHeader_mobile
+    .projectsPanelHeaderRowActions
+    :global([class*='detailPanelHeaderBtn_refresh']:hover:not(:disabled)) {
+    background: transparent !important;
+    border: none !important;
+    color: var(--color-text, #0f172a);
+  }
+
+  :global([data-theme='dark'])
+    .projectsPanelHeader_mobile
+    .projectsPanelHeaderRowActions
+    :global([class*='detailPanelHeaderBtn_refresh']) {
+    color: #94a3b8;
+  }
+
+  :global([data-theme='dark'])
+    .projectsPanelHeader_mobile
+    .projectsPanelHeaderRowActions
+    :global([class*='detailPanelHeaderBtn_refresh']:hover:not(:disabled)) {
+    color: #e2e8f0;
   }
 
   .projectsPanelHeaderRowActions > button {

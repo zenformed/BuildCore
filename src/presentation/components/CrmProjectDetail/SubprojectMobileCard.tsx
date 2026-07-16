@@ -155,7 +155,9 @@ export function SubprojectMobileCard({
                     }
                     progressPercent={progress?.textPercent ?? null}
                   >
-                    <span className={styles.subprojectMobileCardName}>{project.name}</span>
+                    <span className={styles.subprojectMobileCardName} title={project.name}>
+                      {project.name}
+                    </span>
                   </ProjectPreviewNameAnchor>
                   {isInactive ? <CrmProjectInactiveInlineLabel project={project} /> : null}
                 </span>

@@ -499,12 +499,14 @@ export function CrmProjectsPipeline({
     searchOrFiltersMessage: content.crm.table.empty,
   });
 
-  const filterMenu = (
+  const filterCaret = (
     <CrmProjectsFilterMenu
       filters={filters}
       onChange={setFilters}
       radiusFilter={radiusFilter}
       onRadiusFilterChange={setRadiusFilter}
+      triggerVariant="caret"
+      menuAlign="start"
     />
   );
   const expandAllButton = isProjectsView ? (
@@ -585,21 +587,17 @@ export function CrmProjectsPipeline({
                 <h2 id="crm-projects-heading" className={styles.projectsPanelTitle}>
                   {panelTitle}
                 </h2>
-                {expandAllButton}
-              </div>
-              <div className={styles.projectsPanelHeaderRowActions}>
-                {filterMenu}
-              </div>
-            </div>
-            <div className={styles.projectsPanelHeaderRow}>
-              <div className={styles.projectsPanelSearchWrap}>
-                {listViewMenu}
-                {searchInput}
+                {filterCaret}
               </div>
               <div className={styles.projectsPanelHeaderRowActions}>
                 {refreshButton}
-                {addButton}
+                {listViewMenu}
+                {expandAllButton}
               </div>
+            </div>
+            <div className={styles.projectsPanelHeaderRow}>
+              <div className={styles.projectsPanelSearchWrap}>{searchInput}</div>
+              <div className={styles.projectsPanelHeaderRowActions}>{addButton}</div>
             </div>
           </>
         ) : (
