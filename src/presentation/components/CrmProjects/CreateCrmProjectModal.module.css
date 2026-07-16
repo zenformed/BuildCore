@@ -43,6 +43,24 @@
   -webkit-overflow-scrolling: touch;
 }
 
+.drawerFormWrap {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  height: 100%;
+}
+
+.formScrollDrawer {
+  flex: 1;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 1.25rem 1.25rem 1rem;
+  -webkit-overflow-scrolling: touch;
+}
+
 .formFooter {
   display: flex;
   justify-content: flex-end;
@@ -50,6 +68,16 @@
   flex-shrink: 0;
   margin-top: 0;
   padding-top: 1rem;
+  border-top: 1px solid var(--theme-border-main, #e2e8f0);
+}
+
+.drawerFormWrap .formFooter {
+  padding: 1rem 1.25rem calc(1rem + env(safe-area-inset-bottom, 0px));
+  background: var(--theme-bg-app, var(--color-bg, #fff));
+}
+
+:global([data-theme='dark']) .drawerFormWrap .formFooter {
+  background: var(--theme-surface-card, #161922);
 }
 
 .templateRow {

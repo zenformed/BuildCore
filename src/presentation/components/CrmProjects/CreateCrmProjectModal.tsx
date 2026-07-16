@@ -57,6 +57,8 @@ import { useBuildCoreDashboardContext } from '@/presentation/providers/BuildCore
 import { useSaaSProfile } from '@/presentation/hooks/useSaaSProfile';
 
 import { CenterConfirmDialog } from '@/presentation/components/CenterConfirmDialog';
+import { RightSideDrawer } from '@/presentation/components/RightSideDrawer';
+import { useDashboardMobileLayout } from '@/presentation/features/crmProjects/useDashboardMobileLayout';
 
 import { crmRepositories } from '@/shared/di/container';
 
@@ -135,6 +137,7 @@ export function CreateCrmProjectModal({
 }: CreateCrmProjectModalProps): ReactElement {
 
   const router = useRouter();
+  const isMobileLayout = useDashboardMobileLayout();
   const nav = useBuildCoreNavigation();
 
   const dash = useBuildCoreDashboardContext();
@@ -154,6 +157,8 @@ export function CreateCrmProjectModal({
 
   const copy = isEditMode ? edit : create;
   const modalTitle = !isEditMode && createTitle ? createTitle : copy.title;
+  const useDesktopDrawer = !isMobileLayout && !isEditMode;
+  const titleId = 'create-crm-project-title';
 
   const templateScope: BuildCoreProjectTemplateScope =
     isEditMode && project != null
@@ -495,100 +500,89 @@ export function CreateCrmProjectModal({
 
 
 
+  const formElement = (
+    <form className={styles.form} onSubmit={(event) => void handleSubmit(event)}>
+      <div className={useDesktopDrawer ? styles.formScrollDrawer : styles.formScroll}>
+        {!canMutateProjects ? <p className={formStyles.notice}>{create.mockDisabledMessage}</p> : null}
+
+        <CreateCrmProjectFormFields
+          form={form}
+          saving={saving}
+          assigneeOptions={assigneeOptions}
+          updateField={updateField}
+        />
+
+        <ProjectCustomFieldsSection
+          scope={templateScope}
+          values={customFieldDraft}
+          disabled={saving}
+          onValueChange={(fieldKey, value) =>
+            setCustomFieldDraft((current) => ({ ...current, [fieldKey]: value }))
+          }
+          onAddField={() => setAddCustomFieldOpen(true)}
+          onFieldDeleted={(fieldKey) =>
+            setCustomFieldDraft((current) => {
+              const next = { ...current };
+              delete next[fieldKey];
+              return next;
+            })
+          }
+        />
+
+        {!isEditMode && canManageTemplates && isApiSource ? (
+          <ProjectTemplateDraftSelect
+            templateScope={templateScope}
+            disabled={saving}
+            selectedTemplateId={selectedTemplateId}
+            templatesRefreshKey={templateRefreshKey}
+            onDraftChange={handleTemplateDraftChange}
+            onManageClick={templateManager.openList}
+          />
+        ) : null}
+
+        {error ? <p className={formStyles.error}>{error}</p> : null}
+      </div>
+
+      <div className={styles.formFooter}>
+        <button type="button" className={formStyles.cancelButton} onClick={onClose} disabled={saving}>
+          {copy.cancel}
+        </button>
+
+        <button type="submit" className={formStyles.submitButton} disabled={saving || !canMutateProjects}>
+          {saving ? copy.submitting : copy.submit}
+        </button>
+      </div>
+    </form>
+  );
+
   return (
-
     <>
-
-      <CenterConfirmDialog
-
-        isOpen={open}
-
-        title={modalTitle}
-
-        body={
-
-          <form className={styles.form} onSubmit={(event) => void handleSubmit(event)}>
-
-            <div className={styles.formScroll}>
-
-              {!canMutateProjects ? <p className={formStyles.notice}>{create.mockDisabledMessage}</p> : null}
-
-              <CreateCrmProjectFormFields
-                form={form}
-                saving={saving}
-                assigneeOptions={assigneeOptions}
-                updateField={updateField}
-              />
-
-              <ProjectCustomFieldsSection
-                scope={templateScope}
-                values={customFieldDraft}
-                disabled={saving}
-                onValueChange={(fieldKey, value) =>
-                  setCustomFieldDraft((current) => ({ ...current, [fieldKey]: value }))
-                }
-                onAddField={() => setAddCustomFieldOpen(true)}
-                onFieldDeleted={(fieldKey) =>
-                  setCustomFieldDraft((current) => {
-                    const next = { ...current };
-                    delete next[fieldKey];
-                    return next;
-                  })
-                }
-              />
-
-              {!isEditMode && canManageTemplates && isApiSource ? (
-                <ProjectTemplateDraftSelect
-                  templateScope={templateScope}
-                  disabled={saving}
-                  selectedTemplateId={selectedTemplateId}
-                  templatesRefreshKey={templateRefreshKey}
-                  onDraftChange={handleTemplateDraftChange}
-                  onManageClick={templateManager.openList}
-                />
-              ) : null}
-
-              {error ? <p className={formStyles.error}>{error}</p> : null}
-
-            </div>
-
-            <div className={styles.formFooter}>
-
-              <button type="button" className={formStyles.cancelButton} onClick={onClose} disabled={saving}>
-
-                {copy.cancel}
-
-              </button>
-
-              <button type="submit" className={formStyles.submitButton} disabled={saving || !canMutateProjects}>
-
-                {saving ? copy.submitting : copy.submit}
-
-              </button>
-
-            </div>
-
-          </form>
-
-        }
-
-        hideActions
-
-        cancelLabel={copy.cancel}
-
-        onClose={onClose}
-
-        cancelDisabled={saving}
-
-        closeAriaLabel={copy.closeAriaLabel}
-
-        overlayClassName={styles.createProjectOverlay}
-
-        panelClassName={styles.createProjectPanel}
-
-        bodyClassName={styles.modalBody}
-
-      />
+      {useDesktopDrawer ? (
+        <RightSideDrawer
+          open={open}
+          title={modalTitle}
+          titleId={titleId}
+          onClose={onClose}
+          closeAriaLabel={copy.closeAriaLabel}
+          closeDisabled={saving}
+        >
+          <div className={styles.drawerFormWrap}>{formElement}</div>
+        </RightSideDrawer>
+      ) : (
+        <CenterConfirmDialog
+          isOpen={open}
+          title={modalTitle}
+          body={formElement}
+          hideActions
+          cancelLabel={copy.cancel}
+          onClose={onClose}
+          cancelDisabled={saving}
+          closeAriaLabel={copy.closeAriaLabel}
+          overlayClassName={styles.createProjectOverlay}
+          panelClassName={styles.createProjectPanel}
+          bodyClassName={styles.modalBody}
+        />
+      )}
 
       {!isEditMode && canManageTemplates && isApiSource ? (
         <LoadProjectTemplateDialogs
