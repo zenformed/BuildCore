@@ -22,7 +22,7 @@ import {
   workflowTaskPermissionFlagsFromAccess,
   workflowTaskPermissionForbiddenResponse,
 } from '@/infrastructure/crm/server/buildCoreWorkflowTaskPermissionService';
-import { assertWorkflowTaskUpdateAllowed } from '@/domain/buildcore/rolePermissions';
+import { assertMemberCannotAssignWorkflowTask, assertWorkflowTaskUpdateAllowed } from '@/domain/buildcore/rolePermissions';
 import {
   dispatchWorkflowTaskStatusTransitionNotifications,
   resolvePreviousWorkflowTaskStatusForPatch,
@@ -105,17 +105,26 @@ export async function PATCH(
       return workflowTaskPermissionForbiddenResponse(updateCheck.message);
     }
 
+    const previousAssignedMemberId =
+      typeof (taskRow as { assigned_member_id?: unknown }).assigned_member_id === 'string'
+        ? (taskRow as { assigned_member_id: string }).assigned_member_id
+        : null;
+
+    const assignCheck = assertMemberCannotAssignWorkflowTask(access.actorRole, {
+      mode: 'update',
+      assignedMemberId: validated.patch.assignedMemberId,
+      previousAssignedMemberId,
+    });
+    if (!assignCheck.ok) {
+      return workflowTaskPermissionForbiddenResponse(assignCheck.message);
+    }
+
     const previousStatus = await resolvePreviousWorkflowTaskStatusForPatch(
       auth.context.supabase,
       auth.context.organizationId,
       taskId,
       validated.patch.status
     );
-
-    const previousAssignedMemberId =
-      typeof (taskRow as { assigned_member_id?: unknown }).assigned_member_id === 'string'
-        ? (taskRow as { assigned_member_id: string }).assigned_member_id
-        : null;
 
     const task = await updateCrmWorkflowTaskForOrg(
       auth.context.supabase,

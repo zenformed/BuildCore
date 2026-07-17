@@ -4,6 +4,7 @@ import type { FormEvent, ReactElement } from 'react';
 import { useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createCrmProject } from '@/application/use-cases/crm';
+import { isBuildCoreMemberRole } from '@/domain/buildcore/memberRole';
 import { getCrmDataSource } from '@/infrastructure/config/crmDataSource';
 import { canMutateCrmProjectsInCurrentRuntime } from '@/infrastructure/demo/canMutateCrmProjectsInCurrentRuntime';
 import { CrmCreateNotAvailableError } from '@/infrastructure/crm/errors';
@@ -12,6 +13,7 @@ import { useBuildCoreNavigation } from '@/presentation/providers/BuildCoreNaviga
 import { getCrmProjectAssigneeOptions } from '@/presentation/features/crmProjects/crmProjectAssigneeOptions';
 import { useAssignmentIdentityCatalog } from '@/presentation/providers/AssignmentIdentityProvider';
 import { useBuildCoreDashboardContext } from '@/presentation/providers/BuildCoreDashboardProvider';
+import { useSaaSProfile } from '@/presentation/hooks/useSaaSProfile';
 import {
   defaultCreateCrmProjectFormState,
   validateCreateCrmProjectForm,
@@ -31,6 +33,8 @@ export function CreateCrmProjectDrawer({ open, onClose }: CreateCrmProjectDrawer
   const router = useRouter();
   const nav = useBuildCoreNavigation();
   const dash = useBuildCoreDashboardContext();
+  const { organizationMembershipContext } = useSaaSProfile();
+  const allowAssignee = !isBuildCoreMemberRole(organizationMembershipContext?.role);
   const assignmentCatalog = useAssignmentIdentityCatalog();
   const canMutateProjects = canMutateCrmProjectsInCurrentRuntime();
   const isApiSource = getCrmDataSource() === 'api';
@@ -42,10 +46,14 @@ export function CreateCrmProjectDrawer({ open, onClose }: CreateCrmProjectDrawer
 
   useEffect(() => {
     if (!open) return;
-    setForm(defaultCreateCrmProjectFormState());
+    setForm(
+      allowAssignee && canMutateProjects && dash.user?.id
+        ? { ...defaultCreateCrmProjectFormState(), assignedMemberId: dash.user.id }
+        : { ...defaultCreateCrmProjectFormState(), assignedMemberId: '' }
+    );
     setError(null);
     setSaving(false);
-  }, [open]);
+  }, [allowAssignee, canMutateProjects, dash.user?.id, open]);
 
   const updateField = useCallback(
     <K extends keyof CreateCrmProjectFormState>(key: K, value: CreateCrmProjectFormState[K]) => {
@@ -64,7 +72,8 @@ export function CreateCrmProjectDrawer({ open, onClose }: CreateCrmProjectDrawer
         return;
       }
 
-      const validated = validateCreateCrmProjectForm(form);
+      const formForSave = allowAssignee ? form : { ...form, assignedMemberId: '' };
+      const validated = validateCreateCrmProjectForm(formForSave);
       if (!validated.ok) {
         setError(validated.message);
         return;
@@ -87,7 +96,16 @@ export function CreateCrmProjectDrawer({ open, onClose }: CreateCrmProjectDrawer
         setSaving(false);
       }
     },
-    [form, canMutateProjects, onClose, router, create.mockDisabledMessage, create.submitFailed]
+    [
+      allowAssignee,
+      form,
+      canMutateProjects,
+      onClose,
+      router,
+      nav.routes,
+      create.mockDisabledMessage,
+      create.submitFailed,
+    ]
   );
 
   if (!open) return null;
@@ -129,6 +147,7 @@ export function CreateCrmProjectDrawer({ open, onClose }: CreateCrmProjectDrawer
               form={form}
               saving={saving}
               assigneeOptions={assigneeOptions}
+              allowAssignee={allowAssignee}
               updateField={updateField}
             />
 

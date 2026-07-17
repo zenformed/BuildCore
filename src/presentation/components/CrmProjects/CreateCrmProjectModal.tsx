@@ -12,6 +12,7 @@ import type { CrmProjectDetail, CreateCrmProjectResult } from '@/domain/crm';
 import { isCrmProjectInactive } from '@/domain/crm';
 
 import { canManageBuildCoreProjectTemplates } from '@/domain/buildcore/projectTemplateAccess';
+import { isBuildCoreMemberRole } from '@/domain/buildcore/memberRole';
 
 import {
   hasCreateProjectTemplateDraftContent,
@@ -144,6 +145,8 @@ export function CreateCrmProjectModal({
   const dash = useBuildCoreDashboardContext();
 
   const { organizationMembershipContext } = useSaaSProfile();
+  const isMemberRole = isBuildCoreMemberRole(organizationMembershipContext?.role);
+  const allowAssignee = !isMemberRole;
 
   const assignmentCatalog = useAssignmentIdentityCatalog();
 
@@ -240,9 +243,9 @@ export function CreateCrmProjectModal({
           : defaultCreateCrmProjectFormState();
 
       setForm(
-        canMutateProjects && dash.user?.id
+        allowAssignee && canMutateProjects && dash.user?.id
           ? { ...baseDefaults, assignedMemberId: dash.user.id }
-          : baseDefaults
+          : { ...baseDefaults, assignedMemberId: '' }
       );
 
       setTemplateDraft(null);
@@ -257,7 +260,7 @@ export function CreateCrmProjectModal({
 
     setSaving(false);
 
-  }, [activeDefinitions, canMutateProjects, dash.user?.id, isEditMode, open, parentProjectForDefaults, parentProjectId, project]);
+  }, [activeDefinitions, allowAssignee, canMutateProjects, dash.user?.id, isEditMode, open, parentProjectForDefaults, parentProjectId, project]);
 
 
 
@@ -335,7 +338,10 @@ export function CreateCrmProjectModal({
 
 
 
-        const validated = validateProjectDetailForm(form, project);
+        const formForSave = allowAssignee
+          ? form
+          : { ...form, assignedMemberId: project.summary.assignedTo?.id ?? '' };
+        const validated = validateProjectDetailForm(formForSave, project);
 
         if (!validated.ok) {
 
@@ -389,7 +395,8 @@ export function CreateCrmProjectModal({
 
 
 
-      const validated = validateCreateCrmProjectForm(form);
+      const formForSave = allowAssignee ? form : { ...form, assignedMemberId: '' };
+      const validated = validateCreateCrmProjectForm(formForSave);
 
       if (!validated.ok) {
 
@@ -464,6 +471,8 @@ export function CreateCrmProjectModal({
 
     [
 
+      allowAssignee,
+
       create.mockDisabledMessage,
 
       create.submitFailed,
@@ -515,6 +524,7 @@ export function CreateCrmProjectModal({
           form={form}
           saving={saving}
           assigneeOptions={assigneeOptions}
+          allowAssignee={allowAssignee}
           updateField={updateField}
         />
 

@@ -241,6 +241,31 @@ export function assertWorkflowTaskUpdateAllowed(
   return { ok: true };
 }
 
+/** Members may not assign (or reassign) people on workflow/payment tasks. */
+export function assertMemberCannotAssignWorkflowTask(
+  actorRole: OrganizationMemberRole | null | undefined,
+  options: {
+    readonly mode: 'create' | 'update';
+    readonly assignedMemberId?: string | null;
+    readonly previousAssignedMemberId?: string | null;
+  }
+): { ok: true } | { ok: false; message: string } {
+  if (actorRole !== 'member') return { ok: true };
+
+  if (options.mode === 'create') {
+    if (options.assignedMemberId == null || options.assignedMemberId === '') {
+      return { ok: true };
+    }
+    return { ok: false, message: 'Members cannot assign people.' };
+  }
+
+  if (options.assignedMemberId === undefined) return { ok: true };
+  const next = options.assignedMemberId ?? null;
+  const previous = options.previousAssignedMemberId ?? null;
+  if (next === previous) return { ok: true };
+  return { ok: false, message: 'Members cannot assign people.' };
+}
+
 export function assertWorkflowTaskCreateAllowed(
   permissions: BuildCoreRolePermissionFlags,
   status: string | undefined

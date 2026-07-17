@@ -866,31 +866,35 @@ function WorkflowTaskRowAssigneeField({
     </span>
   );
 
+  if (!model.canAssign) {
+    return (
+      <span className={wrapClass} ref={model.assigneeRef}>
+        {assigneeContent}
+      </span>
+    );
+  }
+
   return (
     <span className={wrapClass} ref={model.assigneeRef}>
-        {(mobile || compact) && !model.canEdit ? (
-          assigneeContent
-        ) : (
-          <button
-            type="button"
-            className={
-              compact
-                ? styles.workflowTaskCompactAssigneeBtn
-                : mobile
-                  ? `${styles.workflowTaskMobileCardValueBtn} ${styles.assignedCell}`
-                  : `${styles.inlineCellBtn} ${styles.assignedCell}`
-            }
-            disabled={model.saving || !model.canEdit}
-            aria-expanded={model.assigneeMenuOpen}
-            onClick={() => {
-              model.setStatusMenuOpen(false);
-              model.setDocumentsMenuOpen(false);
-              model.setAssigneeMenuOpen((open) => !open);
-            }}
-          >
-            {assigneeContent}
-          </button>
-        )}
+      <button
+        type="button"
+        className={
+          compact
+            ? styles.workflowTaskCompactAssigneeBtn
+            : mobile
+              ? `${styles.workflowTaskMobileCardValueBtn} ${styles.assignedCell}`
+              : `${styles.inlineCellBtn} ${styles.assignedCell}`
+        }
+        disabled={model.saving}
+        aria-expanded={model.assigneeMenuOpen}
+        onClick={() => {
+          model.setStatusMenuOpen(false);
+          model.setDocumentsMenuOpen(false);
+          model.setAssigneeMenuOpen((open) => !open);
+        }}
+      >
+        {assigneeContent}
+      </button>
       <WorkflowInlineMenu
         open={model.assigneeMenuOpen}
         onClose={() => model.setAssigneeMenuOpen(false)}

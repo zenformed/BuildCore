@@ -61,6 +61,7 @@ type WorkflowOpsTaskDraftFieldsProps = {
   readonly assigneeRef: RefObject<HTMLDivElement>;
   readonly assigneeOptions: ReturnType<typeof getWorkflowTaskAssigneeOptions>;
   readonly selectedAssignee: ReturnType<typeof getWorkflowTaskAssigneeOptions>[number] | undefined;
+  readonly canAssign: boolean;
   readonly onStatusMenuOpenChange: (open: boolean) => void;
   readonly onAssigneeMenuOpenChange: (open: boolean) => void;
   readonly updateField: <K extends keyof WorkflowTaskFormState>(
@@ -201,6 +202,7 @@ function WorkflowOpsTaskDraftAssigneeField({
   assigneeRef,
   assigneeOptions,
   selectedAssignee,
+  canAssign,
   onStatusMenuOpenChange,
   onAssigneeMenuOpenChange,
   updateField,
@@ -212,6 +214,26 @@ function WorkflowOpsTaskDraftAssigneeField({
     : mobile
       ? styles.workflowTaskMobileCardControl
       : `${styles.inlineCellWrap} ${styles.workflowMetaCell}`;
+
+  const assigneeContent = selectedAssignee?.member ? (
+    <TeamMemberAvatar member={selectedAssignee.member} />
+  ) : (
+    <span
+      className={`${shared.avatar} ${shared.avatarUnassigned}`}
+      title={wf.unassigned}
+      aria-label={wf.unassigned}
+    >
+      —
+    </span>
+  );
+
+  if (!canAssign) {
+    return (
+      <div className={wrapClass} ref={assigneeRef}>
+        {assigneeContent}
+      </div>
+    );
+  }
 
   return (
     <div className={wrapClass} ref={assigneeRef}>
@@ -231,17 +253,7 @@ function WorkflowOpsTaskDraftAssigneeField({
           onAssigneeMenuOpenChange(!assigneeMenuOpen);
         }}
       >
-        {selectedAssignee?.member ? (
-          <TeamMemberAvatar member={selectedAssignee.member} />
-        ) : (
-          <span
-            className={`${shared.avatar} ${shared.avatarUnassigned}`}
-            title={wf.unassigned}
-            aria-label={wf.unassigned}
-          >
-            —
-          </span>
-        )}
+        {assigneeContent}
       </button>
       <WorkflowInlineMenu
         open={assigneeMenuOpen}
@@ -478,7 +490,8 @@ export function WorkflowOpsTaskDraftRow({
   const isMobileLayout = useDashboardMobileLayout();
   const showCompactLayout = useCompactLayout || (useCardLayout ?? isMobileLayout);
   const dash = useBuildCoreDashboardContext();
-  const { requestCustomerNotifyAfterAssigneeChange } = useProjectDetailShell();
+  const { isMemberRole, requestCustomerNotifyAfterAssigneeChange } = useProjectDetailShell();
+  const canAssign = !isMemberRole;
   const assignmentCatalog = useAssignmentIdentityCatalog();
   const [form, setForm] = useState<WorkflowTaskFormState>(() =>
     defaultWorkflowTaskFormState(stageSlug)
@@ -517,7 +530,8 @@ export function WorkflowOpsTaskDraftRow({
   );
 
   const handleSave = useCallback(async () => {
-    const validated = validateWorkflowTaskForm({ ...form, stageSlug }, { docCount: 0 });
+    const formForSave = canAssign ? form : { ...form, assignedMemberId: '' };
+    const validated = validateWorkflowTaskForm({ ...formForSave, stageSlug }, { docCount: 0 });
     if (!validated.ok) {
       setError(validated.message);
       return;
@@ -532,17 +546,18 @@ export function WorkflowOpsTaskDraftRow({
       });
       await onSaved(created);
       if (
+        canAssign &&
         shouldOfferWorkflowTaskCustomerNotify({
           isApiSource,
           previousAssigneeId: '',
-          newAssigneeId: form.assignedMemberId,
+          newAssigneeId: formForSave.assignedMemberId,
         })
       ) {
         requestCustomerNotifyAfterAssigneeChange(
           isApiSource,
           created.id,
           '',
-          form.assignedMemberId
+          formForSave.assignedMemberId
         );
       }
       onCancel();
@@ -552,6 +567,7 @@ export function WorkflowOpsTaskDraftRow({
       setSaving(false);
     }
   }, [
+    canAssign,
     form,
     onCancel,
     onSaved,
@@ -574,6 +590,7 @@ export function WorkflowOpsTaskDraftRow({
     assigneeRef,
     assigneeOptions,
     selectedAssignee,
+    canAssign,
     onStatusMenuOpenChange: setStatusMenuOpen,
     onAssigneeMenuOpenChange: setAssigneeMenuOpen,
     updateField,

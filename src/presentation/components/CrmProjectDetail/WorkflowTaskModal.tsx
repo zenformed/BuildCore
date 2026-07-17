@@ -41,6 +41,7 @@ import {
 import { resolveWorkflowTaskCustomFieldScopeFromModalContext } from '@/domain/buildcore/workflowTaskCustomFields';
 import { useBuildCoreWorkflowTaskCustomFieldsForScope } from '@/presentation/providers/BuildCoreWorkflowTaskCustomFieldsProvider';
 import { useDashboardMobileLayout } from '@/presentation/features/crmProjects/useDashboardMobileLayout';
+import { useProjectDetailShell } from '@/presentation/features/crmProjectDetail/ProjectDetailShellContext';
 import styles from './WorkflowTaskModal.module.css';
 
 export type WorkflowTaskModalContext = 'workflow' | 'payment';
@@ -96,6 +97,7 @@ export function WorkflowTaskModal({
   const isMobileLayout = useDashboardMobileLayout();
   const assignmentCatalog = useAssignmentIdentityCatalog();
   const dash = useBuildCoreDashboardContext();
+  const { isMemberRole } = useProjectDetailShell();
   const { catalogForProject } = useBuildCorePipelineStages();
   const customFieldScope = resolveWorkflowTaskCustomFieldScopeFromModalContext(modalContext);
   const { activeDefinitions, createDefinition, isSaving: isSavingCustomFieldDefinition } =
@@ -190,7 +192,13 @@ export function WorkflowTaskModal({
     async (e: FormEvent) => {
       e.preventDefault();
       setError(null);
-      const validated = validateWorkflowTaskForm(form, { docCount: editDocCount });
+      const formForSave = isMemberRole
+        ? {
+            ...form,
+            assignedMemberId: mode === 'create' ? '' : (task?.assignedTo?.id ?? ''),
+          }
+        : form;
+      const validated = validateWorkflowTaskForm(formForSave, { docCount: editDocCount });
       if (!validated.ok) {
         setError(validated.message);
         return;
@@ -212,7 +220,7 @@ export function WorkflowTaskModal({
           await onCreated?.(created);
         } else if (task) {
           const updated = await updateCrmWorkflowTask(crmRepositories, {
-            ...formToUpdateInput(task.id, form, { docCount: editDocCount }),
+            ...formToUpdateInput(task.id, formForSave, { docCount: editDocCount }),
             customFieldValues,
           });
           if (updated == null) {
@@ -233,6 +241,7 @@ export function WorkflowTaskModal({
       customFieldDraft,
       editDocCount,
       form,
+      isMemberRole,
       mode,
       onClose,
       onCreated,
@@ -304,7 +313,7 @@ export function WorkflowTaskModal({
   const canSelectDone = canMarkWorkflowTaskDone({ documentsRequired }, editDocCount);
   const isStatusDisabled = (status: WorkflowTaskStatus) =>
     status === 'done' && documentsRequired && !canSelectDone;
-  const showAssignee = assigneeOptions.length > 0;
+  const showAssignee = assigneeOptions.length > 0 && !isMemberRole;
   const createCopy = content.crm.create;
   const useDesktopDrawer = !isMobileLayout;
   const titleId = 'workflow-task-modal-title';

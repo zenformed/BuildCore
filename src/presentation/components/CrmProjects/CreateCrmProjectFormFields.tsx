@@ -24,6 +24,8 @@ export type CreateCrmProjectFormFieldsProps = {
   readonly form: CreateCrmProjectFormState;
   readonly saving: boolean;
   readonly assigneeOptions: readonly CrmProjectAssigneeOption[];
+  /** When false, hides the assignee picker (e.g. member role). */
+  readonly allowAssignee?: boolean;
   readonly updateField: <K extends keyof CreateCrmProjectFormState>(
     key: K,
     value: CreateCrmProjectFormState[K]
@@ -34,10 +36,11 @@ export function CreateCrmProjectFormFields({
   form,
   saving,
   assigneeOptions,
+  allowAssignee = true,
   updateField,
 }: CreateCrmProjectFormFieldsProps): ReactElement {
   const create = content.crm.create;
-  const showAssignee = assigneeOptions.length > 0;
+  const showAssignee = allowAssignee && assigneeOptions.length > 0;
 
   return (
     <>

@@ -77,6 +77,7 @@ export function useWorkflowTaskInlineRow({
     syncWorkflowTaskDocuments,
     setToast,
     projectMutationsLocked,
+    isMemberRole,
   } = useProjectDetailShell();
   const dash = useBuildCoreDashboardContext();
   const assignmentCatalog = useAssignmentIdentityCatalog();
@@ -95,6 +96,8 @@ export function useWorkflowTaskInlineRow({
   const { permissions, isReady } = accessState;
   const canView = isReady && permissions.canView;
   const canEdit = isReady && permissions.canEdit && !projectMutationsLocked;
+  /** Members may edit tasks but never reassign people. */
+  const canAssign = canEdit && !isMemberRole;
   const canDelete = isReady && permissions.canDelete && !projectMutationsLocked;
   const canUpload = isReady && permissions.canUpload && !projectMutationsLocked;
   const canDownload = isReady && permissions.canDownload;
@@ -287,7 +290,7 @@ export function useWorkflowTaskInlineRow({
 
   const saveAssignee = useCallback(
     async (assignedMemberId: string) => {
-      if (!canEdit) return;
+      if (!canAssign) return;
       setAssigneeMenuOpen(false);
       const current = task.assignedTo?.id ?? '';
       if (assignedMemberId === current) return;
@@ -316,7 +319,7 @@ export function useWorkflowTaskInlineRow({
     },
     [
       isApiSource,
-      canEdit,
+      canAssign,
       patchTask,
       reportError,
       requestCustomerNotifyAfterAssigneeChange,
@@ -392,7 +395,7 @@ export function useWorkflowTaskInlineRow({
   );
 
   const { assigneeDragOver, assigneeDropHandlers } = useWorkflowTaskRowAssigneeDrop(
-    canEdit,
+    canAssign,
     (memberId) => {
       void saveAssignee(memberId);
     }
@@ -443,7 +446,7 @@ export function useWorkflowTaskInlineRow({
   const canOpenDocumentsMenu =
     canView && (hasDocuments || awaitingCustomerReview || canUpload || canEdit);
   const showAssignedNotification =
-    canEdit && taskSupportsManualWorkflowTaskAssignedNotification(task, isApiSource);
+    canAssign && taskSupportsManualWorkflowTaskAssignedNotification(task, isApiSource);
   const showSendAttachment =
     canSendFiles && projectSupportsSendAttachment(project, assignmentCatalog, isApiSource);
   const notesPreview = formatWorkflowTaskNotesPreview(task.notes);
@@ -509,6 +512,7 @@ export function useWorkflowTaskInlineRow({
     savePaid,
     canView,
     canEdit,
+    canAssign,
     canDelete,
     canUpload,
     canDownload,

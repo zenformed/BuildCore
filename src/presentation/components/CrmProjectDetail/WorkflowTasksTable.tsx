@@ -96,6 +96,7 @@ export function WorkflowTasksTable({
     openCreateWorkflowTask,
     projectMutationsLocked,
     guardProjectEdit,
+    isMemberRole,
   } = useProjectDetailShell();
   const projectRouteScope = useMemo(
     () => (subSlug != null ? { parentSlug: parentRouteSlug } : undefined),
@@ -108,7 +109,8 @@ export function WorkflowTasksTable({
   const canView = isReady && permissions.canView;
   const canCreate = isReady && permissions.canCreate;
   const canDelete = isReady && permissions.canDelete && !projectMutationsLocked;
-  const canAssignTasks = isReady && permissions.canEdit && !projectMutationsLocked;
+  const canAssignTasks =
+    isReady && permissions.canEdit && !projectMutationsLocked && !isMemberRole;
   const isFullLayout = layout === 'full';
   const isMobileLayout = useDashboardMobileLayout();
   const currentStage = project.summary.currentStageSlug;
@@ -392,8 +394,9 @@ export function WorkflowTasksTable({
       canDelete,
       canApprove: permissions.canApprove && !projectMutationsLocked,
       canChangeNonDoneStatus: permissions.canView && !projectMutationsLocked,
-      canAssign: permissions.canEdit && !projectMutationsLocked,
-      canNotifyAssigned: permissions.canEdit && isApiSource && !projectMutationsLocked,
+      canAssign: permissions.canEdit && !projectMutationsLocked && !isMemberRole,
+      canNotifyAssigned:
+        permissions.canEdit && isApiSource && !projectMutationsLocked && !isMemberRole,
       tasksById,
       docCountByTaskId: docCounts,
       onTaskUpdated,
@@ -407,6 +410,7 @@ export function WorkflowTasksTable({
       permissions.canEdit,
       permissions.canView,
       projectMutationsLocked,
+      isMemberRole,
       tasksById,
     ]
   );

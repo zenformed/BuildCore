@@ -139,6 +139,7 @@ export function buildCoreEditablePermissionRoleKeys(
 }
 
 export {
+  assertMemberCannotAssignWorkflowTask,
   assertWorkflowTaskCreateAllowed,
   assertWorkflowTaskUpdateAllowed,
   BUILDCORE_WORKFLOW_TASK_PERMISSION_ROLE_KEYS,

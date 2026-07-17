@@ -23,7 +23,7 @@ import {
   workflowTaskPermissionFlagsFromAccess,
   workflowTaskPermissionForbiddenResponse,
 } from '@/infrastructure/crm/server/buildCoreWorkflowTaskPermissionService';
-import { assertWorkflowTaskCreateAllowed } from '@/domain/buildcore/rolePermissions';
+import { assertMemberCannotAssignWorkflowTask, assertWorkflowTaskCreateAllowed } from '@/domain/buildcore/rolePermissions';
 import { dispatchWorkflowTaskAssignedInAppNotification } from '@/infrastructure/crm/server/dispatchWorkflowTaskAssignedInAppNotification';
 
 export const dynamic = 'force-dynamic';
@@ -134,6 +134,13 @@ export async function POST(
     const createCheck = assertWorkflowTaskCreateAllowed(permissions, validated.input.status);
     if (!createCheck.ok) {
       return workflowTaskPermissionForbiddenResponse(createCheck.message);
+    }
+    const assignCheck = assertMemberCannotAssignWorkflowTask(access.actorRole, {
+      mode: 'create',
+      assignedMemberId: validated.input.assignedMemberId,
+    });
+    if (!assignCheck.ok) {
+      return workflowTaskPermissionForbiddenResponse(assignCheck.message);
     }
 
     const projectId = await resolveCrmProjectIdBySlug(

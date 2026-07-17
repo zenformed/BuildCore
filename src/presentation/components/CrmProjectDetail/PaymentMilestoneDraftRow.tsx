@@ -14,7 +14,6 @@ import {
   type WorkflowTaskFormState,
 } from '@/presentation/features/crmProjectDetail/workflowTaskFormModel';
 import { getWorkflowTaskAssigneeOptions } from '@/presentation/features/crmProjectDetail/workflowTaskAssigneeOptions';
-import { normalizeAssigneeMemberIdForSave } from '@/presentation/features/crmAssignment/buildAssigneeOptions';
 import { AssigneeMenuOptionLabel } from '@/presentation/features/crmAssignment/AssigneeMenuOptionLabel';
 import { useAssignmentIdentityCatalog } from '@/presentation/providers/AssignmentIdentityProvider';
 import { useBuildCoreDashboardContext } from '@/presentation/providers/BuildCoreDashboardProvider';
@@ -104,7 +103,8 @@ export function PaymentMilestoneDraftRow({
   const { getFieldLabel } = useBuildCoreFieldLabels();
   const isMobileLayout = useDashboardMobileLayout();
   const dash = useBuildCoreDashboardContext();
-  const { requestCustomerNotifyAfterAssigneeChange } = useProjectDetailShell();
+  const { isMemberRole, requestCustomerNotifyAfterAssigneeChange } = useProjectDetailShell();
+  const canAssign = !isMemberRole;
   const assignmentCatalog = useAssignmentIdentityCatalog();
   const [form, setForm] = useState<WorkflowTaskFormState>(defaultPaymentMilestoneFormState);
   const [error, setError] = useState<string | null>(null);
@@ -133,7 +133,8 @@ export function PaymentMilestoneDraftRow({
   );
 
   const handleSave = useCallback(async () => {
-    const validated = validateWorkflowTaskForm(form, { docCount: 0 });
+    const formForSave = canAssign ? form : { ...form, assignedMemberId: '' };
+    const validated = validateWorkflowTaskForm(formForSave, { docCount: 0 });
     if (!validated.ok) {
       setError(validated.message);
       return;
@@ -148,17 +149,18 @@ export function PaymentMilestoneDraftRow({
       });
       await onSaved(created);
       if (
+        canAssign &&
         shouldOfferWorkflowTaskCustomerNotify({
           isApiSource,
           previousAssigneeId: '',
-          newAssigneeId: form.assignedMemberId,
+          newAssigneeId: formForSave.assignedMemberId,
         })
       ) {
         requestCustomerNotifyAfterAssigneeChange(
           isApiSource,
           created.id,
           '',
-          form.assignedMemberId
+          formForSave.assignedMemberId
         );
       }
       onCancel();
@@ -168,6 +170,7 @@ export function PaymentMilestoneDraftRow({
       setSaving(false);
     }
   }, [
+    canAssign,
     form,
     isApiSource,
     onCancel,
@@ -177,6 +180,21 @@ export function PaymentMilestoneDraftRow({
     requestCustomerNotifyAfterAssigneeChange,
     wf.taskSubmitFailed,
   ]);
+
+  const unassignedAvatar = (
+    <span
+      className={`${shared.avatar} ${shared.avatarUnassigned}`}
+      title={wf.unassigned}
+      aria-label={wf.unassigned}
+    >
+      —
+    </span>
+  );
+  const assigneeAvatar = selectedAssignee?.member ? (
+    <TeamMemberAvatar member={selectedAssignee.member} />
+  ) : (
+    unassignedAvatar
+  );
 
   const rowClass = `${styles.tableRow} ${styles.workflowGrid} ${styles.workflowGridPaymentsWithDates} ${styles.workflowInlineRow} ${styles.paymentDraftRow}`;
 
@@ -263,50 +281,46 @@ export function PaymentMilestoneDraftRow({
                 className={styles.projectInfoMobileLabel}
               />
               <div className={styles.workflowTaskMobileCardControl} ref={assigneeRef}>
-                <button
-                  type="button"
-                  className={`${styles.workflowTaskMobileCardValueBtn} ${styles.assignedCell}`}
-                  disabled={saving}
-                  aria-expanded={assigneeMenuOpen}
-                  onClick={() => {
-                    setStatusMenuOpen(false);
-                    setAssigneeMenuOpen((open) => !open);
-                  }}
-                >
-                  {selectedAssignee?.member ? (
-                    <TeamMemberAvatar member={selectedAssignee.member} />
-                  ) : (
-                    <span
-                      className={`${shared.avatar} ${shared.avatarUnassigned}`}
-                      title={wf.unassigned}
-                      aria-label={wf.unassigned}
-                    >
-                      —
-                    </span>
-                  )}
-                </button>
-                <WorkflowInlineMenu
-                  open={assigneeMenuOpen}
-                  onClose={() => setAssigneeMenuOpen(false)}
-                  anchorRef={assigneeRef}
-                  align="end"
-                >
-                  {assigneeOptions.map((option) => (
+                {canAssign ? (
+                  <>
                     <button
-                      key={option.id || 'unassigned'}
                       type="button"
-                      className={`${styles.inlineMenuAction} ${shared.assigneeMenuAction}`}
-                      disabled={saving || option.disabled === true}
+                      className={`${styles.workflowTaskMobileCardValueBtn} ${styles.assignedCell}`}
+                      disabled={saving}
+                      aria-expanded={assigneeMenuOpen}
                       onClick={() => {
-                        if (option.disabled) return;
-                        updateField('assignedMemberId', option.id);
-                        setAssigneeMenuOpen(false);
+                        setStatusMenuOpen(false);
+                        setAssigneeMenuOpen((open) => !open);
                       }}
                     >
-                      <AssigneeMenuOptionLabel option={option} />
+                      {assigneeAvatar}
                     </button>
-                  ))}
-                </WorkflowInlineMenu>
+                    <WorkflowInlineMenu
+                      open={assigneeMenuOpen}
+                      onClose={() => setAssigneeMenuOpen(false)}
+                      anchorRef={assigneeRef}
+                      align="end"
+                    >
+                      {assigneeOptions.map((option) => (
+                        <button
+                          key={option.id || 'unassigned'}
+                          type="button"
+                          className={`${styles.inlineMenuAction} ${shared.assigneeMenuAction}`}
+                          disabled={saving || option.disabled === true}
+                          onClick={() => {
+                            if (option.disabled) return;
+                            updateField('assignedMemberId', option.id);
+                            setAssigneeMenuOpen(false);
+                          }}
+                        >
+                          <AssigneeMenuOptionLabel option={option} />
+                        </button>
+                      ))}
+                    </WorkflowInlineMenu>
+                  </>
+                ) : (
+                  assigneeAvatar
+                )}
               </div>
             </div>
           </div>
@@ -485,50 +499,46 @@ export function PaymentMilestoneDraftRow({
         </span>
 
         <span className={`${styles.inlineCellWrap} ${styles.workflowMetaCell}`} ref={assigneeRef}>
-          <button
-            type="button"
-            className={`${styles.inlineCellBtn} ${styles.assignedCell}`}
-            disabled={saving}
-            aria-expanded={assigneeMenuOpen}
-            onClick={() => {
-              setStatusMenuOpen(false);
-              setAssigneeMenuOpen((open) => !open);
-            }}
-          >
-            {selectedAssignee?.member ? (
-              <TeamMemberAvatar member={selectedAssignee.member} />
-            ) : (
-              <span
-                className={`${shared.avatar} ${shared.avatarUnassigned}`}
-                title={wf.unassigned}
-                aria-label={wf.unassigned}
-              >
-                —
-              </span>
-            )}
-          </button>
-          <WorkflowInlineMenu
-            open={assigneeMenuOpen}
-            onClose={() => setAssigneeMenuOpen(false)}
-            anchorRef={assigneeRef}
-            align="end"
-          >
-            {assigneeOptions.map((option) => (
+          {canAssign ? (
+            <>
               <button
-                key={option.id || 'unassigned'}
                 type="button"
-                className={`${styles.inlineMenuAction} ${shared.assigneeMenuAction}`}
-                disabled={saving || option.disabled === true}
+                className={`${styles.inlineCellBtn} ${styles.assignedCell}`}
+                disabled={saving}
+                aria-expanded={assigneeMenuOpen}
                 onClick={() => {
-                  if (option.disabled) return;
-                  updateField('assignedMemberId', option.id);
-                  setAssigneeMenuOpen(false);
+                  setStatusMenuOpen(false);
+                  setAssigneeMenuOpen((open) => !open);
                 }}
               >
-                <AssigneeMenuOptionLabel option={option} />
+                {assigneeAvatar}
               </button>
-            ))}
-          </WorkflowInlineMenu>
+              <WorkflowInlineMenu
+                open={assigneeMenuOpen}
+                onClose={() => setAssigneeMenuOpen(false)}
+                anchorRef={assigneeRef}
+                align="end"
+              >
+                {assigneeOptions.map((option) => (
+                  <button
+                    key={option.id || 'unassigned'}
+                    type="button"
+                    className={`${styles.inlineMenuAction} ${shared.assigneeMenuAction}`}
+                    disabled={saving || option.disabled === true}
+                    onClick={() => {
+                      if (option.disabled) return;
+                      updateField('assignedMemberId', option.id);
+                      setAssigneeMenuOpen(false);
+                    }}
+                  >
+                    <AssigneeMenuOptionLabel option={option} />
+                  </button>
+                ))}
+              </WorkflowInlineMenu>
+            </>
+          ) : (
+            assigneeAvatar
+          )}
         </span>
 
         <span className={`${styles.inlineDueCell} ${styles.workflowMetaCell}`}>

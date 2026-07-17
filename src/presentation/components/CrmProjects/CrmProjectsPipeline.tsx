@@ -405,7 +405,7 @@ export function CrmProjectsPipeline({
       canMakePriority={selectedPriorityEligible.length > 0}
       canMarkInactive={selectedActiveProjects.length > 0}
       canMarkComplete={selectedCompleteEligible.length > 0}
-      canAssign={selectedProjects.length > 0 && !identitiesLoading}
+      canAssign={selectedProjects.length > 0 && !identitiesLoading && !isMemberRole}
       assigneeOptions={assigneeOptions}
       onMakePriority={() => {
         void handleBulkMakePriority();

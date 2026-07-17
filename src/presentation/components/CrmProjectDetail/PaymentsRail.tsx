@@ -51,7 +51,7 @@ export function PaymentsRail({
   const payments = content.projectDetail.payments;
   const paymentPermissionsCopy = content.teams.paymentPermissions;
   const wf = content.projectDetail.workflow;
-  const { refreshWorkflowTasks, setToast, openCreateWorkflowTask, projectMutationsLocked } =
+  const { refreshWorkflowTasks, setToast, openCreateWorkflowTask, projectMutationsLocked, isMemberRole } =
     useProjectDetailShell();
   const { payment } = useBuildCoreProjectSectionAccess();
   const { permissions, isLoading, isReady } = payment;
@@ -97,8 +97,9 @@ export function PaymentsRail({
       canDelete,
       canApprove: permissions.canApprove && !projectMutationsLocked,
       canChangeNonDoneStatus: permissions.canView && !projectMutationsLocked,
-      canAssign: permissions.canEdit && !projectMutationsLocked,
-      canNotifyAssigned: permissions.canEdit && isApiSource && !projectMutationsLocked,
+      canAssign: permissions.canEdit && !projectMutationsLocked && !isMemberRole,
+      canNotifyAssigned:
+        permissions.canEdit && isApiSource && !projectMutationsLocked && !isMemberRole,
       tasksById,
       docCountByTaskId: docCounts,
       onTaskUpdated,
@@ -112,6 +113,7 @@ export function PaymentsRail({
       permissions.canEdit,
       permissions.canView,
       projectMutationsLocked,
+      isMemberRole,
       tasksById,
     ]
   );
