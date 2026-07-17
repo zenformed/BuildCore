@@ -22,6 +22,7 @@ export type ProjectSummaryMobileCardProps = {
   readonly project: CrmProjectDetail;
   readonly memberView?: boolean;
   readonly readOnly?: boolean;
+  readonly showEditAction?: boolean;
   readonly savingField: SummaryEditableField | null;
   readonly patchField: (field: SummaryEditableField, value: string) => Promise<boolean>;
 };
@@ -52,11 +53,12 @@ export function ProjectSummaryMobileCard({
   project,
   memberView = false,
   readOnly = false,
+  showEditAction = false,
   savingField,
   patchField,
 }: ProjectSummaryMobileCardProps): ReactElement {
   const { summary } = project;
-  const { childSummaries, setToast, onProjectSaved } = useProjectDetailShell();
+  const { childSummaries, setToast, onProjectSaved, guardProjectEdit } = useProjectDetailShell();
   const [editModalOpen, setEditModalOpen] = useState(false);
   const paymentFinancials = useProjectDetailPaymentFinancials({
     project,
@@ -181,12 +183,16 @@ export function ProjectSummaryMobileCard({
             </span>
           </div>
         )}
-        {!readOnly ? (
+        {showEditAction ? (
           <footer className={styles.projectInfoMobileCardFooter}>
             <button
               type="button"
               className={styles.summaryStripViewEditBtn}
-              onClick={() => setEditModalOpen(true)}
+              onClick={() => {
+                guardProjectEdit(() => {
+                  setEditModalOpen(true);
+                });
+              }}
               aria-label={fullDetailsCopy.viewEdit}
             >
               {fullDetailsCopy.viewEdit}

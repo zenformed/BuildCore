@@ -47,7 +47,7 @@ export function ProjectDocumentsPanelContent({
   const stageCatalog = catalogForProject({ parentProjectId: project.summary.parentProjectId });
   const docsContent = content.projectDetail.documents;
   const wf = content.projectDetail.workflow;
-  const { setToast } = useProjectDetailShell();
+  const { setToast, guardProjectEdit } = useProjectDetailShell();
   const [busyDocId, setBusyDocId] = useState<string | null>(null);
 
   const { downloadDocument, deleteDocument } = useProjectDocumentModalActions({
@@ -184,7 +184,11 @@ export function ProjectDocumentsPanelContent({
                         disabled={isBusy}
                         title={wf.documentDelete}
                         aria-label={`${wf.documentDelete} ${doc.name}`}
-                        onClick={() => void runDocAction(doc.id, () => deleteDocument(doc))}
+                        onClick={() => {
+                          guardProjectEdit(() => {
+                            void runDocAction(doc.id, () => deleteDocument(doc));
+                          });
+                        }}
                       >
                         <span className={styles.inlineMenuDeleteIcon} aria-hidden />
                       </button>

@@ -9,6 +9,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
 import type { CrmProjectDetail, CreateCrmProjectResult } from '@/domain/crm';
+import { isCrmProjectInactive } from '@/domain/crm';
 
 import { canManageBuildCoreProjectTemplates } from '@/domain/buildcore/projectTemplateAccess';
 
@@ -325,6 +326,11 @@ export function CreateCrmProjectModal({
 
           return;
 
+        }
+
+        if (isCrmProjectInactive(project.summary)) {
+          setError(content.projectDetail.subprojects.markActive.editRequiresActiveMessage);
+          return;
         }
 
 

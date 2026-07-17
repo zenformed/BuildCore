@@ -94,6 +94,8 @@ export function WorkflowTasksTable({
     parentRouteSlug,
     subSlug,
     openCreateWorkflowTask,
+    projectMutationsLocked,
+    guardProjectEdit,
   } = useProjectDetailShell();
   const projectRouteScope = useMemo(
     () => (subSlug != null ? { parentSlug: parentRouteSlug } : undefined),
@@ -105,8 +107,8 @@ export function WorkflowTasksTable({
   const catalog = catalogForProject({ parentProjectId: project.summary.parentProjectId });
   const canView = isReady && permissions.canView;
   const canCreate = isReady && permissions.canCreate;
-  const canDelete = isReady && permissions.canDelete;
-  const canAssignTasks = isReady && permissions.canEdit;
+  const canDelete = isReady && permissions.canDelete && !projectMutationsLocked;
+  const canAssignTasks = isReady && permissions.canEdit && !projectMutationsLocked;
   const isFullLayout = layout === 'full';
   const isMobileLayout = useDashboardMobileLayout();
   const currentStage = project.summary.currentStageSlug;
@@ -388,10 +390,10 @@ export function WorkflowTasksTable({
   const selectionBulkActions = useMemo(
     () => ({
       canDelete,
-      canApprove: permissions.canApprove,
-      canChangeNonDoneStatus: permissions.canView,
-      canAssign: permissions.canEdit,
-      canNotifyAssigned: permissions.canEdit && isApiSource,
+      canApprove: permissions.canApprove && !projectMutationsLocked,
+      canChangeNonDoneStatus: permissions.canView && !projectMutationsLocked,
+      canAssign: permissions.canEdit && !projectMutationsLocked,
+      canNotifyAssigned: permissions.canEdit && isApiSource && !projectMutationsLocked,
       tasksById,
       docCountByTaskId: docCounts,
       onTaskUpdated,
@@ -404,6 +406,7 @@ export function WorkflowTasksTable({
       permissions.canApprove,
       permissions.canEdit,
       permissions.canView,
+      projectMutationsLocked,
       tasksById,
     ]
   );
@@ -423,7 +426,9 @@ export function WorkflowTasksTable({
       onRequestToggleManualStageCompletion={
         canCreate
           ? (stageSlug, action, stageLabel) =>
-              setPendingStageToggle({ stageSlug, action, stageLabel })
+              guardProjectEdit(() => {
+                setPendingStageToggle({ stageSlug, action, stageLabel });
+              })
           : undefined
       }
       markStageCompleteBusy={markStageToggleBusy}

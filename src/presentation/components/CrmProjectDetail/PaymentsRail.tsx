@@ -51,12 +51,13 @@ export function PaymentsRail({
   const payments = content.projectDetail.payments;
   const paymentPermissionsCopy = content.teams.paymentPermissions;
   const wf = content.projectDetail.workflow;
-  const { refreshWorkflowTasks, setToast, openCreateWorkflowTask } = useProjectDetailShell();
+  const { refreshWorkflowTasks, setToast, openCreateWorkflowTask, projectMutationsLocked } =
+    useProjectDetailShell();
   const { payment } = useBuildCoreProjectSectionAccess();
   const { permissions, isLoading, isReady } = payment;
   const canView = isReady && permissions.canView;
   const canCreate = isReady && permissions.canCreate;
-  const canDelete = isReady && permissions.canDelete;
+  const canDelete = isReady && permissions.canDelete && !projectMutationsLocked;
   const milestones = useMemo(
     () => listPaymentMilestones(project.workflowTasks),
     [project.workflowTasks]
@@ -94,10 +95,10 @@ export function PaymentsRail({
   const selectionBulkActions = useMemo(
     () => ({
       canDelete,
-      canApprove: permissions.canApprove,
-      canChangeNonDoneStatus: permissions.canView,
-      canAssign: permissions.canEdit,
-      canNotifyAssigned: permissions.canEdit && isApiSource,
+      canApprove: permissions.canApprove && !projectMutationsLocked,
+      canChangeNonDoneStatus: permissions.canView && !projectMutationsLocked,
+      canAssign: permissions.canEdit && !projectMutationsLocked,
+      canNotifyAssigned: permissions.canEdit && isApiSource && !projectMutationsLocked,
       tasksById,
       docCountByTaskId: docCounts,
       onTaskUpdated,
@@ -110,6 +111,7 @@ export function PaymentsRail({
       permissions.canApprove,
       permissions.canEdit,
       permissions.canView,
+      projectMutationsLocked,
       tasksById,
     ]
   );

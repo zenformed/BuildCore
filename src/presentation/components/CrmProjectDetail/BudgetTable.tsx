@@ -43,11 +43,13 @@ export function BudgetTable({ onError }: BudgetTableProps): ReactElement {
     handleBudgetEntryDeleted,
     refreshBudgetSection,
     setToast,
+    guardProjectEdit,
+    projectMutationsLocked,
   } = useProjectDetailShell();
   const { budget: budgetAccess } = useBuildCoreProjectSectionAccess();
   const { permissions, isReady } = budgetAccess;
   const canCreate = isReady && permissions.canCreate;
-  const canDelete = isReady && permissions.canDelete;
+  const canDelete = isReady && permissions.canDelete && !projectMutationsLocked;
   const b = content.projectDetail.budget;
   const [filters, setFilters] = useState<BudgetListFilters>(EMPTY_BUDGET_LIST_FILTERS);
   const [searchQuery, setSearchQuery] = useState('');
@@ -141,7 +143,11 @@ export function BudgetTable({ onError }: BudgetTableProps): ReactElement {
       variant="add"
       disabled={draftOpen}
       title={b.addItem}
-      onClick={() => setDraftOpen(true)}
+      onClick={() => {
+        guardProjectEdit(() => {
+          setDraftOpen(true);
+        });
+      }}
     />
   ) : null;
 
@@ -264,7 +270,11 @@ export function BudgetTable({ onError }: BudgetTableProps): ReactElement {
                 <button
                   type="button"
                   className={`${styles.budgetAddPromptRow} ${styles.budgetGrid} ${styles.budgetDraftSwap}`}
-                  onClick={() => setDraftOpen(true)}
+                  onClick={() => {
+                    guardProjectEdit(() => {
+                      setDraftOpen(true);
+                    });
+                  }}
                 >
                   <span className={styles.budgetAddPromptLabel}>
                     <span className={styles.budgetAddPromptPlusBtn} aria-hidden>

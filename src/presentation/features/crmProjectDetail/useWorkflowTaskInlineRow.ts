@@ -76,6 +76,7 @@ export function useWorkflowTaskInlineRow({
     openEditWorkflowTask,
     syncWorkflowTaskDocuments,
     setToast,
+    projectMutationsLocked,
   } = useProjectDetailShell();
   const dash = useBuildCoreDashboardContext();
   const assignmentCatalog = useAssignmentIdentityCatalog();
@@ -93,13 +94,13 @@ export function useWorkflowTaskInlineRow({
   const accessState = permissionDomain === 'payments' ? sectionAccess.payment : workflowAccess;
   const { permissions, isReady } = accessState;
   const canView = isReady && permissions.canView;
-  const canEdit = isReady && permissions.canEdit;
-  const canDelete = isReady && permissions.canDelete;
-  const canUpload = isReady && permissions.canUpload;
+  const canEdit = isReady && permissions.canEdit && !projectMutationsLocked;
+  const canDelete = isReady && permissions.canDelete && !projectMutationsLocked;
+  const canUpload = isReady && permissions.canUpload && !projectMutationsLocked;
   const canDownload = isReady && permissions.canDownload;
-  const canSendFiles = isReady && permissions.canSendFiles;
-  const canApprove = isReady && permissions.canApprove;
-  const canChangeStatus = canView;
+  const canSendFiles = isReady && permissions.canSendFiles && !projectMutationsLocked;
+  const canApprove = isReady && permissions.canApprove && !projectMutationsLocked;
+  const canChangeStatus = canView && !projectMutationsLocked;
   const documentAccept = BUILDCORE_UPLOAD_ALLOWED_EXTENSIONS.join(',');
   const { rowDragOver: fileDragOver, rowDropHandlers: fileDropHandlers } =
     useWorkflowTaskRowFileDrop(task);

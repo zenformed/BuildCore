@@ -14,6 +14,7 @@ import { ProjectHeaderAssignee } from './ProjectHeaderAssignee';
 import { ProjectHeaderIndustry } from './ProjectHeaderIndustry';
 import { ProjectNotesInline } from './ProjectNotesInline';
 import { useDashboardMobileLayout } from '@/presentation/features/crmProjects/useDashboardMobileLayout';
+import { useProjectDetailShell } from '@/presentation/features/crmProjectDetail/ProjectDetailShellContext';
 import { ProjectSummaryStrip } from './ProjectSummaryStrip';
 import { StageProgressBar } from './StageProgressBar';
 import styles from './ProjectDetail.module.css';
@@ -52,7 +53,8 @@ export function ProjectDetailContextBlock({
   patchIndustry,
   scrollBody,
 }: ProjectDetailContextBlockProps): ReactElement {
-  const readOnly = isMemberRole;
+  const { isProjectInactive } = useProjectDetailShell();
+  const readOnly = isMemberRole || isProjectInactive;
   const isMobileLayout = useDashboardMobileLayout();
   const isMobileDetailOverview =
     isMobileLayout && pageContext === 'detail' && scrollBody != null;
@@ -65,7 +67,7 @@ export function ProjectDetailContextBlock({
       breadcrumbNavigation={breadcrumbNavigation}
       actions={actions}
       progress={progress}
-      canEditPrimaryPhoto={!isMemberRole}
+      canEditPrimaryPhoto={!isMemberRole && !isProjectInactive}
       onPrimaryPhotoUpdated={onPrimaryPhotoUpdated}
       onPrimaryPhotoError={onPrimaryPhotoError}
       mobileStageWorkflowTasks={
@@ -109,6 +111,7 @@ export function ProjectDetailContextBlock({
       project={project}
       memberView={isMemberRole}
       readOnly={readOnly}
+      showEditAction={!isMemberRole}
       savingField={savingField}
       patchField={patchField}
     />

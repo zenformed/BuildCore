@@ -274,6 +274,8 @@ export type ProjectSummaryStripProps = {
   project: CrmProjectDetail;
   memberView?: boolean;
   readOnly?: boolean;
+  /** When true, show View/Edit even if fields are read-only (e.g. inactive project). */
+  showEditAction?: boolean;
   savingField: SummaryEditableField | null;
   patchField: (field: SummaryEditableField, value: string) => Promise<boolean>;
 };
@@ -282,11 +284,12 @@ export function ProjectSummaryStrip({
   project,
   memberView = false,
   readOnly = false,
+  showEditAction = false,
   savingField,
   patchField,
 }: ProjectSummaryStripProps): ReactElement {
   const { summary } = project;
-  const { childSummaries, setToast, onProjectSaved } = useProjectDetailShell();
+  const { childSummaries, setToast, onProjectSaved, guardProjectEdit } = useProjectDetailShell();
   const [editModalOpen, setEditModalOpen] = useState(false);
   const paymentFinancials = useProjectDetailPaymentFinancials({
     project,
@@ -330,6 +333,7 @@ export function ProjectSummaryStrip({
           project={project}
           memberView={memberView}
           readOnly={readOnly}
+          showEditAction={showEditAction}
           savingField={savingField}
           patchField={patchField}
         />
@@ -423,12 +427,16 @@ export function ProjectSummaryStrip({
             </SummaryMetric>
           </>
         )}
-        {!readOnly ? (
+        {showEditAction ? (
           <div className={styles.summaryStripEditAction}>
             <button
               type="button"
               className={styles.summaryStripViewEditBtn}
-              onClick={() => setEditModalOpen(true)}
+              onClick={() => {
+                guardProjectEdit(() => {
+                  setEditModalOpen(true);
+                });
+              }}
               aria-label={fullDetailsCopy.viewEdit}
             >
               {fullDetailsCopy.viewEdit}

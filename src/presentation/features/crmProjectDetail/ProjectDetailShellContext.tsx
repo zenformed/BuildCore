@@ -28,6 +28,15 @@ export type ProjectDetailShellContextValue = {
   routes: ProjectDetailRoutes;
   /** Loaded on parent /slug overview only; shared by header progress + subprojects table. */
   childSummaries: ProjectDetailChildSummaries | null;
+  /** True when the open project/subproject is marked inactive. */
+  isProjectInactive: boolean;
+  /** True when mutations must be blocked until the project is marked active. */
+  projectMutationsLocked: boolean;
+  /**
+   * Run `onAllowed` immediately when the project is active.
+   * When inactive, prompt to mark active; on success, run `onAllowed`.
+   */
+  guardProjectEdit: (onAllowed: () => void) => void;
 } & ReturnType<typeof useProjectDetailWorkspace>;
 
 const ProjectDetailShellContext = createContext<ProjectDetailShellContextValue | null>(null);

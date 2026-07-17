@@ -72,15 +72,16 @@ export function BudgetInlineRow({
     project,
     isApiSource,
     setToast,
+    projectMutationsLocked,
   } = useProjectDetailShell();
   const assignmentCatalog = useAssignmentIdentityCatalog();
   const { budget: budgetAccess } = useBuildCoreProjectSectionAccess();
   const { permissions, isReady } = budgetAccess;
-  const canEdit = isReady && permissions.canEdit;
-  const canUpload = isReady && permissions.canUpload;
+  const canEdit = isReady && permissions.canEdit && !projectMutationsLocked;
+  const canUpload = isReady && permissions.canUpload && !projectMutationsLocked;
   const canDownload = isReady && permissions.canDownload;
-  const canSendFiles = isReady && permissions.canSendFiles;
-  const canDelete = isReady && permissions.canDelete;
+  const canSendFiles = isReady && permissions.canSendFiles && !projectMutationsLocked;
+  const canDelete = isReady && permissions.canDelete && !projectMutationsLocked;
   const showSendAttachment =
     canSendFiles && projectSupportsSendAttachment(project, assignmentCatalog, isApiSource);
   const showActionsMenu = showSendAttachment || (canDelete && onRequestDelete != null);

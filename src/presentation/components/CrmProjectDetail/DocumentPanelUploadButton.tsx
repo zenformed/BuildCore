@@ -5,6 +5,7 @@ import { useRef, useState } from 'react';
 import { BUILDCORE_UPLOAD_ALLOWED_EXTENSIONS } from '@/domain/crm/buildCoreUploadPolicy';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
 import { performCrmDirectUpload } from '@/presentation/features/crmDirectUpload/performBuildCoreDirectUpload';
+import { useProjectDetailShell } from '@/presentation/features/crmProjectDetail/ProjectDetailShellContext';
 import { DetailPanelHeaderButton } from './DetailPanelHeaderButton';
 
 export type DocumentPanelUploadButtonProps = {
@@ -19,6 +20,7 @@ export function DocumentPanelUploadButton({
   onError,
 }: DocumentPanelUploadButtonProps): ReactElement {
   const wf = content.projectDetail.workflow;
+  const { guardProjectEdit } = useProjectDetailShell();
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -48,7 +50,11 @@ export function DocumentPanelUploadButton({
         title={uploading ? wf.taskSubmitting : wf.documentsUpload}
         aria-label={wf.documentsUpload}
         disabled={uploading}
-        onClick={() => fileInputRef.current?.click()}
+        onClick={() => {
+          guardProjectEdit(() => {
+            fileInputRef.current?.click();
+          });
+        }}
       />
       <input
         ref={fileInputRef}

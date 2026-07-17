@@ -84,7 +84,7 @@ function SubprojectsSectionContent(): ReactElement {
   const bulkDeleteCopy = content.bulkDelete;
   const destructiveWorkflowCopy = content.destructiveConfirmationWorkflow;
   const detailCopy = content.projectDetail;
-  const { project, routes, parentRouteSlug, isMemberRole, childSummaries, isApiSource } =
+  const { project, routes, parentRouteSlug, isMemberRole, childSummaries, isApiSource, guardProjectEdit } =
     useProjectDetailShell();
   const dash = useBuildCoreDashboardContext();
   const assignmentCatalog = useAssignmentIdentityCatalog();
@@ -589,7 +589,11 @@ function SubprojectsSectionContent(): ReactElement {
                   canManage={canManage}
                   newSubprojectTitle={copy.newSubprojectTitle}
                   newSubprojectAriaLabel={copy.newSubprojectAriaLabel}
-                  onCreateOpen={() => setCreateOpen(true)}
+                  onCreateOpen={() => {
+                    guardProjectEdit(() => {
+                      setCreateOpen(true);
+                    });
+                  }}
                   showMobileBulkToolbar={
                     bulkSelection.selectedCount > 0 && canUseBulkActions
                   }
@@ -643,7 +647,11 @@ function SubprojectsSectionContent(): ReactElement {
                 canManage={canManage}
                 newSubprojectTitle={copy.newSubprojectTitle}
                 newSubprojectAriaLabel={copy.newSubprojectAriaLabel}
-                onCreateOpen={() => setCreateOpen(true)}
+                onCreateOpen={() => {
+                  guardProjectEdit(() => {
+                    setCreateOpen(true);
+                  });
+                }}
               />
             </div>
           </>

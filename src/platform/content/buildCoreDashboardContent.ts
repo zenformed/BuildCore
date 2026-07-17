@@ -957,6 +957,11 @@ const buildCoreDashboardContentSource = {
         failed: 'Could not mark §E7§ active.',
         partialFailure: (updated: number, failed: number): string =>
           `Marked ${updated} active · ${failed} could not be updated`,
+        editRequiresActiveTitle: '§E1§ is inactive',
+        editRequiresActiveMessage:
+          'This §E5§ must be active before you can make edits. Mark it active now?',
+        editRequiresActiveConfirm: 'Mark active',
+        editRequiresActiveCancel: 'Cancel',
       },
       bulkSendAttachment: {
         title: 'Send attachment to selected items',

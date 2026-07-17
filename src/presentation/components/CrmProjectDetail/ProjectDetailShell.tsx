@@ -1,9 +1,10 @@
 'use client';
 
 import type { ReactElement, ReactNode } from 'react';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import type { CrmProjectDetail, CrmProjectSummary, CrmPriority } from '@/domain/crm';
+import { isCrmProjectInactive } from '@/domain/crm';
 import { isBuildCoreMemberRole } from '@/domain/buildcore/memberRole';
 import { canManageBuildCoreProjectTemplates } from '@/domain/buildcore/projectTemplateAccess';
 import { resolveProjectTemplateScopeForProject } from '@/domain/crm/projectTemplateScope';
@@ -31,6 +32,7 @@ import { LoadProjectTemplateDialogs } from '@/presentation/components/ProjectTem
 import { useSaaSProfile } from '@/presentation/hooks/useSaaSProfile';
 import { useCrmPaymentTasksIndexContext } from '@/presentation/providers/CrmPaymentTasksIndexProvider';
 import { useDashboardMobileLayout } from '@/presentation/features/crmProjects/useDashboardMobileLayout';
+import { ConfirmModal } from '@/presentation/components/ConfirmModal';
 import { DetailToast } from './DetailToast';
 import { SaveProjectTemplateDialog } from './SaveProjectTemplateDialog';
 import { ProjectQrDialog } from './ProjectQrDialog';
@@ -157,6 +159,43 @@ function ProjectDetailShellBody({
     onError: (message) => workspace.setToast({ kind: 'error', message }),
   });
   const lifecycleBusy = markingInactive || markingActive || markingActiveProjectId != null;
+  const isProjectInactive = isCrmProjectInactive(projectSummary);
+  const projectMutationsLocked = isProjectInactive && !isMemberRole;
+  const inactiveEditCopy = markActiveCopy;
+  const pendingEditActionRef = useRef<(() => void) | null>(null);
+  const [inactiveEditPromptOpen, setInactiveEditPromptOpen] = useState(false);
+
+  const guardProjectEdit = useCallback(
+    (onAllowed: () => void) => {
+      if (!projectMutationsLocked) {
+        onAllowed();
+        return;
+      }
+      pendingEditActionRef.current = onAllowed;
+      setInactiveEditPromptOpen(true);
+    },
+    [projectMutationsLocked]
+  );
+
+  const handleCloseInactiveEditPrompt = useCallback(() => {
+    if (markingActive) return;
+    pendingEditActionRef.current = null;
+    setInactiveEditPromptOpen(false);
+  }, [markingActive]);
+
+  const handleConfirmInactiveEditActivate = useCallback(() => {
+    const pending = pendingEditActionRef.current;
+    void (async () => {
+      const ok = await markProjectActive(projectSummary);
+      setInactiveEditPromptOpen(false);
+      pendingEditActionRef.current = null;
+      if (ok) {
+        await refreshProjectDetail();
+        pending?.();
+      }
+    })();
+  }, [markProjectActive, projectSummary, refreshProjectDetail]);
+
   const projectLifecycleProps = canMutateProjects && !isMemberRole
     ? {
         isSubproject,
@@ -232,8 +271,16 @@ function ProjectDetailShellBody({
     saveTemplateLabel: templateScopeCopy.actionsSave,
     deleting,
     onRequestDelete: setPendingDeleteProject,
-    onSaveTemplate: saveTemplate.openDialog,
-    onLoadTemplate: loadTemplate.openList,
+    onSaveTemplate: () => {
+      guardProjectEdit(() => {
+        saveTemplate.openDialog();
+      });
+    },
+    onLoadTemplate: () => {
+      guardProjectEdit(() => {
+        loadTemplate.openList();
+      });
+    },
     canShowQrCode,
     onShowQrCode: () => setQrDialogOpen(true),
     ...projectLifecycleProps,
@@ -249,9 +296,55 @@ function ProjectDetailShellBody({
     markPriorityLabel: detail.markPriority,
     removePriorityLabel: detail.removePriority,
     onPriorityToggle: (nextPriority: CrmPriority) => {
-      void workspace.patchField('priority', nextPriority);
+      guardProjectEdit(() => {
+        void workspace.patchField('priority', nextPriority);
+      });
     },
   };
+
+  const guardedOpenCreateWorkflowTask = useCallback(
+    (input: Parameters<typeof workspace.openCreateWorkflowTask>[0]) => {
+      guardProjectEdit(() => {
+        workspace.openCreateWorkflowTask(input);
+      });
+    },
+    [guardProjectEdit, workspace]
+  );
+
+  const guardedOpenEditWorkflowTask = useCallback(
+    (task: Parameters<typeof workspace.openEditWorkflowTask>[0]) => {
+      guardProjectEdit(() => {
+        workspace.openEditWorkflowTask(task);
+      });
+    },
+    [guardProjectEdit, workspace]
+  );
+
+  const guardedPatchField = useCallback(
+    (...args: Parameters<typeof workspace.patchField>) => {
+      if (projectMutationsLocked) {
+        guardProjectEdit(() => {
+          void workspace.patchField(...args);
+        });
+        return Promise.resolve(false);
+      }
+      return workspace.patchField(...args);
+    },
+    [guardProjectEdit, projectMutationsLocked, workspace]
+  );
+
+  const guardedPatchIndustry = useCallback(
+    (...args: Parameters<typeof workspace.patchIndustry>) => {
+      if (projectMutationsLocked) {
+        guardProjectEdit(() => {
+          void workspace.patchIndustry(...args);
+        });
+        return Promise.resolve(false);
+      }
+      return workspace.patchIndustry(...args);
+    },
+    [guardProjectEdit, projectMutationsLocked, workspace]
+  );
 
   const headerActions = isMemberRole
     ? undefined
@@ -262,8 +355,16 @@ function ProjectDetailShellBody({
             {...priorityToggleProps}
             isComplete={completion.isComplete}
             completionBusy={completion.completionBusy}
-            onMarkComplete={completion.requestMarkComplete}
-            onMarkIncomplete={completion.requestMarkIncomplete}
+            onMarkComplete={() => {
+              guardProjectEdit(() => {
+                completion.requestMarkComplete();
+              });
+            }}
+            onMarkIncomplete={() => {
+              guardProjectEdit(() => {
+                completion.requestMarkIncomplete();
+              });
+            }}
             markCompleteLabel={detail.markComplete}
             markIncompleteLabel={detail.markIncomplete}
           />
@@ -295,16 +396,30 @@ function ProjectDetailShellBody({
       parentProject,
       routes,
       childSummaries,
+      isProjectInactive,
+      projectMutationsLocked,
+      guardProjectEdit,
       ...workspace,
+      openCreateWorkflowTask: guardedOpenCreateWorkflowTask,
+      openEditWorkflowTask: guardedOpenEditWorkflowTask,
+      patchField: guardedPatchField,
+      patchIndustry: guardedPatchIndustry,
     }),
     [
       childSummaries,
       completion,
+      guardProjectEdit,
+      guardedOpenCreateWorkflowTask,
+      guardedOpenEditWorkflowTask,
+      guardedPatchField,
+      guardedPatchIndustry,
       isApiSource,
       isMemberRole,
+      isProjectInactive,
       pageContext,
       parentProject,
       parentRouteSlug,
+      projectMutationsLocked,
       refreshProjectDetail,
       routes,
       showCompletionActions,
@@ -336,8 +451,8 @@ function ProjectDetailShellBody({
           onPrimaryPhotoUpdated={workspace.onPrimaryPhotoUpdated}
           onPrimaryPhotoError={(message) => workspace.setToast({ kind: 'error', message })}
           savingField={workspace.savingField}
-          patchField={workspace.patchField}
-          patchIndustry={workspace.patchIndustry}
+          patchField={guardedPatchField}
+          patchIndustry={guardedPatchIndustry}
           scrollBody={isMobileDetailOverview ? children : undefined}
         />
 
@@ -345,6 +460,17 @@ function ProjectDetailShellBody({
 
         {!isMemberRole ? (
           <>
+            <ConfirmModal
+              isOpen={inactiveEditPromptOpen}
+              onClose={handleCloseInactiveEditPrompt}
+              onConfirm={handleConfirmInactiveEditActivate}
+              title={inactiveEditCopy.editRequiresActiveTitle}
+              message={inactiveEditCopy.editRequiresActiveMessage}
+              confirmLabel={inactiveEditCopy.editRequiresActiveConfirm}
+              cancelLabel={inactiveEditCopy.editRequiresActiveCancel}
+              variant="primary"
+              hideIcon
+            />
             <ProjectDetailShellModals
               showCompletion={showCompletionActions}
               completion={showCompletionActions ? completion : null}
