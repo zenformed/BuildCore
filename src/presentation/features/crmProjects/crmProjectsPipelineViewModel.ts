@@ -201,8 +201,13 @@ export function filterDashboardProjectSummaries(
   const { roots, childrenByParentId } = partitionCrmProjectSummaries(summaries);
   const visibleChildrenByParentId = new Map<string, CrmProjectSummary[]>();
   const parentsWithMatchingChildren = new Set<string>();
+  // Drop orphans whose parent was archived/deleted (not in the active root set).
+  const activeRootIds = new Set(roots.map((root) => root.id));
 
   for (const [parentId, children] of childrenByParentId) {
+    if (!activeRootIds.has(parentId)) {
+      continue;
+    }
     const matchingChildren = children.filter((child) =>
       projectMatchesListFilters(child, searchQuery, filters, filterContext)
     );

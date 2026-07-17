@@ -1,6 +1,68 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { appendCrmAccountabilityEvent } from './crmAccountability';
 
+async function listActiveChildProjects(
+  supabase: SupabaseClient,
+  organizationId: string,
+  parentProjectIds: readonly string[]
+): Promise<readonly { readonly id: string; readonly name: string }[]> {
+  if (parentProjectIds.length === 0) return [];
+
+  const { data, error } = await supabase
+    .from('crm_projects')
+    .select('id, name')
+    .eq('organization_id', organizationId)
+    .in('parent_project_id', parentProjectIds)
+    .is('archived_at', null);
+
+  if (error) throw new Error(error.message);
+  return (data ?? []).map((row) => ({
+    id: row.id as string,
+    name: row.name as string,
+  }));
+}
+
+async function archiveProjectsAndTasksByIds(
+  supabase: SupabaseClient,
+  organizationId: string,
+  actorUserId: string,
+  projects: readonly { readonly id: string; readonly name: string }[],
+  now: string
+): Promise<void> {
+  if (projects.length === 0) return;
+
+  const projectIds = projects.map((project) => project.id);
+
+  const { error: archiveProjectsError } = await supabase
+    .from('crm_projects')
+    .update({ archived_at: now })
+    .in('id', projectIds)
+    .eq('organization_id', organizationId);
+
+  if (archiveProjectsError) throw new Error(archiveProjectsError.message);
+
+  const { error: archiveTasksError } = await supabase
+    .from('crm_workflow_tasks')
+    .update({ archived_at: now })
+    .in('project_id', projectIds)
+    .eq('organization_id', organizationId)
+    .is('archived_at', null);
+
+  if (archiveTasksError) throw new Error(archiveTasksError.message);
+
+  await Promise.all(
+    projects.map((project) =>
+      appendCrmAccountabilityEvent(supabase, {
+        organizationId,
+        projectId: project.id,
+        actorMemberId: actorUserId,
+        eventType: 'project_archived',
+        summary: `Archived project: ${project.name}`,
+      })
+    )
+  );
+}
+
 export async function archiveCrmProjectBySlugForOrg(
   supabase: SupabaseClient,
   organizationId: string,
@@ -22,30 +84,17 @@ export async function archiveCrmProjectBySlugForOrg(
   if (project == null) return false;
 
   const now = new Date().toISOString();
-  const { error } = await supabase
-    .from('crm_projects')
-    .update({ archived_at: now })
-    .eq('id', project.id)
-    .eq('organization_id', organizationId);
+  const childProjects = await listActiveChildProjects(supabase, organizationId, [
+    project.id as string,
+  ]);
 
-  if (error) throw new Error(error.message);
-
-  const { error: archiveTasksError } = await supabase
-    .from('crm_workflow_tasks')
-    .update({ archived_at: now })
-    .eq('project_id', project.id)
-    .eq('organization_id', organizationId)
-    .is('archived_at', null);
-
-  if (archiveTasksError) throw new Error(archiveTasksError.message);
-
-  await appendCrmAccountabilityEvent(supabase, {
+  await archiveProjectsAndTasksByIds(
+    supabase,
     organizationId,
-    projectId: project.id,
-    actorMemberId: actorUserId,
-    eventType: 'project_archived',
-    summary: `Archived project: ${project.name}`,
-  });
+    actorUserId,
+    [{ id: project.id as string, name: project.name as string }, ...childProjects],
+    now
+  );
 
   return true;
 }
@@ -79,35 +128,25 @@ export async function bulkArchiveCrmProjectsBySlugsForOrg(
   }
 
   const now = new Date().toISOString();
-  const projectIds = toArchive.map((project) => project.id as string);
+  const parentIds = toArchive.map((project) => project.id as string);
+  const childProjects = await listActiveChildProjects(supabase, organizationId, parentIds);
+  const selectedIdSet = new Set(parentIds);
+  const cascadeChildren = childProjects.filter((child) => !selectedIdSet.has(child.id));
 
-  const { error: archiveProjectsError } = await supabase
-    .from('crm_projects')
-    .update({ archived_at: now })
-    .in('id', projectIds)
-    .eq('organization_id', organizationId);
+  const projectsToArchive = [
+    ...toArchive.map((project) => ({
+      id: project.id as string,
+      name: project.name as string,
+    })),
+    ...cascadeChildren,
+  ];
 
-  if (archiveProjectsError) throw new Error(archiveProjectsError.message);
-
-  const { error: archiveTasksError } = await supabase
-    .from('crm_workflow_tasks')
-    .update({ archived_at: now })
-    .in('project_id', projectIds)
-    .eq('organization_id', organizationId)
-    .is('archived_at', null);
-
-  if (archiveTasksError) throw new Error(archiveTasksError.message);
-
-  await Promise.all(
-    toArchive.map((project) =>
-      appendCrmAccountabilityEvent(supabase, {
-        organizationId,
-        projectId: project.id as string,
-        actorMemberId: actorUserId,
-        eventType: 'project_archived',
-        summary: `Archived project: ${project.name as string}`,
-      })
-    )
+  await archiveProjectsAndTasksByIds(
+    supabase,
+    organizationId,
+    actorUserId,
+    projectsToArchive,
+    now
   );
 
   return {

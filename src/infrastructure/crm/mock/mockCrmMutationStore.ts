@@ -35,8 +35,35 @@ export function isMockProjectArchived(slug: string): boolean {
 export function archiveMockProjectSlug(slug: string): void {
   const trimmed = slug.trim();
   if (!trimmed) return;
+
+  const detail =
+    projectOverrides.get(trimmed) ??
+    MOCK_CRM_PROJECT_DETAILS.find((seed) => seed.summary.slug === trimmed) ??
+    null;
+  const parentId = detail?.summary.id ?? null;
+
   archivedSlugs.add(trimmed);
   projectOverrides.delete(trimmed);
+
+  if (parentId != null) {
+    const childSlugs = new Set<string>();
+    for (const seed of MOCK_CRM_PROJECT_DETAILS) {
+      if (seed.summary.parentProjectId === parentId) {
+        childSlugs.add(seed.summary.slug);
+      }
+    }
+    for (const [childSlug, childDetail] of projectOverrides.entries()) {
+      if (childDetail.summary.parentProjectId === parentId) {
+        childSlugs.add(childSlug);
+      }
+    }
+    for (const childSlug of childSlugs) {
+      if (childSlug === trimmed) continue;
+      archivedSlugs.add(childSlug);
+      projectOverrides.delete(childSlug);
+    }
+  }
+
   persistDemoOverridesIfActive();
 }
 
@@ -59,9 +86,17 @@ export function listEffectiveMockProjectSummaries(options?: {
     }
   }
 
-  return [...bySlug.values()].filter(
-    (summary) => !rootsOnly || summary.parentProjectId == null
+  const listed = [...bySlug.values()];
+  const activeParentIds = new Set(
+    listed.filter((summary) => summary.parentProjectId == null).map((summary) => summary.id)
   );
+
+  return listed.filter((summary) => {
+    if (rootsOnly && summary.parentProjectId != null) return false;
+    if (summary.parentProjectId == null) return true;
+    // Hide orphans whose parent was archived but the child was not.
+    return activeParentIds.has(summary.parentProjectId);
+  });
 }
 
 export function getActiveDemoSessionId(): string | null {
