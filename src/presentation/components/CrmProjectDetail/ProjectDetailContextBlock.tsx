@@ -147,7 +147,7 @@ export function ProjectDetailContextBlock({
       {header}
       {summaryStrip}
       {notes}
-      {isMobileLayout ? null : (
+      {isMobileLayout || isMemberRole ? null : (
         <StageProgressBar
           workflowTasks={project.workflowTasks}
           manualStageCompletions={project.manualStageCompletions}

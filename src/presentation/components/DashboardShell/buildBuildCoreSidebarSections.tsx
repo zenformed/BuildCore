@@ -9,6 +9,7 @@ import {
   TeamsIcon,
   WorkflowStagesIcon,
 } from '@/platform/icons/buildCoreDashboardShellIcons';
+import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
 import type { BuildCoreSidebarNavId } from './BuildCoreSidebar';
 import {
   filterBuildCoreSidebarNavItems,
@@ -27,14 +28,17 @@ function IconWithCog({ children }: { children: ReactElement }): ReactElement {
   );
 }
 
-const LABELS: Record<BuildCoreSidebarNavId, { label: string; title: string }> = {
+const MANAGEMENT_LABELS: Record<
+  Exclude<BuildCoreSidebarNavId, 'notifications'>,
+  { label: string; title: string }
+> = {
   projects: { label: 'Dashboard', title: 'Dashboard' },
   reports: { label: 'CRM Reports', title: 'CRM Reports' },
   teams: { label: 'Team Settings', title: 'Team Settings' },
   workflowStages: { label: 'Workflow Settings', title: 'Workflow Settings' },
 };
 
-const ICONS: Record<BuildCoreSidebarNavId, () => ReactElement> = {
+const ICONS: Record<Exclude<BuildCoreSidebarNavId, 'notifications'>, () => ReactElement> = {
   projects: () => <HomeIcon />,
   reports: () => <ReportsIcon />,
   teams: () => (
@@ -60,22 +64,26 @@ export type BuildBuildCoreSidebarSectionsInput = BuildCoreSidebarNavAccess & {
 export function buildBuildCoreSidebarSections(
   input: BuildBuildCoreSidebarSectionsInput
 ): readonly ZenformedSidebarSection[] {
+  const isMemberExperience = input.isMemberExperience === true;
   const visible = filterBuildCoreSidebarNavItems({
     canAccessTeams: input.canAccessTeams,
     canAccessReports: input.canAccessReports,
     canAccessWorkflowStages: input.canAccessWorkflowStages,
   });
 
-  const menuIds: BuildCoreSidebarNavId[] = [
-    'projects',
-    'reports',
-    'teams',
-    'workflowStages',
-  ];
+  const menuIds: BuildCoreSidebarNavId[] = isMemberExperience
+    ? ['projects']
+    : ['projects', 'reports', 'teams', 'workflowStages'];
 
   const toItem = (id: BuildCoreSidebarNavId): ZenformedSidebarNavItem | null => {
+    if (id === 'notifications') return null;
     if (!visible.some((v) => v.id === id)) return null;
-    const meta = LABELS[id];
+    const meta = isMemberExperience && id === 'projects'
+      ? {
+          label: content.crm.myTasks.sidebarLabel,
+          title: content.crm.myTasks.sidebarTitle,
+        }
+      : MANAGEMENT_LABELS[id];
     const Icon = ICONS[id];
     return {
       id,

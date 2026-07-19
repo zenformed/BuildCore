@@ -25,6 +25,7 @@ import { useBuildCoreFieldLabels } from '@/presentation/providers/BuildCoreField
 import { WorkflowFieldLabelText } from './EditableFieldLabelHeader';
 import { AssigneeMenuOptionLabel } from '@/presentation/features/crmAssignment/AssigneeMenuOptionLabel';
 import shared from '@/presentation/components/crmShared/crmShared.module.css';
+import { workflowTaskStatusBadgeClass } from '@/presentation/components/crmShared/workflowTaskStatusBadge';
 import { TeamMemberAvatar } from './TeamMemberAvatar';
 import { WorkflowDocumentFileIcon } from './WorkflowDocumentFileIcon';
 import { WorkflowInlineMenu } from './WorkflowInlineMenu';
@@ -48,7 +49,7 @@ import styles from './ProjectDetail.module.css';
 const DOCUMENTS_PREVIEW_NAME_LIMIT = 5;
 
 function statusBadgeClass(status: string): string {
-  return shared[`statusBadge_${status}`] ?? shared.statusBadge_pending;
+  return workflowTaskStatusBadgeClass(status);
 }
 
 function isDesktopWorkflowTableRow(
@@ -169,6 +170,7 @@ function WorkflowTaskCompactCardBody({
   readonly model: WorkflowTaskInlineRowModel;
   readonly showAmount?: boolean;
 }): ReactElement {
+  const { isMemberRole } = useProjectDetailShell();
   const actionsButtonRef = useRef<HTMLButtonElement>(null);
 
   return (
@@ -176,6 +178,9 @@ function WorkflowTaskCompactCardBody({
       <div className={styles.workflowTaskCompactRow1}>
         <div className={styles.workflowTaskCompactTitleWrap}>
           <WorkflowTaskRowTitleField model={model} compact />
+          {model.contextLine ? (
+            <p className={styles.workflowNotesPreview}>{model.contextLine}</p>
+          ) : null}
         </div>
         {model.showActionsMenu ? (
           <div className={styles.workflowTaskCompactActions}>
@@ -188,7 +193,11 @@ function WorkflowTaskCompactCardBody({
         ) : null}
       </div>
       <div className={styles.workflowTaskCompactRow2}>
-        <WorkflowTaskRowStatusField model={model} compact />
+        {isMemberRole ? (
+          <WorkflowTaskRowMemberApprovalCheckbox model={model} compact />
+        ) : (
+          <WorkflowTaskRowStatusField model={model} compact />
+        )}
         <span className={styles.workflowTaskCompactRow2Spacer} aria-hidden />
         <div className={styles.workflowTaskCompactRow2End}>
           {showAmount ? <WorkflowTaskRowAmountField model={model} compact /> : null}
@@ -315,6 +324,33 @@ function WorkflowTaskRowPrimaryField({
 }: {
   readonly model: WorkflowTaskInlineRowModel;
 }): ReactElement {
+  const { isMemberRole, project } = useProjectDetailShell();
+  const { catalogForProject } = useBuildCorePipelineStages();
+  const previewScope: WorkflowTaskCustomFieldScope =
+    model.showAmount || model.permissionDomain === 'payments' ? 'payment' : 'workflow_task';
+  const { activeDefinitions } = useBuildCoreWorkflowTaskCustomFieldsForScope(previewScope);
+  const stageLabel =
+    previewScope === 'workflow_task'
+      ? formatWorkflowStageLabel(
+          model.task.stageSlug,
+          catalogForProject({ parentProjectId: project.summary.parentProjectId })
+        )
+      : null;
+  const preview = useWorkflowTaskPreviewPopover({
+    task: model.task,
+    scope: previewScope,
+    customFieldDefinitions: activeDefinitions,
+    stageLabel,
+    documentCount: model.documentCount,
+    enabled: true,
+    interactionMode: 'hover',
+    previewTrigger: 'icon',
+    showOpenDetails: model.canEdit,
+    onOpenDetails: () => {
+      model.closeMenus();
+      model.openEditWorkflowTask(model.task);
+    },
+  });
   const statusLabel = formatWorkflowStatus(model.task.status);
   const openStatusMenu = () => {
     model.setDocumentsMenuOpen(false);
@@ -324,46 +360,67 @@ function WorkflowTaskRowPrimaryField({
 
   return (
     <span className={styles.workflowPrimaryCell} role="cell">
-      <span className={styles.workflowPrimaryStatusLead} ref={model.statusRef}>
-        <button
-          type="button"
-          className={styles.workflowStatusIconBtn}
-          disabled={model.saving || !model.canChangeStatus}
-          aria-expanded={model.statusMenuOpen}
-          aria-label={statusLabel}
-          onClick={openStatusMenu}
-        >
-          <span className={`${styles.statusDotIndicator} ${statusBadgeClass(model.task.status)}`}>
-            <span className={styles.statusDot} aria-hidden />
-          </span>
-        </button>
-        <WorkflowInlineMenu
-          open={model.statusMenuOpen}
-          onClose={() => model.setStatusMenuOpen(false)}
-          anchorRef={model.statusRef}
-        >
-          {WORKFLOW_TASK_STATUSES.map((status) => (
-            <button
-              key={status}
-              type="button"
-              className={styles.inlineMenuPillOption}
-              disabled={
-                model.saving || status === model.task.status || model.isStatusDisabled(status)
-              }
-              title={
-                status === 'done' && !model.canApprove ? model.wf.statusDoneNotAllowed : undefined
-              }
-              onClick={() => void model.saveStatus(status)}
-            >
-              <span className={`${styles.statusDotIndicator} ${statusBadgeClass(status)}`}>
-                <span className={styles.statusDot} aria-hidden />
-                <span className={styles.statusDotText}>{formatWorkflowStatus(status)}</span>
-              </span>
-            </button>
-          ))}
-        </WorkflowInlineMenu>
+      {isMemberRole ? (
+        <span className={styles.workflowPrimaryLead}>
+          <WorkflowTaskRowMemberApprovalCheckbox model={model} embedded />
+        </span>
+      ) : (
+        <span className={styles.workflowPrimaryLead} ref={model.statusRef}>
+          <button
+            type="button"
+            className={styles.workflowStatusIconBtn}
+            disabled={model.saving || !model.canChangeStatus}
+            aria-expanded={model.statusMenuOpen}
+            aria-label={statusLabel}
+            onClick={openStatusMenu}
+          >
+            <span className={`${styles.statusDotIndicator} ${statusBadgeClass(model.task.status)}`}>
+              <span className={styles.statusDot} aria-hidden />
+            </span>
+          </button>
+          <WorkflowInlineMenu
+            open={model.statusMenuOpen}
+            onClose={() => model.setStatusMenuOpen(false)}
+            anchorRef={model.statusRef}
+          >
+            {WORKFLOW_TASK_STATUSES.map((status) => (
+              <button
+                key={status}
+                type="button"
+                className={styles.inlineMenuPillOption}
+                disabled={
+                  model.saving || status === model.task.status || model.isStatusDisabled(status)
+                }
+                title={
+                  status === 'done' && !model.canApprove ? model.wf.statusDoneNotAllowed : undefined
+                }
+                onClick={() => void model.saveStatus(status)}
+              >
+                <span className={`${styles.statusDotIndicator} ${statusBadgeClass(status)}`}>
+                  <span className={styles.statusDot} aria-hidden />
+                  <span className={styles.statusDotText}>{formatWorkflowStatus(status)}</span>
+                </span>
+              </button>
+            ))}
+          </WorkflowInlineMenu>
+        </span>
+      )}
+      {preview.toggleButtonProps ? (
+        <span className={styles.workflowPrimaryPreviewLead}>
+          <button
+            ref={preview.iconAnchorRef as RefObject<HTMLButtonElement>}
+            {...preview.toggleButtonProps}
+            className={`${preview.toggleButtonProps.className} ${previewStyles.previewCardBtnTall}`}
+          >
+            <span className={previewStyles.previewCardIconTall} aria-hidden />
+          </button>
+        </span>
+      ) : null}
+      <span className={styles.workflowPrimaryTitleStack}>
+        <WorkflowTaskRowTitleField model={model} hidePreviewIcon />
+        <WorkflowTaskRowNotesField model={model} underTitle />
       </span>
-      <WorkflowTaskRowTitleField model={model} />
+      {preview.menu}
     </span>
   );
 }
@@ -373,16 +430,32 @@ function WorkflowTaskRowTitleField({
   mobile = false,
   mobileHeader = false,
   compact = false,
+  hidePreviewIcon = false,
 }: {
   readonly model: WorkflowTaskInlineRowModel;
   readonly mobile?: boolean;
   readonly mobileHeader?: boolean;
   readonly compact?: boolean;
+  /** Desktop primary cell owns the tall preview icon beside title+notes. */
+  readonly hidePreviewIcon?: boolean;
 }): ReactElement {
   const { task, saving, canEdit, editingTitle, titleDraft } = model;
+  const { isMemberRole, project } = useProjectDetailShell();
   const compactTitle = formatWorkflowTaskCompactTitle(task.title);
+  const isCompletedTask = task.status === 'done';
+  const showMemberInReview =
+    isMemberRole && !mobile && !mobileHeader && !compact && task.status === 'request_review';
+  const titleTextClass = [
+    compact
+      ? styles.workflowTaskCompactTitle
+      : mobileHeader
+        ? styles.workflowTaskMobileCardTitle
+        : styles.taskTitleBtnText,
+    isCompletedTask ? styles.taskTitleBtnText_completed : '',
+  ]
+    .filter(Boolean)
+    .join(' ');
   const isMobileLayout = useDashboardMobileLayout();
-  const { project } = useProjectDetailShell();
   const { catalogForProject } = useBuildCorePipelineStages();
   const previewScope: WorkflowTaskCustomFieldScope =
     model.showAmount || model.permissionDomain === 'payments' ? 'payment' : 'workflow_task';
@@ -395,13 +468,14 @@ function WorkflowTaskRowTitleField({
         )
       : null;
   const useTapPreview = isMobileLayout || mobile || mobileHeader;
+  const previewEnabled = !editingTitle && !compact && !hidePreviewIcon;
   const preview = useWorkflowTaskPreviewPopover({
     task,
     scope: previewScope,
     customFieldDefinitions: activeDefinitions,
     stageLabel,
     documentCount: model.documentCount,
-    enabled: !editingTitle && !compact,
+    enabled: previewEnabled,
     interactionMode: useTapPreview ? 'tap' : 'hover',
     previewTrigger: 'icon',
     showOpenDetails: canEdit,
@@ -452,26 +526,14 @@ function WorkflowTaskRowTitleField({
         }}
       >
         <span
-          className={
-            compact
-              ? styles.workflowTaskCompactTitle
-              : mobileHeader
-                ? styles.workflowTaskMobileCardTitle
-                : styles.taskTitleBtnText
-          }
+          className={titleTextClass}
         >
           {compact ? compactTitle : task.title}
         </span>
       </button>
     ) : (
       <span
-        className={
-          compact
-            ? styles.workflowTaskCompactTitle
-            : mobileHeader
-              ? styles.workflowTaskMobileCardTitle
-              : styles.taskTitleBtnText
-        }
+        className={titleTextClass}
         title={task.title}
       >
         {compact ? compactTitle : task.title}
@@ -484,6 +546,22 @@ function WorkflowTaskRowTitleField({
 
   const titleHoverFocusable =
     !useTapPreview && !editingTitle && preview.toggleButtonProps == null;
+
+  const titleWithStatus = showMemberInReview ? (
+    <span className={styles.memberDesktopTitleWithStatus}>
+      {titleContent}
+      <span
+        className={`${styles.statusDotIndicator} ${styles.memberDesktopInReview} ${statusBadgeClass('request_review')}`}
+      >
+        <span className={styles.statusDot} aria-hidden />
+        <span className={styles.memberDesktopInReviewLabel}>
+          {content.crm.myTasks.detail.inReviewInline}
+        </span>
+      </span>
+    </span>
+  ) : (
+    titleContent
+  );
 
   const titleWithPreview = (
     <>
@@ -508,7 +586,7 @@ function WorkflowTaskRowTitleField({
             />
           </button>
         ) : null}
-        {titleContent}
+        {titleWithStatus}
       </div>
       {preview.menu}
     </>
@@ -529,20 +607,28 @@ function WorkflowTaskRowNotesField({
   model,
   mobile = false,
   compact = false,
+  underTitle = false,
 }: {
   readonly model: WorkflowTaskInlineRowModel;
   readonly mobile?: boolean;
   readonly compact?: boolean;
-}): ReactElement {
+  /** Render under the task title instead of as a table column. */
+  readonly underTitle?: boolean;
+}): ReactElement | null {
   const { saving, canEdit, editingNotes, notesDraft, notesPreview, notesTitle, task, wf } = model;
-  const notesClass = compact
-    ? styles.workflowTaskCompactNotesWrap
-    : mobile
-      ? styles.workflowTaskMobileCardControl
-      : `${styles.workflowNotesCell} ${styles.workflowMetaCell}`;
+  const hasNotes = (task.notes?.trim() ?? '').length > 0;
+
+  const notesClass = underTitle
+    ? styles.workflowPrimaryNotesUnderTitle
+    : compact
+      ? styles.workflowTaskCompactNotesWrap
+      : mobile
+        ? styles.workflowTaskMobileCardControl
+        : `${styles.workflowNotesCell} ${styles.workflowMetaCell}`;
   const notesDisplay = formatWorkflowTaskNotesDisplay(task.notes);
   const fullNotes = task.notes?.trim() ?? '';
   const useNotesHoverPreview =
+    !underTitle &&
     isDesktopWorkflowTableRow(model, mobile, compact) &&
     !editingNotes &&
     fullNotes.length > 0 &&
@@ -555,24 +641,40 @@ function WorkflowTaskRowNotesField({
     children: fullNotes,
   });
 
-  const previewTextClass = compact
-    ? styles.workflowTaskCompactNotes
-    : mobile
-      ? styles.workflowTaskMobileCardNotesText
-      : styles.workflowNotesPreview;
+  const previewTextClass = underTitle
+    ? `${styles.workflowNotesPreview} ${styles.workflowPrimaryNotesText}${
+        hasNotes ? '' : ` ${styles.workflowPrimaryNotesText_empty}`
+      }`
+    : compact
+      ? styles.workflowTaskCompactNotes
+      : mobile
+        ? styles.workflowTaskMobileCardNotesText
+        : styles.workflowNotesPreview;
+
+  const displayLabel = underTitle
+    ? hasNotes
+      ? notesPreview
+      : canEdit
+        ? wf.addNotes
+        : '-'
+    : compact || mobile
+      ? notesDisplay
+      : notesPreview;
 
   return (
     <span className={notesClass}>
       {editingNotes && canEdit ? (
         <textarea
           className={`${styles.inlineFieldInput} ${
-            compact
-              ? styles.workflowTaskCompactNotesInput
-              : styles.workflowTaskMobileCardNotesInput
+            underTitle
+              ? styles.workflowPrimaryNotesInput
+              : compact
+                ? styles.workflowTaskCompactNotesInput
+                : styles.workflowTaskMobileCardNotesInput
           }`}
           value={notesDraft}
           disabled={saving}
-          rows={compact ? 2 : 3}
+          rows={underTitle || compact ? 2 : 3}
           onChange={(e) => model.setNotesDraft(e.target.value)}
           onBlur={() => void model.saveNotes()}
           onKeyDown={(e) => {
@@ -591,11 +693,13 @@ function WorkflowTaskRowNotesField({
               (notesPreviewPopover.anchorRef as MutableRefObject<HTMLElement | null>).current = node;
             }}
             className={
-              compact
-                ? styles.workflowTaskCompactNotesBtn
-                : mobile
-                  ? styles.workflowTaskMobileCardNotesBtn
-                  : styles.inlineCellBtn
+              underTitle
+                ? styles.workflowPrimaryNotesBtn
+                : compact
+                  ? styles.workflowTaskCompactNotesBtn
+                  : mobile
+                    ? styles.workflowTaskMobileCardNotesBtn
+                    : styles.inlineCellBtn
             }
             disabled={saving}
             title={useNotesHoverPreview ? undefined : notesTitle}
@@ -609,9 +713,7 @@ function WorkflowTaskRowNotesField({
               model.setEditingNotes(true);
             }}
           >
-            <span className={previewTextClass}>
-              {compact || mobile ? notesDisplay : notesPreview}
-            </span>
+            <span className={previewTextClass}>{displayLabel}</span>
           </button>
           {notesPreviewPopover.menu}
         </>
@@ -626,7 +728,7 @@ function WorkflowTaskRowNotesField({
             tabIndex={useNotesHoverPreview ? 0 : undefined}
             {...notesPreviewPopover.anchorHandlers}
           >
-            {compact || mobile ? notesDisplay : notesPreview}
+            {displayLabel}
           </span>
           {notesPreviewPopover.menu}
         </>
@@ -1174,6 +1276,50 @@ function WorkflowTaskRowPaymentDateFields({
   );
 }
 
+function WorkflowTaskRowMemberApprovalCheckbox({
+  model,
+  compact = false,
+  embedded = false,
+}: {
+  readonly model: WorkflowTaskInlineRowModel;
+  readonly compact?: boolean;
+  readonly embedded?: boolean;
+}): ReactElement {
+  const isDone = model.task.status === 'done';
+  const needsApproval = model.task.status === 'request_review';
+  const checked = isDone || needsApproval;
+  const ariaLabel = isDone
+    ? content.crm.myTasks.detail.completedTaskLocked
+    : content.crm.myTasks.detail.completeNeedsReview;
+  const disabled = model.saving || !model.canChangeStatus || isDone;
+
+  const checkbox = (
+    <BulkSelectCheckbox
+      checked={checked}
+      disabled={disabled}
+      ariaLabel={ariaLabel}
+      onChange={(nextChecked) => {
+        if (isDone) return;
+        void model.saveStatus(nextChecked ? 'request_review' : 'in_progress');
+      }}
+    />
+  );
+
+  if (embedded) {
+    return checkbox;
+  }
+
+  if (compact) {
+    return <span className={styles.workflowTaskCompactControl}>{checkbox}</span>;
+  }
+
+  return (
+    <span className={styles.workflowSelectCell} role="cell">
+      {checkbox}
+    </span>
+  );
+}
+
 export function WorkflowTaskRowTableView({
   model,
   showAmountColumn = false,
@@ -1187,20 +1333,25 @@ export function WorkflowTaskRowTableView({
 }): ReactElement {
   const { gridClassName } = useBuildCoreWorkflowTaskTableColumns();
   const showAmount = showAmountColumn || model.showAmount;
-  const paymentGrid = model.showPaymentDates
-    ? styles.workflowGridPaymentsWithDates
-    : styles.workflowGridPayments;
+  /** Keep amount + invoiced/paid cells in lockstep with the payments shell header. */
+  const showPaymentDateColumns = Boolean(showAmountColumn) || model.showPaymentDates;
   const opsGridClass =
     enableCustomColumns && !showAmount
       ? resolveWorkflowOpsGridClassName(true, gridClassName)
       : styles.workflowGrid;
+  const { isMemberRole } = useProjectDetailShell();
   const rowSelection = useWorkflowTaskRowSelection();
-  const usePrimaryLeading = !showAmount || rowSelection != null;
-  const showRowSelect = rowSelection != null;
-  const isSelected = showRowSelect && rowSelection.selectedIds.has(model.task.id);
+  const usePrimaryLeading = isMemberRole || !showAmount || rowSelection != null;
+  const showBulkSelect = rowSelection != null && !isMemberRole;
+  const isSelected = showBulkSelect && rowSelection.selectedIds.has(model.task.id);
   const rowClass = [
     styles.tableRow,
-    showAmount ? `${styles.workflowGrid} ${paymentGrid}` : opsGridClass,
+    /* Payments columns come from .paymentsAlignedGrid (do not also apply .workflowGrid —
+       member workflowGrid overrides would steal the template). */
+    showAmount ? styles.paymentsAlignedGrid : opsGridClass,
+    /* Member: force no-select-track grid on the row itself (ancestor CSS can lose to
+       later .workflowPanelFull / 2K media rules and squeeze the checkbox under later cells). */
+    isMemberRole && !showAmount ? styles.memberProjectWorkflowGrid : '',
     styles.workflowInlineRow,
     model.rowDragOver ? styles.workflowInlineRow_fileDragOver : '',
     isSelected ? styles.tableRow_selected : '',
@@ -1213,10 +1364,10 @@ export function WorkflowTaskRowTableView({
       className={rowClass}
       role="row"
       aria-busy={model.saving || model.documentActions.uploading}
-      aria-selected={showRowSelect ? isSelected : undefined}
+      aria-selected={showBulkSelect ? isSelected : undefined}
       {...model.rowDropHandlers}
     >
-      {showRowSelect ? (
+      {showBulkSelect ? (
         <span className={styles.workflowSelectCell} role="cell">
           <BulkSelectCheckbox
             checked={isSelected}
@@ -1230,7 +1381,10 @@ export function WorkflowTaskRowTableView({
       ) : (
         <>
           <WorkflowTaskRowStatusField model={model} />
-          <WorkflowTaskRowTitleField model={model} />
+          <span className={styles.workflowPrimaryTitleStack}>
+            <WorkflowTaskRowTitleField model={model} />
+            <WorkflowTaskRowNotesField model={model} underTitle />
+          </span>
         </>
       )}
       {enableCustomColumns && !showAmount ? (
@@ -1259,13 +1413,19 @@ export function WorkflowTaskRowTableView({
           onCancel={model.cancelEditCustomField}
         />
       ) : null}
-      <WorkflowTaskRowNotesField model={model} />
+      {showAmount ? <WorkflowTaskRowAmountField model={model} /> : null}
+      {showPaymentDateColumns ? <WorkflowTaskRowPaymentDateFields model={model} /> : null}
+      {isMemberRole && !showAmount ? (
+        <>
+          <span className={styles.workflowStageEmptyCell} aria-hidden />
+          <span className={styles.workflowStageEmptyCell} aria-hidden />
+          <span className={styles.workflowStageEmptyCell} aria-hidden />
+        </>
+      ) : null}
       <WorkflowTaskRowDocumentsField model={model} />
       <WorkflowTaskRowAssigneeField model={model} />
-      {showAmount ? <WorkflowTaskRowAmountField model={model} /> : null}
       <WorkflowTaskRowDueField model={model} />
-      {model.showPaymentDates ? <WorkflowTaskRowPaymentDateFields model={model} /> : null}
-      {model.showActionsMenu ? (
+      {isMemberRole ? null : model.showActionsMenu ? (
         <span className={styles.taskDeleteCell}>
           <WorkflowTaskRowActionsMenuSlot model={model} />
         </span>
@@ -1352,12 +1512,41 @@ export function WorkflowTaskRowMobileView({
   return <WorkflowTaskRowWorkflowMobileView model={model} />;
 }
 
+function MemberMobileStatusBanner({
+  status,
+}: {
+  readonly status: WorkflowTaskInlineRowModel['task']['status'];
+}): ReactElement | null {
+  if (status === 'request_review') {
+    return (
+      <div
+        className={`${styles.workflowTaskMobileStatusBanner} ${styles.workflowTaskMobileStatusBanner_inReview}`}
+        role="status"
+      >
+        {content.crm.myTasks.detail.inReviewBanner}
+      </div>
+    );
+  }
+  if (status === 'done') {
+    return (
+      <div
+        className={`${styles.workflowTaskMobileStatusBanner} ${styles.workflowTaskMobileStatusBanner_complete}`}
+        role="status"
+      >
+        {content.crm.myTasks.detail.taskCompleteBanner}
+      </div>
+    );
+  }
+  return null;
+}
+
 function WorkflowTaskRowWorkflowMobileView({
   model,
 }: {
   readonly model: WorkflowTaskInlineRowModel;
 }): ReactElement {
-  const { cols, task, saving, documentActions, rowDragOver, rowDropHandlers } = model;
+  const { isMemberRole } = useProjectDetailShell();
+  const { task, saving, documentActions, rowDragOver, rowDropHandlers } = model;
   const cardClass = [
     styles.card,
     styles.workflowTaskMobileCard,
@@ -1365,6 +1554,57 @@ function WorkflowTaskRowWorkflowMobileView({
   ]
     .filter(Boolean)
     .join(' ');
+
+  if (isMemberRole) {
+    return (
+      <article
+        className={cardClass}
+        aria-label={task.title}
+        aria-busy={saving || documentActions.uploading}
+        {...rowDropHandlers}
+      >
+        <MemberMobileStatusBanner status={task.status} />
+        <div className={styles.workflowTaskMobileCardHeader}>
+          <div className={styles.workflowTaskMobileCardTitleWrap}>
+            <WorkflowTaskRowTitleField model={model} mobileHeader />
+          </div>
+          <div className={styles.workflowTaskMobileCardActions}>
+            <WorkflowTaskRowMemberApprovalCheckbox model={model} embedded />
+          </div>
+        </div>
+        <div className={styles.workflowTaskMobileCardGrid3}>
+          <div className={styles.workflowTaskMobileCardCell}>
+            <WorkflowFieldLabelText
+              fieldKey={WORKFLOW_TASK_DOCUMENTS_FIELD_KEY}
+              className={styles.projectInfoMobileLabel}
+            />
+            <WorkflowTaskRowDocumentsField model={model} mobile />
+          </div>
+          <div className={`${styles.workflowTaskMobileCardCell} ${styles.workflowTaskMobileCardCell_center}`}>
+            <WorkflowFieldLabelText
+              fieldKey={WORKFLOW_TASK_DUE_FIELD_KEY}
+              className={styles.projectInfoMobileLabel}
+            />
+            <WorkflowTaskRowDueField model={model} mobile />
+          </div>
+          <div className={`${styles.workflowTaskMobileCardCell} ${styles.workflowTaskMobileCardCell_right}`}>
+            <WorkflowFieldLabelText
+              fieldKey={WORKFLOW_TASK_ASSIGNED_FIELD_KEY}
+              className={styles.projectInfoMobileLabel}
+            />
+            <WorkflowTaskRowAssigneeField model={model} mobile />
+          </div>
+        </div>
+        <div className={styles.workflowTaskMobileCardNotes}>
+          <WorkflowFieldLabelText
+            fieldKey={WORKFLOW_TASK_NOTES_FIELD_KEY}
+            className={styles.projectInfoMobileLabel}
+          />
+          <WorkflowTaskRowNotesField model={model} mobile />
+        </div>
+      </article>
+    );
+  }
 
   return (
     <article
@@ -1431,6 +1671,7 @@ function WorkflowTaskRowPaymentMobileView({
 }: {
   readonly model: WorkflowTaskInlineRowModel;
 }): ReactElement {
+  const { isMemberRole } = useProjectDetailShell();
   const { cols, task, saving, documentActions, rowDragOver, rowDropHandlers } = model;
   const payCols = content.projectDetail.payments.columns;
   const cardClass = [
@@ -1440,6 +1681,66 @@ function WorkflowTaskRowPaymentMobileView({
   ]
     .filter(Boolean)
     .join(' ');
+
+  if (isMemberRole) {
+    return (
+      <article
+        className={cardClass}
+        aria-label={task.title}
+        aria-busy={saving || documentActions.uploading}
+        {...rowDropHandlers}
+      >
+        <MemberMobileStatusBanner status={task.status} />
+        <div className={styles.workflowTaskMobileCardHeader}>
+          <div className={styles.workflowTaskMobileCardTitleWrap}>
+            <WorkflowTaskRowTitleField model={model} mobileHeader />
+          </div>
+          <div className={styles.workflowTaskMobileCardActions}>
+            <WorkflowTaskRowMemberApprovalCheckbox model={model} embedded />
+          </div>
+        </div>
+        <div className={styles.workflowTaskMobileCardBody}>
+          <div className={styles.workflowTaskMobileCardGrid3}>
+            <div className={styles.workflowTaskMobileCardCell}>
+              <WorkflowFieldLabelText
+                fieldKey={WORKFLOW_TASK_DOCUMENTS_FIELD_KEY}
+                className={styles.projectInfoMobileLabel}
+              />
+              <WorkflowTaskRowDocumentsField model={model} mobile />
+            </div>
+            <div className={`${styles.workflowTaskMobileCardCell} ${styles.workflowTaskMobileCardCell_center}`}>
+              <WorkflowFieldLabelText
+                fieldKey={WORKFLOW_TASK_DUE_FIELD_KEY}
+                className={styles.projectInfoMobileLabel}
+              />
+              <WorkflowTaskRowDueField model={model} mobile />
+            </div>
+            <div className={`${styles.workflowTaskMobileCardCell} ${styles.workflowTaskMobileCardCell_right}`}>
+              <WorkflowFieldLabelText
+                fieldKey={WORKFLOW_TASK_ASSIGNED_FIELD_KEY}
+                className={styles.projectInfoMobileLabel}
+              />
+              <WorkflowTaskRowAssigneeField model={model} mobile />
+            </div>
+          </div>
+          <div className={styles.workflowTaskMobileCardGrid3}>
+            <div className={styles.workflowTaskMobileCardCell}>
+              <span className={styles.projectInfoMobileLabel}>{cols.amount}</span>
+              <WorkflowTaskRowAmountField model={model} mobile />
+            </div>
+            <div className={`${styles.workflowTaskMobileCardCell} ${styles.workflowTaskMobileCardCell_center}`}>
+              <span className={styles.projectInfoMobileLabel}>{payCols.invoiced}</span>
+              <WorkflowTaskRowInvoicedField model={model} mobile />
+            </div>
+            <div className={`${styles.workflowTaskMobileCardCell} ${styles.workflowTaskMobileCardCell_right}`}>
+              <span className={styles.projectInfoMobileLabel}>{payCols.paid}</span>
+              <WorkflowTaskRowPaidField model={model} mobile />
+            </div>
+          </div>
+        </div>
+      </article>
+    );
+  }
 
   return (
     <article
@@ -1459,59 +1760,59 @@ function WorkflowTaskRowPaymentMobileView({
         ) : null}
       </div>
       <div className={styles.workflowTaskMobileCardBody}>
-      <div className={styles.workflowTaskMobileCardGrid2}>
-        <div className={styles.workflowTaskMobileCardCell}>
+        <div className={styles.workflowTaskMobileCardGrid2}>
+          <div className={styles.workflowTaskMobileCardCell}>
+            <WorkflowFieldLabelText
+              fieldKey={WORKFLOW_TASK_STATUS_FIELD_KEY}
+              className={styles.projectInfoMobileLabel}
+            />
+            <WorkflowTaskRowStatusField model={model} mobile />
+          </div>
+          <div className={`${styles.workflowTaskMobileCardCell} ${styles.workflowTaskMobileCardCell_right}`}>
+            <WorkflowFieldLabelText
+              fieldKey={WORKFLOW_TASK_ASSIGNED_FIELD_KEY}
+              className={styles.projectInfoMobileLabel}
+            />
+            <WorkflowTaskRowAssigneeField model={model} mobile />
+          </div>
+        </div>
+        <div className={styles.workflowTaskMobileCardGrid2}>
+          <div className={styles.workflowTaskMobileCardCell}>
+            <WorkflowFieldLabelText
+              fieldKey={WORKFLOW_TASK_DOCUMENTS_FIELD_KEY}
+              className={styles.projectInfoMobileLabel}
+            />
+            <WorkflowTaskRowDocumentsField model={model} mobile />
+          </div>
+          <div className={`${styles.workflowTaskMobileCardCell} ${styles.workflowTaskMobileCardCell_right}`}>
+            <span className={styles.projectInfoMobileLabel}>{cols.amount}</span>
+            <WorkflowTaskRowAmountField model={model} mobile />
+          </div>
+        </div>
+        <div className={styles.workflowTaskMobileCardGrid3}>
+          <div className={styles.workflowTaskMobileCardCell}>
+            <WorkflowFieldLabelText
+              fieldKey={WORKFLOW_TASK_DUE_FIELD_KEY}
+              className={styles.projectInfoMobileLabel}
+            />
+            <WorkflowTaskRowDueField model={model} mobile />
+          </div>
+          <div className={`${styles.workflowTaskMobileCardCell} ${styles.workflowTaskMobileCardCell_center}`}>
+            <span className={styles.projectInfoMobileLabel}>{payCols.invoiced}</span>
+            <WorkflowTaskRowInvoicedField model={model} mobile />
+          </div>
+          <div className={`${styles.workflowTaskMobileCardCell} ${styles.workflowTaskMobileCardCell_right}`}>
+            <span className={styles.projectInfoMobileLabel}>{payCols.paid}</span>
+            <WorkflowTaskRowPaidField model={model} mobile />
+          </div>
+        </div>
+        <div className={styles.workflowTaskMobileCardNotes}>
           <WorkflowFieldLabelText
-            fieldKey={WORKFLOW_TASK_STATUS_FIELD_KEY}
+            fieldKey={WORKFLOW_TASK_NOTES_FIELD_KEY}
             className={styles.projectInfoMobileLabel}
           />
-          <WorkflowTaskRowStatusField model={model} mobile />
+          <WorkflowTaskRowNotesField model={model} mobile />
         </div>
-        <div className={`${styles.workflowTaskMobileCardCell} ${styles.workflowTaskMobileCardCell_right}`}>
-          <WorkflowFieldLabelText
-            fieldKey={WORKFLOW_TASK_ASSIGNED_FIELD_KEY}
-            className={styles.projectInfoMobileLabel}
-          />
-          <WorkflowTaskRowAssigneeField model={model} mobile />
-        </div>
-      </div>
-      <div className={styles.workflowTaskMobileCardGrid2}>
-        <div className={styles.workflowTaskMobileCardCell}>
-          <WorkflowFieldLabelText
-            fieldKey={WORKFLOW_TASK_DOCUMENTS_FIELD_KEY}
-            className={styles.projectInfoMobileLabel}
-          />
-          <WorkflowTaskRowDocumentsField model={model} mobile />
-        </div>
-        <div className={`${styles.workflowTaskMobileCardCell} ${styles.workflowTaskMobileCardCell_right}`}>
-          <span className={styles.projectInfoMobileLabel}>{cols.amount}</span>
-          <WorkflowTaskRowAmountField model={model} mobile />
-        </div>
-      </div>
-      <div className={styles.workflowTaskMobileCardGrid3}>
-        <div className={styles.workflowTaskMobileCardCell}>
-          <WorkflowFieldLabelText
-            fieldKey={WORKFLOW_TASK_DUE_FIELD_KEY}
-            className={styles.projectInfoMobileLabel}
-          />
-          <WorkflowTaskRowDueField model={model} mobile />
-        </div>
-        <div className={`${styles.workflowTaskMobileCardCell} ${styles.workflowTaskMobileCardCell_center}`}>
-          <span className={styles.projectInfoMobileLabel}>{payCols.invoiced}</span>
-          <WorkflowTaskRowInvoicedField model={model} mobile />
-        </div>
-        <div className={`${styles.workflowTaskMobileCardCell} ${styles.workflowTaskMobileCardCell_right}`}>
-          <span className={styles.projectInfoMobileLabel}>{payCols.paid}</span>
-          <WorkflowTaskRowPaidField model={model} mobile />
-        </div>
-      </div>
-      <div className={styles.workflowTaskMobileCardNotes}>
-        <WorkflowFieldLabelText
-          fieldKey={WORKFLOW_TASK_NOTES_FIELD_KEY}
-          className={styles.projectInfoMobileLabel}
-        />
-        <WorkflowTaskRowNotesField model={model} mobile />
-      </div>
       </div>
     </article>
   );

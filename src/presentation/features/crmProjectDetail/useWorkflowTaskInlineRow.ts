@@ -45,6 +45,8 @@ export type UseWorkflowTaskInlineRowInput = {
   readonly taskDocuments: readonly CrmDocumentMetadata[];
   readonly showAmountColumn?: boolean;
   readonly permissionDomain?: WorkflowTaskPermissionDomain;
+  /** Optional secondary line under the title (e.g. Project - Stage). */
+  readonly contextLine?: string | null;
   readonly isApiSource: boolean;
   readonly onUpdated: (task: CrmWorkflowTask) => Promise<void>;
   readonly onTaskError?: (message: string) => void;
@@ -58,6 +60,7 @@ export function useWorkflowTaskInlineRow({
   taskDocuments,
   showAmountColumn = false,
   permissionDomain = 'workflow_tasks',
+  contextLine = null,
   isApiSource,
   onUpdated,
   onTaskError,
@@ -95,15 +98,22 @@ export function useWorkflowTaskInlineRow({
   const accessState = permissionDomain === 'payments' ? sectionAccess.payment : workflowAccess;
   const { permissions, isReady } = accessState;
   const canView = isReady && permissions.canView;
-  const canEdit = isReady && permissions.canEdit && !projectMutationsLocked;
+  /** Members cannot mutate completed (done) tasks at all. */
+  const memberCompletedLocked = isMemberRole && task.status === 'done';
+  const canEdit =
+    isReady && permissions.canEdit && !projectMutationsLocked && !memberCompletedLocked;
   /** Members may edit tasks but never reassign people. */
   const canAssign = canEdit && !isMemberRole;
-  const canDelete = isReady && permissions.canDelete && !projectMutationsLocked;
-  const canUpload = isReady && permissions.canUpload && !projectMutationsLocked;
+  const canDelete =
+    isReady && permissions.canDelete && !projectMutationsLocked && !memberCompletedLocked;
+  const canUpload =
+    isReady && permissions.canUpload && !projectMutationsLocked && !memberCompletedLocked;
   const canDownload = isReady && permissions.canDownload;
-  const canSendFiles = isReady && permissions.canSendFiles && !projectMutationsLocked;
-  const canApprove = isReady && permissions.canApprove && !projectMutationsLocked;
-  const canChangeStatus = canView && !projectMutationsLocked;
+  const canSendFiles =
+    isReady && permissions.canSendFiles && !projectMutationsLocked && !memberCompletedLocked;
+  const canApprove =
+    isReady && permissions.canApprove && !projectMutationsLocked && !memberCompletedLocked;
+  const canChangeStatus = canView && !projectMutationsLocked && !memberCompletedLocked;
   const documentAccept = BUILDCORE_UPLOAD_ALLOWED_EXTENSIONS.join(',');
   const { rowDragOver: fileDragOver, rowDropHandlers: fileDropHandlers } =
     useWorkflowTaskRowFileDrop(task);
@@ -248,7 +258,13 @@ export function useWorkflowTaskInlineRow({
 
   const saveStatus = useCallback(
     async (status: WorkflowTaskStatus) => {
-      if (status === 'done' ? !canApprove : !canView) return;
+      if (!canChangeStatus) return;
+      if (status === 'done' ? !canApprove : !canView) {
+        onTaskError?.(
+          status === 'done' ? wf.statusDoneNotAllowed : wf.noViewPermission
+        );
+        return;
+      }
       setStatusMenuOpen(false);
       if (status === task.status) return;
       const validation = validateWorkflowTaskStatusChange(task, status, docCount);
@@ -262,7 +278,7 @@ export function useWorkflowTaskInlineRow({
         reportError(err);
       }
     },
-    [canApprove, canView, docCount, onTaskError, patchTask, reportError, task]
+    [canApprove, canChangeStatus, canView, docCount, onTaskError, patchTask, reportError, task, wf]
   );
 
   const isStatusDisabled = useCallback(
@@ -430,19 +446,19 @@ export function useWorkflowTaskInlineRow({
   const awaitingCustomerReview = task.status === 'request_review';
   const documentsLabel = hasDocuments
     ? `${effectiveDocCount} ${wf.documentsCountSuffix}`
-    : awaitingCustomerReview
-      ? wf.documentsReview
-      : !task.documentsRequired
-        ? wf.documentsNotRequired
+    : !task.documentsRequired
+      ? wf.documentsNotRequired
+      : awaitingCustomerReview
+        ? wf.documentsReview
         : wf.documentsNone;
   const documentsMobileLabel = hasDocuments
     ? formatWorkflowTaskDocumentCountLabel(effectiveDocCount)
-    : awaitingCustomerReview
-      ? wf.documentsReview
-      : !task.documentsRequired
-        ? wf.documentsNotRequired
+    : !task.documentsRequired
+      ? wf.documentsNotRequired
+      : awaitingCustomerReview
+        ? wf.documentsReview
         : wf.documentsNone;
-  const showDocumentsIcon = hasDocuments || task.documentsRequired || awaitingCustomerReview;
+  const showDocumentsIcon = hasDocuments || task.documentsRequired;
   const canOpenDocumentsMenu =
     canView && (hasDocuments || awaitingCustomerReview || canUpload || canEdit);
   const showAssignedNotification =
@@ -455,10 +471,11 @@ export function useWorkflowTaskInlineRow({
       ? task.notes.replace(/\s+/g, ' ').trim()
       : undefined;
   const showActionsMenu =
-    canEdit ||
-    (canDelete && onRequestArchiveTask != null) ||
-    showAssignedNotification ||
-    showSendAttachment;
+    !isMemberRole &&
+    (canEdit ||
+      (canDelete && onRequestArchiveTask != null) ||
+      showAssignedNotification ||
+      showSendAttachment);
 
   return {
     wf,
@@ -535,6 +552,7 @@ export function useWorkflowTaskInlineRow({
     notesPreview,
     notesTitle,
     showActionsMenu,
+    contextLine,
     openEditWorkflowTask,
     openAssignedNotifyPromptForTask,
     openSendAttachmentDialogForTask,

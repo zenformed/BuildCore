@@ -37,12 +37,14 @@ export type WorkflowTaskTableHeaderRowProps = {
   readonly showStatusRefresh?: boolean;
   /** Gmail-style filter caret shown between select and refresh/bulk actions. */
   readonly leadingFilter?: ReactNode;
+  /** Override table-header refresh (e.g. member parent+child rollup). */
+  readonly onRefreshTasks?: () => Promise<void>;
 };
 
 export function WorkflowTaskTableHeaderRow({
   context = 'workflow',
   showAmount = false,
-  showNotes = true,
+  showNotes = false,
   enableCustomColumns = false,
   enablePaymentCustomColumns = false,
   trailingHeaders = null,
@@ -50,11 +52,14 @@ export function WorkflowTaskTableHeaderRow({
   gridClassName,
   showStatusRefresh = false,
   leadingFilter = null,
+  onRefreshTasks,
 }: WorkflowTaskTableHeaderRowProps): ReactElement {
   const cols = content.projectDetail.workflow.columns;
   const rowSelection = useWorkflowTaskRowSelection();
-  const { refreshWorkflowTasks, setToast } = useProjectDetailShell();
+  const { refreshWorkflowTasks, setToast, isMemberRole } = useProjectDetailShell();
+  const handleRefresh = onRefreshTasks ?? refreshWorkflowTasks;
   const showSelectionChrome = showStatusRefresh;
+  const showBulkSelect = rowSelection != null && showSelectionChrome && !isMemberRole;
   const hasSelection = (rowSelection?.selectedCount ?? 0) > 0;
   const bulk = rowSelection?.bulkActions;
   const showBulkChrome =
@@ -75,6 +80,7 @@ export function WorkflowTaskTableHeaderRow({
     styles.tableHeader,
     styles.workflowTaskTableHeader,
     gridClass,
+    isMemberRole && !showAmount ? styles.memberProjectWorkflowGrid : '',
     rowClassName,
   ]
     .filter(Boolean)
@@ -82,7 +88,7 @@ export function WorkflowTaskTableHeaderRow({
 
   return (
     <div className={rowClass} role="row">
-      {rowSelection != null && showSelectionChrome ? (
+      {showBulkSelect ? (
         <span role="columnheader" className={styles.workflowSelectHeader}>
           <BulkSelectCheckbox
             checked={rowSelection.allVisibleSelected}
@@ -103,7 +109,7 @@ export function WorkflowTaskTableHeaderRow({
             <WorkflowTableBulkActions />
           ) : (
             <WorkflowTableStatusRefresh
-              onRefresh={refreshWorkflowTasks}
+              onRefresh={handleRefresh}
               onError={(message) => setToast({ kind: 'error', message })}
             />
           )}
@@ -125,6 +131,19 @@ export function WorkflowTaskTableHeaderRow({
       )}
       {enableCustomColumns ? <WorkflowTaskTableCustomColumnHeaders /> : null}
       {enablePaymentCustomColumns ? <PaymentTableCustomColumnHeaders /> : null}
+      {showAmount ? (
+        <span role="columnheader" className={styles.workflowColumnHeaderAlignCenter}>
+          {cols.amount}
+        </span>
+      ) : null}
+      {trailingHeaders}
+      {isMemberRole && !showAmount ? (
+        <>
+          <span role="columnheader" aria-hidden />
+          <span role="columnheader" aria-hidden />
+          <span role="columnheader" aria-hidden />
+        </>
+      ) : null}
       {showNotes ? (
         <EditableFieldLabelHeader
           fieldKey={WORKFLOW_TASK_NOTES_FIELD_KEY}
@@ -143,15 +162,13 @@ export function WorkflowTaskTableHeaderRow({
         context={context}
         align="center"
       />
-      {showAmount ? <span role="columnheader">{cols.amount}</span> : null}
       <EditableFieldLabelHeader
         fieldKey={WORKFLOW_TASK_DUE_FIELD_KEY}
         context={context}
         align="center"
         className={styles.workflowDueHeader}
       />
-      {trailingHeaders}
-      <WorkflowTaskActionsColumnHeader context={context} />
+      {isMemberRole ? null : <WorkflowTaskActionsColumnHeader context={context} />}
     </div>
   );
 }

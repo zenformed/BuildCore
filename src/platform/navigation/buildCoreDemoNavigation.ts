@@ -43,6 +43,9 @@ export const buildCoreDemoNavigation: BuildCoreNavigation = {
     projectDocuments: (slug: string): string => `${DEMO_PREFIX}/projects/${slug}/documents`,
     projectAccountability: (slug: string): string => `${DEMO_PREFIX}/projects/${slug}/accountability`,
     projectFinancials: (slug: string): string => `${DEMO_PREFIX}/projects/${slug}/financials`,
+    notifications: `${DEMO_PREFIX}/notifications`,
+    myTaskDetail: (taskId: string): string =>
+      `${DEMO_PREFIX}/dashboard/tasks/${encodeURIComponent(taskId)}`,
   },
   sidebar: {
     ...buildCoreDashboardNavigation.sidebar,

@@ -597,7 +597,7 @@ export function WorkflowOpsTaskDraftRow({
   };
 
   const rowSelection = useWorkflowTaskRowSelection();
-  const showRowSelect = rowSelection != null;
+  const showRowSelect = rowSelection != null && !isMemberRole;
 
   if (showCompactLayout) {
     return (
@@ -670,7 +670,9 @@ export function WorkflowOpsTaskDraftRow({
           <span className={styles.workflowSelectCell} aria-hidden />
         ) : null}
         <span className={styles.workflowPrimaryCell}>
-          <WorkflowOpsTaskDraftStatusField {...fieldProps} layout="dot" />
+          {isMemberRole ? null : (
+            <WorkflowOpsTaskDraftStatusField {...fieldProps} layout="dot" />
+          )}
           <span className={styles.taskTitleCell}>
             <input
               className={styles.inlineFieldInput}
@@ -685,9 +687,6 @@ export function WorkflowOpsTaskDraftRow({
               autoFocus
             />
           </span>
-        </span>
-        <span className={`${styles.workflowNotesCell} ${styles.workflowMetaCell}`} aria-hidden>
-          <span className={styles.workflowNotesPreview}>—</span>
         </span>
         <span className={`${styles.inlineCellWrap} ${styles.workflowMetaCell}`}>
           <select

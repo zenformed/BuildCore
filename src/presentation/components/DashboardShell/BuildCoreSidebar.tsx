@@ -14,13 +14,19 @@ import {
 } from '@/platform/icons/buildCoreDashboardShellIcons';
 import styles from './BuildCoreSidebar.module.css';
 
-export type BuildCoreSidebarNavId = 'projects' | 'reports' | 'teams' | 'workflowStages';
+export type BuildCoreSidebarNavId =
+  | 'projects'
+  | 'reports'
+  | 'teams'
+  | 'workflowStages'
+  | 'notifications';
 
 const SIDEBAR_ICONS: Record<BuildCoreSidebarNavId, () => ReactElement> = {
   projects: ListIcon,
   reports: ReportsIcon,
   teams: TeamsIcon,
   workflowStages: WorkflowStagesIcon,
+  notifications: ListIcon,
 };
 
 export type BuildCoreSidebarProps = BuildCoreSidebarNavAccess & {

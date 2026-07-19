@@ -588,6 +588,45 @@
   box-sizing: border-box;
 }
 
+.previewCardBtnTall {
+  align-self: stretch;
+  width: 1.375rem;
+  min-height: 2.25rem;
+  height: auto;
+  border-radius: 0.25rem;
+}
+
+.previewCardIconTall {
+  display: block;
+  width: 0.875rem;
+  height: 1.375rem;
+  border: 1.5px solid currentColor;
+  border-radius: 0.2rem;
+  position: relative;
+  box-sizing: border-box;
+}
+
+.previewCardIconTall::before,
+.previewCardIconTall::after {
+  content: '';
+  position: absolute;
+  left: 0.15rem;
+  right: 0.15rem;
+  height: 1px;
+  background: currentColor;
+  opacity: 0.85;
+}
+
+.previewCardIconTall::before {
+  top: 0.35rem;
+}
+
+.previewCardIconTall::after {
+  top: 0.62rem;
+  width: 55%;
+  right: auto;
+}
+
 .previewCardIcon::before,
 .previewCardIcon::after {
   content: '';

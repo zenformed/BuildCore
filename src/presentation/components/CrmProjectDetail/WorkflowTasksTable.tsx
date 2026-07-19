@@ -58,6 +58,14 @@ import { WorkflowUsersColumn } from './WorkflowUsersColumn';
 import { WorkflowAssigneeDragHeldIndicator } from './WorkflowAssigneeDragHeldIndicator';
 import { WorkflowTaskAssigneeDragProvider } from '@/presentation/features/crmProjectDetail/workflowTaskAssigneeDragContext';
 import { WorkflowTaskRowSelectionProvider } from '@/presentation/features/crmProjectDetail/workflowTaskRowSelectionContext';
+import {
+  isMemberCompletedWorkflowTask,
+  MemberCompletedTasksSection,
+} from './MemberCompletedTasksSection';
+import { MemberNoActiveTasksRow } from './MemberNoActiveTasksRow';
+import { WorkflowTaskInlineRow } from './WorkflowTaskInlineRow';
+import { resolveWorkflowOpsGridClassName } from './WorkflowTaskTableCustomColumns';
+import { useBuildCoreWorkflowTaskTableColumns } from '@/presentation/providers/BuildCoreWorkflowTaskTableColumnsProvider';
 import styles from './ProjectDetail.module.css';
 
 export type WorkflowTasksTableLayout = 'preview' | 'full';
@@ -71,6 +79,16 @@ export type WorkflowTasksTableProps = {
   onTaskAdded?: (task: CrmWorkflowTask) => void | Promise<void>;
   onTaskError?: (message: string) => void;
   onRequestArchiveTask?: (task: CrmWorkflowTask) => void;
+  /** When false, all ops tasks render in one flat list (no stage sections). */
+  groupByStage?: boolean;
+  /** Hide stage section chrome when using a flat list. */
+  hideStageHeaders?: boolean;
+  /** Resolve owning project slug per task (parent vs subproject rollups). */
+  resolveTaskProjectSlug?: (taskId: string) => string;
+  /** Optional second-line context under the task title. */
+  taskContextLineById?: ReadonlyMap<string, string>;
+  /** Override panel refresh (e.g. parent+child rollup reload). */
+  onRefreshTasks?: () => Promise<void>;
 };
 
 export function WorkflowTasksTable({
@@ -81,6 +99,11 @@ export function WorkflowTasksTable({
   onTaskAdded,
   onTaskError,
   onRequestArchiveTask,
+  groupByStage = true,
+  hideStageHeaders = false,
+  resolveTaskProjectSlug,
+  taskContextLineById,
+  onRefreshTasks,
 }: WorkflowTasksTableProps): ReactElement {
   const router = useRouter();
   const {
@@ -105,6 +128,7 @@ export function WorkflowTasksTable({
   const wf = content.projectDetail.workflow;
   const { permissions, isLoading, isReady } = useBuildCoreWorkflowTaskAccess();
   const { catalogForProject } = useBuildCorePipelineStages();
+  const { gridClassName: workflowCustomGridClassName } = useBuildCoreWorkflowTaskTableColumns();
   const catalog = catalogForProject({ parentProjectId: project.summary.parentProjectId });
   const canView = isReady && permissions.canView;
   const canCreate = isReady && permissions.canCreate;
@@ -124,7 +148,7 @@ export function WorkflowTasksTable({
   const [searchQuery, setSearchQuery] = useState('');
   const [filters, setFilters] = useState<CrmProjectsListFilters>(EMPTY_CRM_PROJECTS_LIST_FILTERS);
   const [taskViewMode, setTaskViewMode] = useState<WorkflowTaskViewMode>('table');
-  const isDesktopStageCardMode = !isMobileLayout && taskViewMode === 'cards';
+  const isDesktopStageCardMode = groupByStage && !isMobileLayout && taskViewMode === 'cards';
   const useCardTaskLayout = isMobileLayout || isDesktopStageCardMode;
   const useUnifiedDesktopTable = !isMobileLayout && !isDesktopStageCardMode;
   const isSearching = searchQuery.trim().length > 0;
@@ -155,11 +179,30 @@ export function WorkflowTasksTable({
   });
 
   const groups = useMemo(() => {
+    if (!groupByStage) {
+      const opsTasks = filteredTasks.filter((task) => !isPaymentWorkflowTask(task));
+      const listTasks = isMemberRole
+        ? opsTasks.filter((task) => !isMemberCompletedWorkflowTask(task.status))
+        : opsTasks;
+      if (listTasks.length === 0) return [];
+      return [
+        {
+          collapseKey: currentStage,
+          stageSlug: currentStage,
+          stageLabel: content.projectDetail.sections.workflow,
+          isPaymentsGroup: false as const,
+          tasks: listTasks,
+        },
+      ];
+    }
     // Stage filters should still show the selected stage shell(s) even with zero tasks,
     // so table chrome (select + headers) stays available to clear/adjust the filter.
     const includeEmptyStages =
       stageFilterActive || (!isNarrowingResults && !hideEmptyStages);
-    const grouped = groupOpsWorkflowTasksByStage(filteredTasks, currentStage, catalog, {
+    const tasksForGroups = isMemberRole
+      ? filteredTasks.filter((task) => !isMemberCompletedWorkflowTask(task.status))
+      : filteredTasks;
+    const grouped = groupOpsWorkflowTasksByStage(tasksForGroups, currentStage, catalog, {
       includeEmptyStages,
     });
     if (!stageFilterActive) return grouped;
@@ -168,11 +211,20 @@ export function WorkflowTasksTable({
     catalog,
     currentStage,
     filteredTasks,
+    groupByStage,
     hideEmptyStages,
+    isMemberRole,
     isNarrowingResults,
     stageFilterActive,
     stageFilterSlugs,
   ]);
+
+  const memberCompletedTasks = useMemo(() => {
+    if (!isMemberRole) return [];
+    return filteredTasks.filter(
+      (task) => !isPaymentWorkflowTask(task) && isMemberCompletedWorkflowTask(task.status)
+    );
+  }, [filteredTasks, isMemberRole]);
 
   const orderedGroups = groups;
   const totalTasks = countWorkflowTasksInGroups(groups);
@@ -185,7 +237,8 @@ export function WorkflowTasksTable({
     : previewStageGroups;
   const docCounts = countDocumentsByTaskId(project.documents);
   const showViewAllLink = !isFullLayout;
-  const showWorkflowContent = groups.length > 0;
+  const showWorkflowContent =
+    groups.length > 0 || (isMemberRole && memberCompletedTasks.length > 0);
 
   const handleSelectStage = useCallback(
     (stageSlug: PipelineStageSlug) => {
@@ -312,7 +365,7 @@ export function WorkflowTasksTable({
     .join(' ');
 
   const batchCompleteLeading =
-    canCreate ? (
+    canCreate && groupByStage ? (
       <WorkflowTasksBatchCompleteButton
         workflowTasks={project.workflowTasks}
         manualStageCompletions={project.manualStageCompletions}
@@ -348,12 +401,13 @@ export function WorkflowTasksTable({
     />
   );
 
-  const viewToggleButton = !isMobileLayout ? (
-    <WorkflowTasksViewToggleButton
-      viewMode={taskViewMode}
-      onToggle={() => setTaskViewMode((mode) => (mode === 'table' ? 'cards' : 'table'))}
-    />
-  ) : null;
+  const viewToggleButton =
+    !isMobileLayout && groupByStage ? (
+      <WorkflowTasksViewToggleButton
+        viewMode={taskViewMode}
+        onToggle={() => setTaskViewMode((mode) => (mode === 'table' ? 'cards' : 'table'))}
+      />
+    ) : null;
 
   const searchInput = (
     <DetailPanelSectionSearch
@@ -367,7 +421,7 @@ export function WorkflowTasksTable({
   const refreshButton = (
     <DetailPanelSectionRefresh
       sectionLabel={content.projectDetail.sections.workflow}
-      onRefresh={refreshWorkflowTasks}
+      onRefresh={onRefreshTasks ?? refreshWorkflowTasks}
       onError={(message) => setToast({ kind: 'error', message })}
     />
   );
@@ -428,7 +482,7 @@ export function WorkflowTasksTable({
       onTaskError={onTaskError}
       onRequestArchiveTask={canDelete ? onRequestArchiveTask : undefined}
       onRequestToggleManualStageCompletion={
-        canCreate
+        canCreate && groupByStage
           ? (stageSlug, action, stageLabel) =>
               guardProjectEdit(() => {
                 setPendingStageToggle({ stageSlug, action, stageLabel });
@@ -436,11 +490,61 @@ export function WorkflowTasksTable({
           : undefined
       }
       markStageCompleteBusy={markStageToggleBusy}
+      collapsible={groupByStage}
+      showStageHeader={!hideStageHeaders && groupByStage}
+      resolveTaskProjectSlug={resolveTaskProjectSlug}
+      taskContextLineById={taskContextLineById}
       useCardLayout={useCardTaskLayout}
-      layoutAsStageCard={isDesktopStageCardMode}
+      layoutAsStageCard={isDesktopStageCardMode && groupByStage}
       unifiedDesktopTable={useUnifiedDesktopTable}
     />
   ));
+
+  const memberCompletedRows = memberCompletedTasks.map((task) => (
+    <WorkflowTaskInlineRow
+      key={task.id}
+      variant={useCardTaskLayout || isMobileLayout ? (isMobileLayout ? 'mobile' : 'compact') : 'table'}
+      projectSlug={resolveTaskProjectSlug?.(task.id) ?? project.summary.slug}
+      task={task}
+      docCount={docCounts.get(task.id) ?? 0}
+      taskDocuments={project.documents.filter((doc) => doc.workflowTaskId === task.id)}
+      enableCustomColumns={!useCardTaskLayout && !isMobileLayout}
+      contextLine={taskContextLineById?.get(task.id) ?? null}
+      isApiSource={isApiSource}
+      onUpdated={onTaskUpdated}
+      onTaskError={onTaskError}
+    />
+  ));
+
+  const memberCompletedSection =
+    isMemberRole && memberCompletedTasks.length > 0 ? (
+      <MemberCompletedTasksSection taskCount={memberCompletedTasks.length}>
+        {useCardTaskLayout || isMobileLayout ? (
+          <div className={styles.memberCompletedTasksCards}>{memberCompletedRows}</div>
+        ) : (
+          <div className={styles.stageGroup_unifiedTableSection}>
+            <div className={styles.stageGroupTable}>{memberCompletedRows}</div>
+          </div>
+        )}
+      </MemberCompletedTasksSection>
+    ) : null;
+
+  const activeTasksEmpty =
+    isMemberRole && groups.length === 0 && memberCompletedTasks.length > 0;
+
+  const memberNoActiveTasksGridClass = [
+    styles.memberProjectWorkflowGrid,
+    resolveWorkflowOpsGridClassName(true, workflowCustomGridClassName),
+  ]
+    .filter(Boolean)
+    .join(' ');
+
+  const memberNoActiveTasksRow = activeTasksEmpty ? (
+    <MemberNoActiveTasksRow
+      gridClassName={memberNoActiveTasksGridClass}
+      variant={useCardTaskLayout || isMobileLayout ? 'mobile' : 'table'}
+    />
+  ) : null;
 
   const tableBody = useCardTaskLayout ? (
     isDesktopStageCardMode ? (
@@ -450,7 +554,10 @@ export function WorkflowTasksTable({
         <WorkflowAssigneeDragHeldIndicator />
       </WorkflowTaskAssigneeDragProvider>
     ) : (
-      stageGroupElements
+      <>
+        {memberNoActiveTasksRow ?? stageGroupElements}
+        {memberCompletedSection}
+      </>
     )
   ) : (
     <WorkflowTaskRowSelectionProvider
@@ -463,11 +570,18 @@ export function WorkflowTasksTable({
             showAmount={showUnifiedTableAmount}
             showStatusRefresh
             leadingFilter={tableFilterCaret}
+            onRefreshTasks={onRefreshTasks}
           />
-          <div className={styles.workflowUnifiedTableBody}>{stageGroupElements}</div>
+          <div className={styles.workflowUnifiedTableBody}>
+            {memberNoActiveTasksRow ?? stageGroupElements}
+            {memberCompletedSection}
+          </div>
         </div>
       ) : (
-        stageGroupElements
+        <>
+          {memberNoActiveTasksRow ?? stageGroupElements}
+          {memberCompletedSection}
+        </>
       )}
     </WorkflowTaskRowSelectionProvider>
   );

@@ -10,12 +10,14 @@ export type WorkflowTasksTableColumnHeaderProps = {
   readonly showAmount?: boolean;
   readonly showStatusRefresh?: boolean;
   readonly leadingFilter?: ReactNode;
+  readonly onRefreshTasks?: () => Promise<void>;
 };
 
 export function WorkflowTasksTableColumnHeader({
   showAmount = false,
   showStatusRefresh = false,
   leadingFilter = null,
+  onRefreshTasks,
 }: WorkflowTasksTableColumnHeaderProps): ReactElement {
   const { gridClassName } = useBuildCoreWorkflowTaskTableColumns();
   const enableCustomColumns = !showAmount;
@@ -26,6 +28,7 @@ export function WorkflowTasksTableColumnHeader({
       enableCustomColumns={enableCustomColumns}
       showStatusRefresh={showStatusRefresh}
       leadingFilter={leadingFilter}
+      onRefreshTasks={onRefreshTasks}
       gridClassName={
         enableCustomColumns
           ? resolveWorkflowOpsGridClassName(true, gridClassName)

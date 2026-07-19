@@ -58,6 +58,7 @@ const buildCoreDashboardNavigationSource = {
     projectDocuments: (slug: string): string => `/projects/${slug}/documents`,
     projectAccountability: (slug: string): string => `/projects/${slug}/accountability`,
     projectFinancials: (slug: string): string => `/projects/${slug}/financials`,
+    myTaskDetail: (taskId: string): string => `/dashboard/tasks/${encodeURIComponent(taskId)}`,
   },
   sidebar: {
     ariaLabel: 'Primary navigation',

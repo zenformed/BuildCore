@@ -6,6 +6,8 @@ export type BuildCoreSidebarNavAccess = {
   readonly canAccessTeams?: boolean;
   readonly canAccessReports?: boolean;
   readonly canAccessWorkflowStages?: boolean;
+  /** Members: relabel Dashboard → My Tasks. */
+  readonly isMemberExperience?: boolean;
 };
 
 export function filterBuildCoreSidebarNavItems({

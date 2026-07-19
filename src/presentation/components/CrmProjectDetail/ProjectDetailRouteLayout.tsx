@@ -64,9 +64,22 @@ export function ProjectDetailRouteLayout({ children }: ProjectDetailRouteLayoutP
 
   useEffect(() => {
     if (!isMemberRole || !activeProjectSlug) return;
+    if (subSlug != null && subSlug.length > 0 && parentRouteSlug.length > 0) {
+      router.replace(nav.routes.projectDetail(parentRouteSlug));
+      return;
+    }
     if (pageContext === 'detail' || pageContext === 'workflowTasks') return;
     goToProject();
-  }, [activeProjectSlug, goToProject, isMemberRole, pageContext]);
+  }, [
+    activeProjectSlug,
+    goToProject,
+    isMemberRole,
+    nav.routes.projectDetail,
+    pageContext,
+    parentRouteSlug,
+    router,
+    subSlug,
+  ]);
 
   const shellState: ReadyDetailState | null =
     detailState.status === 'ready' ? detailState : lastReadyRef.current;

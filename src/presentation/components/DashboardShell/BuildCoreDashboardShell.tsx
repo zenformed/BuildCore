@@ -34,6 +34,7 @@ import { useBuildCoreDashboardContext } from '@/presentation/providers/BuildCore
 import { useOptionalDemoMode } from '@/presentation/providers/DemoModeProvider';
 import { CurrentUserAvatarProvider } from '@/presentation/providers/CurrentUserAvatarContext';
 import { useBuildCoreNotificationsConfig } from '@/presentation/features/notifications/useBuildCoreNotificationsConfig';
+import { isBuildCoreMemberRole } from '@/domain/buildcore/memberRole';
 import { useSaaSProfile } from '@/presentation/hooks/useSaaSProfile';
 import { runtimeModes } from '@/infrastructure/config/runtimeModes';
 import { CorePlatformDegradedBanner } from '@/presentation/components/CorePlatform/CorePlatformDegradedBanner';
@@ -86,7 +87,8 @@ export function BuildCoreDashboardShell({
   const dash = useBuildCoreDashboardContext();
   const demoMode = useOptionalDemoMode();
   const { theme } = useTheme();
-  const { session, user: saasUser } = useSaaSProfile();
+  const { session, user: saasUser, organizationMembershipContext } = useSaaSProfile();
+  const isMemberExperience = isBuildCoreMemberRole(organizationMembershipContext?.role);
   const [appsOpen, setAppsOpen] = useState(false);
   const notifications = useBuildCoreNotificationsConfig(dash.getAccessToken);
   const themeLabel = theme === 'dark' ? 'Light Mode' : 'Dark Mode';
@@ -131,13 +133,17 @@ export function BuildCoreDashboardShell({
         canAccessTeams: dash.canAccessBuildCoreTeams,
         canAccessReports: dash.canAccessBuildCoreReports,
         canAccessWorkflowStages: dash.canAccessBuildCoreWorkflowStages,
-        canViewTeamSection: dash.canAccessBuildCoreTeams || runtimeModes.isDemoRuntime(),
+        canViewTeamSection:
+          !isMemberExperience &&
+          (dash.canAccessBuildCoreTeams || runtimeModes.isDemoRuntime()),
+        isMemberExperience,
         teamContent,
       }),
     [
       dash.canAccessBuildCoreReports,
       dash.canAccessBuildCoreTeams,
       dash.canAccessBuildCoreWorkflowStages,
+      isMemberExperience,
       onSidebarSelect,
       sidebarActiveId,
       teamContent,

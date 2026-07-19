@@ -34,6 +34,16 @@ export function resolveBuildCoreDashboardShellConfig(
     };
   }
 
+  if (
+    pathname === nav.routes.notifications ||
+    pathname.startsWith(`${nav.routes.notifications}/`)
+  ) {
+    return {
+      sidebarActiveId: 'notifications',
+      title: null,
+    };
+  }
+
   if (pathname.startsWith('/demo/projects') || pathname.startsWith('/projects')) {
     return {
       sidebarActiveId: 'projects',

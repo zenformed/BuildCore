@@ -12,7 +12,7 @@ import styles from './ProjectDetail.module.css';
 export type ProjectSummaryAddressProps = {
   readonly address: CrmProjectAddress;
   readonly label: string;
-  readonly layout?: 'strip' | 'mobile';
+  readonly layout?: 'strip' | 'mobile' | 'value';
   readonly editAction?: ReactNode;
 };
 
@@ -101,6 +101,10 @@ export function ProjectSummaryAddress({
         </div>
       </div>
     );
+  }
+
+  if (layout === 'value') {
+    return addressValue;
   }
 
   return (

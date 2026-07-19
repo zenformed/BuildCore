@@ -75,11 +75,11 @@
 }
 
 .workflowPanelFull .workflowGrid {
-  grid-template-columns: 1.125rem minmax(0, 1.65fr) minmax(4.5rem, 0.75fr) 7rem 6.5rem 7.5rem 2rem;
+  grid-template-columns: 1.125rem minmax(0, 1.65fr) 7rem 6.5rem 7.5rem 2rem;
 }
 
 .workflowPanelFull .workflowGridPayments {
-  grid-template-columns: 10.5rem minmax(0, 3.25fr) minmax(3.25rem, 0.55fr) 7rem 5.5rem 5rem 6.5rem 2rem;
+  grid-template-columns: 10.5rem minmax(0, 3.25fr) 4.75rem 7rem 5.5rem 6.5rem 2rem;
 }
 
 .workflowPanel.documentsPagePanel {
@@ -3879,43 +3879,43 @@
   white-space: nowrap;
 }
 
-/* Col 1 = select; col 2 = status dot + task; then rest… */
+/* Col 1 = select; col 2 = status + title (+ notes under title); then Docs | Assigned | Due | Actions */
 .workflowGrid {
-  grid-template-columns: 1.125rem minmax(0, 1.65fr) minmax(4.5rem, 0.75fr) 6.5rem 5.5rem 7.25rem 1.75rem;
+  grid-template-columns: 1.125rem minmax(0, 1.65fr) 6.5rem 5.5rem 7.25rem 1.75rem;
 }
 
 .workflowGridOps {
-  grid-template-columns: 1.125rem minmax(0, 1.65fr) minmax(4.5rem, 0.75fr) 6.5rem 5.5rem 7.25rem 1.75rem;
+  grid-template-columns: 1.125rem minmax(0, 1.65fr) 6.5rem 5.5rem 7.25rem 1.75rem;
 }
 
 .workflowGridOpsCustom1 {
   grid-template-columns:
-    1.125rem minmax(0, 1.55fr) minmax(0, 0.5fr) minmax(4.5rem, 0.75fr) 6.5rem 5.5rem 7.25rem 1.75rem;
+    1.125rem minmax(0, 1.55fr) minmax(0, 0.5fr) 6.5rem 5.5rem 7.25rem 1.75rem;
 }
 
 .workflowGridOpsCustom2 {
   grid-template-columns:
-    1.125rem minmax(0, 1.4fr) minmax(0, 0.5fr) minmax(0, 0.5fr) minmax(4.5rem, 0.75fr) 6.5rem 5.5rem 7.25rem 1.75rem;
+    1.125rem minmax(0, 1.4fr) minmax(0, 0.5fr) minmax(0, 0.5fr) 6.5rem 5.5rem 7.25rem 1.75rem;
 }
 
 .workflowGrid.workflowGridOpsCustom1 {
   grid-template-columns:
-    1.125rem minmax(0, 1.55fr) minmax(0, 0.5fr) minmax(4.5rem, 0.75fr) 6.5rem 5.5rem 7.25rem 1.75rem;
+    1.125rem minmax(0, 1.55fr) minmax(0, 0.5fr) 6.5rem 5.5rem 7.25rem 1.75rem;
 }
 
 .workflowGrid.workflowGridOpsCustom2 {
   grid-template-columns:
-    1.125rem minmax(0, 1.4fr) minmax(0, 0.5fr) minmax(0, 0.5fr) minmax(4.5rem, 0.75fr) 6.5rem 5.5rem 7.25rem 1.75rem;
+    1.125rem minmax(0, 1.4fr) minmax(0, 0.5fr) minmax(0, 0.5fr) 6.5rem 5.5rem 7.25rem 1.75rem;
 }
 
 .workflowPanelFull .workflowGrid.workflowGridOpsCustom1 {
   grid-template-columns:
-    1.125rem minmax(0, 1.65fr) minmax(0, 0.5fr) minmax(4.5rem, 0.75fr) 7rem 6.5rem 7.5rem 2rem;
+    1.125rem minmax(0, 1.65fr) minmax(0, 0.5fr) 7rem 6.5rem 7.5rem 2rem;
 }
 
 .workflowPanelFull .workflowGrid.workflowGridOpsCustom2 {
   grid-template-columns:
-    1.125rem minmax(0, 1.5fr) minmax(0, 0.5fr) minmax(0, 0.5fr) minmax(4.5rem, 0.75fr) 7rem 6.5rem 7.5rem 2rem;
+    1.125rem minmax(0, 1.5fr) minmax(0, 0.5fr) minmax(0, 0.5fr) 7rem 6.5rem 7.5rem 2rem;
 }
 
 .workflowSelectHeader,
@@ -4013,9 +4013,11 @@
 }
 
 .workflowStatusIconRefreshBtn_busy {
-  color: var(--color-primary, #2563eb);
+  /* Keep header text color — primary blue vanishes on the blue header in light mode. */
+  color: inherit;
   opacity: 1;
   cursor: wait;
+  animation: detailPanelRefreshPulse 0.9s ease-in-out infinite;
 }
 
 .workflowStatusIconRefreshGlyph {
@@ -4057,7 +4059,7 @@
 .workflowPrimaryCell {
   display: flex;
   flex-direction: row;
-  align-items: center;
+  align-items: stretch;
   gap: 0.35rem;
   min-width: 0;
 }
@@ -4073,11 +4075,107 @@
   line-height: 1.25;
 }
 
-.workflowPrimaryStatusLead {
+.memberDesktopTitleWithStatus {
+  display: inline-flex;
+  align-items: center;
+  gap: 1.1rem;
+  min-width: 0;
+  max-width: 100%;
+  vertical-align: middle;
+}
+
+.memberDesktopTitleWithStatus > .inlineCellBtn,
+.memberDesktopTitleWithStatus > .taskTitleBtnText,
+.memberDesktopTitleWithStatus > .inlineFieldInput {
+  min-width: 0;
+  flex: 0 1 auto;
+  width: auto;
+  max-width: 100%;
+}
+
+.memberDesktopInReview {
+  flex: 0 0 auto;
+  gap: 0.3rem;
+}
+
+.memberDesktopInReviewLabel {
+  font-size: 0.75rem;
+  font-weight: 500;
+  line-height: 1.2;
+  color: var(--color-text-muted, #64748b);
+  white-space: nowrap;
+}
+
+:global([data-theme='dark']) .memberDesktopInReviewLabel {
+  color: #94a3b8;
+}
+
+.workflowPrimaryTitleStack {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  min-width: 0;
+  flex: 1 1 auto;
+  justify-content: center;
+}
+
+.workflowPrimaryNotesUnderTitle {
+  display: block;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.workflowPrimaryNotesBtn {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: none;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  color: inherit;
+}
+
+.workflowPrimaryNotesText {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.75rem;
+  font-weight: 400;
+  line-height: 1.3;
+  color: var(--color-text-muted, #64748b);
+}
+
+.workflowPrimaryNotesText_empty {
+  opacity: 0.85;
+}
+
+.workflowPrimaryNotesInput {
+  width: 100%;
+  min-height: 2.25rem;
+  resize: vertical;
+  font-size: 0.75rem;
+  font-weight: 400;
+}
+
+.workflowPrimaryStatusLead,
+.workflowPrimaryLead,
+.workflowPrimaryPreviewLead {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  align-self: stretch;
+}
+
+/* Keep the member Needs Approval checkbox above overflowing neighbors. */
+.workflowPrimaryLead {
+  position: relative;
+  z-index: 1;
 }
 
 .workflowBulkActions {
@@ -4258,12 +4356,14 @@
 }
 
 .workflowGridPayments {
-  grid-template-columns: 8.5rem minmax(0, 3.25fr) minmax(3.25rem, 0.55fr) 6.75rem 4.5rem 4.5rem 6.25rem 1.75rem;
+  /* Status+title | Amount | Docs | Assigned | Due | Actions */
+  grid-template-columns: 8.5rem minmax(0, 3.25fr) 4.75rem 6.75rem 4.5rem 6.25rem 1.75rem;
 }
 
 .workflowGridPaymentsWithDates {
+  /* Status | Title | Amount | Invoiced | Paid | Docs | Assigned | Due | Actions */
   grid-template-columns:
-    8rem minmax(0, 3.25fr) minmax(3.25rem, 0.55fr) 6rem 4.25rem 4.25rem 5rem 3.5rem 3.5rem 1.75rem;
+    8rem minmax(0, 2.5fr) 4.5rem 5rem 5rem 6rem 4.25rem 5.5rem 1.75rem;
 }
 
 .paymentDatePlaceholder {
@@ -5364,6 +5464,353 @@
   overflow: hidden;
 }
 
+/* Must follow .workflowPanel so full-layout panels are content-sized, not viewport-stretched. */
+.workflowPanel.workflowPanelFull {
+  min-height: unset;
+  height: auto;
+  flex: none;
+  overflow: visible;
+}
+
+.workflowPanel.workflowPanelFull .workflowUnifiedTable {
+  flex: none;
+  min-height: unset;
+  overflow: visible;
+}
+
+/* Member parent rollup: stacked WF + payments should hug content height. */
+.detailPanelsScroll[data-member-project-tasks] .workflowPanel,
+.detailPanelsScroll[data-member-project-tasks] .paymentsPanel {
+  min-height: unset;
+  height: auto;
+  flex: none;
+  overflow: visible;
+}
+
+.detailPanelsScroll[data-member-project-tasks] .workflowUnifiedTable {
+  flex: none;
+  min-height: unset;
+  overflow: visible;
+  gap: 0;
+}
+
+.detailPanelsScroll[data-member-project-tasks] .workflowUnifiedTableBody {
+  flex: none;
+  min-height: unset;
+  overflow: visible;
+  gap: 0;
+  padding-block: 0;
+}
+
+.memberCompletedTasks {
+  margin-top: 0.625rem;
+  margin-inline: 0;
+}
+
+.memberCompletedTasksToggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  width: auto;
+  margin: 0;
+  padding: 0.25rem 0;
+  box-sizing: border-box;
+  font: inherit;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  line-height: 1.3;
+  text-align: left;
+  color: var(--color-text-muted, #64748b);
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  cursor: pointer;
+}
+
+.memberCompletedTasksToggle:hover {
+  color: var(--color-text, #0f172a);
+}
+
+:global([data-theme='dark']) .memberCompletedTasksToggle {
+  color: #94a3b8;
+  background: transparent;
+  border: none;
+}
+
+:global([data-theme='dark']) .memberCompletedTasksToggle:hover {
+  color: #f1f5f9;
+  background: transparent;
+}
+
+.memberCompletedTasksLabel {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  min-width: 0;
+}
+
+.memberCompletedTasksCount {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.25rem;
+  padding: 0.0625rem 0.375rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1.2;
+  color: var(--color-text-muted, #64748b);
+  background: color-mix(in srgb, var(--color-text-muted, #64748b) 14%, transparent);
+  border-radius: 999px;
+}
+
+:global([data-theme='dark']) .memberCompletedTasksCount {
+  color: #cbd5e1;
+  background: rgba(148, 163, 184, 0.2);
+}
+
+.memberCompletedTasksPanel {
+  margin-top: 0.375rem;
+  border: none;
+  background: transparent;
+}
+
+:global([data-theme='dark']) .memberCompletedTasksPanel {
+  border: none;
+}
+
+.memberCompletedTasksCards {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0;
+}
+
+.detailPanelsScroll[data-member-project-tasks] .memberCompletedTasks {
+  margin-inline: 0;
+  padding-inline: 0;
+}
+
+.detailPanelsScroll[data-member-project-tasks] .memberCompletedTasksToggle {
+  padding-inline: 0;
+  /* Match row content: stage inset + row inline pad */
+  padding-inline-start: calc(
+    var(--theme-workflow-unified-inset, 0.3125rem) + var(--member-task-inline-pad, 0.75rem)
+  );
+  background: transparent;
+  color: var(--color-text-muted, #64748b);
+  border: none;
+}
+
+.detailPanelsScroll[data-member-project-tasks] .memberCompletedTasksToggle:hover {
+  background: transparent;
+  color: var(--color-text, #0f172a);
+}
+
+.detailPanelsScroll[data-member-project-tasks] .memberCompletedTasksCount {
+  color: var(--color-text-muted, #64748b);
+  background: color-mix(in srgb, var(--color-text-muted, #64748b) 14%, transparent);
+}
+
+:global([data-theme='dark']) .detailPanelsScroll[data-member-project-tasks] .memberCompletedTasksCount {
+  color: #cbd5e1;
+  background: rgba(148, 163, 184, 0.2);
+}
+
+/*
+ * Member stacked tables: shared column system across Workflow + Payment Tasks.
+ * Mid tracks (Amount / Invoiced / Paid) are always reserved; workflow leaves them empty.
+ * Amount / Invoiced / Paid / Due share equal width; customs shrink to compensate.
+ */
+.detailPanelsScroll[data-member-project-tasks] {
+  --member-task-inline-pad: 0.75rem;
+  --member-task-col-gap: 0.625rem;
+  --member-task-custom: minmax(3.25rem, 0.32fr);
+  --member-task-docs: 7rem;
+  --member-task-assigned: 6.5rem;
+  --member-task-due: 7.5rem;
+  --member-task-payment-mid: var(--member-task-due) var(--member-task-due) var(--member-task-due);
+  /* No actions (⋮) column for members — Due is last so the header right border closes. */
+  --member-task-trail: var(--member-task-docs) var(--member-task-assigned) var(--member-task-due);
+}
+
+.detailPanelsScroll[data-member-project-tasks] .workflowUnifiedTableHeader {
+  margin-inline: var(--theme-workflow-unified-inset, 0.3125rem);
+  padding-inline: var(--member-task-inline-pad) !important;
+  padding-block: 0.5rem;
+  border: 1px solid var(--theme-table-header-bg, #5a7a9e);
+  border-bottom: none;
+  box-sizing: border-box;
+  width: auto;
+  max-width: none;
+  overflow: visible;
+  background: var(--theme-table-header-bg, #5a7a9e);
+  color: var(--theme-table-header-text, #ffffff);
+}
+
+/* Member: no vertical dividers between column headers (both Workflow + Payment Tasks). */
+.detailPanelsScroll[data-member-project-tasks] .workflowTaskTableHeader > *:not(:last-child) {
+  border-right: none;
+}
+
+.detailPanelsScroll[data-member-project-tasks] .workflowTaskTableHeader > .taskDeleteHeader {
+  display: none;
+}
+
+.detailPanelsScroll[data-member-project-tasks] .workflowUnifiedTableHeader .workflowColumnHeaderLabelBtn:hover:not(:disabled),
+.detailPanelsScroll[data-member-project-tasks] .workflowUnifiedTableHeader .workflowCustomColumnMenuBtn:hover:not(:disabled) {
+  color: var(--theme-table-header-text, #ffffff);
+  background: color-mix(in srgb, var(--theme-table-header-text, #ffffff) 14%, transparent);
+}
+
+.detailPanelsScroll[data-member-project-tasks] .workflowUnifiedTableHeader .projectsFilterCaretBtn {
+  color: var(--theme-table-header-text, #ffffff);
+}
+
+.detailPanelsScroll[data-member-project-tasks] .workflowUnifiedTableHeader .projectsFilterCaretBtn:hover:not(:disabled),
+.detailPanelsScroll[data-member-project-tasks] .workflowUnifiedTableHeader .projectsFilterCaretBtn_active {
+  color: var(--theme-table-header-text, #ffffff);
+  opacity: 1;
+}
+
+:global([data-theme='dark']) .detailPanelsScroll[data-member-project-tasks] .workflowUnifiedTableHeader {
+  border-color: var(--theme-border-main, #3d3e4a);
+}
+
+.detailPanelsScroll[data-member-project-tasks] .stageGroup_unifiedTableSection {
+  margin-inline: var(--theme-workflow-unified-inset, 0.3125rem);
+  border-top: none;
+}
+
+/* Completed block sits below the label — restore the top edge active rows get from the header. */
+.detailPanelsScroll[data-member-project-tasks] .memberCompletedTasksPanel .stageGroup_unifiedTableSection {
+  border-top: 1px solid var(--theme-border-main, var(--color-border, #e2e8f0));
+}
+
+.detailPanelsScroll[data-member-project-tasks] .stageGroup_unifiedTableSection .stageGroupTable .tableRow,
+.detailPanelsScroll[data-member-project-tasks] .paymentsTableRows .tableRow,
+.detailPanelsScroll[data-member-project-tasks] .paymentsTableRows .paymentDraftRow {
+  padding-inline: var(--member-task-inline-pad);
+  column-gap: var(--member-task-col-gap);
+  gap: 0 var(--member-task-col-gap);
+}
+
+.detailPanelsScroll[data-member-project-tasks] .stageGroup_unifiedTableSection .stageGroupTable .tableRow > .taskDeleteCell,
+.detailPanelsScroll[data-member-project-tasks] .paymentsTableRows .tableRow > .taskDeleteCell {
+  display: none;
+}
+
+/*
+ * Member workflow grid on the row/header itself — beats later .workflowPanelFull /
+ * viewport media rules that reintroduce the 1.125rem select track and leave the
+ * checkbox under overflowing title/custom cells (payment rows never had this bug).
+ */
+.memberProjectWorkflowGrid {
+  grid-template-columns:
+    minmax(0, 1fr)
+    var(--member-task-payment-mid, 7.5rem 7.5rem 7.5rem)
+    var(--member-task-trail, 7rem 6.5rem 7.5rem) !important;
+}
+
+.memberProjectWorkflowGrid.workflowGridOpsCustom1 {
+  grid-template-columns:
+    minmax(0, 1fr)
+    var(--member-task-custom, minmax(3.25rem, 0.32fr))
+    var(--member-task-payment-mid, 7.5rem 7.5rem 7.5rem)
+    var(--member-task-trail, 7rem 6.5rem 7.5rem) !important;
+}
+
+.memberProjectWorkflowGrid.workflowGridOpsCustom2 {
+  grid-template-columns:
+    minmax(0, 1fr)
+    var(--member-task-custom, minmax(3.25rem, 0.32fr))
+    var(--member-task-custom, minmax(3.25rem, 0.32fr))
+    var(--member-task-payment-mid, 7.5rem 7.5rem 7.5rem)
+    var(--member-task-trail, 7rem 6.5rem 7.5rem) !important;
+}
+
+/* Member: Primary | …customs… | Amount|Invoiced|Paid (or spacers) | Docs | Assigned | Due */
+.detailPanelsScroll[data-member-project-tasks] .workflowGrid,
+.detailPanelsScroll[data-member-project-tasks] .workflowGridOps {
+  grid-template-columns:
+    minmax(0, 1fr)
+    var(--member-task-payment-mid)
+    var(--member-task-trail);
+}
+
+.detailPanelsScroll[data-member-project-tasks] .workflowPanelFull .workflowGrid {
+  grid-template-columns:
+    minmax(0, 1fr)
+    var(--member-task-payment-mid)
+    var(--member-task-trail);
+}
+
+.detailPanelsScroll[data-member-project-tasks] .workflowGrid.workflowGridOpsCustom1 {
+  grid-template-columns:
+    minmax(0, 1fr)
+    var(--member-task-custom)
+    var(--member-task-payment-mid)
+    var(--member-task-trail);
+}
+
+.detailPanelsScroll[data-member-project-tasks] .workflowGrid.workflowGridOpsCustom2 {
+  grid-template-columns:
+    minmax(0, 1fr)
+    var(--member-task-custom)
+    var(--member-task-custom)
+    var(--member-task-payment-mid)
+    var(--member-task-trail);
+}
+
+.detailPanelsScroll[data-member-project-tasks] .workflowPanelFull .workflowGrid.workflowGridOpsCustom1 {
+  grid-template-columns:
+    minmax(0, 1fr)
+    var(--member-task-custom)
+    var(--member-task-payment-mid)
+    var(--member-task-trail);
+}
+
+.detailPanelsScroll[data-member-project-tasks] .workflowPanelFull .workflowGrid.workflowGridOpsCustom2 {
+  grid-template-columns:
+    minmax(0, 1fr)
+    var(--member-task-custom)
+    var(--member-task-custom)
+    var(--member-task-payment-mid)
+    var(--member-task-trail);
+}
+
+.detailPanelsScroll[data-member-project-tasks] .paymentsUnifiedTable,
+.detailPanelsScroll[data-member-project-tasks] .paymentsTableGridShell {
+  --payments-grid-gap: var(--member-task-col-gap);
+  --payments-grid-columns:
+    minmax(0, 1fr)
+    var(--member-task-payment-mid)
+    var(--member-task-trail);
+}
+
+.detailPanelsScroll[data-member-project-tasks] .paymentsUnifiedTable.paymentsTableGridShellCustom1,
+.detailPanelsScroll[data-member-project-tasks] .paymentsTableGridShellCustom1 {
+  --payments-grid-columns:
+    minmax(0, 1fr)
+    var(--member-task-custom)
+    var(--member-task-payment-mid)
+    var(--member-task-trail);
+}
+
+.detailPanelsScroll[data-member-project-tasks] .paymentsUnifiedTable.paymentsTableGridShellCustom2,
+.detailPanelsScroll[data-member-project-tasks] .paymentsTableGridShellCustom2 {
+  --payments-grid-columns:
+    minmax(0, 1fr)
+    var(--member-task-custom)
+    var(--member-task-custom)
+    var(--member-task-payment-mid)
+    var(--member-task-trail);
+}
+
+.detailPanelsScroll[data-member-project-tasks] .paymentsAlignedGrid {
+  grid-template-columns: var(--payments-grid-columns);
+  column-gap: var(--member-task-col-gap);
+}
+
 .workflowPanelGrow {
   flex: 1 1 auto;
   min-width: 0;
@@ -5411,10 +5858,12 @@
 
 .paymentsTableGridShell {
   --payments-grid-gap: 0.625rem;
-  /* Select | Primary (status+task) | Notes | Docs | Assigned | Amount | Due | Invoiced | Paid | Actions */
+  /*
+   * Select | Primary (title + notes) | Amount | Invoiced | Paid | Docs | Assigned | Due | Actions
+   * Trailing Docs/Assigned/Due/Actions match workflowPanelFull ops tracks so stacked tables align.
+   */
   --payments-grid-columns:
-    1.5rem minmax(0, 1.65fr) minmax(2.75rem, 0.4fr) 6rem 4.25rem 4.75rem 7.25rem 7.25rem 7.25rem
-    3.25rem;
+    1.125rem minmax(0, 1fr) 4.75rem 5rem 5rem 7rem 6.5rem 7.5rem 2rem;
   --payments-table-min-width: 52rem;
   display: grid;
   grid-template-columns: var(--payments-grid-columns);
@@ -5423,20 +5872,78 @@
   min-width: 100%;
 }
 
-/* Select | Primary | Custom1 | Notes | Docs | Assigned | Amount | Due | Invoiced | Paid | Actions */
-.paymentsTableGridShellCustom1 {
+/*
+ * Payments unified chrome (matches workflow): header outside bordered body section.
+ * Column vars live on the unified table; header + rows each use .paymentsAlignedGrid.
+ */
+.paymentsUnifiedTable {
+  --payments-grid-gap: 0.625rem;
   --payments-grid-columns:
-    1.5rem minmax(0, 1.4fr) minmax(8.75rem, 11rem) minmax(2.75rem, 0.4fr) 6rem 4.25rem 4.75rem 7.25rem
-    7.25rem 7.25rem 3.25rem;
-  --payments-table-min-width: 60rem;
+    1.125rem minmax(0, 1fr) 4.75rem 5rem 5rem 7rem 6.5rem 7.5rem 2rem;
+  --payments-table-min-width: 52rem;
 }
 
-/* Select | Primary | Custom1 | Custom2 | Notes | Docs | Assigned | Amount | Due | Invoiced | Paid | Actions */
+.paymentsUnifiedTable.paymentsTableGridShellCustom1 {
+  --payments-grid-columns:
+    1.125rem minmax(0, 1fr) minmax(0, 0.5fr) 4.75rem 5rem 5rem 7rem 6.5rem 7.5rem 2rem;
+  --payments-table-min-width: 58rem;
+}
+
+.paymentsUnifiedTable.paymentsTableGridShellCustom2 {
+  --payments-grid-columns:
+    1.125rem minmax(0, 1fr) minmax(0, 0.5fr) minmax(0, 0.5fr) 4.75rem 5rem 5rem 7rem 6.5rem 7.5rem 2rem;
+  --payments-table-min-width: 64rem;
+}
+
+.paymentsAlignedGrid {
+  display: grid;
+  grid-template-columns: var(--payments-grid-columns);
+  column-gap: var(--payments-grid-gap);
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.paymentsTableRows {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  min-width: 100%;
+}
+
+.paymentsTableRows .tableRow,
+.paymentsTableRows .paymentDraftRow {
+  display: grid;
+  grid-template-columns: var(--payments-grid-columns);
+  /* Same as .tableRow (gap: 0 0.625rem) — do not use gap:0 after column-gap (it zeros the gutter). */
+  gap: 0 var(--payments-grid-gap);
+  /* Match workflow stage rows — no extra inset (header already uses unified inset). */
+  padding-inline: 0;
+  padding-block: 0.5rem;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  align-items: center;
+}
+
+.paymentsTableRows .tableRow > *,
+.paymentsTableRows .paymentDraftRow > * {
+  padding-inline: 0;
+  min-width: 0;
+}
+
+/* Select | Primary | Custom1 | Amount | Invoiced | Paid | Docs | Assigned | Due | Actions */
+.paymentsTableGridShellCustom1 {
+  --payments-grid-columns:
+    1.125rem minmax(0, 1fr) minmax(0, 0.5fr) 4.75rem 5rem 5rem 7rem 6.5rem 7.5rem 2rem;
+  --payments-table-min-width: 58rem;
+}
+
+/* Select | Primary | Custom1 | Custom2 | Amount | Invoiced | Paid | Docs | Assigned | Due | Actions */
 .paymentsTableGridShellCustom2 {
   --payments-grid-columns:
-    1.5rem minmax(0, 1.25fr) minmax(8.75rem, 11rem) minmax(8.75rem, 11rem) minmax(2.75rem, 0.4fr) 6rem 4.25rem
-    4.75rem 7.25rem 7.25rem 7.25rem 3.25rem;
-  --payments-table-min-width: 68rem;
+    1.125rem minmax(0, 1fr) minmax(0, 0.5fr) minmax(0, 0.5fr) 4.75rem 5rem 5rem 7rem 6.5rem 7.5rem 2rem;
+  --payments-table-min-width: 64rem;
 }
 
 @media (max-width: 1100px) {
@@ -5445,7 +5952,9 @@
     -webkit-overflow-scrolling: touch;
   }
 
-  .paymentsTableGridShell {
+  .paymentsTableGridShell,
+  .paymentsTableRows,
+  .paymentsUnifiedTable .workflowUnifiedTableHeader.paymentsAlignedGrid {
     width: max(100%, var(--payments-table-min-width));
     min-width: max(100%, var(--payments-table-min-width));
   }
@@ -5471,12 +5980,16 @@
 .paymentsTableGridShell .paymentDraftRow.workflowGrid {
   grid-column: 1 / -1;
   display: grid;
-  grid-template-columns: subgrid;
+  grid-template-columns: subgrid !important;
+  gap: 0;
+  column-gap: unset;
+  row-gap: unset;
   padding-block: 0.5rem;
   padding-inline: 0.625rem;
   width: auto;
   min-width: 0;
   box-sizing: border-box;
+  align-items: center;
 }
 
 .paymentsTableGridShell .tableRow > *,
@@ -5507,18 +6020,21 @@
 .paymentsTableGridShell .tableRow > .workflowSelectCell {
   text-align: center;
   justify-content: center;
-  /* Don't use the ops caret-tightening margin — it collapses select→dot gap here. */
-  margin-inline-end: 0;
 }
 
 .paymentsTableGridShell .tableHeader > .workflowPrimaryHeader,
-.paymentsTableGridShell .tableRow > .workflowPrimaryCell {
+.paymentsTableGridShell .tableRow > .workflowPrimaryCell,
+.paymentsUnifiedTable .tableHeader.paymentsAlignedGrid > .workflowPrimaryHeader,
+.paymentsTableRows .tableRow > .workflowPrimaryCell {
   padding-inline-start: 0.125rem;
 }
 
 .paymentsTableGridShell .tableHeader > .workflowPrimaryHeader,
 .paymentsTableGridShell .tableRow > .workflowPrimaryCell,
-.paymentsTableGridShell .tableRow .taskTitleCell {
+.paymentsTableGridShell .tableRow .taskTitleCell,
+.paymentsUnifiedTable .tableHeader.paymentsAlignedGrid > .workflowPrimaryHeader,
+.paymentsTableRows .tableRow > .workflowPrimaryCell,
+.paymentsTableRows .tableRow .taskTitleCell {
   text-align: left;
 }
 
@@ -6408,6 +6924,16 @@
 
 .stageGroup_unifiedTableSection .stageGroupTable {
   background: var(--theme-workflow-stage-table-bg);
+}
+
+.stageGroup_unifiedTableSection .paymentsTableScroll,
+.stageGroup_unifiedTableSection .paymentsTableGridShell,
+.stageGroup_unifiedTableSection .paymentsTableRows {
+  background: var(--theme-workflow-stage-table-bg);
+}
+
+.stageGroup_unifiedTableSection .paymentsTableGridShell .tableHeader {
+  position: static;
 }
 
 .stageGroup_unifiedTableSection .stageGroupHeaderBtn,
@@ -7437,6 +7963,17 @@
   border-color: #94a3b8;
 }
 
+/*
+ * Completed Tasks disclosure sits on a light surface — stage chevron defaults to
+ * white (--theme-stage-header-text). Force inherited label color instead.
+ */
+.memberCompletedTasksToggle .stageGroupChevron,
+.memberCompletedTasksToggle .stageGroupChevron_expanded {
+  border-right-color: currentColor;
+  border-bottom-color: currentColor;
+  opacity: 0.9;
+}
+
 .stageGroupCompleteIcon {
   display: inline-flex;
   flex-shrink: 0;
@@ -7560,15 +8097,15 @@
 }
 
 .paymentsList .workflowGridPaymentsWithDates {
+  /* Status | Title | Amount | Invoiced | Paid | Docs | Assigned | Due | Actions */
   grid-template-columns:
     8rem
     minmax(6.25rem, 1.15fr)
-    minmax(3.25rem, 0.55fr)
-    6rem
-    4.25rem
     4.75rem
     7.25rem
     7.25rem
+    6rem
+    4.25rem
     7.25rem
     3.25rem;
 }
@@ -7596,6 +8133,11 @@
   max-width: 100%;
 }
 
+.taskTitleCell .memberDesktopTitleWithStatus > .inlineCellBtn {
+  flex: 0 1 auto;
+  width: auto;
+}
+
 .taskTitleCell .previewTitleAnchor {
   flex: 1;
   min-width: 0;
@@ -7611,6 +8153,15 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.taskTitleBtnText_completed {
+  color: var(--color-text-muted, #64748b);
+}
+
+.workflowTaskCompactTitle.taskTitleBtnText_completed,
+.workflowTaskMobileCardTitle.taskTitleBtnText_completed {
+  color: var(--color-text-muted, #64748b);
 }
 
 .statusPill {
@@ -8659,39 +9210,39 @@
   }
 
   .workflowGrid {
-    grid-template-columns: 1.125rem minmax(0, 1.65fr) minmax(4.5rem, 0.75fr) 6.5rem 5.5rem 7.25rem 1.75rem;
+    grid-template-columns: 1.125rem minmax(0, 1.65fr) 6.5rem 5.5rem 7.25rem 1.75rem;
   }
 
   .workflowGridPayments {
-    grid-template-columns: 9.5rem minmax(0, 3.25fr) minmax(3.25rem, 0.55fr) 6.75rem 4.5rem 4.5rem 6.25rem 1.75rem;
+    grid-template-columns: 9.5rem minmax(0, 3.25fr) 4.75rem 6.75rem 4.5rem 6.25rem 1.75rem;
   }
 
   .workflowPanelFull .workflowGrid {
-    grid-template-columns: 1.125rem minmax(0, 1.65fr) minmax(4.5rem, 0.75fr) 7rem 6.5rem 7.5rem 2rem;
+    grid-template-columns: 1.125rem minmax(0, 1.65fr) 7rem 6.5rem 7.5rem 2rem;
   }
 
   .workflowPanelFull .workflowGridPayments {
-    grid-template-columns: 10.5rem minmax(0, 3.25fr) minmax(3.25rem, 0.55fr) 7rem 5.5rem 5rem 6.5rem 2rem;
+    grid-template-columns: 10.5rem minmax(0, 3.25fr) 4.75rem 7rem 5.5rem 6.5rem 2rem;
   }
 
   .workflowGrid.workflowGridOpsCustom1 {
     grid-template-columns:
-      1.125rem minmax(0, 1.55fr) minmax(0, 0.5fr) minmax(4.5rem, 0.75fr) 6.5rem 5.5rem 7.25rem 1.75rem;
+      1.125rem minmax(0, 1.55fr) minmax(0, 0.5fr) 6.5rem 5.5rem 7.25rem 1.75rem;
   }
 
   .workflowGrid.workflowGridOpsCustom2 {
     grid-template-columns:
-      1.125rem minmax(0, 1.4fr) minmax(0, 0.5fr) minmax(0, 0.5fr) minmax(4.5rem, 0.75fr) 6.5rem 5.5rem 7.25rem 1.75rem;
+      1.125rem minmax(0, 1.4fr) minmax(0, 0.5fr) minmax(0, 0.5fr) 6.5rem 5.5rem 7.25rem 1.75rem;
   }
 
   .workflowPanelFull .workflowGrid.workflowGridOpsCustom1 {
     grid-template-columns:
-      1.125rem minmax(0, 1.65fr) minmax(0, 0.5fr) minmax(4.5rem, 0.75fr) 7rem 6.5rem 7.5rem 2rem;
+      1.125rem minmax(0, 1.65fr) minmax(0, 0.5fr) 7rem 6.5rem 7.5rem 2rem;
   }
 
   .workflowPanelFull .workflowGrid.workflowGridOpsCustom2 {
     grid-template-columns:
-      1.125rem minmax(0, 1.5fr) minmax(0, 0.5fr) minmax(0, 0.5fr) minmax(4.5rem, 0.75fr) 7rem 6.5rem 7.5rem 2rem;
+      1.125rem minmax(0, 1.5fr) minmax(0, 0.5fr) minmax(0, 0.5fr) 7rem 6.5rem 7.5rem 2rem;
   }
 
   .statusPill {
@@ -8767,39 +9318,39 @@
   }
 
   .workflowGrid {
-    grid-template-columns: 1.125rem minmax(0, 1.65fr) minmax(4.5rem, 0.75fr) 7rem 6rem 7.75rem 2rem;
+    grid-template-columns: 1.125rem minmax(0, 1.65fr) 7rem 6rem 7.75rem 2rem;
   }
 
   .workflowGridPayments {
-    grid-template-columns: 10.5rem minmax(0, 3.25fr) minmax(3.25rem, 0.55fr) 7rem 5rem 5rem 7rem 2rem;
+    grid-template-columns: 10.5rem minmax(0, 3.25fr) 4.75rem 7rem 5rem 7rem 2rem;
   }
 
   .workflowPanelFull .workflowGrid {
-    grid-template-columns: 1.125rem minmax(0, 1.65fr) minmax(4.5rem, 0.75fr) 7rem 6.5rem 7.5rem 2rem;
+    grid-template-columns: 1.125rem minmax(0, 1.65fr) 7rem 6.5rem 7.5rem 2rem;
   }
 
   .workflowPanelFull .workflowGridPayments {
-    grid-template-columns: 10.5rem minmax(0, 3.25fr) minmax(3.25rem, 0.55fr) 7rem 5.5rem 5rem 6.5rem 2rem;
+    grid-template-columns: 10.5rem minmax(0, 3.25fr) 4.75rem 7rem 5.5rem 6.5rem 2rem;
   }
 
   .workflowGrid.workflowGridOpsCustom1 {
     grid-template-columns:
-      1.125rem minmax(0, 1.55fr) minmax(0, 0.5fr) minmax(4.5rem, 0.75fr) 7rem 6rem 7.75rem 2rem;
+      1.125rem minmax(0, 1.55fr) minmax(0, 0.5fr) 7rem 6rem 7.75rem 2rem;
   }
 
   .workflowGrid.workflowGridOpsCustom2 {
     grid-template-columns:
-      1.125rem minmax(0, 1.4fr) minmax(0, 0.5fr) minmax(0, 0.5fr) minmax(4.5rem, 0.75fr) 7rem 6rem 7.75rem 2rem;
+      1.125rem minmax(0, 1.4fr) minmax(0, 0.5fr) minmax(0, 0.5fr) 7rem 6rem 7.75rem 2rem;
   }
 
   .workflowPanelFull .workflowGrid.workflowGridOpsCustom1 {
     grid-template-columns:
-      1.125rem minmax(0, 1.65fr) minmax(0, 0.5fr) minmax(4.5rem, 0.75fr) 7rem 6.5rem 7.5rem 2rem;
+      1.125rem minmax(0, 1.65fr) minmax(0, 0.5fr) 7rem 6.5rem 7.5rem 2rem;
   }
 
   .workflowPanelFull .workflowGrid.workflowGridOpsCustom2 {
     grid-template-columns:
-      1.125rem minmax(0, 1.5fr) minmax(0, 0.5fr) minmax(0, 0.5fr) minmax(4.5rem, 0.75fr) 7rem 6.5rem 7.5rem 2rem;
+      1.125rem minmax(0, 1.5fr) minmax(0, 0.5fr) minmax(0, 0.5fr) 7rem 6.5rem 7.5rem 2rem;
   }
 
   .statusPill {
@@ -9854,6 +10405,43 @@
   overflow: hidden;
 }
 
+.workflowTaskMobileStatusBanner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  margin: 0;
+  padding: 0.375rem 0.75rem;
+  box-sizing: border-box;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  line-height: 1.2;
+  text-align: center;
+}
+
+.workflowTaskMobileStatusBanner_inReview {
+  background: #fef3c7;
+  color: #92400e;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.workflowTaskMobileStatusBanner_complete {
+  background: #d1e7dd;
+  color: #0f5132;
+}
+
+:global([data-theme='dark']) .workflowTaskMobileStatusBanner_inReview {
+  background: #854d0e;
+  color: #fef3c7;
+}
+
+:global([data-theme='dark']) .workflowTaskMobileStatusBanner_complete {
+  background: #1e3a2f;
+  color: #a3cfbb;
+}
+
 .workflowTaskMobileCardHeader {
   display: flex;
   align-items: flex-start;
@@ -9964,6 +10552,13 @@
 .workflowTaskMobileCardActions button {
   width: 2.75rem;
   height: 2.75rem;
+}
+
+/* Member completed: locked checkbox sits across from the title in the header. */
+.workflowTaskMobileCardHeader .workflowTaskMobileCardActions :global(input[type='checkbox']) {
+  width: 1.125rem;
+  height: 1.125rem;
+  margin: 0;
 }
 
 .workflowTaskMobileCardHeader .taskActionsBtn {

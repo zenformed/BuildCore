@@ -145,6 +145,21 @@ export {
   type MarkCrmProjectsActiveInput,
 } from './subprojectStatus';
 export {
+  crmMyTaskAssignmentKindFromTask,
+  filterCrmMyTasksByAssigneeScope,
+  formatCrmMyTaskContextLine,
+  groupCrmMyTasksByParentProject,
+  isCrmMyTaskAssigneeFilterAvailable,
+  memberAssigneeIdFromMyTask,
+  parseCrmMyTaskAssigneeScope,
+  type CrmMyTaskAssigneeFilterMeta,
+  type CrmMyTaskAssigneeScope,
+  type CrmMyTaskAssignment,
+  type CrmMyTaskAssignmentKind,
+  type CrmMyTaskParentGroup,
+  type CrmMyTasksResponse,
+} from './myTaskAssignment';
+export {
   areAllWorkflowStagesComplete,
   isStageManuallyCompleted,
   isWorkflowStageComplete,

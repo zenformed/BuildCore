@@ -11,6 +11,7 @@ export type BuildCoreNavigation = {
     readonly reports: string;
     readonly teams: string;
     readonly workflowStages: string;
+    readonly notifications: string;
     readonly home: string;
     readonly projectDetail: (slug: string) => string;
     readonly projectSubDetail: (parentSlug: string, subSlug: string) => string;
@@ -19,6 +20,7 @@ export type BuildCoreNavigation = {
     readonly projectDocuments: (slug: string) => string;
     readonly projectAccountability: (slug: string) => string;
     readonly projectFinancials: (slug: string) => string;
+    readonly myTaskDetail: (taskId: string) => string;
   };
   readonly sidebar: {
     readonly ariaLabel: string;

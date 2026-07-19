@@ -196,7 +196,7 @@ export function PaymentMilestoneDraftRow({
     unassignedAvatar
   );
 
-  const rowClass = `${styles.tableRow} ${styles.workflowGrid} ${styles.workflowGridPaymentsWithDates} ${styles.workflowInlineRow} ${styles.paymentDraftRow}`;
+  const rowClass = `${styles.tableRow} ${styles.paymentsAlignedGrid} ${styles.workflowInlineRow} ${styles.paymentDraftRow}`;
 
   if (isMobileLayout) {
     return (
@@ -480,8 +480,26 @@ export function PaymentMilestoneDraftRow({
           />
         </span>
 
-        <span className={`${styles.workflowNotesCell} ${styles.workflowMetaCell}`} aria-hidden>
-          <span className={styles.workflowNotesPreview}>—</span>
+        <span className={`${styles.inlineDueCell} ${styles.workflowMetaCell}`}>
+          <input
+            type="date"
+            className={styles.paymentDraftDateInput}
+            value={form.invoicedAt}
+            disabled={saving}
+            aria-label={payments.columns.invoiced}
+            onChange={(e) => updateField('invoicedAt', e.target.value)}
+          />
+        </span>
+
+        <span className={`${styles.inlineDueCell} ${styles.workflowMetaCell}`}>
+          <input
+            type="date"
+            className={styles.paymentDraftDateInput}
+            value={form.paidAt}
+            disabled={saving}
+            aria-label={payments.columns.paid}
+            onChange={(e) => updateField('paidAt', e.target.value)}
+          />
         </span>
 
         <span className={`${styles.inlineCellWrap} ${styles.workflowMetaCell}`}>
@@ -548,28 +566,6 @@ export function PaymentMilestoneDraftRow({
             value={form.dueAt}
             disabled={saving}
             onChange={(e) => updateField('dueAt', e.target.value)}
-          />
-        </span>
-
-        <span className={`${styles.inlineDueCell} ${styles.workflowMetaCell}`}>
-          <input
-            type="date"
-            className={styles.paymentDraftDateInput}
-            value={form.invoicedAt}
-            disabled={saving}
-            aria-label={payments.columns.invoiced}
-            onChange={(e) => updateField('invoicedAt', e.target.value)}
-          />
-        </span>
-
-        <span className={`${styles.inlineDueCell} ${styles.workflowMetaCell}`}>
-          <input
-            type="date"
-            className={styles.paymentDraftDateInput}
-            value={form.paidAt}
-            disabled={saving}
-            aria-label={payments.columns.paid}
-            onChange={(e) => updateField('paidAt', e.target.value)}
           />
         </span>
 

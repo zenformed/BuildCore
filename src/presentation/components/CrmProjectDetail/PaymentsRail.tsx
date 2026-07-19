@@ -28,6 +28,11 @@ import { DetailPanelSectionRefresh } from './DetailPanelSectionRefresh';
 import { DetailPanelSectionSearch } from './DetailPanelSectionSearch';
 import { WorkflowTaskInlineRow } from './WorkflowTaskInlineRow';
 import { WorkflowTaskTableHeaderRow } from './WorkflowTaskTableHeaderRow';
+import {
+  isMemberCompletedWorkflowTask,
+  MemberCompletedTasksSection,
+} from './MemberCompletedTasksSection';
+import { MemberNoActiveTasksRow } from './MemberNoActiveTasksRow';
 import { useBuildCorePaymentTableColumns } from '@/presentation/providers/BuildCorePaymentTableColumnsProvider';
 import styles from './ProjectDetail.module.css';
 
@@ -38,6 +43,9 @@ export type PaymentsRailProps = {
   onTaskCreated?: (task: CrmWorkflowTask) => Promise<void>;
   onTaskError?: (message: string) => void;
   onRequestArchiveTask?: (task: CrmWorkflowTask) => void;
+  resolveTaskProjectSlug?: (taskId: string) => string;
+  taskContextLineById?: ReadonlyMap<string, string>;
+  onRefreshTasks?: () => Promise<void>;
 };
 
 export function PaymentsRail({
@@ -47,12 +55,16 @@ export function PaymentsRail({
   onTaskCreated,
   onTaskError,
   onRequestArchiveTask,
+  resolveTaskProjectSlug,
+  taskContextLineById,
+  onRefreshTasks,
 }: PaymentsRailProps): ReactElement {
   const payments = content.projectDetail.payments;
   const paymentPermissionsCopy = content.teams.paymentPermissions;
   const wf = content.projectDetail.workflow;
   const { refreshWorkflowTasks, setToast, openCreateWorkflowTask, projectMutationsLocked, isMemberRole } =
     useProjectDetailShell();
+  const paymentsPanelTitle = isMemberRole ? payments.memberTitle : payments.title;
   const { payment } = useBuildCoreProjectSectionAccess();
   const { permissions, isLoading, isReady } = payment;
   const canView = isReady && permissions.canView;
@@ -77,13 +89,21 @@ export function PaymentsRail({
     const byFilters = filterPaymentMilestonesByListFilters(milestones, filters);
     return filterPaymentMilestonesBySearch(byFilters, searchQuery);
   }, [filters, milestones, searchQuery]);
+  const activeMilestones = useMemo(() => {
+    if (!isMemberRole) return filteredMilestones;
+    return filteredMilestones.filter((task) => !isMemberCompletedWorkflowTask(task.status));
+  }, [filteredMilestones, isMemberRole]);
+  const completedMilestones = useMemo(() => {
+    if (!isMemberRole) return [];
+    return filteredMilestones.filter((task) => isMemberCompletedWorkflowTask(task.status));
+  }, [filteredMilestones, isMemberRole]);
   const docCounts = countDocumentsByTaskId(project.documents);
   const payCols = content.projectDetail.payments.columns;
   const isMobileLayout = useDashboardMobileLayout();
   const { shellClassName } = useBuildCorePaymentTableColumns();
   const visibleTaskIds = useMemo(
-    () => filteredMilestones.map((task) => task.id),
-    [filteredMilestones]
+    () => activeMilestones.map((task) => task.id),
+    [activeMilestones]
   );
   const tasksById = useMemo(() => {
     const map = new Map<string, CrmWorkflowTask>();
@@ -147,8 +167,8 @@ export function PaymentsRail({
 
   const refreshButton = (
     <DetailPanelSectionRefresh
-      sectionLabel={payments.title}
-      onRefresh={refreshWorkflowTasks}
+      sectionLabel={paymentsPanelTitle}
+      onRefresh={onRefreshTasks ?? refreshWorkflowTasks}
       onError={(message) => setToast({ kind: 'error', message })}
     />
   );
@@ -161,8 +181,52 @@ export function PaymentsRail({
     />
   ) : null;
 
+  const renderPaymentRow = (task: CrmWorkflowTask, variant: 'table' | 'mobile') => (
+    <WorkflowTaskInlineRow
+      key={task.id}
+      variant={variant}
+      projectSlug={resolveTaskProjectSlug?.(task.id) ?? project.summary.slug}
+      task={task}
+      docCount={docCounts.get(task.id) ?? 0}
+      taskDocuments={project.documents.filter((doc) => doc.workflowTaskId === task.id)}
+      showAmountColumn
+      enablePaymentCustomColumns={variant === 'table'}
+      permissionDomain="payments"
+      contextLine={taskContextLineById?.get(task.id) ?? null}
+      isApiSource={isApiSource}
+      onUpdated={onTaskUpdated}
+      onTaskError={onTaskError}
+      onRequestArchiveTask={canDelete ? onRequestArchiveTask : undefined}
+    />
+  );
+
+  const memberCompletedSection =
+    isMemberRole && completedMilestones.length > 0 ? (
+      <MemberCompletedTasksSection taskCount={completedMilestones.length}>
+        {isMobileLayout ? (
+          <div className={styles.memberCompletedTasksCards}>
+            {completedMilestones.map((task) => renderPaymentRow(task, 'mobile'))}
+          </div>
+        ) : (
+          <div className={styles.stageGroup_unifiedTableSection}>
+            <div className={styles.paymentsTableScroll}>
+              <div className={styles.paymentsTableRows}>
+                {completedMilestones.map((task) => renderPaymentRow(task, 'table'))}
+              </div>
+            </div>
+          </div>
+        )}
+      </MemberCompletedTasksSection>
+    ) : null;
+
+  const activePaymentsEmpty =
+    isMemberRole && activeMilestones.length === 0 && completedMilestones.length > 0;
+
   return (
-    <section className={styles.paymentsPanel} aria-labelledby="payments-rail-heading">
+    <section
+      className={`${styles.paymentsPanel} ${styles.workflowPanelFull}`}
+      aria-labelledby="payments-rail-heading"
+    >
       {isMobileLayout ? (
         <div
           className={[styles.detailPanelHeader, styles.detailPanelHeader_mobile]
@@ -172,7 +236,7 @@ export function PaymentsRail({
           <div className={styles.detailPanelHeaderRow}>
             <div className={styles.detailPanelHeaderTitleGroup}>
               <h3 id="payments-rail-heading" className={styles.detailPanelTitle}>
-                {payments.title}
+                {paymentsPanelTitle}
               </h3>
               {statusFilterCaret}
             </div>
@@ -184,7 +248,7 @@ export function PaymentsRail({
           </div>
         </div>
       ) : (
-        <DetailPanelHeader title={payments.title} titleId="payments-rail-heading">
+        <DetailPanelHeader title={paymentsPanelTitle} titleId="payments-rail-heading">
           <DetailPanelHeaderActions>
             {searchInput}
             {addButton}
@@ -199,80 +263,70 @@ export function PaymentsRail({
         <p className={styles.subtitle}>{payments.empty}</p>
       ) : isMobileLayout ? (
         <div className={styles.paymentsMobileList}>
-          {filteredMilestones.length === 0 ? (
+          {activePaymentsEmpty ? (
+            <MemberNoActiveTasksRow gridClassName={styles.paymentsAlignedGrid} variant="mobile" />
+          ) : activeMilestones.length === 0 ? (
             <p className={styles.subtitle}>{payments.empty}</p>
-          ) : null}
-          {filteredMilestones.map((task) => (
-            <WorkflowTaskInlineRow
-              key={task.id}
-              variant="mobile"
-              projectSlug={project.summary.slug}
-              task={task}
-              docCount={docCounts.get(task.id) ?? 0}
-              taskDocuments={project.documents.filter((doc) => doc.workflowTaskId === task.id)}
-              showAmountColumn
-              permissionDomain="payments"
-              isApiSource={isApiSource}
-              onUpdated={onTaskUpdated}
-              onTaskError={onTaskError}
-              onRequestArchiveTask={canDelete ? onRequestArchiveTask : undefined}
-            />
-          ))}
+          ) : (
+            activeMilestones.map((task) => renderPaymentRow(task, 'mobile'))
+          )}
+          {memberCompletedSection}
         </div>
       ) : (
         <WorkflowTaskRowSelectionProvider
           visibleTaskIds={visibleTaskIds}
           bulkActions={selectionBulkActions}
         >
-          <div className={styles.detailPanelTableCard}>
-            <div className={styles.paymentsTableScroll}>
-              <div
-                className={[styles.paymentsTableGridShell, shellClassName]
-                  .filter(Boolean)
-                  .join(' ')}
-              >
-                <WorkflowTaskTableHeaderRow
-                  context="payments"
-                  showAmount
-                  enablePaymentCustomColumns
-                  showStatusRefresh
-                  leadingFilter={statusFilterCaret}
-                  rowClassName={styles.paymentsTableHeader}
-                  gridClassName=""
-                  trailingHeaders={
-                    <>
-                      <span role="columnheader">{payCols.invoiced}</span>
-                      <span role="columnheader">{payCols.paid}</span>
-                    </>
-                  }
-                />
-                {filteredMilestones.length === 0 ? (
-                  <div className={`${styles.tableRow} ${styles.workflowGrid}`} role="row">
-                    <span className={styles.workflowSelectCell} aria-hidden />
-                    <span className={styles.workflowPrimaryCell}>
-                      <span className={styles.workflowStageEmptyMessage}>{payments.empty}</span>
-                    </span>
-                  </div>
-                ) : null}
-                {filteredMilestones.map((task) => (
-                  <WorkflowTaskInlineRow
-                    key={task.id}
-                    projectSlug={project.summary.slug}
-                    task={task}
-                    docCount={docCounts.get(task.id) ?? 0}
-                    taskDocuments={project.documents.filter(
-                      (doc) => doc.workflowTaskId === task.id
+          <div
+            className={[styles.workflowUnifiedTable, styles.paymentsUnifiedTable, shellClassName]
+              .filter(Boolean)
+              .join(' ')}
+          >
+            <WorkflowTaskTableHeaderRow
+              context="payments"
+              showAmount
+              enablePaymentCustomColumns
+              showStatusRefresh
+              leadingFilter={statusFilterCaret}
+              onRefreshTasks={onRefreshTasks}
+              rowClassName={styles.workflowUnifiedTableHeader}
+              gridClassName={styles.paymentsAlignedGrid}
+              trailingHeaders={
+                <>
+                  <span role="columnheader" className={styles.workflowColumnHeaderAlignCenter}>
+                    {payCols.invoiced}
+                  </span>
+                  <span role="columnheader" className={styles.workflowColumnHeaderAlignCenter}>
+                    {payCols.paid}
+                  </span>
+                </>
+              }
+            />
+            <div className={styles.workflowUnifiedTableBody}>
+              <div className={styles.stageGroup_unifiedTableSection}>
+                <div className={styles.paymentsTableScroll}>
+                  <div className={styles.paymentsTableRows}>
+                    {activePaymentsEmpty ? (
+                      <MemberNoActiveTasksRow
+                        gridClassName={styles.paymentsAlignedGrid}
+                        wrapInSection={false}
+                      />
+                    ) : activeMilestones.length === 0 ? (
+                      <div className={`${styles.tableRow} ${styles.paymentsAlignedGrid}`} role="row">
+                        {isMemberRole ? null : (
+                          <span className={styles.workflowSelectCell} aria-hidden />
+                        )}
+                        <span className={styles.workflowPrimaryCell}>
+                          <span className={styles.workflowStageEmptyMessage}>{payments.empty}</span>
+                        </span>
+                      </div>
+                    ) : (
+                      activeMilestones.map((task) => renderPaymentRow(task, 'table'))
                     )}
-                    showAmountColumn
-                    enablePaymentCustomColumns
-                    permissionDomain="payments"
-                    isApiSource={isApiSource}
-                    onUpdated={onTaskUpdated}
-                    onTaskError={onTaskError}
-                    onRequestArchiveTask={canDelete ? onRequestArchiveTask : undefined}
-                  />
-                ))}
+                  </div>
+                </div>
               </div>
+              {memberCompletedSection}
             </div>
           </div>
         </WorkflowTaskRowSelectionProvider>

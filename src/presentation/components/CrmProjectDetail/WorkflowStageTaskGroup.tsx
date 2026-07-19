@@ -18,6 +18,7 @@ import { WorkflowTaskTableHeaderRow } from './WorkflowTaskTableHeaderRow';
 import { WorkflowTaskTableCustomColumnEmptyCells, resolveWorkflowOpsGridClassName } from './WorkflowTaskTableCustomColumns';
 import { useBuildCoreWorkflowTaskTableColumns } from '@/presentation/providers/BuildCoreWorkflowTaskTableColumnsProvider';
 import { useWorkflowTaskRowSelection } from '@/presentation/features/crmProjectDetail/workflowTaskRowSelectionContext';
+import { useProjectDetailShell } from '@/presentation/features/crmProjectDetail/ProjectDetailShellContext';
 import styles from './ProjectDetail.module.css';
 
 export type ManualStageCompletionToggleAction = 'complete' | 'incomplete';
@@ -40,6 +41,10 @@ export type WorkflowStageTaskGroupProps = {
   markStageCompleteBusy?: boolean;
   /** When false, stage is always expanded with a static header (e.g. "View all" modal). */
   collapsible?: boolean;
+  /** When false, omit the stage section header chrome entirely. */
+  showStageHeader?: boolean;
+  resolveTaskProjectSlug?: (taskId: string) => string;
+  taskContextLineById?: ReadonlyMap<string, string>;
   /** Keep the stage expanded while composing an inline draft row. */
   forceExpanded?: boolean;
   /** When true, render tasks as stacked cards instead of the desktop table grid. */
@@ -64,6 +69,9 @@ export function WorkflowStageTaskGroup({
   onRequestToggleManualStageCompletion,
   markStageCompleteBusy = false,
   collapsible = true,
+  showStageHeader = true,
+  resolveTaskProjectSlug,
+  taskContextLineById,
   forceExpanded = false,
   useCardLayout,
   layoutAsStageCard = false,
@@ -73,7 +81,12 @@ export function WorkflowStageTaskGroup({
   const wf = content.projectDetail.workflow;
   const isMobileLayout = useDashboardMobileLayout();
   const showCardLayout = useCardLayout ?? isMobileLayout;
-  const taskRowVariant = showCardLayout || layoutAsStageCard ? 'compact' : 'table';
+  // Mobile uses labeled mobile cards; desktop "cards" view keeps the compact summary row.
+  const taskRowVariant = isMobileLayout
+    ? 'mobile'
+    : showCardLayout || layoutAsStageCard
+      ? 'compact'
+      : 'table';
   const persisted = useWorkflowStageExpanded(projectSlug, group.collapseKey);
   const expanded = forceExpanded || (collapsible ? persisted.expanded : true);
   const groupClass = [
@@ -86,7 +99,8 @@ export function WorkflowStageTaskGroup({
   const panelId = `workflow-stage-${projectSlug}-${group.collapseKey}`;
   const { gridClassName } = useBuildCoreWorkflowTaskTableColumns();
   const rowSelection = useWorkflowTaskRowSelection();
-  const showRowSelect = rowSelection != null && !group.isPaymentsGroup;
+  const { isMemberRole } = useProjectDetailShell();
+  const showRowSelect = rowSelection != null && !group.isPaymentsGroup && !isMemberRole;
   const enableCustomColumns = !group.isPaymentsGroup && !showCardLayout;
   const gridClass = group.isPaymentsGroup
     ? `${styles.workflowGrid} ${styles.workflowGridPayments}`
@@ -182,12 +196,13 @@ export function WorkflowStageTaskGroup({
         <WorkflowTaskInlineRow
           key={task.id}
           variant={taskRowVariant}
-          projectSlug={projectSlug}
+          projectSlug={resolveTaskProjectSlug?.(task.id) ?? projectSlug}
           task={task}
           docCount={docCounts.get(task.id) ?? 0}
           taskDocuments={projectDocuments.filter((doc) => doc.workflowTaskId === task.id)}
           showAmountColumn={group.isPaymentsGroup}
           enableCustomColumns={enableCustomColumns}
+          contextLine={taskContextLineById?.get(task.id) ?? null}
           isApiSource={isApiSource}
           onUpdated={onTaskUpdated}
           onTaskError={onTaskError}
@@ -212,12 +227,13 @@ export function WorkflowStageTaskGroup({
       {group.tasks.map((task) => (
         <WorkflowTaskInlineRow
           key={task.id}
-          projectSlug={projectSlug}
+          projectSlug={resolveTaskProjectSlug?.(task.id) ?? projectSlug}
           task={task}
           docCount={docCounts.get(task.id) ?? 0}
           taskDocuments={projectDocuments.filter((doc) => doc.workflowTaskId === task.id)}
           showAmountColumn={group.isPaymentsGroup}
           enableCustomColumns={enableCustomColumns}
+          contextLine={taskContextLineById?.get(task.id) ?? null}
           isApiSource={isApiSource}
           onUpdated={onTaskUpdated}
           onTaskError={onTaskError}
@@ -242,6 +258,13 @@ export function WorkflowStageTaskGroup({
           )}
           {enableCustomColumns ? <WorkflowTaskTableCustomColumnEmptyCells /> : null}
           {group.isPaymentsGroup ? <span className={styles.workflowStageEmptyCell} aria-hidden /> : null}
+          {isMemberRole && !group.isPaymentsGroup ? (
+            <>
+              <span className={styles.workflowStageEmptyCell} aria-hidden />
+              <span className={styles.workflowStageEmptyCell} aria-hidden />
+              <span className={styles.workflowStageEmptyCell} aria-hidden />
+            </>
+          ) : null}
           <span className={styles.workflowStageEmptyCell} aria-hidden />
           <span className={styles.workflowStageEmptyCell} aria-hidden />
           <span className={styles.workflowStageEmptyCell} aria-hidden />
@@ -255,28 +278,30 @@ export function WorkflowStageTaskGroup({
 
   return (
     <section className={groupClass} aria-label={group.stageLabel}>
-      <div className={styles.stageGroupHeaderRow}>
-        {completeIconControl}
-        {collapsible ? (
-          <button
-            type="button"
-            className={styles.stageGroupHeaderBtn}
-            onClick={persisted.toggle}
-            aria-expanded={expanded}
-            aria-controls={panelId}
-            aria-label={`${expanded ? wf.collapseStageTasks : wf.expandStageTasks}: ${group.stageLabel}`}
-          >
-            {stageTitle}
-            {taskCount}
-          </button>
-        ) : (
-          <div className={styles.stageGroupHeaderStatic}>
-            {stageTitle}
-            {taskCount}
-          </div>
-        )}
-      </div>
-      {expanded ? table : null}
+      {showStageHeader ? (
+        <div className={styles.stageGroupHeaderRow}>
+          {completeIconControl}
+          {collapsible ? (
+            <button
+              type="button"
+              className={styles.stageGroupHeaderBtn}
+              onClick={persisted.toggle}
+              aria-expanded={expanded}
+              aria-controls={panelId}
+              aria-label={`${expanded ? wf.collapseStageTasks : wf.expandStageTasks}: ${group.stageLabel}`}
+            >
+              {stageTitle}
+              {taskCount}
+            </button>
+          ) : (
+            <div className={styles.stageGroupHeaderStatic}>
+              {stageTitle}
+              {taskCount}
+            </div>
+          )}
+        </div>
+      ) : null}
+      {expanded || !showStageHeader ? table : null}
     </section>
   );
 }

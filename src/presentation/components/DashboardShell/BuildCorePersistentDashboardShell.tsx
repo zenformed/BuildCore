@@ -51,6 +51,10 @@ export function BuildCorePersistentDashboardShell({
         }
         return;
       }
+      if (id === 'notifications') {
+        router.push(nav.routes.notifications);
+        return;
+      }
       router.push(nav.routes.dashboard);
     },
     [dash, nav, router]
