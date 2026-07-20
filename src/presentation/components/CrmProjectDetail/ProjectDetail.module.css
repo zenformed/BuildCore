@@ -5585,6 +5585,18 @@
   padding: 0;
 }
 
+@media (max-width: 767px) {
+  /* Member mobile cards sit outside folderTabPanelInner gap rules — keep space even with status banners. */
+  .detailPanelsScroll[data-member-project-tasks] .stageGroupMobileTaskList {
+    gap: 0.5rem;
+  }
+
+  .stageGroupMobileTaskList:has(.workflowTaskMobileStatusBanner),
+  .memberCompletedTasksCards:has(.workflowTaskMobileStatusBanner) {
+    gap: 0.5rem;
+  }
+}
+
 .detailPanelsScroll[data-member-project-tasks] .memberCompletedTasks {
   margin-inline: 0;
   padding-inline: 0;
