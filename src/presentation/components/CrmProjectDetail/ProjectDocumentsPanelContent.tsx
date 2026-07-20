@@ -1,6 +1,6 @@
 'use client';
 
-import type { ReactElement } from 'react';
+import type { ReactElement, ReactNode } from 'react';
 import { useMemo, useState } from 'react';
 import type { CrmProjectDetail, PipelineStageSlug, CrmDocumentMetadata } from '@/domain/crm';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
@@ -22,7 +22,12 @@ import {
   formatShortDate,
 } from '@/presentation/features/crmProjectDetail/crmProjectDetailFormatters';
 import { useProjectDocumentModalActions } from '@/presentation/features/crmProjectDetail/useProjectDocumentModalActions';
+import { useDocumentRowSelection } from '@/presentation/features/crmProjectDetail/documentRowSelectionContext';
 import { useProjectDetailShell } from '@/presentation/features/crmProjectDetail/ProjectDetailShellContext';
+import { useDashboardMobileLayout } from '@/presentation/features/crmProjects/useDashboardMobileLayout';
+import { BulkSelectCheckbox } from '@/presentation/components/BulkSelection/BulkSelectCheckbox';
+import { DocumentsListHeaderRow } from './DocumentsListHeaderRow';
+import { DocumentsMobileBulkSelectAllRow } from './MobileBulkSelectionChrome';
 import { WorkflowDocumentFileIcon } from './WorkflowDocumentFileIcon';
 import styles from './ProjectDetail.module.css';
 
@@ -30,6 +35,8 @@ export type ProjectDocumentsPanelContentProps = {
   project: CrmProjectDetail;
   filter: DocumentPanelFilter;
   searchQuery?: string;
+  /** Desktop: filter caret shown in the list header (workflow/budget pattern). */
+  leadingFilter?: ReactNode;
   onRefresh: () => Promise<void>;
   onError?: (message: string) => void;
 };
@@ -38,6 +45,7 @@ export function ProjectDocumentsPanelContent({
   project,
   filter,
   searchQuery = '',
+  leadingFilter = null,
   onRefresh,
   onError,
 }: ProjectDocumentsPanelContentProps): ReactElement {
@@ -48,6 +56,8 @@ export function ProjectDocumentsPanelContent({
   const docsContent = content.projectDetail.documents;
   const wf = content.projectDetail.workflow;
   const { setToast, guardProjectEdit } = useProjectDetailShell();
+  const rowSelection = useDocumentRowSelection();
+  const isMobileLayout = useDashboardMobileLayout();
   const [busyDocId, setBusyDocId] = useState<string | null>(null);
 
   const { downloadDocument, deleteDocument } = useProjectDocumentModalActions({
@@ -74,6 +84,11 @@ export function ProjectDocumentsPanelContent({
     );
     return filterDocumentPanelItemsBySearch(byFilter, searchQuery, stageCatalog);
   }, [filter, project, searchQuery, stageCatalog]);
+
+  const hasSelectableDocuments = useMemo(
+    () => items.some((item) => item.kind === 'document'),
+    [items]
+  );
 
   const formatDocStageLabel = (workflowTaskId: string, stageSlug: PipelineStageSlug | null) => {
     const task = taskById.get(workflowTaskId);
@@ -112,108 +127,149 @@ export function ProjectDocumentsPanelContent({
   return (
     <div className={styles.documentsPanelContent}>
       <div className={styles.documentsPanelScroll}>
-      {items.length === 0 ? (
-        <div className={styles.docEmptyState}>
-          <p className={styles.subtitle}>{docsContent.empty}</p>
-        </div>
-      ) : (
-        <ul className={styles.docList}>
-          {items.map((item) => {
-            if (item.kind === 'missing') {
-              return (
-                <li key={`missing-${item.task.id}`} className={`${styles.docListItem} ${styles.docListItem_missing}`}>
-                  <WorkflowDocumentFileIcon fileName="file" mimeType="" modal />
-                  <div className={styles.docItemBody}>
-                    <span className={styles.docItemName}>{item.task.title}</span>
-                    <span className={styles.docItemMeta}>
-                      {docsContent.missingForTask} · {formatWorkflowTaskStageLabel(item.task, stageCatalog)}
-                    </span>
-                  </div>
-                  <span className={styles.docCompletionMissing}>0/1</span>
-                </li>
-              );
-            }
+        {items.length === 0 ? (
+          <div className={styles.docEmptyState}>
+            <p className={styles.subtitle}>{docsContent.empty}</p>
+          </div>
+        ) : (
+          <>
+            {hasSelectableDocuments && isMobileLayout ? (
+              <DocumentsMobileBulkSelectAllRow />
+            ) : null}
+            {hasSelectableDocuments && !isMobileLayout ? (
+              <DocumentsListHeaderRow
+                leadingFilter={leadingFilter}
+                onRefresh={onRefresh}
+                onError={onError}
+              />
+            ) : null}
+            <ul className={styles.docList}>
+              {items.map((item) => {
+                if (item.kind === 'missing') {
+                  return (
+                    <li
+                      key={`missing-${item.task.id}`}
+                      className={`${styles.docListItem} ${styles.docListItem_missing}`}
+                    >
+                      <WorkflowDocumentFileIcon fileName="file" mimeType="" modal />
+                      <div className={styles.docItemBody}>
+                        <span className={styles.docItemName}>{item.task.title}</span>
+                        <span className={styles.docItemMeta}>
+                          {docsContent.missingForTask} ·{' '}
+                          {formatWorkflowTaskStageLabel(item.task, stageCatalog)}
+                        </span>
+                      </div>
+                      <span className={styles.docCompletionMissing}>0/1</span>
+                    </li>
+                  );
+                }
 
-            if (item.kind === 'missing_budget') {
-              return (
-                <li
-                  key={`missing-budget-${item.entry.id}`}
-                  className={`${styles.docListItem} ${styles.docListItem_missing}`}
-                >
-                  <WorkflowDocumentFileIcon fileName="file" mimeType="" modal />
-                  <div className={styles.docItemBody}>
-                    <span className={styles.docItemName}>{item.entry.itemName}</span>
-                    <span className={styles.docItemMeta}>
-                      {docsContent.missingForBudgetEntry} · {formatBudgetCategory(item.entry.category)}
-                    </span>
-                  </div>
-                  <span className={styles.docCompletionMissing}>0/1</span>
-                </li>
-              );
-            }
+                if (item.kind === 'missing_budget') {
+                  return (
+                    <li
+                      key={`missing-budget-${item.entry.id}`}
+                      className={`${styles.docListItem} ${styles.docListItem_missing}`}
+                    >
+                      <WorkflowDocumentFileIcon fileName="file" mimeType="" modal />
+                      <div className={styles.docItemBody}>
+                        <span className={styles.docItemName}>{item.entry.itemName}</span>
+                        <span className={styles.docItemMeta}>
+                          {docsContent.missingForBudgetEntry} ·{' '}
+                          {formatBudgetCategory(item.entry.category)}
+                        </span>
+                      </div>
+                      <span className={styles.docCompletionMissing}>0/1</span>
+                    </li>
+                  );
+                }
 
-            const doc = item.document;
-            const isBusy = busyDocId === doc.id;
-            const isProjectMedia = doc.workflowTaskId == null && doc.budgetEntryId == null;
-            const budgetEntry = doc.budgetEntryId ? budgetEntryById.get(doc.budgetEntryId) : undefined;
+                const doc = item.document;
+                const isBusy = busyDocId === doc.id;
+                const isProjectMedia = doc.workflowTaskId == null && doc.budgetEntryId == null;
+                const budgetEntry = doc.budgetEntryId
+                  ? budgetEntryById.get(doc.budgetEntryId)
+                  : undefined;
+                const isSelected = rowSelection?.selectedIds.has(doc.id) === true;
 
-            return (
-              <li key={doc.id} className={`${styles.docListItem} ${styles.docListItem_hasFile}`}>
-                <WorkflowDocumentFileIcon fileName={doc.name} mimeType={doc.mimeType} modal />
-                <div className={styles.docItemBody}>
-                  <div className={styles.docItemTitleRow}>
-                    <span className={styles.docItemName} title={doc.name}>
-                      {doc.name}
-                    </span>
-                    <div className={styles.docListItemActions}>
-                      {canDownloadDoc(doc) ? (
-                        <button
-                          type="button"
-                          className={styles.inlineMenuIconBtn}
-                          disabled={isBusy}
-                          title={wf.documentDownload}
-                          aria-label={`${wf.documentDownload} ${doc.name}`}
-                          onClick={() => void runDocAction(doc.id, () => downloadDocument(doc))}
-                        >
-                          <span className={styles.inlineMenuDownloadIcon} aria-hidden />
-                        </button>
-                      ) : null}
-                      <button
-                        type="button"
-                        className={styles.inlineMenuIconBtn}
-                        disabled={isBusy}
-                        title={wf.documentDelete}
-                        aria-label={`${wf.documentDelete} ${doc.name}`}
-                        onClick={() => {
-                          guardProjectEdit(() => {
-                            void runDocAction(doc.id, () => deleteDocument(doc));
-                          });
-                        }}
-                      >
-                        <span className={styles.inlineMenuDeleteIcon} aria-hidden />
-                      </button>
+                return (
+                  <li
+                    key={doc.id}
+                    className={[
+                      styles.docListItem,
+                      styles.docListItem_hasFile,
+                      isSelected ? styles.docListItem_selected : '',
+                    ]
+                      .filter(Boolean)
+                      .join(' ')}
+                  >
+                    {rowSelection != null ? (
+                      <span className={styles.docListItemSelect}>
+                        <BulkSelectCheckbox
+                          checked={isSelected}
+                          ariaLabel={rowSelection.selectItemAriaLabel(doc.name)}
+                          onChange={() => rowSelection.onToggle(doc.id)}
+                        />
+                      </span>
+                    ) : null}
+                    <WorkflowDocumentFileIcon fileName={doc.name} mimeType={doc.mimeType} modal />
+                    <div className={styles.docItemBody}>
+                      <div className={styles.docItemTitleRow}>
+                        <span className={styles.docItemName} title={doc.name}>
+                          {doc.name}
+                        </span>
+                        <div className={styles.docListItemActions}>
+                          {canDownloadDoc(doc) ? (
+                            <button
+                              type="button"
+                              className={styles.inlineMenuIconBtn}
+                              disabled={isBusy}
+                              title={wf.documentDownload}
+                              aria-label={`${wf.documentDownload} ${doc.name}`}
+                              onClick={() => void runDocAction(doc.id, () => downloadDocument(doc))}
+                            >
+                              <span className={styles.inlineMenuDownloadIcon} aria-hidden />
+                            </button>
+                          ) : null}
+                          <button
+                            type="button"
+                            className={styles.inlineMenuIconBtn}
+                            disabled={isBusy}
+                            title={wf.documentDelete}
+                            aria-label={`${wf.documentDelete} ${doc.name}`}
+                            onClick={() => {
+                              guardProjectEdit(() => {
+                                void runDocAction(doc.id, () => deleteDocument(doc));
+                              });
+                            }}
+                          >
+                            <span className={styles.inlineMenuDeleteIcon} aria-hidden />
+                          </button>
+                        </div>
+                      </div>
+                      <span className={styles.docItemMeta}>
+                        {formatDocumentKind(doc.kind)} ·{' '}
+                        {isProjectMedia
+                          ? 'Project file'
+                          : doc.workflowTaskId
+                            ? formatDocStageLabel(doc.workflowTaskId, doc.stageSlug)
+                            : budgetEntry
+                              ? `${docsContent.uploadedForBudgetEntry} · ${budgetEntry.itemName} · ${formatBudgetCategory(budgetEntry.category)}`
+                              : doc.stageSlug
+                                ? formatWorkflowTaskStageLabel(
+                                    { stageSlug: doc.stageSlug, amountCents: null },
+                                    stageCatalog
+                                  )
+                                : docsContent.noStage}
+                        {doc.uploadedAt ? ` · ${formatShortDate(doc.uploadedAt)}` : null}
+                        {` · ${formatFileSize(doc.sizeBytes)}`}
+                      </span>
                     </div>
-                  </div>
-                  <span className={styles.docItemMeta}>
-                    {formatDocumentKind(doc.kind)} ·{' '}
-                    {isProjectMedia
-                      ? 'Project file'
-                      : doc.workflowTaskId
-                        ? formatDocStageLabel(doc.workflowTaskId, doc.stageSlug)
-                        : budgetEntry
-                          ? `${docsContent.uploadedForBudgetEntry} · ${budgetEntry.itemName} · ${formatBudgetCategory(budgetEntry.category)}`
-                          : doc.stageSlug
-                            ? formatWorkflowTaskStageLabel({ stageSlug: doc.stageSlug, amountCents: null }, stageCatalog)
-                            : docsContent.noStage}
-                    {doc.uploadedAt ? ` · ${formatShortDate(doc.uploadedAt)}` : null}
-                    {` · ${formatFileSize(doc.sizeBytes)}`}
-                  </span>
-                </div>
-              </li>
-            );
-          })}
-        </ul>
-      )}
+                  </li>
+                );
+              })}
+            </ul>
+          </>
+        )}
       </div>
     </div>
   );

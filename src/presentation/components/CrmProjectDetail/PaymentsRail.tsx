@@ -213,11 +213,13 @@ export function PaymentsRail({
             {completedMilestones.map((task) => renderPaymentRow(task, 'mobile'))}
           </div>
         ) : (
-          <div className={styles.stageGroup_unifiedTableSection}>
-            <div className={styles.paymentsTableScroll}>
-              <div className={styles.paymentsTableRows}>
-                {completedMilestones.map((task) => renderPaymentRow(task, 'table'))}
-              </div>
+          <div className={styles.detailPanelTableCard}>
+            <div
+              className={[styles.paymentsList, styles.paymentsUnifiedTable, shellClassName]
+                .filter(Boolean)
+                .join(' ')}
+            >
+              {completedMilestones.map((task) => renderPaymentRow(task, 'table'))}
             </div>
           </div>
         )}
@@ -283,58 +285,62 @@ export function PaymentsRail({
             {memberCompletedSection}
           </div>
         ) : (
-          <div
-            className={[styles.workflowUnifiedTable, styles.paymentsUnifiedTable, shellClassName]
-              .filter(Boolean)
-              .join(' ')}
-          >
-            <WorkflowTaskTableHeaderRow
-              context="payments"
-              showAmount
-              enablePaymentCustomColumns
-              showStatusRefresh
-              leadingFilter={statusFilterCaret}
-              onRefreshTasks={onRefreshTasks}
-              rowClassName={styles.workflowUnifiedTableHeader}
-              gridClassName={styles.paymentsAlignedGrid}
-              trailingHeaders={
-                <>
-                  <span role="columnheader" className={styles.workflowColumnHeaderAlignCenter}>
-                    {payCols.invoiced}
-                  </span>
-                  <span role="columnheader" className={styles.workflowColumnHeaderAlignCenter}>
-                    {payCols.paid}
-                  </span>
-                </>
-              }
-            />
-            <div className={styles.workflowUnifiedTableBody}>
-              <div className={styles.stageGroup_unifiedTableSection}>
-                <div className={styles.paymentsTableScroll}>
-                  <div className={styles.paymentsTableRows}>
-                    {activePaymentsEmpty ? (
-                      <MemberNoActiveTasksRow
-                        gridClassName={styles.paymentsAlignedGrid}
-                        wrapInSection={false}
-                      />
-                    ) : activeMilestones.length === 0 ? (
-                      <div className={`${styles.tableRow} ${styles.paymentsAlignedGrid}`} role="row">
-                        {isMemberRole ? null : (
-                          <span className={styles.workflowSelectCell} aria-hidden />
-                        )}
-                        <span className={styles.workflowPrimaryCell}>
-                          <span className={styles.workflowStageEmptyMessage}>{payments.empty}</span>
+          <>
+            <div className={styles.detailPanelTableCard}>
+              <div className={styles.paymentsTableScroll}>
+                <div
+                  className={[styles.paymentsList, styles.paymentsUnifiedTable, shellClassName]
+                    .filter(Boolean)
+                    .join(' ')}
+                >
+                  <WorkflowTaskTableHeaderRow
+                    context="payments"
+                    showAmount
+                    enablePaymentCustomColumns
+                    showStatusRefresh
+                    leadingFilter={statusFilterCaret}
+                    onRefreshTasks={onRefreshTasks}
+                    rowClassName={styles.paymentsTableHeader}
+                    gridClassName={styles.paymentsAlignedGrid}
+                    trailingHeaders={
+                      <>
+                        <span
+                          role="columnheader"
+                          className={styles.workflowColumnHeaderAlignCenter}
+                        >
+                          {payCols.invoiced}
                         </span>
-                      </div>
-                    ) : (
-                      activeMilestones.map((task) => renderPaymentRow(task, 'table'))
-                    )}
-                  </div>
+                        <span
+                          role="columnheader"
+                          className={styles.workflowColumnHeaderAlignCenter}
+                        >
+                          {payCols.paid}
+                        </span>
+                      </>
+                    }
+                  />
+                  {activePaymentsEmpty ? (
+                    <MemberNoActiveTasksRow
+                      gridClassName={styles.paymentsAlignedGrid}
+                      wrapInSection={false}
+                    />
+                  ) : activeMilestones.length === 0 ? (
+                    <div className={`${styles.tableRow} ${styles.paymentsAlignedGrid}`} role="row">
+                      {isMemberRole ? null : (
+                        <span className={styles.workflowSelectCell} aria-hidden />
+                      )}
+                      <span className={styles.workflowPrimaryCell}>
+                        <span className={styles.workflowStageEmptyMessage}>{payments.empty}</span>
+                      </span>
+                    </div>
+                  ) : (
+                    activeMilestones.map((task) => renderPaymentRow(task, 'table'))
+                  )}
                 </div>
               </div>
-              {memberCompletedSection}
             </div>
-          </div>
+            {memberCompletedSection}
+          </>
         )}
       </section>
     </WorkflowTaskRowSelectionProvider>

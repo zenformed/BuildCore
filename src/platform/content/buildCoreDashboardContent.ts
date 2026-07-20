@@ -1431,6 +1431,14 @@ const buildCoreDashboardContentSource = {
       placeholderMeta: 'Required · not uploaded',
       placeholders: ['Signed estimate', 'Site photos', 'Permit packet'],
       viewAll: 'View all documents',
+      bulkDeleteItemLabel: 'document',
+      bulkDeleteConfirmTitle: (count: number): string =>
+        count === 1
+          ? 'Delete selected document?'
+          : `Delete ${count} selected documents?`,
+      bulkDownloadDocument: 'Download document',
+      bulkDownloadDocuments: 'Download selected documents',
+      bulkDownloadFailed: 'Could not download selected documents. Try again.',
       columns: {
         name: 'Document',
         kind: 'Type',

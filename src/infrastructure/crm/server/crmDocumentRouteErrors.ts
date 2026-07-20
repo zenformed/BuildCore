@@ -6,13 +6,15 @@ export function crmDocumentErrorResponse(err: unknown): NextResponse {
     const status =
       err.code === 'not_found'
         ? 404
-        : err.code === 'STORAGE_LIMIT_EXCEEDED' ||
-            err.code === 'INVALID_FILE_TYPE' ||
-            err.code === 'FILE_TOO_LARGE' ||
-            err.code === 'EMPTY_FILE' ||
-            err.code === 'DOCUMENTS_REQUIRED'
-          ? 400
-          : 400;
+        : err.code === 'forbidden' || err.code === 'FORBIDDEN'
+          ? 403
+          : err.code === 'STORAGE_LIMIT_EXCEEDED' ||
+              err.code === 'INVALID_FILE_TYPE' ||
+              err.code === 'FILE_TOO_LARGE' ||
+              err.code === 'EMPTY_FILE' ||
+              err.code === 'DOCUMENTS_REQUIRED'
+            ? 400
+            : 400;
     return NextResponse.json({ error: err.code, message: err.message }, { status });
   }
   if (err instanceof Error) {

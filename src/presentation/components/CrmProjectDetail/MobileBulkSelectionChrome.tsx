@@ -5,9 +5,11 @@ import { CloseIcon } from '@/platform/icons/buildCoreDashboardShellIcons';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
 import { BulkSelectCheckbox } from '@/presentation/components/BulkSelection';
 import { useBudgetEntryRowSelection } from '@/presentation/features/crmProjectDetail/budgetEntryRowSelectionContext';
+import { useDocumentRowSelection } from '@/presentation/features/crmProjectDetail/documentRowSelectionContext';
 import { useProjectDetailShell } from '@/presentation/features/crmProjectDetail/ProjectDetailShellContext';
 import { useWorkflowTaskRowSelection } from '@/presentation/features/crmProjectDetail/workflowTaskRowSelectionContext';
 import { BudgetTableBulkActions } from './BudgetTableBulkActions';
+import { DocumentsPanelBulkActions } from './DocumentsPanelBulkActions';
 import { WorkflowTableBulkActions } from './WorkflowTableBulkActions';
 import styles from './ProjectDetail.module.css';
 
@@ -222,3 +224,72 @@ export function BudgetMobileSearchToolsRow({
     </div>
   );
 }
+
+function useDocumentsMobileBulkSelection(): {
+  readonly showBulkToolbar: boolean;
+  readonly selectedCount: number;
+  readonly clearSelection: () => void;
+} {
+  const rowSelection = useDocumentRowSelection();
+  const selectedCount = rowSelection?.selectedCount ?? 0;
+  const showBulkToolbar = rowSelection != null && selectedCount > 0;
+  return {
+    showBulkToolbar,
+    selectedCount,
+    clearSelection: () => rowSelection?.clearSelection(),
+  };
+}
+
+/** Documents mobile: select-all row (requires selection provider ancestor). */
+export function DocumentsMobileBulkSelectAllRow(): ReactElement | null {
+  const rowSelection = useDocumentRowSelection();
+  if (rowSelection == null) return null;
+  return (
+    <MobileBulkSelectAllRow
+      allVisibleSelected={rowSelection.allVisibleSelected}
+      someVisibleSelected={rowSelection.someVisibleSelected}
+      selectAllAriaLabel={rowSelection.selectAllAriaLabel}
+      onToggleAllVisible={() => rowSelection.onToggleAllVisible()}
+    />
+  );
+}
+
+/** Documents: bulk toolbar for the top header actions row (after refresh). */
+export function DocumentsMobileBulkToolbar(): ReactElement | null {
+  const bulkCopy = content.bulkSelection;
+  const { showBulkToolbar, selectedCount, clearSelection } = useDocumentsMobileBulkSelection();
+  if (!showBulkToolbar) return null;
+  return (
+    <MobileBulkSelectionToolbar
+      selectedCountLabel={bulkCopy.selectedCount(selectedCount)}
+      toolbarAriaLabel={bulkCopy.toolbarAriaLabel}
+      cancelLabel={bulkCopy.cancel}
+      onClearSelection={clearSelection}
+      actions={<DocumentsPanelBulkActions />}
+    />
+  );
+}
+
+/**
+ * Documents: search + upload row.
+ * Hidden while bulk toolbar is active (same swap as subprojects tools row).
+ */
+export function DocumentsMobileSearchToolsRow({
+  searchInput,
+  trailingActions = null,
+}: {
+  readonly searchInput: ReactNode;
+  readonly trailingActions?: ReactNode;
+}): ReactElement | null {
+  const { showBulkToolbar } = useDocumentsMobileBulkSelection();
+  if (showBulkToolbar) return null;
+  return (
+    <div className={styles.detailPanelHeaderRow}>
+      <div className={styles.detailPanelSearchWrap}>{searchInput}</div>
+      {trailingActions != null ? (
+        <div className={styles.detailPanelHeaderRowActions}>{trailingActions}</div>
+      ) : null}
+    </div>
+  );
+}
+

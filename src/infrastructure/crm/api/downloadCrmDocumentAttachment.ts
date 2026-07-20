@@ -38,6 +38,37 @@ export async function downloadCrmDocumentAttachment(
     cache: 'no-store',
   });
 
+  await consumeDocumentDownloadResponse(response, fallbackFileName);
+}
+
+export async function downloadCrmDocumentAttachmentPost(
+  apiPath: string,
+  body: unknown,
+  fallbackFileName = 'download'
+): Promise<void> {
+  const session = await getSession();
+  const token = session?.access_token;
+  if (token == null || token.trim() === '') {
+    throw new CrmApiError('unauthenticated', 401);
+  }
+
+  const response = await fetch(apiPath, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(body),
+    cache: 'no-store',
+  });
+
+  await consumeDocumentDownloadResponse(response, fallbackFileName);
+}
+
+async function consumeDocumentDownloadResponse(
+  response: Response,
+  fallbackFileName: string
+): Promise<void> {
   if (!response.ok) {
     let body: unknown = null;
     try {
