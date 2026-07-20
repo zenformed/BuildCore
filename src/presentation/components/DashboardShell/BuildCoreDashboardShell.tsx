@@ -36,7 +36,6 @@ import { CurrentUserAvatarProvider } from '@/presentation/providers/CurrentUserA
 import { useBuildCoreNotificationsConfig } from '@/presentation/features/notifications/useBuildCoreNotificationsConfig';
 import { isBuildCoreMemberRole } from '@/domain/buildcore/memberRole';
 import { useSaaSProfile } from '@/presentation/hooks/useSaaSProfile';
-import { runtimeModes } from '@/infrastructure/config/runtimeModes';
 import { CorePlatformDegradedBanner } from '@/presentation/components/CorePlatform/CorePlatformDegradedBanner';
 import { DemoDisabledAppsLauncher } from '@/presentation/components/Demo/DemoDisabledShellControls';
 import { BuildCoreDashboardModals } from './BuildCoreDashboardModals';
@@ -133,9 +132,7 @@ export function BuildCoreDashboardShell({
         canAccessTeams: dash.canAccessBuildCoreTeams,
         canAccessReports: dash.canAccessBuildCoreReports,
         canAccessWorkflowStages: dash.canAccessBuildCoreWorkflowStages,
-        canViewTeamSection:
-          !isMemberExperience &&
-          (dash.canAccessBuildCoreTeams || runtimeModes.isDemoRuntime()),
+        canViewTeamSection: true,
         isMemberExperience,
         teamContent,
       }),

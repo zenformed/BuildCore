@@ -184,10 +184,57 @@
   z-index: 400;
 }
 
-/* Desktop sidebar apps overlay (unchanged) */
+/*
+ * Desktop sidebar apps dock — portaled beside the rail (top), same surface as
+ * notifications / account dock popovers.
+ */
+.appsPopover:global([data-zenformed-sidebar-dock-popover='apps']) {
+  margin: 0 !important;
+  width: min(22.5rem, calc(100vw - 1.5rem)) !important;
+  min-width: 0 !important;
+  max-width: min(22.5rem, calc(100vw - 1.5rem)) !important;
+  height: auto !important;
+  min-height: 0 !important;
+  max-height: min(28rem, calc(100vh - 5rem)) !important;
+  padding: 0.75rem 0 !important;
+  border-radius: 0.75rem !important;
+  border: 1px solid var(--theme-nav-sidebar-menu-border, rgba(255, 255, 255, 0.14)) !important;
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.35) !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+  background: var(--theme-nav-sidebar-menu-bg, var(--theme-nav-sidebar-bg, #102741)) !important;
+  color: var(--theme-nav-sidebar-menu-text, #f1f5f9) !important;
+  --color-text: var(--theme-nav-sidebar-menu-text, #f1f5f9);
+  --color-text-muted: var(--theme-nav-sidebar-menu-text-muted, #94a3b8);
+  --theme-surface-hover: var(--theme-nav-sidebar-menu-hover, rgba(255, 255, 255, 0.08));
+}
+
+/*
+ * Mobile apps sheet — floating near the top (modal-like), ~1/4 viewport, scrollable.
+ */
+.appsPopover:global([data-zenformed-sidebar-dock-popover='apps-mobile']) {
+  margin: 0 !important;
+  width: min(28rem, calc(100vw - 1rem)) !important;
+  min-width: 0 !important;
+  max-width: min(28rem, calc(100vw - 1rem)) !important;
+  padding: 0.65rem 0 !important;
+  border-radius: 0.75rem !important;
+  border: 1px solid var(--theme-nav-sidebar-menu-border, rgba(255, 255, 255, 0.14)) !important;
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.4) !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+  -webkit-overflow-scrolling: touch;
+  background: var(--theme-nav-sidebar-menu-bg, var(--theme-nav-sidebar-bg, #102741)) !important;
+  color: var(--theme-nav-sidebar-menu-text, #f1f5f9) !important;
+  --color-text: var(--theme-nav-sidebar-menu-text, #f1f5f9);
+  --color-text-muted: var(--theme-nav-sidebar-menu-text-muted, #94a3b8);
+  --theme-surface-hover: var(--theme-nav-sidebar-menu-hover, rgba(255, 255, 255, 0.08));
+}
+
+/* Legacy inset overlay (kept for safety if portal is unavailable) */
 :global([data-zenformed-collapsible-sidebar-shell])
   .appsLauncherWrap:not([data-zenformed-apps-inline='true'])
-  .appsPopover {
+  .appsPopover:not(:global([data-zenformed-sidebar-dock-popover])) {
   position: absolute !important;
   top: 0.35rem !important;
   left: 0.35rem !important;
@@ -212,36 +259,15 @@
   --color-text-muted: var(--theme-nav-sidebar-menu-text-muted, #94a3b8);
 }
 
-/* Inline apps list inside the mobile drawer (not a floating overlay) */
-:global([data-zenformed-apps-inline='true']) .appsPopover {
-  position: static !important;
-  top: auto !important;
-  left: auto !important;
-  right: auto !important;
-  height: auto !important;
-  max-height: none !important;
-  width: 100% !important;
-  margin: 0 !important;
-  border: none !important;
-  border-radius: 0 !important;
-  box-shadow: none !important;
-  overflow: visible !important;
-  background: transparent !important;
-  padding: 0.15rem 0 0.25rem !important;
-}
-
-:global([data-zenformed-apps-inline='true']) .appsPopoverRow {
-  padding-left: calc(var(--zenformed-sidebar-pad-x, 0.75rem) + 0.5rem) !important;
-  padding-right: calc(var(--zenformed-sidebar-pad-x, 0.75rem) + 0.5rem) !important;
-}
-
 .appsPopoverList {
   display: flex;
   flex-direction: column;
   gap: 0.875rem;
 }
 
-:global([data-zenformed-collapsible-sidebar-shell]) .appsPopoverList {
+:global([data-zenformed-collapsible-sidebar-shell]) .appsPopoverList,
+:global([data-zenformed-sidebar-dock-popover='apps']) .appsPopoverList,
+:global([data-zenformed-sidebar-dock-popover='apps-mobile']) .appsPopoverList {
   gap: 0;
 }
 
@@ -332,7 +358,11 @@
 }
 
 :global([data-zenformed-collapsible-sidebar-shell]) .appsTileIcon,
-:global([data-zenformed-collapsible-sidebar-shell]) .appsTileIconFallback {
+:global([data-zenformed-collapsible-sidebar-shell]) .appsTileIconFallback,
+:global([data-zenformed-sidebar-dock-popover='apps']) .appsTileIcon,
+:global([data-zenformed-sidebar-dock-popover='apps']) .appsTileIconFallback,
+:global([data-zenformed-sidebar-dock-popover='apps-mobile']) .appsTileIcon,
+:global([data-zenformed-sidebar-dock-popover='apps-mobile']) .appsTileIconFallback {
   width: 2rem;
   height: 2rem;
   flex-shrink: 0;
@@ -381,15 +411,19 @@
 }
 
 /* Sidebar list: icon | name/tier stack | optional check */
-:global([data-zenformed-collapsible-sidebar-shell]) .appsPopoverRow {
+:global([data-zenformed-collapsible-sidebar-shell]) .appsPopoverRow,
+:global([data-zenformed-sidebar-dock-popover='apps']) .appsPopoverRow,
+:global([data-zenformed-sidebar-dock-popover='apps-mobile']) .appsPopoverRow {
   flex-direction: row;
   align-items: center;
   gap: 0.65rem;
-  padding: 0.5rem calc(var(--zenformed-sidebar-pad-x, 0.75rem) + 0.5rem);
+  padding: 0.5rem 1rem;
   border-radius: 0;
 }
 
-:global([data-zenformed-collapsible-sidebar-shell]) .appsPopoverRow:hover:not(.appsPopoverRowDisabled) {
+:global([data-zenformed-collapsible-sidebar-shell]) .appsPopoverRow:hover:not(.appsPopoverRowDisabled),
+:global([data-zenformed-sidebar-dock-popover='apps']) .appsPopoverRow:hover:not(.appsPopoverRowDisabled),
+:global([data-zenformed-sidebar-dock-popover='apps-mobile']) .appsPopoverRow:hover:not(.appsPopoverRowDisabled) {
   border-radius: 0;
   background: var(--theme-nav-sidebar-menu-hover, rgba(255, 255, 255, 0.08));
 }
@@ -418,7 +452,9 @@
   background: var(--theme-apps-launcher-row-current, rgba(99, 102, 241, 0.14));
 }
 
-:global([data-zenformed-collapsible-sidebar-shell]) .appsPopoverRowCurrent {
+:global([data-zenformed-collapsible-sidebar-shell]) .appsPopoverRowCurrent,
+:global([data-zenformed-sidebar-dock-popover='apps']) .appsPopoverRowCurrent,
+:global([data-zenformed-sidebar-dock-popover='apps-mobile']) .appsPopoverRowCurrent {
   background: var(--theme-nav-sidebar-active, rgba(90, 122, 158, 0.35));
 }
 
@@ -428,6 +464,12 @@
 
 :global([data-theme='dark'])
   :global([data-zenformed-collapsible-sidebar-shell])
+  .appsPopoverRowCurrent,
+:global([data-theme='dark'])
+  :global([data-zenformed-sidebar-dock-popover='apps'])
+  .appsPopoverRowCurrent,
+:global([data-theme='dark'])
+  :global([data-zenformed-sidebar-dock-popover='apps-mobile'])
   .appsPopoverRowCurrent {
   background: var(--theme-nav-sidebar-active, rgba(90, 122, 158, 0.35));
 }
