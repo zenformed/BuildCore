@@ -137,7 +137,12 @@ export async function PATCH(
     }
 
     await dispatchWorkflowTaskStatusTransitionNotifications({
+      supabase: auth.context.supabase,
+      organizationId: auth.context.organizationId,
+      projectId: (taskRow as { project_id: string }).project_id,
       taskId,
+      taskTitle: task.title,
+      assignedMemberId: task.assignedTo?.id ?? null,
       actorUserId: auth.context.user.id,
       authHeader: auth.context.authHeader,
       patchStatus: validated.patch.status,

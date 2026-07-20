@@ -1,5 +1,6 @@
 /**
  * POST /api/crm/tasks/[taskId]/notify-assigned — relay to ZenformedCore (customer or member).
+ * After a successful member email, also ensure the platform in-app notification exists.
  */
 
 import { NextRequest, NextResponse } from 'next/server';
@@ -11,6 +12,7 @@ import { coreUpstreamHttpResponsePayload } from '@/infrastructure/coreApi/zenfor
 import { requireCrmApiAuth } from '@/infrastructure/crm/server/crmApiRouteAuth';
 import { env } from '@/infrastructure/config/env';
 import { getBuildCorePublicAppUrl } from '@/infrastructure/config/buildCorePublicAppUrl';
+import { dispatchWorkflowTaskAssignedNotifyEmailInApp } from '@/infrastructure/crm/server/dispatchWorkflowTaskAssignedNotifyEmailInApp';
 
 export const dynamic = 'force-dynamic';
 
@@ -57,6 +59,18 @@ export async function POST(
       },
       { status: 502 }
     );
+  }
+
+  // Member recipients: ensure sidebar row (idempotent with auto-assign create).
+  // Customer recipients: email only — no platform in-app recipient.
+  if (result.data.recipientKind !== 'customer') {
+    await dispatchWorkflowTaskAssignedNotifyEmailInApp({
+      supabase: auth.context.supabase,
+      accessToken: token,
+      organizationId: auth.context.organizationId,
+      actorUserId: auth.context.user.id,
+      taskId,
+    });
   }
 
   return NextResponse.json(result.data);

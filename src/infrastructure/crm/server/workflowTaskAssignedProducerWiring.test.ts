@@ -38,3 +38,63 @@ describe('workflow_task.assigned producer wiring', () => {
     assert.doesNotMatch(relay, /POST.*create/);
   });
 });
+
+describe('status-transition + notify-email in-app producer wiring', () => {
+  it('patch status dispatcher calls email and in-app for needs_approval/rejected', () => {
+    const source = readFileSync(
+      join(
+        process.cwd(),
+        'src/infrastructure/crm/server/workflowTaskStatusTransitionNotifications.ts'
+      ),
+      'utf8'
+    );
+    assert.match(source, /notifyWorkflowTaskNeedsApprovalAfterTransition/);
+    assert.match(source, /notifyWorkflowTaskRejectedAfterTransition/);
+    assert.match(source, /dispatchWorkflowTaskStatusTransitionInAppNotifications/);
+  });
+
+  it('needs_approval and rejected in-app helpers create platform notifications', () => {
+    const needsApproval = readFileSync(
+      join(
+        process.cwd(),
+        'src/infrastructure/crm/server/notifyWorkflowTaskNeedsApprovalInApp.ts'
+      ),
+      'utf8'
+    );
+    const rejected = readFileSync(
+      join(process.cwd(), 'src/infrastructure/crm/server/notifyWorkflowTaskRejectedInApp.ts'),
+      'utf8'
+    );
+    assert.match(needsApproval, /createPlatformNotificationOnCore/);
+    assert.match(needsApproval, /workflow_task\.needs_approval/);
+    assert.match(rejected, /createPlatformNotificationOnCore/);
+    assert.match(rejected, /workflow_task\.rejected/);
+  });
+
+  it('completed in-app helper creates platform notification with no email relay', () => {
+    const completed = readFileSync(
+      join(process.cwd(), 'src/infrastructure/crm/server/notifyWorkflowTaskCompletedInApp.ts'),
+      'utf8'
+    );
+    const statusDispatch = readFileSync(
+      join(
+        process.cwd(),
+        'src/infrastructure/crm/server/workflowTaskStatusTransitionNotifications.ts'
+      ),
+      'utf8'
+    );
+    assert.match(completed, /createPlatformNotificationOnCore/);
+    assert.match(completed, /workflow_task\.completed/);
+    assert.match(completed, /In-app only/);
+    assert.match(statusDispatch, /enteredCompleted/);
+    assert.doesNotMatch(statusDispatch, /notifyWorkflowTaskCompletedAfterTransition/);
+  });
+
+  it('notify-assigned route ensures in-app after member email', () => {
+    const route = readFileSync(
+      join(process.cwd(), 'app/api/crm/tasks/[taskId]/notify-assigned/route.ts'),
+      'utf8'
+    );
+    assert.match(route, /dispatchWorkflowTaskAssignedNotifyEmailInApp/);
+  });
+});

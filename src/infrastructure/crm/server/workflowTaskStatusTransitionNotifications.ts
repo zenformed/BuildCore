@@ -1,13 +1,20 @@
+import type { SupabaseClient } from '@supabase/supabase-js';
 import type { WorkflowTaskStatus } from '@/domain/crm';
 import { env } from '@/infrastructure/config/env';
 import { getCrmWorkflowTaskStatusForOrg } from '@/infrastructure/crm/server/crmWorkflowTaskService';
+import { dispatchWorkflowTaskStatusTransitionInAppNotifications } from '@/infrastructure/crm/server/dispatchWorkflowTaskStatusTransitionInAppNotifications';
 import { logNeedsApprovalNotifyDebug } from '@/infrastructure/crm/server/needsApprovalNotifyDebug';
 import { notifyWorkflowTaskNeedsApprovalAfterTransition } from '@/infrastructure/crm/server/notifyWorkflowTaskNeedsApproval';
 import { notifyWorkflowTaskRejectedAfterTransition } from '@/infrastructure/crm/server/notifyWorkflowTaskRejectedAfterTransition';
 import { didEnterWorkflowTaskStatus } from '@/infrastructure/crm/server/workflowTaskStatusTransition';
 
 type WorkflowTaskStatusNotificationContext = {
+  readonly supabase: SupabaseClient;
+  readonly organizationId: string;
+  readonly projectId: string;
   readonly taskId: string;
+  readonly taskTitle: string;
+  readonly assignedMemberId: string | null;
   readonly actorUserId: string;
   readonly authHeader: string;
   readonly patchStatus: WorkflowTaskStatus | undefined;
@@ -19,7 +26,12 @@ export async function dispatchWorkflowTaskStatusTransitionNotifications(
   context: WorkflowTaskStatusNotificationContext
 ): Promise<void> {
   const {
+    supabase,
+    organizationId,
+    projectId,
     taskId,
+    taskTitle,
+    assignedMemberId,
     actorUserId,
     authHeader,
     patchStatus,
@@ -35,6 +47,7 @@ export async function dispatchWorkflowTaskStatusTransitionNotifications(
     'request_review'
   );
   const enteredRejected = didEnterWorkflowTaskStatus(previousStatus, nextStatus, 'rejected');
+  const enteredCompleted = didEnterWorkflowTaskStatus(previousStatus, nextStatus, 'done');
 
   if (patchStatus === 'request_review' || patchStatus === 'rejected') {
     logNeedsApprovalNotifyDebug('buildcore_patch_transition_check', {
@@ -103,6 +116,24 @@ export async function dispatchWorkflowTaskStatusTransitionNotifications(
       nextStatus,
       actorUserId,
       skippedReason: 'already_rejected',
+    });
+  }
+
+  if (enteredNeedsApproval || enteredRejected || enteredCompleted) {
+    await dispatchWorkflowTaskStatusTransitionInAppNotifications({
+      supabase,
+      accessToken: token,
+      organizationId,
+      actorUserId,
+      projectId,
+      taskId,
+      taskTitle,
+      previousStatus,
+      nextStatus,
+      enteredNeedsApproval,
+      enteredRejected,
+      enteredCompleted,
+      assignedMemberId,
     });
   }
 }
