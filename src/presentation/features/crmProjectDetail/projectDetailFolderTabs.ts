@@ -32,8 +32,8 @@ export function buildProjectDetailFolderTabs(input: {
     items.push({ id: 'budget', label: detail.budget.tableTitle });
   }
   if (!input.isMemberRole) {
-    items.push({ id: 'financials', label: 'Reports' });
     items.push({ id: 'documents', label: detail.sections.documents });
+    items.push({ id: 'financials', label: 'Reports' });
     items.push({ id: 'accountability', label: detail.actions.accountability });
   }
 
