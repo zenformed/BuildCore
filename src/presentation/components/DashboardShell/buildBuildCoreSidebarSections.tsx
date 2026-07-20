@@ -73,7 +73,10 @@ export function buildBuildCoreSidebarSections(
 
   const menuIds: BuildCoreSidebarNavId[] = isMemberExperience
     ? ['projects']
-    : ['projects', 'reports', 'teams', 'workflowStages'];
+    : ['projects', 'reports'];
+  const toolsIds: BuildCoreSidebarNavId[] = isMemberExperience
+    ? []
+    : ['teams', 'workflowStages'];
 
   const toItem = (id: BuildCoreSidebarNavId): ZenformedSidebarNavItem | null => {
     if (id === 'notifications') return null;
@@ -96,6 +99,7 @@ export function buildBuildCoreSidebarSections(
   };
 
   const menuItems = menuIds.map(toItem).filter(Boolean) as ZenformedSidebarNavItem[];
+  const toolsItems = toolsIds.map(toItem).filter(Boolean) as ZenformedSidebarNavItem[];
 
   const sections: ZenformedSidebarSection[] = [];
   if (menuItems.length > 0) {
@@ -105,6 +109,15 @@ export function buildBuildCoreSidebarSections(
       label: 'Menu',
       collapsedLabel: 'MENU',
       items: menuItems,
+    });
+  }
+  if (toolsItems.length > 0) {
+    sections.push({
+      kind: 'nav',
+      id: 'tools',
+      label: 'Tools',
+      collapsedLabel: 'TOOLS',
+      items: toolsItems,
     });
   }
   if (input.canViewTeamSection && input.teamContent != null) {
