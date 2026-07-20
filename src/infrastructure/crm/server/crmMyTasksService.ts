@@ -9,7 +9,6 @@ import {
   filterWorkflowTasksForBuildCoreMember,
   type BuildCoreWorkflowTaskMemberVisibilityInput,
 } from '@/domain/buildcore/workflowTaskMemberVisibility';
-import { maskEmailForMemberDisplay } from '@/domain/buildcore/maskEmailForMemberDisplay';
 import { isCrmProjectInactive } from '@/domain/crm';
 import type { CrmContact } from '@/domain/crm/contact';
 import type { CrmDocumentMetadata } from '@/domain/crm/document';
@@ -25,7 +24,6 @@ import {
   type CrmMyTaskAssignment,
   type CrmMyTasksResponse,
 } from '@/domain/crm/myTaskAssignment';
-import { primaryContactEmail } from '@/domain/crm/contactMultiValue';
 import {
   mapDbDocument,
   mapDbWorkflowTask,
@@ -49,16 +47,6 @@ export class CrmMyTasksForbiddenError extends Error {
     super(message);
     this.name = 'CrmMyTasksForbiddenError';
   }
-}
-
-function maskContactEmailForMember(contact: CrmContact): CrmContact {
-  const email = primaryContactEmail(contact.emails) || contact.email;
-  const masked = maskEmailForMemberDisplay(email);
-  return {
-    ...contact,
-    email: masked,
-    emails: contact.emails.map((value) => maskEmailForMemberDisplay(value)),
-  };
 }
 
 function resolveParentAndSubproject(
@@ -121,7 +109,7 @@ function toMyTaskAssignment(
     subprojectName: parent.subprojectName,
     projectId: project.id,
     projectSlug: project.slug,
-    contact: maskContactEmailForMember(project.contact),
+    contact: project.contact,
     clientName: project.client.name,
     address: project.address,
     projectInactive: isCrmProjectInactive(project),

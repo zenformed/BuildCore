@@ -66,6 +66,12 @@ export type CrmProjectsFilterMenuProps = {
   readonly sections?: readonly CrmProjectsFilterMenuSection[];
   /** Required when `sections` includes `assigned`. */
   readonly assigneeFilterOptions?: readonly CrmAssigneeFilterOption[];
+  /** Optional single-select assignee scope (e.g. My Tasks Mine / Others / Everyone). */
+  readonly assigneeScope?: string | null;
+  readonly onAssigneeScopeChange?: (scope: string) => void;
+  readonly assigneeScopeOptions?: readonly { readonly value: string; readonly label: string }[];
+  readonly assigneeScopeLabel?: string;
+  readonly assigneeScopeDefault?: string;
 };
 
 const DEFAULT_FILTER_SECTIONS: readonly CrmProjectsFilterMenuSection[] = [
@@ -86,6 +92,11 @@ export function CrmProjectsFilterMenu({
   triggerClassName,
   sections = DEFAULT_FILTER_SECTIONS,
   assigneeFilterOptions = [],
+  assigneeScope = null,
+  onAssigneeScopeChange,
+  assigneeScopeOptions = [],
+  assigneeScopeLabel,
+  assigneeScopeDefault = 'mine',
 }: CrmProjectsFilterMenuProps): ReactElement {
   const copy = content.crm.filters;
   const stageColumnCopy = content.workflowSettings.stageColumns;
@@ -95,6 +106,8 @@ export function CrmProjectsFilterMenu({
   const showStatus = sections.includes('status');
   const showAssigned = sections.includes('assigned');
   const showDocumentsRequired = sections.includes('documentsRequired');
+  const showAssigneeScope =
+    assigneeScopeOptions.length > 0 && onAssigneeScopeChange != null && assigneeScope != null;
   const stageFilterGroups = useMemo(() => {
     if (!showStage) return [];
     if (stageScopeMode === 'mixed') {
@@ -135,7 +148,8 @@ export function CrmProjectsFilterMenu({
     (showStatus && filters.workflowTaskStatuses.length > 0) ||
     (showAssigned && filters.assignedMemberIds.length > 0) ||
     (showDocumentsRequired && filters.documentsRequired.length > 0) ||
-    (showRadiusFilter && isRadiusFilterActive(radiusFilter));
+    (showRadiusFilter && isRadiusFilterActive(radiusFilter)) ||
+    (showAssigneeScope && assigneeScope !== assigneeScopeDefault);
   const isCaret = triggerVariant === 'caret';
 
   const toggleStage = (slug: PipelineStageSlug): void => {
@@ -217,6 +231,26 @@ export function CrmProjectsFilterMenu({
         portalClassName={styles.projectsFilterMenuPortal}
       >
         <div className={styles.projectsFilterMenu} role="group" aria-label={copy.menuAriaLabel}>
+          {showAssigneeScope ? (
+            <fieldset className={styles.projectsFilterFieldset}>
+              <legend className={styles.projectsFilterLegend}>
+                {assigneeScopeLabel ?? copy.assignedLabel}
+              </legend>
+              <div className={styles.projectsFilterOptions}>
+                {assigneeScopeOptions.map((option) => (
+                  <label key={option.value} className={styles.projectsFilterOption}>
+                    <input
+                      type="radio"
+                      name="crm-projects-assignee-scope"
+                      checked={assigneeScope === option.value}
+                      onChange={() => onAssigneeScopeChange(option.value)}
+                    />
+                    <span>{option.label}</span>
+                  </label>
+                ))}
+              </div>
+            </fieldset>
+          ) : null}
           {stageFilterGroups.map((group) => (
             <fieldset key={group.scope} className={styles.projectsFilterFieldset}>
               <legend className={styles.projectsFilterLegend}>{group.title}</legend>
@@ -312,6 +346,9 @@ export function CrmProjectsFilterMenu({
             onClick={() => {
               onChange(EMPTY_CRM_PROJECTS_LIST_FILTERS);
               onRadiusFilterChange?.(EMPTY_RADIUS_FILTER);
+              if (showAssigneeScope) {
+                onAssigneeScopeChange(assigneeScopeDefault);
+              }
             }}
           >
             {copy.clear}

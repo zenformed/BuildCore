@@ -1,0 +1,299 @@
+.myTasksGroups {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  min-width: 0;
+}
+
+.headerTitleRow {
+  gap: 0.5rem;
+}
+
+.headerLeadControls {
+  display: inline-flex;
+  align-items: center;
+  gap: 0;
+  flex-shrink: 0;
+  color: var(--color-text-muted, #64748b);
+}
+
+:global([data-theme='dark']) .headerLeadControls {
+  color: #94a3b8;
+}
+
+.headerLeadControls :global(button:hover:not(:disabled)) {
+  color: var(--color-text, #0f172a);
+}
+
+:global([data-theme='dark']) .headerLeadControls :global(button:hover:not(:disabled)) {
+  color: #f1f5f9;
+}
+
+.projectGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  min-width: 0;
+  border: 1px solid var(--theme-border-main, var(--color-border, #e2e8f0));
+  border-radius: 0.375rem;
+  overflow: hidden;
+  background: #f2f4f7;
+}
+
+:global([data-theme='dark']) .projectGroup {
+  border-color: var(--theme-border-main, #3d3e4a);
+  background: #1d2029;
+}
+
+.projectGroupToggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  width: 100%;
+  margin: 0;
+  padding: 0.5rem 0.625rem;
+  border: none;
+  border-bottom: 1px solid var(--theme-table-header-bg-solid, transparent);
+  background: var(--theme-table-header-bg);
+  color: var(--theme-table-header-text);
+  cursor: pointer;
+  text-align: left;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  line-height: 1.35;
+  box-sizing: border-box;
+}
+
+.projectGroupToggle:hover {
+  color: var(--theme-table-header-text);
+  filter: brightness(1.05);
+}
+
+:global([data-theme='dark']) .projectGroupToggle {
+  background: var(--theme-table-header-bg);
+  color: var(--theme-table-header-text);
+  border-bottom-color: var(--theme-border-main, #3d3e4a);
+}
+
+.projectGroupName {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.projectGroupLead {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.projectPreviewTrigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: var(--theme-table-header-text, #ffffff);
+  opacity: 0.9;
+  outline: none;
+}
+
+.projectPreviewTrigger:hover,
+.projectPreviewTrigger:focus-visible {
+  opacity: 1;
+}
+
+.taskProjectPreviewPortal {
+  width: min(36rem, calc(100vw - 1.5rem)) !important;
+  min-width: min(36rem, calc(100vw - 1.5rem)) !important;
+  max-width: min(36rem, calc(100vw - 1.5rem)) !important;
+  max-height: none;
+}
+
+.taskProjectPreviewPanel {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  padding: 0.75rem 0.875rem;
+}
+
+.taskProjectPreview {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  min-width: 0;
+}
+
+.taskProjectPreviewMetaRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  width: 100%;
+  margin-top: 0.75rem;
+}
+
+.taskProjectPreviewMetaRow :global([class*='metaColumn']) {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.taskProjectPreviewLink {
+  color: inherit;
+  text-decoration: none;
+  word-break: break-word;
+}
+
+.taskProjectPreviewLink:hover {
+  color: #2563eb;
+  text-decoration: underline;
+}
+
+:global([data-theme='dark']) .taskProjectPreviewLink:hover {
+  color: #93c5fd;
+}
+
+.projectGroupCount {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  min-width: 1.25rem;
+  padding: 0.0625rem 0.375rem;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--theme-table-header-text, #ffffff);
+  background: color-mix(in srgb, var(--theme-table-header-text, #ffffff) 18%, transparent);
+  border-radius: 999px;
+}
+
+.projectGroupChevronWrap {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 1rem;
+  height: 1rem;
+  color: var(--theme-table-header-text, #ffffff);
+}
+
+.projectGroupChevron,
+.projectGroupChevron_expanded {
+  display: block;
+  width: 0.5rem;
+  height: 0.5rem;
+  border-right: 2px solid var(--theme-table-header-text, #ffffff);
+  border-bottom: 2px solid var(--theme-table-header-text, #ffffff);
+  transform: rotate(-45deg);
+  transition: transform 0.15s ease;
+  opacity: 1;
+}
+
+.projectGroupChevron_expanded {
+  transform: rotate(45deg);
+}
+
+.taskList {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  min-width: 0;
+}
+
+.taskRow {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  width: 100%;
+  margin: 0;
+  padding: 0.5rem 0.625rem;
+  border: none;
+  border-bottom: 1px solid var(--theme-border-main, var(--color-border, #e2e8f0));
+  border-radius: 0;
+  background: #f2f4f7;
+  box-sizing: border-box;
+  cursor: pointer;
+  text-align: left;
+  color: inherit;
+  font: inherit;
+}
+
+.taskRow:last-child {
+  border-bottom: none;
+}
+
+.taskRow:hover {
+  background: #e9ecf1;
+}
+
+.taskRow:focus-visible {
+  outline: 2px solid var(--theme-focus-ring, #2563eb);
+  outline-offset: -2px;
+  z-index: 1;
+}
+
+:global([data-theme='dark']) .taskRow {
+  background: #1d2029;
+  border-bottom-color: var(--theme-border-main, #3d3e4a);
+}
+
+:global([data-theme='dark']) .taskRow:hover {
+  background: #232733;
+}
+
+.taskRowTop {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+  min-width: 0;
+}
+
+.taskTitle {
+  min-width: 0;
+  flex: 1 1 auto;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  line-height: 1.35;
+  color: var(--color-text, #0f172a);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.taskDue {
+  flex: 0 0 auto;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  line-height: 1.35;
+  color: var(--color-text-muted, #64748b);
+  white-space: nowrap;
+}
+
+.taskNotes {
+  margin: 0;
+  font-size: 0.75rem;
+  font-weight: 400;
+  line-height: 1.4;
+  color: var(--color-text-muted, #64748b);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+:global([data-theme='dark']) .taskTitle {
+  color: #f1f5f9;
+}
+
+:global([data-theme='dark']) .taskDue,
+:global([data-theme='dark']) .taskNotes {
+  color: #94a3b8;
+}

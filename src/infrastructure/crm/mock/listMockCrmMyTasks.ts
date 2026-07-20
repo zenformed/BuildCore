@@ -7,10 +7,7 @@ import {
   DEFAULT_BUILDCORE_WORKFLOW_TASK_ONLY_ASSIGNED_USER_CAN_VIEW,
   filterWorkflowTasksForBuildCoreMember,
 } from '@/domain/buildcore/workflowTaskMemberVisibility';
-import { maskEmailForMemberDisplay } from '@/domain/buildcore/maskEmailForMemberDisplay';
 import { isCrmProjectInactive } from '@/domain/crm';
-import { primaryContactEmail } from '@/domain/crm/contactMultiValue';
-import type { CrmContact } from '@/domain/crm/contact';
 import type { CrmProjectSummary } from '@/domain/crm/project';
 import type { CrmWorkflowTask } from '@/domain/crm/workflowTask';
 import {
@@ -26,16 +23,6 @@ import {
   listEffectiveMockProjectSummaries,
 } from '@/infrastructure/crm/mock/mockCrmMutationStore';
 import { getSession } from '@/infrastructure/supabase/supabaseClient';
-
-function maskContactEmailForMember(contact: CrmContact): CrmContact {
-  const email = primaryContactEmail(contact.emails) || contact.email;
-  const masked = maskEmailForMemberDisplay(email);
-  return {
-    ...contact,
-    email: masked,
-    emails: contact.emails.map((value) => maskEmailForMemberDisplay(value)),
-  };
-}
 
 function resolveParentAndSubproject(
   project: CrmProjectSummary,
@@ -92,7 +79,7 @@ function toAssignment(
     subprojectName: parent.subprojectName,
     projectId: project.id,
     projectSlug: project.slug,
-    contact: maskContactEmailForMember(project.contact),
+    contact: project.contact,
     clientName: project.client.name,
     address: project.address,
     projectInactive: isCrmProjectInactive(project),
