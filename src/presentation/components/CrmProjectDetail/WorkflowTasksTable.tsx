@@ -46,6 +46,11 @@ import { DetailPanelHeader } from './DetailPanelHeader';
 import { DetailPanelHeaderActions } from './DetailPanelHeaderActions';
 import { DetailPanelSectionRefresh } from './DetailPanelSectionRefresh';
 import { DetailPanelSectionSearch } from './DetailPanelSectionSearch';
+import {
+  WorkflowMobileBulkSelectAllRow,
+  WorkflowMobileBulkToolbar,
+  WorkflowMobileSearchToolsRow,
+} from './MobileBulkSelectionChrome';
 import { WorkflowStageTaskGroup, type ManualStageCompletionToggleAction } from './WorkflowStageTaskGroup';
 import { WorkflowTasksTableColumnHeader } from './WorkflowTasksTableColumnHeader';
 import { WorkflowTaskStageAddButton } from './WorkflowTaskStageAddButton';
@@ -555,40 +560,33 @@ export function WorkflowTasksTable({
       </WorkflowTaskAssigneeDragProvider>
     ) : (
       <>
+        {isMobileLayout ? <WorkflowMobileBulkSelectAllRow /> : null}
         {memberNoActiveTasksRow ?? stageGroupElements}
         {memberCompletedSection}
       </>
     )
+  ) : useUnifiedDesktopTable ? (
+    <div className={styles.workflowUnifiedTable}>
+      <WorkflowTasksTableColumnHeader
+        showAmount={showUnifiedTableAmount}
+        showStatusRefresh
+        leadingFilter={tableFilterCaret}
+        onRefreshTasks={onRefreshTasks}
+      />
+      <div className={styles.workflowUnifiedTableBody}>
+        {memberNoActiveTasksRow ?? stageGroupElements}
+        {memberCompletedSection}
+      </div>
+    </div>
   ) : (
-    <WorkflowTaskRowSelectionProvider
-      visibleTaskIds={visibleTaskIds}
-      bulkActions={selectionBulkActions}
-    >
-      {useUnifiedDesktopTable ? (
-        <div className={styles.workflowUnifiedTable}>
-          <WorkflowTasksTableColumnHeader
-            showAmount={showUnifiedTableAmount}
-            showStatusRefresh
-            leadingFilter={tableFilterCaret}
-            onRefreshTasks={onRefreshTasks}
-          />
-          <div className={styles.workflowUnifiedTableBody}>
-            {memberNoActiveTasksRow ?? stageGroupElements}
-            {memberCompletedSection}
-          </div>
-        </div>
-      ) : (
-        <>
-          {memberNoActiveTasksRow ?? stageGroupElements}
-          {memberCompletedSection}
-        </>
-      )}
-    </WorkflowTaskRowSelectionProvider>
+    <>
+      {memberNoActiveTasksRow ?? stageGroupElements}
+      {memberCompletedSection}
+    </>
   );
 
-  return (
-    <>
-      <section className={panelClass} aria-labelledby="workflow-tasks-heading">
+  const panel = (
+    <section className={panelClass} aria-labelledby="workflow-tasks-heading">
       {isMobileLayout ? (
         <div
           className={[styles.detailPanelHeader, styles.detailPanelHeader_mobile]
@@ -603,14 +601,12 @@ export function WorkflowTasksTable({
               </h3>
               {tableFilterCaret}
             </div>
-            {showPanelRefresh ? (
-              <div className={styles.detailPanelHeaderRowActions}>{refreshButton}</div>
-            ) : null}
+            <div className={styles.detailPanelHeaderRowActions}>
+              {showPanelRefresh ? refreshButton : null}
+              <WorkflowMobileBulkToolbar />
+            </div>
           </div>
-          <div className={styles.detailPanelHeaderRow}>
-            <div className={styles.detailPanelSearchWrap}>{searchInput}</div>
-            <div className={styles.detailPanelHeaderRowActions}>{addButton}</div>
-          </div>
+          <WorkflowMobileSearchToolsRow searchInput={searchInput} trailingActions={addButton} />
         </div>
       ) : (
         <DetailPanelHeader
@@ -640,9 +636,7 @@ export function WorkflowTasksTable({
           <p className={styles.subtitle}>{wf.empty}</p>
         </div>
       ) : (
-        <div className={stackClass}>
-          {tableBody}
-        </div>
+        <div className={stackClass}>{tableBody}</div>
       )}
       {showViewAllLink ? (
         <div className={styles.workflowPanelFooters}>
@@ -655,7 +649,23 @@ export function WorkflowTasksTable({
           </button>
         </div>
       ) : null}
-      </section>
+    </section>
+  );
+
+  const useSelectionProvider = !isDesktopStageCardMode;
+
+  return (
+    <>
+      {useSelectionProvider ? (
+        <WorkflowTaskRowSelectionProvider
+          visibleTaskIds={visibleTaskIds}
+          bulkActions={selectionBulkActions}
+        >
+          {panel}
+        </WorkflowTaskRowSelectionProvider>
+      ) : (
+        panel
+      )}
       <ConfirmModal
         isOpen={pendingStageToggle != null}
         onClose={() => {

@@ -1,6 +1,6 @@
 'use client';
 
-import type { MutableRefObject, ReactElement, RefObject } from 'react';
+import type { MutableRefObject, ReactElement, ReactNode, RefObject } from 'react';
 import { useRef } from 'react';
 import { WORKFLOW_TASK_STATUSES } from '@/domain/crm/workflowTaskStatuses';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
@@ -8,6 +8,7 @@ import {
   formatShortDate,
   formatWorkflowStatus,
   formatWorkflowTaskCompactTitle,
+  formatWorkflowTaskMobileCardTitle,
   formatWorkflowTaskNotesDisplay,
 } from '@/presentation/features/crmProjectDetail/crmProjectDetailFormatters';
 import { formatCentsAsUsd } from '@/presentation/features/crmProjects/crmProjectFormatters';
@@ -442,6 +443,8 @@ function WorkflowTaskRowTitleField({
   const { task, saving, canEdit, editingTitle, titleDraft } = model;
   const { isMemberRole, project } = useProjectDetailShell();
   const compactTitle = formatWorkflowTaskCompactTitle(task.title);
+  const mobileCardTitle = formatWorkflowTaskMobileCardTitle(task.title);
+  const displayTitle = compact ? compactTitle : mobileHeader ? mobileCardTitle : task.title;
   const isCompletedTask = task.status === 'done';
   const showMemberInReview =
     isMemberRole && !mobile && !mobileHeader && !compact && task.status === 'request_review';
@@ -468,7 +471,7 @@ function WorkflowTaskRowTitleField({
         )
       : null;
   const useTapPreview = isMobileLayout || mobile || mobileHeader;
-  const previewEnabled = !editingTitle && !compact && !hidePreviewIcon;
+  const previewEnabled = !editingTitle && !compact && !hidePreviewIcon && !mobileHeader;
   const preview = useWorkflowTaskPreviewPopover({
     task,
     scope: previewScope,
@@ -525,18 +528,11 @@ function WorkflowTaskRowTitleField({
           model.setEditingTitle(true);
         }}
       >
-        <span
-          className={titleTextClass}
-        >
-          {compact ? compactTitle : task.title}
-        </span>
+        <span className={titleTextClass}>{displayTitle}</span>
       </button>
     ) : (
-      <span
-        className={titleTextClass}
-        title={task.title}
-      >
-        {compact ? compactTitle : task.title}
+      <span className={titleTextClass} title={task.title}>
+        {displayTitle}
       </span>
     );
 
@@ -593,7 +589,7 @@ function WorkflowTaskRowTitleField({
   );
 
   if (mobileHeader) {
-    return titleWithPreview;
+    return titleContent;
   }
 
   return (
@@ -1540,6 +1536,100 @@ function MemberMobileStatusBanner({
   return null;
 }
 
+function WorkflowTaskMobileCardBulkSelect({
+  taskId,
+  taskTitle,
+}: {
+  readonly taskId: string;
+  readonly taskTitle: string;
+}): ReactElement | null {
+  const { isMemberRole } = useProjectDetailShell();
+  const rowSelection = useWorkflowTaskRowSelection();
+  if (rowSelection == null || isMemberRole) return null;
+  const isSelected = rowSelection.selectedIds.has(taskId);
+  return (
+    <span className={styles.workflowTaskMobileCardSelect}>
+      <BulkSelectCheckbox
+        checked={isSelected}
+        ariaLabel={rowSelection.selectItemAriaLabel(taskTitle)}
+        onChange={() => rowSelection.onToggle(taskId)}
+      />
+    </span>
+  );
+}
+
+function WorkflowTaskMobileCardPreviewIcon({
+  model,
+}: {
+  readonly model: WorkflowTaskInlineRowModel;
+}): ReactElement | null {
+  const { task, canEdit } = model;
+  const { project } = useProjectDetailShell();
+  const { catalogForProject } = useBuildCorePipelineStages();
+  const previewScope: WorkflowTaskCustomFieldScope =
+    model.showAmount || model.permissionDomain === 'payments' ? 'payment' : 'workflow_task';
+  const { activeDefinitions } = useBuildCoreWorkflowTaskCustomFieldsForScope(previewScope);
+  const stageLabel =
+    previewScope === 'workflow_task'
+      ? formatWorkflowStageLabel(
+          task.stageSlug,
+          catalogForProject({ parentProjectId: project.summary.parentProjectId })
+        )
+      : null;
+  const preview = useWorkflowTaskPreviewPopover({
+    task,
+    scope: previewScope,
+    customFieldDefinitions: activeDefinitions,
+    stageLabel,
+    documentCount: model.documentCount,
+    enabled: true,
+    interactionMode: 'tap',
+    previewTrigger: 'icon',
+    showOpenDetails: canEdit,
+    onOpenDetails: () => {
+      model.closeMenus();
+      model.openEditWorkflowTask(task);
+    },
+  });
+
+  if (preview.toggleButtonProps == null) return null;
+
+  return (
+    <>
+      <button ref={preview.iconAnchorRef as RefObject<HTMLButtonElement>} {...preview.toggleButtonProps}>
+        <span className={previewStyles.previewInfoIcon} aria-hidden />
+      </button>
+      {preview.menu}
+    </>
+  );
+}
+
+function WorkflowTaskMobileCardHeaderActions({
+  model,
+  children = null,
+}: {
+  readonly model: WorkflowTaskInlineRowModel;
+  readonly children?: ReactNode;
+}): ReactElement {
+  return (
+    <div className={styles.workflowTaskMobileCardActions}>
+      <WorkflowTaskMobileCardPreviewIcon model={model} />
+      {children}
+    </div>
+  );
+}
+
+function useWorkflowTaskMobileCardSelection(taskId: string): {
+  readonly showBulkSelect: boolean;
+  readonly isSelected: boolean;
+} {
+  const { isMemberRole } = useProjectDetailShell();
+  const rowSelection = useWorkflowTaskRowSelection();
+  const showBulkSelect = rowSelection != null && !isMemberRole;
+  const isSelected = showBulkSelect && rowSelection.selectedIds.has(taskId);
+  return { showBulkSelect, isSelected };
+}
+
 function WorkflowTaskRowWorkflowMobileView({
   model,
 }: {
@@ -1547,10 +1637,12 @@ function WorkflowTaskRowWorkflowMobileView({
 }): ReactElement {
   const { isMemberRole } = useProjectDetailShell();
   const { task, saving, documentActions, rowDragOver, rowDropHandlers } = model;
+  const { showBulkSelect, isSelected } = useWorkflowTaskMobileCardSelection(task.id);
   const cardClass = [
     styles.card,
     styles.workflowTaskMobileCard,
     rowDragOver ? styles.workflowInlineRow_fileDragOver : '',
+    isSelected ? styles.workflowTaskMobileCard_selected : '',
   ]
     .filter(Boolean)
     .join(' ');
@@ -1566,41 +1658,43 @@ function WorkflowTaskRowWorkflowMobileView({
         <MemberMobileStatusBanner status={task.status} />
         <div className={styles.workflowTaskMobileCardHeader}>
           <div className={styles.workflowTaskMobileCardTitleWrap}>
-            <WorkflowTaskRowTitleField model={model} mobileHeader />
+            <WorkflowTaskRowTitleField model={model} mobileHeader hidePreviewIcon />
           </div>
-          <div className={styles.workflowTaskMobileCardActions}>
+          <WorkflowTaskMobileCardHeaderActions model={model}>
             <WorkflowTaskRowMemberApprovalCheckbox model={model} embedded />
-          </div>
+          </WorkflowTaskMobileCardHeaderActions>
         </div>
-        <div className={styles.workflowTaskMobileCardGrid3}>
-          <div className={styles.workflowTaskMobileCardCell}>
+        <div className={styles.workflowTaskMobileCardBody}>
+          <div className={styles.workflowTaskMobileCardGrid3}>
+            <div className={styles.workflowTaskMobileCardCell}>
+              <WorkflowFieldLabelText
+                fieldKey={WORKFLOW_TASK_DOCUMENTS_FIELD_KEY}
+                className={styles.projectInfoMobileLabel}
+              />
+              <WorkflowTaskRowDocumentsField model={model} mobile />
+            </div>
+            <div className={`${styles.workflowTaskMobileCardCell} ${styles.workflowTaskMobileCardCell_center}`}>
+              <WorkflowFieldLabelText
+                fieldKey={WORKFLOW_TASK_DUE_FIELD_KEY}
+                className={styles.projectInfoMobileLabel}
+              />
+              <WorkflowTaskRowDueField model={model} mobile />
+            </div>
+            <div className={`${styles.workflowTaskMobileCardCell} ${styles.workflowTaskMobileCardCell_right}`}>
+              <WorkflowFieldLabelText
+                fieldKey={WORKFLOW_TASK_ASSIGNED_FIELD_KEY}
+                className={styles.projectInfoMobileLabel}
+              />
+              <WorkflowTaskRowAssigneeField model={model} mobile />
+            </div>
+          </div>
+          <div className={styles.workflowTaskMobileCardNotes}>
             <WorkflowFieldLabelText
-              fieldKey={WORKFLOW_TASK_DOCUMENTS_FIELD_KEY}
+              fieldKey={WORKFLOW_TASK_NOTES_FIELD_KEY}
               className={styles.projectInfoMobileLabel}
             />
-            <WorkflowTaskRowDocumentsField model={model} mobile />
+            <WorkflowTaskRowNotesField model={model} mobile />
           </div>
-          <div className={`${styles.workflowTaskMobileCardCell} ${styles.workflowTaskMobileCardCell_center}`}>
-            <WorkflowFieldLabelText
-              fieldKey={WORKFLOW_TASK_DUE_FIELD_KEY}
-              className={styles.projectInfoMobileLabel}
-            />
-            <WorkflowTaskRowDueField model={model} mobile />
-          </div>
-          <div className={`${styles.workflowTaskMobileCardCell} ${styles.workflowTaskMobileCardCell_right}`}>
-            <WorkflowFieldLabelText
-              fieldKey={WORKFLOW_TASK_ASSIGNED_FIELD_KEY}
-              className={styles.projectInfoMobileLabel}
-            />
-            <WorkflowTaskRowAssigneeField model={model} mobile />
-          </div>
-        </div>
-        <div className={styles.workflowTaskMobileCardNotes}>
-          <WorkflowFieldLabelText
-            fieldKey={WORKFLOW_TASK_NOTES_FIELD_KEY}
-            className={styles.projectInfoMobileLabel}
-          />
-          <WorkflowTaskRowNotesField model={model} mobile />
         </div>
       </article>
     );
@@ -1611,56 +1705,58 @@ function WorkflowTaskRowWorkflowMobileView({
       className={cardClass}
       aria-label={task.title}
       aria-busy={saving || documentActions.uploading}
+      aria-selected={showBulkSelect ? isSelected : undefined}
       {...rowDropHandlers}
     >
       <div className={styles.workflowTaskMobileCardHeader}>
+        <WorkflowTaskMobileCardBulkSelect taskId={task.id} taskTitle={task.title} />
         <div className={styles.workflowTaskMobileCardTitleWrap}>
-          <WorkflowTaskRowTitleField model={model} mobileHeader />
+          <WorkflowTaskRowTitleField model={model} mobileHeader hidePreviewIcon />
         </div>
-        {model.showActionsMenu ? (
-          <div className={styles.workflowTaskMobileCardActions}>
-            <WorkflowTaskRowActionsMenuSlot model={model} />
+        <WorkflowTaskMobileCardHeaderActions model={model}>
+          {model.showActionsMenu ? <WorkflowTaskRowActionsMenuSlot model={model} /> : null}
+        </WorkflowTaskMobileCardHeaderActions>
+      </div>
+      <div className={styles.workflowTaskMobileCardBody}>
+        <div className={styles.workflowTaskMobileCardGrid2}>
+          <div className={styles.workflowTaskMobileCardCell}>
+            <WorkflowFieldLabelText
+              fieldKey={WORKFLOW_TASK_STATUS_FIELD_KEY}
+              className={styles.projectInfoMobileLabel}
+            />
+            <WorkflowTaskRowStatusField model={model} mobile />
           </div>
-        ) : null}
-      </div>
-      <div className={styles.workflowTaskMobileCardGrid2}>
-        <div className={styles.workflowTaskMobileCardCell}>
+          <div className={`${styles.workflowTaskMobileCardCell} ${styles.workflowTaskMobileCardCell_right}`}>
+            <WorkflowFieldLabelText
+              fieldKey={WORKFLOW_TASK_ASSIGNED_FIELD_KEY}
+              className={styles.projectInfoMobileLabel}
+            />
+            <WorkflowTaskRowAssigneeField model={model} mobile />
+          </div>
+        </div>
+        <div className={styles.workflowTaskMobileCardGrid2}>
+          <div className={styles.workflowTaskMobileCardCell}>
+            <WorkflowFieldLabelText
+              fieldKey={WORKFLOW_TASK_DOCUMENTS_FIELD_KEY}
+              className={styles.projectInfoMobileLabel}
+            />
+            <WorkflowTaskRowDocumentsField model={model} mobile />
+          </div>
+          <div className={`${styles.workflowTaskMobileCardCell} ${styles.workflowTaskMobileCardCell_right}`}>
+            <WorkflowFieldLabelText
+              fieldKey={WORKFLOW_TASK_DUE_FIELD_KEY}
+              className={styles.projectInfoMobileLabel}
+            />
+            <WorkflowTaskRowDueField model={model} mobile />
+          </div>
+        </div>
+        <div className={styles.workflowTaskMobileCardNotes}>
           <WorkflowFieldLabelText
-            fieldKey={WORKFLOW_TASK_STATUS_FIELD_KEY}
+            fieldKey={WORKFLOW_TASK_NOTES_FIELD_KEY}
             className={styles.projectInfoMobileLabel}
           />
-          <WorkflowTaskRowStatusField model={model} mobile />
+          <WorkflowTaskRowNotesField model={model} mobile />
         </div>
-        <div className={`${styles.workflowTaskMobileCardCell} ${styles.workflowTaskMobileCardCell_right}`}>
-          <WorkflowFieldLabelText
-            fieldKey={WORKFLOW_TASK_ASSIGNED_FIELD_KEY}
-            className={styles.projectInfoMobileLabel}
-          />
-          <WorkflowTaskRowAssigneeField model={model} mobile />
-        </div>
-      </div>
-      <div className={styles.workflowTaskMobileCardGrid2}>
-        <div className={styles.workflowTaskMobileCardCell}>
-          <WorkflowFieldLabelText
-            fieldKey={WORKFLOW_TASK_DOCUMENTS_FIELD_KEY}
-            className={styles.projectInfoMobileLabel}
-          />
-          <WorkflowTaskRowDocumentsField model={model} mobile />
-        </div>
-        <div className={`${styles.workflowTaskMobileCardCell} ${styles.workflowTaskMobileCardCell_right}`}>
-          <WorkflowFieldLabelText
-            fieldKey={WORKFLOW_TASK_DUE_FIELD_KEY}
-            className={styles.projectInfoMobileLabel}
-          />
-          <WorkflowTaskRowDueField model={model} mobile />
-        </div>
-      </div>
-      <div className={styles.workflowTaskMobileCardNotes}>
-        <WorkflowFieldLabelText
-          fieldKey={WORKFLOW_TASK_NOTES_FIELD_KEY}
-          className={styles.projectInfoMobileLabel}
-        />
-        <WorkflowTaskRowNotesField model={model} mobile />
       </div>
     </article>
   );
@@ -1674,10 +1770,12 @@ function WorkflowTaskRowPaymentMobileView({
   const { isMemberRole } = useProjectDetailShell();
   const { cols, task, saving, documentActions, rowDragOver, rowDropHandlers } = model;
   const payCols = content.projectDetail.payments.columns;
+  const { showBulkSelect, isSelected } = useWorkflowTaskMobileCardSelection(task.id);
   const cardClass = [
     styles.card,
     styles.workflowTaskMobileCard,
     rowDragOver ? styles.workflowInlineRow_fileDragOver : '',
+    isSelected ? styles.workflowTaskMobileCard_selected : '',
   ]
     .filter(Boolean)
     .join(' ');
@@ -1693,11 +1791,11 @@ function WorkflowTaskRowPaymentMobileView({
         <MemberMobileStatusBanner status={task.status} />
         <div className={styles.workflowTaskMobileCardHeader}>
           <div className={styles.workflowTaskMobileCardTitleWrap}>
-            <WorkflowTaskRowTitleField model={model} mobileHeader />
+            <WorkflowTaskRowTitleField model={model} mobileHeader hidePreviewIcon />
           </div>
-          <div className={styles.workflowTaskMobileCardActions}>
+          <WorkflowTaskMobileCardHeaderActions model={model}>
             <WorkflowTaskRowMemberApprovalCheckbox model={model} embedded />
-          </div>
+          </WorkflowTaskMobileCardHeaderActions>
         </div>
         <div className={styles.workflowTaskMobileCardBody}>
           <div className={styles.workflowTaskMobileCardGrid3}>
@@ -1747,17 +1845,17 @@ function WorkflowTaskRowPaymentMobileView({
       className={cardClass}
       aria-label={task.title}
       aria-busy={saving || documentActions.uploading}
+      aria-selected={showBulkSelect ? isSelected : undefined}
       {...rowDropHandlers}
     >
       <div className={styles.workflowTaskMobileCardHeader}>
+        <WorkflowTaskMobileCardBulkSelect taskId={task.id} taskTitle={task.title} />
         <div className={styles.workflowTaskMobileCardTitleWrap}>
-          <WorkflowTaskRowTitleField model={model} mobileHeader />
+          <WorkflowTaskRowTitleField model={model} mobileHeader hidePreviewIcon />
         </div>
-        {model.showActionsMenu ? (
-          <div className={styles.workflowTaskMobileCardActions}>
-            <WorkflowTaskRowActionsMenuSlot model={model} />
-          </div>
-        ) : null}
+        <WorkflowTaskMobileCardHeaderActions model={model}>
+          {model.showActionsMenu ? <WorkflowTaskRowActionsMenuSlot model={model} /> : null}
+        </WorkflowTaskMobileCardHeaderActions>
       </div>
       <div className={styles.workflowTaskMobileCardBody}>
         <div className={styles.workflowTaskMobileCardGrid2}>

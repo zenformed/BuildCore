@@ -28,6 +28,11 @@ import { DetailPanelHeaderActions } from './DetailPanelHeaderActions';
 import { DetailPanelHeaderButton } from './DetailPanelHeaderButton';
 import { DetailPanelSectionRefresh } from './DetailPanelSectionRefresh';
 import { DetailPanelSectionSearch } from './DetailPanelSectionSearch';
+import {
+  BudgetMobileBulkSelectAllRow,
+  BudgetMobileBulkToolbar,
+  BudgetMobileSearchToolsRow,
+} from './MobileBulkSelectionChrome';
 import { useDashboardMobileLayout } from '@/presentation/features/crmProjects/useDashboardMobileLayout';
 import styles from './ProjectDetail.module.css';
 
@@ -173,94 +178,98 @@ export function BudgetTable({ onError }: BudgetTableProps): ReactElement {
   };
 
   return (
-    <section
-      className={`${styles.paymentsPanel} ${styles.budgetTablePanel}`}
-      aria-labelledby="budget-table-heading"
+    <BudgetEntryRowSelectionProvider
+      visibleEntryIds={visibleEntryIds}
+      bulkActions={selectionBulkActions}
     >
-      {isMobileLayout ? (
-        <div
-          className={[styles.detailPanelHeader, styles.detailPanelHeader_mobile]
-            .filter(Boolean)
-            .join(' ')}
-        >
-          <div className={styles.detailPanelHeaderRow}>
-            <div className={styles.detailPanelHeaderTitleGroup}>
-              <h3 id="budget-table-heading" className={styles.detailPanelTitle}>
-                {b.tableTitle}
-              </h3>
-              {filterCaret}
-            </div>
-            <div className={styles.detailPanelHeaderRowActions}>{refreshButton}</div>
-          </div>
-          <div className={styles.detailPanelHeaderRow}>
-            <div className={styles.detailPanelSearchWrap}>{searchInput}</div>
-            <div className={styles.detailPanelHeaderRowActions}>{mobileAddButton}</div>
-          </div>
-        </div>
-      ) : (
-        <DetailPanelHeader title={b.tableTitle} titleId="budget-table-heading">
-          <DetailPanelHeaderActions>{searchInput}</DetailPanelHeaderActions>
-        </DetailPanelHeader>
-      )}
-
-      {!showTable ? (
-        <p className={styles.subtitle}>{b.empty}</p>
-      ) : isMobileLayout ? (
-        <div className={styles.budgetMobileList}>
-          {filtered.length === 0 ? <p className={styles.subtitle}>{b.empty}</p> : null}
-          {filtered.map((entry) => (
-            <BudgetInlineRow
-              key={entry.id}
-              variant="mobile"
-              projectSlug={project.summary.slug}
-              entry={entry}
-              entryDocuments={project.documents.filter((doc) => doc.budgetEntryId === entry.id)}
-              onSave={updateEntry}
-              onError={onError}
-              onRequestDelete={canDelete ? () => setDeleteConfirmEntry(entry) : undefined}
-            />
-          ))}
-          {draftOpen ? (
-            <BudgetDraftRow onSave={handleDraftSave} onCancel={() => setDraftOpen(false)} />
-          ) : null}
-          <article
-            className={`${styles.card} ${styles.workflowTaskMobileCard} ${styles.budgetMobileTotalsCard}`}
+      <section
+        className={`${styles.paymentsPanel} ${styles.budgetTablePanel}`}
+        aria-labelledby="budget-table-heading"
+      >
+        {isMobileLayout ? (
+          <div
+            className={[styles.detailPanelHeader, styles.detailPanelHeader_mobile]
+              .filter(Boolean)
+              .join(' ')}
           >
-            <div className={styles.workflowTaskMobileCardGrid3}>
-              <div className={styles.workflowTaskMobileCardCell}>
-                <span className={styles.projectInfoMobileLabel}>{b.totalsLabel}</span>
-                <span className={styles.workflowTaskMobileCardValue}>
-                  {formatCentsAsUsd(totals.cost)}
-                </span>
+            <div className={styles.detailPanelHeaderRow}>
+              <div className={styles.detailPanelHeaderTitleGroup}>
+                <h3 id="budget-table-heading" className={styles.detailPanelTitle}>
+                  {b.tableTitle}
+                </h3>
+                {filterCaret}
               </div>
-              <div
-                className={`${styles.workflowTaskMobileCardCell} ${styles.workflowTaskMobileCardCell_center}`}
-              >
-                <span className={styles.projectInfoMobileLabel}>{b.columns.budget}</span>
-                <span className={styles.workflowTaskMobileCardValue}>
-                  {formatCentsAsUsd(totals.budget)}
-                </span>
-              </div>
-              <div
-                className={`${styles.workflowTaskMobileCardCell} ${styles.workflowTaskMobileCardCell_right}`}
-              >
-                <span className={styles.projectInfoMobileLabel}>{b.columns.remaining}</span>
-                <span
-                  className={`${styles.workflowTaskMobileCardValue} ${
-                    totals.diff >= 0 ? styles.budgetRemainingUnder : styles.budgetRemainingOver
-                  }`}
-                >
-                  {formatCentsAsUsd(totals.diff)}
-                </span>
+              <div className={styles.detailPanelHeaderRowActions}>
+                {refreshButton}
+                <BudgetMobileBulkToolbar />
               </div>
             </div>
-          </article>
-        </div>
-      ) : (
-        <BudgetEntryRowSelectionProvider
-          visibleEntryIds={visibleEntryIds}
-          bulkActions={selectionBulkActions}
-        >
+            <BudgetMobileSearchToolsRow
+              searchInput={searchInput}
+              trailingActions={mobileAddButton}
+            />
+          </div>
+        ) : (
+          <DetailPanelHeader title={b.tableTitle} titleId="budget-table-heading">
+            <DetailPanelHeaderActions>{searchInput}</DetailPanelHeaderActions>
+          </DetailPanelHeader>
+        )}
+
+        {!showTable ? (
+          <p className={styles.subtitle}>{b.empty}</p>
+        ) : isMobileLayout ? (
+          <div className={styles.budgetMobileList}>
+            <BudgetMobileBulkSelectAllRow />
+            {filtered.length === 0 ? <p className={styles.subtitle}>{b.empty}</p> : null}
+            {filtered.map((entry) => (
+              <BudgetInlineRow
+                key={entry.id}
+                variant="mobile"
+                projectSlug={project.summary.slug}
+                entry={entry}
+                entryDocuments={project.documents.filter((doc) => doc.budgetEntryId === entry.id)}
+                onSave={updateEntry}
+                onError={onError}
+                onRequestDelete={canDelete ? () => setDeleteConfirmEntry(entry) : undefined}
+              />
+            ))}
+            {draftOpen ? (
+              <BudgetDraftRow onSave={handleDraftSave} onCancel={() => setDraftOpen(false)} />
+            ) : null}
+            <article
+              className={`${styles.card} ${styles.workflowTaskMobileCard} ${styles.budgetMobileTotalsCard}`}
+            >
+              <div className={styles.workflowTaskMobileCardGrid3}>
+                <div className={styles.workflowTaskMobileCardCell}>
+                  <span className={styles.projectInfoMobileLabel}>{b.totalsLabel}</span>
+                  <span className={styles.workflowTaskMobileCardValue}>
+                    {formatCentsAsUsd(totals.cost)}
+                  </span>
+                </div>
+                <div
+                  className={`${styles.workflowTaskMobileCardCell} ${styles.workflowTaskMobileCardCell_center}`}
+                >
+                  <span className={styles.projectInfoMobileLabel}>{b.columns.budget}</span>
+                  <span className={styles.workflowTaskMobileCardValue}>
+                    {formatCentsAsUsd(totals.budget)}
+                  </span>
+                </div>
+                <div
+                  className={`${styles.workflowTaskMobileCardCell} ${styles.workflowTaskMobileCardCell_right}`}
+                >
+                  <span className={styles.projectInfoMobileLabel}>{b.columns.remaining}</span>
+                  <span
+                    className={`${styles.workflowTaskMobileCardValue} ${
+                      totals.diff >= 0 ? styles.budgetRemainingUnder : styles.budgetRemainingOver
+                    }`}
+                  >
+                    {formatCentsAsUsd(totals.diff)}
+                  </span>
+                </div>
+              </div>
+            </article>
+          </div>
+        ) : (
           <div className={styles.detailPanelTableCard}>
             <div className={styles.paymentsList}>
               <BudgetTableHeaderRow leadingFilter={filterCaret} />
@@ -325,23 +334,23 @@ export function BudgetTable({ onError }: BudgetTableProps): ReactElement {
               </div>
             </div>
           </div>
-        </BudgetEntryRowSelectionProvider>
-      )}
+        )}
 
-      <ConfirmModal
-        isOpen={deleteConfirmEntry != null}
-        onClose={() => setDeleteConfirmEntry(null)}
-        onConfirm={() => void handleConfirmDelete()}
-        title={b.deleteItemConfirmTitle}
-        message={
-          deleteConfirmEntry
-            ? `“${deleteConfirmEntry.itemName}” will be removed from this budget.`
-            : undefined
-        }
-        confirmLabel={b.deleteItemConfirmLabel}
-        cancelLabel={b.deleteItemCancelLabel}
-        variant="danger"
-      />
-    </section>
+        <ConfirmModal
+          isOpen={deleteConfirmEntry != null}
+          onClose={() => setDeleteConfirmEntry(null)}
+          onConfirm={() => void handleConfirmDelete()}
+          title={b.deleteItemConfirmTitle}
+          message={
+            deleteConfirmEntry
+              ? `“${deleteConfirmEntry.itemName}” will be removed from this budget.`
+              : undefined
+          }
+          confirmLabel={b.deleteItemConfirmLabel}
+          cancelLabel={b.deleteItemCancelLabel}
+          variant="danger"
+        />
+      </section>
+    </BudgetEntryRowSelectionProvider>
   );
 }

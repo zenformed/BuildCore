@@ -10,6 +10,7 @@ import { buildCoreDashboardContent as content } from '@/platform/content/buildCo
 import { formatBudgetCategory } from '@/presentation/features/crmProjectDetail/budgetCategoryLabels';
 import { parseUsdInputToCents } from '@/presentation/features/crmCreate/createCrmProjectFormModel';
 import { formatCentsAsUsd } from '@/presentation/features/crmProjects/crmProjectFormatters';
+import { formatWorkflowTaskMobileCardTitle } from '@/presentation/features/crmProjectDetail/crmProjectDetailFormatters';
 import { centsToUsdInput } from '@/presentation/features/crmProjectDetail/workflowTaskFormModel';
 import type { BudgetEntryDraft } from '@/presentation/features/crmProjectDetail/useBudgetEntryActions';
 import {
@@ -207,8 +208,9 @@ export function BudgetInlineRow({
   const showDocumentsIcon = hasDocuments || entry.documentsRequired;
 
   const rowSelection = useBudgetEntryRowSelection();
-  const showRowSelect = variant === 'table' && rowSelection != null;
+  const showRowSelect = rowSelection != null && (variant === 'table' || variant === 'mobile');
   const isSelected = showRowSelect && rowSelection.selectedIds.has(entry.id);
+  const mobileCardTitle = formatWorkflowTaskMobileCardTitle(entry.itemName);
   const rowClass = [
     styles.tableRow,
     styles.budgetGrid,
@@ -244,11 +246,27 @@ export function BudgetInlineRow({
 
     return (
       <article
-        className={`${styles.card} ${styles.workflowTaskMobileCard}`}
+        className={[
+          styles.card,
+          styles.workflowTaskMobileCard,
+          isSelected ? styles.workflowTaskMobileCard_selected : '',
+        ]
+          .filter(Boolean)
+          .join(' ')}
         aria-label={entry.itemName}
         aria-busy={saving}
+        aria-selected={showRowSelect ? isSelected : undefined}
       >
         <div className={styles.workflowTaskMobileCardHeader}>
+          {showRowSelect && rowSelection != null ? (
+            <span className={styles.workflowTaskMobileCardSelect}>
+              <BulkSelectCheckbox
+                checked={isSelected}
+                ariaLabel={rowSelection.selectItemAriaLabel(entry.itemName)}
+                onChange={() => rowSelection.onToggle(entry.id)}
+              />
+            </span>
+          ) : null}
           <div className={styles.workflowTaskMobileCardTitleWrap}>
             {editingName ? (
               <input
@@ -281,7 +299,7 @@ export function BudgetInlineRow({
                   setEditingName(true);
                 }}
               >
-                <span className={styles.workflowTaskMobileCardTitle}>{entry.itemName}</span>
+                <span className={styles.workflowTaskMobileCardTitle}>{mobileCardTitle}</span>
               </button>
             )}
           </div>

@@ -26,6 +26,11 @@ import { DetailPanelHeaderActions } from './DetailPanelHeaderActions';
 import { DetailPanelHeaderButton } from './DetailPanelHeaderButton';
 import { DetailPanelSectionRefresh } from './DetailPanelSectionRefresh';
 import { DetailPanelSectionSearch } from './DetailPanelSectionSearch';
+import {
+  WorkflowMobileBulkSelectAllRow,
+  WorkflowMobileBulkToolbar,
+  WorkflowMobileSearchToolsRow,
+} from './MobileBulkSelectionChrome';
 import { WorkflowTaskInlineRow } from './WorkflowTaskInlineRow';
 import { WorkflowTaskTableHeaderRow } from './WorkflowTaskTableHeaderRow';
 import {
@@ -223,60 +228,61 @@ export function PaymentsRail({
     isMemberRole && activeMilestones.length === 0 && completedMilestones.length > 0;
 
   return (
-    <section
-      className={`${styles.paymentsPanel} ${styles.workflowPanelFull}`}
-      aria-labelledby="payments-rail-heading"
+    <WorkflowTaskRowSelectionProvider
+      visibleTaskIds={visibleTaskIds}
+      bulkActions={selectionBulkActions}
     >
-      {isMobileLayout ? (
-        <div
-          className={[styles.detailPanelHeader, styles.detailPanelHeader_mobile]
-            .filter(Boolean)
-            .join(' ')}
-        >
-          <div className={styles.detailPanelHeaderRow}>
-            <div className={styles.detailPanelHeaderTitleGroup}>
-              <h3 id="payments-rail-heading" className={styles.detailPanelTitle}>
-                {paymentsPanelTitle}
-              </h3>
-              {statusFilterCaret}
+      <section
+        className={`${styles.paymentsPanel} ${styles.workflowPanelFull}`}
+        aria-labelledby="payments-rail-heading"
+      >
+        {isMobileLayout ? (
+          <div
+            className={[styles.detailPanelHeader, styles.detailPanelHeader_mobile]
+              .filter(Boolean)
+              .join(' ')}
+          >
+            <div className={styles.detailPanelHeaderRow}>
+              <div className={styles.detailPanelHeaderTitleGroup}>
+                <h3 id="payments-rail-heading" className={styles.detailPanelTitle}>
+                  {paymentsPanelTitle}
+                </h3>
+                {statusFilterCaret}
+              </div>
+              <div className={styles.detailPanelHeaderRowActions}>
+                {refreshButton}
+                <WorkflowMobileBulkToolbar />
+              </div>
             </div>
-            <div className={styles.detailPanelHeaderRowActions}>{refreshButton}</div>
+            <WorkflowMobileSearchToolsRow searchInput={searchInput} trailingActions={addButton} />
           </div>
-          <div className={styles.detailPanelHeaderRow}>
-            <div className={styles.detailPanelSearchWrap}>{searchInput}</div>
-            <div className={styles.detailPanelHeaderRowActions}>{addButton}</div>
+        ) : (
+          <DetailPanelHeader title={paymentsPanelTitle} titleId="payments-rail-heading">
+            <DetailPanelHeaderActions>
+              {searchInput}
+              {addButton}
+            </DetailPanelHeaderActions>
+          </DetailPanelHeader>
+        )}
+        {isLoading && !isReady ? (
+          <p className={styles.subtitle}>{paymentPermissionsCopy.loading}</p>
+        ) : !canView ? (
+          <p className={styles.subtitle}>{wf.noViewPermission}</p>
+        ) : !showTable ? (
+          <p className={styles.subtitle}>{payments.empty}</p>
+        ) : isMobileLayout ? (
+          <div className={styles.paymentsMobileList}>
+            <WorkflowMobileBulkSelectAllRow />
+            {activePaymentsEmpty ? (
+              <MemberNoActiveTasksRow gridClassName={styles.paymentsAlignedGrid} variant="mobile" />
+            ) : activeMilestones.length === 0 ? (
+              <p className={styles.subtitle}>{payments.empty}</p>
+            ) : (
+              activeMilestones.map((task) => renderPaymentRow(task, 'mobile'))
+            )}
+            {memberCompletedSection}
           </div>
-        </div>
-      ) : (
-        <DetailPanelHeader title={paymentsPanelTitle} titleId="payments-rail-heading">
-          <DetailPanelHeaderActions>
-            {searchInput}
-            {addButton}
-          </DetailPanelHeaderActions>
-        </DetailPanelHeader>
-      )}
-      {isLoading && !isReady ? (
-        <p className={styles.subtitle}>{paymentPermissionsCopy.loading}</p>
-      ) : !canView ? (
-        <p className={styles.subtitle}>{wf.noViewPermission}</p>
-      ) : !showTable ? (
-        <p className={styles.subtitle}>{payments.empty}</p>
-      ) : isMobileLayout ? (
-        <div className={styles.paymentsMobileList}>
-          {activePaymentsEmpty ? (
-            <MemberNoActiveTasksRow gridClassName={styles.paymentsAlignedGrid} variant="mobile" />
-          ) : activeMilestones.length === 0 ? (
-            <p className={styles.subtitle}>{payments.empty}</p>
-          ) : (
-            activeMilestones.map((task) => renderPaymentRow(task, 'mobile'))
-          )}
-          {memberCompletedSection}
-        </div>
-      ) : (
-        <WorkflowTaskRowSelectionProvider
-          visibleTaskIds={visibleTaskIds}
-          bulkActions={selectionBulkActions}
-        >
+        ) : (
           <div
             className={[styles.workflowUnifiedTable, styles.paymentsUnifiedTable, shellClassName]
               .filter(Boolean)
@@ -329,8 +335,8 @@ export function PaymentsRail({
               {memberCompletedSection}
             </div>
           </div>
-        </WorkflowTaskRowSelectionProvider>
-      )}
-    </section>
+        )}
+      </section>
+    </WorkflowTaskRowSelectionProvider>
   );
 }

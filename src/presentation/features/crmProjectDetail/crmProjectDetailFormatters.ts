@@ -26,12 +26,23 @@ export function formatShortDate(iso: string | null): string {
 
 const WORKFLOW_TASK_NOTES_PREVIEW_MAX = 60;
 const WORKFLOW_TASK_COMPACT_TITLE_MAX = 100;
+const WORKFLOW_TASK_MOBILE_CARD_TITLE_MAX = 25;
+
+/** Truncate display text to a max character count with an ellipsis. */
+export function truncateDisplayText(text: string, maxChars: number): string {
+  const trimmed = text.trim();
+  if (trimmed.length <= maxChars) return trimmed;
+  return `${trimmed.slice(0, maxChars)}…`;
+}
 
 /** Single-line workflow task title for compact stage cards. */
 export function formatWorkflowTaskCompactTitle(title: string): string {
-  const trimmed = title.trim();
-  if (trimmed.length <= WORKFLOW_TASK_COMPACT_TITLE_MAX) return trimmed;
-  return `${trimmed.slice(0, WORKFLOW_TASK_COMPACT_TITLE_MAX)}…`;
+  return truncateDisplayText(title, WORKFLOW_TASK_COMPACT_TITLE_MAX);
+}
+
+/** Single-line task/item title for mobile workflow/payment/budget card headers. */
+export function formatWorkflowTaskMobileCardTitle(title: string): string {
+  return truncateDisplayText(title, WORKFLOW_TASK_MOBILE_CARD_TITLE_MAX);
 }
 
 /** Single-line workflow task note preview for table cells. */

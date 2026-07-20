@@ -7285,7 +7285,20 @@
     .stageGroup:not(.stageGroup_stageCardColumn)
     .stageGroupMobileTaskList
     > .paymentDraftBlock
-    > .workflowTaskCompactCard {
+    > .workflowTaskCompactCard,
+  :global([data-theme='light'])
+    .folderTabPanelInner
+    .workflowPanel
+    .stageGroup:not(.stageGroup_stageCardColumn)
+    .stageGroupMobileTaskList
+    > .workflowTaskMobileCard,
+  :global([data-theme='light'])
+    .folderTabPanelInner
+    .workflowPanel
+    .stageGroup:not(.stageGroup_stageCardColumn)
+    .stageGroupMobileTaskList
+    > .paymentDraftBlock
+    > .workflowTaskMobileCard {
     background: #f2f4f7;
     border: 1px solid var(--theme-border-main, #e2e8f0);
     border-radius: 0;
@@ -7324,10 +7337,42 @@
     .stageGroup:not(.stageGroup_stageCardColumn)
     .stageGroupMobileTaskList
     > .paymentDraftBlock
-    > .workflowTaskCompactCard {
+    > .workflowTaskCompactCard,
+  :global([data-theme='dark'])
+    .folderTabPanelInner
+    .workflowPanel
+    .stageGroup:not(.stageGroup_stageCardColumn)
+    .stageGroupMobileTaskList
+    > .workflowTaskMobileCard,
+  :global([data-theme='dark'])
+    .folderTabPanelInner
+    .workflowPanel
+    .stageGroup:not(.stageGroup_stageCardColumn)
+    .stageGroupMobileTaskList
+    > .paymentDraftBlock
+    > .workflowTaskMobileCard {
     background: #1d2029;
     border: 1px solid var(--theme-stage-group-border-color, #80808052);
     border-radius: 0;
+    box-shadow: none;
+  }
+
+  /* Member rollup (no folder tabs): same card body contrast as payments mobile. */
+  :global([data-theme='light'])
+    .detailPanelsScroll[data-member-project-tasks]
+    .stageGroupMobileTaskList
+    > .workflowTaskMobileCard {
+    background: #f2f4f7;
+    border: 1px solid var(--theme-border-main, #e2e8f0);
+    box-shadow: none;
+  }
+
+  :global([data-theme='dark'])
+    .detailPanelsScroll[data-member-project-tasks]
+    .stageGroupMobileTaskList
+    > .workflowTaskMobileCard {
+    background: #1d2029;
+    border: 1px solid var(--theme-stage-group-border-color, #80808052);
     box-shadow: none;
   }
 }
@@ -8765,6 +8810,10 @@
   flex-shrink: 0;
 }
 
+.detailPanelHeaderRowActions .subprojectsMobileBulkToolbar {
+  margin-inline-start: 0.125rem;
+}
+
 .detailPanelSearchWrap {
   flex: 1;
   min-width: 0;
@@ -10125,6 +10174,54 @@
     color: #e2e8f0;
   }
 
+  /* Bulk toolbar icons match icon-only refresh in the same actions row */
+  .detailPanelHeader_mobile
+    .detailPanelHeaderRowActions
+    .subprojectsMobileBulkToolbar
+    .workflowBulkActionBtn {
+    color: var(--color-text-muted, #64748b);
+    opacity: 1;
+  }
+
+  .detailPanelHeader_mobile
+    .detailPanelHeaderRowActions
+    .subprojectsMobileBulkToolbar
+    .workflowBulkActionBtn:hover:not(:disabled) {
+    color: var(--color-text, #0f172a);
+    opacity: 0.9;
+  }
+
+  .detailPanelHeader_mobile
+    .detailPanelHeaderRowActions
+    .subprojectsMobileBulkToolbar
+    .subprojectsMobileBulkCount {
+    color: var(--color-text-muted, #64748b);
+  }
+
+  :global([data-theme='dark'])
+    .detailPanelHeader_mobile
+    .detailPanelHeaderRowActions
+    .subprojectsMobileBulkToolbar
+    .workflowBulkActionBtn {
+    color: #94a3b8;
+  }
+
+  :global([data-theme='dark'])
+    .detailPanelHeader_mobile
+    .detailPanelHeaderRowActions
+    .subprojectsMobileBulkToolbar
+    .workflowBulkActionBtn:hover:not(:disabled) {
+    color: #e2e8f0;
+  }
+
+  :global([data-theme='dark'])
+    .detailPanelHeader_mobile
+    .detailPanelHeaderRowActions
+    .subprojectsMobileBulkToolbar
+    .subprojectsMobileBulkCount {
+    color: #94a3b8;
+  }
+
   .detailPanelHeader_mobile .detailPanelHeaderRowActions > button,
   .detailPanelHeader_mobile
     .detailPanelHeaderRowActions
@@ -10456,7 +10553,7 @@
 
 .workflowTaskMobileCardHeader {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
   gap: 0.375rem;
   min-width: 0;
@@ -10465,6 +10562,32 @@
   background: var(--theme-table-header-bg);
   color: var(--theme-table-header-text);
   box-sizing: border-box;
+}
+
+.workflowTaskMobileCardSelect {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.workflowTaskMobileCardSelect :global(input[type='checkbox']) {
+  width: 1.125rem;
+  height: 1.125rem;
+  margin: 0;
+  accent-color: var(--color-primary, #2563eb);
+}
+
+.workflowTaskMobileCard_selected {
+  border-color: color-mix(in srgb, var(--color-primary, #2563eb) 55%, var(--theme-border-card));
+  box-shadow:
+    var(--theme-shadow-card),
+    inset 0 0 0 1px color-mix(in srgb, var(--color-primary, #2563eb) 28%, transparent);
+  background: color-mix(in srgb, var(--color-primary, #2563eb) 8%, var(--theme-surface-card));
+}
+
+:global([data-theme='dark']) .workflowTaskMobileCard_selected {
+  border-color: color-mix(in srgb, var(--color-primary, #3b82f6) 50%, var(--theme-border-card));
+  background: color-mix(in srgb, var(--color-primary, #3b82f6) 14%, var(--theme-surface-card));
 }
 
 .workflowTaskMobileCard:has(.workflowTaskMobileCardHeader) > .workflowTaskMobileCardGrid2,
@@ -10508,6 +10631,8 @@
 }
 
 .workflowTaskMobileCardTitleWrap {
+  display: flex;
+  align-items: center;
   flex: 1;
   min-width: 0;
 }
@@ -10528,7 +10653,9 @@
   color: var(--theme-text-main, var(--color-text, #0f172a));
   text-align: left;
   cursor: pointer;
-  word-break: break-word;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .workflowTaskMobileCard:has(.workflowTaskMobileCardHeader) .workflowTaskMobileCardTitle,
@@ -10559,11 +10686,21 @@
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  gap: 0.25rem;
 }
 
 .workflowTaskMobileCardActions button {
-  width: 2.75rem;
-  height: 2.75rem;
+  width: 2.25rem;
+  height: 2.25rem;
+}
+
+.workflowTaskMobileCardHeader .workflowTaskMobileCardActions button {
+  color: var(--theme-table-header-text);
+}
+
+.workflowTaskMobileCardHeader .workflowTaskMobileCardActions button:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--theme-table-header-text) 14%, transparent);
+  color: var(--theme-table-header-text);
 }
 
 /* Member completed: locked checkbox sits across from the title in the header. */
