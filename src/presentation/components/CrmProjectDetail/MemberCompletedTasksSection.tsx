@@ -7,6 +7,7 @@ import styles from './ProjectDetail.module.css';
 export type MemberCompletedTasksSectionProps = {
   readonly taskCount: number;
   readonly children: ReactNode;
+  readonly className?: string;
 };
 
 /**
@@ -15,6 +16,7 @@ export type MemberCompletedTasksSectionProps = {
 export function MemberCompletedTasksSection({
   taskCount,
   children,
+  className,
 }: MemberCompletedTasksSectionProps): ReactElement | null {
   const copy = content.crm.myTasks.detail;
   const panelId = useId();
@@ -23,7 +25,7 @@ export function MemberCompletedTasksSection({
   if (taskCount <= 0) return null;
 
   return (
-    <div className={styles.memberCompletedTasks}>
+    <div className={[styles.memberCompletedTasks, className].filter(Boolean).join(' ')}>
       <button
         type="button"
         className={styles.memberCompletedTasksToggle}

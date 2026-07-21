@@ -258,6 +258,19 @@
   min-width: 0;
 }
 
+.taskMobileStatusBanner {
+  width: calc(100% + 1.25rem);
+  margin: -0.5rem -0.625rem 0.25rem;
+}
+
+.taskTitleLead {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
 .taskTitle {
   min-width: 0;
   flex: 1 1 auto;
@@ -268,6 +281,38 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.taskTitleLead .taskTitle {
+  flex: 0 1 auto;
+}
+
+.taskTitle_complete {
+  color: var(--color-text-muted, #64748b);
+  opacity: 0.85;
+}
+
+:global([data-theme='dark']) .taskTitle_complete {
+  color: #94a3b8;
+}
+
+.completedTasks {
+  margin: 0 !important;
+}
+
+.completedTasks > button {
+  width: 100%;
+  padding: 0.5rem 0.625rem;
+}
+
+.completedTasks > div {
+  margin-top: 0;
+}
+
+.completedTaskList {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
 }
 
 .taskDue {

@@ -35,7 +35,13 @@ import {
   type CrmProjectsListFilters,
 } from '@/presentation/features/crmProjects/crmProjectsPipelineViewModel';
 import { WorkflowTableStatusRefresh } from '@/presentation/components/CrmProjectDetail/WorkflowTableStatusRefresh';
+import {
+  isMemberCompletedWorkflowTask,
+  MemberCompletedTasksSection,
+} from '@/presentation/components/CrmProjectDetail/MemberCompletedTasksSection';
 import { useCellHoverPreview } from '@/presentation/components/CrmProjectDetail/useCellHoverPreview';
+import { workflowTaskStatusBadgeClass } from '@/presentation/components/crmShared/workflowTaskStatusBadge';
+import { useDashboardMobileLayout } from '@/presentation/features/crmProjects/useDashboardMobileLayout';
 import { PreviewMetaColumn } from '@/presentation/components/CrmProjects/projectDetailsPreviewShared';
 import panelStyles from '@/presentation/components/CrmProjects/CrmProjects.module.css';
 import detailStyles from '@/presentation/components/CrmProjectDetail/ProjectDetail.module.css';
@@ -212,6 +218,9 @@ function MemberMyTaskSimpleRow({
 }): ReactElement {
   const copy = content.crm.myTasks;
   const dueDisplay = task.dueAt ? formatShortDate(task.dueAt) : '—';
+  const isMobileLayout = useDashboardMobileLayout();
+  const isInReview = task.status === 'request_review';
+  const isComplete = isMemberCompletedWorkflowTask(task.status);
 
   return (
     <button
@@ -220,8 +229,45 @@ function MemberMyTaskSimpleRow({
       aria-label={copy.openTaskAriaLabel(task.title)}
       onClick={onOpen}
     >
+      {isMobileLayout && (isInReview || isComplete) ? (
+        <div
+          className={[
+            detailStyles.workflowTaskMobileStatusBanner,
+            isInReview
+              ? detailStyles.workflowTaskMobileStatusBanner_inReview
+              : detailStyles.workflowTaskMobileStatusBanner_complete,
+            styles.taskMobileStatusBanner,
+          ].join(' ')}
+          role="status"
+        >
+          {isInReview
+            ? copy.detail.inReviewBanner
+            : copy.detail.taskCompleteBanner}
+        </div>
+      ) : null}
       <div className={styles.taskRowTop}>
-        <span className={styles.taskTitle}>{task.title}</span>
+        <span className={styles.taskTitleLead}>
+          <span
+            className={[
+              styles.taskTitle,
+              isComplete ? styles.taskTitle_complete : '',
+            ]
+              .filter(Boolean)
+              .join(' ')}
+          >
+            {task.title}
+          </span>
+          {!isMobileLayout && isInReview ? (
+            <span
+              className={`${detailStyles.statusDotIndicator} ${detailStyles.memberDesktopInReview} ${workflowTaskStatusBadgeClass('request_review')}`}
+            >
+              <span className={detailStyles.statusDot} aria-hidden />
+              <span className={detailStyles.memberDesktopInReviewLabel}>
+                {copy.detail.inReviewInline}
+              </span>
+            </span>
+          ) : null}
+        </span>
         <span className={styles.taskDue}>{dueDisplay}</span>
       </div>
       <p className={styles.taskNotes}>{notesDisplay(task.notes)}</p>
@@ -249,6 +295,12 @@ function MemberMyTasksProjectGroup({
   const copy = content.crm.myTasks;
   const panelId = useId();
   const contactSource = tasks.find((task) => task.subprojectId == null) ?? tasks[0];
+  const activeTasks = tasks.filter(
+    (task) => !isMemberCompletedWorkflowTask(task.status)
+  );
+  const completedTasks = tasks.filter((task) =>
+    isMemberCompletedWorkflowTask(task.status)
+  );
 
   const onHeaderKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
     if (event.key === 'Enter' || event.key === ' ') {
@@ -289,13 +341,29 @@ function MemberMyTasksProjectGroup({
       </div>
       {expanded ? (
         <div id={panelId} className={styles.taskList}>
-          {tasks.map((task) => (
+          {activeTasks.map((task) => (
             <MemberMyTaskSimpleRow
               key={task.taskId}
               task={task}
               onOpen={() => onOpenProject(task.parentProjectSlug || parentProjectSlug)}
             />
           ))}
+          <MemberCompletedTasksSection
+            taskCount={completedTasks.length}
+            className={styles.completedTasks}
+          >
+            <div className={styles.completedTaskList}>
+              {completedTasks.map((task) => (
+                <MemberMyTaskSimpleRow
+                  key={task.taskId}
+                  task={task}
+                  onOpen={() =>
+                    onOpenProject(task.parentProjectSlug || parentProjectSlug)
+                  }
+                />
+              ))}
+            </div>
+          </MemberCompletedTasksSection>
         </div>
       ) : null}
     </section>
