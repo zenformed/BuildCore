@@ -136,6 +136,10 @@
 }
 
 @media (max-width: 767px) {
+  .snackbarIcon {
+    display: none;
+  }
+
   .snackbarInner {
     flex-direction: column;
     align-items: stretch;

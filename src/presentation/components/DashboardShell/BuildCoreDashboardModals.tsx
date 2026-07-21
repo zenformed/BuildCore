@@ -38,6 +38,7 @@ export function BuildCoreDashboardModals({ signOut, profilePhoto }: BuildCoreDas
         confirmLabel={nav.modals.signOut.confirmLabel}
         cancelLabel={nav.modals.signOut.cancelLabel}
         variant="primary"
+        hideIcon
       />
       {profilePhoto ? (
         <ProfilePhotoModal
