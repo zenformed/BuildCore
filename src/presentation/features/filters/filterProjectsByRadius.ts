@@ -6,7 +6,9 @@ import type { CrmProjectSummary } from '@/domain/crm';
 import type { RadiusFilterState } from './radiusFilterModel';
 import { isRadiusFilterActive } from './radiusFilterModel';
 
-export function filterProjectsByRadius<TProject extends CrmProjectSummary>(input: {
+export function filterProjectsByRadius<
+  TProject extends Pick<CrmProjectSummary, 'address'>,
+>(input: {
   readonly projects: readonly TProject[];
   readonly filter: RadiusFilterState;
   readonly centerCoordinates: GeoCoordinates | null;

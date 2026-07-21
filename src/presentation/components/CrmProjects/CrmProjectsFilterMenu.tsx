@@ -50,6 +50,11 @@ export type CrmProjectsFilterMenuSection =
 
 export type CrmProjectsFilterMenuTriggerVariant = 'filter' | 'caret';
 
+export type CrmWorkflowTaskStatusFilterOption = {
+  readonly label: string;
+  readonly statuses: readonly WorkflowTaskStatus[];
+};
+
 export type CrmProjectsFilterMenuProps = {
   readonly filters: CrmProjectsListFilters;
   readonly onChange: (filters: CrmProjectsListFilters) => void;
@@ -72,6 +77,8 @@ export type CrmProjectsFilterMenuProps = {
   readonly assigneeScopeOptions?: readonly { readonly value: string; readonly label: string }[];
   readonly assigneeScopeLabel?: string;
   readonly assigneeScopeDefault?: string;
+  /** Optional grouped/relabelled status choices for specialized views. */
+  readonly workflowTaskStatusOptions?: readonly CrmWorkflowTaskStatusFilterOption[];
 };
 
 const DEFAULT_FILTER_SECTIONS: readonly CrmProjectsFilterMenuSection[] = [
@@ -79,6 +86,12 @@ const DEFAULT_FILTER_SECTIONS: readonly CrmProjectsFilterMenuSection[] = [
   'priority',
   'status',
 ];
+
+const DEFAULT_WORKFLOW_TASK_STATUS_OPTIONS: readonly CrmWorkflowTaskStatusFilterOption[] =
+  WORKFLOW_TASK_STATUSES.map((status) => ({
+    label: WORKFLOW_TASK_STATUS_LABELS[status],
+    statuses: [status],
+  }));
 
 export function CrmProjectsFilterMenu({
   filters,
@@ -97,6 +110,7 @@ export function CrmProjectsFilterMenu({
   assigneeScopeOptions = [],
   assigneeScopeLabel,
   assigneeScopeDefault = 'mine',
+  workflowTaskStatusOptions = DEFAULT_WORKFLOW_TASK_STATUS_OPTIONS,
 }: CrmProjectsFilterMenuProps): ReactElement {
   const copy = content.crm.filters;
   const stageColumnCopy = content.workflowSettings.stageColumns;
@@ -166,10 +180,16 @@ export function CrmProjectsFilterMenu({
     onChange({ ...filters, priorities: next });
   };
 
-  const toggleWorkflowTaskStatus = (status: WorkflowTaskStatus): void => {
-    const next = filters.workflowTaskStatuses.includes(status)
-      ? filters.workflowTaskStatuses.filter((value) => value !== status)
-      : [...filters.workflowTaskStatuses, status];
+  const toggleWorkflowTaskStatusOption = (
+    option: CrmWorkflowTaskStatusFilterOption
+  ): void => {
+    const optionStatuses = new Set(option.statuses);
+    const selected = option.statuses.some((status) =>
+      filters.workflowTaskStatuses.includes(status)
+    );
+    const next = selected
+      ? filters.workflowTaskStatuses.filter((status) => !optionStatuses.has(status))
+      : [...new Set([...filters.workflowTaskStatuses, ...option.statuses])];
     onChange({ ...filters, workflowTaskStatuses: next });
   };
 
@@ -289,14 +309,16 @@ export function CrmProjectsFilterMenu({
             <fieldset className={styles.projectsFilterFieldset}>
               <legend className={styles.projectsFilterLegend}>{copy.statusLabel}</legend>
               <div className={styles.projectsFilterOptions}>
-                {WORKFLOW_TASK_STATUSES.map((status) => (
-                  <label key={status} className={styles.projectsFilterOption}>
+                {workflowTaskStatusOptions.map((option) => (
+                  <label key={option.label} className={styles.projectsFilterOption}>
                     <input
                       type="checkbox"
-                      checked={filters.workflowTaskStatuses.includes(status)}
-                      onChange={() => toggleWorkflowTaskStatus(status)}
+                      checked={option.statuses.some((status) =>
+                        filters.workflowTaskStatuses.includes(status)
+                      )}
+                      onChange={() => toggleWorkflowTaskStatusOption(option)}
                     />
-                    <span>{WORKFLOW_TASK_STATUS_LABELS[status]}</span>
+                    <span>{option.label}</span>
                   </label>
                 ))}
               </div>

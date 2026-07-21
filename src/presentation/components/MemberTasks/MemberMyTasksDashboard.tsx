@@ -25,15 +25,25 @@ import { buildCoreDashboardContent as content } from '@/platform/content/buildCo
 import { useBuildCoreNavigation } from '@/presentation/providers/BuildCoreNavigationProvider';
 import { formatShortDate } from '@/presentation/features/crmProjectDetail/crmProjectDetailFormatters';
 import {
+  formatCentsAsUsd,
   formatContactEmailDisplay,
   formatPhoneDisplay,
 } from '@/presentation/features/crmProjects/crmProjectFormatters';
 import { fetchCrmMyTasks } from '@/presentation/features/memberTasks/fetchCrmMyTasks';
-import { CrmProjectsFilterMenu } from '@/presentation/components/CrmProjects/CrmProjectsFilterMenu';
+import {
+  CrmProjectsFilterMenu,
+  type CrmWorkflowTaskStatusFilterOption,
+} from '@/presentation/components/CrmProjects/CrmProjectsFilterMenu';
 import {
   EMPTY_CRM_PROJECTS_LIST_FILTERS,
   type CrmProjectsListFilters,
 } from '@/presentation/features/crmProjects/crmProjectsPipelineViewModel';
+import {
+  EMPTY_RADIUS_FILTER,
+  isRadiusFilterActive,
+  type RadiusFilterState,
+} from '@/presentation/features/filters/radiusFilterModel';
+import { useRadiusFilteredProjects } from '@/presentation/features/filters/useRadiusFilteredProjects';
 import { WorkflowTableStatusRefresh } from '@/presentation/components/CrmProjectDetail/WorkflowTableStatusRefresh';
 import {
   isMemberCompletedWorkflowTask,
@@ -47,6 +57,15 @@ import panelStyles from '@/presentation/components/CrmProjects/CrmProjects.modul
 import detailStyles from '@/presentation/components/CrmProjectDetail/ProjectDetail.module.css';
 import previewStyles from '@/presentation/components/CrmProjectDetail/WorkflowTaskPreviewCard.module.css';
 import styles from './MemberMyTasks.module.css';
+
+const MEMBER_MY_TASK_STATUS_FILTER_OPTIONS = [
+  { label: 'In Review', statuses: ['request_review'] },
+  { label: 'Task Complete', statuses: ['done'] },
+  {
+    label: 'Pending',
+    statuses: ['pending', 'in_progress', 'blocked', 'skipped', 'rejected'],
+  },
+] as const satisfies readonly CrmWorkflowTaskStatusFilterOption[];
 
 function notesDisplay(notes: string | null): string {
   const trimmed = notes?.trim() ?? '';
@@ -221,6 +240,10 @@ function MemberMyTaskSimpleRow({
   const isMobileLayout = useDashboardMobileLayout();
   const isInReview = task.status === 'request_review';
   const isComplete = isMemberCompletedWorkflowTask(task.status);
+  const documentCount = task.documents.length;
+  const documentDisplay =
+    documentCount === 0 ? 'N/A' : `${documentCount} ${documentCount === 1 ? 'Document' : 'Documents'}`;
+  const assigneeDisplay = task.assignedTo?.initials || task.assignedTo?.displayName || '—';
 
   return (
     <button
@@ -236,7 +259,6 @@ function MemberMyTaskSimpleRow({
             isInReview
               ? detailStyles.workflowTaskMobileStatusBanner_inReview
               : detailStyles.workflowTaskMobileStatusBanner_complete,
-            styles.taskMobileStatusBanner,
           ].join(' ')}
           role="status"
         >
@@ -245,32 +267,113 @@ function MemberMyTaskSimpleRow({
             : copy.detail.taskCompleteBanner}
         </div>
       ) : null}
-      <div className={styles.taskRowTop}>
-        <span className={styles.taskTitleLead}>
-          <span
-            className={[
-              styles.taskTitle,
-              isComplete ? styles.taskTitle_complete : '',
-            ]
-              .filter(Boolean)
-              .join(' ')}
-          >
-            {task.title}
-          </span>
-          {!isMobileLayout && isInReview ? (
+      {isMobileLayout ? (
+        <>
+          <div className={styles.taskMobileHeader}>
             <span
-              className={`${detailStyles.statusDotIndicator} ${detailStyles.memberDesktopInReview} ${workflowTaskStatusBadgeClass('request_review')}`}
+              className={[
+                styles.taskTitle,
+                isComplete ? styles.taskTitle_complete : '',
+              ]
+                .filter(Boolean)
+                .join(' ')}
             >
-              <span className={detailStyles.statusDot} aria-hidden />
-              <span className={detailStyles.memberDesktopInReviewLabel}>
-                {copy.detail.inReviewInline}
-              </span>
+              {task.title}
             </span>
-          ) : null}
-        </span>
-        <span className={styles.taskDue}>{dueDisplay}</span>
+          </div>
+          <div className={styles.taskMobileBody}>
+            <div className={styles.taskMobileGrid}>
+              <span className={styles.taskMobileField}>
+                <span className={styles.taskMobileLabel}>Documents</span>
+                <span className={styles.taskMobileValue}>{documentDisplay}</span>
+              </span>
+              <span className={`${styles.taskMobileField} ${styles.taskMobileField_center}`}>
+                <span className={styles.taskMobileLabel}>Due</span>
+                <span className={styles.taskMobileValue}>{dueDisplay}</span>
+              </span>
+              <span className={`${styles.taskMobileField} ${styles.taskMobileField_right}`}>
+                <span className={styles.taskMobileLabel}>Assigned</span>
+                <span
+                  className={styles.taskMobileAssignee}
+                  title={task.assignedTo?.displayName ?? undefined}
+                >
+                  {task.assignedTo?.avatarUrl ? (
+                    <img
+                      className={styles.taskMobileAssigneeAvatar}
+                      src={task.assignedTo.avatarUrl}
+                      alt=""
+                    />
+                  ) : (
+                    assigneeDisplay
+                  )}
+                </span>
+              </span>
+            </div>
+            {task.kind === 'payment' ? (
+              <>
+                <div className={styles.taskMobileGrid}>
+                  <span className={styles.taskMobileField}>
+                    <span className={styles.taskMobileLabel}>Amount</span>
+                    <span className={styles.taskMobileValue}>
+                      {formatCentsAsUsd(task.amountCents ?? 0)}
+                    </span>
+                  </span>
+                  <span className={`${styles.taskMobileField} ${styles.taskMobileField_center}`}>
+                    <span className={styles.taskMobileLabel}>Invoiced</span>
+                    <span className={styles.taskMobileValue}>
+                      {task.invoicedAt ? formatShortDate(task.invoicedAt) : '—'}
+                    </span>
+                  </span>
+                  <span className={`${styles.taskMobileField} ${styles.taskMobileField_right}`}>
+                    <span className={styles.taskMobileLabel}>Paid</span>
+                    <span className={styles.taskMobileValue}>
+                      {task.paidAt ? formatShortDate(task.paidAt) : '—'}
+                    </span>
+                  </span>
+                </div>
+                <span className={styles.taskMobileNotes}>
+                  <span className={styles.taskMobileLabel}>Notes</span>
+                  <span className={styles.taskMobileValue}>{notesDisplay(task.notes)}</span>
+                </span>
+              </>
+            ) : (
+              <span className={styles.taskMobileNotes}>
+                <span className={styles.taskMobileLabel}>Notes</span>
+                <span className={styles.taskMobileValue}>{notesDisplay(task.notes)}</span>
+              </span>
+            )}
+          </div>
+        </>
+      ) : (
+      <div className={styles.taskRowBody}>
+        <div className={styles.taskRowTop}>
+          <span className={styles.taskTitleLead}>
+            <span
+              className={[
+                styles.taskTitle,
+                isComplete ? styles.taskTitle_complete : '',
+              ]
+                .filter(Boolean)
+                .join(' ')}
+            >
+              {task.title}
+            </span>
+            {!isMobileLayout && isInReview ? (
+              <span
+                className={`${detailStyles.statusDotIndicator} ${detailStyles.memberDesktopInReview} ${workflowTaskStatusBadgeClass('request_review')}`}
+              >
+                <span className={detailStyles.statusDot} aria-hidden />
+                <span className={detailStyles.memberDesktopInReviewLabel}>
+                  {copy.detail.inReviewInline}
+                </span>
+              </span>
+            ) : null}
+          </span>
+          <span className={styles.taskDue}>{dueDisplay}</span>
+        </div>
+        <p className={styles.taskNotes}>{notesDisplay(task.notes)}</p>
       </div>
-      <p className={styles.taskNotes}>{notesDisplay(task.notes)}</p>
+      )}
     </button>
   );
 }
@@ -378,6 +481,8 @@ export function MemberMyTasksDashboard(): ReactElement {
   const [tasks, setTasks] = useState<readonly CrmMyTaskAssignment[]>([]);
   const [filterAvailable, setFilterAvailable] = useState(false);
   const [filters, setFilters] = useState<CrmProjectsListFilters>(EMPTY_CRM_PROJECTS_LIST_FILTERS);
+  const [radiusFilter, setRadiusFilter] =
+    useState<RadiusFilterState>(EMPTY_RADIUS_FILTER);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -410,7 +515,7 @@ export function MemberMyTasksDashboard(): ReactElement {
     void load(assigneeScope);
   }, [assigneeScope, load]);
 
-  const filteredTasks = useMemo(() => {
+  const preRadiusFilteredTasks = useMemo(() => {
     const query = searchQuery.trim().toLowerCase();
     return tasks.filter(
       (task) =>
@@ -418,6 +523,12 @@ export function MemberMyTasksDashboard(): ReactElement {
         taskMatchesStatusFilters(task, filters.workflowTaskStatuses)
     );
   }, [filters.workflowTaskStatuses, searchQuery, tasks]);
+
+  const {
+    rows: filteredTasks,
+    isGeocoding: isRadiusGeocoding,
+    geocodingError: radiusGeocodingError,
+  } = useRadiusFilteredProjects(preRadiusFilteredTasks, radiusFilter);
 
   const groups = useMemo(() => groupCrmMyTasksByParentProject(filteredTasks), [filteredTasks]);
 
@@ -481,6 +592,9 @@ export function MemberMyTasksDashboard(): ReactElement {
               assigneeScopeOptions={assigneeScopeOptions}
               assigneeScopeLabel={copy.assigneeFilterAriaLabel}
               assigneeScopeDefault="mine"
+              workflowTaskStatusOptions={MEMBER_MY_TASK_STATUS_FILTER_OPTIONS}
+              radiusFilter={radiusFilter}
+              onRadiusFilterChange={setRadiusFilter}
             />
             <WorkflowTableStatusRefresh
               onRefresh={refreshTasks}
@@ -503,10 +617,22 @@ export function MemberMyTasksDashboard(): ReactElement {
       <div className={panelStyles.projectsPanelBody}>
         {loading ? <p className={detailStyles.subtitle}>{copy.loading}</p> : null}
         {error ? <p className={detailStyles.subtitle}>{error}</p> : null}
+        {!loading && isRadiusGeocoding ? (
+          <p className={detailStyles.subtitle}>Finding tasks near that ZIP code…</p>
+        ) : null}
+        {!loading && radiusGeocodingError ? (
+          <p className={detailStyles.subtitle}>{radiusGeocodingError}</p>
+        ) : null}
 
-        {!loading && !error && groups.length === 0 ? (
+        {!loading &&
+        !error &&
+        !isRadiusGeocoding &&
+        radiusGeocodingError == null &&
+        groups.length === 0 ? (
           <p className={detailStyles.subtitle}>
-            {searchQuery.trim() || filters.workflowTaskStatuses.length > 0
+            {searchQuery.trim() ||
+            filters.workflowTaskStatuses.length > 0 ||
+            isRadiusFilterActive(radiusFilter)
               ? copy.emptySearch
               : filterAvailable && assigneeScope !== 'mine'
                 ? copy.emptyFiltered
@@ -514,7 +640,11 @@ export function MemberMyTasksDashboard(): ReactElement {
           </p>
         ) : null}
 
-        {!loading && !error && groups.length > 0 ? (
+        {!loading &&
+        !error &&
+        !isRadiusGeocoding &&
+        radiusGeocodingError == null &&
+        groups.length > 0 ? (
           <div className={styles.myTasksGroups}>
             {groups.map((group) => (
               <MemberMyTasksProjectGroup

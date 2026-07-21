@@ -11292,6 +11292,19 @@
   padding-block: 0.75rem 0.625rem;
 }
 
+/* Member mobile cards (workflow + payment): fixed dark-mode colors, light mode untouched. */
+:global([data-theme='dark'])
+  .detailPanelsScroll[data-member-project-tasks]
+  .workflowTaskMobileCard {
+  background: #1d2029;
+}
+
+:global([data-theme='dark'])
+  .detailPanelsScroll[data-member-project-tasks]
+  .workflowTaskMobileCardHeader {
+  background: #161922;
+}
+
 .workflowTaskMobileCard:has(.workflowTaskMobileCardHeader) .workflowTaskMobileCardBody {
   padding-inline: 0.75rem;
 }

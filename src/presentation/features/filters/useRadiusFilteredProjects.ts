@@ -9,14 +9,18 @@ import { lookupUsPostalCodeCoordinates } from './lookupUsPostalCodeCoordinates';
 import type { RadiusFilterState } from './radiusFilterModel';
 import { isRadiusFilterActive } from './radiusFilterModel';
 
-export type UseRadiusFilteredProjectsResult<TProject extends CrmProjectSummary> = {
+export type UseRadiusFilteredProjectsResult<
+  TProject extends Pick<CrmProjectSummary, 'address'>,
+> = {
   readonly rows: readonly TProject[];
   readonly isGeocoding: boolean;
   readonly geocodingError: string | null;
   readonly isRadiusFilterActive: boolean;
 };
 
-export function useRadiusFilteredProjects<TProject extends CrmProjectSummary>(
+export function useRadiusFilteredProjects<
+  TProject extends Pick<CrmProjectSummary, 'address'>,
+>(
   projects: readonly TProject[],
   radiusFilter: RadiusFilterState
 ): UseRadiusFilteredProjectsResult<TProject> {

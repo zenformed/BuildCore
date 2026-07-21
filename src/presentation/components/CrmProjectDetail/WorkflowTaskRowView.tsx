@@ -1835,6 +1835,13 @@ function WorkflowTaskRowPaymentMobileView({
               <WorkflowTaskRowPaidField model={model} mobile />
             </div>
           </div>
+          <div className={styles.workflowTaskMobileCardNotes}>
+            <WorkflowFieldLabelText
+              fieldKey={WORKFLOW_TASK_NOTES_FIELD_KEY}
+              className={styles.projectInfoMobileLabel}
+            />
+            <WorkflowTaskRowNotesField model={model} mobile />
+          </div>
         </div>
       </article>
     );
