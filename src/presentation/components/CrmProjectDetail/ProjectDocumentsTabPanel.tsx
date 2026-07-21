@@ -12,11 +12,13 @@ import {
 import { filterDocumentPanelItemsBySearch } from '@/presentation/features/crmProjectDetail/projectSectionSearchModel';
 import { useDashboardMobileLayout } from '@/presentation/features/crmProjects/useDashboardMobileLayout';
 import { useProjectDetailShell } from '@/presentation/features/crmProjectDetail/ProjectDetailShellContext';
-import { useProjectDocumentModalActions } from '@/presentation/features/crmProjectDetail/useProjectDocumentModalActions';
+import { deleteCrmProjectDocumentsBulk } from '@/presentation/features/crmProjectDetail/deleteCrmProjectDocumentsBulk';
 import {
   DocumentRowSelectionProvider,
   type DocumentRowSelectionBulkActions,
 } from '@/presentation/features/crmProjectDetail/documentRowSelectionContext';
+import { clearApiCrmDetailCache } from '@/infrastructure/crm/api/apiCrmDetailCache';
+import { crmRepositories } from '@/shared/di/container';
 import {
   readDocumentsViewMode,
   writeDocumentsViewMode,
@@ -59,6 +61,7 @@ export function ProjectDocumentsTabPanel({
     project,
     parentProject,
     onRefresh,
+    onDocumentsDeleted,
     setToast,
     projectMutationsLocked,
   } = useProjectDetailShell();
@@ -92,13 +95,6 @@ export function ProjectDocumentsTabPanel({
       return next;
     });
   };
-
-  const { deleteDocument } = useProjectDocumentModalActions({
-    projectSlug: project.summary.slug,
-    onChanged: handleRefresh,
-    onError: handleError,
-    onDemoDownloadBlocked: (message) => setToast({ kind: 'success', message }),
-  });
 
   const items = useMemo(() => {
     const byFilter = filterDocumentPanelItems(
@@ -190,30 +186,49 @@ export function ProjectDocumentsTabPanel({
       downloadableDocumentIds,
       documentsById,
       onDeleteDocuments: async (documentIds) => {
-        let deletedCount = 0;
-        let failedCount = 0;
+        const docsToDelete: CrmDocumentMetadata[] = [];
         for (const documentId of documentIds) {
           const doc =
             documentsById.get(documentId) ?? project.documents.find((d) => d.id === documentId);
-          if (doc == null) {
-            failedCount += 1;
-            continue;
-          }
+          if (doc != null) docsToDelete.push(doc);
+        }
+        if (docsToDelete.length === 0) {
+          return { deletedCount: 0, failedCount: documentIds.length };
+        }
+
+        const idSet = new Set(docsToDelete.map((doc) => doc.id));
+        // Remove all selected tiles immediately; delete continues in parallel.
+        onDocumentsDeleted([...idSet]);
+        clearApiCrmDetailCache();
+
+        const { deletedCount, failedCount } = await deleteCrmProjectDocumentsBulk(
+          crmRepositories,
+          project.summary.slug,
+          docsToDelete
+        );
+
+        if (failedCount > 0) {
+          // Reconcile UI with server if any deletes failed.
           try {
-            await deleteDocument(doc);
-            deletedCount += 1;
+            await onRefresh();
           } catch {
-            failedCount += 1;
+            // Keep optimistic state; toast still reports partial failure.
           }
         }
-        return { deletedCount, failedCount };
+
+        return {
+          deletedCount,
+          failedCount: failedCount + (documentIds.length - docsToDelete.length),
+        };
       },
     }),
     [
-      deleteDocument,
       documentsById,
       downloadableDocumentIds,
+      onDocumentsDeleted,
+      onRefresh,
       project.documents,
+      project.summary.slug,
       projectMutationsLocked,
     ]
   );

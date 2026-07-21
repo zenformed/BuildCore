@@ -9,6 +9,7 @@ import {
   getCrmProjectSummaryBySlugSync,
 } from '@/application/use-cases/crm';
 import { getCrmDataSource } from '@/infrastructure/config/crmDataSource';
+import { clearApiCrmDetailCache } from '@/infrastructure/crm/api/apiCrmDetailCache';
 import { DEMO_RESET_EVENT } from '@/presentation/providers/DemoModeProvider';
 import { crmRepositories } from '@/shared/di/container';
 
@@ -73,6 +74,9 @@ export function useCrmProjectDetail(
     }
     if (!silent) {
       setState({ status: 'loading' });
+    } else {
+      // Explicit refresh must bypass the in-memory detail cache.
+      clearApiCrmDetailCache();
     }
 
     if (parentSlug) {

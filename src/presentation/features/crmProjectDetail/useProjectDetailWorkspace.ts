@@ -59,6 +59,7 @@ export function useProjectDetailWorkspace(initialProject: CrmProjectDetail) {
     onWorkflowTaskArchived,
     onWorkflowTaskDocumentUploaded,
     onWorkflowTaskDocumentDeleted,
+    onDocumentsDeleted,
     syncWorkflowTaskDocuments,
   } = useWorkflowTasksSection(project, setProject);
   const {
@@ -324,6 +325,7 @@ export function useProjectDetailWorkspace(initialProject: CrmProjectDetail) {
     refreshWorkflowTasks,
     onWorkflowTaskDocumentUploaded,
     onWorkflowTaskDocumentDeleted,
+    onDocumentsDeleted,
     syncWorkflowTaskDocuments,
     handleBudgetEntryPatched,
     handleBudgetEntryCreated,

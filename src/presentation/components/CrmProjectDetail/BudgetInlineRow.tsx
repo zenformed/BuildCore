@@ -201,7 +201,7 @@ export function BudgetInlineRow({
   const effectiveDocCount = Math.max(entry.documentCount, entryDocuments.length);
   const hasDocuments = effectiveDocCount > 0;
   const documentsLabel = hasDocuments
-    ? `${effectiveDocCount} ${wf.documentsCountSuffix}`
+    ? `${effectiveDocCount}`
     : !entry.documentsRequired
       ? wf.documentsNotRequired
       : wf.documentsNone;

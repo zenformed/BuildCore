@@ -4,7 +4,9 @@ import {
   useCallback,
   useEffect,
   useMemo,
+  useRef,
   useState,
+  type PointerEvent as ReactPointerEvent,
   type ReactElement,
 } from 'react';
 import type { CrmDocumentMetadata, CrmProjectDetail } from '@/domain/crm';
@@ -53,6 +55,11 @@ export function DocumentsGalleryPreview({
   const [activeId, setActiveId] = useState(initialDocumentId);
   const [metaOpen, setMetaOpen] = useState(!isMobileLayout);
   const [busy, setBusy] = useState(false);
+  const swipeStartRef = useRef<{
+    pointerId: number;
+    x: number;
+    y: number;
+  } | null>(null);
 
   const docsById = useMemo(() => {
     const map = new Map<string, CrmDocumentMetadata>();
@@ -89,6 +96,48 @@ export function DocumentsGalleryPreview({
     if (!canNext) return;
     setActiveId(orderedIds[activeIndex + 1]!);
   }, [activeIndex, canNext, orderedIds]);
+
+  const handleSwipeStart = (
+    event: ReactPointerEvent<HTMLElement>
+  ): void => {
+    if (!isMobileLayout || event.pointerType === 'mouse') return;
+    swipeStartRef.current = {
+      pointerId: event.pointerId,
+      x: event.clientX,
+      y: event.clientY,
+    };
+    event.currentTarget.setPointerCapture(event.pointerId);
+  };
+
+  const handleSwipeEnd = (
+    event: ReactPointerEvent<HTMLElement>
+  ): void => {
+    const start = swipeStartRef.current;
+    swipeStartRef.current = null;
+    if (
+      !isMobileLayout ||
+      start == null ||
+      start.pointerId !== event.pointerId
+    ) {
+      return;
+    }
+
+    const deltaX = event.clientX - start.x;
+    const deltaY = event.clientY - start.y;
+    if (Math.abs(deltaY) < 60 || Math.abs(deltaY) <= Math.abs(deltaX)) return;
+
+    if (deltaY < 0) {
+      setMetaOpen(true);
+    } else if (metaOpen) {
+      setMetaOpen(false);
+    } else {
+      onClose();
+    }
+  };
+
+  const cancelSwipe = (): void => {
+    swipeStartRef.current = null;
+  };
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent): void => {
@@ -206,8 +255,20 @@ export function DocumentsGalleryPreview({
         </div>
       </div>
 
-      <div className={styles.docGalleryPreviewBody}>
-        <div className={styles.docGalleryPreviewStage}>
+      <div
+        className={[
+          styles.docGalleryPreviewBody,
+          metaOpen ? styles.docGalleryPreviewBody_metaOpen : '',
+        ]
+          .filter(Boolean)
+          .join(' ')}
+      >
+        <div
+          className={styles.docGalleryPreviewStage}
+          onPointerDown={handleSwipeStart}
+          onPointerUp={handleSwipeEnd}
+          onPointerCancel={cancelSwipe}
+        >
           <div className={styles.docGalleryPreviewMedia}>
             {blobUrl && isImage ? (
               // eslint-disable-next-line @next/next/no-img-element
@@ -265,6 +326,17 @@ export function DocumentsGalleryPreview({
 
         {metaOpen ? (
           <aside className={styles.docGalleryPreviewMeta}>
+            {isMobileLayout ? (
+              <div
+                className={styles.docGalleryPreviewMetaHandle}
+                aria-hidden
+                onPointerDown={handleSwipeStart}
+                onPointerUp={handleSwipeEnd}
+                onPointerCancel={cancelSwipe}
+              >
+                <span />
+              </div>
+            ) : null}
             <dl className={styles.docGalleryPreviewMetaList}>
               {metaRows.map((row) => (
                 <div key={row.label} className={styles.docGalleryPreviewMetaRow}>

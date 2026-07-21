@@ -69,6 +69,18 @@ export function removeWorkflowTaskDocument(
   };
 }
 
+export function removeProjectDocuments(
+  project: CrmProjectDetail,
+  documentIds: readonly string[]
+): CrmProjectDetail {
+  if (documentIds.length === 0) return project;
+  const idSet = new Set(documentIds);
+  return {
+    ...project,
+    documents: project.documents.filter((d) => !idSet.has(d.id)),
+  };
+}
+
 export function replaceWorkflowTaskDocuments(
   project: CrmProjectDetail,
   taskId: string,

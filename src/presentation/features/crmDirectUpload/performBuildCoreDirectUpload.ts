@@ -1,6 +1,7 @@
 'use client';
 
 import { validateBuildCoreUpload } from '@/domain/crm/buildCoreUploadPolicy';
+import { clearApiCrmDetailCache } from '@/infrastructure/crm/api/apiCrmDetailCache';
 import { shouldSimulateDemoOperation } from '@/infrastructure/demo/demoSafetyPolicy';
 import { simulateDemoDocumentUpload } from '@/infrastructure/demo/demoSimulatedDocumentUpload';
 import { uploadFileToSignedUrl } from '@/infrastructure/coreApi/buildCoreDirectUploadClient';
@@ -32,6 +33,7 @@ export async function performCrmDirectUpload(
 
   if (shouldSimulateDemoOperation('crm-direct-upload')) {
     const simulated = await simulateDemoDocumentUpload(file, uploadScope);
+    clearApiCrmDetailCache();
     return {
       documentId: simulated.documentId,
       uploadUrl: 'demo://local',
@@ -93,6 +95,10 @@ export async function performCrmDirectUpload(
   if (!finalizeResponse.ok) {
     throw new Error(finalizeBody.message ?? 'Could not finalize upload.');
   }
+
+  // Direct-upload finalize is outside the repository layer, so invalidate the
+  // client project-detail cache before any subsequent refresh/refetch.
+  clearApiCrmDetailCache();
 
   return {
     documentId: prepareBody.documentId,

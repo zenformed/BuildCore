@@ -125,6 +125,9 @@ export function DocumentsPanelBulkActions(): ReactElement | null {
   const handleConfirmDelete = useCallback(async () => {
     if (rowSelection == null || bulkActions == null || !bulkActions.canDelete) return;
     const ids = [...rowSelection.selectedIds];
+    // Close chrome immediately so the gallery feels instantaneous.
+    setDeleteConfirmOpen(false);
+    rowSelection.clearSelection();
     setBusy(true);
     try {
       const { deletedCount, failedCount } = await bulkActions.onDeleteDocuments(ids);
@@ -141,8 +144,6 @@ export function DocumentsPanelBulkActions(): ReactElement | null {
           message: bulkDeleteCopy.success(deletedCount, docs.bulkDeleteItemLabel),
         });
       }
-      setDeleteConfirmOpen(false);
-      rowSelection.clearSelection();
     } finally {
       setBusy(false);
     }

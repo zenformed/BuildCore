@@ -5,11 +5,13 @@ import type { CrmDocumentMetadata, CrmProjectDetail, CrmWorkflowTask } from '@/d
 import { listCrmWorkflowTasksByProject } from '@/application/use-cases/crm/listCrmWorkflowTasksByProject';
 import { getCrmProjectDetailBySlug } from '@/application/use-cases/crm/getCrmProjectDetailBySlug';
 import { listWorkflowTaskDocuments } from '@/application/use-cases/crm/listWorkflowTaskDocuments';
+import { clearApiCrmDetailCache } from '@/infrastructure/crm/api/apiCrmDetailCache';
 import { crmRepositories } from '@/shared/di/container';
 import {
   appendWorkflowTaskDocument,
   applyWorkflowTasksToProject,
   patchWorkflowTaskInProject,
+  removeProjectDocuments,
   removeWorkflowTaskDocument,
   removeWorkflowTaskFromProject,
   replaceWorkflowTaskDocuments,
@@ -25,9 +27,11 @@ export function useWorkflowTasksSection(
   onWorkflowTaskArchived: (taskId: string) => void;
   onWorkflowTaskDocumentUploaded: (document: CrmDocumentMetadata) => void;
   onWorkflowTaskDocumentDeleted: (documentId: string) => void;
+  onDocumentsDeleted: (documentIds: readonly string[]) => void;
   syncWorkflowTaskDocuments: (taskId: string) => Promise<void>;
 } {
   const refreshWorkflowTasks = useCallback(async () => {
+    clearApiCrmDetailCache();
     const [workflowTasks, detail] = await Promise.all([
       listCrmWorkflowTasksByProject(crmRepositories, {
         projectId: project.summary.id,
@@ -77,6 +81,13 @@ export function useWorkflowTasksSection(
     [setProject]
   );
 
+  const onDocumentsDeleted = useCallback(
+    (documentIds: readonly string[]) => {
+      setProject((prev) => removeProjectDocuments(prev, documentIds));
+    },
+    [setProject]
+  );
+
   const syncWorkflowTaskDocuments = useCallback(
     async (taskId: string) => {
       const taskDocuments = await listWorkflowTaskDocuments(crmRepositories, {
@@ -95,6 +106,7 @@ export function useWorkflowTasksSection(
     onWorkflowTaskArchived,
     onWorkflowTaskDocumentUploaded,
     onWorkflowTaskDocumentDeleted,
+    onDocumentsDeleted,
     syncWorkflowTaskDocuments,
   };
 }
