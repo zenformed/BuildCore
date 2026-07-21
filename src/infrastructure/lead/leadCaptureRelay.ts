@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { createCrmServiceRoleClient } from '@/infrastructure/crm/server/createCrmServiceRoleClient';
 import { LeadCaptureInvalidTokenError, LeadCapturePersistenceError } from '@/infrastructure/lead/leadCaptureErrors';
 import {
+  getLeadCaptureProjectPhoto,
   getLeadCapturePublicContext,
   submitLeadCaptureForToken,
 } from '@/infrastructure/lead/leadCaptureService';
@@ -21,8 +22,41 @@ function invalidTokenContext() {
       projectName: '',
       organizationName: '',
       industry: null,
+      hasProjectPhoto: false,
     },
   };
+}
+
+export async function relayLeadCapturePhotoGet(token: string): Promise<NextResponse> {
+  const leadToken = token.trim();
+  if (!leadToken) {
+    return NextResponse.json({ error: 'not_found' }, { status: 404 });
+  }
+
+  const supabase = createCrmServiceRoleClient();
+  if (supabase == null) return serviceUnavailable();
+
+  try {
+    const photo = await getLeadCaptureProjectPhoto(supabase, leadToken);
+    if (photo == null) {
+      return NextResponse.json({ error: 'not_found' }, { status: 404 });
+    }
+
+    return new NextResponse(photo.buffer, {
+      status: 200,
+      headers: {
+        'Content-Type': photo.contentType,
+        'Cache-Control': 'public, max-age=300',
+      },
+    });
+  } catch (err) {
+    if (err instanceof LeadCapturePersistenceError) {
+      console.error('[lead-capture] photo GET failed:', err.detail);
+    } else {
+      console.error('[lead-capture] photo GET failed:', err);
+    }
+    return NextResponse.json({ error: 'server_error' }, { status: 500 });
+  }
 }
 
 export async function relayLeadCaptureGet(token: string): Promise<NextResponse> {

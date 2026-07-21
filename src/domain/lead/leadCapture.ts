@@ -5,6 +5,7 @@ export type LeadCapturePublicContext = {
   readonly projectName: string;
   readonly organizationName: string;
   readonly industry: string | null;
+  readonly hasProjectPhoto: boolean;
 };
 
 export type LeadCaptureSubmitInput = {

@@ -16,8 +16,21 @@
   border: 1px solid var(--theme-border-main, #e2e8f0);
   border-radius: 0.875rem;
   background: var(--theme-surface-card, #ffffff);
-  padding: 1.5rem;
+  padding: 0;
+  overflow: hidden;
   box-shadow: 0 10px 30px rgba(15, 23, 42, 0.06);
+}
+
+.projectImage {
+  display: block;
+  width: 100%;
+  height: clamp(14rem, 38vw, 20rem);
+  margin: 0;
+  object-fit: cover;
+}
+
+.cardContent {
+  padding: 1.5rem;
 }
 
 :global([data-theme='dark']) .card {
@@ -44,6 +57,10 @@
   color: var(--color-text, #0f172a);
 }
 
+.title {
+  text-align: center;
+}
+
 :global([data-theme='dark']) .title,
 :global([data-theme='dark']) .invalidTitle,
 :global([data-theme='dark']) .successTitle {
@@ -54,6 +71,7 @@
   margin-bottom: 1.5rem;
   font-size: 0.9375rem;
   color: var(--color-text-muted, #64748b);
+  text-align: center;
 }
 
 :global([data-theme='dark']) .intro {
@@ -245,7 +263,7 @@
     align-items: flex-start;
   }
 
-  .card {
+  .cardContent {
     padding: 1.25rem;
   }
 

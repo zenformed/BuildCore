@@ -28,9 +28,11 @@ import {
   pickLeadCaptureContactFromRows,
   type LeadCaptureContactLookupRow,
 } from '@/infrastructure/lead/pickLeadCaptureContactFromRows';
+import { downloadProjectPrimaryPhotoForOrg } from '@/infrastructure/crm/server/crmProjectPrimaryPhotoService';
 
 type LeadCaptureProjectRow = {
   readonly id: string;
+  readonly slug: string;
   readonly organization_id: string;
   readonly parent_project_id: string | null;
   readonly name: string;
@@ -38,6 +40,7 @@ type LeadCaptureProjectRow = {
   readonly custom_industry: string | null;
   readonly archived_at: string | null;
   readonly lead_token: string;
+  readonly primary_photo_path: string | null;
   readonly crm_clients: { readonly company_name: string } | { readonly company_name: string }[] | null;
   readonly platform_organizations:
     | { readonly name: string }
@@ -50,6 +53,7 @@ const INVALID_CONTEXT: LeadCapturePublicContext = {
   projectName: '',
   organizationName: '',
   industry: null,
+  hasProjectPhoto: false,
 };
 
 function unwrapJoin<T>(value: T | T[] | null | undefined): T | null {
@@ -80,6 +84,7 @@ function mapProjectRowToContext(row: LeadCaptureProjectRow): LeadCapturePublicCo
     projectName: row.name.trim(),
     organizationName,
     industry: resolveIndustryLabel(row),
+    hasProjectPhoto: row.primary_photo_path != null,
   };
 }
 
@@ -109,6 +114,7 @@ async function loadProjectByLeadToken(
     .select(
       `
       id,
+      slug,
       organization_id,
       parent_project_id,
       name,
@@ -116,6 +122,7 @@ async function loadProjectByLeadToken(
       custom_industry,
       archived_at,
       lead_token,
+      primary_photo_path,
       crm_clients ( company_name ),
       platform_organizations ( name )
     `
@@ -127,6 +134,23 @@ async function loadProjectByLeadToken(
   if (data == null) return null;
   if (data.archived_at != null) return null;
   return data as LeadCaptureProjectRow;
+}
+
+export async function getLeadCaptureProjectPhoto(
+  supabase: SupabaseClient,
+  leadToken: string
+): Promise<{ readonly buffer: Buffer; readonly contentType: string } | null> {
+  const normalizedToken = leadToken.trim();
+  if (!normalizedToken) return null;
+
+  const row = await loadProjectByLeadToken(supabase, normalizedToken);
+  if (row?.primary_photo_path == null) return null;
+
+  return downloadProjectPrimaryPhotoForOrg(
+    supabase,
+    row.organization_id,
+    row.slug
+  );
 }
 
 async function findContactByEmail(

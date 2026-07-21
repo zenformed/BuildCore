@@ -21,6 +21,7 @@ export function LeadCapturePage({ token }: LeadCapturePageProps): ReactElement {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [photoFailed, setPhotoFailed] = useState(false);
 
   const loadContext = useCallback(async (): Promise<void> => {
     setLoading(true);
@@ -33,6 +34,7 @@ export function LeadCapturePage({ token }: LeadCapturePageProps): ReactElement {
         projectName: '',
         organizationName: '',
         industry: null,
+        hasProjectPhoto: false,
       });
     } finally {
       setLoading(false);
@@ -47,7 +49,9 @@ export function LeadCapturePage({ token }: LeadCapturePageProps): ReactElement {
     return (
       <div className={styles.page}>
         <div className={styles.card}>
-          <p className={styles.loading}>{copy.loading}</p>
+          <div className={styles.cardContent}>
+            <p className={styles.loading}>{copy.loading}</p>
+          </div>
         </div>
       </div>
     );
@@ -57,8 +61,10 @@ export function LeadCapturePage({ token }: LeadCapturePageProps): ReactElement {
     return (
       <div className={styles.page}>
         <div className={styles.card}>
-          <h1 className={styles.invalidTitle}>{copy.invalidTitle}</h1>
-          <p className={styles.invalidMessage}>{copy.invalidMessage}</p>
+          <div className={styles.cardContent}>
+            <h1 className={styles.invalidTitle}>{copy.invalidTitle}</h1>
+            <p className={styles.invalidMessage}>{copy.invalidMessage}</p>
+          </div>
         </div>
       </div>
     );
@@ -68,8 +74,10 @@ export function LeadCapturePage({ token }: LeadCapturePageProps): ReactElement {
     return (
       <div className={styles.page}>
         <div className={styles.card}>
-          <h1 className={styles.successTitle}>{copy.successTitle}</h1>
-          <p className={styles.successMessage}>{copy.successMessage}</p>
+          <div className={styles.cardContent}>
+            <h1 className={styles.successTitle}>{copy.successTitle}</h1>
+            <p className={styles.successMessage}>{copy.successMessage}</p>
+          </div>
         </div>
       </div>
     );
@@ -78,20 +86,30 @@ export function LeadCapturePage({ token }: LeadCapturePageProps): ReactElement {
   return (
     <div className={styles.page}>
       <div className={styles.card}>
-        <h1 className={styles.title}>{context.organizationName}</h1>
-        <p className={styles.intro}>{copy.intro}</p>
-        <LeadCaptureForm
-          submitting={submitting}
-          onSubmit={async (input) => {
-            setSubmitting(true);
-            try {
-              await submitLeadCapture(token, input);
-              setSubmitted(true);
-            } finally {
-              setSubmitting(false);
-            }
-          }}
-        />
+        {context.hasProjectPhoto && !photoFailed ? (
+          <img
+            className={styles.projectImage}
+            src={`/api/lead/${encodeURIComponent(token)}/photo`}
+            alt={`${context.projectName} project`}
+            onError={() => setPhotoFailed(true)}
+          />
+        ) : null}
+        <div className={styles.cardContent}>
+          <h1 className={styles.title}>{context.projectName}</h1>
+          <p className={styles.intro}>{copy.intro}</p>
+          <LeadCaptureForm
+            submitting={submitting}
+            onSubmit={async (input) => {
+              setSubmitting(true);
+              try {
+                await submitLeadCapture(token, input);
+                setSubmitted(true);
+              } finally {
+                setSubmitting(false);
+              }
+            }}
+          />
+        </div>
       </div>
     </div>
   );
