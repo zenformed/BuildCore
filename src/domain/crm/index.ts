@@ -194,10 +194,13 @@ export {
 } from './projectCoordinates';
 export {
   buildCrmProjectMapsSearchUrl,
+  buildCrmProjectLocationMapsSearchUrl,
   crmProjectAddressSearchText,
   emptyCrmProjectAddress,
   formatCrmProjectAddressEnvelopeLines,
   formatCrmProjectAddressLine,
+  formatCrmProjectCoordinateLine,
+  formatCrmProjectLocationLine,
   type CrmProjectAddressEnvelopeLines,
 } from './projectAddress';
 export { buildCrmProjectSummarySearchHaystack } from './projectSummarySearch';

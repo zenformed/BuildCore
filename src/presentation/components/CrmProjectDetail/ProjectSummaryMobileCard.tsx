@@ -156,7 +156,13 @@ export function ProjectSummaryMobileCard({
               />
             </ProjectInfoMobileFieldCell>
           </div>
-          <ProjectSummaryAddress address={summary.address} label={fields.address} layout="mobile" />
+          <ProjectSummaryAddress
+            address={summary.address}
+            latitude={summary.latitude}
+            longitude={summary.longitude}
+            label={fields.address}
+            layout="mobile"
+          />
         </div>
         {memberView ? null : (
           <div className={styles.projectInfoMobileFinancials} aria-label={content.projectDetail.sections.financials}>

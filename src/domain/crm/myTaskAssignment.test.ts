@@ -88,6 +88,8 @@ function assignment(
     },
     clientName: 'Client',
     address: emptyCrmProjectAddress(),
+    latitude: null,
+    longitude: null,
     projectInactive: false,
     documents: [],
     ...overrides,

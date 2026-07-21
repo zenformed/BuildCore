@@ -1,5 +1,5 @@
 import type { CrmProjectSummary } from '@/domain/crm';
-import { formatCrmProjectAddressLine } from '@/domain/crm/projectAddress';
+import { formatCrmProjectLocationLine } from '@/domain/crm/projectAddress';
 import { buildCrmProjectSummarySearchHaystack } from '@/domain/crm/projectSummarySearch';
 import {
   hasValidProjectCoordinates,
@@ -38,7 +38,8 @@ export function buildCrmMapModel(
       parentProjectName: summary.name,
       latitude: summary.latitude,
       longitude: summary.longitude,
-      addressLabel: formatCrmProjectAddressLine(summary.address) || '—',
+      addressLabel:
+        formatCrmProjectLocationLine(summary.address, summary.latitude, summary.longitude) || '—',
     };
     markers.push(marker);
     markerByParentId.set(summary.id, marker);

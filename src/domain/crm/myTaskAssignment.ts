@@ -44,6 +44,8 @@ export type CrmMyTaskAssignment = {
   readonly contact: CrmContact;
   readonly clientName: string;
   readonly address: CrmProjectAddress;
+  readonly latitude: number | null;
+  readonly longitude: number | null;
   /** True when the owning project/subproject is inactive. */
   readonly projectInactive: boolean;
   readonly documents: readonly CrmDocumentMetadata[];

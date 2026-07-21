@@ -112,6 +112,8 @@ function toMyTaskAssignment(
     contact: project.contact,
     clientName: project.client.name,
     address: project.address,
+    latitude: project.latitude,
+    longitude: project.longitude,
     projectInactive: isCrmProjectInactive(project),
     documents,
   };

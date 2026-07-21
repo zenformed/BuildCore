@@ -392,7 +392,12 @@ export function ProjectSummaryStrip({
           getContactCopyValue={getPhoneCopyValue}
           onContactCopied={onContactCopied}
         />
-        <ProjectSummaryAddress address={summary.address} label={fields.address} />
+        <ProjectSummaryAddress
+          address={summary.address}
+          latitude={summary.latitude}
+          longitude={summary.longitude}
+          label={fields.address}
+        />
         {memberView ? null : (
           <>
             <SummaryMetric

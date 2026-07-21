@@ -299,6 +299,24 @@
   margin-top: 0.75rem;
 }
 
+.mapNotesRow {
+  position: relative;
+  padding-top: 0.875rem;
+}
+
+.mapNotesRow::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  border-top: 1px solid var(--theme-border-main, #e2e8f0);
+}
+
+:global([data-theme='dark']) .mapNotesRow::before {
+  border-top-color: var(--theme-stage-group-border-color, #80808052);
+}
+
 .previewMetaRow .metaColumn {
   flex: 1 1 0;
   min-width: 0;

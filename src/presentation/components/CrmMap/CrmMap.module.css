@@ -160,7 +160,7 @@
 .detailsPanel {
   display: flex;
   flex-direction: column;
-  width: min(24rem, 100%);
+  width: min(26.5rem, 100%);
   max-width: 100%;
   min-width: 0;
   min-height: 0;
@@ -183,11 +183,65 @@
   flex-shrink: 0;
 }
 
+.detailsHeaderSummary {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.375rem;
+  min-width: 0;
+  flex: 1;
+}
+
+.detailsHeaderMeta {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
 .detailsPanelTitle {
   margin: 0;
+  min-width: 0;
+  max-width: 100%;
   font-size: 1rem;
   font-weight: 650;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   color: var(--color-text, #0f172a);
+}
+
+.detailsIndustry {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--color-text-muted, #64748b);
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+:global([data-theme='dark']) .detailsIndustry {
+  color: #94a3b8;
+}
+
+.detailsAssigneeAvatar {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+}
+
+.detailsStagePill {
+  flex-shrink: 0;
+  max-width: 7.5rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.detailsHeaderProgress {
+  flex-shrink: 0;
 }
 
 :global([data-theme='dark']) .detailsPanelTitle {
@@ -231,11 +285,10 @@
 
 .detailsPhoto {
   position: relative;
-  width: min(100%, 12.5rem);
-  aspect-ratio: 1;
-  border-radius: 0.75rem;
+  width: calc(100% + 2rem);
+  height: 14rem;
   overflow: hidden;
-  margin: 0 auto 0.75rem;
+  margin: 0 -1rem 0.75rem;
   background: var(--color-surface-muted, #f1f5f9);
   flex-shrink: 0;
 }

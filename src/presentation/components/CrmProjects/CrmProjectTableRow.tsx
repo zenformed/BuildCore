@@ -6,7 +6,7 @@ import type { ProjectPaymentFinancials } from '@/domain/crm/projectPaymentValue'
 import type { CrmProjectWorkflowProgressInputIndex } from '@/domain/crm/projectWorkflowProgressInput';
 import { isCrmProjectComplete, isCrmProjectInactive } from '@/domain/crm';
 import { nonEmptyContactValues } from '@/domain/crm/contactMultiValue';
-import { formatCrmProjectAddressLine } from '@/domain/crm/projectAddress';
+import { formatCrmProjectLocationLine } from '@/domain/crm/projectAddress';
 import { isProjectPriorityUrgent } from '@/domain/crm/projectPriorityToggle';
 import { ProjectProgressPercent } from '@/presentation/components/CrmProjectDetail/ProjectProgressPercent';
 import { CrmProjectCompleteIcon } from '@/presentation/components/crmShared/CrmProjectCompleteIcon';
@@ -123,7 +123,11 @@ export function CrmProjectTableRow({
     (phone: string) => formatPhoneDisplay(phone) || phone.trim(),
     []
   );
-  const formattedAddress = formatCrmProjectAddressLine(project.address);
+  const formattedAddress = formatCrmProjectLocationLine(
+    project.address,
+    project.latitude,
+    project.longitude
+  );
   const rowAriaLabel = isChild
     ? tableCopy.subprojectRowAriaLabel(project.name)
     : tableCopy.rowAriaLabel(project.name);
@@ -265,7 +269,11 @@ export function CrmProjectTableRow({
         role="cell"
         title={formattedAddress ?? undefined}
       >
-        <CrmProjectAddressEnvelope address={project.address} />
+        <CrmProjectAddressEnvelope
+          address={project.address}
+          latitude={project.latitude}
+          longitude={project.longitude}
+        />
       </span>
       <span
         className={`${styles.gridCell} ${styles.gridCellAlignCenter}`}

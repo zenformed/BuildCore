@@ -3,14 +3,17 @@
 import type { ReactElement, ReactNode } from 'react';
 import type { CrmProjectAddress } from '@/domain/crm/projectAddress';
 import {
-  buildCrmProjectMapsSearchUrl,
+  buildCrmProjectLocationMapsSearchUrl,
   formatCrmProjectAddressEnvelopeLines,
-  formatCrmProjectAddressLine,
+  formatCrmProjectCoordinateLine,
+  formatCrmProjectLocationLine,
 } from '@/domain/crm/projectAddress';
 import styles from './ProjectDetail.module.css';
 
 export type ProjectSummaryAddressProps = {
   readonly address: CrmProjectAddress;
+  readonly latitude?: number | null;
+  readonly longitude?: number | null;
   readonly label: string;
   readonly layout?: 'strip' | 'mobile' | 'value';
   readonly editAction?: ReactNode;
@@ -18,16 +21,21 @@ export type ProjectSummaryAddressProps = {
 
 function MobileAddressValue({
   address,
+  latitude = null,
+  longitude = null,
 }: {
   readonly address: CrmProjectAddress;
+  readonly latitude: number | null;
+  readonly longitude: number | null;
 }): ReactElement {
   const envelope = formatCrmProjectAddressEnvelopeLines(address);
-  const formattedAddress = formatCrmProjectAddressLine(address);
-  const mapsUrl = buildCrmProjectMapsSearchUrl(address);
+  const coordinateLine = formatCrmProjectCoordinateLine(latitude, longitude);
+  const formattedLocation = formatCrmProjectLocationLine(address, latitude, longitude);
+  const mapsUrl = buildCrmProjectLocationMapsSearchUrl(address, latitude, longitude);
   const hasAddress = envelope.line1 != null || envelope.line2 != null;
   const valueClass = `${styles.summaryText} ${styles.projectInfoMobileValue}`;
 
-  if (!hasAddress) {
+  if (!hasAddress && coordinateLine == null) {
     return <span className={valueClass}>—</span>;
   }
 
@@ -35,17 +43,20 @@ function MobileAddressValue({
     <>
       {envelope.line1 ? <span className={styles.projectInfoMobileAddressLine}>{envelope.line1}</span> : null}
       {envelope.line2 ? <span className={styles.projectInfoMobileAddressLine}>{envelope.line2}</span> : null}
+      {!hasAddress && coordinateLine ? (
+        <span className={styles.projectInfoMobileAddressLine}>{coordinateLine}</span>
+      ) : null}
     </>
   );
 
-  if (formattedAddress != null && mapsUrl != null) {
+  if (formattedLocation != null && mapsUrl != null) {
     return (
       <a
         href={mapsUrl}
         target="_blank"
         rel="noopener noreferrer"
         className={`${valueClass} ${styles.summaryLink} ${styles.projectInfoMobileAddressLink}`}
-        title={formattedAddress}
+        title={formattedLocation}
       >
         {content}
       </a>
@@ -53,7 +64,7 @@ function MobileAddressValue({
   }
 
   return (
-    <span className={valueClass} title={formattedAddress ?? undefined}>
+    <span className={valueClass} title={formattedLocation ?? undefined}>
       {content}
     </span>
   );
@@ -61,29 +72,31 @@ function MobileAddressValue({
 
 export function ProjectSummaryAddress({
   address,
+  latitude = null,
+  longitude = null,
   label,
   layout = 'strip',
   editAction,
 }: ProjectSummaryAddressProps): ReactElement {
-  const formattedAddress = formatCrmProjectAddressLine(address);
-  const mapsUrl = buildCrmProjectMapsSearchUrl(address);
-  const displayText = formattedAddress ?? '—';
+  const formattedLocation = formatCrmProjectLocationLine(address, latitude, longitude);
+  const mapsUrl = buildCrmProjectLocationMapsSearchUrl(address, latitude, longitude);
+  const displayText = formattedLocation ?? '—';
 
   const addressValue =
-    formattedAddress != null && mapsUrl != null ? (
+    formattedLocation != null && mapsUrl != null ? (
       <a
         href={mapsUrl}
         target="_blank"
         rel="noopener noreferrer"
         className={`${styles.summaryText} ${styles.summaryLink}${layout === 'mobile' ? ` ${styles.projectInfoMobileValue}` : ''}`}
-        title={formattedAddress}
+        title={formattedLocation}
       >
-        {formattedAddress}
+        {formattedLocation}
       </a>
     ) : (
       <span
         className={`${styles.summaryText}${layout === 'mobile' ? ` ${styles.projectInfoMobileValue}` : ''}`}
-        title={formattedAddress ?? undefined}
+        title={formattedLocation ?? undefined}
       >
         {displayText}
       </span>
@@ -95,7 +108,11 @@ export function ProjectSummaryAddress({
         <span className={styles.projectInfoMobileLabel}>{label}</span>
         <div className={styles.projectInfoMobileAddressValueRow}>
           <div className={styles.projectInfoMobileAddressValue}>
-            <MobileAddressValue address={address} />
+            <MobileAddressValue
+              address={address}
+              latitude={latitude}
+              longitude={longitude}
+            />
           </div>
           {editAction ?? null}
         </div>

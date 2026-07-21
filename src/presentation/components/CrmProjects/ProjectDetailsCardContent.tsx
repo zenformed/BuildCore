@@ -5,7 +5,7 @@ import type { CrmIndustry, CrmTeamMemberRef } from '@/domain/crm';
 import type { CrmProjectPreview } from '@/domain/crm/projectPreview';
 import type { ProjectCustomFieldDefinition } from '@/domain/buildcore/projectCustomFields';
 import type { ProjectPaymentFinancials } from '@/domain/crm/projectPaymentValue';
-import { formatCrmProjectAddressLine } from '@/domain/crm/projectAddress';
+import { formatCrmProjectLocationLine } from '@/domain/crm/projectAddress';
 import { INDUSTRY_LABELS } from '@/domain/crm';
 import { nonEmptyContactValues } from '@/domain/crm/contactMultiValue';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
@@ -49,7 +49,7 @@ export type ProjectDetailsCardContentProps = {
   readonly financials?: ProjectPaymentFinancials | null;
   readonly stageLabel?: string | null;
   readonly progressPercent?: number | null;
-  readonly mode: 'preview' | 'full';
+  readonly mode: 'preview' | 'full' | 'map';
   readonly edit?: ProjectDetailsEditContext | null;
 };
 
@@ -260,7 +260,11 @@ export function ProjectDetailsCardContent({
 
   const assignedDisplay =
     summary.assignedTo?.displayName?.trim() || content.projectDetail.unassigned;
-  const addressDisplay = formatCrmProjectAddressLine(summary.address);
+  const addressDisplay = formatCrmProjectLocationLine(
+    summary.address,
+    summary.latitude,
+    summary.longitude
+  );
   const industryDisplay =
     summary.industry === 'other'
       ? summary.customIndustry?.trim() || INDUSTRY_LABELS.other
@@ -462,6 +466,47 @@ export function ProjectDetailsCardContent({
             </dl>
           </section>
         ) : null}
+      </div>
+    );
+  }
+
+  if (mode === 'map') {
+    const labelPosition = 'above' as const;
+
+    return (
+      <div className={cardStyles.previewBody}>
+        <section className={cardStyles.previewSection} aria-label={previewCopy.sections.overview}>
+          <div className={cardStyles.previewMetaRow}>
+            <PreviewMetaColumn
+              label={previewCopy.labels.contact}
+              labelPosition={labelPosition}
+              value={summary.contact.name || emptyValue}
+            />
+          </div>
+          <div className={`${cardStyles.previewMetaRow} ${cardStyles.previewMetaRow_spaced}`}>
+            <PreviewMetaColumn
+              label={previewCopy.labels.email}
+              labelPosition={labelPosition}
+              value={<StackedMetaList values={emails} emptyValue={emptyValue} />}
+            />
+          </div>
+          <div className={`${cardStyles.previewMetaRow} ${cardStyles.previewMetaRow_spaced}`}>
+            <PreviewMetaColumn
+              label={previewCopy.labels.phone}
+              labelPosition={labelPosition}
+              value={<StackedMetaList values={phones} emptyValue={emptyValue} />}
+            />
+          </div>
+          <div
+            className={`${cardStyles.previewMetaRow} ${cardStyles.previewMetaRow_spaced} ${cardStyles.mapNotesRow}`}
+          >
+            <PreviewMetaColumn
+              label={previewCopy.labels.notes}
+              labelPosition={labelPosition}
+              value={notesText || emptyValue}
+            />
+          </div>
+        </section>
       </div>
     );
   }

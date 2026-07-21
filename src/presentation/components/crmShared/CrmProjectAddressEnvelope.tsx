@@ -2,20 +2,27 @@
 
 import type { ReactElement } from 'react';
 import type { CrmProjectAddress } from '@/domain/crm';
-import { formatCrmProjectAddressEnvelopeLines } from '@/domain/crm/projectAddress';
+import {
+  formatCrmProjectAddressEnvelopeLines,
+  formatCrmProjectCoordinateLine,
+} from '@/domain/crm/projectAddress';
 import shared from './crmShared.module.css';
 
 export type CrmProjectAddressEnvelopeProps = {
   readonly address: CrmProjectAddress;
+  readonly latitude?: number | null;
+  readonly longitude?: number | null;
 };
 
 export function CrmProjectAddressEnvelope({
   address,
+  latitude = null,
+  longitude = null,
 }: CrmProjectAddressEnvelopeProps): ReactElement {
   const { line1, line2 } = formatCrmProjectAddressEnvelopeLines(address);
 
   if (!line1 && !line2) {
-    return <>—</>;
+    return <>{formatCrmProjectCoordinateLine(latitude, longitude) ?? '—'}</>;
   }
 
   return (

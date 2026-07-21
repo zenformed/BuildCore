@@ -1,3 +1,5 @@
+import { validateCrmProjectCoordinates } from './projectCoordinates';
+
 export type CrmProjectAddress = {
   readonly addressLine1: string | null;
   readonly addressLine2: string | null;
@@ -51,6 +53,31 @@ export function formatCrmProjectAddressLine(address: CrmProjectAddress): string 
   return parts.length > 0 ? parts.join(', ') : null;
 }
 
+function formatCoordinate(value: number): string {
+  return String(Number(value.toFixed(6)));
+}
+
+export function formatCrmProjectCoordinateLine(
+  latitude: number | null,
+  longitude: number | null
+): string | null {
+  const validated = validateCrmProjectCoordinates(latitude, longitude);
+  if (!validated.ok || validated.coordinates == null) return null;
+  return `${formatCoordinate(validated.coordinates.latitude)}, ${formatCoordinate(validated.coordinates.longitude)}`;
+}
+
+/** Prefers a street address and falls back to a valid coordinate pair. */
+export function formatCrmProjectLocationLine(
+  address: CrmProjectAddress,
+  latitude: number | null,
+  longitude: number | null
+): string | null {
+  return (
+    formatCrmProjectAddressLine(address) ??
+    formatCrmProjectCoordinateLine(latitude, longitude)
+  );
+}
+
 /** Envelope-style display: street line(s) with trailing comma, then city/state/zip line. */
 export function formatCrmProjectAddressEnvelopeLines(
   address: CrmProjectAddress
@@ -99,6 +126,16 @@ export function crmProjectAddressSearchText(address: CrmProjectAddress): string 
 
 export function buildCrmProjectMapsSearchUrl(address: CrmProjectAddress): string | null {
   const formatted = formatCrmProjectAddressLine(address);
+  if (!formatted) return null;
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(formatted)}`;
+}
+
+export function buildCrmProjectLocationMapsSearchUrl(
+  address: CrmProjectAddress,
+  latitude: number | null,
+  longitude: number | null
+): string | null {
+  const formatted = formatCrmProjectLocationLine(address, latitude, longitude);
   if (!formatted) return null;
   return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(formatted)}`;
 }

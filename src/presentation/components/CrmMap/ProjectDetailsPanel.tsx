@@ -13,9 +13,12 @@ import {
   resolveProjectWorkflowProgressDisplayFromIndex,
 } from '@/domain/buildcore/projectPipelineProgress';
 import type { CrmProjectWorkflowProgressInputIndex } from '@/domain/crm/projectWorkflowProgressInput';
-import { formatCrmProjectAddressLine } from '@/domain/crm/projectAddress';
+import { formatCrmProjectLocationLine } from '@/domain/crm/projectAddress';
+import { INDUSTRY_LABELS } from '@/domain/crm';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
+import { ProjectProgressPercent } from '@/presentation/components/CrmProjectDetail/ProjectProgressPercent';
 import { ProjectDetailsCardContent } from '@/presentation/components/CrmProjects/ProjectDetailsCardContent';
+import { TeamMemberAvatar } from '@/presentation/components/CrmProjectDetail/TeamMemberAvatar';
 import { formatWorkflowStageLabel } from '@/presentation/features/crmProjectDetail/crmProjectDetailFormatters';
 import {
   buildProjectPrimaryPhotoApiPath,
@@ -26,6 +29,7 @@ import type { CrmMapSearchableProject } from '@/presentation/features/crmMap';
 import { useBuildCorePipelineStages } from '@/presentation/providers/BuildCorePipelineStagesProvider';
 import { useBuildCoreProjectCustomFieldsForScope } from '@/presentation/providers/BuildCoreProjectCustomFieldsProvider';
 import cardStyles from '@/presentation/components/CrmProjectDetail/WorkflowTaskPreviewCard.module.css';
+import shared from '@/presentation/components/crmShared/crmShared.module.css';
 import styles from './CrmMap.module.css';
 
 export type ProjectDetailsPanelProps = {
@@ -161,14 +165,46 @@ export function ProjectDetailsPanel({
   }, [catalog, selected.summary, workflowProgressInputIndex]);
 
   const addressDisplay =
-    (preview != null ? formatCrmProjectAddressLine(preview.summary.address) : null) ||
+    (preview != null
+      ? formatCrmProjectLocationLine(
+          preview.summary.address,
+          preview.summary.latitude,
+          preview.summary.longitude
+        )
+      : null) ||
     selected.marker.addressLabel ||
     null;
+  const headerStageLabel =
+    stageLabel?.trim() ||
+    formatWorkflowStageLabel(selected.summary.currentStageSlug, catalog);
+  const industryDisplay =
+    selected.summary.industry === 'other'
+      ? selected.summary.customIndustry?.trim() || INDUSTRY_LABELS.other
+      : INDUSTRY_LABELS[selected.summary.industry];
+  const assignedTo = selected.summary.assignedTo;
 
   const body = (
     <>
       <div className={styles.detailsPanelHeader}>
-        <h2 className={styles.detailsPanelTitle}>{selected.projectName}</h2>
+        <div className={styles.detailsHeaderSummary}>
+          <h2 className={styles.detailsPanelTitle}>{selected.projectName}</h2>
+          <span className={styles.detailsIndustry}>{industryDisplay}</span>
+          <div className={styles.detailsHeaderMeta}>
+            <span className={`${shared.stagePill} ${styles.detailsStagePill}`}>
+              {headerStageLabel}
+            </span>
+            {progress ? (
+              <div className={styles.detailsHeaderProgress}>
+                <ProjectProgressPercent progress={progress} variant="compact" tone="progress" />
+              </div>
+            ) : null}
+          </div>
+        </div>
+        {assignedTo ? (
+          <span className={styles.detailsAssigneeAvatar}>
+            <TeamMemberAvatar member={assignedTo} />
+          </span>
+        ) : null}
         <button
           type="button"
           className={styles.detailsCloseBtn}
@@ -196,7 +232,7 @@ export function ProjectDetailsPanel({
               customFieldDefinitions={activeDefinitions}
               stageLabel={stageLabel}
               progressPercent={progress?.textPercent ?? null}
-              mode="preview"
+              mode="map"
             />
           </div>
         ) : null}

@@ -17,8 +17,8 @@ import type { CrmMyTaskAssigneeScope, CrmMyTaskAssignment } from '@/domain/crm/m
 import { groupCrmMyTasksByParentProject } from '@/domain/crm/myTaskAssignment';
 import type { WorkflowTaskStatus } from '@/domain/crm';
 import {
-  buildCrmProjectMapsSearchUrl,
-  formatCrmProjectAddressLine,
+  buildCrmProjectLocationMapsSearchUrl,
+  formatCrmProjectLocationLine,
 } from '@/domain/crm/projectAddress';
 import { extractUsPhoneDigits } from '@/domain/crm/phoneFormat';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
@@ -138,8 +138,14 @@ function MemberMyTaskProjectPreviewIcon({
   const phoneDigits = extractUsPhoneDigits(rawPhone);
   const phoneHref = phoneDigits.length > 0 ? `tel:+1${phoneDigits}` : null;
 
-  const addressDisplay = displayOrDash(formatCrmProjectAddressLine(task.address) ?? '');
-  const addressHref = buildCrmProjectMapsSearchUrl(task.address);
+  const addressDisplay = displayOrDash(
+    formatCrmProjectLocationLine(task.address, task.latitude, task.longitude) ?? ''
+  );
+  const addressHref = buildCrmProjectLocationMapsSearchUrl(
+    task.address,
+    task.latitude,
+    task.longitude
+  );
 
   const preview = useCellHoverPreview({
     ariaLabel: copy.projectPreviewAriaLabel(resolvedProjectName),
