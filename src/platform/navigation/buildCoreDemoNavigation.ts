@@ -32,6 +32,7 @@ export const buildCoreDemoNavigation: BuildCoreNavigation = {
     ...buildCoreDashboardNavigation.routes,
     dashboard: `${DEMO_PREFIX}/dashboard`,
     reports: `${DEMO_PREFIX}/reports`,
+    photos: `${DEMO_PREFIX}/reports/photos`,
     teams: `${DEMO_PREFIX}/teams`,
     workflowStages: `${DEMO_PREFIX}/workflow-settings`,
     home: DEMO_PREFIX,
@@ -53,6 +54,7 @@ export const buildCoreDemoNavigation: BuildCoreNavigation = {
       (item) =>
         item.id === 'projects' ||
         item.id === 'reports' ||
+        item.id === 'photos' ||
         item.id === 'workflowStages' ||
         item.id === 'teams'
     ),

@@ -8,6 +8,7 @@ import {
 } from './buildCoreSidebarNavModel';
 import {
   ListIcon,
+  ImageIcon,
   ReportsIcon,
   TeamsIcon,
   WorkflowStagesIcon,
@@ -17,6 +18,7 @@ import styles from './BuildCoreSidebar.module.css';
 export type BuildCoreSidebarNavId =
   | 'projects'
   | 'reports'
+  | 'photos'
   | 'teams'
   | 'workflowStages'
   | 'notifications';
@@ -24,6 +26,7 @@ export type BuildCoreSidebarNavId =
 const SIDEBAR_ICONS: Record<BuildCoreSidebarNavId, () => ReactElement> = {
   projects: ListIcon,
   reports: ReportsIcon,
+  photos: ImageIcon,
   teams: TeamsIcon,
   workflowStages: WorkflowStagesIcon,
   notifications: ListIcon,

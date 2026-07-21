@@ -39,6 +39,10 @@ export function BuildCorePersistentDashboardShell({
         }
         return;
       }
+      if (id === 'photos') {
+        router.push(nav.routes.photos);
+        return;
+      }
       if (id === 'teams') {
         if (dash.canAccessBuildCoreTeams) {
           router.push(nav.routes.teams);
@@ -71,10 +75,12 @@ export function BuildCorePersistentDashboardShell({
   useEffect(() => {
     const onReportsRoute =
       pathname === nav.routes.reports || pathname.startsWith(`${nav.routes.reports}/`);
-    if (onReportsRoute && isMemberRole) {
+    const onPhotosRoute =
+      pathname === nav.routes.photos || pathname.startsWith(`${nav.routes.photos}/`);
+    if (onReportsRoute && !onPhotosRoute && isMemberRole) {
       router.replace(nav.routes.dashboard);
     }
-  }, [isMemberRole, pathname, router]);
+  }, [isMemberRole, nav.routes.photos, nav.routes.reports, pathname, router]);
 
   useEffect(() => {
     const onWorkflowStagesRoute =

@@ -8,7 +8,7 @@ import {
   useState,
   type ReactElement,
 } from 'react';
-import type { CrmDocumentMetadata, CrmProjectDetail } from '@/domain/crm';
+import type { CrmDocumentMetadata } from '@/domain/crm';
 import {
   groupDocumentsByGalleryDay,
   type DocumentGalleryDayGroup,
@@ -34,17 +34,25 @@ import { DocumentsGalleryPreview } from './DocumentsGalleryPreview';
 import styles from './ProjectDetail.module.css';
 
 export type DocumentsGalleryProps = {
-  readonly project: CrmProjectDetail;
   readonly documents: readonly CrmDocumentMetadata[];
-  readonly projectLabel: string;
+  readonly resolveProjectSlug: (doc: CrmDocumentMetadata) => string;
+  readonly resolveProjectLabel: (doc: CrmDocumentMetadata) => string;
   readonly resolveTaskTitle: (doc: CrmDocumentMetadata) => string;
+  readonly onDownloadDocument: (doc: CrmDocumentMetadata) => Promise<void>;
+  readonly onDeleteDocument?: (doc: CrmDocumentMetadata) => Promise<void>;
+  readonly canDeleteDocument?: (doc: CrmDocumentMetadata) => boolean;
+  readonly emptyMessage?: string;
 };
 
 export function DocumentsGallery({
-  project,
   documents,
-  projectLabel,
+  resolveProjectSlug,
+  resolveProjectLabel,
   resolveTaskTitle,
+  onDownloadDocument,
+  onDeleteDocument,
+  canDeleteDocument,
+  emptyMessage,
 }: DocumentsGalleryProps): ReactElement {
   const rowSelection = useDocumentRowSelection();
   const galleryCopy = content.projectDetail.documents.gallery;
@@ -171,7 +179,11 @@ export function DocumentsGallery({
   );
 
   if (documents.length === 0) {
-    return <p className={styles.subtitle}>{content.projectDetail.documents.empty}</p>;
+    return (
+      <p className={styles.subtitle}>
+        {emptyMessage ?? content.projectDetail.documents.empty}
+      </p>
+    );
   }
 
   return (
@@ -273,7 +285,7 @@ export function DocumentsGallery({
                           return (
                             <DocumentsGalleryTile
                               key={item.id}
-                              projectSlug={project.summary.slug}
+                              projectSlug={resolveProjectSlug(doc)}
                               document={doc}
                               width={item.width}
                               height={item.height}
@@ -294,12 +306,15 @@ export function DocumentsGallery({
 
       {previewDocumentId != null ? (
         <DocumentsGalleryPreview
-          project={project}
           documents={documents}
           orderedIds={orderedIds}
           initialDocumentId={previewDocumentId}
-          projectLabel={projectLabel}
+          resolveProjectSlug={resolveProjectSlug}
+          resolveProjectLabel={resolveProjectLabel}
           resolveTaskTitle={resolveTaskTitle}
+          onDownloadDocument={onDownloadDocument}
+          onDeleteDocument={onDeleteDocument}
+          canDeleteDocument={canDeleteDocument}
           onClose={() => setPreviewDocumentId(null)}
         />
       ) : null}

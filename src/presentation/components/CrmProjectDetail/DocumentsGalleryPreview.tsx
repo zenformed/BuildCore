@@ -9,7 +9,7 @@ import {
   type PointerEvent as ReactPointerEvent,
   type ReactElement,
 } from 'react';
-import type { CrmDocumentMetadata, CrmProjectDetail } from '@/domain/crm';
+import type { CrmDocumentMetadata } from '@/domain/crm';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
 import { formatBuildCoreDisplayDateTime } from '@/platform/formatting/buildCoreDisplayDate';
 import {
@@ -22,35 +22,38 @@ import {
   isCrmDocumentVideo,
 } from '@/presentation/features/crmProjectDetail/documentGalleryMedia';
 import { useCrmDocumentPreviewBlob } from '@/presentation/features/crmProjectDetail/useCrmDocumentPreviewBlob';
-import { useProjectDocumentModalActions } from '@/presentation/features/crmProjectDetail/useProjectDocumentModalActions';
 import { useDashboardMobileLayout } from '@/presentation/features/crmProjects/useDashboardMobileLayout';
-import { useProjectDetailShell } from '@/presentation/features/crmProjectDetail/ProjectDetailShellContext';
 import { WorkflowDocumentFileIcon } from './WorkflowDocumentFileIcon';
 import styles from './ProjectDetail.module.css';
 
 export type DocumentsGalleryPreviewProps = {
-  readonly project: CrmProjectDetail;
   readonly documents: readonly CrmDocumentMetadata[];
   readonly orderedIds: readonly string[];
   readonly initialDocumentId: string;
-  readonly projectLabel: string;
+  readonly resolveProjectSlug: (doc: CrmDocumentMetadata) => string;
+  readonly resolveProjectLabel: (doc: CrmDocumentMetadata) => string;
   readonly resolveTaskTitle: (doc: CrmDocumentMetadata) => string;
+  readonly onDownloadDocument: (doc: CrmDocumentMetadata) => Promise<void>;
+  readonly onDeleteDocument?: (doc: CrmDocumentMetadata) => Promise<void>;
+  readonly canDeleteDocument?: (doc: CrmDocumentMetadata) => boolean;
   readonly onClose: () => void;
 };
 
 export function DocumentsGalleryPreview({
-  project,
   documents,
   orderedIds,
   initialDocumentId,
-  projectLabel,
+  resolveProjectSlug,
+  resolveProjectLabel,
   resolveTaskTitle,
+  onDownloadDocument,
+  onDeleteDocument,
+  canDeleteDocument,
   onClose,
 }: DocumentsGalleryPreviewProps): ReactElement | null {
   const docsCopy = content.projectDetail.documents;
   const galleryCopy = docsCopy.gallery;
   const wf = content.projectDetail.workflow;
-  const { setToast, guardProjectEdit } = useProjectDetailShell();
   const isMobileLayout = useDashboardMobileLayout();
   const [activeId, setActiveId] = useState(initialDocumentId);
   const [metaOpen, setMetaOpen] = useState(!isMobileLayout);
@@ -73,19 +76,10 @@ export function DocumentsGalleryPreview({
   const canNext = activeIndex >= 0 && activeIndex < orderedIds.length - 1;
 
   const blobUrl = useCrmDocumentPreviewBlob(
-    project.summary.slug,
+    activeDoc != null ? resolveProjectSlug(activeDoc) : '',
     activeDoc,
     activeDoc != null
   );
-
-  const { downloadDocument, deleteDocument } = useProjectDocumentModalActions({
-    projectSlug: project.summary.slug,
-    onChanged: async () => {
-      onClose();
-    },
-    onError: (message) => setToast({ kind: 'error', message }),
-    onDemoDownloadBlocked: (message) => setToast({ kind: 'success', message }),
-  });
 
   const goPrev = useCallback(() => {
     if (!canPrev) return;
@@ -168,7 +162,7 @@ export function DocumentsGalleryPreview({
   const isPdf = isCrmDocumentPdf(activeDoc.name, activeDoc.mimeType);
 
   const metaRows = [
-    { label: galleryCopy.metadata.project, value: projectLabel },
+    { label: galleryCopy.metadata.project, value: resolveProjectLabel(activeDoc) },
     { label: galleryCopy.metadata.fileName, value: activeDoc.name },
     {
       label: galleryCopy.metadata.fileType,
@@ -211,7 +205,9 @@ export function DocumentsGalleryPreview({
               void (async () => {
                 setBusy(true);
                 try {
-                  await downloadDocument(activeDoc);
+                  await onDownloadDocument(activeDoc);
+                } catch {
+                  // Consumer owns toast/error presentation.
                 } finally {
                   setBusy(false);
                 }
@@ -220,27 +216,30 @@ export function DocumentsGalleryPreview({
           >
             <span className={styles.inlineMenuDownloadIcon} aria-hidden />
           </button>
-          <button
-            type="button"
-            className={styles.docGalleryPreviewToolbarBtn}
-            disabled={busy}
-            title={wf.documentDelete}
-            aria-label={wf.documentDelete}
-            onClick={() => {
-              guardProjectEdit(() => {
+          {onDeleteDocument != null &&
+          (canDeleteDocument?.(activeDoc) ?? true) ? (
+            <button
+              type="button"
+              className={styles.docGalleryPreviewToolbarBtn}
+              disabled={busy}
+              title={wf.documentDelete}
+              aria-label={wf.documentDelete}
+              onClick={() => {
                 void (async () => {
                   setBusy(true);
                   try {
-                    await deleteDocument(activeDoc);
+                    await onDeleteDocument(activeDoc);
+                  } catch {
+                    // Consumer owns toast/error presentation.
                   } finally {
                     setBusy(false);
                   }
                 })();
-              });
-            }}
-          >
-            <span className={styles.inlineMenuDeleteIcon} aria-hidden />
-          </button>
+              }}
+            >
+              <span className={styles.inlineMenuDeleteIcon} aria-hidden />
+            </button>
+          ) : null}
           {isMobileLayout ? (
             <button
               type="button"

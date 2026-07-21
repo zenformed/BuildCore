@@ -16,10 +16,17 @@ export type DocumentRowSelectionBulkActions = {
   readonly canDownload: boolean;
   readonly canDelete: boolean;
   readonly downloadableDocumentIds: ReadonlySet<string>;
+  readonly deletableDocumentIds?: ReadonlySet<string>;
   readonly documentsById: ReadonlyMap<string, CrmDocumentMetadata>;
+  readonly onDownloadDocuments: (documentIds: readonly string[]) => Promise<void>;
   readonly onDeleteDocuments: (
     documentIds: readonly string[]
   ) => Promise<{ deletedCount: number; failedCount: number }>;
+  readonly onFeedback: (feedback: {
+    readonly kind: 'success' | 'error';
+    readonly message: string;
+  }) => void;
+  readonly guardDelete: (action: () => void) => void;
 };
 
 export type DocumentRowSelectionContextValue = BulkSelectionBindings & {

@@ -42,3 +42,12 @@ export function buildDocumentsZipFileName(projectName: string, now = new Date())
   if (!safeName) return `documents-${stamp}.zip`;
   return `${safeName}-documents-${stamp}.zip`;
 }
+
+export function buildPhotosZipFileName(now = new Date()): string {
+  const stamp = [
+    now.getFullYear(),
+    String(now.getMonth() + 1).padStart(2, '0'),
+    String(now.getDate()).padStart(2, '0'),
+  ].join('-');
+  return `photos-${stamp}.zip`;
+}

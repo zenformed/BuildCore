@@ -12,7 +12,9 @@ import {
 import { filterDocumentPanelItemsBySearch } from '@/presentation/features/crmProjectDetail/projectSectionSearchModel';
 import { useDashboardMobileLayout } from '@/presentation/features/crmProjects/useDashboardMobileLayout';
 import { useProjectDetailShell } from '@/presentation/features/crmProjectDetail/ProjectDetailShellContext';
+import { useProjectDocumentModalActions } from '@/presentation/features/crmProjectDetail/useProjectDocumentModalActions';
 import { deleteCrmProjectDocumentsBulk } from '@/presentation/features/crmProjectDetail/deleteCrmProjectDocumentsBulk';
+import { downloadCrmProjectDocumentsBulk } from '@/presentation/features/crmProjectDetail/downloadCrmProjectDocumentsBulk';
 import {
   DocumentRowSelectionProvider,
   type DocumentRowSelectionBulkActions,
@@ -64,6 +66,7 @@ export function ProjectDocumentsTabPanel({
     onDocumentsDeleted,
     setToast,
     projectMutationsLocked,
+    guardProjectEdit,
   } = useProjectDetailShell();
   const docs = content.projectDetail.documents;
   const isMobileLayout = useDashboardMobileLayout();
@@ -95,6 +98,13 @@ export function ProjectDocumentsTabPanel({
       return next;
     });
   };
+
+  const previewActions = useProjectDocumentModalActions({
+    projectSlug: project.summary.slug,
+    onChanged: handleRefresh,
+    onError: handleError,
+    onDemoDownloadBlocked: (message) => setToast({ kind: 'success', message }),
+  });
 
   const items = useMemo(() => {
     const byFilter = filterDocumentPanelItems(
@@ -185,6 +195,9 @@ export function ProjectDocumentsTabPanel({
       canDelete: !projectMutationsLocked,
       downloadableDocumentIds,
       documentsById,
+      onDownloadDocuments: async (documentIds) => {
+        await downloadCrmProjectDocumentsBulk(project.summary.slug, documentIds);
+      },
       onDeleteDocuments: async (documentIds) => {
         const docsToDelete: CrmDocumentMetadata[] = [];
         for (const documentId of documentIds) {
@@ -221,15 +234,19 @@ export function ProjectDocumentsTabPanel({
           failedCount: failedCount + (documentIds.length - docsToDelete.length),
         };
       },
+      onFeedback: setToast,
+      guardDelete: guardProjectEdit,
     }),
     [
       documentsById,
       downloadableDocumentIds,
+      guardProjectEdit,
       onDocumentsDeleted,
       onRefresh,
       project.documents,
       project.summary.slug,
       projectMutationsLocked,
+      setToast,
     ]
   );
 
@@ -323,10 +340,13 @@ export function ProjectDocumentsTabPanel({
               />
             ) : null}
             <DocumentsGallery
-              project={project}
               documents={visibleDocuments}
-              projectLabel={projectLabel}
+              resolveProjectSlug={() => project.summary.slug}
+              resolveProjectLabel={() => projectLabel}
               resolveTaskTitle={resolveTaskTitle}
+              onDownloadDocument={previewActions.downloadDocument}
+              onDeleteDocument={previewActions.deleteDocument}
+              canDeleteDocument={() => !projectMutationsLocked}
             />
           </>
         ) : (

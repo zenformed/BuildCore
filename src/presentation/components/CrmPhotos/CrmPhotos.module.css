@@ -1,0 +1,109 @@
+.pageShell {
+  composes: pageShell from '../CrmProjectDetail/ProjectDetail.module.css';
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(24rem, 38rem) minmax(0, 1fr);
+  align-items: end;
+  gap: 1rem;
+  width: 100%;
+  min-width: 0;
+}
+
+.headerTitle {
+  min-width: 0;
+}
+
+.headerSearch {
+  min-width: 0;
+  width: 100%;
+  align-self: center;
+}
+
+.searchInput {
+  width: 100%;
+  max-width: none;
+  min-width: 0;
+  padding: 0.5rem 0.875rem;
+  font-size: 0.9375rem;
+}
+
+.headerActions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  align-self: center;
+  min-width: 0;
+  min-height: 2rem;
+  color: var(--color-text-muted, #64748b);
+}
+
+/* Bigger, breadcrumb-colored bulk action icons in the page header. */
+.headerActions button {
+  width: 2rem;
+  height: 2rem;
+  color: var(--color-text-muted, #64748b);
+}
+
+.headerActions button svg {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+.content {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  overflow: auto;
+}
+
+.state,
+.error {
+  margin: 2rem 0;
+  text-align: center;
+  color: var(--color-text-muted, #64748b);
+}
+
+.error {
+  color: var(--color-danger, #dc2626);
+}
+
+.loadMore {
+  min-height: 2.5rem;
+  padding: 1rem;
+  text-align: center;
+  color: var(--color-text-muted, #64748b);
+  font-size: 0.8125rem;
+}
+
+@media (max-width: 767px) {
+  .header {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+  }
+
+  .headerTitle {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .headerActions {
+    grid-column: 2;
+    grid-row: 1;
+  }
+
+  .headerSearch {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    width: 100%;
+  }
+
+  .content {
+    padding-top: 0.5rem;
+  }
+}

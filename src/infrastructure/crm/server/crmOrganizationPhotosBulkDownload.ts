@@ -1,0 +1,89 @@
+import type { SupabaseClient } from '@supabase/supabase-js';
+import type { IDocumentStorageProvider } from '@/application/ports/storage/IDocumentStorageProvider';
+import { buildPhotosZipFileName } from '@/domain/crm/documentZipEntryNames';
+import { CrmDocumentServiceError } from '@/infrastructure/crm/errors';
+import type { DbCrmDocumentRow } from '@/infrastructure/crm/mappers/mapCrmFromDb';
+import {
+  loadCrmDocumentAttachmentFromRow,
+  type CrmDocumentAttachmentPayload,
+} from './crmDocumentDownloadResponse';
+import { buildCrmDocumentsBulkAttachmentResult } from './crmProjectDocumentsBulkDownload';
+import {
+  loadOrganizationPhotoAccessContext,
+  resolveOrganizationPhotoDocumentAccess,
+  type OrganizationPhotoTaskRow,
+} from './crmOrganizationPhotoAccess';
+
+const DOCUMENT_SELECT =
+  'id, project_id, workflow_task_id, budget_entry_id, document_type, file_name, mime_type, file_size_bytes, upload_status, uploaded_by_member_id, reviewed_by_member_id, reviewed_at, created_at, safe_file_name, storage_provider, storage_bucket, storage_key, storage_path, deleted_at';
+
+export async function buildCrmOrganizationPhotosBulkDownloadForViewer(
+  supabase: SupabaseClient,
+  storage: IDocumentStorageProvider,
+  organizationId: string,
+  userId: string,
+  documentIds: readonly string[]
+): Promise<CrmDocumentAttachmentPayload> {
+  const ids = [...new Set(documentIds.map((id) => id.trim()).filter(Boolean))];
+  if (ids.length === 0) {
+    throw new CrmDocumentServiceError('INVALID_FILE_TYPE', 'Select at least one photo');
+  }
+
+  const { data, error } = await supabase
+    .from('crm_documents')
+    .select(DOCUMENT_SELECT)
+    .eq('organization_id', organizationId)
+    .in('id', ids)
+    .like('mime_type', 'image/%')
+    .eq('upload_status', 'ready')
+    .is('deleted_at', null);
+  if (error) throw new Error(error.message);
+  const rows = (data ?? []) as DbCrmDocumentRow[];
+  if (rows.length !== ids.length) {
+    throw new CrmDocumentServiceError('not_found', 'One or more photos were not found');
+  }
+
+  const taskIds = rows
+    .map((row) => row.workflow_task_id)
+    .filter((id): id is string => typeof id === 'string' && id.length > 0);
+  const { data: taskData, error: taskError } =
+    taskIds.length === 0
+      ? { data: [] as OrganizationPhotoTaskRow[], error: null }
+      : await supabase
+          .from('crm_workflow_tasks')
+          .select('id, project_id, title, stage_slug, assigned_member_id, amount_cents')
+          .eq('organization_id', organizationId)
+          .in('id', [...new Set(taskIds)])
+          .is('archived_at', null);
+  if (taskError) throw new Error(taskError.message);
+  const taskById = new Map(
+    ((taskData ?? []) as OrganizationPhotoTaskRow[]).map(
+      (task) => [task.id, task] as const
+    )
+  );
+  const access = await loadOrganizationPhotoAccessContext(
+    supabase,
+    organizationId,
+    userId
+  );
+  for (const row of rows) {
+    const task = row.workflow_task_id ? taskById.get(row.workflow_task_id) ?? null : null;
+    const permission = resolveOrganizationPhotoDocumentAccess(access, row, task);
+    if (!permission.visible || !permission.canDownload) {
+      throw new CrmDocumentServiceError(
+        'forbidden',
+        'You cannot download one or more selected photos'
+      );
+    }
+  }
+
+  const rowById = new Map(rows.map((row) => [row.id, row] as const));
+  const attachments = await Promise.all(
+    ids.map(async (id) => {
+      const row = rowById.get(id);
+      if (!row) throw new CrmDocumentServiceError('not_found', 'Photo not found');
+      return loadCrmDocumentAttachmentFromRow(storage, row);
+    })
+  );
+  return buildCrmDocumentsBulkAttachmentResult(attachments, buildPhotosZipFileName());
+}

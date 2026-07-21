@@ -9,6 +9,7 @@ export type BuildCoreNavigation = {
     readonly forgotPassword: string;
     readonly resetPassword: string;
     readonly reports: string;
+    readonly photos: string;
     readonly teams: string;
     readonly workflowStages: string;
     readonly notifications: string;
@@ -25,7 +26,7 @@ export type BuildCoreNavigation = {
   readonly sidebar: {
     readonly ariaLabel: string;
     readonly items: ReadonlyArray<{
-      readonly id: 'projects' | 'reports' | 'teams' | 'workflowStages';
+      readonly id: 'projects' | 'reports' | 'photos' | 'teams' | 'workflowStages';
       readonly label: string;
       readonly title: string;
     }>;

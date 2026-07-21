@@ -27,6 +27,13 @@ export function resolveBuildCoreDashboardShellConfig(
     };
   }
 
+  if (pathname === nav.routes.photos || pathname.startsWith(`${nav.routes.photos}/`)) {
+    return {
+      sidebarActiveId: 'photos',
+      title: null,
+    };
+  }
+
   if (pathname === nav.routes.reports || pathname.startsWith(`${nav.routes.reports}/`)) {
     return {
       sidebarActiveId: 'reports',

@@ -46,6 +46,7 @@ const buildCoreDashboardNavigationSource = {
     forgotPassword: '/forgot-password',
     resetPassword: '/reset-password',
     reports: '/reports',
+    photos: '/reports/photos',
     teams: '/teams',
     workflowStages: '/workflow-settings',
     notifications: '/notifications',
@@ -65,6 +66,7 @@ const buildCoreDashboardNavigationSource = {
     items: [
       { id: 'projects' as const, label: T.projects, title: `All ${T.projectsLc}` },
       { id: 'reports' as const, label: 'Reports', title: 'CRM reports' },
+      { id: 'photos' as const, label: 'Photos', title: 'Photos across all projects' },
       { id: 'teams' as const, label: 'Teams', title: 'Teams' },
       { id: 'workflowStages' as const, label: 'Workflow Settings', title: 'Workflow settings' },
     ],

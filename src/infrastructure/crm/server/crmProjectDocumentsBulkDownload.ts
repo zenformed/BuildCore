@@ -27,6 +27,32 @@ const DOCUMENT_SELECT =
 
 export type CrmProjectDocumentsBulkDownloadResult = CrmDocumentAttachmentPayload;
 
+export async function buildCrmDocumentsBulkAttachmentResult(
+  attachments: readonly CrmDocumentAttachmentPayload[],
+  zipFileName: string
+): Promise<CrmDocumentAttachmentPayload> {
+  if (attachments.length === 0) {
+    throw new CrmDocumentServiceError('not_found', 'No documents were found');
+  }
+  if (attachments.length === 1) return attachments[0]!;
+
+  const entryNames = uniqueZipEntryFileNames(attachments.map((item) => item.fileName));
+  const zip = new JSZip();
+  for (let i = 0; i < attachments.length; i += 1) {
+    zip.file(entryNames[i]!, attachments[i]!.buffer);
+  }
+  const zipBuffer = await zip.generateAsync({
+    type: 'nodebuffer',
+    compression: 'DEFLATE',
+    compressionOptions: { level: 6 },
+  });
+  return {
+    fileName: zipFileName,
+    mimeType: 'application/zip',
+    buffer: Buffer.from(zipBuffer),
+  };
+}
+
 function resolveDocumentDownloadDomain(
   row: Pick<DbCrmDocumentRow, 'workflow_task_id' | 'budget_entry_id'>,
   taskAmountCents: number | null | undefined
@@ -186,26 +212,9 @@ export async function buildCrmProjectDocumentsBulkDownloadForOrg(
     }
   }
 
-  if (attachments.length === 1) {
-    return attachments[0]!;
-  }
-
-  const entryNames = uniqueZipEntryFileNames(attachments.map((item) => item.fileName));
-  const zip = new JSZip();
-  for (let i = 0; i < attachments.length; i += 1) {
-    zip.file(entryNames[i]!, attachments[i]!.buffer);
-  }
-
   const projectName = await loadProjectName(supabase, organizationId, projectId);
-  const zipBuffer = await zip.generateAsync({
-    type: 'nodebuffer',
-    compression: 'DEFLATE',
-    compressionOptions: { level: 6 },
-  });
-
-  return {
-    fileName: buildDocumentsZipFileName(projectName),
-    mimeType: 'application/zip',
-    buffer: Buffer.from(zipBuffer),
-  };
+  return buildCrmDocumentsBulkAttachmentResult(
+    attachments,
+    buildDocumentsZipFileName(projectName)
+  );
 }

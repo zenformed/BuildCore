@@ -8,6 +8,7 @@ export type DetailPanelSectionSearchProps = {
   readonly onChange: (value: string) => void;
   readonly placeholder: string;
   readonly ariaLabel: string;
+  readonly className?: string;
 };
 
 export function DetailPanelSectionSearch({
@@ -15,6 +16,7 @@ export function DetailPanelSectionSearch({
   onChange,
   placeholder,
   ariaLabel,
+  className,
 }: DetailPanelSectionSearchProps): ReactElement {
   return (
     <input
@@ -23,7 +25,7 @@ export function DetailPanelSectionSearch({
       onChange={(event) => onChange(event.target.value)}
       placeholder={placeholder}
       aria-label={ariaLabel}
-      className={styles.detailPanelSectionSearch}
+      className={[styles.detailPanelSectionSearch, className].filter(Boolean).join(' ')}
     />
   );
 }

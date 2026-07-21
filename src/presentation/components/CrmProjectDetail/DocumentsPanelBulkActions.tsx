@@ -4,10 +4,8 @@ import { useCallback, useState, type ReactElement } from 'react';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
 import { ConfirmModal } from '@/presentation/components/ConfirmModal';
 import { useDocumentRowSelection } from '@/presentation/features/crmProjectDetail/documentRowSelectionContext';
-import { downloadCrmProjectDocumentsBulk } from '@/presentation/features/crmProjectDetail/downloadCrmProjectDocumentsBulk';
 import { mapCrmDocumentActionError } from '@/presentation/features/crmProjectDetail/crmDocumentActionErrors';
 import { DEMO_DOCUMENT_DOWNLOAD_LOCKED_MESSAGE } from '@/presentation/features/crmProjectDetail/crmProjectDocumentDownloadFeedback';
-import { useProjectDetailShell } from '@/presentation/features/crmProjectDetail/ProjectDetailShellContext';
 import { useCorePlatformDegraded } from '@/presentation/hooks/useCorePlatformDegraded';
 import { isDemoRuntimeClient } from '@/infrastructure/runtime/buildCoreRuntime';
 import styles from './ProjectDetail.module.css';
@@ -58,7 +56,6 @@ function DownloadGlyph({ className }: { readonly className?: string }): ReactEle
 /** Gmail-style bulk download/delete for the Documents panel toolbar. */
 export function DocumentsPanelBulkActions(): ReactElement | null {
   const rowSelection = useDocumentRowSelection();
-  const { project, setToast, guardProjectEdit } = useProjectDetailShell();
   const docs = content.projectDetail.documents;
   const wf = content.projectDetail.workflow;
   const bulkCopy = content.bulkSelection;
@@ -76,11 +73,18 @@ export function DocumentsPanelBulkActions(): ReactElement | null {
     [...(rowSelection?.selectedIds ?? [])].every((id) =>
       bulkActions.downloadableDocumentIds.has(id)
     );
+  const canDeleteSelection =
+    bulkActions != null &&
+    selectedCount > 0 &&
+    bulkActions.canDelete &&
+    [...(rowSelection?.selectedIds ?? [])].every((id) =>
+      (bulkActions.deletableDocumentIds ?? bulkActions.documentsById).has(id)
+    );
   const showChrome =
     rowSelection != null &&
     selectedCount > 0 &&
     bulkActions != null &&
-    (canDownloadSelection || bulkActions.canDelete);
+    (canDownloadSelection || canDeleteSelection);
 
   const downloadLabel =
     selectedCount === 1 ? docs.bulkDownloadDocument : docs.bulkDownloadDocuments;
@@ -89,21 +93,24 @@ export function DocumentsPanelBulkActions(): ReactElement | null {
     if (rowSelection == null || bulkActions == null || !canDownloadSelection) return;
     if (busy) return;
     if (coreDegraded) {
-      setToast({ kind: 'error', message: wf.coreServicesUnavailable });
+      bulkActions.onFeedback({ kind: 'error', message: wf.coreServicesUnavailable });
       return;
     }
     if (isDemoRuntimeClient()) {
-      setToast({ kind: 'success', message: DEMO_DOCUMENT_DOWNLOAD_LOCKED_MESSAGE });
+      bulkActions.onFeedback({
+        kind: 'success',
+        message: DEMO_DOCUMENT_DOWNLOAD_LOCKED_MESSAGE,
+      });
       return;
     }
 
     const ids = [...rowSelection.selectedIds];
     setBusy(true);
     try {
-      await downloadCrmProjectDocumentsBulk(project.summary.slug, ids);
+      await bulkActions.onDownloadDocuments(ids);
       rowSelection.clearSelection();
     } catch (err) {
-      setToast({
+      bulkActions.onFeedback({
         kind: 'error',
         message: mapCrmDocumentActionError(err, wf) || docs.bulkDownloadFailed,
       });
@@ -116,14 +123,12 @@ export function DocumentsPanelBulkActions(): ReactElement | null {
     canDownloadSelection,
     coreDegraded,
     docs.bulkDownloadFailed,
-    project.summary.slug,
     rowSelection,
-    setToast,
     wf,
   ]);
 
   const handleConfirmDelete = useCallback(async () => {
-    if (rowSelection == null || bulkActions == null || !bulkActions.canDelete) return;
+    if (rowSelection == null || bulkActions == null || !canDeleteSelection) return;
     const ids = [...rowSelection.selectedIds];
     // Close chrome immediately so the gallery feels instantaneous.
     setDeleteConfirmOpen(false);
@@ -132,14 +137,14 @@ export function DocumentsPanelBulkActions(): ReactElement | null {
     try {
       const { deletedCount, failedCount } = await bulkActions.onDeleteDocuments(ids);
       if (failedCount > 0 && deletedCount === 0) {
-        setToast({ kind: 'error', message: bulkDeleteCopy.failed });
+        bulkActions.onFeedback({ kind: 'error', message: bulkDeleteCopy.failed });
       } else if (failedCount > 0) {
-        setToast({
+        bulkActions.onFeedback({
           kind: 'error',
           message: bulkDeleteCopy.partialFailure(deletedCount, failedCount),
         });
       } else {
-        setToast({
+        bulkActions.onFeedback({
           kind: 'success',
           message: bulkDeleteCopy.success(deletedCount, docs.bulkDeleteItemLabel),
         });
@@ -147,7 +152,13 @@ export function DocumentsPanelBulkActions(): ReactElement | null {
     } finally {
       setBusy(false);
     }
-  }, [bulkActions, bulkDeleteCopy, docs.bulkDeleteItemLabel, rowSelection, setToast]);
+  }, [
+    bulkActions,
+    bulkDeleteCopy,
+    canDeleteSelection,
+    docs.bulkDeleteItemLabel,
+    rowSelection,
+  ]);
 
   if (!showChrome || bulkActions == null || rowSelection == null) {
     return null;
@@ -170,7 +181,7 @@ export function DocumentsPanelBulkActions(): ReactElement | null {
             <DownloadGlyph className={styles.workflowBulkActionGlyph} />
           </button>
         ) : null}
-        {bulkActions.canDelete ? (
+        {canDeleteSelection ? (
           <button
             type="button"
             className={styles.workflowBulkActionBtn}
@@ -178,7 +189,7 @@ export function DocumentsPanelBulkActions(): ReactElement | null {
             title={bulkCopy.deleteSelected}
             aria-label={bulkCopy.deleteSelected}
             onClick={() => {
-              guardProjectEdit(() => {
+              bulkActions.guardDelete(() => {
                 setDeleteConfirmOpen(true);
               });
             }}

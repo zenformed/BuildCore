@@ -72,6 +72,10 @@ export {
   WORKFLOW_TASK_STATUS_LABELS,
 } from './workflowTaskStatuses';
 export type { CrmDocumentKind, CrmDocumentMetadata } from './document';
+export type {
+  CrmOrganizationPhoto,
+  CrmOrganizationPhotosPage,
+} from './organizationPhoto';
 export {
   BUILDCORE_MAX_DOCUMENT_UPLOAD_BYTES,
   BUILDCORE_DOCUMENT_ALLOWED_EXTENSIONS,
