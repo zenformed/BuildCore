@@ -127,6 +127,15 @@ export function mockCreateCrmProject(input: CreateCrmProjectInput): CreateCrmPro
     paidCents: 0,
     assignedToId,
     lastUpdatedAt: now,
+    latitude: input.latitude,
+    longitude: input.longitude,
+    address: {
+      addressLine1: input.addressLine1,
+      addressLine2: input.addressLine2,
+      city: input.city,
+      state: input.state,
+      postalCode: input.postalCode,
+    },
     accountabilityLog: [
       {
         id: `acct-demo-${crypto.randomUUID()}`,
@@ -151,6 +160,8 @@ export function mockCreateCrmProject(input: CreateCrmProjectInput): CreateCrmPro
       state: input.state,
       postalCode: input.postalCode,
     },
+    latitude: input.latitude,
+    longitude: input.longitude,
   };
 
   const saved = saveMockProjectDetail(slug, { ...detail, summary });

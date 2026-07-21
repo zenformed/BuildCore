@@ -189,6 +189,7 @@ export function CreateCrmProjectModal({
   const [selectedTemplateId, setSelectedTemplateId] = useState('');
   const [templateRefreshKey, setTemplateRefreshKey] = useState(0);
   const [error, setError] = useState<string | null>(null);
+  const [showValidationErrors, setShowValidationErrors] = useState(false);
   const [saving, setSaving] = useState(false);
   const [customFieldDraft, setCustomFieldDraft] = useState<Record<string, string>>({});
   const [addCustomFieldOpen, setAddCustomFieldOpen] = useState(false);
@@ -257,6 +258,7 @@ export function CreateCrmProjectModal({
 
 
     setError(null);
+    setShowValidationErrors(false);
 
     setSaving(false);
 
@@ -308,6 +310,7 @@ export function CreateCrmProjectModal({
       event.preventDefault();
 
       setError(null);
+      setShowValidationErrors(true);
 
 
 
@@ -525,6 +528,7 @@ export function CreateCrmProjectModal({
           saving={saving}
           assigneeOptions={assigneeOptions}
           allowAssignee={allowAssignee}
+          showValidationErrors={showValidationErrors}
           updateField={updateField}
         />
 

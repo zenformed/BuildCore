@@ -21,6 +21,7 @@ import {
   validateOptionalPostalCode,
   validateProjectNotes,
 } from '@/domain/crm/projectFormFieldValidation';
+import { validateCrmProjectCoordinates } from '@/domain/crm/projectCoordinates';
 
 const PRIORITIES: readonly CrmPriority[] = ['low', 'normal', 'high', 'urgent'];
 
@@ -44,6 +45,8 @@ export type CreateCrmProjectBody = {
   city?: unknown;
   state?: unknown;
   postalCode?: unknown;
+  latitude?: unknown;
+  longitude?: unknown;
   initialTemplateBlueprints?: unknown;
   parentProjectId?: unknown;
   customFieldValues?: unknown;
@@ -65,6 +68,12 @@ function asOptionalString(value: unknown): string | null {
   if (typeof value !== 'string') return null;
   const trimmed = value.trim();
   return trimmed.length > 0 ? trimmed : null;
+}
+
+function asOptionalCoordinate(value: unknown): number | null | undefined {
+  if (value == null || value === '') return null;
+  if (typeof value !== 'number' || !Number.isFinite(value)) return undefined;
+  return value;
 }
 
 function asCents(value: unknown, field: string): number | null {
@@ -240,6 +249,19 @@ export function validateCreateCrmProjectBody(
     return postalValidated;
   }
 
+  const latitude = asOptionalCoordinate(body.latitude);
+  if (latitude === undefined) {
+    return { ok: false, message: 'Latitude must be a number between -90 and 90.' };
+  }
+  const longitude = asOptionalCoordinate(body.longitude);
+  if (longitude === undefined) {
+    return { ok: false, message: 'Longitude must be a number between -180 and 180.' };
+  }
+  const coordinatesValidated = validateCrmProjectCoordinates(latitude, longitude);
+  if (!coordinatesValidated.ok) {
+    return { ok: false, message: coordinatesValidated.message };
+  }
+
   const notesRaw = asOptionalString(body.notes);
   const notesValidated = validateProjectNotes(notesRaw ?? '');
   if (!notesValidated.ok) {
@@ -275,6 +297,8 @@ export function validateCreateCrmProjectBody(
       city: cityValidated.city,
       state,
       postalCode: postalValidated.postalCode,
+      latitude: coordinatesValidated.coordinates?.latitude ?? null,
+      longitude: coordinatesValidated.coordinates?.longitude ?? null,
       initialTemplateBlueprints,
       ...(parentProjectId !== undefined ? { parentProjectId } : {}),
       ...(customFieldValues !== undefined ? { customFieldValues } : {}),

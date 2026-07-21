@@ -496,6 +496,10 @@ const buildCoreDashboardContentSource = {
         city: 'City',
         state: 'State',
         postalCode: 'Zip code',
+        latitude: 'Latitude',
+        longitude: 'Longitude',
+        useCoordinates: '📍 Lat / Long',
+        useStreetAddress: '← Use street address instead',
       },
     },
     projectCustomFields: {

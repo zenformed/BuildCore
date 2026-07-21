@@ -131,6 +131,10 @@ export function isSummaryFieldUnchanged(
 
 export function projectDetailToFormState(project: CrmProjectDetail): CreateCrmProjectFormState {
   const { summary, notes } = project;
+  const hasStreetAddress = Object.values(summary.address).some(
+    (value) => value != null && value.trim().length > 0
+  );
+  const hasCoordinates = summary.latitude != null && summary.longitude != null;
   return {
     name: summary.name,
     industry: summary.industry,
@@ -149,6 +153,9 @@ export function projectDetailToFormState(project: CrmProjectDetail): CreateCrmPr
     city: summary.address.city ?? '',
     state: summary.address.state ?? '',
     postalCode: summary.address.postalCode ?? '',
+    addressEntryMode: hasCoordinates && !hasStreetAddress ? 'coordinates' : 'street',
+    latitude: summary.latitude != null ? String(summary.latitude) : '',
+    longitude: summary.longitude != null ? String(summary.longitude) : '',
   };
 }
 

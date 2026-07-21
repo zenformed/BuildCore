@@ -21,6 +21,8 @@ export type CreateCrmProjectInput = {
   readonly city: string | null;
   readonly state: string | null;
   readonly postalCode: string | null;
+  readonly latitude: number | null;
+  readonly longitude: number | null;
   /** Applied after project insert when creating from a template-backed draft. */
   readonly initialTemplateBlueprints?: BuildCoreProjectTemplateBlueprints | null;
   /** When set, creates a subproject under the given parent project id. */

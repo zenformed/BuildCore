@@ -42,6 +42,7 @@ export function CreateCrmProjectDrawer({ open, onClose }: CreateCrmProjectDrawer
 
   const [form, setForm] = useState<CreateCrmProjectFormState>(defaultCreateCrmProjectFormState);
   const [error, setError] = useState<string | null>(null);
+  const [showValidationErrors, setShowValidationErrors] = useState(false);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -52,6 +53,7 @@ export function CreateCrmProjectDrawer({ open, onClose }: CreateCrmProjectDrawer
         : { ...defaultCreateCrmProjectFormState(), assignedMemberId: '' }
     );
     setError(null);
+    setShowValidationErrors(false);
     setSaving(false);
   }, [allowAssignee, canMutateProjects, dash.user?.id, open]);
 
@@ -66,6 +68,7 @@ export function CreateCrmProjectDrawer({ open, onClose }: CreateCrmProjectDrawer
     async (e: FormEvent) => {
       e.preventDefault();
       setError(null);
+      setShowValidationErrors(true);
 
       if (!canMutateProjects) {
         setError(create.mockDisabledMessage);
@@ -148,6 +151,7 @@ export function CreateCrmProjectDrawer({ open, onClose }: CreateCrmProjectDrawer
               saving={saving}
               assigneeOptions={assigneeOptions}
               allowAssignee={allowAssignee}
+              showValidationErrors={showValidationErrors}
               updateField={updateField}
             />
 

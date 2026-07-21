@@ -176,6 +176,8 @@ function applyProjectUpdate(detail: CrmProjectDetail, input: UpdateCrmProjectInp
       state: input.state,
       postalCode: input.postalCode,
     },
+    latitude: input.latitude,
+    longitude: input.longitude,
 
     lastUpdatedAt: now,
     completedAt: detail.summary.completedAt,

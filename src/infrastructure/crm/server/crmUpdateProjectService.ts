@@ -62,6 +62,8 @@ export async function updateCrmProjectBySlugForOrg(
       city: input.city,
       state: input.state,
       postal_code: input.postalCode,
+      latitude: input.latitude,
+      longitude: input.longitude,
       last_activity_at: now,
     })
     .eq('id', existing.summary.id)

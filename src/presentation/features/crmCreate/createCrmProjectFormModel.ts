@@ -12,8 +12,15 @@ import {
   validateOptionalPostalCode,
   validateProjectNotes,
 } from '@/domain/crm/projectFormFieldValidation';
+import {
+  isValidCrmProjectLatitude,
+  isValidCrmProjectLongitude,
+  validateCrmProjectCoordinates,
+} from '@/domain/crm/projectCoordinates';
 import { normalizeAssigneeMemberIdForSave } from '@/presentation/features/crmAssignment/buildAssigneeOptions';
 import { getBuildCoreDashboardContent } from '@/platform/content/buildCoreDashboardContent';
+
+export type CrmProjectAddressEntryMode = 'street' | 'coordinates';
 
 export type CreateCrmProjectFormState = {
   name: string;
@@ -33,6 +40,9 @@ export type CreateCrmProjectFormState = {
   city: string;
   state: string;
   postalCode: string;
+  addressEntryMode: CrmProjectAddressEntryMode;
+  latitude: string;
+  longitude: string;
 };
 
 export const defaultCreateCrmProjectFormState = (): CreateCrmProjectFormState => ({
@@ -53,6 +63,9 @@ export const defaultCreateCrmProjectFormState = (): CreateCrmProjectFormState =>
   city: '',
   state: '',
   postalCode: '',
+  addressEntryMode: 'street',
+  latitude: '',
+  longitude: '',
 });
 
 /** Initial create form values copied from a parent project (subproject defaults only). */
@@ -78,6 +91,40 @@ export function parseUsdInputToCents(value: string): number | null {
   const amount = Number(normalized);
   if (!Number.isFinite(amount) || amount < 0) return null;
   return Math.round(amount * 100);
+}
+
+export type CrmProjectCoordinateFormErrors = {
+  readonly latitude?: string;
+  readonly longitude?: string;
+};
+
+function parseCoordinateFormValue(value: string): number | null {
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+  const parsed = Number(trimmed);
+  return Number.isFinite(parsed) ? parsed : Number.NaN;
+}
+
+export function validateCrmProjectCoordinateFormFields(
+  form: Pick<CreateCrmProjectFormState, 'addressEntryMode' | 'latitude' | 'longitude'>
+): CrmProjectCoordinateFormErrors {
+  const latitude = parseCoordinateFormValue(form.latitude);
+  const longitude = parseCoordinateFormValue(form.longitude);
+  if (form.addressEntryMode === 'street' && latitude == null && longitude == null) {
+    return {};
+  }
+  const errors: { latitude?: string; longitude?: string } = {};
+  if (latitude == null) {
+    errors.latitude = 'Latitude is required.';
+  } else if (!isValidCrmProjectLatitude(latitude)) {
+    errors.latitude = 'Latitude must be between -90 and 90.';
+  }
+  if (longitude == null) {
+    errors.longitude = 'Longitude is required.';
+  } else if (!isValidCrmProjectLongitude(longitude)) {
+    errors.longitude = 'Longitude must be between -180 and 180.';
+  }
+  return errors;
 }
 
 export function validateCreateCrmProjectForm(
@@ -133,6 +180,16 @@ export function validateCreateCrmProjectForm(
     return notesValidated;
   }
 
+  const latitude = parseCoordinateFormValue(form.latitude);
+  const longitude = parseCoordinateFormValue(form.longitude);
+  const coordinatesValidated =
+    form.addressEntryMode === 'street' && latitude == null && longitude == null
+      ? { ok: true as const, coordinates: null }
+      : validateCrmProjectCoordinates(latitude, longitude);
+  if (!coordinatesValidated.ok) {
+    return { ok: false, message: coordinatesValidated.message };
+  }
+
   const optionalText = (value: string): string | null => {
     const trimmed = value.trim();
     return trimmed.length > 0 ? trimmed : null;
@@ -158,6 +215,8 @@ export function validateCreateCrmProjectForm(
       city: cityValidated.city,
       state: state || null,
       postalCode: postalValidated.postalCode,
+      latitude: coordinatesValidated.coordinates?.latitude ?? null,
+      longitude: coordinatesValidated.coordinates?.longitude ?? null,
     },
   };
 }

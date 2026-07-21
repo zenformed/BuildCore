@@ -127,6 +127,8 @@ async function insertCrmProjectForOrg(
       city: input.city,
       state: input.state,
       postal_code: input.postalCode,
+      latitude: input.latitude,
+      longitude: input.longitude,
       last_activity_at: now,
       lead_token: generateCrmProjectLeadToken(),
     })
@@ -286,6 +288,8 @@ export async function buildLeadCaptureSubprojectCreateInput(
     city: params.city,
     state: params.state,
     postalCode: params.postalCode,
+    latitude: null,
+    longitude: null,
     parentProjectId: params.parentProjectId,
   };
 }

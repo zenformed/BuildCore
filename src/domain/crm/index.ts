@@ -183,6 +183,15 @@ export {
 export type { CreateCrmProjectInput, CreateCrmProjectResult } from './createProject';
 export type { UpdateCrmProjectInput } from './updateProject';
 export type { CrmProjectAddress } from './projectAddress';
+export type {
+  CrmProjectCoordinates,
+  CrmProjectCoordinateValidationResult,
+} from './projectCoordinates';
+export {
+  isValidCrmProjectLatitude,
+  isValidCrmProjectLongitude,
+  validateCrmProjectCoordinates,
+} from './projectCoordinates';
 export {
   buildCrmProjectMapsSearchUrl,
   crmProjectAddressSearchText,
