@@ -1,6 +1,8 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import {
+  applyManualStreetAddressEdit,
+  applyVerifiedGoogleAddress,
   defaultCreateCrmProjectFormState,
   validateCreateCrmProjectForm,
   validateCrmProjectCoordinateFormFields,
@@ -71,5 +73,47 @@ describe('project address entry form', () => {
       ok: false,
       message: 'Latitude must be between -90 and 90.',
     });
+  });
+
+  it('clears existing coordinates when a street address is manually changed', () => {
+    const form = {
+      ...validBaseForm(),
+      addressLine1: '100 Main St',
+      latitude: '30.2672',
+      longitude: '-97.7431',
+    };
+    assert.deepEqual(applyManualStreetAddressEdit(form, 'addressLine1', '101 Main St'), {
+      ...form,
+      addressLine1: '101 Main St',
+      latitude: '',
+      longitude: '',
+    });
+  });
+
+  it('atomically applies a verified Google address and coordinates', () => {
+    const form = {
+      ...validBaseForm(),
+      addressLine2: 'Suite 200',
+    };
+    assert.deepEqual(
+      applyVerifiedGoogleAddress(form, {
+        addressLine1: '1600 Amphitheatre Parkway',
+        city: 'Mountain View',
+        state: 'CA',
+        postalCode: '94043',
+        latitude: 37.422,
+        longitude: -122.084,
+      }),
+      {
+        ...form,
+        addressEntryMode: 'street',
+        addressLine1: '1600 Amphitheatre Parkway',
+        city: 'Mountain View',
+        state: 'CA',
+        postalCode: '94043',
+        latitude: '37.422',
+        longitude: '-122.084',
+      }
+    );
   });
 });

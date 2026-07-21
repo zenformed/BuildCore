@@ -4,8 +4,13 @@ import type { ReactElement } from 'react';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
 import {
   validateCrmProjectCoordinateFormFields,
+  type CrmProjectStreetAddressFormField,
   type CreateCrmProjectFormState,
 } from '@/presentation/features/crmCreate/createCrmProjectFormModel';
+import {
+  GooglePlacesAddressInput,
+  type GooglePlacesAddressSelection,
+} from '@/presentation/components/GooglePlacesAddressInput';
 import type { CrmProjectAssigneeOption } from '@/presentation/features/crmProjects/crmProjectAssigneeOptions';
 import { CreateFormAssigneePicker } from '@/presentation/components/crmShared/CreateFormAssigneePicker';
 import { UsStateCombobox } from '@/presentation/components/crmShared/UsStateCombobox';
@@ -23,6 +28,8 @@ import {
 } from '@/presentation/components/crmShared/ContactMultiValueFields';
 import formStyles from './CreateCrmProjectDrawer.module.css';
 
+const GOOGLE_PLACES_US_REGIONS = ['us'] as const;
+
 export type CreateCrmProjectFormFieldsProps = {
   readonly form: CreateCrmProjectFormState;
   readonly saving: boolean;
@@ -30,6 +37,11 @@ export type CreateCrmProjectFormFieldsProps = {
   /** When false, hides the assignee picker (e.g. member role). */
   readonly allowAssignee?: boolean;
   readonly showValidationErrors?: boolean;
+  readonly onStreetAddressFieldChange: (
+    field: CrmProjectStreetAddressFormField,
+    value: string
+  ) => void;
+  readonly onVerifiedAddressSelected: (address: GooglePlacesAddressSelection) => void;
   readonly updateField: <K extends keyof CreateCrmProjectFormState>(
     key: K,
     value: CreateCrmProjectFormState[K]
@@ -42,6 +54,8 @@ export function CreateCrmProjectFormFields({
   assigneeOptions,
   allowAssignee = true,
   showValidationErrors = false,
+  onStreetAddressFieldChange,
+  onVerifiedAddressSelected,
   updateField,
 }: CreateCrmProjectFormFieldsProps): ReactElement {
   const create = content.crm.create;
@@ -184,12 +198,14 @@ export function CreateCrmProjectFormFields({
                   {create.fields.useCoordinates}
                 </button>
               </div>
-              <input
+              <GooglePlacesAddressInput
                 id="crm-create-address-line-1"
                 className={formStyles.input}
                 value={form.addressLine1}
                 disabled={saving}
-                onChange={(e) => updateField('addressLine1', e.target.value)}
+                includedRegionCodes={GOOGLE_PLACES_US_REGIONS}
+                onChange={(value) => onStreetAddressFieldChange('addressLine1', value)}
+                onAddressSelected={onVerifiedAddressSelected}
               />
             </div>
 
@@ -202,7 +218,9 @@ export function CreateCrmProjectFormFields({
                 className={formStyles.input}
                 value={form.addressLine2}
                 disabled={saving}
-                onChange={(e) => updateField('addressLine2', e.target.value)}
+                onChange={(e) =>
+                  onStreetAddressFieldChange('addressLine2', e.target.value)
+                }
               />
             </div>
 
@@ -217,7 +235,9 @@ export function CreateCrmProjectFormFields({
                   value={form.city}
                   disabled={saving}
                   autoComplete="address-level2"
-                  onChange={(e) => updateField('city', sanitizeCityInput(e.target.value))}
+                  onChange={(e) =>
+                    onStreetAddressFieldChange('city', sanitizeCityInput(e.target.value))
+                  }
                 />
               </div>
               <div className={formStyles.field}>
@@ -230,7 +250,7 @@ export function CreateCrmProjectFormFields({
                   disabled={saving}
                   ariaLabel={create.fields.state}
                   placeholder="Select state"
-                  onChange={(state) => updateField('state', state)}
+                  onChange={(state) => onStreetAddressFieldChange('state', state)}
                 />
               </div>
               <div className={formStyles.field}>
@@ -246,7 +266,10 @@ export function CreateCrmProjectFormFields({
                   autoComplete="postal-code"
                   maxLength={5}
                   onChange={(e) =>
-                    updateField('postalCode', sanitizePostalCodeInput(e.target.value))
+                    onStreetAddressFieldChange(
+                      'postalCode',
+                      sanitizePostalCodeInput(e.target.value)
+                    )
                   }
                 />
               </div>

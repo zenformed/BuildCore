@@ -98,6 +98,49 @@ export type CrmProjectCoordinateFormErrors = {
   readonly longitude?: string;
 };
 
+export type CrmProjectStreetAddressFormField =
+  | 'addressLine1'
+  | 'addressLine2'
+  | 'city'
+  | 'state'
+  | 'postalCode';
+
+export function applyManualStreetAddressEdit(
+  form: CreateCrmProjectFormState,
+  field: CrmProjectStreetAddressFormField,
+  value: string
+): CreateCrmProjectFormState {
+  return {
+    ...form,
+    [field]: value,
+    latitude: '',
+    longitude: '',
+  };
+}
+
+export function applyVerifiedGoogleAddress(
+  form: CreateCrmProjectFormState,
+  address: {
+    readonly addressLine1: string;
+    readonly city: string;
+    readonly state: string;
+    readonly postalCode: string;
+    readonly latitude: number;
+    readonly longitude: number;
+  }
+): CreateCrmProjectFormState {
+  return {
+    ...form,
+    addressEntryMode: 'street',
+    addressLine1: address.addressLine1,
+    city: address.city,
+    state: address.state,
+    postalCode: address.postalCode,
+    latitude: String(address.latitude),
+    longitude: String(address.longitude),
+  };
+}
+
 function parseCoordinateFormValue(value: string): number | null {
   const trimmed = value.trim();
   if (!trimmed) return null;

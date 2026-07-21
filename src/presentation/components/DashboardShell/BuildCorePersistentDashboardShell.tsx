@@ -7,6 +7,7 @@ import type { BuildCoreNavigation } from '@/platform/navigation/buildCoreNavigat
 import { isBuildCoreMemberRole } from '@/domain/buildcore/memberRole';
 import { resolveBuildCoreDashboardShellConfig } from '@/presentation/features/buildCoreDashboard/resolveBuildCoreDashboardShellConfig';
 import { useBuildCoreDashboardContext } from '@/presentation/providers/BuildCoreDashboardProvider';
+import { BuildCoreGoogleMapsProvider } from '@/presentation/providers/BuildCoreGoogleMapsProvider';
 import { useSaaSProfile } from '@/presentation/hooks/useSaaSProfile';
 import type { BuildCoreSidebarNavId } from './BuildCoreSidebar';
 import { BuildCoreDashboardShell } from './BuildCoreDashboardShell';
@@ -107,12 +108,14 @@ export function BuildCorePersistentDashboardShell({
   ]);
 
   return (
-    <BuildCoreDashboardShell
-      title={shellConfig.title}
-      sidebarActiveId={shellConfig.sidebarActiveId}
-      onSidebarSelect={onSidebarSelect}
-    >
-      {children}
-    </BuildCoreDashboardShell>
+    <BuildCoreGoogleMapsProvider>
+      <BuildCoreDashboardShell
+        title={shellConfig.title}
+        sidebarActiveId={shellConfig.sidebarActiveId}
+        onSidebarSelect={onSidebarSelect}
+      >
+        {children}
+      </BuildCoreDashboardShell>
+    </BuildCoreGoogleMapsProvider>
   );
 }

@@ -1,7 +1,6 @@
 'use client';
 
 import {
-  APIProvider,
   ColorScheme,
   Map,
   useMap,
@@ -170,9 +169,5 @@ export function MapView(props: MapViewProps): ReactElement {
     );
   }
 
-  return (
-    <APIProvider apiKey={apiKey} onError={() => undefined}>
-      <MapInner {...props} />
-    </APIProvider>
-  );
+  return <MapInner {...props} />;
 }

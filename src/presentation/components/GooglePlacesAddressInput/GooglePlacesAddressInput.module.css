@@ -1,0 +1,101 @@
+.wrapper {
+  position: relative;
+  min-width: 0;
+}
+
+.dropdown {
+  position: absolute;
+  z-index: 80;
+  top: calc(100% + 0.25rem);
+  left: 0;
+  right: 0;
+  overflow: hidden;
+  border: 1px solid var(--theme-form-input-border, var(--color-border, #e2e8f0));
+  border-radius: 0.5rem;
+  background: var(--theme-surface-card, #fff);
+  box-shadow: 0 0.75rem 1.75rem rgba(15, 23, 42, 0.16);
+}
+
+.suggestion {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  gap: 0.125rem;
+  border: 0;
+  border-bottom: 1px solid var(--color-border, #e2e8f0);
+  background: transparent;
+  padding: 0.625rem 0.75rem;
+  color: var(--color-text, #0f172a);
+  text-align: left;
+  cursor: pointer;
+}
+
+.suggestion:hover,
+.suggestionActive {
+  background: var(--color-surface-muted, #f1f5f9);
+}
+
+.suggestionMain {
+  overflow: hidden;
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1.25;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.suggestionSecondary {
+  overflow: hidden;
+  color: var(--color-text-muted, #64748b);
+  font-size: 0.75rem;
+  line-height: 1.25;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.status {
+  margin: 0;
+  padding: 0.75rem;
+  color: var(--color-text-muted, #64748b);
+  font-size: 0.8125rem;
+  line-height: 1.35;
+}
+
+.googleAttribution {
+  width: 120px;
+  height: 18px;
+  margin: 0.375rem 0.625rem 0.375rem auto;
+  background-image: url('https://maps.gstatic.com/mapfiles/api-3/images/powered-by-google-on-white3.png');
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: 120px auto;
+}
+
+:global([data-theme='dark']) .dropdown {
+  border-color: #3d3e4a;
+  background: #1f2028;
+  box-shadow: 0 0.75rem 1.75rem rgba(0, 0, 0, 0.38);
+}
+
+:global([data-theme='dark']) .suggestion {
+  border-color: #3d3e4a;
+  color: #f1f5f9;
+}
+
+:global([data-theme='dark']) .suggestion:hover,
+:global([data-theme='dark']) .suggestionActive {
+  background: #2a2b35;
+}
+
+:global([data-theme='dark']) .suggestionSecondary,
+:global([data-theme='dark']) .status {
+  color: #a3a8b5;
+}
+
+:global([data-theme='dark']) .googleAttribution {
+  margin-right: 0;
+  padding-right: 0.625rem;
+  background-color: #fff;
+  background-position: center;
+  box-sizing: content-box;
+}

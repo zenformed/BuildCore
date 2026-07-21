@@ -15,10 +15,14 @@ import { useAssignmentIdentityCatalog } from '@/presentation/providers/Assignmen
 import { useBuildCoreDashboardContext } from '@/presentation/providers/BuildCoreDashboardProvider';
 import { useSaaSProfile } from '@/presentation/hooks/useSaaSProfile';
 import {
+  applyManualStreetAddressEdit,
+  applyVerifiedGoogleAddress,
   defaultCreateCrmProjectFormState,
   validateCreateCrmProjectForm,
+  type CrmProjectStreetAddressFormField,
   type CreateCrmProjectFormState,
 } from '@/presentation/features/crmCreate/createCrmProjectFormModel';
+import type { GooglePlacesAddressSelection } from '@/presentation/components/GooglePlacesAddressInput';
 import { crmRepositories } from '@/shared/di/container';
 import shellStyles from '../../../../app/(dashboard)/dashboard/dashboard.module.css';
 import { CreateCrmProjectFormFields } from './CreateCrmProjectFormFields';
@@ -60,6 +64,22 @@ export function CreateCrmProjectDrawer({ open, onClose }: CreateCrmProjectDrawer
   const updateField = useCallback(
     <K extends keyof CreateCrmProjectFormState>(key: K, value: CreateCrmProjectFormState[K]) => {
       setForm((prev) => ({ ...prev, [key]: value }));
+    },
+    []
+  );
+
+  const updateStreetAddressField = useCallback(
+    (field: CrmProjectStreetAddressFormField, value: string) => {
+      setForm((current) => applyManualStreetAddressEdit(current, field, value));
+      setError(null);
+    },
+    []
+  );
+
+  const handleVerifiedAddressSelected = useCallback(
+    (address: GooglePlacesAddressSelection) => {
+      setForm((current) => applyVerifiedGoogleAddress(current, address));
+      setError(null);
     },
     []
   );
@@ -152,6 +172,8 @@ export function CreateCrmProjectDrawer({ open, onClose }: CreateCrmProjectDrawer
               assigneeOptions={assigneeOptions}
               allowAssignee={allowAssignee}
               showValidationErrors={showValidationErrors}
+              onStreetAddressFieldChange={updateStreetAddressField}
+              onVerifiedAddressSelected={handleVerifiedAddressSelected}
               updateField={updateField}
             />
 

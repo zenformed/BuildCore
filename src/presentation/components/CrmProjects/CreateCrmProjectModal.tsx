@@ -32,8 +32,11 @@ import {
 
   defaultCreateCrmProjectFormState,
   createSubprojectFormDefaultsFromParent,
+  applyManualStreetAddressEdit,
+  applyVerifiedGoogleAddress,
   validateCreateCrmProjectForm,
 
+  type CrmProjectStreetAddressFormField,
   type CreateCrmProjectFormState,
 
 } from '@/presentation/features/crmCreate/createCrmProjectFormModel';
@@ -65,6 +68,7 @@ import { useDashboardMobileLayout } from '@/presentation/features/crmProjects/us
 import { crmRepositories } from '@/shared/di/container';
 
 import { CreateCrmProjectFormFields } from './CreateCrmProjectFormFields';
+import type { GooglePlacesAddressSelection } from '@/presentation/components/GooglePlacesAddressInput';
 import {
   ProjectCustomFieldsSection,
   buildProjectCustomFieldDraftFromSummary,
@@ -277,6 +281,22 @@ export function CreateCrmProjectModal({
   const updateField = useCallback(
     <K extends keyof CreateCrmProjectFormState>(key: K, value: CreateCrmProjectFormState[K]) => {
       setForm((prev) => ({ ...prev, [key]: value }));
+      setError(null);
+    },
+    []
+  );
+
+  const updateStreetAddressField = useCallback(
+    (field: CrmProjectStreetAddressFormField, value: string) => {
+      setForm((current) => applyManualStreetAddressEdit(current, field, value));
+      setError(null);
+    },
+    []
+  );
+
+  const handleVerifiedAddressSelected = useCallback(
+    (address: GooglePlacesAddressSelection) => {
+      setForm((current) => applyVerifiedGoogleAddress(current, address));
       setError(null);
     },
     []
@@ -529,6 +549,8 @@ export function CreateCrmProjectModal({
           assigneeOptions={assigneeOptions}
           allowAssignee={allowAssignee}
           showValidationErrors={showValidationErrors}
+          onStreetAddressFieldChange={updateStreetAddressField}
+          onVerifiedAddressSelected={handleVerifiedAddressSelected}
           updateField={updateField}
         />
 
