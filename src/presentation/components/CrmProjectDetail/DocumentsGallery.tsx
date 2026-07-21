@@ -79,20 +79,22 @@ export function DocumentsGallery({
   const gap = DOCUMENT_GALLERY_TILE_GAP;
   const layoutWidth = Math.max(containerWidth, rowHeight);
 
-  const packedRows = useMemo(
-    () =>
-      packDocumentGalleryDayGroups({
-        groups: dayGroups.map((group) => ({
-          dayKey: group.dayKey,
-          itemIds: group.documents.map((doc) => doc.id),
-          aspectsById,
-        })),
-        containerWidth: layoutWidth,
-        rowHeight,
-        gap,
-      }),
-    [aspectsById, dayGroups, gap, layoutWidth, rowHeight]
-  );
+  const packedRows = useMemo(() => {
+    // Mobile: every date gets its own full-width row.
+    if (isMobileLayout) {
+      return dayGroups.map((group) => ({ dayKeys: [group.dayKey] }));
+    }
+    return packDocumentGalleryDayGroups({
+      groups: dayGroups.map((group) => ({
+        dayKey: group.dayKey,
+        itemIds: group.documents.map((doc) => doc.id),
+        aspectsById,
+      })),
+      containerWidth: layoutWidth,
+      rowHeight,
+      gap,
+    });
+  }, [aspectsById, dayGroups, gap, isMobileLayout, layoutWidth, rowHeight]);
 
   const justifiedByDay = useMemo(() => {
     const map = new Map<string, ReturnType<typeof justifyDocumentGalleryItems>>();
@@ -175,18 +177,31 @@ export function DocumentsGallery({
   return (
     <>
       <div ref={containerRef} className={styles.docGallery}>
+        {isMobileLayout && rowSelection != null && rowSelection.selectedCount > 0 ? (
+          <button
+            type="button"
+            className={styles.docGalleryMobileSelectionPill}
+            aria-label={`Clear selection, ${rowSelection.selectedCount} selected`}
+            onClick={rowSelection.clearSelection}
+          >
+            <span aria-hidden>✕</span>
+            <span>{rowSelection.selectedCount}</span>
+          </button>
+        ) : null}
         {packedRows.map((row) => (
           <div key={row.dayKeys.join('|')} className={styles.docGalleryPackRow}>
             {row.dayKeys.map((dayKey) => {
               const group = groupsByKey.get(dayKey);
               if (group == null) return null;
               const sel = daySelectionState(group);
-              const headingActive =
-                isMobileLayout ||
-                headingHoverKey === dayKey ||
-                sel.checked ||
-                sel.indeterminate ||
-                (rowSelection != null && rowSelection.selectedCount > 0);
+              const selectionActive =
+                rowSelection != null && rowSelection.selectedCount > 0;
+              const headingActive = isMobileLayout
+                ? selectionActive
+                : headingHoverKey === dayKey ||
+                  sel.checked ||
+                  sel.indeterminate ||
+                  selectionActive;
               const dayRows = justifiedByDay.get(dayKey) ?? [];
               const sharing = row.dayKeys.length > 1;
               const groupWidth = sharing
@@ -206,10 +221,31 @@ export function DocumentsGallery({
                 >
                   <div
                     className={styles.docGalleryDayHeading}
+                    role={isMobileLayout ? 'button' : undefined}
+                    tabIndex={isMobileLayout ? 0 : undefined}
+                    aria-label={
+                      isMobileLayout
+                        ? sel.checked
+                          ? galleryCopy.deselectDay(group.heading)
+                          : galleryCopy.selectDay(group.heading)
+                        : undefined
+                    }
+                    onClick={() => {
+                      if (isMobileLayout) handleDayToggle(group);
+                    }}
+                    onKeyDown={(event) => {
+                      if (
+                        isMobileLayout &&
+                        (event.key === 'Enter' || event.key === ' ')
+                      ) {
+                        event.preventDefault();
+                        handleDayToggle(group);
+                      }
+                    }}
                     onMouseEnter={() => setHeadingHoverKey(dayKey)}
                     onMouseLeave={() => setHeadingHoverKey(null)}
                   >
-                    {rowSelection != null ? (
+                    {rowSelection != null && (isMobileLayout ? selectionActive : true) ? (
                       <DocumentsGallerySelectCircle
                         checked={sel.checked}
                         indeterminate={sel.indeterminate}

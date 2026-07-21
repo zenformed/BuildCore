@@ -1,6 +1,12 @@
 'use client';
 
-import { useEffect, useRef, useState, type ReactElement } from 'react';
+import {
+  useEffect,
+  useRef,
+  useState,
+  type PointerEvent as ReactPointerEvent,
+  type ReactElement,
+} from 'react';
 import type { CrmDocumentMetadata } from '@/domain/crm';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
 import { useDocumentRowSelection } from '@/presentation/features/crmProjectDetail/documentRowSelectionContext';
@@ -43,6 +49,9 @@ export function DocumentsGalleryTile({
   const [hovered, setHovered] = useState(false);
   const [focused, setFocused] = useState(false);
   const [mediaFailed, setMediaFailed] = useState(false);
+  const longPressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pointerStartRef = useRef<{ x: number; y: number } | null>(null);
+  const suppressNextClickRef = useRef(false);
 
   const isImage = isCrmDocumentImage(doc.name, doc.mimeType);
   const isVideo = isCrmDocumentVideo(doc.name, doc.mimeType);
@@ -60,12 +69,10 @@ export function DocumentsGalleryTile({
   );
 
   const selected = rowSelection?.selectedIds.has(doc.id) === true;
-  const showSelect =
-    isMobileLayout ||
-    hovered ||
-    focused ||
-    selected ||
-    (rowSelection != null && rowSelection.selectedCount > 0);
+  const selectionActive = rowSelection != null && rowSelection.selectedCount > 0;
+  const showSelect = isMobileLayout
+    ? selectionActive
+    : hovered || focused || selected || selectionActive;
 
   const showImage = Boolean(blobUrl) && !mediaFailed && isImage;
   const showVideo = Boolean(blobUrl) && !mediaFailed && isVideo;
@@ -92,9 +99,46 @@ export function DocumentsGalleryTile({
     return () => observer.disconnect();
   }, []);
 
+  useEffect(
+    () => () => {
+      if (longPressTimerRef.current != null) {
+        clearTimeout(longPressTimerRef.current);
+      }
+    },
+    []
+  );
+
   const reportAspect = (naturalWidth: number, naturalHeight: number): void => {
     if (naturalWidth <= 0 || naturalHeight <= 0) return;
     onAspectRatio?.(doc.id, naturalWidth / naturalHeight);
+  };
+
+  const cancelLongPress = (): void => {
+    if (longPressTimerRef.current != null) {
+      clearTimeout(longPressTimerRef.current);
+      longPressTimerRef.current = null;
+    }
+    pointerStartRef.current = null;
+  };
+
+  const handlePointerDown = (event: ReactPointerEvent<HTMLButtonElement>): void => {
+    if (!isMobileLayout || rowSelection == null || event.button !== 0) return;
+    cancelLongPress();
+    pointerStartRef.current = { x: event.clientX, y: event.clientY };
+    longPressTimerRef.current = setTimeout(() => {
+      longPressTimerRef.current = null;
+      pointerStartRef.current = null;
+      suppressNextClickRef.current = true;
+      rowSelection.selectMany([doc.id]);
+    }, 500);
+  };
+
+  const handlePointerMove = (event: ReactPointerEvent<HTMLButtonElement>): void => {
+    const start = pointerStartRef.current;
+    if (start == null) return;
+    if (Math.hypot(event.clientX - start.x, event.clientY - start.y) > 10) {
+      cancelLongPress();
+    }
   };
 
   return (
@@ -112,17 +156,35 @@ export function DocumentsGalleryTile({
       style={{ width, height }}
       title={doc.name}
       aria-label={galleryCopy.openPreview(doc.name)}
-      onClick={() => onOpenPreview(doc.id)}
+      onClick={() => {
+        if (suppressNextClickRef.current) {
+          suppressNextClickRef.current = false;
+          return;
+        }
+        if (isMobileLayout && rowSelection != null && rowSelection.selectedCount > 0) {
+          rowSelection.onToggle(doc.id);
+          return;
+        }
+        onOpenPreview(doc.id);
+      }}
+      onPointerDown={handlePointerDown}
+      onPointerMove={handlePointerMove}
+      onPointerUp={cancelLongPress}
+      onPointerCancel={cancelLongPress}
+      onPointerLeave={cancelLongPress}
+      onContextMenu={(event) => {
+        if (isMobileLayout) event.preventDefault();
+      }}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       onFocus={() => setFocused(true)}
       onBlur={() => setFocused(false)}
     >
-      {rowSelection != null ? (
+      {rowSelection != null && showSelect ? (
         <span className={styles.docGalleryTileSelectWrap}>
           <DocumentsGallerySelectCircle
             checked={selected}
-            visible={showSelect}
+            visible
             ariaLabel={
               selected
                 ? galleryCopy.deselectDocument(doc.name)
