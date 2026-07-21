@@ -8535,6 +8535,450 @@
   border-color: #94a3b8;
 }
 
+/* —— Documents gallery (Google Photos–style packing) —— */
+.docGallery {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  width: 100%;
+  min-width: 0;
+}
+
+.docGalleryPackRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 1rem;
+  width: 100%;
+  min-width: 0;
+}
+
+.docGalleryDayGroup {
+  flex: 0 0 auto;
+  min-width: 0;
+}
+
+.docGalleryDayGroup_full {
+  flex: 1 1 100%;
+  width: 100%;
+}
+
+.docGalleryDayHeading {
+  display: flex;
+  align-items: center;
+  min-height: 1.75rem;
+  margin: 0 0 0.5rem;
+}
+
+.docGalleryDayHeadingText {
+  margin: 0;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--color-text, #0f172a);
+}
+
+:global([data-theme='dark']) .docGalleryDayHeadingText {
+  color: #f1f5f9;
+}
+
+.docGalleryDayTiles {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  width: 100%;
+  min-width: 0;
+}
+
+.docGalleryJustifiedRow {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: stretch;
+  width: 100%;
+  min-width: 0;
+}
+
+.docGalleryTile {
+  position: relative;
+  display: block;
+  padding: 0;
+  margin: 0;
+  border: 1px solid var(--theme-border-main, #e2e8f0);
+  border-radius: 0.25rem;
+  overflow: hidden;
+  background: var(--theme-surface-muted, #f1f5f9);
+  cursor: pointer;
+  flex: 0 0 auto;
+}
+
+.docGalleryTile_loading {
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--theme-surface-muted, #f1f5f9) 70%, #cbd5e1) 0%,
+    var(--theme-surface-muted, #f1f5f9) 50%,
+    color-mix(in srgb, var(--theme-surface-muted, #f1f5f9) 70%, #cbd5e1) 100%
+  );
+  background-size: 200% 100%;
+  animation: docGalleryTileShimmer 1.2s ease-in-out infinite;
+}
+
+@keyframes docGalleryTileShimmer {
+  0% {
+    background-position: 100% 0;
+  }
+  100% {
+    background-position: -100% 0;
+  }
+}
+
+.docGalleryTile_document {
+  background: color-mix(in srgb, var(--theme-surface-card, #fff) 88%, var(--color-muted, #e2e8f0));
+}
+
+.docGalleryTile:focus-visible {
+  outline: 2px solid var(--color-primary, #2563eb);
+  outline-offset: 2px;
+}
+
+.docGalleryTile_selected {
+  box-shadow: inset 0 0 0 3px var(--color-primary, #2563eb);
+}
+
+.docGalleryTileImage {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  pointer-events: none;
+}
+
+.docGalleryTileIconWrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+}
+
+.docGalleryTileDocFallback {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  box-sizing: border-box;
+  width: 100%;
+  height: 100%;
+  padding: 0.5rem 0.4rem;
+  text-align: center;
+}
+
+.docGalleryTileDocExt {
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: var(--color-text-muted, #64748b);
+}
+
+.docGalleryTileDocName {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.625rem;
+  line-height: 1.25;
+  color: var(--color-text, #0f172a);
+}
+
+:global([data-theme='dark']) .docGalleryTile_document {
+  background: color-mix(in srgb, var(--theme-surface-list-item, #1d2029) 90%, #000);
+}
+
+:global([data-theme='dark']) .docGalleryTileDocName {
+  color: #e2e8f0;
+}
+
+:global([data-theme='dark']) .docGalleryTileDocExt {
+  color: #94a3b8;
+}
+
+.docGalleryTileSelectWrap {
+  position: absolute;
+  top: 0.375rem;
+  left: 0.375rem;
+  z-index: 2;
+}
+
+.docGalleryTileVideoBadge {
+  position: absolute;
+  right: 0.375rem;
+  bottom: 0.375rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.72);
+  color: #fff;
+  font-size: 0.625rem;
+  pointer-events: none;
+}
+
+.docGallerySelectCircle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.375rem;
+  height: 1.375rem;
+  padding: 0;
+  border: 2px solid rgba(255, 255, 255, 0.92);
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.35);
+  color: #fff;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.35);
+  opacity: 0;
+  pointer-events: none;
+  cursor: pointer;
+  transition: opacity 0.12s ease, background-color 0.12s ease;
+}
+
+.docGalleryDayHeading .docGallerySelectCircle {
+  /* Collapsed: no reserved space — the date slides over when the circle appears. */
+  width: 0;
+  min-width: 0;
+  border-width: 0;
+  margin-right: 0;
+  overflow: hidden;
+  transition:
+    width 0.15s ease,
+    margin 0.15s ease,
+    border-width 0.15s ease,
+    opacity 0.12s ease,
+    background-color 0.12s ease;
+}
+
+.docGalleryDayHeading .docGallerySelectCircle_visible,
+.docGalleryDayHeading .docGallerySelectCircle_checked {
+  width: 1.375rem;
+  border-width: 2px;
+  margin-right: 0.5rem;
+}
+
+.docGallerySelectCircle_visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.docGallerySelectCircle_checked {
+  opacity: 1;
+  pointer-events: auto;
+  background: var(--color-primary, #2563eb);
+  border-color: var(--color-primary, #2563eb);
+  color: #fff;
+}
+
+.docGallerySelectCircleMark {
+  font-size: 0.75rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.docGalleryPreview {
+  position: fixed;
+  inset: 0;
+  /* Above the shell sidebar (100) and app chrome (400), below confirm dialogs (10050). */
+  z-index: 10000;
+  display: flex;
+  flex-direction: column;
+  background: rgba(8, 10, 16, 0.94);
+  color: #f8fafc;
+}
+
+.docGalleryPreviewToolbar {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-shrink: 0;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid rgba(248, 250, 252, 0.12);
+}
+
+.docGalleryPreviewToolbarTitle {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.docGalleryPreviewToolbarActions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.docGalleryPreviewToolbarBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  border: none;
+  border-radius: 0.375rem;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+
+.docGalleryPreviewToolbarBtn:hover:not(:disabled) {
+  background: rgba(248, 250, 252, 0.1);
+}
+
+.docGalleryPreviewToolbarBtn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.docGalleryPreviewBody {
+  display: flex;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.docGalleryPreviewStage {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+  gap: 0.5rem;
+  padding: 0.75rem;
+}
+
+.docGalleryPreviewCarouselNav {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  flex-shrink: 0;
+  padding: 0.25rem 0;
+}
+
+.docGalleryPreviewCarouselCount {
+  min-width: 4rem;
+  text-align: center;
+  font-size: 0.8125rem;
+  font-variant-numeric: tabular-nums;
+  color: #cbd5e1;
+}
+
+.docGalleryPreviewNavBtn {
+  flex-shrink: 0;
+  width: 2.5rem;
+  height: 2.5rem;
+  border: none;
+  border-radius: 999px;
+  background: rgba(248, 250, 252, 0.08);
+  color: inherit;
+  font-size: 1.5rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.docGalleryPreviewNavBtn:hover:not(:disabled) {
+  background: rgba(248, 250, 252, 0.18);
+}
+
+.docGalleryPreviewNavBtn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.docGalleryPreviewMedia {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+}
+
+.docGalleryPreviewImage,
+.docGalleryPreviewVideo {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+.docGalleryPreviewPdf {
+  width: 100%;
+  height: 100%;
+  min-height: 60vh;
+  border: none;
+  background: #fff;
+}
+
+.docGalleryPreviewFallback {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  text-align: center;
+  color: #cbd5e1;
+}
+
+.docGalleryPreviewMeta {
+  flex: 0 0 18rem;
+  max-width: 40%;
+  overflow: auto;
+  padding: 1rem 1.25rem;
+  border-left: 1px solid rgba(248, 250, 252, 0.12);
+  background: rgba(15, 23, 42, 0.55);
+}
+
+.docGalleryPreviewMetaList {
+  margin: 0;
+}
+
+.docGalleryPreviewMetaRow {
+  margin: 0 0 1rem;
+}
+
+.docGalleryPreviewMetaRow dt {
+  margin: 0 0 0.25rem;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #94a3b8;
+}
+
+.docGalleryPreviewMetaRow dd {
+  margin: 0;
+  font-size: 0.875rem;
+  color: #f8fafc;
+  word-break: break-word;
+}
+
+@media (max-width: 767px) {
+  .docGalleryPreviewBody {
+    flex-direction: column;
+  }
+
+  .docGalleryPreviewMeta {
+    flex: 0 0 auto;
+    max-width: none;
+    max-height: 40%;
+    border-left: none;
+    border-top: 1px solid rgba(248, 250, 252, 0.12);
+  }
+}
+
 :global([data-theme='dark']) .docListItem {
   border-color: var(--theme-border-main);
   background: var(--theme-surface-list-item);

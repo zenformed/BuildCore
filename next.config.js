@@ -1,7 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  transpilePackages: ['@zenformed/core'],
+  transpilePackages: ['@zenformed/core', 'pdfjs-dist'],
   output: 'standalone',
   experimental: {
     instrumentationHook: true,

@@ -276,15 +276,20 @@ export function DocumentsMobileBulkToolbar(): ReactElement | null {
  */
 export function DocumentsMobileSearchToolsRow({
   searchInput,
+  leadingActions = null,
   trailingActions = null,
 }: {
   readonly searchInput: ReactNode;
+  readonly leadingActions?: ReactNode;
   readonly trailingActions?: ReactNode;
 }): ReactElement | null {
   const { showBulkToolbar } = useDocumentsMobileBulkSelection();
   if (showBulkToolbar) return null;
   return (
     <div className={styles.detailPanelHeaderRow}>
+      {leadingActions != null ? (
+        <div className={styles.detailPanelHeaderRowActions}>{leadingActions}</div>
+      ) : null}
       <div className={styles.detailPanelSearchWrap}>{searchInput}</div>
       {trailingActions != null ? (
         <div className={styles.detailPanelHeaderRowActions}>{trailingActions}</div>

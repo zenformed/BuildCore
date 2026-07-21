@@ -17,6 +17,12 @@ import {
   DocumentRowSelectionProvider,
   type DocumentRowSelectionBulkActions,
 } from '@/presentation/features/crmProjectDetail/documentRowSelectionContext';
+import {
+  readDocumentsViewMode,
+  writeDocumentsViewMode,
+  type DocumentsViewMode,
+} from '@/presentation/features/crmProjectDetail/documentsViewStorage';
+import { formatWorkflowTaskStageLabel } from '@/presentation/features/crmProjectDetail/crmProjectDetailFormatters';
 import { useBuildCorePipelineStages } from '@/presentation/providers/BuildCorePipelineStagesProvider';
 import { useBuildCoreWorkflowTaskAccess } from '@/presentation/providers/BuildCoreWorkflowTaskAccessProvider';
 import { useBuildCoreProjectSectionAccess } from '@/presentation/providers/BuildCoreProjectSectionAccessProvider';
@@ -27,7 +33,11 @@ import { DetailPanelSectionRefresh } from './DetailPanelSectionRefresh';
 import { DetailPanelSectionSearch } from './DetailPanelSectionSearch';
 import { DocumentPanelFilterMenu } from './DocumentPanelFilterMenu';
 import { DocumentPanelUploadButton } from './DocumentPanelUploadButton';
+import { DocumentsGallery } from './DocumentsGallery';
+import { DocumentsListHeaderRow } from './DocumentsListHeaderRow';
+import { DocumentsViewToggleButton } from './DocumentsViewToggleButton';
 import {
+  DocumentsMobileBulkSelectAllRow,
   DocumentsMobileBulkToolbar,
   DocumentsMobileSearchToolsRow,
 } from './MobileBulkSelectionChrome';
@@ -47,6 +57,7 @@ export function ProjectDocumentsTabPanel({
 }: ProjectDocumentsTabPanelProps): ReactElement {
   const {
     project,
+    parentProject,
     onRefresh,
     setToast,
     projectMutationsLocked,
@@ -59,6 +70,7 @@ export function ProjectDocumentsTabPanel({
   const stageCatalog = catalogForProject({ parentProjectId: project.summary.parentProjectId });
   const [filter, setFilter] = useState<DocumentPanelFilter>('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const [viewMode, setViewMode] = useState<DocumentsViewMode>(() => readDocumentsViewMode());
 
   const handleRefresh = async (): Promise<void> => {
     try {
@@ -71,6 +83,14 @@ export function ProjectDocumentsTabPanel({
   const handleError = (message: string): void => {
     onError?.(message);
     setToast({ kind: 'error', message });
+  };
+
+  const handleToggleViewMode = (): void => {
+    setViewMode((previous) => {
+      const next: DocumentsViewMode = previous === 'list' ? 'gallery' : 'list';
+      writeDocumentsViewMode(next);
+      return next;
+    });
   };
 
   const { deleteDocument } = useProjectDocumentModalActions({
@@ -114,6 +134,27 @@ export function ProjectDocumentsTabPanel({
   const taskById = useMemo(
     () => new Map(project.workflowTasks.map((task) => [task.id, task] as const)),
     [project.workflowTasks]
+  );
+
+  const projectLabel = useMemo(() => {
+    if (parentProject != null) {
+      return `${parentProject.name} / ${project.summary.name}`;
+    }
+    return project.summary.name;
+  }, [parentProject, project.summary.name]);
+
+  const resolveTaskTitle = useCallback(
+    (doc: CrmDocumentMetadata): string => {
+      if (doc.workflowTaskId == null) return docs.gallery.metadata.noTask;
+      const task = taskById.get(doc.workflowTaskId);
+      if (task) return task.title;
+      if (doc.stageSlug == null) return docs.gallery.metadata.noTask;
+      return formatWorkflowTaskStageLabel(
+        { stageSlug: doc.stageSlug, amountCents: null },
+        stageCatalog
+      );
+    },
+    [docs.gallery.metadata.noTask, stageCatalog, taskById]
   );
 
   const canDownloadDoc = useCallback(
@@ -186,6 +227,10 @@ export function ProjectDocumentsTabPanel({
     />
   );
 
+  const viewToggle = (
+    <DocumentsViewToggleButton viewMode={viewMode} onToggle={handleToggleViewMode} />
+  );
+
   const searchInput = (
     <DetailPanelSectionSearch
       value={searchQuery}
@@ -236,6 +281,7 @@ export function ProjectDocumentsTabPanel({
               </div>
             </div>
             <DocumentsMobileSearchToolsRow
+              leadingActions={viewToggle}
               searchInput={searchInput}
               trailingActions={uploadButton}
             />
@@ -243,19 +289,41 @@ export function ProjectDocumentsTabPanel({
         ) : (
           <DetailPanelHeader title={content.projectDetail.sections.documents} titleId={titleId}>
             <DetailPanelHeaderActions>
+              {viewToggle}
               {searchInput}
               {uploadButton}
             </DetailPanelHeaderActions>
           </DetailPanelHeader>
         )}
-        <ProjectDocumentsPanelContent
-          project={project}
-          filter={filter}
-          searchQuery={searchQuery}
-          leadingFilter={filterCaret}
-          onRefresh={handleRefresh}
-          onError={handleError}
-        />
+        {viewMode === 'gallery' ? (
+          <>
+            {visibleDocuments.length > 0 && isMobileLayout ? (
+              <DocumentsMobileBulkSelectAllRow />
+            ) : null}
+            {visibleDocuments.length > 0 && !isMobileLayout ? (
+              <DocumentsListHeaderRow
+                leadingFilter={filterCaret}
+                onRefresh={handleRefresh}
+                onError={handleError}
+              />
+            ) : null}
+            <DocumentsGallery
+              project={project}
+              documents={visibleDocuments}
+              projectLabel={projectLabel}
+              resolveTaskTitle={resolveTaskTitle}
+            />
+          </>
+        ) : (
+          <ProjectDocumentsPanelContent
+            project={project}
+            filter={filter}
+            searchQuery={searchQuery}
+            leadingFilter={filterCaret}
+            onRefresh={handleRefresh}
+            onError={handleError}
+          />
+        )}
       </section>
     </DocumentRowSelectionProvider>
   );

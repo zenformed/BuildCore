@@ -10,6 +10,8 @@ export type UseBulkSelectionResult<TId extends string> = {
   readonly exitSelectionMode: () => void;
   readonly toggle: (id: TId) => void;
   readonly selectAllVisible: (visibleIds: readonly TId[]) => void;
+  readonly selectMany: (ids: readonly TId[]) => void;
+  readonly deselectMany: (ids: readonly TId[]) => void;
   readonly clearSelection: () => void;
   readonly isSelected: (id: TId) => boolean;
   readonly allVisibleSelected: (visibleIds: readonly TId[]) => boolean;
@@ -45,6 +47,22 @@ export function useBulkSelection<TId extends string>(): UseBulkSelectionResult<T
     setSelectedIds(new Set(visibleIds));
   }, []);
 
+  const selectMany = useCallback((ids: readonly TId[]) => {
+    setSelectedIds((previous) => {
+      const next = new Set(previous);
+      for (const id of ids) next.add(id);
+      return next;
+    });
+  }, []);
+
+  const deselectMany = useCallback((ids: readonly TId[]) => {
+    setSelectedIds((previous) => {
+      const next = new Set(previous);
+      for (const id of ids) next.delete(id);
+      return next;
+    });
+  }, []);
+
   const clearSelection = useCallback(() => {
     setSelectedIds(new Set());
   }, []);
@@ -76,6 +94,8 @@ export function useBulkSelection<TId extends string>(): UseBulkSelectionResult<T
       exitSelectionMode,
       toggle,
       selectAllVisible,
+      selectMany,
+      deselectMany,
       clearSelection,
       isSelected,
       allVisibleSelected,
@@ -84,10 +104,12 @@ export function useBulkSelection<TId extends string>(): UseBulkSelectionResult<T
     [
       allVisibleSelected,
       clearSelection,
+      deselectMany,
       enterSelectionMode,
       exitSelectionMode,
       isSelected,
       selectAllVisible,
+      selectMany,
       selectedCount,
       selectedIds,
       selectionMode,

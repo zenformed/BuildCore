@@ -25,6 +25,8 @@ export type DocumentRowSelectionBulkActions = {
 export type DocumentRowSelectionContextValue = BulkSelectionBindings & {
   readonly selectedCount: number;
   readonly clearSelection: () => void;
+  readonly selectMany: (ids: readonly string[]) => void;
+  readonly deselectMany: (ids: readonly string[]) => void;
   readonly bulkActions: DocumentRowSelectionBulkActions | null;
 };
 
@@ -49,6 +51,8 @@ export function DocumentRowSelectionProvider({
       selectedIds: bulk.selectedIds,
       selectedCount: bulk.selectedCount,
       clearSelection: bulk.clearSelection,
+      selectMany: bulk.selectMany,
+      deselectMany: bulk.deselectMany,
       onToggle: bulk.toggle,
       allVisibleSelected: bulk.allVisibleSelected(visibleDocumentIds),
       someVisibleSelected: bulk.someVisibleSelected(visibleDocumentIds),
