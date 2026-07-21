@@ -58,6 +58,10 @@ export function CrmMapPage(): ReactElement {
     setSelectionToken((token) => token + 1);
   }, []);
 
+  const closeDetails = useCallback(() => {
+    setSelected(null);
+  }, []);
+
   const onMarkerClick = useCallback(
     (marker: CrmMapMarker) => {
       const parentEntry =
@@ -132,7 +136,7 @@ export function CrmMapPage(): ReactElement {
               selected={selected}
               workflowProgressInputIndex={workflowProgressInputIndex}
               isMobileLayout={false}
-              onClose={() => setSelected(null)}
+              onClose={closeDetails}
               onOpenProject={onOpenProject}
               onViewPhotos={onViewPhotos}
             />
@@ -149,7 +153,7 @@ export function CrmMapPage(): ReactElement {
               selected={selected}
               workflowProgressInputIndex={workflowProgressInputIndex}
               isMobileLayout
-              onClose={() => setSelected(null)}
+              onClose={closeDetails}
               onOpenProject={onOpenProject}
               onViewPhotos={onViewPhotos}
             />

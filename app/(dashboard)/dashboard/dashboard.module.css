@@ -207,7 +207,26 @@
     flex: 1;
     min-height: 0;
     overflow: hidden;
-    padding: 0.75rem 0.5rem calc(96px + env(safe-area-inset-bottom, 0px));
+    padding: 0;
+  }
+
+  .appLayout
+    :global([data-zenformed-collapsible-sidebar-shell]:has([data-crm-map-page])) {
+    position: relative;
+  }
+
+  /* Map owns the full mobile viewport; shell hamburger floats above it. */
+  .appLayout
+    :global(
+      [data-zenformed-collapsible-sidebar-shell]:has([data-crm-map-page])
+        > div:last-child
+        > div:first-child
+    ) {
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 7;
+    background: transparent;
   }
 
   .listViewWrap:has([data-buildcore-teams-page]) {

@@ -1,6 +1,13 @@
 'use client';
 
-import { useEffect, useMemo, useState, type ReactElement } from 'react';
+import {
+  useEffect,
+  useMemo,
+  useState,
+  type MouseEvent as ReactMouseEvent,
+  type PointerEvent as ReactPointerEvent,
+  type ReactElement,
+} from 'react';
 import type { CrmProjectPreview } from '@/domain/crm/projectPreview';
 import {
   projectPrimaryPhotoCircleColor,
@@ -117,6 +124,33 @@ export function ProjectDetailsPanel({
   const [preview, setPreview] = useState<CrmProjectPreview | null>(null);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [mobileExpanded, setMobileExpanded] = useState(false);
+  const [sheetDragStartY, setSheetDragStartY] = useState<number | null>(null);
+
+  const setExpanded = (expanded: boolean): void => {
+    setMobileExpanded(expanded);
+  };
+
+  const handleSheetPointerDown = (event: ReactPointerEvent<HTMLButtonElement>): void => {
+    setSheetDragStartY(event.clientY);
+    event.currentTarget.setPointerCapture(event.pointerId);
+  };
+
+  const handleSheetPointerUp = (event: ReactPointerEvent<HTMLButtonElement>): void => {
+    if (sheetDragStartY == null) return;
+    const distance = event.clientY - sheetDragStartY;
+    setSheetDragStartY(null);
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    }
+    if (distance < -24) {
+      setExpanded(true);
+    } else if (distance > 24) {
+      setExpanded(false);
+    } else {
+      setExpanded(!mobileExpanded);
+    }
+  };
 
   useEffect(() => {
     let cancelled = false;
@@ -182,6 +216,21 @@ export function ProjectDetailsPanel({
       ? selected.summary.customIndustry?.trim() || INDUSTRY_LABELS.other
       : INDUSTRY_LABELS[selected.summary.industry];
   const assignedTo = selected.summary.assignedTo;
+  const destination = `${selected.marker.latitude},${selected.marker.longitude}`;
+  const directionsUrl = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(destination)}&travelmode=driving`;
+
+  const handleNavigate = (event: ReactMouseEvent<HTMLAnchorElement>): void => {
+    const userAgent = navigator.userAgent;
+    if (/Android/i.test(userAgent)) {
+      event.preventDefault();
+      window.location.href = `geo:${destination}?q=${encodeURIComponent(destination)}`;
+      return;
+    }
+    if (/iPhone|iPad|iPod/i.test(userAgent)) {
+      event.preventDefault();
+      window.location.href = `https://maps.apple.com/?daddr=${encodeURIComponent(destination)}&dirflg=d`;
+    }
+  };
 
   const body = (
     <>
@@ -225,7 +274,25 @@ export function ProjectDetailsPanel({
           <div className={styles.detailsPreviewCard}>
             <MapProjectPhoto preview={preview} selected={selected} />
             {addressDisplay && addressDisplay !== '—' ? (
-              <p className={styles.detailsAddress}>{addressDisplay}</p>
+              <div className={styles.detailsAddressRow}>
+                <a
+                  href={directionsUrl}
+                  className={styles.detailsNavigateLink}
+                  onClick={handleNavigate}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label={`Navigate to ${addressDisplay}`}
+                  title="Navigate"
+                >
+                  <svg viewBox="0 0 24 24" aria-hidden>
+                    <path
+                      d="M20.7 3.3a1 1 0 0 0-1.02-.24L3.8 9.02a1 1 0 0 0 .08 1.9l6.63 2.2 2.2 6.63a1 1 0 0 0 .92.68h.04a1 1 0 0 0 .93-.61l6.34-15.5a1 1 0 0 0-.24-1.02ZM13.8 16.5l-1.57-4.72-4.72-1.57 10.72-4.02L13.8 16.5Z"
+                      fill="currentColor"
+                    />
+                  </svg>
+                </a>
+                <p className={styles.detailsAddress}>{addressDisplay}</p>
+              </div>
             ) : null}
             <ProjectDetailsCardContent
               preview={preview}
@@ -265,8 +332,29 @@ export function ProjectDetailsPanel({
           aria-label="Dismiss project details"
           onClick={onClose}
         />
-        <aside className={styles.sheet} role="dialog" aria-label="Project details">
-          <div className={styles.sheetHandle} aria-hidden />
+        <aside
+          className={`${styles.sheet}${mobileExpanded ? ` ${styles.sheet_expanded}` : ''}`}
+          role="dialog"
+          aria-label="Project details"
+        >
+          <button
+            type="button"
+            className={styles.sheetHandleButton}
+            aria-label={mobileExpanded ? 'Collapse project details' : 'Expand project details'}
+            aria-expanded={mobileExpanded}
+            onPointerDown={handleSheetPointerDown}
+            onPointerUp={handleSheetPointerUp}
+            onPointerCancel={() => setSheetDragStartY(null)}
+            onKeyDown={(event) => {
+              if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault();
+                setExpanded(!mobileExpanded);
+              }
+            }}
+            onClick={(event) => event.preventDefault()}
+          >
+            <span className={styles.sheetHandle} aria-hidden />
+          </button>
           {body}
         </aside>
       </>
