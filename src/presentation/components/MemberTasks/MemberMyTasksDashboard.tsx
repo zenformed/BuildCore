@@ -614,7 +614,7 @@ export function MemberMyTasksDashboard(): ReactElement {
         </div>
       </div>
 
-      <div className={panelStyles.projectsPanelBody}>
+      <div className={`${panelStyles.projectsPanelBody} ${styles.myTasksPanelBody}`}>
         {loading ? <p className={detailStyles.subtitle}>{copy.loading}</p> : null}
         {error ? <p className={detailStyles.subtitle}>{error}</p> : null}
         {!loading && isRadiusGeocoding ? (

@@ -231,7 +231,7 @@ export function CrmPhotosPage(): ReactElement {
   );
 
   return (
-    <div className={styles.pageShell}>
+    <div className={styles.pageShell} data-crm-photos-page>
       {toast ? (
         <DetailToast
           kind={toast.kind}

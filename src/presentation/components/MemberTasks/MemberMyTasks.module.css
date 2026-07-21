@@ -1,8 +1,17 @@
+.myTasksPanelBody {
+  overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  /* Enough bottom space so the last card is fully visible when scrolled to end. */
+  padding-bottom: 1.5rem;
+}
+
 .myTasksGroups {
   display: flex;
   flex-direction: column;
   gap: 1rem;
   min-width: 0;
+  padding-bottom: 1rem;
 }
 
 .headerTitleRow {
@@ -445,6 +454,14 @@
 }
 
 @media (max-width: 767px) {
+  .myTasksPanelBody {
+    padding-bottom: 2.5rem;
+  }
+
+  .myTasksGroups {
+    padding-bottom: 1.25rem;
+  }
+
   .taskList {
     gap: 0.5rem;
     padding: 0.5rem;
