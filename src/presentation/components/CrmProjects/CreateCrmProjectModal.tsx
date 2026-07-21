@@ -161,7 +161,7 @@ export function CreateCrmProjectModal({
 
   const copy = isEditMode ? edit : create;
   const modalTitle = !isEditMode && createTitle ? createTitle : copy.title;
-  const useDesktopDrawer = !isMobileLayout && !isEditMode;
+  const useDesktopDrawer = !isMobileLayout;
   const titleId = 'create-crm-project-title';
 
   const templateScope: BuildCoreProjectTemplateScope =
