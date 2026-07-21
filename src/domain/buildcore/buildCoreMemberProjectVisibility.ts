@@ -146,6 +146,8 @@ export function reduceProjectSummaryForMemberContainer(
     balanceRemainingCents: 0,
     assignedTo: null,
     completedBy: null,
+    latitude: null,
+    longitude: null,
   };
 }
 

@@ -9,6 +9,7 @@ import {
 import {
   ListIcon,
   ImageIcon,
+  MapIcon,
   ReportsIcon,
   TeamsIcon,
   WorkflowStagesIcon,
@@ -19,6 +20,7 @@ export type BuildCoreSidebarNavId =
   | 'projects'
   | 'reports'
   | 'photos'
+  | 'map'
   | 'teams'
   | 'workflowStages'
   | 'notifications';
@@ -27,6 +29,7 @@ const SIDEBAR_ICONS: Record<BuildCoreSidebarNavId, () => ReactElement> = {
   projects: ListIcon,
   reports: ReportsIcon,
   photos: ImageIcon,
+  map: MapIcon,
   teams: TeamsIcon,
   workflowStages: WorkflowStagesIcon,
   notifications: ListIcon,

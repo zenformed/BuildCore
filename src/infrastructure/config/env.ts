@@ -101,4 +101,20 @@ export const env = {
   get crmDataSource(): CrmDataSource {
     return getCrmDataSource();
   },
+  /**
+   * Google Maps JavaScript API key for the Map page.
+   * Optional — Map page shows a configuration state when unset.
+   */
+  get googleMapsApiKey(): string | null {
+    const value = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY?.trim() ?? '';
+    return value.length > 0 ? value : null;
+  },
+  /**
+   * Optional Google Maps Map ID for Advanced Markers / cloud styling.
+   * Defaults to Google's documented DEMO_MAP_ID when unset.
+   */
+  get googleMapsMapId(): string {
+    const value = process.env.NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID?.trim() ?? '';
+    return value.length > 0 ? value : 'DEMO_MAP_ID';
+  },
 } as const;

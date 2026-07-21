@@ -42,6 +42,10 @@ export type CrmProjectSummary = {
   readonly completedBy: CrmTeamMemberRef | null;
   /** Supabase storage key for primary project photo; null when using initials placeholder. */
   readonly primaryPhotoPath: string | null;
+  /** Optional WGS84 latitude for map display; null when unknown. Must pair with longitude. */
+  readonly latitude: number | null;
+  /** Optional WGS84 longitude for map display; null when unknown. Must pair with latitude. */
+  readonly longitude: number | null;
   /** Permanent random token for public lead URLs; never derived from slug or id. */
   readonly leadToken: string;
   /** Subproject lifecycle status — urgent, normal, completed, or inactive. */

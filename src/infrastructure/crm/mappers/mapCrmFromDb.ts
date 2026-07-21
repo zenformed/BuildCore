@@ -83,6 +83,8 @@ export type DbCrmProjectRow = {
   inactive_at?: string | null;
   inactive_by?: string | null;
   primary_photo_path?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
   lead_token: string;
   address_line_1: string | null;
   address_line_2: string | null;
@@ -353,6 +355,27 @@ export function mapDbProjectAddress(row: DbCrmProjectRow): CrmProjectAddress {
   };
 }
 
+function mapDbProjectCoordinates(row: DbCrmProjectRow): {
+  readonly latitude: number | null;
+  readonly longitude: number | null;
+} {
+  const latitude = row.latitude == null ? null : Number(row.latitude);
+  const longitude = row.longitude == null ? null : Number(row.longitude);
+  if (
+    latitude == null ||
+    longitude == null ||
+    !Number.isFinite(latitude) ||
+    !Number.isFinite(longitude) ||
+    latitude < -90 ||
+    latitude > 90 ||
+    longitude < -180 ||
+    longitude > 180
+  ) {
+    return { latitude: null, longitude: null };
+  }
+  return { latitude, longitude };
+}
+
 export function mapDbProjectSummary(
   row: DbCrmProjectRow,
   memberById: ReadonlyMap<string, CrmTeamMemberRef>
@@ -394,6 +417,7 @@ export function mapDbProjectSummary(
     completedAt: row.completed_at,
     completedBy,
     primaryPhotoPath: row.primary_photo_path ?? null,
+    ...mapDbProjectCoordinates(row),
     leadToken: row.lead_token,
     subprojectStatus: asSubprojectStatus(row.subproject_status, row),
     inactiveReason: asInactiveReason(row.inactive_reason),

@@ -46,6 +46,17 @@ export function CrmPhotosPage(): ReactElement {
     message: string;
   } | null>(null);
   const loadMoreRef = useRef<HTMLDivElement>(null);
+  const didInitQueryRef = useRef(false);
+
+  useEffect(() => {
+    if (didInitQueryRef.current) return;
+    didInitQueryRef.current = true;
+    const params = new URLSearchParams(window.location.search);
+    const initialQuery = (params.get('q') ?? params.get('project') ?? '').trim();
+    if (!initialQuery) return;
+    setSearchInput(initialQuery);
+    setSearch(initialQuery);
+  }, []);
 
   useEffect(() => {
     const timer = window.setTimeout(() => setSearch(searchInput.trim()), 300);

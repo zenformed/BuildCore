@@ -5,6 +5,7 @@ import type { ZenformedSidebarNavItem, ZenformedSidebarSection } from '@zenforme
 import {
   HomeIcon,
   ImageIcon,
+  MapIcon,
   ReportsIcon,
   SettingsIcon,
   TeamsIcon,
@@ -36,6 +37,7 @@ const MANAGEMENT_LABELS: Record<
   projects: { label: 'Dashboard', title: 'Dashboard' },
   reports: { label: 'CRM Reports', title: 'CRM Reports' },
   photos: { label: 'Photos', title: 'Photos across all projects' },
+  map: { label: 'Map', title: 'Project map' },
   teams: { label: 'Team Settings', title: 'Team Settings' },
   workflowStages: { label: 'Workflow Settings', title: 'Workflow Settings' },
 };
@@ -44,6 +46,7 @@ const ICONS: Record<Exclude<BuildCoreSidebarNavId, 'notifications'>, () => React
   projects: () => <HomeIcon />,
   reports: () => <ReportsIcon />,
   photos: () => <ImageIcon />,
+  map: () => <MapIcon />,
   teams: () => (
     <IconWithCog>
       <TeamsIcon />
@@ -75,8 +78,8 @@ export function buildBuildCoreSidebarSections(
   });
 
   const menuIds: BuildCoreSidebarNavId[] = isMemberExperience
-    ? ['projects', 'photos']
-    : ['projects', 'reports', 'photos'];
+    ? ['projects', 'photos', 'map']
+    : ['projects', 'reports', 'photos', 'map'];
   const toolsIds: BuildCoreSidebarNavId[] = isMemberExperience
     ? []
     : ['teams', 'workflowStages'];

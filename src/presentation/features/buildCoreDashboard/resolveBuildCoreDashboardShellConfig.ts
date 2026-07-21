@@ -34,6 +34,13 @@ export function resolveBuildCoreDashboardShellConfig(
     };
   }
 
+  if (pathname === nav.routes.map || pathname.startsWith(`${nav.routes.map}/`)) {
+    return {
+      sidebarActiveId: 'map',
+      title: null,
+    };
+  }
+
   if (pathname === nav.routes.reports || pathname.startsWith(`${nav.routes.reports}/`)) {
     return {
       sidebarActiveId: 'reports',

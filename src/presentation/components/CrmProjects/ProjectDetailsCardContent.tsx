@@ -510,6 +510,15 @@ export function ProjectDetailsCardContent({
         </div>
         <div className={`${cardStyles.previewMetaRow} ${cardStyles.previewMetaRow_spaced}`}>
           <PreviewMetaColumn
+            label={previewCopy.labels.address}
+            labelPosition={previewLabelPosition}
+            value={
+              addressDisplay ? <MultilineMetaValue text={addressDisplay} /> : emptyValue
+            }
+          />
+        </div>
+        <div className={`${cardStyles.previewMetaRow} ${cardStyles.previewMetaRow_spaced}`}>
+          <PreviewMetaColumn
             label={previewCopy.labels.stage}
             labelPosition={previewLabelPosition}
             value={stageDisplay}

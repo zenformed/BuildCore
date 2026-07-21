@@ -63,6 +63,8 @@ ${crmProjectIndustrySelectLines(mode)}
   inactive_at,
   inactive_by,
   primary_photo_path,
+  latitude,
+  longitude,
   lead_token,
   address_line_1,
   address_line_2,

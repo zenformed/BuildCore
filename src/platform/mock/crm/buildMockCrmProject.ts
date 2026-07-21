@@ -17,7 +17,7 @@ import {
   type WorkflowTaskStatus,
 } from '@/domain/crm';
 import { deriveCrmSubprojectStatus } from '@/domain/crm/subprojectStatus';
-import { emptyCrmProjectAddress } from '@/domain/crm/projectAddress';
+import { emptyCrmProjectAddress, type CrmProjectAddress } from '@/domain/crm/projectAddress';
 import type { CrmClient } from '@/domain/crm/client';
 import type { CrmContact } from '@/domain/crm/contact';
 import type { CrmTeamMemberRef } from '@/domain/crm/teamMember';
@@ -44,6 +44,9 @@ export type BuildMockCrmProjectInput = {
   readonly completedAt?: string | null;
   readonly completedById?: string | null;
   readonly primaryPhotoPath?: string | null;
+  readonly latitude?: number | null;
+  readonly longitude?: number | null;
+  readonly address?: CrmProjectAddress;
   readonly leadToken?: string;
   readonly workflowTasks?: readonly CrmWorkflowTask[];
   readonly manualStageCompletions?: readonly CrmProjectStageCompletion[];
@@ -338,7 +341,7 @@ export function buildMockCrmProjectDetail(input: BuildMockCrmProjectInput): CrmP
     customIndustry: input.customIndustry ?? null,
     contact: input.contact,
     client: input.client,
-    address: emptyCrmProjectAddress(),
+    address: input.address ?? emptyCrmProjectAddress(),
     priority: input.priority,
     currentStageSlug: input.currentStageSlug,
     notesPreview: notesPreview(input.notes),
@@ -352,6 +355,8 @@ export function buildMockCrmProjectDetail(input: BuildMockCrmProjectInput): CrmP
         ? getMockCrmTeamMember(input.completedById)
         : null,
     primaryPhotoPath: input.primaryPhotoPath ?? null,
+    latitude: input.latitude ?? null,
+    longitude: input.longitude ?? null,
     leadToken: input.leadToken ?? `00000000-0000-4000-8000-${input.id.replace(/\D/g, '').padStart(12, '0').slice(-12)}`,
     subprojectStatus: deriveCrmSubprojectStatus({
       priority: input.priority,
