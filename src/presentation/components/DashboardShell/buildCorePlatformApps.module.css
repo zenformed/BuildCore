@@ -210,13 +210,21 @@
 }
 
 /*
- * Mobile apps sheet — floating near the top (modal-like), ~1/4 viewport, scrollable.
+ * Mobile apps sheet — centered modal (~70% viewport), scrollable.
  */
 .appsPopover:global([data-zenformed-sidebar-dock-popover='apps-mobile']) {
   margin: 0 !important;
+  top: 50% !important;
+  left: 50% !important;
+  right: auto !important;
+  bottom: auto !important;
+  transform: translate(-50%, -50%) !important;
   width: min(28rem, calc(100vw - 1rem)) !important;
   min-width: 0 !important;
   max-width: min(28rem, calc(100vw - 1rem)) !important;
+  height: 70vh !important;
+  max-height: 70vh !important;
+  z-index: 10051 !important;
   padding: 0.65rem 0 !important;
   border-radius: 0.75rem !important;
   border: 1px solid var(--theme-nav-sidebar-menu-border, rgba(255, 255, 255, 0.14)) !important;
@@ -229,6 +237,19 @@
   --color-text: var(--theme-nav-sidebar-menu-text, #f1f5f9);
   --color-text-muted: var(--theme-nav-sidebar-menu-text-muted, #94a3b8);
   --theme-surface-hover: var(--theme-nav-sidebar-menu-hover, rgba(255, 255, 255, 0.08));
+}
+
+.appsMobileBackdrop {
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 10050 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: none !important;
+  cursor: pointer;
+  background: rgba(8, 15, 30, 0.62) !important;
+  -webkit-backdrop-filter: blur(14px) saturate(1.1);
+  backdrop-filter: blur(14px) saturate(1.1);
 }
 
 /* Legacy inset overlay (kept for safety if portal is unavailable) */
