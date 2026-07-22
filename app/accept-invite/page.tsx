@@ -4,10 +4,13 @@ import { Suspense, useCallback, useEffect, useState, type ReactElement } from 'r
 import { useRouter, useSearchParams } from 'next/navigation';
 import {
   ZenformedAuthLinkButton,
+  ZenformedAuthMethodDivider,
   ZenformedAuthNavLink,
   ZenformedAuthPageLinks,
+  ZenformedGoogleSignInButton,
 } from '@zenformed/core/auth';
 import { Button } from '@/presentation/components/Button';
+import { buildPlatformGoogleAuthUrl } from '@/infrastructure/auth/buildPlatformAuthEntryUrl';
 import { formatBuildCoreDisplayDateTime } from '@/platform/formatting/buildCoreDisplayDate';
 import { AuthPageShell } from '@/presentation/components/SaaSAuth/AuthPageShell';
 import { InviteRegistrationForm } from '@/presentation/components/SaaSAuth/InviteRegistrationForm';
@@ -291,6 +294,16 @@ function AcceptInviteContent(): ReactElement {
 
           {!session || !user ? (
             <>
+              <ZenformedGoogleSignInButton
+                onContinue={async () => {
+                  window.location.assign(
+                    buildPlatformGoogleAuthUrl({
+                      returnTo: `/accept-invite?token=${encodeURIComponent(token)}`,
+                    })
+                  );
+                }}
+              />
+              <ZenformedAuthMethodDivider />
               {authMode === 'register' ? (
                 <InviteRegistrationForm
                   email={lookup.invitedEmail}

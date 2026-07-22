@@ -50,6 +50,32 @@ export function buildPlatformLoginUrl(options?: {
   return `${origin}${href}`;
 }
 
+/** Platform Google OAuth auto-start (saves intent, redirects to Google). */
+export function buildPlatformGoogleAuthUrl(options?: {
+  returnTo?: string | null;
+  authEntryParams?: Partial<AuthEntryQueryParams> | null;
+}): string {
+  const origin = resolvePlatformPublicAppUrl();
+  const resolvedReturnTo =
+    options?.returnTo?.trim() ||
+    resolvePostAuthRedirectTarget(
+      {
+        app: options?.authEntryParams?.app ?? null,
+        plan: options?.authEntryParams?.plan ?? null,
+        returnTo: options?.authEntryParams?.returnTo ?? null,
+        redirect: options?.authEntryParams?.redirect ?? null,
+      },
+      nav.routes.dashboard
+    );
+
+  const href = buildAuthEntryHref('/auth/google', {
+    app: BUILDCORE_PLATFORM_APP_ID,
+    returnTo: resolvedReturnTo,
+    plan: options?.authEntryParams?.plan,
+  });
+  return `${origin}${href}`;
+}
+
 /** Cross-origin navigation to Platform login with BuildCore handoff params. */
 export function redirectToPlatformLogin(options?: {
   returnTo?: string | null;
