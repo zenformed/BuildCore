@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo, useState, type DragEvent, type ReactElement } from 'react';
+import { createPortal } from 'react-dom';
 import type { BuildCoreEntityTerminologyKey } from '@/domain/buildcore/entityTerminology';
 import type { OrgPipelineStageRecord, PipelineStageScope } from '@/domain/buildcore/orgPipelineStages';
 import { isReservedPipelineStageSlug } from '@/domain/buildcore/orgPipelineStages';
@@ -10,6 +11,7 @@ import { DetailPanelHeaderButton } from '@/presentation/components/CrmProjectDet
 import { DetailToast } from '@/presentation/components/CrmProjectDetail/DetailToast';
 import detailStyles from '@/presentation/components/CrmProjectDetail/ProjectDetail.module.css';
 import { WorkflowStagesEntityHeading } from '@/presentation/components/BuildCoreWorkflowSettings/WorkflowStagesEntityHeading';
+import { useDashboardMobileLayout } from '@/presentation/features/crmProjects/useDashboardMobileLayout';
 import { useBuildCorePipelineStages } from '@/presentation/providers/BuildCorePipelineStagesProvider';
 import { useBuildCoreWorkflowStagesPage } from '@/presentation/features/buildCoreWorkflowStages/useBuildCoreWorkflowStagesPage';
 import styles from './BuildCoreWorkflowStages.module.css';
@@ -55,6 +57,7 @@ export function BuildCoreWorkflowStagesList({
   const [draftLabel, setDraftLabel] = useState('');
   const [draggingStageId, setDraggingStageId] = useState<string | null>(null);
   const [dragOverStageId, setDragOverStageId] = useState<string | null>(null);
+  const isMobileLayout = useDashboardMobileLayout();
 
   const sortedStages = useMemo(
     () => [...stages].sort((a, b) => a.sortOrder - b.sortOrder),
@@ -232,6 +235,88 @@ export function BuildCoreWorkflowStagesList({
     );
   };
 
+  const closeEditor = (): void => setEditor(null);
+  const editorTitle =
+    editor?.mode === 'edit' ? copy.editStageTitle : copy.addStageTitle;
+  const editorConfirmLabel = editor?.mode === 'edit' ? copy.save : copy.addStage;
+
+  const stageEditorForm =
+    editor?.mode === 'add' || editor?.mode === 'edit' ? (
+      isMobileLayout ? (
+        <form
+          className={styles.stageEditorDialog}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="workflow-stage-editor-title"
+          onSubmit={(event) => {
+            event.preventDefault();
+            void handleEditorConfirm();
+          }}
+        >
+          <label className={styles.modalField}>
+            <span id="workflow-stage-editor-title" className={styles.modalLabel}>
+              {editorTitle}
+            </span>
+            <input
+              type="text"
+              className={styles.modalInput}
+              value={draftLabel}
+              autoFocus
+              aria-label={copy.stageNameLabel}
+              onChange={(event) => setDraftLabel(event.target.value)}
+            />
+          </label>
+          <span className={styles.stageEditorActions}>
+            <button type="submit" className={styles.addButton}>
+              {editorConfirmLabel}
+            </button>
+            <button type="button" className={styles.iconButton} onClick={closeEditor}>
+              {copy.cancel}
+            </button>
+          </span>
+        </form>
+      ) : (
+        <form
+          className={`${styles.row} ${styles.stageEditorInline}`}
+          aria-label={editorTitle}
+          onSubmit={(event) => {
+            event.preventDefault();
+            void handleEditorConfirm();
+          }}
+        >
+          <span className={styles.leadingSpacer} aria-hidden />
+          <input
+            type="text"
+            className={styles.stageNameInput}
+            value={draftLabel}
+            autoFocus
+            aria-label={copy.stageNameLabel}
+            placeholder={copy.stageNameLabel}
+            onChange={(event) => setDraftLabel(event.target.value)}
+          />
+          <span className={styles.rowActions}>
+            <button
+              type="submit"
+              className={styles.rowIconBtn}
+              title={editorConfirmLabel}
+              aria-label={editorConfirmLabel}
+            >
+              <span className={styles.stageEditorCheckIcon} aria-hidden />
+            </button>
+            <button
+              type="button"
+              className={styles.rowIconBtn}
+              title={copy.cancel}
+              aria-label={copy.cancel}
+              onClick={closeEditor}
+            >
+              <span className={styles.stageEditorCancelIcon} aria-hidden />
+            </button>
+          </span>
+        </form>
+      )
+    ) : null;
+
   return (
     <section
       className={`${styles.panel} ${embeddedInTab ? styles.panelInScrollParent : ''}`}
@@ -266,37 +351,7 @@ export function BuildCoreWorkflowStagesList({
         ) : null}
       </div>
       {!canManage ? <p className={styles.readOnlyNote}>{copy.readOnlyNote}</p> : null}
-      {editor?.mode === 'add' || editor?.mode === 'edit' ? (
-        <form
-          className={styles.row}
-          onSubmit={(event) => {
-            event.preventDefault();
-            void handleEditorConfirm();
-          }}
-        >
-          <label className={styles.modalField}>
-            <span className={styles.modalLabel}>
-              {editor.mode === 'edit' ? copy.editStageTitle : copy.addStageTitle}
-            </span>
-            <input
-              type="text"
-              className={styles.modalInput}
-              value={draftLabel}
-              autoFocus
-              aria-label={copy.stageNameLabel}
-              onChange={(event) => setDraftLabel(event.target.value)}
-            />
-          </label>
-          <span className={styles.rowActions}>
-            <button type="submit" className={styles.addButton}>
-              {editor.mode === 'edit' ? copy.save : copy.addStage}
-            </button>
-            <button type="button" className={styles.iconButton} onClick={() => setEditor(null)}>
-              {copy.cancel}
-            </button>
-          </span>
-        </form>
-      ) : null}
+      {!isMobileLayout ? stageEditorForm : null}
       {sortedStages.length === 0 ? (
         <p className={styles.empty}>{copy.empty}</p>
       ) : (
@@ -309,9 +364,24 @@ export function BuildCoreWorkflowStagesList({
         </div>
       )}
 
+      {isMobileLayout && stageEditorForm != null && typeof document !== 'undefined'
+        ? createPortal(
+            <div className={styles.stageEditorRoot} role="presentation">
+              <button
+                type="button"
+                className={styles.stageEditorBackdrop}
+                aria-label={copy.cancel}
+                onClick={closeEditor}
+              />
+              {stageEditorForm}
+            </div>,
+            document.body
+          )
+        : null}
+
       <ConfirmModal
         isOpen={editor?.mode === 'delete'}
-        onClose={() => setEditor(null)}
+        onClose={closeEditor}
         onConfirm={() => void handleDeleteConfirm()}
         title={copy.deleteStageTitle}
         message={copy.deleteStageMessage(editor?.mode === 'delete' ? editor.stage.label : '')}
