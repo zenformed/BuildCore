@@ -622,6 +622,7 @@ export function CreateCrmProjectModal({
           closeAriaLabel={copy.closeAriaLabel}
           overlayClassName={styles.createProjectOverlay}
           panelClassName={styles.createProjectPanel}
+          titleClassName={styles.createProjectTitle}
           bodyClassName={styles.modalBody}
         />
       )}
