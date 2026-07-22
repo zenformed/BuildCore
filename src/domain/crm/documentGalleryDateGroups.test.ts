@@ -26,6 +26,11 @@ function doc(
     reviewedBy: null,
     mimeType: 'image/jpeg',
     sizeBytes: 1000,
+    latitude: null,
+    longitude: null,
+    locationAccuracyMeters: null,
+    locationSource: null,
+    locationCapturedAt: null,
     ...partial,
   };
 }

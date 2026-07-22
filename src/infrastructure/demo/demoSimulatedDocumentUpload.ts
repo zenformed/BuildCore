@@ -10,6 +10,7 @@ import {
 } from '@/infrastructure/crm/mock/mockCrmMutationStore';
 import { resolveMockCrmTeamMember } from '@/platform/mock/crm';
 import type { CrmDirectUploadScope } from '@/presentation/features/crmDirectUpload/performBuildCoreDirectUpload';
+import type { ResolvedUploadCaptureLocation } from '@/presentation/features/crmDirectUpload/resolveUploadCaptureLocation';
 
 function requireDetail(slug: string): CrmProjectDetail {
   const detail = getEffectiveMockProjectDetailBySlug(slug);
@@ -48,7 +49,8 @@ function appendDocument(projectSlug: string, document: CrmDocumentMetadata): voi
 /** Creates a fake uploaded document row in mock project state without touching storage or APIs. */
 export async function simulateDemoDocumentUpload(
   file: File,
-  uploadScope: CrmDirectUploadScope
+  uploadScope: CrmDirectUploadScope,
+  location: ResolvedUploadCaptureLocation | null = null
 ): Promise<{ readonly documentId: string; readonly mimeType: string; readonly fileName: string }> {
   const mimeType = file.type || 'application/octet-stream';
   const validation = validateBuildCoreUpload({
@@ -63,6 +65,13 @@ export async function simulateDemoDocumentUpload(
   const documentId = crypto.randomUUID();
   const uploadedAt = new Date().toISOString();
   const uploadedBy = demoUploader();
+  const locationFields = {
+    latitude: location?.latitude ?? null,
+    longitude: location?.longitude ?? null,
+    locationAccuracyMeters: location?.locationAccuracyMeters ?? null,
+    locationSource: location?.locationSource ?? null,
+    locationCapturedAt: location?.locationCapturedAt ?? null,
+  };
 
   if (uploadScope.scope === 'workflow_task') {
     const workflowValidation = validateWorkflowTaskDocumentUpload({
@@ -93,6 +102,7 @@ export async function simulateDemoDocumentUpload(
       reviewedBy: null,
       mimeType,
       sizeBytes: file.size,
+      ...locationFields,
     });
   } else if (uploadScope.scope === 'budget_entry') {
     const detail = requireDetail(uploadScope.projectSlug);
@@ -114,6 +124,7 @@ export async function simulateDemoDocumentUpload(
       reviewedBy: null,
       mimeType,
       sizeBytes: file.size,
+      ...locationFields,
     });
   } else {
     appendDocument(uploadScope.projectSlug, {
@@ -129,6 +140,7 @@ export async function simulateDemoDocumentUpload(
       reviewedBy: null,
       mimeType,
       sizeBytes: file.size,
+      ...locationFields,
     });
   }
 

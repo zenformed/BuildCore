@@ -11,7 +11,7 @@ import {
 } from './crmOrganizationPhotoAccess';
 
 const DOCUMENT_SELECT =
-  'id, project_id, workflow_task_id, budget_entry_id, document_type, file_name, mime_type, file_size_bytes, upload_status, uploaded_by_member_id, reviewed_by_member_id, reviewed_at, created_at, safe_file_name, storage_provider, storage_bucket, storage_key, storage_path, deleted_at';
+  'id, project_id, workflow_task_id, budget_entry_id, document_type, file_name, mime_type, file_size_bytes, upload_status, uploaded_by_member_id, reviewed_by_member_id, reviewed_at, created_at, safe_file_name, storage_provider, storage_bucket, storage_key, storage_path, deleted_at, latitude, longitude, location_accuracy_meters, location_source, location_captured_at';
 
 export async function deleteCrmOrganizationPhotosForViewer(
   supabase: SupabaseClient,

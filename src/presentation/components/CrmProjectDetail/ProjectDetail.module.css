@@ -9202,16 +9202,22 @@
 }
 
 .docGalleryPreviewMeta {
-  flex: 0 0 18rem;
-  max-width: 40%;
+  flex: 0 0 24rem;
+  max-width: min(28rem, 42%);
   overflow: auto;
-  padding: 1rem 1.25rem;
+  padding: 1.15rem 1.35rem;
   border-left: 1px solid rgba(248, 250, 252, 0.12);
   background: rgba(15, 23, 42, 0.55);
 }
 
 .docGalleryPreviewMetaHandle {
   display: none;
+}
+
+.docGalleryPreviewMetaContext {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
 }
 
 .docGalleryPreviewMetaList {
@@ -9222,6 +9228,11 @@
   margin: 0 0 1rem;
 }
 
+.docGalleryPreviewMetaRow:last-child {
+  margin-bottom: 0;
+}
+
+.docGalleryPreviewMetaLabel,
 .docGalleryPreviewMetaRow dt {
   margin: 0 0 0.25rem;
   font-size: 0.6875rem;
@@ -9231,11 +9242,81 @@
   color: #94a3b8;
 }
 
+.docGalleryPreviewMetaValue,
 .docGalleryPreviewMetaRow dd {
   margin: 0;
   font-size: 0.875rem;
   color: #f8fafc;
   word-break: break-word;
+}
+
+.docGalleryPreviewUploaderRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-top: 0.15rem;
+}
+
+.docGalleryPreviewUploaderMain {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.docGalleryPreviewUploaderText {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.docGalleryPreviewUploaderName {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #f8fafc;
+  overflow-wrap: anywhere;
+}
+
+.docGalleryPreviewUploaderTime {
+  font-size: 0.75rem;
+  color: #94a3b8;
+}
+
+.docGalleryPreviewMapBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 2.25rem;
+  height: 2.25rem;
+  margin: 0;
+  padding: 0;
+  border: none;
+  border-radius: 0.45rem;
+  background: transparent;
+  color: #e2e8f0;
+  font-size: 1.15rem;
+  cursor: pointer;
+}
+
+.docGalleryPreviewMapBtn:hover {
+  background: rgba(248, 250, 252, 0.08);
+  color: #fff;
+}
+
+.docGalleryPreviewMapBtn:focus-visible {
+  outline: 2px solid var(--color-primary, #2563eb);
+  outline-offset: 1px;
+}
+
+.docGalleryPreviewMetaDivider {
+  width: 100%;
+  height: 1px;
+  margin: 1rem 0;
+  background: rgba(248, 250, 252, 0.12);
 }
 
 @media (max-width: 767px) {

@@ -65,6 +65,11 @@ const document = {
   reviewedBy: null,
   mimeType: 'application/pdf',
   sizeBytes: 2048,
+  latitude: null,
+  longitude: null,
+  locationAccuracyMeters: null,
+  locationSource: null,
+  locationCapturedAt: null,
 } as CrmDocumentMetadata;
 
 const member: CrmTeamMemberRef = {

@@ -420,7 +420,7 @@ export function BudgetInlineRow({
                 type="file"
                 accept={documentAccept}
                 className={styles.hiddenFileInput}
-                onChange={(e) => void documentActions.handleFileSelected(e)}
+                onChange={(e) => void documentActions.handleFileSelected(e, 'files')}
               />
               <input
                 ref={documentActions.cameraFileInputRef}
@@ -431,7 +431,7 @@ export function BudgetInlineRow({
                 className={styles.hiddenFileInput}
                 onChange={(e) => {
                   setDocumentsMenuOpen(false);
-                  void documentActions.handleFileSelected(e);
+                  void documentActions.handleFileSelected(e, 'camera');
                 }}
               />
               {(() => {
@@ -987,7 +987,7 @@ export function BudgetInlineRow({
           type="file"
           accept={documentAccept}
           className={styles.hiddenFileInput}
-          onChange={(e) => void documentActions.handleFileSelected(e)}
+          onChange={(e) => void documentActions.handleFileSelected(e, 'files')}
         />
         <WorkflowInlineMenu
           open={documentsMenuOpen}

@@ -46,3 +46,26 @@ export function formatBuildCoreDisplayDateTime(
   if (iso == null || iso.trim() === '') return fallback;
   return formatBuildCoreDisplayDateTimeFromDate(new Date(iso), fallback);
 }
+
+/**
+ * Photo viewer timestamp: MM/DD/YYYY HH:MM AM/PM (zero-padded hour, no comma).
+ * Example: 05/02/2026 08:35 AM
+ */
+export function formatBuildCoreDisplayDateTimePhotoMeta(
+  iso: string | null | undefined,
+  fallback: string = DEFAULT_FALLBACK
+): string {
+  if (iso == null || iso.trim() === '') return fallback;
+  const date = new Date(iso);
+  if (!isValidDate(date)) return fallback;
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  const year = date.getFullYear();
+  let hours = date.getHours();
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+  const meridiem = hours >= 12 ? 'PM' : 'AM';
+  hours = hours % 12;
+  if (hours === 0) hours = 12;
+  const hour = String(hours).padStart(2, '0');
+  return `${month}/${day}/${year} ${hour}:${minutes} ${meridiem}`;
+}

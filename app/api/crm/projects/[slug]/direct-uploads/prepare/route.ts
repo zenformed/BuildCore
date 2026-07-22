@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { parseDocumentCaptureLocationPayload } from '@/domain/crm/documentCaptureLocation';
 import { requireCrmApiAuth } from '@/infrastructure/crm/server/crmApiRouteAuth';
 import {
   requireBuildCoreWorkflowTaskPermission,
-  workflowTaskPermissionForbiddenResponse,
 } from '@/infrastructure/crm/server/buildCoreWorkflowTaskPermissionService';
 import { relayCrmDirectUploadPrepare } from '@/infrastructure/crm/server/buildCoreDirectUploadRelay';
 import type { PrepareDirectUploadPayload } from '@/infrastructure/coreApi/buildCoreDirectUploadClient';
@@ -62,6 +62,30 @@ export async function POST(
     return NextResponse.json({ error: 'validation_error', message: 'Invalid upload request.' }, { status: 400 });
   }
 
+  let location;
+  try {
+    location = parseDocumentCaptureLocationPayload(record);
+  } catch (err) {
+    return NextResponse.json(
+      {
+        error: 'validation_error',
+        message: err instanceof Error ? err.message : 'Invalid capture location.',
+      },
+      { status: 400 }
+    );
+  }
+
+  const locationFields =
+    location == null
+      ? {}
+      : {
+          latitude: location.latitude,
+          longitude: location.longitude,
+          locationAccuracyMeters: location.locationAccuracyMeters,
+          locationSource: location.locationSource,
+          locationCapturedAt: location.locationCapturedAt,
+        };
+
   let payload: PrepareDirectUploadPayload;
   if (scope === 'workflow_task') {
     payload = {
@@ -71,6 +95,7 @@ export async function POST(
       fileName,
       mimeType,
       sizeBytes,
+      ...locationFields,
     };
   } else if (scope === 'budget_entry') {
     payload = {
@@ -80,9 +105,10 @@ export async function POST(
       fileName,
       mimeType,
       sizeBytes,
+      ...locationFields,
     };
   } else {
-    payload = { scope, projectSlug: slug, fileName, mimeType, sizeBytes };
+    payload = { scope, projectSlug: slug, fileName, mimeType, sizeBytes, ...locationFields };
   }
 
   const accessToken = auth.context.authHeader.replace(/^Bearer\s+/i, '').trim();

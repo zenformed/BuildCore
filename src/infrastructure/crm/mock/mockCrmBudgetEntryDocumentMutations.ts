@@ -125,6 +125,11 @@ export async function mockUploadBudgetEntryDocument(
     reviewedBy: null,
     mimeType: input.mimeType,
     sizeBytes: input.sizeBytes,
+  latitude: null,
+  longitude: null,
+  locationAccuracyMeters: null,
+  locationSource: null,
+  locationCapturedAt: null,
   };
 
   adjustMockStorage(organizationId, input.sizeBytes);

@@ -11,6 +11,7 @@ import { buildCoreDashboardContent as content } from '@/platform/content/buildCo
 import { mapCrmDocumentActionError } from '@/presentation/features/crmProjectDetail/crmDocumentActionErrors';
 import { useCorePlatformDegraded } from '@/presentation/hooks/useCorePlatformDegraded';
 import { performCrmDirectUpload } from '@/presentation/features/crmDirectUpload/performBuildCoreDirectUpload';
+import type { UploadCaptureSource } from '@/presentation/features/crmDirectUpload/resolveUploadCaptureLocation';
 
 export type WorkflowTaskDocumentChangeHandlers = {
   onDocumentUploaded: (document: CrmDocumentMetadata) => void | Promise<void>;
@@ -28,8 +29,11 @@ export function useWorkflowTaskDocumentActions(input: {
   cameraFileInputRef: React.RefObject<HTMLInputElement>;
   openFilePicker: () => void;
   openCameraPicker: () => void;
-  uploadFile: (file: File) => Promise<void>;
-  handleFileSelected: (e: React.ChangeEvent<HTMLInputElement>) => Promise<void>;
+  uploadFile: (file: File, captureSource?: UploadCaptureSource) => Promise<void>;
+  handleFileSelected: (
+    e: React.ChangeEvent<HTMLInputElement>,
+    captureSource?: UploadCaptureSource
+  ) => Promise<void>;
   downloadDocument: (documentId: string, fileName: string) => Promise<void>;
   deleteDocument: (documentId: string) => Promise<void>;
 } {
@@ -53,7 +57,7 @@ export function useWorkflowTaskDocumentActions(input: {
   }, []);
 
   const uploadFile = useCallback(
-    async (file: File) => {
+    async (file: File, captureSource: UploadCaptureSource = 'files') => {
       if (coreDegraded) {
         input.onError(wf.coreServicesUnavailable);
         return;
@@ -61,11 +65,15 @@ export function useWorkflowTaskDocumentActions(input: {
 
       setUploading(true);
       try {
-        const prepared = await performCrmDirectUpload(file, {
-          scope: 'workflow_task',
-          projectSlug: input.projectSlug,
-          workflowTaskId: input.workflowTaskId,
-        });
+        const prepared = await performCrmDirectUpload(
+          file,
+          {
+            scope: 'workflow_task',
+            projectSlug: input.projectSlug,
+            workflowTaskId: input.workflowTaskId,
+          },
+          { captureSource }
+        );
         const documents = await listWorkflowTaskDocuments(crmRepositories, {
           projectSlug: input.projectSlug,
           workflowTaskId: input.workflowTaskId,
@@ -85,11 +93,14 @@ export function useWorkflowTaskDocumentActions(input: {
   );
 
   const handleFileSelected = useCallback(
-    async (e: React.ChangeEvent<HTMLInputElement>) => {
+    async (
+      e: React.ChangeEvent<HTMLInputElement>,
+      captureSource: UploadCaptureSource = 'files'
+    ) => {
       const file = e.target.files?.[0];
       e.target.value = '';
       if (!file) return;
-      await uploadFile(file);
+      await uploadFile(file, captureSource);
     },
     [uploadFile]
   );

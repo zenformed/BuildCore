@@ -40,7 +40,7 @@ const TASK_SELECT =
   'id, project_id, title, stage_slug, status, documents_required, notes, due_at, completed_at, assigned_member_id, assigned_contact_id, assigned_at, completed_by_member_id, sort_order, amount_cents, invoiced_at, paid_at';
 
 const DOCUMENT_SELECT =
-  'id, project_id, workflow_task_id, budget_entry_id, document_type, file_name, mime_type, file_size_bytes, upload_status, uploaded_by_member_id, reviewed_by_member_id, reviewed_at, created_at, safe_file_name, storage_provider, storage_bucket, storage_key, deleted_at';
+  'id, project_id, workflow_task_id, budget_entry_id, document_type, file_name, mime_type, file_size_bytes, upload_status, uploaded_by_member_id, reviewed_by_member_id, reviewed_at, created_at, safe_file_name, storage_provider, storage_bucket, storage_key, deleted_at, latitude, longitude, location_accuracy_meters, location_source, location_captured_at';
 
 export class CrmMyTasksForbiddenError extends Error {
   constructor(message = 'Only members can access My Tasks.') {

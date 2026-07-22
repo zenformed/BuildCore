@@ -219,6 +219,11 @@ function defaultDocuments(
       reviewedBy: reviewer,
       mimeType: 'application/zip',
       sizeBytes: 4_800_000,
+    latitude: null,
+    longitude: null,
+    locationAccuracyMeters: null,
+    locationSource: null,
+    locationCapturedAt: null,
     },
     {
       id: 'doc-estimate',
@@ -233,6 +238,11 @@ function defaultDocuments(
       reviewedBy: stageSlug === 'waiting-on-approval' ? null : reviewer,
       mimeType: 'application/pdf',
       sizeBytes: 320_000,
+    latitude: null,
+    longitude: null,
+    locationAccuracyMeters: null,
+    locationSource: null,
+    locationCapturedAt: null,
     },
   ];
 }

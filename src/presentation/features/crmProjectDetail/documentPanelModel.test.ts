@@ -70,6 +70,11 @@ function makeDocument(
     reviewedBy: null,
     mimeType: 'application/pdf',
     sizeBytes: 1024,
+    latitude: null,
+    longitude: null,
+    locationAccuracyMeters: null,
+    locationSource: null,
+    locationCapturedAt: null,
     ...overrides,
   };
 }

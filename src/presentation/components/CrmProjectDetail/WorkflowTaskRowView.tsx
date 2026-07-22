@@ -858,7 +858,7 @@ function WorkflowTaskRowDocumentsField({
         type="file"
         accept={model.documentAccept}
         className={styles.hiddenFileInput}
-        onChange={(e) => void model.documentActions.handleFileSelected(e)}
+        onChange={(e) => void model.documentActions.handleFileSelected(e, 'files')}
       />
       <input
         ref={model.documentActions.cameraFileInputRef}
@@ -869,7 +869,7 @@ function WorkflowTaskRowDocumentsField({
         className={styles.hiddenFileInput}
         onChange={(e) => {
           model.setDocumentsMenuOpen(false);
-          void model.documentActions.handleFileSelected(e);
+          void model.documentActions.handleFileSelected(e, 'camera');
         }}
       />
       {(() => {

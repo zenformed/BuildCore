@@ -6,11 +6,20 @@ import { shouldSimulateDemoOperation } from '@/infrastructure/demo/demoSafetyPol
 import { simulateDemoDocumentUpload } from '@/infrastructure/demo/demoSimulatedDocumentUpload';
 import { uploadFileToSignedUrl } from '@/infrastructure/coreApi/buildCoreDirectUploadClient';
 import { getSession } from '@/infrastructure/supabase/supabaseClient';
+import {
+  resolveUploadCaptureLocation,
+  type UploadCaptureSource,
+} from '@/presentation/features/crmDirectUpload/resolveUploadCaptureLocation';
 
 export type CrmDirectUploadScope =
   | { readonly scope: 'workflow_task'; readonly projectSlug: string; readonly workflowTaskId: string }
   | { readonly scope: 'budget_entry'; readonly projectSlug: string; readonly budgetEntryId: string }
   | { readonly scope: 'project_media'; readonly projectSlug: string };
+
+export type CrmDirectUploadOptions = {
+  /** How the file was chosen. Camera triggers device geolocation; files use EXIF when present. */
+  readonly captureSource?: UploadCaptureSource;
+};
 
 export type DirectUploadPrepared = {
   readonly documentId: string;
@@ -20,7 +29,8 @@ export type DirectUploadPrepared = {
 
 export async function performCrmDirectUpload(
   file: File,
-  uploadScope: CrmDirectUploadScope
+  uploadScope: CrmDirectUploadScope,
+  options?: CrmDirectUploadOptions
 ): Promise<DirectUploadPrepared & { readonly fileName: string }> {
   const validation = validateBuildCoreUpload({
     fileName: file.name,
@@ -31,8 +41,21 @@ export async function performCrmDirectUpload(
     throw new Error(validation.message);
   }
 
+  const captureSource = options?.captureSource ?? 'files';
+  const location = await resolveUploadCaptureLocation(file, captureSource);
+  const locationFields =
+    location == null
+      ? {}
+      : {
+          latitude: location.latitude,
+          longitude: location.longitude,
+          locationAccuracyMeters: location.locationAccuracyMeters,
+          locationSource: location.locationSource,
+          locationCapturedAt: location.locationCapturedAt,
+        };
+
   if (shouldSimulateDemoOperation('crm-direct-upload')) {
-    const simulated = await simulateDemoDocumentUpload(file, uploadScope);
+    const simulated = await simulateDemoDocumentUpload(file, uploadScope, location);
     clearApiCrmDetailCache();
     return {
       documentId: simulated.documentId,
@@ -62,6 +85,7 @@ export async function performCrmDirectUpload(
         fileName: file.name,
         mimeType: file.type || 'application/octet-stream',
         sizeBytes: file.size,
+        ...locationFields,
       }),
     }
   );

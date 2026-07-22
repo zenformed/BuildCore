@@ -71,7 +71,8 @@ export {
   WORKFLOW_TASK_STATUSES,
   WORKFLOW_TASK_STATUS_LABELS,
 } from './workflowTaskStatuses';
-export type { CrmDocumentKind, CrmDocumentMetadata } from './document';
+export type { CrmDocumentKind, CrmDocumentLocationSource, CrmDocumentMetadata } from './document';
+export { EMPTY_CRM_DOCUMENT_LOCATION } from './document';
 export type {
   CrmOrganizationPhoto,
   CrmOrganizationPhotosPage,

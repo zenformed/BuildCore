@@ -8,6 +8,7 @@ import {
   type CrmClient,
   type CrmContact,
   type CrmDocumentKind,
+  type CrmDocumentLocationSource,
   type CrmDocumentMetadata,
   type CrmMilestone,
   type CrmMilestonePaymentSummary,
@@ -138,7 +139,31 @@ export type DbCrmDocumentRow = {
   reviewed_at: string | null;
   created_at: string;
   deleted_at?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
+  location_accuracy_meters?: number | null;
+  location_source?: string | null;
+  location_captured_at?: string | null;
 };
+
+/** Append to crm_documents select lists (shared Photos + Documents). */
+export const CRM_DOCUMENT_LOCATION_COLUMNS =
+  'latitude, longitude, location_accuracy_meters, location_source, location_captured_at';
+
+function asDocumentLocationSource(
+  value: string | null | undefined
+): CrmDocumentLocationSource | null {
+  if (value === 'device_capture' || value === 'exif' || value === 'manual') {
+    return value;
+  }
+  return null;
+}
+
+function asOptionalFiniteNumber(value: unknown): number | null {
+  if (value == null || value === '') return null;
+  const n = typeof value === 'number' ? value : Number(value);
+  return Number.isFinite(n) ? n : null;
+}
 
 export type DbCrmMilestoneRow = {
   id: string;
@@ -504,6 +529,11 @@ export function mapDbDocument(
         : null,
     mimeType: row.mime_type,
     sizeBytes: Number(row.file_size_bytes),
+    latitude: asOptionalFiniteNumber(row.latitude),
+    longitude: asOptionalFiniteNumber(row.longitude),
+    locationAccuracyMeters: asOptionalFiniteNumber(row.location_accuracy_meters),
+    locationSource: asDocumentLocationSource(row.location_source),
+    locationCapturedAt: row.location_captured_at ?? null,
   };
 }
 

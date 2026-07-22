@@ -14,11 +14,19 @@ export type BuildCoreDirectUploadScopePayload =
   | { readonly scope: 'budget_entry'; readonly projectSlug: string; readonly budgetEntryId: string }
   | { readonly scope: 'project_media'; readonly projectSlug: string };
 
+export type PrepareDirectUploadLocationPayload = {
+  readonly latitude: number;
+  readonly longitude: number;
+  readonly locationAccuracyMeters: number | null;
+  readonly locationSource: 'device_capture' | 'exif' | 'manual';
+  readonly locationCapturedAt: string;
+};
+
 export type PrepareDirectUploadPayload = BuildCoreDirectUploadScopePayload & {
   readonly fileName: string;
   readonly mimeType: string;
   readonly sizeBytes: number;
-};
+} & Partial<PrepareDirectUploadLocationPayload>;
 
 export type PrepareDirectUploadResult = {
   readonly documentId: string;

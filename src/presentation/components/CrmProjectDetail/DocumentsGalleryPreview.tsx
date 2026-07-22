@@ -9,12 +9,11 @@ import {
   type PointerEvent as ReactPointerEvent,
   type ReactElement,
 } from 'react';
+import { BsGeoAlt } from 'react-icons/bs';
 import type { CrmDocumentMetadata } from '@/domain/crm';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
-import { formatBuildCoreDisplayDateTime } from '@/platform/formatting/buildCoreDisplayDate';
-import {
-  formatFileSize,
-} from '@/presentation/features/crmProjectDetail/crmProjectDetailFormatters';
+import { formatBuildCoreDisplayDateTimePhotoMeta } from '@/platform/formatting/buildCoreDisplayDate';
+import { formatFileSize } from '@/presentation/features/crmProjectDetail/crmProjectDetailFormatters';
 import {
   formatCrmDocumentFriendlyType,
   isCrmDocumentImage,
@@ -23,6 +22,13 @@ import {
 } from '@/presentation/features/crmProjectDetail/documentGalleryMedia';
 import { useCrmDocumentPreviewBlob } from '@/presentation/features/crmProjectDetail/useCrmDocumentPreviewBlob';
 import { useDashboardMobileLayout } from '@/presentation/features/crmProjects/useDashboardMobileLayout';
+import { useResolvedTeamMemberRef } from '@/presentation/hooks/useResolvedTeamMemberRef';
+import {
+  formatPhotoCoordinates,
+  hasValidPhotoCoordinates,
+  PhotoLocationMapOverlay,
+} from './PhotoLocationMapOverlay';
+import { TeamMemberAvatar } from './TeamMemberAvatar';
 import { WorkflowDocumentFileIcon } from './WorkflowDocumentFileIcon';
 import styles from './ProjectDetail.module.css';
 
@@ -38,6 +44,12 @@ export type DocumentsGalleryPreviewProps = {
   readonly canDeleteDocument?: (doc: CrmDocumentMetadata) => boolean;
   readonly onClose: () => void;
 };
+
+function isMeaningfulTaskTitle(value: string): boolean {
+  const trimmed = value.trim();
+  if (!trimmed || trimmed === '—') return false;
+  return true;
+}
 
 export function DocumentsGalleryPreview({
   documents,
@@ -58,6 +70,7 @@ export function DocumentsGalleryPreview({
   const [activeId, setActiveId] = useState(initialDocumentId);
   const [metaOpen, setMetaOpen] = useState(!isMobileLayout);
   const [busy, setBusy] = useState(false);
+  const [mapOpen, setMapOpen] = useState(false);
   const swipeStartRef = useRef<{
     pointerId: number;
     x: number;
@@ -81,13 +94,20 @@ export function DocumentsGalleryPreview({
     activeDoc != null
   );
 
+  const resolvedUploader =
+    useResolvedTeamMemberRef(activeDoc?.uploadedBy ?? null) ??
+    activeDoc?.uploadedBy ??
+    null;
+
   const goPrev = useCallback(() => {
     if (!canPrev) return;
+    setMapOpen(false);
     setActiveId(orderedIds[activeIndex - 1]!);
   }, [activeIndex, canPrev, orderedIds]);
 
   const goNext = useCallback(() => {
     if (!canNext) return;
+    setMapOpen(false);
     setActiveId(orderedIds[activeIndex + 1]!);
   }, [activeIndex, canNext, orderedIds]);
 
@@ -136,12 +156,15 @@ export function DocumentsGalleryPreview({
   useEffect(() => {
     const onKey = (event: KeyboardEvent): void => {
       if (event.key === 'Escape') {
+        if (mapOpen) return;
         event.preventDefault();
         onClose();
       } else if (event.key === 'ArrowLeft') {
+        if (mapOpen) return;
         event.preventDefault();
         goPrev();
       } else if (event.key === 'ArrowRight') {
+        if (mapOpen) return;
         event.preventDefault();
         goNext();
       }
@@ -153,31 +176,53 @@ export function DocumentsGalleryPreview({
       window.removeEventListener('keydown', onKey);
       document.body.style.overflow = previousOverflow;
     };
-  }, [goNext, goPrev, onClose]);
+  }, [goNext, goPrev, mapOpen, onClose]);
+
+  useEffect(() => {
+    setMapOpen(false);
+  }, [activeId]);
 
   if (activeDoc == null) return null;
 
   const isImage = isCrmDocumentImage(activeDoc.name, activeDoc.mimeType);
   const isVideo = isCrmDocumentVideo(activeDoc.name, activeDoc.mimeType);
   const isPdf = isCrmDocumentPdf(activeDoc.name, activeDoc.mimeType);
+  const projectLabel = resolveProjectLabel(activeDoc);
+  const taskTitle =
+    activeDoc.workflowTaskId != null
+      ? resolveTaskTitle(activeDoc)
+      : '';
+  const showTask = isMeaningfulTaskTitle(taskTitle);
+  const hasLocation = hasValidPhotoCoordinates(
+    activeDoc.latitude,
+    activeDoc.longitude
+  );
+  const locationLatitude = hasLocation ? activeDoc.latitude! : null;
+  const locationLongitude = hasLocation ? activeDoc.longitude! : null;
+  const uploadedAtLabel = formatBuildCoreDisplayDateTimePhotoMeta(
+    activeDoc.uploadedAt
+  );
+  const uploaderName =
+    resolvedUploader?.displayName?.trim() ||
+    activeDoc.uploadedBy.displayName.trim() ||
+    '—';
 
-  const metaRows = [
-    { label: galleryCopy.metadata.project, value: resolveProjectLabel(activeDoc) },
-    { label: galleryCopy.metadata.fileName, value: activeDoc.name },
+  const fileMetaRows: Array<{ label: string; value: string }> = [
     {
       label: galleryCopy.metadata.fileType,
       value: formatCrmDocumentFriendlyType(activeDoc.name, activeDoc.mimeType),
-    },
-    { label: galleryCopy.metadata.taskName, value: resolveTaskTitle(activeDoc) },
-    {
-      label: galleryCopy.metadata.date,
-      value: formatBuildCoreDisplayDateTime(activeDoc.uploadedAt),
     },
     {
       label: galleryCopy.metadata.fileSize,
       value: formatFileSize(activeDoc.sizeBytes),
     },
   ];
+  if (hasLocation && locationLatitude != null && locationLongitude != null) {
+    fileMetaRows.push({
+      label: galleryCopy.metadata.location,
+      value: formatPhotoCoordinates(locationLatitude, locationLongitude),
+    });
+  }
 
   return (
     <div className={styles.docGalleryPreview} role="dialog" aria-modal="true" aria-label={activeDoc.name}>
@@ -336,8 +381,63 @@ export function DocumentsGalleryPreview({
                 <span />
               </div>
             ) : null}
+
+            <div className={styles.docGalleryPreviewMetaContext}>
+              <div className={styles.docGalleryPreviewMetaRow}>
+                <div className={styles.docGalleryPreviewMetaLabel}>
+                  {galleryCopy.metadata.projectName}
+                </div>
+                <div className={styles.docGalleryPreviewMetaValue} title={projectLabel}>
+                  {projectLabel}
+                </div>
+              </div>
+
+              {showTask ? (
+                <div className={styles.docGalleryPreviewMetaRow}>
+                  <div className={styles.docGalleryPreviewMetaLabel}>
+                    {galleryCopy.metadata.taskName}
+                  </div>
+                  <div className={styles.docGalleryPreviewMetaValue} title={taskTitle}>
+                    {taskTitle}
+                  </div>
+                </div>
+              ) : null}
+
+              <div className={styles.docGalleryPreviewUploaderRow}>
+                <div className={styles.docGalleryPreviewUploaderMain}>
+                  {resolvedUploader != null || activeDoc.uploadedBy != null ? (
+                    <TeamMemberAvatar member={resolvedUploader ?? activeDoc.uploadedBy} />
+                  ) : null}
+                  <div className={styles.docGalleryPreviewUploaderText}>
+                    <div
+                      className={styles.docGalleryPreviewUploaderName}
+                      title={uploaderName}
+                    >
+                      {uploaderName}
+                    </div>
+                    <div className={styles.docGalleryPreviewUploaderTime}>
+                      {uploadedAtLabel}
+                    </div>
+                  </div>
+                </div>
+                {hasLocation ? (
+                  <button
+                    type="button"
+                    className={styles.docGalleryPreviewMapBtn}
+                    aria-label={galleryCopy.metadata.viewPhotoLocation}
+                    title={galleryCopy.metadata.viewPhotoLocation}
+                    onClick={() => setMapOpen(true)}
+                  >
+                    <BsGeoAlt aria-hidden />
+                  </button>
+                ) : null}
+              </div>
+            </div>
+
+            <div className={styles.docGalleryPreviewMetaDivider} aria-hidden />
+
             <dl className={styles.docGalleryPreviewMetaList}>
-              {metaRows.map((row) => (
+              {fileMetaRows.map((row) => (
                 <div key={row.label} className={styles.docGalleryPreviewMetaRow}>
                   <dt>{row.label}</dt>
                   <dd title={row.value}>{row.value}</dd>
@@ -347,6 +447,16 @@ export function DocumentsGalleryPreview({
           </aside>
         ) : null}
       </div>
+
+      {hasLocation && locationLatitude != null && locationLongitude != null ? (
+        <PhotoLocationMapOverlay
+          open={mapOpen}
+          onClose={() => setMapOpen(false)}
+          latitude={locationLatitude}
+          longitude={locationLongitude}
+          photoName={activeDoc.name}
+        />
+      ) : null}
     </div>
   );
 }

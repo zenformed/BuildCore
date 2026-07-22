@@ -11,6 +11,7 @@ import { buildCoreDashboardContent as content } from '@/platform/content/buildCo
 import { mapCrmDocumentActionError } from '@/presentation/features/crmProjectDetail/crmDocumentActionErrors';
 import { useCorePlatformDegraded } from '@/presentation/hooks/useCorePlatformDegraded';
 import { performCrmDirectUpload } from '@/presentation/features/crmDirectUpload/performBuildCoreDirectUpload';
+import type { UploadCaptureSource } from '@/presentation/features/crmDirectUpload/resolveUploadCaptureLocation';
 
 export type BudgetEntryDocumentChangeHandlers = {
   onDocumentUploaded: (document: CrmDocumentMetadata) => void | Promise<void>;
@@ -30,8 +31,11 @@ export function useBudgetEntryDocumentActions(
   cameraFileInputRef: React.RefObject<HTMLInputElement>;
   openFilePicker: () => void;
   openCameraPicker: () => void;
-  uploadFile: (file: File) => Promise<void>;
-  handleFileSelected: (e: React.ChangeEvent<HTMLInputElement>) => Promise<void>;
+  uploadFile: (file: File, captureSource?: UploadCaptureSource) => Promise<void>;
+  handleFileSelected: (
+    e: React.ChangeEvent<HTMLInputElement>,
+    captureSource?: UploadCaptureSource
+  ) => Promise<void>;
   downloadDocument: (documentId: string, fileName: string) => Promise<void>;
   deleteDocument: (documentId: string) => Promise<void>;
 } {
@@ -55,7 +59,7 @@ export function useBudgetEntryDocumentActions(
   }, []);
 
   const uploadFile = useCallback(
-    async (file: File) => {
+    async (file: File, captureSource: UploadCaptureSource = 'files') => {
       if (coreDegraded) {
         input.onError(wf.coreServicesUnavailable);
         return;
@@ -63,11 +67,15 @@ export function useBudgetEntryDocumentActions(
 
       setUploading(true);
       try {
-        const prepared = await performCrmDirectUpload(file, {
-          scope: 'budget_entry',
-          projectSlug: input.projectSlug,
-          budgetEntryId: input.budgetEntryId,
-        });
+        const prepared = await performCrmDirectUpload(
+          file,
+          {
+            scope: 'budget_entry',
+            projectSlug: input.projectSlug,
+            budgetEntryId: input.budgetEntryId,
+          },
+          { captureSource }
+        );
         const documents = await listBudgetEntryDocuments(crmRepositories, {
           projectSlug: input.projectSlug,
           budgetEntryId: input.budgetEntryId,
@@ -87,11 +95,14 @@ export function useBudgetEntryDocumentActions(
   );
 
   const handleFileSelected = useCallback(
-    async (e: React.ChangeEvent<HTMLInputElement>) => {
+    async (
+      e: React.ChangeEvent<HTMLInputElement>,
+      captureSource: UploadCaptureSource = 'files'
+    ) => {
       const file = e.target.files?.[0];
       e.target.value = '';
       if (!file) return;
-      await uploadFile(file);
+      await uploadFile(file, captureSource);
     },
     [uploadFile]
   );

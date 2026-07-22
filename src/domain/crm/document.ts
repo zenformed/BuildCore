@@ -11,6 +11,8 @@ export type CrmDocumentKind =
   | 'inspection_report'
   | 'other';
 
+export type CrmDocumentLocationSource = 'device_capture' | 'exif' | 'manual';
+
 export type CrmDocumentMetadata = {
   readonly id: string;
   readonly workflowTaskId: string | null;
@@ -24,4 +26,26 @@ export type CrmDocumentMetadata = {
   readonly reviewedBy: CrmTeamMemberRef | null;
   readonly mimeType: string;
   readonly sizeBytes: number;
+  /** Optional capture location (WGS84). Null for legacy uploads. */
+  readonly latitude: number | null;
+  readonly longitude: number | null;
+  readonly locationAccuracyMeters: number | null;
+  readonly locationSource: CrmDocumentLocationSource | null;
+  readonly locationCapturedAt: string | null;
 };
+
+/** Defaults for records that do not yet have capture coordinates. */
+export const EMPTY_CRM_DOCUMENT_LOCATION = {
+  latitude: null,
+  longitude: null,
+  locationAccuracyMeters: null,
+  locationSource: null,
+  locationCapturedAt: null,
+} as const satisfies Pick<
+  CrmDocumentMetadata,
+  | 'latitude'
+  | 'longitude'
+  | 'locationAccuracyMeters'
+  | 'locationSource'
+  | 'locationCapturedAt'
+>;
