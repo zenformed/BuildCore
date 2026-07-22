@@ -1,4 +1,5 @@
 import {
+  appendSessionEndToLoginUrl,
   buildAuthEntryHref,
   type AuthEntryQueryParams,
   resolvePostAuthRedirectTarget,
@@ -47,7 +48,7 @@ export function buildPlatformLoginUrl(options?: {
     returnTo: resolvedReturnTo,
     plan: options?.authEntryParams?.plan,
   });
-  return `${origin}${href}`;
+  return appendSessionEndToLoginUrl(`${origin}${href}`);
 }
 
 /** Platform Google OAuth auto-start (saves intent, redirects to Google). */

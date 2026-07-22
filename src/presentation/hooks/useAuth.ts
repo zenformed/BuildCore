@@ -91,6 +91,8 @@ export function useAuth(): UseAuthState {
 
   const signOut = useCallback(
     async (options?: { redirectTo?: string | null }): Promise<void> => {
+      const { markVoluntarySignOut } = await import('@zenformed/core/auth');
+      markVoluntarySignOut();
       const { authService } = await import('@/shared/di/container');
       await authService.signOut();
       setUser(null);

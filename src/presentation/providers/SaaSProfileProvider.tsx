@@ -11,6 +11,8 @@ import {
   shouldApplyAuthCallbackSession,
   shouldShowSaasProfileFullPageLoading,
   inactiveAppEntitlementSnapshot,
+  recordSessionInvalidation,
+  recordUnexpectedSignedOut,
 } from '@zenformed/core';
 import { BUILD_CORE_APP_SLUG } from '@/infrastructure/entitlements/buildCoreZenformedAppContext';
 import {
@@ -259,6 +261,7 @@ export function SaaSProfileProvider({ children }: { children: React.ReactNode })
   const cachedCoreEntitlementRef = useRef<SaaSEntitlementSnapshot | null>(null);
   const bootstrappedUserIdRef = useRef<string | null>(null);
   const profileRef = useRef<SaaSProfile | null>(null);
+  const hadAuthenticatedSessionRef = useRef(false);
   const loadGenerationRef = useRef(0);
   const coreEntitlementResolutionRef = useRef<CoreEntitlementResolutionState>({ status: 'unused' });
   const membershipContextStatusRef = useRef<MembershipContextStatus>('pending');
@@ -272,6 +275,9 @@ export function SaaSProfileProvider({ children }: { children: React.ReactNode })
   membershipContextStatusRef.current = membershipContextStatus;
   if (profile?.id) {
     bootstrappedUserIdRef.current = profile.id;
+  }
+  if (session != null && user != null) {
+    hadAuthenticatedSessionRef.current = true;
   }
 
   /**
@@ -440,7 +446,9 @@ export function SaaSProfileProvider({ children }: { children: React.ReactNode })
                 setUser(refreshed.session.user);
                 relayRes = await fetchProfileFromCoreRelay(refreshed.session.access_token);
               } else {
+                recordSessionInvalidation(refreshError, 'ended');
                 await supabase.auth.signOut();
+                hadAuthenticatedSessionRef.current = false;
                 bootstrappedUserIdRef.current = null;
                 setSession(null);
                 setUser(null);
@@ -451,6 +459,21 @@ export function SaaSProfileProvider({ children }: { children: React.ReactNode })
                 setCorePlatformStatus('not_required');
                 return;
               }
+            }
+
+            if (relayRes.status === 401) {
+              recordSessionInvalidation('access token rejected', 'expired');
+              await supabase.auth.signOut();
+              hadAuthenticatedSessionRef.current = false;
+              bootstrappedUserIdRef.current = null;
+              setSession(null);
+              setUser(null);
+              setProfile(null);
+              setOrganizationMembershipContext(null);
+              setMembershipContextStatus('ready');
+              setCoreEntitlementResolution({ status: 'unused' });
+              setCorePlatformStatus('not_required');
+              return;
             }
 
             let relayBody: Record<string, unknown> = {};
@@ -641,6 +664,10 @@ export function SaaSProfileProvider({ children }: { children: React.ReactNode })
           applySession();
           return;
         case 'sign_out': {
+          if (hadAuthenticatedSessionRef.current) {
+            recordUnexpectedSignedOut();
+          }
+          hadAuthenticatedSessionRef.current = false;
           const signedOutUserId = profileRef.current?.id ?? bootstrappedUserIdRef.current;
           if (signedOutUserId) clearCachedSaaSProfile(signedOutUserId);
           bootstrappedUserIdRef.current = null;
