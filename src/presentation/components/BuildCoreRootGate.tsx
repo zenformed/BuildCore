@@ -6,6 +6,7 @@ import { env } from '@/infrastructure/config/env';
 import { BrandingProvider } from '@/presentation/providers/BrandingProvider';
 import { SaaSProfileProvider } from '@/presentation/providers/SaaSProfileProvider';
 import { TenantProvider } from '@/presentation/providers/TenantProvider';
+import { BuildCorePresenceProvider } from '@/presentation/providers/BuildCorePresenceProvider';
 import { CorePlatformAppShell } from '@/presentation/components/CorePlatform/CorePlatformAppShell';
 import { SaaSAuthGate } from '@/presentation/components/SaaSAuth/SaaSAuthGate';
 
@@ -41,11 +42,13 @@ export function BuildCoreRootGate({ children }: BuildCoreRootGateProps): React.R
   return (
     <SaaSProfileProvider>
       <SaaSAuthGate>
-        <BrandingProvider>
-          <CorePlatformAppShell>
-            <TenantProvider>{children}</TenantProvider>
-          </CorePlatformAppShell>
-        </BrandingProvider>
+        <BuildCorePresenceProvider>
+          <BrandingProvider>
+            <CorePlatformAppShell>
+              <TenantProvider>{children}</TenantProvider>
+            </CorePlatformAppShell>
+          </BrandingProvider>
+        </BuildCorePresenceProvider>
       </SaaSAuthGate>
     </SaaSProfileProvider>
   );

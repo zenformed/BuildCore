@@ -2,6 +2,12 @@
 
 import { useCallback, useEffect, useMemo, useState, type ReactElement } from 'react';
 import { formatOrganizationRoleLabel, getUserInitials, userCircleColor } from '@zenformed/core/dashboard-shell';
+import {
+  PRESENCE_EFFECTIVE_STATUS_LABELS,
+  ZenformedPresenceAvatarBadge,
+  useUserPresence,
+  useZenformedPresenceOptional,
+} from '@zenformed/core/presence';
 import { buildcoreAppDefinition } from '@/platform/appDefinitions/buildcore';
 import { runSessionCached } from '@/infrastructure/coreApi/clientRequestDedupe';
 import type { ZenformedCoreOrganizationAssignmentIdentitiesResponse } from '@/infrastructure/coreApi/types';
@@ -84,7 +90,9 @@ export function BuildCoreSidebarTeamSection({
 }: BuildCoreSidebarTeamSectionProps): ReactElement {
   const isDemoRuntime = runtimeModes.isDemoRuntime();
   const { user } = useBuildCoreDashboardContext();
-  const currentUserId = user?.id?.trim() || null;
+  const presence = useZenformedPresenceOptional();
+  const currentUserId =
+    user?.id?.trim() || presence?.currentUserId?.trim() || null;
 
   const [liveRows, setLiveRows] = useState<readonly SidebarTeamRow[] | null>(null);
   const [isLoading, setIsLoading] = useState(!isDemoRuntime);
@@ -163,36 +171,59 @@ export function BuildCoreSidebarTeamSection({
 
   return (
     <ul className={styles.teamList} aria-label="BuildCore team members">
-      {members.map((member) => {
-        const { firstLast, initialsSource } = memberDisplayName(member.name);
-        const email = member.email ?? member.id;
-        return (
-          <li key={member.id} className={styles.teamRow} title={firstLast}>
-            <span
-              className={styles.teamAvatar}
-              style={{ backgroundColor: userCircleColor(email) }}
-              aria-hidden
-            >
-              {getUserInitials({ email }, initialsSource)}
-            </span>
-            <span className={styles.teamMeta}>
-              <span className={styles.teamName}>{firstLast}</span>
-              <span className={styles.teamMetaRow}>
-                {member.email ? (
-                  <span className={styles.teamEmail} title={member.email}>
-                    {member.email}
-                  </span>
-                ) : (
-                  <span className={styles.teamEmailSpacer} aria-hidden />
-                )}
-                <span className={styles.teamRolePill} data-role={member.organizationRole}>
-                  {member.organizationRoleLabel}
-                </span>
-              </span>
-            </span>
-          </li>
-        );
-      })}
+      {members.map((member) => (
+        <BuildCoreSidebarTeamMemberRow key={member.id} member={member} />
+      ))}
     </ul>
+  );
+}
+
+function BuildCoreSidebarTeamMemberRow({
+  member,
+}: {
+  readonly member: SidebarTeamRow;
+}): ReactElement {
+  const { firstLast, initialsSource } = memberDisplayName(member.name);
+  const email = member.email ?? member.id;
+  const status = useUserPresence(member.id);
+  const statusLabel = PRESENCE_EFFECTIVE_STATUS_LABELS[status];
+
+  useEffect(() => {
+    if (process.env.NODE_ENV !== 'development') return;
+    console.info('[zenformed-presence] Team row indicator', {
+      memberId: member.id,
+      status,
+      statusLabel,
+    });
+  }, [member.id, status, statusLabel]);
+
+  return (
+    <li className={styles.teamRow} title={`${firstLast} · ${statusLabel}`}>
+      <ZenformedPresenceAvatarBadge status={status} announceDot={false}>
+        <span
+          className={styles.teamAvatar}
+          style={{ backgroundColor: userCircleColor(email) }}
+          aria-hidden
+        >
+          {getUserInitials({ email }, initialsSource)}
+        </span>
+      </ZenformedPresenceAvatarBadge>
+      <span className={styles.teamMeta}>
+        <span className={styles.teamName}>{firstLast}</span>
+        <span className={styles.teamMetaRow}>
+          {member.email ? (
+            <span className={styles.teamEmail} title={member.email}>
+              {member.email}
+            </span>
+          ) : (
+            <span className={styles.teamEmailSpacer} aria-hidden />
+          )}
+          <span className={styles.teamRolePill} data-role={member.organizationRole}>
+            {member.organizationRoleLabel}
+          </span>
+        </span>
+        <span className={styles.teamPresenceSrOnly}>{statusLabel}</span>
+      </span>
+    </li>
   );
 }
