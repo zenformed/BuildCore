@@ -25,10 +25,11 @@ import { useAssignmentIdentityCatalog } from '@/presentation/providers/Assignmen
 import { useBuildCoreProjectSectionAccess } from '@/presentation/providers/BuildCoreProjectSectionAccessProvider';
 import { useBudgetEntryDocumentActions } from '@/presentation/features/crmProjectDetail/useBudgetEntryDocumentActions';
 import { BulkSelectCheckbox } from '@/presentation/components/BulkSelection/BulkSelectCheckbox';
-import { CenterConfirmDialog } from '@/presentation/components/CenterConfirmDialog';
 import { WorkflowDocumentFileIcon } from './WorkflowDocumentFileIcon';
+import { DocumentsGalleryPreview } from './DocumentsGalleryPreview';
 import { BudgetRowActionsMenu } from './BudgetRowActionsMenu';
 import { WorkflowInlineMenu } from './WorkflowInlineMenu';
+import { CenterConfirmDialog } from '@/presentation/components/CenterConfirmDialog';
 import styles from './ProjectDetail.module.css';
 
 export type BudgetInlineRowProps = {
@@ -63,6 +64,7 @@ export function BudgetInlineRow({
   const [categoryMenuOpen, setCategoryMenuOpen] = useState(false);
   const [documentsMenuOpen, setDocumentsMenuOpen] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [previewDocumentId, setPreviewDocumentId] = useState<string | null>(null);
   const cameraInputId = useId();
 
   const categoryRef = useRef<HTMLDivElement>(null);
@@ -246,12 +248,37 @@ export function BudgetInlineRow({
     openSendAttachmentDialogForBudgetEntry(entry, entryDocuments);
   };
 
+  const documentsGalleryPreview =
+    previewDocumentId != null ? (
+      <DocumentsGalleryPreview
+        documents={entryDocuments}
+        orderedIds={entryDocuments.map((doc) => doc.id)}
+        initialDocumentId={previewDocumentId}
+        resolveProjectSlug={() => projectSlug}
+        resolveProjectLabel={() => project.summary.name}
+        resolveTaskTitle={() => entry.itemName}
+        onDownloadDocument={async (doc) => {
+          await documentActions.downloadDocument(doc.id, doc.name);
+        }}
+        onDeleteDocument={
+          canDelete
+            ? async (doc) => {
+                await documentActions.deleteDocument(doc.id);
+              }
+            : undefined
+        }
+        canDeleteDocument={() => canDelete}
+        onClose={() => setPreviewDocumentId(null)}
+      />
+    ) : null;
+
   if (variant === 'mobile') {
     const mobileValueBtn = styles.workflowTaskMobileCardValueBtn;
     const mobileValue = styles.workflowTaskMobileCardValue;
     const mobileControl = styles.workflowTaskMobileCardControl;
 
     return (
+      <>
       <article
         className={[
           styles.card,
@@ -414,9 +441,18 @@ export function BudgetInlineRow({
                 const documentRows = entryDocuments.map((doc) => (
                   <div key={doc.id} className={styles.inlineMenuDocRow}>
                     <WorkflowDocumentFileIcon fileName={doc.name} mimeType={doc.mimeType} compact />
-                    <span className={styles.inlineMenuDocName} title={doc.name}>
+                    <button
+                      type="button"
+                      className={styles.inlineMenuDocNameBtn}
+                      title={doc.name}
+                      disabled={sourceBusy}
+                      onClick={() => {
+                        closeDocumentsMenu();
+                        setPreviewDocumentId(doc.id);
+                      }}
+                    >
                       {doc.name}
-                    </span>
+                    </button>
                     {canDownload ? (
                       <button
                         type="button"
@@ -712,10 +748,13 @@ export function BudgetInlineRow({
         </div>
         </div>
       </article>
+      {documentsGalleryPreview}
+      </>
     );
   }
 
   return (
+    <>
     <div
       className={rowClass}
       role="row"
@@ -972,9 +1011,18 @@ export function BudgetInlineRow({
           {entryDocuments.map((doc) => (
             <div key={doc.id} className={styles.inlineMenuDocRow}>
               <WorkflowDocumentFileIcon fileName={doc.name} mimeType={doc.mimeType} compact />
-              <span className={styles.inlineMenuDocName} title={doc.name}>
+              <button
+                type="button"
+                className={styles.inlineMenuDocNameBtn}
+                title={doc.name}
+                disabled={saving || documentActions.uploading}
+                onClick={() => {
+                  setDocumentsMenuOpen(false);
+                  setPreviewDocumentId(doc.id);
+                }}
+              >
                 {doc.name}
-              </span>
+              </button>
               {canDownload ? (
                 <button
                   type="button"
@@ -1042,5 +1090,7 @@ export function BudgetInlineRow({
         ) : null}
       </span>
     </div>
+    {documentsGalleryPreview}
+    </>
   );
 }

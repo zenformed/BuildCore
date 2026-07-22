@@ -1,7 +1,7 @@
 'use client';
 
 import type { MutableRefObject, ReactElement, ReactNode, RefObject } from 'react';
-import { useId, useRef } from 'react';
+import { useId, useRef, useState } from 'react';
 import { WORKFLOW_TASK_STATUSES } from '@/domain/crm/workflowTaskStatuses';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
 import {
@@ -30,6 +30,7 @@ import { workflowTaskStatusBadgeClass } from '@/presentation/components/crmShare
 import { TeamMemberAvatar } from './TeamMemberAvatar';
 import { WorkflowDocumentFileIcon } from './WorkflowDocumentFileIcon';
 import { WorkflowInlineMenu } from './WorkflowInlineMenu';
+import { DocumentsGalleryPreview } from './DocumentsGalleryPreview';
 import { CenterConfirmDialog } from '@/presentation/components/CenterConfirmDialog';
 import { WorkflowTaskRowActionsMenu } from './WorkflowTaskRowActionsMenu';
 import { WorkflowTaskTableCustomColumnCells, resolveWorkflowOpsGridClassName } from './WorkflowTaskTableCustomColumns';
@@ -744,6 +745,7 @@ function WorkflowTaskRowDocumentsField({
   readonly compact?: boolean;
 }): ReactElement {
   const cameraInputId = useId();
+  const [previewDocumentId, setPreviewDocumentId] = useState<string | null>(null);
   const wrapClass = compact
     ? styles.workflowTaskCompactControl
     : mobile
@@ -803,6 +805,7 @@ function WorkflowTaskRowDocumentsField({
   });
 
   return (
+    <>
     <span className={wrapClass} ref={model.documentsRef}>
       <button
         type="button"
@@ -889,9 +892,18 @@ function WorkflowTaskRowDocumentsField({
         const documentRows = model.taskDocuments.map((doc) => (
           <div key={doc.id} className={styles.inlineMenuDocRow}>
             <WorkflowDocumentFileIcon fileName={doc.name} mimeType={doc.mimeType} compact />
-            <span className={styles.inlineMenuDocName} title={doc.name}>
+            <button
+              type="button"
+              className={styles.inlineMenuDocNameBtn}
+              title={doc.name}
+              disabled={model.saving || model.documentActions.uploading}
+              onClick={() => {
+                closeDocumentsMenu();
+                setPreviewDocumentId(doc.id);
+              }}
+            >
               {doc.name}
-            </span>
+            </button>
             {model.canDownload ? (
               <button
                 type="button"
@@ -1088,6 +1100,29 @@ function WorkflowTaskRowDocumentsField({
         );
       })()}
     </span>
+    {previewDocumentId != null ? (
+      <DocumentsGalleryPreview
+        documents={model.taskDocuments}
+        orderedIds={model.taskDocuments.map((doc) => doc.id)}
+        initialDocumentId={previewDocumentId}
+        resolveProjectSlug={() => model.projectSlug}
+        resolveProjectLabel={() => model.projectLabel}
+        resolveTaskTitle={() => model.task.title}
+        onDownloadDocument={async (doc) => {
+          await model.documentActions.downloadDocument(doc.id, doc.name);
+        }}
+        onDeleteDocument={
+          model.canEdit
+            ? async (doc) => {
+                await model.documentActions.deleteDocument(doc.id);
+              }
+            : undefined
+        }
+        canDeleteDocument={() => model.canEdit}
+        onClose={() => setPreviewDocumentId(null)}
+      />
+    ) : null}
+    </>
   );
 }
 

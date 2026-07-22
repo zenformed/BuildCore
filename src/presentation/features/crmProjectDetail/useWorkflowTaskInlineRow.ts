@@ -485,6 +485,8 @@ export function useWorkflowTaskInlineRow({
   return {
     wf,
     cols,
+    projectSlug,
+    projectLabel: project.summary.name,
     task,
     taskDocuments,
     saving,
