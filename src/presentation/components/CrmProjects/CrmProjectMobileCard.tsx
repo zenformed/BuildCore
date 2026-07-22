@@ -162,14 +162,12 @@ export function CrmProjectMobileCard({
       className={cardClass}
       aria-label={rowAriaLabel}
       aria-busy={busy || deleting || undefined}
+      role="button"
+      tabIndex={0}
+      onClick={onRowClick}
+      onKeyDown={handleKeyDown}
     >
-      <div
-        role="button"
-        tabIndex={0}
-        className={styles.mobileCardBody}
-        onClick={onRowClick}
-        onKeyDown={handleKeyDown}
-      >
+      <div className={styles.mobileCardBody}>
         <div className={styles.mobileCardHeader}>
           <div className={styles.mobileCardTitleBlock}>
             <span

@@ -48,7 +48,13 @@ export function ProjectPreviewNameAnchor({
         ref={preview.anchorRef as RefObject<HTMLDivElement>}
         className={anchorClass}
         {...preview.anchorHandlers}
-        onClick={(event) => event.stopPropagation()}
+        onClick={
+          isMobile
+            ? undefined
+            : (event) => {
+                event.stopPropagation();
+              }
+        }
       >
         {children}
         {preview.toggleButtonProps ? (
