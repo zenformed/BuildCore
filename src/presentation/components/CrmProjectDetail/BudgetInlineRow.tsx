@@ -25,6 +25,7 @@ import { useAssignmentIdentityCatalog } from '@/presentation/providers/Assignmen
 import { useBuildCoreProjectSectionAccess } from '@/presentation/providers/BuildCoreProjectSectionAccessProvider';
 import { useBudgetEntryDocumentActions } from '@/presentation/features/crmProjectDetail/useBudgetEntryDocumentActions';
 import { BulkSelectCheckbox } from '@/presentation/components/BulkSelection/BulkSelectCheckbox';
+import { CenterConfirmDialog } from '@/presentation/components/CenterConfirmDialog';
 import { WorkflowDocumentFileIcon } from './WorkflowDocumentFileIcon';
 import { BudgetRowActionsMenu } from './BudgetRowActionsMenu';
 import { WorkflowInlineMenu } from './WorkflowInlineMenu';
@@ -189,8 +190,13 @@ export function BudgetInlineRow({
   }, [budgetDraft, commit, entry.budgetCents, onError]);
 
   const saveDocumentsRequired = useCallback(
-    async (documentsRequired: boolean) => {
-      setDocumentsMenuOpen(false);
+    async (
+      documentsRequired: boolean,
+      options?: { readonly keepMenuOpen?: boolean }
+    ) => {
+      if (!options?.keepMenuOpen) {
+        setDocumentsMenuOpen(false);
+      }
       if (documentsRequired === entry.documentsRequired) return;
       await commit({ documentsRequired });
     },
@@ -388,26 +394,19 @@ export function BudgetInlineRow({
                 className={styles.hiddenFileInput}
                 onChange={(e) => void documentActions.handleFileSelected(e)}
               />
-              <WorkflowInlineMenu
-                open={documentsMenuOpen}
-                onClose={() => setDocumentsMenuOpen(false)}
-                anchorRef={documentsRef}
-              >
-                {canUpload ? (
-                  <button
-                    type="button"
-                    className={`${styles.inlineMenuAction} ${styles.inlineMenuUploadAction}`}
-                    disabled={saving || documentActions.uploading}
-                    onClick={() => {
-                      setDocumentsMenuOpen(false);
-                      documentActions.openFilePicker();
-                    }}
-                  >
-                    <span className={styles.inlineMenuUploadIcon} aria-hidden />
-                    {wf.documentsUpload}
-                  </button>
-                ) : null}
-                {entryDocuments.map((doc) => (
+              <input
+                ref={documentActions.cameraFileInputRef}
+                type="file"
+                accept="image/*,video/*"
+                capture="environment"
+                className={styles.hiddenFileInput}
+                onChange={(e) => void documentActions.handleFileSelected(e)}
+              />
+              {(() => {
+                const closeDocumentsMenu = (): void => setDocumentsMenuOpen(false);
+                const docsRequired = entry.documentsRequired;
+                const sourceBusy = saving || documentActions.uploading;
+                const documentRows = entryDocuments.map((doc) => (
                   <div key={doc.id} className={styles.inlineMenuDocRow}>
                     <WorkflowDocumentFileIcon fileName={doc.name} mimeType={doc.mimeType} compact />
                     <span className={styles.inlineMenuDocName} title={doc.name}>
@@ -417,11 +416,11 @@ export function BudgetInlineRow({
                       <button
                         type="button"
                         className={styles.inlineMenuIconBtn}
-                        disabled={saving || documentActions.uploading}
+                        disabled={sourceBusy}
                         title={wf.documentDownload}
                         aria-label={`${wf.documentDownload} ${doc.name}`}
                         onClick={() => {
-                          setDocumentsMenuOpen(false);
+                          closeDocumentsMenu();
                           void documentActions.downloadDocument(doc.id, doc.name);
                         }}
                       >
@@ -432,11 +431,11 @@ export function BudgetInlineRow({
                       <button
                         type="button"
                         className={styles.inlineMenuIconBtn}
-                        disabled={saving || documentActions.uploading}
+                        disabled={sourceBusy}
                         title={wf.documentDelete}
                         aria-label={`${wf.documentDelete} ${doc.name}`}
                         onClick={() => {
-                          setDocumentsMenuOpen(false);
+                          closeDocumentsMenu();
                           void documentActions.deleteDocument(doc.id);
                         }}
                       >
@@ -444,28 +443,129 @@ export function BudgetInlineRow({
                       </button>
                     ) : null}
                   </div>
-                ))}
-                {canEdit && !entry.documentsRequired ? (
-                  <button
-                    type="button"
-                    className={styles.inlineMenuAction}
-                    disabled={saving}
-                    onClick={() => void saveDocumentsRequired(true)}
-                  >
-                    {wf.documentsMarkRequired}
-                  </button>
-                ) : null}
-                {canEdit && entry.documentsRequired && entryDocuments.length === 0 ? (
-                  <button
-                    type="button"
-                    className={styles.inlineMenuAction}
-                    disabled={saving}
-                    onClick={() => void saveDocumentsRequired(false)}
-                  >
-                    {wf.documentsNotRequired}
-                  </button>
-                ) : null}
-              </WorkflowInlineMenu>
+                ));
+
+                return (
+                  <CenterConfirmDialog
+                    isOpen={documentsMenuOpen}
+                    title={entry.itemName}
+                    body={
+                      <div className={styles.documentsActionSheetBody}>
+                        {canUpload || canEdit ? (
+                          <div className={styles.documentsSourceGrid}>
+                            {canUpload ? (
+                              <>
+                                <button
+                                  type="button"
+                                  className={styles.documentsSourceBtn}
+                                  disabled={sourceBusy}
+                                  onClick={() => {
+                                    closeDocumentsMenu();
+                                    documentActions.openFilePicker();
+                                  }}
+                                >
+                                  <span className={styles.documentsSourceIconWrap}>
+                                    <span className={styles.documentsSourceIconCircle} aria-hidden>
+                                      <span className={styles.inlineMenuUploadIcon} />
+                                    </span>
+                                  </span>
+                                  <span className={styles.documentsSourceLabel}>
+                                    {wf.documentsFiles}
+                                  </span>
+                                </button>
+                                <button
+                                  type="button"
+                                  className={styles.documentsSourceBtn}
+                                  disabled={sourceBusy}
+                                  onClick={() => {
+                                    closeDocumentsMenu();
+                                    documentActions.openCameraPicker();
+                                  }}
+                                >
+                                  <span className={styles.documentsSourceIconWrap}>
+                                    <span className={styles.documentsSourceIconCircle} aria-hidden>
+                                      <span className={styles.inlineMenuCameraIcon} />
+                                    </span>
+                                  </span>
+                                  <span className={styles.documentsSourceLabel}>
+                                    {wf.documentsCamera}
+                                  </span>
+                                </button>
+                              </>
+                            ) : null}
+                            {canEdit ? (
+                              <>
+                                <button
+                                  type="button"
+                                  className={`${styles.documentsSourceBtn} ${
+                                    docsRequired ? styles.documentsSourceBtnSelected : ''
+                                  }`}
+                                  disabled={saving}
+                                  aria-pressed={docsRequired}
+                                  onClick={() => {
+                                    if (!docsRequired) {
+                                      void saveDocumentsRequired(true, { keepMenuOpen: true });
+                                    }
+                                  }}
+                                >
+                                  <span className={styles.documentsSourceIconWrap}>
+                                    <span className={styles.documentsSourceIconCircle} aria-hidden>
+                                      <span className={styles.documentsRequiredIcon} />
+                                    </span>
+                                    {docsRequired ? (
+                                      <span className={styles.documentsSourceCheck} aria-hidden />
+                                    ) : null}
+                                  </span>
+                                  <span className={styles.documentsSourceLabel}>
+                                    {wf.documentsMarkRequired}
+                                  </span>
+                                </button>
+                                <button
+                                  type="button"
+                                  className={`${styles.documentsSourceBtn} ${
+                                    !docsRequired ? styles.documentsSourceBtnSelected : ''
+                                  }`}
+                                  disabled={
+                                    saving || (docsRequired && entryDocuments.length > 0)
+                                  }
+                                  aria-pressed={!docsRequired}
+                                  onClick={() => {
+                                    if (docsRequired && entryDocuments.length === 0) {
+                                      void saveDocumentsRequired(false, { keepMenuOpen: true });
+                                    }
+                                  }}
+                                >
+                                  <span className={styles.documentsSourceIconWrap}>
+                                    <span className={styles.documentsSourceIconCircle} aria-hidden>
+                                      <span className={styles.documentsNaIcon} />
+                                    </span>
+                                    {!docsRequired ? (
+                                      <span className={styles.documentsSourceCheck} aria-hidden />
+                                    ) : null}
+                                  </span>
+                                  <span className={styles.documentsSourceLabel}>
+                                    {wf.documentsNotRequired}
+                                  </span>
+                                </button>
+                              </>
+                            ) : null}
+                          </div>
+                        ) : null}
+                        {documentRows.length > 0 ? (
+                          <div className={styles.documentsActionSheetDocList}>{documentRows}</div>
+                        ) : null}
+                      </div>
+                    }
+                    hideActions
+                    cancelLabel={content.projectDetail.edit.cancel}
+                    onClose={closeDocumentsMenu}
+                    closeAriaLabel={wf.documentsMenuCloseAriaLabel}
+                    panelClassName={styles.documentsActionSheetPanel}
+                    titleClassName={styles.documentsActionSheetTitle}
+                    bodyClassName={styles.documentsActionSheetBodyWrap}
+                  />
+                );
+              })()}
             </div>
           </div>
           <div

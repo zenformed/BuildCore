@@ -30,6 +30,7 @@ import { workflowTaskStatusBadgeClass } from '@/presentation/components/crmShare
 import { TeamMemberAvatar } from './TeamMemberAvatar';
 import { WorkflowDocumentFileIcon } from './WorkflowDocumentFileIcon';
 import { WorkflowInlineMenu } from './WorkflowInlineMenu';
+import { CenterConfirmDialog } from '@/presentation/components/CenterConfirmDialog';
 import { WorkflowTaskRowActionsMenu } from './WorkflowTaskRowActionsMenu';
 import { WorkflowTaskTableCustomColumnCells, resolveWorkflowOpsGridClassName } from './WorkflowTaskTableCustomColumns';
 import { PaymentTableCustomColumnCells } from './PaymentTableCustomColumns';
@@ -855,26 +856,32 @@ function WorkflowTaskRowDocumentsField({
         className={styles.hiddenFileInput}
         onChange={(e) => void model.documentActions.handleFileSelected(e)}
       />
-      <WorkflowInlineMenu
-        open={model.documentsMenuOpen}
-        onClose={() => model.setDocumentsMenuOpen(false)}
-        anchorRef={model.documentsRef}
-      >
-        {model.canUpload ? (
-          <button
-            type="button"
-            className={`${styles.inlineMenuAction} ${styles.inlineMenuUploadAction}`}
-            disabled={model.saving || model.documentActions.uploading}
-            onClick={() => {
-              model.setDocumentsMenuOpen(false);
-              model.documentActions.openFilePicker();
-            }}
-          >
-            <span className={styles.inlineMenuUploadIcon} aria-hidden />
-            {model.wf.documentsUpload}
-          </button>
-        ) : null}
-        {model.taskDocuments.map((doc) => (
+      <input
+        ref={model.documentActions.cameraFileInputRef}
+        type="file"
+        accept="image/*,video/*"
+        capture="environment"
+        className={styles.hiddenFileInput}
+        onChange={(e) => void model.documentActions.handleFileSelected(e)}
+      />
+      {(() => {
+        const closeDocumentsMenu = (): void => model.setDocumentsMenuOpen(false);
+        const uploadActions =
+          model.canUpload ? (
+            <button
+              type="button"
+              className={`${styles.inlineMenuAction} ${styles.inlineMenuUploadAction}`}
+              disabled={model.saving || model.documentActions.uploading}
+              onClick={() => {
+                closeDocumentsMenu();
+                model.documentActions.openFilePicker();
+              }}
+            >
+              <span className={styles.inlineMenuUploadIcon} aria-hidden />
+              {model.wf.documentsUpload}
+            </button>
+          ) : null;
+        const documentRows = model.taskDocuments.map((doc) => (
           <div key={doc.id} className={styles.inlineMenuDocRow}>
             <WorkflowDocumentFileIcon fileName={doc.name} mimeType={doc.mimeType} compact />
             <span className={styles.inlineMenuDocName} title={doc.name}>
@@ -888,7 +895,7 @@ function WorkflowTaskRowDocumentsField({
                 title={model.wf.documentDownload}
                 aria-label={`${model.wf.documentDownload} ${doc.name}`}
                 onClick={() => {
-                  model.setDocumentsMenuOpen(false);
+                  closeDocumentsMenu();
                   void model.documentActions.downloadDocument(doc.id, doc.name);
                 }}
               >
@@ -903,7 +910,7 @@ function WorkflowTaskRowDocumentsField({
                 title={model.wf.documentDelete}
                 aria-label={`${model.wf.documentDelete} ${doc.name}`}
                 onClick={() => {
-                  model.setDocumentsMenuOpen(false);
+                  closeDocumentsMenu();
                   void model.documentActions.deleteDocument(doc.id);
                 }}
               >
@@ -911,28 +918,169 @@ function WorkflowTaskRowDocumentsField({
               </button>
             ) : null}
           </div>
-        ))}
-        {model.canEdit && !model.task.documentsRequired ? (
-          <button
-            type="button"
-            className={styles.inlineMenuAction}
-            disabled={model.saving}
-            onClick={() => void model.saveDocumentsRequired(true)}
+        ));
+        const requirementActions = (
+          <>
+            {model.canEdit && !model.task.documentsRequired ? (
+              <button
+                type="button"
+                className={styles.inlineMenuAction}
+                disabled={model.saving}
+                onClick={() => void model.saveDocumentsRequired(true)}
+              >
+                {model.wf.documentsMarkRequired}
+              </button>
+            ) : null}
+            {model.canEdit && model.task.documentsRequired && model.taskDocuments.length === 0 ? (
+              <button
+                type="button"
+                className={styles.inlineMenuAction}
+                disabled={model.saving}
+                onClick={() => void model.saveDocumentsRequired(false)}
+              >
+                {model.wf.documentsNotRequired}
+              </button>
+            ) : null}
+          </>
+        );
+
+        if (mobile) {
+          const docsRequired = model.task.documentsRequired;
+          const sourceBusy = model.saving || model.documentActions.uploading;
+          const showUploadActions = model.canUpload;
+          const showRequirementActions = model.canEdit;
+          return (
+            <CenterConfirmDialog
+              isOpen={model.documentsMenuOpen}
+              title={model.task.title}
+              body={
+                <div className={styles.documentsActionSheetBody}>
+                  {showUploadActions || showRequirementActions ? (
+                    <div className={styles.documentsSourceGrid}>
+                      {showUploadActions ? (
+                        <>
+                          <button
+                            type="button"
+                            className={styles.documentsSourceBtn}
+                            disabled={sourceBusy}
+                            onClick={() => {
+                              closeDocumentsMenu();
+                              model.documentActions.openFilePicker();
+                            }}
+                          >
+                            <span className={styles.documentsSourceIconWrap}>
+                              <span className={styles.documentsSourceIconCircle} aria-hidden>
+                                <span className={styles.inlineMenuUploadIcon} />
+                              </span>
+                            </span>
+                            <span className={styles.documentsSourceLabel}>
+                              {model.wf.documentsFiles}
+                            </span>
+                          </button>
+                          <button
+                            type="button"
+                            className={styles.documentsSourceBtn}
+                            disabled={sourceBusy}
+                            onClick={() => {
+                              closeDocumentsMenu();
+                              model.documentActions.openCameraPicker();
+                            }}
+                          >
+                            <span className={styles.documentsSourceIconWrap}>
+                              <span className={styles.documentsSourceIconCircle} aria-hidden>
+                                <span className={styles.inlineMenuCameraIcon} />
+                              </span>
+                            </span>
+                            <span className={styles.documentsSourceLabel}>
+                              {model.wf.documentsCamera}
+                            </span>
+                          </button>
+                        </>
+                      ) : null}
+                      {showRequirementActions ? (
+                        <>
+                          <button
+                            type="button"
+                            className={`${styles.documentsSourceBtn} ${
+                              docsRequired ? styles.documentsSourceBtnSelected : ''
+                            }`}
+                            disabled={model.saving}
+                            aria-pressed={docsRequired}
+                            onClick={() => {
+                              if (!docsRequired) {
+                                void model.saveDocumentsRequired(true, { keepMenuOpen: true });
+                              }
+                            }}
+                          >
+                            <span className={styles.documentsSourceIconWrap}>
+                              <span className={styles.documentsSourceIconCircle} aria-hidden>
+                                <span className={styles.documentsRequiredIcon} />
+                              </span>
+                              {docsRequired ? (
+                                <span className={styles.documentsSourceCheck} aria-hidden />
+                              ) : null}
+                            </span>
+                            <span className={styles.documentsSourceLabel}>
+                              {model.wf.documentsMarkRequired}
+                            </span>
+                          </button>
+                          <button
+                            type="button"
+                            className={`${styles.documentsSourceBtn} ${
+                              !docsRequired ? styles.documentsSourceBtnSelected : ''
+                            }`}
+                            disabled={model.saving || (docsRequired && model.taskDocuments.length > 0)}
+                            aria-pressed={!docsRequired}
+                            onClick={() => {
+                              if (docsRequired && model.taskDocuments.length === 0) {
+                                void model.saveDocumentsRequired(false, { keepMenuOpen: true });
+                              }
+                            }}
+                          >
+                            <span className={styles.documentsSourceIconWrap}>
+                              <span className={styles.documentsSourceIconCircle} aria-hidden>
+                                <span className={styles.documentsNaIcon} />
+                              </span>
+                              {!docsRequired ? (
+                                <span className={styles.documentsSourceCheck} aria-hidden />
+                              ) : null}
+                            </span>
+                            <span className={styles.documentsSourceLabel}>
+                              {model.wf.documentsNotRequired}
+                            </span>
+                          </button>
+                        </>
+                      ) : null}
+                    </div>
+                  ) : null}
+                  {documentRows.length > 0 ? (
+                    <div className={styles.documentsActionSheetDocList}>{documentRows}</div>
+                  ) : null}
+                </div>
+              }
+              hideActions
+              cancelLabel={content.projectDetail.edit.cancel}
+              onClose={closeDocumentsMenu}
+              closeAriaLabel={model.wf.documentsMenuCloseAriaLabel}
+              panelClassName={styles.documentsActionSheetPanel}
+              titleClassName={styles.documentsActionSheetTitle}
+              bodyClassName={styles.documentsActionSheetBodyWrap}
+            />
+          );
+        }
+
+        return (
+          <WorkflowInlineMenu
+            open={model.documentsMenuOpen}
+            onClose={closeDocumentsMenu}
+            anchorRef={model.documentsRef}
           >
-            {model.wf.documentsMarkRequired}
-          </button>
-        ) : null}
-        {model.canEdit && model.task.documentsRequired && model.taskDocuments.length === 0 ? (
-          <button
-            type="button"
-            className={styles.inlineMenuAction}
-            disabled={model.saving}
-            onClick={() => void model.saveDocumentsRequired(false)}
-          >
-            {model.wf.documentsNotRequired}
-          </button>
-        ) : null}
-      </WorkflowInlineMenu>
+            {uploadActions}
+            {documentRows}
+            {requirementActions}
+          </WorkflowInlineMenu>
+        );
+      })()}
     </span>
   );
 }

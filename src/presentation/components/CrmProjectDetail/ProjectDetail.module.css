@@ -5082,6 +5082,194 @@
     center / contain no-repeat;
 }
 
+.inlineMenuCameraIcon {
+  display: inline-block;
+  width: 0.875rem;
+  height: 0.875rem;
+  flex-shrink: 0;
+  background: currentColor;
+  opacity: 0.85;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z'/%3E%3Ccircle cx='12' cy='13' r='4'/%3E%3C/svg%3E")
+    center / contain no-repeat;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z'/%3E%3Ccircle cx='12' cy='13' r='4'/%3E%3C/svg%3E")
+    center / contain no-repeat;
+}
+
+.documentsActionSheetPanel {
+  width: min(22rem, calc(100vw - 2rem));
+  max-height: min(80vh, 32rem);
+  padding: 0;
+}
+
+.documentsActionSheetTitle {
+  padding-bottom: 0;
+  text-align: center;
+}
+
+.documentsActionSheetBodyWrap {
+  margin: 0 !important;
+  min-height: 0;
+}
+
+.documentsActionSheetBody {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin: 0;
+  padding: 0.875rem 1rem 1rem;
+  overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.documentsSourceGrid {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.375rem;
+  width: 100%;
+}
+
+.documentsSourceBtn {
+  position: relative;
+  display: flex;
+  flex: 1 1 0;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 0.375rem;
+  min-width: 0;
+  min-height: 0;
+  padding: 0.35rem 0.15rem 0.15rem;
+  border: none;
+  border-radius: 0.5rem;
+  background: transparent;
+  color: var(--color-text, #0f172a);
+  cursor: pointer;
+}
+
+.documentsSourceBtn:hover:not(:disabled) .documentsSourceIconCircle {
+  background: var(--theme-surface-hover, var(--color-muted, #e2e8f0));
+}
+
+.documentsSourceBtn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.documentsSourceBtnSelected:disabled {
+  opacity: 1;
+  cursor: default;
+}
+
+.documentsSourceIconWrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.documentsSourceIconCircle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  background: var(--theme-surface-hover, var(--color-muted, #f1f5f9));
+  color: var(--color-text, #0f172a);
+  box-sizing: border-box;
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease;
+}
+
+.documentsSourceBtnSelected .documentsSourceIconCircle {
+  border-color: var(--color-primary, #0ea5e9);
+  background: color-mix(in srgb, var(--color-primary, #0ea5e9) 12%, transparent);
+}
+
+.documentsSourceCheck {
+  position: absolute;
+  top: -0.15rem;
+  right: -0.15rem;
+  width: 1rem;
+  height: 1rem;
+  border-radius: 50%;
+  box-shadow: 0 0 0 2px var(--theme-surface-card, var(--color-surface, #fff));
+  background:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23ffffff' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='20 6 9 17 4 12'/%3E%3C/svg%3E")
+      center / 0.65rem 0.65rem no-repeat,
+    var(--color-primary, #0ea5e9);
+}
+
+.documentsSourceBtn .inlineMenuUploadIcon,
+.documentsSourceBtn .inlineMenuCameraIcon,
+.documentsSourceBtn .documentsRequiredIcon,
+.documentsSourceBtn .documentsNaIcon {
+  width: 1.25rem;
+  height: 1.25rem;
+  opacity: 1;
+}
+
+.documentsRequiredIcon,
+.documentsNaIcon {
+  display: inline-block;
+  flex-shrink: 0;
+  background: currentColor;
+}
+
+.documentsRequiredIcon {
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='10'/%3E%3Cline x1='12' y1='8' x2='12' y2='12'/%3E%3Cline x1='12' y1='16' x2='12.01' y2='16'/%3E%3C/svg%3E")
+    center / contain no-repeat;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='10'/%3E%3Cline x1='12' y1='8' x2='12' y2='12'/%3E%3Cline x1='12' y1='16' x2='12.01' y2='16'/%3E%3C/svg%3E")
+    center / contain no-repeat;
+}
+
+.documentsNaIcon {
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='10'/%3E%3Cpath d='M18 12H9a3 3 0 0 0 0 6'/%3E%3Cpath d='M18 8H8'/%3E%3Cpath d='M4 4l16 16'/%3E%3C/svg%3E")
+    center / contain no-repeat;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='10'/%3E%3Cpath d='M18 12H9a3 3 0 0 0 0 6'/%3E%3Cpath d='M18 8H8'/%3E%3Cpath d='M4 4l16 16'/%3E%3C/svg%3E")
+    center / contain no-repeat;
+}
+
+.documentsSourceLabel {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  line-height: 1.2;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.documentsActionSheetDocList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin-top: 0.25rem;
+}
+
+.documentsActionSheetBody .inlineMenuDocRow {
+  padding: 0.875rem 0.25rem 0.5rem;
+}
+
+.documentsActionSheetBody .inlineMenuAction {
+  padding: 0.75rem 0.875rem;
+  font-size: 0.9375rem;
+  border-radius: 0.5rem;
+}
+
+.documentsActionSheetBody .inlineMenuUploadAction {
+  gap: 0.625rem;
+}
+
+.documentsActionSheetBody .inlineMenuUploadIcon,
+.documentsActionSheetBody .inlineMenuCameraIcon {
+  width: 1.125rem;
+  height: 1.125rem;
+}
+
 .docFileIconWrap {
   display: inline-flex;
   align-items: center;

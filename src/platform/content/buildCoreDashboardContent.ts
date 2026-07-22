@@ -1154,6 +1154,13 @@ const buildCoreDashboardContentSource = {
       documentsMarkRequired: 'Required',
       documentsNotRequired: 'N/A',
       documentsUpload: 'Upload',
+      documentsFiles: 'Files',
+      documentsCamera: 'Camera',
+      documentsTakePhotoVideo: 'Take Photo/Video',
+      documentsMenuTitle: 'Documents',
+      documentsMenuCloseAriaLabel: 'Close documents menu',
+      documentsRequiredToggleAriaLabel: (required: boolean): string =>
+        required ? 'Documents required: yes' : 'Documents required: no',
       documentsUploadComingSoon: 'Uploads coming in a later phase.',
       documentUploadFailed: 'Could not upload document.',
       coreServicesUnavailable: 'Document storage is temporarily unavailable.',

@@ -27,7 +27,9 @@ export function useBudgetEntryDocumentActions(
 ): {
   uploading: boolean;
   fileInputRef: React.RefObject<HTMLInputElement>;
+  cameraFileInputRef: React.RefObject<HTMLInputElement>;
   openFilePicker: () => void;
+  openCameraPicker: () => void;
   uploadFile: (file: File) => Promise<void>;
   handleFileSelected: (e: React.ChangeEvent<HTMLInputElement>) => Promise<void>;
   downloadDocument: (documentId: string, fileName: string) => Promise<void>;
@@ -35,6 +37,7 @@ export function useBudgetEntryDocumentActions(
 } {
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const cameraFileInputRef = useRef<HTMLInputElement>(null);
   const wf = content.projectDetail.workflow;
   const coreDegraded = useCorePlatformDegraded();
 
@@ -45,6 +48,10 @@ export function useBudgetEntryDocumentActions(
 
   const openFilePicker = useCallback(() => {
     fileInputRef.current?.click();
+  }, []);
+
+  const openCameraPicker = useCallback(() => {
+    cameraFileInputRef.current?.click();
   }, []);
 
   const uploadFile = useCallback(
@@ -139,7 +146,9 @@ export function useBudgetEntryDocumentActions(
   return {
     uploading,
     fileInputRef,
+    cameraFileInputRef,
     openFilePicker,
+    openCameraPicker,
     uploadFile,
     handleFileSelected,
     downloadDocument,

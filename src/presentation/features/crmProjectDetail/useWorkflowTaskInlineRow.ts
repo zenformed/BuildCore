@@ -291,9 +291,14 @@ export function useWorkflowTaskInlineRow({
   );
 
   const saveDocumentsRequired = useCallback(
-    async (documentsRequired: boolean) => {
+    async (
+      documentsRequired: boolean,
+      options?: { readonly keepMenuOpen?: boolean }
+    ) => {
       if (!canEdit) return;
-      setDocumentsMenuOpen(false);
+      if (!options?.keepMenuOpen) {
+        setDocumentsMenuOpen(false);
+      }
       if (documentsRequired === task.documentsRequired) return;
       try {
         await patchTask({ taskId: task.id, documentsRequired });
