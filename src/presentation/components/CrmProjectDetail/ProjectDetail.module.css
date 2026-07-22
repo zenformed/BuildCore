@@ -5932,14 +5932,17 @@
 
 .detailPanelsScroll[data-member-project-tasks] .stageGroup_unifiedTableSection .stageGroupTable .tableRow,
 .detailPanelsScroll[data-member-project-tasks] .paymentsTableRows .tableRow,
-.detailPanelsScroll[data-member-project-tasks] .paymentsTableRows .paymentDraftRow {
+.detailPanelsScroll[data-member-project-tasks] .paymentsTableRows .paymentDraftRow,
+.detailPanelsScroll[data-member-project-tasks] .paymentsUnifiedTable .tableRow,
+.detailPanelsScroll[data-member-project-tasks] .paymentsUnifiedTable .paymentDraftRow {
   padding-inline: var(--member-task-inline-pad);
   column-gap: var(--member-task-col-gap);
   gap: 0 var(--member-task-col-gap);
 }
 
 .detailPanelsScroll[data-member-project-tasks] .stageGroup_unifiedTableSection .stageGroupTable .tableRow > .taskDeleteCell,
-.detailPanelsScroll[data-member-project-tasks] .paymentsTableRows .tableRow > .taskDeleteCell {
+.detailPanelsScroll[data-member-project-tasks] .paymentsTableRows .tableRow > .taskDeleteCell,
+.detailPanelsScroll[data-member-project-tasks] .paymentsUnifiedTable .tableRow > .taskDeleteCell {
   display: none;
 }
 
@@ -6053,6 +6056,86 @@
 .detailPanelsScroll[data-member-project-tasks] .paymentsAlignedGrid {
   grid-template-columns: var(--payments-grid-columns);
   column-gap: var(--member-task-col-gap);
+}
+
+/*
+ * Member payment table: same full-bleed + inset padding as workflowUnifiedTable.
+ */
+.detailPanelsScroll[data-member-project-tasks] .paymentsPanel .paymentsMemberUnifiedTable {
+  display: flex;
+  flex-direction: column;
+  margin-inline: -0.875rem;
+  width: calc(100% + 1.75rem);
+  max-width: none;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  background: transparent;
+  overflow: visible;
+}
+
+.detailPanelsScroll[data-member-project-tasks]
+  .paymentsPanel
+  .paymentsMemberUnifiedTable
+  .paymentsTableHeader {
+  margin-inline: var(--theme-workflow-unified-inset, 0.3125rem);
+  width: auto;
+  max-width: none;
+  padding-inline: var(--member-task-inline-pad) !important;
+  padding-block: 0.5rem;
+  border: 1px solid var(--theme-table-header-bg, #5a7a9e);
+  border-bottom: none;
+  box-sizing: border-box;
+  background: var(--theme-table-header-bg, #5a7a9e);
+  color: var(--theme-table-header-text, #ffffff);
+}
+
+.detailPanelsScroll[data-member-project-tasks]
+  .paymentsPanel
+  .paymentsMemberUnifiedTable
+  .stageGroup_unifiedTableSection
+  .stageGroupTable
+  .tableRow,
+.detailPanelsScroll[data-member-project-tasks]
+  .paymentsPanel
+  .paymentsMemberUnifiedTable
+  .stageGroup_unifiedTableSection
+  .stageGroupTable
+  .paymentDraftRow,
+.detailPanelsScroll[data-member-project-tasks]
+  .paymentsPanel
+  .memberCompletedTasksPanel
+  .stageGroup_unifiedTableSection
+  .stageGroupTable
+  .tableRow {
+  padding-inline: var(--member-task-inline-pad);
+  column-gap: var(--member-task-col-gap);
+  gap: 0 var(--member-task-col-gap);
+}
+
+.detailPanelsScroll[data-member-project-tasks]
+  .paymentsPanel
+  .paymentsMemberUnifiedTable
+  .stageGroup_unifiedTableSection
+  .stageGroupTable
+  .tableRow
+  > .taskDeleteCell,
+.detailPanelsScroll[data-member-project-tasks]
+  .paymentsPanel
+  .memberCompletedTasksPanel
+  .stageGroup_unifiedTableSection
+  .stageGroupTable
+  .tableRow
+  > .taskDeleteCell {
+  display: none;
+}
+
+:global([data-theme='dark'])
+  .detailPanelsScroll[data-member-project-tasks]
+  .paymentsPanel
+  .paymentsMemberUnifiedTable
+  .paymentsTableHeader {
+  border-color: var(--theme-border-main, #3d3e4a);
 }
 
 .workflowPanelGrow {
