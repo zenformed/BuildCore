@@ -22,6 +22,7 @@ import { useDashboardMobileLayout } from '@/presentation/features/crmProjects/us
 import { truncateDisplayText } from '@/presentation/features/crmProjectDetail/crmProjectDetailFormatters';
 import { WorkflowDocumentFileIcon } from './WorkflowDocumentFileIcon';
 import { DocumentsGallerySelectCircle } from './DocumentsGallerySelectCircle';
+import { TeamMemberAvatar } from './TeamMemberAvatar';
 import styles from './ProjectDetail.module.css';
 
 export type DocumentsGalleryTileProps = {
@@ -254,6 +255,10 @@ export function DocumentsGalleryTile({
           </span>
         </span>
       ) : null}
+
+      <span className={styles.docGalleryTileUploader} aria-hidden>
+        <TeamMemberAvatar member={doc.uploadedBy} />
+      </span>
     </button>
   );
 }

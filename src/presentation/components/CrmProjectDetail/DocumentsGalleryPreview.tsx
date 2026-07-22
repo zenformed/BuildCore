@@ -9,9 +9,9 @@ import {
   type PointerEvent as ReactPointerEvent,
   type ReactElement,
 } from 'react';
-import { BsGeoAlt } from 'react-icons/bs';
 import type { CrmDocumentMetadata } from '@/domain/crm';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
+import { MapIcon } from '@/platform/icons/buildCoreDashboardShellIcons';
 import { formatBuildCoreDisplayDateTimePhotoMeta } from '@/platform/formatting/buildCoreDisplayDate';
 import { formatFileSize } from '@/presentation/features/crmProjectDetail/crmProjectDetailFormatters';
 import {
@@ -428,7 +428,7 @@ export function DocumentsGalleryPreview({
                     title={galleryCopy.metadata.viewPhotoLocation}
                     onClick={() => setMapOpen(true)}
                   >
-                    <BsGeoAlt aria-hidden />
+                    <MapIcon />
                   </button>
                 ) : null}
               </div>

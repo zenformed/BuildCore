@@ -8978,6 +8978,26 @@
   z-index: 2;
 }
 
+.docGalleryTileUploader {
+  position: absolute;
+  left: 0.375rem;
+  bottom: 0.375rem;
+  z-index: 2;
+  display: inline-flex;
+  line-height: 0;
+  pointer-events: none;
+  border-radius: 999px;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.45);
+}
+
+/* Cross-module: size TeamMemberAvatar from crmShared. */
+.docGalleryTileUploader.docGalleryTileUploader > :global(*) {
+  width: 1.375rem;
+  height: 1.375rem;
+  font-size: 0.5625rem;
+  box-sizing: border-box;
+}
+
 .docGalleryTileVideoBadge {
   position: absolute;
   right: 0.375rem;
@@ -9218,6 +9238,25 @@
   display: flex;
   flex-direction: column;
   gap: 0.85rem;
+}
+
+@media (min-width: 768px) {
+  .docGalleryPreviewMetaContext {
+    gap: 0.8rem;
+  }
+
+  /* Context rows reuse metaRow; drop its list spacing so gap alone controls density. */
+  .docGalleryPreviewMetaContext .docGalleryPreviewMetaRow {
+    margin-bottom: 0;
+  }
+
+  .docGalleryPreviewUploaderRow {
+    margin-top: 0.15rem;
+  }
+
+  .docGalleryPreviewMetaDivider {
+    margin: 0.875rem 0;
+  }
 }
 
 .docGalleryPreviewMetaList {
