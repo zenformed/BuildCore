@@ -1,7 +1,7 @@
 'use client';
 
 import type { ReactElement } from 'react';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useId, useRef, useState } from 'react';
 import {
   BUILDCORE_UPLOAD_ALLOWED_EXTENSIONS,
 } from '@/domain/crm/buildCoreUploadPolicy';
@@ -63,6 +63,7 @@ export function BudgetInlineRow({
   const [categoryMenuOpen, setCategoryMenuOpen] = useState(false);
   const [documentsMenuOpen, setDocumentsMenuOpen] = useState(false);
   const [saving, setSaving] = useState(false);
+  const cameraInputId = useId();
 
   const categoryRef = useRef<HTMLDivElement>(null);
   const documentsRef = useRef<HTMLDivElement>(null);
@@ -396,11 +397,15 @@ export function BudgetInlineRow({
               />
               <input
                 ref={documentActions.cameraFileInputRef}
+                id={cameraInputId}
                 type="file"
-                accept="image/*,video/*"
+                accept="image/*"
                 capture="environment"
                 className={styles.hiddenFileInput}
-                onChange={(e) => void documentActions.handleFileSelected(e)}
+                onChange={(e) => {
+                  setDocumentsMenuOpen(false);
+                  void documentActions.handleFileSelected(e);
+                }}
               />
               {(() => {
                 const closeDocumentsMenu = (): void => setDocumentsMenuOpen(false);
@@ -460,8 +465,8 @@ export function BudgetInlineRow({
                                   className={styles.documentsSourceBtn}
                                   disabled={sourceBusy}
                                   onClick={() => {
-                                    closeDocumentsMenu();
                                     documentActions.openFilePicker();
+                                    closeDocumentsMenu();
                                   }}
                                 >
                                   <span className={styles.documentsSourceIconWrap}>
@@ -478,7 +483,6 @@ export function BudgetInlineRow({
                                   className={styles.documentsSourceBtn}
                                   disabled={sourceBusy}
                                   onClick={() => {
-                                    closeDocumentsMenu();
                                     documentActions.openCameraPicker();
                                   }}
                                 >

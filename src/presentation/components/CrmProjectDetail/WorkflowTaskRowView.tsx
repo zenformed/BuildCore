@@ -1,7 +1,7 @@
 'use client';
 
 import type { MutableRefObject, ReactElement, ReactNode, RefObject } from 'react';
-import { useRef } from 'react';
+import { useId, useRef } from 'react';
 import { WORKFLOW_TASK_STATUSES } from '@/domain/crm/workflowTaskStatuses';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
 import {
@@ -743,6 +743,7 @@ function WorkflowTaskRowDocumentsField({
   readonly mobile?: boolean;
   readonly compact?: boolean;
 }): ReactElement {
+  const cameraInputId = useId();
   const wrapClass = compact
     ? styles.workflowTaskCompactControl
     : mobile
@@ -858,11 +859,15 @@ function WorkflowTaskRowDocumentsField({
       />
       <input
         ref={model.documentActions.cameraFileInputRef}
+        id={cameraInputId}
         type="file"
-        accept="image/*,video/*"
+        accept="image/*"
         capture="environment"
         className={styles.hiddenFileInput}
-        onChange={(e) => void model.documentActions.handleFileSelected(e)}
+        onChange={(e) => {
+          model.setDocumentsMenuOpen(false);
+          void model.documentActions.handleFileSelected(e);
+        }}
       />
       {(() => {
         const closeDocumentsMenu = (): void => model.setDocumentsMenuOpen(false);
@@ -964,8 +969,8 @@ function WorkflowTaskRowDocumentsField({
                             className={styles.documentsSourceBtn}
                             disabled={sourceBusy}
                             onClick={() => {
-                              closeDocumentsMenu();
                               model.documentActions.openFilePicker();
+                              closeDocumentsMenu();
                             }}
                           >
                             <span className={styles.documentsSourceIconWrap}>
@@ -982,7 +987,8 @@ function WorkflowTaskRowDocumentsField({
                             className={styles.documentsSourceBtn}
                             disabled={sourceBusy}
                             onClick={() => {
-                              closeDocumentsMenu();
+                              // Keep the modal open: closing before input.click() breaks the
+                              // user-gesture chain on many mobile browsers (file explorer instead of camera).
                               model.documentActions.openCameraPicker();
                             }}
                           >
