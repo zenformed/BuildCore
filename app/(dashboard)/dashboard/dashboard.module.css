@@ -244,6 +244,22 @@
     -webkit-overflow-scrolling: touch;
     padding: 0.75rem 0.5rem calc(96px + env(safe-area-inset-bottom, 0px));
   }
+
+  .listViewWrap:has([data-buildcore-workflow-settings-page]) {
+    flex: none;
+    min-height: unset;
+    overflow: visible;
+  }
+
+  .mainContent:has([data-buildcore-workflow-settings-page]) {
+    flex: 1;
+    min-height: 0;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+    padding: 0.75rem 0.5rem calc(96px + env(safe-area-inset-bottom, 0px));
+  }
 }
 
 /* Sidebar app identity (ZenformedSidebarBranding) */
@@ -401,19 +417,21 @@
   }
 }
 
-/* Workflow settings: fixed page shell; stage panel scrolls inside its box */
-.listViewWrap:has([data-buildcore-workflow-settings-page]) {
-  flex: 1 1 0;
-  min-height: 0;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-}
+/* Workflow settings: fixed page shell; stage panel scrolls inside its box (desktop) */
+@media (min-width: 768px) {
+  .listViewWrap:has([data-buildcore-workflow-settings-page]) {
+    flex: 1 1 0;
+    min-height: 0;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
 
-.mainContent:has([data-buildcore-workflow-settings-page]) {
-  overflow: hidden;
-  min-height: 0;
-  flex: 1 1 0;
+  .mainContent:has([data-buildcore-workflow-settings-page]) {
+    overflow: hidden;
+    min-height: 0;
+    flex: 1 1 0;
+  }
 }
 
 .mainContent:has([data-project-tasks-page]),
