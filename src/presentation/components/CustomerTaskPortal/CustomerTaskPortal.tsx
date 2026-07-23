@@ -4,7 +4,7 @@ import type { ChangeEvent, DragEvent, ReactElement } from 'react';
 import { useCallback, useEffect, useState } from 'react';
 import type { CustomerTaskPortalView } from '@/domain/crm/customerTaskRequest';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
-import { performCustomerPortalDirectUpload } from '@/presentation/features/crmDirectUpload/performBuildCoreDirectUpload';
+import { performCustomerPortalDirectUploads } from '@/presentation/features/crmDirectUpload/performBuildCoreDirectUpload';
 import styles from './CustomerTaskPortal.module.css';
 
 type CustomerTaskPortalProps = {
@@ -84,19 +84,27 @@ export function CustomerTaskPortal({ token }: CustomerTaskPortalProps): ReactEle
     setPendingFiles((current) => current.filter((item) => item.id !== pendingFileId));
   };
 
-  const uploadPendingFile = async (file: File): Promise<void> => {
-    await performCustomerPortalDirectUpload(token, file);
-  };
-
   const handleSubmit = async (): Promise<void> => {
     if (!portal?.canSubmit || submitting) return;
     setSubmitting(true);
     setError(null);
     const queue = [...pendingFiles];
     try {
-      for (const item of queue) {
-        await uploadPendingFile(item.file);
-        setPendingFiles((current) => current.filter((pending) => pending.id !== item.id));
+      if (queue.length > 0) {
+        const result = await performCustomerPortalDirectUploads(
+          token,
+          queue.map((item) => item.file)
+        );
+        if (result.failed.length > 0) {
+          throw new Error(result.failed[0]?.message ?? copy.submitError);
+        }
+        if (result.skipped.length > 0 && result.succeeded.length === 0) {
+          throw new Error(result.skipped[0]?.message ?? copy.submitError);
+        }
+        if (result.succeeded.length !== queue.length) {
+          throw new Error(copy.submitError);
+        }
+        setPendingFiles([]);
       }
 
       const response = await fetch(`/api/customer-task/${encodeURIComponent(token)}/submit`, {

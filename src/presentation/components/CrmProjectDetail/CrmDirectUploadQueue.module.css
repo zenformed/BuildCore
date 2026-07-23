@@ -1,0 +1,45 @@
+.queue {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.65rem;
+  padding: 0.4rem 0.65rem;
+  border: 1px solid var(--color-border, #d4d4d8);
+  border-radius: 6px;
+  background: var(--color-surface, #fff);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.18);
+  white-space: nowrap;
+  font-size: 0.75rem;
+  line-height: 1.35;
+}
+
+:global([data-theme='dark']) .queue {
+  background: var(--color-surface, #1c1c1f);
+  border-color: var(--color-border, #3f3f46);
+}
+
+.summary {
+  font-weight: 600;
+  color: var(--color-text, #18181b);
+  font-variant-numeric: tabular-nums;
+}
+
+.actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+.actionButton {
+  border: none;
+  background: transparent;
+  color: var(--color-accent, #2563eb);
+  cursor: pointer;
+  padding: 0;
+  font: inherit;
+  text-decoration: underline;
+}
+
+.actionButton:hover {
+  opacity: 0.85;
+}

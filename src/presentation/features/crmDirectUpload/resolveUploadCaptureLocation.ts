@@ -127,3 +127,45 @@ export async function resolveUploadCaptureLocation(
     locationCapturedAt: new Date().toISOString(),
   };
 }
+
+/**
+ * Resolve locations for a batch. Camera capture requests device geolocation once.
+ */
+export async function resolveUploadCaptureLocations(
+  files: readonly File[],
+  captureSource: UploadCaptureSource = 'files'
+): Promise<(ResolvedUploadCaptureLocation | null)[]> {
+  if (files.length === 0) return [];
+
+  if (captureSource === 'camera') {
+    const device = await readDeviceGeolocation();
+    const results: (ResolvedUploadCaptureLocation | null)[] = [];
+    for (const file of files) {
+      if (device != null) {
+        results.push({
+          latitude: device.latitude,
+          longitude: device.longitude,
+          locationAccuracyMeters: device.accuracyMeters,
+          locationSource: 'device_capture',
+          locationCapturedAt: device.capturedAt,
+        });
+        continue;
+      }
+      const exif = await readExifGps(file);
+      results.push(
+        exif == null
+          ? null
+          : {
+              latitude: exif.latitude,
+              longitude: exif.longitude,
+              locationAccuracyMeters: null,
+              locationSource: 'exif',
+              locationCapturedAt: new Date().toISOString(),
+            }
+      );
+    }
+    return results;
+  }
+
+  return Promise.all(files.map((file) => resolveUploadCaptureLocation(file, 'files')));
+}

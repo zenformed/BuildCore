@@ -34,6 +34,7 @@ import { useCrmPaymentTasksIndexContext } from '@/presentation/providers/CrmPaym
 import { useDashboardMobileLayout } from '@/presentation/features/crmProjects/useDashboardMobileLayout';
 import { ConfirmModal } from '@/presentation/components/ConfirmModal';
 import { DetailToast } from './DetailToast';
+import { CrmDirectUploadStatusProvider } from './CrmDirectUploadStatus';
 import { SaveProjectTemplateDialog } from './SaveProjectTemplateDialog';
 import { ProjectQrDialog } from './ProjectQrDialog';
 import { ProjectDetailActionsMenu } from './ProjectDetailActionsMenu';
@@ -430,6 +431,7 @@ function ProjectDetailShellBody({
 
   return (
     <ProjectDetailShellProvider value={shellValue}>
+      <CrmDirectUploadStatusProvider>
       <div className={styles.pageShell}>
         {workspace.toast ? (
           <DetailToast
@@ -529,6 +531,7 @@ function ProjectDetailShellBody({
           </>
         ) : null}
       </div>
+      </CrmDirectUploadStatusProvider>
     </ProjectDetailShellProvider>
   );
 }

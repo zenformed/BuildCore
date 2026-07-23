@@ -8,6 +8,7 @@ import { resolveOpsPipelineStages } from '@/presentation/features/crmProjectDeta
 import { useProjectDetailShell } from '@/presentation/features/crmProjectDetail/ProjectDetailShellContext';
 import { useBuildCorePipelineStages } from '@/presentation/providers/BuildCorePipelineStagesProvider';
 import { DetailPanelHeaderButton } from './DetailPanelHeaderButton';
+import { CrmDirectUploadStatusHost } from './CrmDirectUploadStatus';
 import { WorkflowInlineMenu } from './WorkflowInlineMenu';
 import styles from './ProjectDetail.module.css';
 
@@ -36,6 +37,7 @@ export function WorkflowTaskStageAddButton({
         disabled={disabled}
         onClick={() => setMenuOpen((open) => !open)}
       />
+      <CrmDirectUploadStatusHost />
       <WorkflowInlineMenu
         open={menuOpen}
         onClose={() => setMenuOpen(false)}

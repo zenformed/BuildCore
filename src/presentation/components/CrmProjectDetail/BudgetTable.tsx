@@ -26,6 +26,7 @@ import { BudgetTableHeaderRow } from './BudgetTableHeaderRow';
 import { DetailPanelHeader } from './DetailPanelHeader';
 import { DetailPanelHeaderActions } from './DetailPanelHeaderActions';
 import { DetailPanelHeaderButton } from './DetailPanelHeaderButton';
+import { CrmDirectUploadStatusHost } from './CrmDirectUploadStatus';
 import { DetailPanelSectionRefresh } from './DetailPanelSectionRefresh';
 import { DetailPanelSectionSearch } from './DetailPanelSectionSearch';
 import {
@@ -144,17 +145,24 @@ export function BudgetTable({ onError }: BudgetTableProps): ReactElement {
   );
 
   const mobileAddButton = canCreate ? (
-    <DetailPanelHeaderButton
-      variant="add"
-      disabled={draftOpen}
-      title={b.addItem}
-      onClick={() => {
-        guardProjectEdit(() => {
-          setDraftOpen(true);
-        });
-      }}
-    />
-  ) : null;
+    <div className={styles.detailPanelHeaderBtnWrap}>
+      <DetailPanelHeaderButton
+        variant="add"
+        disabled={draftOpen}
+        title={b.addItem}
+        onClick={() => {
+          guardProjectEdit(() => {
+            setDraftOpen(true);
+          });
+        }}
+      />
+      <CrmDirectUploadStatusHost />
+    </div>
+  ) : (
+    <div className={styles.detailPanelHeaderBtnWrap}>
+      <CrmDirectUploadStatusHost />
+    </div>
+  );
 
   const filterCaret = (
     <BudgetCategoryFilterMenu
@@ -211,7 +219,12 @@ export function BudgetTable({ onError }: BudgetTableProps): ReactElement {
           </div>
         ) : (
           <DetailPanelHeader title={b.tableTitle} titleId="budget-table-heading">
-            <DetailPanelHeaderActions>{searchInput}</DetailPanelHeaderActions>
+            <DetailPanelHeaderActions>
+              {searchInput}
+              <div className={styles.detailPanelHeaderBtnWrap}>
+                <CrmDirectUploadStatusHost />
+              </div>
+            </DetailPanelHeaderActions>
           </DetailPanelHeader>
         )}
 

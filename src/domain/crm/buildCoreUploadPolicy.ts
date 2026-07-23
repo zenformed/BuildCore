@@ -5,6 +5,8 @@ export type BuildCoreUploadAssetKind = 'image' | 'video' | 'document';
 export const BUILDCORE_UPLOAD_MAX_IMAGE_BYTES = 25 * 1024 * 1024;
 export const BUILDCORE_UPLOAD_MAX_VIDEO_BYTES = 250 * 1024 * 1024;
 export const BUILDCORE_UPLOAD_MAX_DOCUMENT_BYTES = 50 * 1024 * 1024;
+/** Maximum files accepted in one batch prepare/finalize request. */
+export const BUILDCORE_UPLOAD_MAX_FILES_PER_BATCH = 25;
 
 export const BUILDCORE_UPLOAD_IMAGE_EXTENSIONS = [
   '.jpg',

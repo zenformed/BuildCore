@@ -1,0 +1,12 @@
+.uploadControl {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.queueAnchor {
+  position: absolute;
+  top: calc(100% + 0.35rem);
+  right: 0;
+  z-index: 20;
+}

@@ -26,6 +26,7 @@ import { DetailPanelHeaderActions } from './DetailPanelHeaderActions';
 import { DetailPanelHeaderButton } from './DetailPanelHeaderButton';
 import { DetailPanelSectionRefresh } from './DetailPanelSectionRefresh';
 import { DetailPanelSectionSearch } from './DetailPanelSectionSearch';
+import { CrmDirectUploadStatusHost } from './CrmDirectUploadStatus';
 import {
   WorkflowMobileBulkSelectAllRow,
   WorkflowMobileBulkToolbar,
@@ -179,12 +180,19 @@ export function PaymentsRail({
   );
 
   const addButton = canCreate ? (
-    <DetailPanelHeaderButton
-      variant="add"
-      title={payments.addMilestone}
-      onClick={() => openCreateWorkflowTask({ context: 'payment' })}
-    />
-  ) : null;
+    <div className={styles.detailPanelHeaderBtnWrap}>
+      <DetailPanelHeaderButton
+        variant="add"
+        title={payments.addMilestone}
+        onClick={() => openCreateWorkflowTask({ context: 'payment' })}
+      />
+      <CrmDirectUploadStatusHost />
+    </div>
+  ) : (
+    <div className={styles.detailPanelHeaderBtnWrap}>
+      <CrmDirectUploadStatusHost />
+    </div>
+  );
 
   const renderPaymentRow = (task: CrmWorkflowTask, variant: 'table' | 'mobile') => (
     <WorkflowTaskInlineRow

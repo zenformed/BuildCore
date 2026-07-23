@@ -6,7 +6,9 @@ import { archiveCrmWorkflowTask } from '@/application/use-cases/crm';
 import { listWorkflowTaskDocuments } from '@/application/use-cases/crm/listWorkflowTaskDocuments';
 import { validateWorkflowTaskDocumentUpload } from '@/domain/crm/documentUpload';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
-import { performCrmDirectUpload } from '@/presentation/features/crmDirectUpload/performBuildCoreDirectUpload';
+import {
+  performCrmDirectUploads,
+} from '@/presentation/features/crmDirectUpload/performBuildCoreDirectUpload';
 import { useProjectSummaryPatch } from '@/presentation/features/crmProjectDetail/useProjectSummaryPatch';
 import { useBudgetSection } from '@/presentation/features/crmProjectDetail/useBudgetSection';
 import { useWorkflowTasksSection } from '@/presentation/features/crmProjectDetail/useWorkflowTasksSection';
@@ -172,11 +174,18 @@ export function useProjectDetailWorkspace(initialProject: CrmProjectDetail) {
     if (!documentUploadConfirm) return;
     const { task, file } = documentUploadConfirm;
     try {
-      const prepared = await performCrmDirectUpload(file, {
-        scope: 'workflow_task',
-        projectSlug: project.summary.slug,
-        workflowTaskId: task.id,
+      const result = await performCrmDirectUploads({
+        files: [file],
+        uploadScope: {
+          scope: 'workflow_task',
+          projectSlug: project.summary.slug,
+          workflowTaskId: task.id,
+        },
       });
+      const prepared = result.succeeded[0];
+      if (prepared == null) {
+        throw new Error(result.failed[0]?.message ?? result.skipped[0]?.message ?? wf.documentUploadFailed);
+      }
       const documents = await listWorkflowTaskDocuments(crmRepositories, {
         projectSlug: project.summary.slug,
         workflowTaskId: task.id,

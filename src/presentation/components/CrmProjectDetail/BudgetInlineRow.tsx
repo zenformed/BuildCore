@@ -419,6 +419,7 @@ export function BudgetInlineRow({
                 ref={documentActions.fileInputRef}
                 type="file"
                 accept={documentAccept}
+                multiple
                 className={styles.hiddenFileInput}
                 onChange={(e) => void documentActions.handleFileSelected(e, 'files')}
               />
@@ -986,6 +987,7 @@ export function BudgetInlineRow({
           ref={documentActions.fileInputRef}
           type="file"
           accept={documentAccept}
+          multiple
           className={styles.hiddenFileInput}
           onChange={(e) => void documentActions.handleFileSelected(e, 'files')}
         />

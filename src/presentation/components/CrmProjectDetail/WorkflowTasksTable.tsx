@@ -54,6 +54,7 @@ import {
 import { WorkflowStageTaskGroup, type ManualStageCompletionToggleAction } from './WorkflowStageTaskGroup';
 import { WorkflowTasksTableColumnHeader } from './WorkflowTasksTableColumnHeader';
 import { WorkflowTaskStageAddButton } from './WorkflowTaskStageAddButton';
+import { CrmDirectUploadStatusHost } from './CrmDirectUploadStatus';
 import { WorkflowTasksBatchCompleteButton } from './WorkflowTasksBatchCompleteButton';
 import {
   WorkflowTasksViewToggleButton,
@@ -434,7 +435,11 @@ export function WorkflowTasksTable({
 
   const addButton = canCreate ? (
     <WorkflowTaskStageAddButton onSelectStage={handleSelectStage} />
-  ) : null;
+  ) : (
+    <div className={styles.detailPanelHeaderBtnWrap}>
+      <CrmDirectUploadStatusHost />
+    </div>
+  );
 
   const showUnifiedTableAmount = displayGroups.some((group) => group.isPaymentsGroup);
   const visibleTaskIds = useMemo(

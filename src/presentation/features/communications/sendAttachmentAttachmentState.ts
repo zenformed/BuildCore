@@ -1,5 +1,8 @@
 import { validateBuildCoreUpload } from '@/domain/crm/buildCoreUploadPolicy';
-import { performCrmDirectUpload, type CrmDirectUploadScope } from '@/presentation/features/crmDirectUpload/performBuildCoreDirectUpload';
+import {
+  performCrmDirectUploads,
+  type CrmDirectUploadScope,
+} from '@/presentation/features/crmDirectUpload/performBuildCoreDirectUpload';
 import type {
   ExistingAttachmentOption,
   SelectedAttachment,
@@ -58,14 +61,35 @@ export async function resolveSelectedAttachmentDocumentIds(
   selectedAttachments: readonly SelectedAttachment[],
   uploadScope: CrmDirectUploadScope
 ): Promise<string[]> {
-  const attachmentDocumentIds: string[] = [];
+  const existingIds: string[] = [];
+  const newAttachments: SelectedNewAttachment[] = [];
+
   for (const selected of selectedAttachments) {
     if (selected.source === 'existing') {
-      attachmentDocumentIds.push(selected.crmDocumentId);
+      existingIds.push(selected.crmDocumentId);
       continue;
     }
-    const prepared = await performCrmDirectUpload(selected.file, uploadScope);
-    attachmentDocumentIds.push(prepared.documentId);
+    newAttachments.push(selected);
   }
-  return attachmentDocumentIds;
+
+  if (newAttachments.length === 0) {
+    return existingIds;
+  }
+
+  const result = await performCrmDirectUploads({
+    files: newAttachments.map((attachment) => attachment.file),
+    uploadScope,
+  });
+
+  if (result.failed.length > 0) {
+    throw new Error(result.failed[0]?.message ?? 'Could not upload attachment.');
+  }
+  if (result.skipped.length > 0 && result.succeeded.length === 0) {
+    throw new Error(result.skipped[0]?.message ?? 'Could not upload attachment.');
+  }
+  if (result.succeeded.length !== newAttachments.length) {
+    throw new Error('Could not upload all attachments.');
+  }
+
+  return [...existingIds, ...result.succeeded.map((entry) => entry.documentId)];
 }

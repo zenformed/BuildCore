@@ -1,0 +1,6 @@
+.host {
+  position: absolute;
+  top: calc(100% + 0.35rem);
+  right: 0;
+  z-index: 40;
+}

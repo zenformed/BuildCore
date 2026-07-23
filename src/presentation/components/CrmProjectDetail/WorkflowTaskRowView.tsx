@@ -857,6 +857,7 @@ function WorkflowTaskRowDocumentsField({
         ref={model.documentActions.fileInputRef}
         type="file"
         accept={model.documentAccept}
+        multiple
         className={styles.hiddenFileInput}
         onChange={(e) => void model.documentActions.handleFileSelected(e, 'files')}
       />

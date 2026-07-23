@@ -1,15 +1,46 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { parseDocumentCaptureLocationPayload } from '@/domain/crm/documentCaptureLocation';
+import { BUILDCORE_UPLOAD_MAX_FILES_PER_BATCH } from '@/domain/crm/buildCoreUploadPolicy';
 import { requireCrmApiAuth } from '@/infrastructure/crm/server/crmApiRouteAuth';
-import {
-  requireBuildCoreWorkflowTaskPermission,
-} from '@/infrastructure/crm/server/buildCoreWorkflowTaskPermissionService';
+import { requireBuildCoreWorkflowTaskPermission } from '@/infrastructure/crm/server/buildCoreWorkflowTaskPermissionService';
 import { relayCrmDirectUploadPrepare } from '@/infrastructure/crm/server/buildCoreDirectUploadRelay';
-import type { PrepareDirectUploadPayload } from '@/infrastructure/coreApi/buildCoreDirectUploadClient';
+import type {
+  PrepareDirectUploadBatchPayload,
+  PrepareDirectUploadFilePayload,
+} from '@/infrastructure/coreApi/buildCoreDirectUploadClient';
 
 export const dynamic = 'force-dynamic';
 
 type RouteContext = { params: { slug: string } };
+
+function parseFilePayload(
+  record: Record<string, unknown>,
+  fallbackClientFileId: string
+): PrepareDirectUploadFilePayload {
+  const clientFileId =
+    typeof record.clientFileId === 'string' && record.clientFileId.trim()
+      ? record.clientFileId.trim()
+      : fallbackClientFileId;
+  const fileName = typeof record.fileName === 'string' ? record.fileName : '';
+  const mimeType = typeof record.mimeType === 'string' ? record.mimeType : 'application/octet-stream';
+  const sizeBytes = typeof record.sizeBytes === 'number' ? record.sizeBytes : Number(record.sizeBytes);
+  const location = parseDocumentCaptureLocationPayload(record);
+  return {
+    clientFileId,
+    fileName,
+    mimeType,
+    sizeBytes,
+    ...(location == null
+      ? {}
+      : {
+          latitude: location.latitude,
+          longitude: location.longitude,
+          locationAccuracyMeters: location.locationAccuracyMeters,
+          locationSource: location.locationSource,
+          locationCapturedAt: location.locationCapturedAt,
+        }),
+  };
+}
 
 export async function POST(
   request: NextRequest,
@@ -54,17 +85,15 @@ export async function POST(
     return NextResponse.json({ error: 'validation_error', message: 'budgetEntryId is required.' }, { status: 400 });
   }
 
-  const fileName = typeof record.fileName === 'string' ? record.fileName : '';
-  const mimeType = typeof record.mimeType === 'string' ? record.mimeType : 'application/octet-stream';
-  const sizeBytes = typeof record.sizeBytes === 'number' ? record.sizeBytes : Number(record.sizeBytes);
-
-  if (!fileName.trim() || !Number.isFinite(sizeBytes) || sizeBytes <= 0) {
-    return NextResponse.json({ error: 'validation_error', message: 'Invalid upload request.' }, { status: 400 });
-  }
-
-  let location;
+  let files: PrepareDirectUploadFilePayload[];
   try {
-    location = parseDocumentCaptureLocationPayload(record);
+    if (Array.isArray(record.files)) {
+      files = record.files.map((entry, index) =>
+        parseFilePayload((entry ?? {}) as Record<string, unknown>, `file-${index + 1}`)
+      );
+    } else {
+      files = [parseFilePayload(record, 'file-1')];
+    }
   } catch (err) {
     return NextResponse.json(
       {
@@ -75,42 +104,65 @@ export async function POST(
     );
   }
 
-  const locationFields =
-    location == null
-      ? {}
-      : {
-          latitude: location.latitude,
-          longitude: location.longitude,
-          locationAccuracyMeters: location.locationAccuracyMeters,
-          locationSource: location.locationSource,
-          locationCapturedAt: location.locationCapturedAt,
-        };
+  if (files.length === 0) {
+    return NextResponse.json(
+      { error: 'validation_error', message: 'At least one file is required.' },
+      { status: 400 }
+    );
+  }
+  if (files.length > BUILDCORE_UPLOAD_MAX_FILES_PER_BATCH) {
+    return NextResponse.json(
+      {
+        error: 'validation_error',
+        message: `You can upload at most ${BUILDCORE_UPLOAD_MAX_FILES_PER_BATCH} files at once.`,
+      },
+      { status: 400 }
+    );
+  }
 
-  let payload: PrepareDirectUploadPayload;
+  if (
+    files.some(
+      (file) => !file.fileName.trim() || !Number.isFinite(file.sizeBytes) || file.sizeBytes <= 0
+    )
+  ) {
+    return NextResponse.json({ error: 'validation_error', message: 'Invalid upload request.' }, { status: 400 });
+  }
+
+  let payload: PrepareDirectUploadBatchPayload;
   if (scope === 'workflow_task') {
     payload = {
       scope,
       projectSlug: slug,
       workflowTaskId: record.workflowTaskId as string,
-      fileName,
-      mimeType,
-      sizeBytes,
-      ...locationFields,
+      files,
     };
   } else if (scope === 'budget_entry') {
     payload = {
       scope,
       projectSlug: slug,
       budgetEntryId: record.budgetEntryId as string,
-      fileName,
-      mimeType,
-      sizeBytes,
-      ...locationFields,
+      files,
     };
   } else {
-    payload = { scope, projectSlug: slug, fileName, mimeType, sizeBytes, ...locationFields };
+    payload = { scope, projectSlug: slug, files };
   }
 
   const accessToken = auth.context.authHeader.replace(/^Bearer\s+/i, '').trim();
+  // When callers still send legacy single-file fields (no files[]), relay returns legacy shape.
+  if (!Array.isArray(record.files) && files.length === 1) {
+    const file = files[0];
+    return relayCrmDirectUploadPrepare(accessToken, auth.context.organizationId, {
+      ...payload,
+      fileName: file.fileName,
+      mimeType: file.mimeType,
+      sizeBytes: file.sizeBytes,
+      latitude: file.latitude,
+      longitude: file.longitude,
+      locationAccuracyMeters: file.locationAccuracyMeters,
+      locationSource: file.locationSource,
+      locationCapturedAt: file.locationCapturedAt,
+    });
+  }
+
   return relayCrmDirectUploadPrepare(accessToken, auth.context.organizationId, payload);
 }
