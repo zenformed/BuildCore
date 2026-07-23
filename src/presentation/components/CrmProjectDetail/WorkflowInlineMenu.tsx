@@ -166,7 +166,7 @@ export function WorkflowInlineMenu({
 
   useLayoutEffect(() => {
     if (!open) {
-      setPosition(null);
+      setPosition((current) => (current == null ? current : null));
       return;
     }
     updatePosition();
