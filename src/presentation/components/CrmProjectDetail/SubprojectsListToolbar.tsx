@@ -3,6 +3,7 @@
 import type { ReactElement, ReactNode } from 'react';
 import { CloseIcon } from '@/platform/icons/buildCoreDashboardShellIcons';
 import { DetailPanelHeaderButton } from './DetailPanelHeaderButton';
+import importStyles from '@/presentation/components/CrmImport/SpreadsheetImportWizard.module.css';
 import styles from './ProjectDetail.module.css';
 
 export type SubprojectsListToolbarProps = {
@@ -15,6 +16,9 @@ export type SubprojectsListToolbarProps = {
   readonly newSubprojectTitle: string;
   readonly newSubprojectAriaLabel: string;
   readonly onCreateOpen: () => void;
+  readonly importSpreadsheetTitle?: string;
+  readonly importSpreadsheetAriaLabel?: string;
+  readonly onImportOpen?: () => void;
   /** Mobile: show bulk chrome when rows are selected. */
   readonly showMobileBulkToolbar?: boolean;
   readonly selectedCountLabel?: string;
@@ -35,6 +39,9 @@ export function SubprojectsListToolbar({
   newSubprojectTitle,
   newSubprojectAriaLabel,
   onCreateOpen,
+  importSpreadsheetTitle,
+  importSpreadsheetAriaLabel,
+  onImportOpen,
   showMobileBulkToolbar = false,
   selectedCountLabel = '',
   bulkToolbarAriaLabel = '',
@@ -78,6 +85,17 @@ export function SubprojectsListToolbar({
         />
       ) : null}
       {trailingActions}
+      {canManage && onImportOpen ? (
+        <button
+          type="button"
+          className={importStyles.toolbarSecondaryButton}
+          title={importSpreadsheetTitle}
+          aria-label={importSpreadsheetAriaLabel ?? importSpreadsheetTitle}
+          onClick={onImportOpen}
+        >
+          {importSpreadsheetTitle}
+        </button>
+      ) : null}
       {canManage ? (
         <DetailPanelHeaderButton
           variant="add"

@@ -342,6 +342,8 @@ const buildCoreDashboardContentSource = {
       title: '§E2§',
       searchPlaceholder: 'Search §E6§…',
       searchAriaLabel: 'Search §E6§',
+      importSpreadsheet: 'Import spreadsheet',
+      importSpreadsheetAriaLabel: 'Import spreadsheet',
       expandAllSubprojects: 'Expand all §E8§',
       collapseAllSubprojects: 'Collapse all §E8§',
       listView: {
@@ -453,6 +455,8 @@ const buildCoreDashboardContentSource = {
       saveProject: 'Save §E5§',
       cancelProject: 'Cancel',
       submitting: 'Creating…',
+      createAndImportSpreadsheet: 'Create & Import Spreadsheet',
+      createAndImportSpreadsheetSubmitting: 'Creating…',
       submitFailed: 'Failed to create §E5§. Please try again.',
       projectAddedSuccess: '§E1§ created.',
       mockDisabledMessage:
@@ -500,6 +504,597 @@ const buildCoreDashboardContentSource = {
         longitude: 'Longitude',
         useCoordinates: '📍 Lat / Long',
         useStreetAddress: '← Use street address instead',
+      },
+    },
+      spreadsheetImport: {
+      title: 'Import spreadsheet',
+      closeAriaLabel: 'Close import spreadsheet wizard',
+      unavailable: 'Spreadsheet import is not available in this environment.',
+      defaults: {
+        newParentName: 'Imported §E1§',
+      },
+      steps: {
+        upload: 'Upload file',
+        map: 'Map columns',
+        hierarchy: 'Parent groups',
+        validate: 'Review validation',
+        import: 'Importing',
+        results: 'Import results',
+      },
+      upload: {
+        fileLabel: 'Spreadsheet file',
+        sheetLabel: 'Worksheet',
+        singleSheetLabel: (name: string): string => `Worksheet: ${name}`,
+        sheetOptionLabel: (name: string, rows: number, cols: number): string =>
+          `${name} (${rows.toLocaleString()} rows · ${cols} columns)`,
+        sheetStats: (rows: number, cols: number): string =>
+          `${rows.toLocaleString()} rows · ${cols} columns`,
+        importingIntoLabel: 'Importing into',
+        detectedHeaderRow: (row: number): string =>
+          `BuildCore detected row ${row} as the column header.`,
+        selectHeaderHint: 'Select a different row below if the header is wrong.',
+        headerRowGroupAriaLabel: 'Choose spreadsheet header row',
+        selectColumnAria: 'Select header row',
+        rowColumnLabel: 'Row',
+        useRowAsHeaders: (row: number): string => `Use row ${row} as headers`,
+        selectedAsHeader: 'Selected as header',
+        dataPreviewLabel: 'Data preview',
+        columnLetter: (index: number): string => {
+          let n = index;
+          let label = '';
+          do {
+            label = String.fromCharCode(65 + (n % 26)) + label;
+            n = Math.floor(n / 26) - 1;
+          } while (n >= 0);
+          return label;
+        },
+        limitsHint: (maxRows: number): string =>
+          `CSV or Excel up to 10 MB · max ${maxRows.toLocaleString()} rows · max 100 columns`,
+        truncatedNotice: 'Only the first 5,000 rows will be imported.',
+      },
+      map: {
+        sourceColumn: 'Spreadsheet column',
+        destinationColumn: 'Import to',
+        ownershipColumn: 'Ownership',
+      },
+      ownership: {
+        parent: '§E1§',
+        subproject: '§E3§',
+        ignored: 'Ignore',
+      },
+      destinations: {
+        ignore: 'Ignore column',
+        newCustomFieldParent: 'New custom field (§E1§)',
+        newCustomFieldSubproject: 'New custom field (§E3§)',
+      },
+      standardFields: {
+        parent_name: '§E1§ name',
+        parent_identifier: '§E1§ ID / job #',
+        subproject_name: '§E3§ name',
+        contact_name: 'Contact name',
+        emails: 'Email',
+        phones: 'Phone',
+        industry: 'Industry',
+        custom_industry: 'Custom industry',
+        priority: 'Priority',
+        stage: 'Stage',
+        notes: 'Notes',
+        deal_value: 'Deal value',
+        assignee_email: 'Assignee email',
+        address_line_1: 'Address',
+        address_line_2: 'Address line 2',
+        city: 'City',
+        state: 'State',
+        postal_code: 'Zip code',
+      },
+      hierarchy: {
+        rowCount: (count: number): string => `${count} rows`,
+        resolutionLabel: 'Parent resolution',
+        createNew: 'Create new §E1§',
+        attachExisting: 'Attach to existing §E1§',
+        ignoreGroup: 'Ignore group',
+        attachLabel: 'Existing §E1§',
+        selectParent: 'Select §E1§…',
+        searchParentPlaceholder: 'Search by name, customer, or address…',
+        searchParentAriaLabel: 'Search existing §E5§',
+        searchParentEmpty: 'No matching root §E5§ found.',
+        clearParent: 'Clear',
+        suggestedBadge: 'Suggested',
+        conflictField: (field: string): string => `Conflicting values for ${field}`,
+        conflictChooseExisting: 'Use this value',
+        conflictEnterAnother: 'Enter another value',
+        conflictUnresolved: 'Choose or enter a value to continue for this group.',
+        conflictRows: (rows: string): string => `Rows ${rows}`,
+        excludeRowsLabel: 'Exclude rows',
+        rowNumber: 'Row',
+        excludeColumn: 'Exclude',
+        excludeRow: 'Exclude from import',
+      },
+      validate: {
+        errorsLabel: 'Errors',
+        warningsLabel: 'Warnings',
+        rowsLabel: 'Rows',
+      },
+      import: {
+        progressHint: 'Creating §E8§…',
+        createdSubprojects: '§E8§ created',
+        createdParents: 'New §E2§ created',
+        failedRows: 'Failed rows',
+        statusLabel: (status: string): string => `Status: ${status}`,
+      },
+      results: {
+        createdSubprojects: '§E8§ created',
+        createdParents: 'New §E2§ created',
+        failedRows: 'Failed rows',
+        statusLabel: (status: string): string => `Final status: ${status}`,
+      },
+      actions: {
+        back: 'Back',
+        continue: 'Continue',
+        cancel: 'Cancel',
+        cancelImport: 'Cancel import',
+        close: 'Close',
+        finish: 'Finish',
+        working: 'Working…',
+        startImport: 'Start import',
+        downloadErrors: 'Download error CSV',
+        resumeImport: 'Resume import',
+        keepImporting: 'Keep importing',
+      },
+      errors: {
+        fileRequired: 'Choose a spreadsheet file to continue.',
+        parseFailed: 'Could not read the spreadsheet.',
+        noDataRows: 'No data rows found below the header row.',
+        draftFailed: 'Could not prepare the import.',
+        mappingInvalid: 'Fix column mapping issues before continuing.',
+        subprojectNameRequired: 'Map at least one column to §E3§ name.',
+        resolutionRequired: 'Resolve each parent group before continuing.',
+        resolutionFailed: 'Could not save parent resolutions.',
+        importFailed: 'Import failed.',
+        importCancelled: 'Import cancelled.',
+        downloadFailed: 'Could not download error CSV.',
+        anotherImportRunning: 'Another spreadsheet import is already running.',
+      },
+      interview: {
+        progress: {
+          upload: 'Upload',
+          structure: 'Structure',
+          fields: 'Fields',
+          review: 'Review',
+          import: 'Import',
+        },
+        nav: {
+          back: 'Back',
+          continue: 'Continue',
+          next: 'Next',
+          previous: 'Previous',
+          working: 'Working…',
+          startImport: 'Start import',
+        },
+        upload: {
+          heading: 'Let\u2019s import your spreadsheet',
+          description:
+            'BuildCore will use your mapped columns to detect parent §E6§ and the §E8§ beneath them.',
+          illustrationAlt: 'Illustration of a spreadsheet being uploaded into BuildCore',
+          features: {
+            detectProjects: {
+              title: 'Detect parent §E6§',
+            },
+            createSubprojects: {
+              title: 'Create one §E7§ per row',
+            },
+            attachExisting: {
+              title: 'Attach to existing BuildCore §E6§',
+            },
+          },
+          dropzone: {
+            heading: 'Choose a CSV or Excel file',
+            subtext: 'Drag and drop or click to browse',
+            chooseFile: 'Choose File',
+            replaceFile: 'Choose a different file',
+            selectedLabel: 'Selected file',
+          },
+          limits: {
+            formats: 'CSV or Excel',
+            maxSize: 'Maximum 10 MB',
+            maxRows: 'Maximum 5,000 rows',
+            maxColumns: 'Maximum 100 columns',
+          },
+          trust: {
+            title: 'We never store your spreadsheet.',
+            body: 'Your spreadsheet is processed securely and removed after import.',
+          },
+          fileLabel: 'Spreadsheet file',
+          chooseFileHint: 'CSV or Excel up to 10 MB.',
+          sheetLabel: 'Worksheet',
+          sheetOptionLabel: (name: string, rows: number, cols: number): string =>
+            `${name} (${rows.toLocaleString()} rows · ${cols} columns)`,
+          singleSheetLabel: (name: string): string => `We\u2019ll use the worksheet "${name}".`,
+          fileSummary: (rows: number, cols: number): string =>
+            `${rows.toLocaleString()} rows · ${cols} columns detected`,
+          truncatedNotice: 'Only the first 5,000 rows will be imported.',
+        },
+        header: {
+          heading: 'Confirm your column headers',
+          hint: 'BuildCore selected the row it believes contains your column names. Click another row if it guessed incorrectly.',
+          autoFoundTitle: 'BuildCore found your column names',
+          autoReviewTitle: 'Please double-check this selection',
+          autoRowLabel: (row: number): string => `Row ${row} appears to be the header row.`,
+          manualTitle: (row: number): string => `You selected Row ${row} as the header row`,
+          confidenceHigh: 'High confidence',
+          confidenceMedium: 'Medium confidence',
+          confidenceLow: 'Low confidence',
+          selectedAsHeader: 'Selected as header',
+          previewAriaLabel: 'Spreadsheet rows — select the header row',
+          columnFallback: (index: number): string => `Column ${index + 1}`,
+        },
+        structure: {
+          heading: 'How is this spreadsheet organized?',
+          subheading: 'Choose the option that best describes how your data is organized.',
+          selectedLabel: 'Selected',
+          selectOptionLabel: 'Select this option',
+          decideLabel: 'Let BuildCore decide',
+          one: {
+            title: 'One §E1§',
+            description: 'Every §E7§ in this spreadsheet belongs to one §E1§.',
+            parentSample: '§E1§',
+            childSamples: ['Sarah', 'John', 'Amy'] as const,
+          },
+          multiple: {
+            title: 'Multiple §E2§',
+            description: 'This spreadsheet contains §E8§ for multiple §E6§.',
+            parentSamples: ['Seattle §E1§', 'Tacoma §E1§'] as const,
+            childSamples: [
+              ['Sarah', 'Mike'],
+              ['Lisa', 'Amy'],
+            ] as const,
+          },
+          unsure: {
+            title: 'I\u2019m not sure',
+            description:
+              'BuildCore will inspect your spreadsheet and recommend the best structure.',
+          },
+        },
+        multiProjectOrganization: {
+          heading: 'How are your §E2§ organized?',
+          subheading: 'Choose the option that best matches how your spreadsheet is laid out.',
+          selectedLabel: 'Selected',
+          selectOptionLabel: 'Select this option',
+          mostCommonBadge: 'Most common',
+          decideLabel: 'Let BuildCore decide',
+          decideCta: 'Let BuildCore decide \u2192',
+          repeating: {
+            title: '§E1§ name repeats on every row',
+            description: 'Every row includes the §E1§ name.',
+            visualHeader: '§E1§',
+            visualRows: ['Oak Ridge', 'Oak Ridge', 'Maple Grove', 'Maple Grove'] as const,
+          },
+          headerRows: {
+            title: '§E2§ are separated by header rows',
+            description: 'A header row starts each §E1§ section.',
+            visualSections: [
+              { title: 'Oak Ridge Apartments', rows: ['Unit 101', 'Unit 102'] as const },
+              { title: 'Maple Grove', rows: ['Unit 1', 'Unit 2'] as const },
+            ] as const,
+          },
+          worksheets: {
+            title: 'One §E1§ per worksheet',
+            description: 'Each worksheet is its own §E1§.',
+            visualSheets: ['Oak Ridge', 'Maple Grove', 'Sunset Villas'] as const,
+          },
+          unsure: {
+            title: 'Not sure?',
+            description:
+              'BuildCore can inspect your spreadsheet and recommend the best import method.',
+          },
+        },
+        comingSoon: {
+          headerRows: {
+            title: 'Header-row §E2§',
+            body: 'Use Back to choose another organization style if this is not the layout you meant.',
+          },
+          worksheets: {
+            title: 'Worksheet-based §E2§',
+            body: 'Use Back to choose another organization style if this is not the layout you meant.',
+          },
+        },
+        recommend: {
+          heading: 'Here\u2019s what we found',
+          subheading: 'Pick the structure that matches your spreadsheet.',
+          estimate: (groups: number, subprojects: number): string =>
+            `${groups.toLocaleString()} §E1§ · ${subprojects.toLocaleString()} §E3§`,
+          manualOption: 'None of these \u2014 let me choose the columns myself',
+          manualOptionDescription: 'Pick which columns identify each §E1§ on the next screen.',
+        },
+        chooseParent: {
+          heading: 'Which §E1§ should these rows be imported into?',
+          subheading: 'Every spreadsheet row will become a §E3§ under the selected §E1§.',
+          searchPlaceholder: 'Search by §E1§ name, customer, or address\u2026',
+          searchAriaLabel: 'Search eligible §E2§',
+          createButton: '+ Create New §E1§',
+          createButtonShort: 'Create New §E1§',
+          columnProject: '§E1§',
+          columnCustomer: 'Customer',
+          columnLocation: 'Location',
+          columnSubprojects: '§E4§',
+          columnUpdated: 'Updated',
+          activeStatus: 'Active',
+          showMore: (count: number): string =>
+            count === 1
+              ? 'Show 1 more §E1§'
+              : `Show ${count.toLocaleString()} more §E2§`,
+          selectedConfirm: (name: string): string =>
+            `Every included row will be imported under ${name}.`,
+          noResultsTitle: 'No §E2§ found',
+          noResultsBody: 'Try another search or create a new §E1§.',
+          noEligibleTitle: 'No §E2§ are ready for this import',
+          noEligibleBody:
+            'Create a §E1§ now, then BuildCore will select it automatically.',
+          listAriaLabel: 'Eligible §E2§',
+          rowAriaLabel: (name: string): string => `Select ${name}`,
+        },
+        projectIdentity: {
+          heading: 'How should BuildCore identify each §E1§?',
+          subheading:
+            'Select the column that contains the §E1§ name. Add another column only when the combination is needed to distinguish §E2§.',
+          selectColumnsTitle: 'Select §E1§ columns',
+          selectColumnsHint:
+            'Choose one or more columns. Rows that share the same combined value become one §E1§.',
+          previewTitle: 'BuildCore preview',
+          previewEmptyTitle: 'Select a column to preview your §E2§',
+          previewEmptyBody:
+            'Choose the column containing the §E1§ name. BuildCore will show the groups it detects here.',
+          foundTitle: (count: number): string =>
+            count === 1
+              ? 'BuildCore found 1 §E1§'
+              : `BuildCore found ${count.toLocaleString()} §E2§`,
+          foundSupporting: 'Based on the column or columns you selected.',
+          sampleOfRows: (count: number): string => `Sample of ${count} rows`,
+          rowCountLabel: (count: number): string =>
+            count === 1 ? '1 row' : `${count.toLocaleString()} rows`,
+          moreProjects: (count: number): string =>
+            count === 1 ? '+ 1 more §E1§' : `+ ${count.toLocaleString()} more §E2§`,
+          exampleRowsTitle: 'Example rows',
+          composedNameColumn: '§E1§ name',
+          exampleNameLabel: 'Example §E1§ name:',
+          combineLabel: 'Combine selected columns using',
+          orderBadgeAria: (order: number): string => `Selection order ${order}`,
+          expandGroupAria: (name: string): string => `Show sample rows for ${name}`,
+          collapseGroupAria: (name: string): string => `Hide sample rows for ${name}`,
+          previewLiveRegionLabel: '§E1§ preview updates',
+          warningHighCardinalityTitle: (count: number): string =>
+            `BuildCore would create ${count.toLocaleString()} §E2§`,
+          warningHighCardinalityBody:
+            'This selection appears to make nearly every spreadsheet row its own §E1§. Try choosing a column with repeating §E1§ names.',
+          warningZipTitle: 'This looks like a ZIP / postal code column',
+          warningZipBody:
+            'ZIP codes rarely identify §E2§. Choose the column that contains the §E1§ name instead.',
+          warningEmailTitle: 'This looks like an email column',
+          warningEmailBody:
+            'Email addresses usually identify people, not §E2§. Choose a repeating §E1§ name column.',
+          warningPhoneTitle: 'This looks like a phone column',
+          warningPhoneBody:
+            'Phone numbers usually identify people, not §E2§. Choose a repeating §E1§ name column.',
+          warningFirstNameTitle: 'This looks like a first-name column',
+          warningFirstNameBody:
+            'First names rarely group rows into §E2§. Choose the column that contains the §E1§ name.',
+          warningUniqueIdTitle: 'This looks like a unique ID column',
+          warningUniqueIdBody:
+            'Unique IDs often create one §E1§ per row. Choose a column with repeating §E1§ names.',
+          warningOneProjectTitle: 'No obvious §E1§ column found',
+          warningOneProjectBody:
+            'This spreadsheet may contain §E8§ for one §E1§ rather than multiple §E2§.',
+          warningOneProjectAction: 'Go back and choose one §E1§',
+          infoIconAria: 'More information',
+        },
+        subprojectIdentity: {
+          heading: 'Which column(s) identify each §E3§?',
+          subheading: 'BuildCore will use the selected column(s) to name each §E3§.',
+          selectTitle: '1. Select identifying column(s)',
+          selectBody: 'Choose one or more columns that uniquely identify each §E3§.',
+          reorderTip:
+            'Tip: Use the up and down arrows to reorder selected columns. BuildCore will combine them in this list order.',
+          dragHandleTitle: 'Drag to reorder selected columns',
+          rowAriaLabel: (header: string): string => `Select column ${header}`,
+          rowAriaLabelOrdered: (header: string, order: number): string =>
+            `Selected column ${header}, combine order ${order}`,
+          moveEarlierAria: (header: string): string => `Move ${header} earlier in the name`,
+          moveLaterAria: (header: string): string => `Move ${header} later in the name`,
+          joinTitle: '2. How should these columns be joined?',
+          joinBody: 'Choose how the selected columns should be combined to create the §E3§ name.',
+          combineLabel: 'Combine selected columns using',
+          oneColumnHint: 'One column selected \u2014 no separator is needed.',
+          selectToCombineHint: 'Select two or more columns to choose a separator.',
+          previewLabel: 'Preview',
+          previewHint: 'This is how your §E3§ names will appear.',
+          previewEmpty: 'Select a column to preview the §E3§ name.',
+          previewLiveRegionLabel: '§E3§ name preview',
+          whyTitle: 'Why does this matter?',
+          whyBody: 'These column(s) should uniquely identify each §E3§.',
+          whyBodySecondary: 'Choose columns that won\u2019t have duplicate combinations.',
+          liveExamplesLabel: 'Live examples',
+          liveExamplesBody: 'See how BuildCore will combine your selected columns.',
+          liveExamplesEmpty: 'Select at least one column to see examples.',
+          moreExamples: (count: number): string =>
+            count === 1 ? '+1 more' : `+${count.toLocaleString()} more`,
+          guidanceUniqueTitle: 'Good choice \u2014 this combination uniquely identifies all included rows.',
+          guidanceUniqueBody: '',
+          guidanceDuplicatesTitle: (count: number): string =>
+            count === 1
+              ? '1 duplicate §E3§ name was found.'
+              : `${count.toLocaleString()} duplicate §E3§ names were found.`,
+          guidanceDuplicatesBody:
+            'Add another distinguishing column so each §E3§ gets a unique name.',
+          guidanceBlankTitle: 'Some rows will have blank §E3§ names.',
+          guidanceBlankBody: 'Choose columns that contain values for every included row.',
+          guidanceWeakSingleTitle: (header: string): string =>
+            `${header} alone may not uniquely identify each §E3§.`,
+          guidanceWeakSingleBody:
+            'Consider adding Last Name, Address, Unit, or another distinguishing column.',
+          sampleHierarchyLabel: 'Sample hierarchy',
+        },
+        composition: {
+          selectColumnsHint: 'Select columns in the order they should appear.',
+          separatorLabel: 'Join with',
+          examplesLabel: 'Live examples',
+          emptyHint: 'Select at least one column to see examples.',
+        },
+        contactPrompt: {
+          question: 'Combine "First name" and "Last name" into one contact name?',
+          accept: 'Combine them',
+          decline: 'Keep them separate',
+        },
+        fields: {
+          heading: 'Match the rest of your information',
+          subheading: 'Review where BuildCore will save each spreadsheet column.',
+          alreadyUsedLabel: 'Already used to identify your §E1§ and §E3§',
+          useHeader: 'Use',
+          columnHeader: 'Spreadsheet column',
+          sampleHeader: 'Sample data',
+          destinationHeader: 'Import to',
+          placementHeader: 'Where',
+          onProject: 'On the §E1§',
+          onSubproject: 'On each §E3§',
+          ignore: 'Ignore this column',
+          tip: 'Tip: Uncheck any column you don\u2019t want to import. Checked columns can be matched to any available destination.',
+          autoMatch: 'Auto-match fields',
+          autoMatchConfirmTitle: 'Replace your current field mappings?',
+          autoMatchConfirmBody:
+            'Auto-match will overwrite the destinations you already chose for remaining columns.',
+          autoMatchReplace: 'Replace mappings',
+          autoMatchCancel: 'Keep my mappings',
+          groupContact: 'Contact information',
+          groupSubproject: '§E3§ information',
+          groupProject: '§E1§ information',
+          groupCustom: 'Custom fields',
+          chooseDestination: 'Choose a destination',
+          alreadyUsedDestination: 'already used',
+          ignoredStatus: 'Ignored',
+          importAria: (header: string): string => `Import ${header}`,
+          destinationAria: (header: string): string => `Import ${header} as`,
+          willImport: (enabled: number, total: number): string =>
+            `${enabled.toLocaleString()} of ${total.toLocaleString()} columns will be imported`,
+          noneWillImport: 'No additional columns will be imported.',
+          needsAttention: (count: number): string =>
+            count === 1
+              ? '1 field needs attention before you can continue.'
+              : `${count.toLocaleString()} fields need attention before you can continue.`,
+          summaryHint: 'Uncheck any columns you don\u2019t want to import.',
+          allConfiguredTitle: 'All spreadsheet columns are already configured.',
+          allConfiguredBody: 'You can continue to review the import.',
+          contactRecommendation: 'BuildCore recommendation',
+          contactQuestion: (first: string, last: string): string =>
+            `Combine \u201c${first}\u201d and \u201c${last}\u201d into one Contact Name?`,
+          contactSampleLabel: 'Sample:',
+        },
+        hierarchyPreview: {
+          heading: 'Here\u2019s the structure we\u2019ll create',
+          subheading: 'Confirm this looks right before resolving each group.',
+          groupRowsLabel: (rows: number): string => `${rows.toLocaleString()} rows`,
+        },
+        parentResolve: {
+          heading: (name: string): string => `How should we handle "${name}"?`,
+          groupOfLabel: (index: number, total: number): string => `§E1§ ${index} of ${total}`,
+          createNew: 'Create a new §E1§',
+          attachExisting: 'Add to an existing §E1§',
+          ignoreGroup: 'Skip these rows',
+          attachLabel: 'Existing §E1§',
+          excludeRowsLabel: 'Exclude specific rows from this group',
+          createAllUnmatched: 'Create all unmatched §E5§',
+          ignoreAllUnresolved: 'Ignore all unresolved §E5§',
+        },
+        conflict: {
+          heading: (field: string): string => `Multiple values found for ${field}`,
+          subheading: 'Choose the value to use for this §E1§, or enter another.',
+          fieldOfLabel: (index: number, total: number): string => `Conflict ${index} of ${total}`,
+          rowsLabel: (rows: string): string => `Rows ${rows}`,
+          enterAnother: 'Enter a different value',
+          unresolved: 'Choose or enter a value to continue.',
+        },
+        review: {
+          readyHeading: 'Ready to import',
+          readyBody: 'BuildCore is ready to import your spreadsheet.',
+          warningHeading: 'Review these warnings before importing',
+          warningBody: 'You can still import, but review the warnings below first.',
+          blockingHeading: 'Fix these issues before importing',
+          blockingBody: 'Resolve the issues below to start the import.',
+          metricRowsReady: 'Rows ready',
+          metricFieldsMapped: 'Fields mapped',
+          metricIssuesFound: 'Issues found',
+          metricsAriaLabel: 'Import readiness metrics',
+          issuesLiveRegionLabel: 'Import issue count',
+          fileTitle: 'File',
+          destinationTitle: 'Destination',
+          subprojectNamesTitle: '§E3§ Names',
+          fileMetaLine: (sheet: string, headerRow: number, rows: number): string =>
+            `Sheet: ${sheet} · Header row: ${headerRow} · Rows: ${rows.toLocaleString()}`,
+          exampleLabel: 'Example',
+          oneProjectLabel: 'One §E1§',
+          multipleProjectsLabel: 'Multiple §E2§',
+          columnsMapped: (count: number): string =>
+            count === 1 ? '1 column mapped' : `${count.toLocaleString()} columns mapped`,
+          columnsIgnored: (count: number): string =>
+            count === 1 ? '1 column ignored' : `${count.toLocaleString()} columns ignored`,
+          keyFieldsLabel: 'Key fields',
+          moreFields: (count: number): string => `+${count.toLocaleString()} more`,
+          issuesPanelHeading: 'Import validation issues',
+          reviewAction: 'Review',
+          reviewFileAria: 'Review file',
+          reviewDestinationAria: 'Review destination',
+          reviewSubprojectNamesAria: 'Review §E3§ names',
+          reviewMappedFieldsAria: 'Review mapped fields',
+          missingNameRows: (count: number): string =>
+            count === 1
+              ? '1 row is missing a §E3§ name.'
+              : `${count.toLocaleString()} rows are missing a §E3§ name.`,
+          whatNextTitle: 'What will happen next',
+          whatNextBody: (count: number, projectName: string): string =>
+            `BuildCore will create ${count.toLocaleString()} §E4§ under ${projectName} using the information from your spreadsheet.`,
+          whatNextBodyMultiple: (count: number): string =>
+            `BuildCore will create ${count.toLocaleString()} §E4§ across your selected §E2§ using the information from your spreadsheet.`,
+          fileRetention:
+            'Your spreadsheet file will not be stored after the import is complete.',
+          startImport: (count: number): string =>
+            `Start importing ${count.toLocaleString()} §E4§`,
+          groupsSummary: (created: number, attached: number, ignored: number): string =>
+            `${created.toLocaleString()} new · ${attached.toLocaleString()} attached · ${ignored.toLocaleString()} skipped`,
+        },
+        importExecution: {
+          headingRunning: 'Importing your spreadsheet',
+          headingPaused: 'Import paused',
+          headingFailed: 'Import needs attention',
+          headingCancelled: 'Import cancelled',
+          headingCompleted: 'Import complete',
+          bodyRunning:
+            'BuildCore is creating your §E8§. You can close this window and return later — the import will continue.',
+          bodyPaused:
+            'Some rows finished, but the import needs attention before it can continue.',
+          bodyFailed: 'The import stopped before all rows were processed.',
+          bodyCancelled: 'The import was cancelled. Already-created records remain.',
+          bodyCompleted: 'Your spreadsheet import finished successfully.',
+          metricsAriaLabel: 'Live import metrics',
+          metricSubprojects: '§E8§ created',
+          metricProjects: 'New §E2§ created',
+          metricFailed: 'Failed rows',
+          overallProgress: 'Overall progress',
+          mayTakeMinutes: 'This may take a few minutes.',
+          timelineHeading: 'What\u2019s happening now',
+          stageReading: 'Reading file',
+          stageValidating: 'Validating data',
+          stageCreating: 'Creating §E8§',
+          stageFinalizing: 'Finalizing',
+          stagePreparing: 'Preparing results',
+          safeLeaveTitle: 'You can safely leave this window',
+          safeLeaveBody:
+            'You can close this window and return later. The import will continue, and you can view its status when you reopen the importer.',
+          cancelConfirmTitle: 'Cancel this import?',
+          cancelConfirmBody:
+            'Already-created §E2§ and §E8§ will remain. Rows that have not yet been processed will be skipped.',
+          progressLiveRegionLabel: 'Import progress',
+          toastCompleted: 'Import complete',
+          toastCompletedPartial: 'Import finished with some issues',
+          completeBadgeLabel: 'Complete',
+        },
       },
     },
     projectCustomFields: {
@@ -961,6 +1556,8 @@ const buildCoreDashboardContentSource = {
       searchAriaLabel: 'Search §E8§',
       newSubprojectTitle: 'New §E7§',
       newSubprojectAriaLabel: 'New §E7§',
+      importSpreadsheet: 'Import spreadsheet',
+      importSpreadsheetAriaLabel: 'Import spreadsheet',
       projectColumn: '§E3§',
       empty: 'No §E8§ yet.',
       emptyMemberNoAssignments: "You don't have any §E8§ assigned to you yet.",

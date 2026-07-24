@@ -1,6 +1,6 @@
 'use client';
 
-import type { ReactElement, ReactNode } from 'react';
+import { useEffect, type ReactElement, type ReactNode } from 'react';
 import styles from './RightSideDrawer.module.css';
 
 export type RightSideDrawerProps = {
@@ -11,6 +11,8 @@ export type RightSideDrawerProps = {
   readonly closeAriaLabel: string;
   readonly closeDisabled?: boolean;
   readonly children: ReactNode;
+  /** Extra class on the fixed overlay (e.g. nested-above-importer z-index). */
+  readonly overlayClassName?: string;
 };
 
 /**
@@ -25,11 +27,32 @@ export function RightSideDrawer({
   closeAriaLabel,
   closeDisabled = false,
   children,
+  overlayClassName,
 }: RightSideDrawerProps): ReactElement | null {
+  useEffect(() => {
+    if (!open) return;
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape') return;
+      if (closeDisabled) return;
+      // Close this drawer before any underlying modal (e.g. spreadsheet importer).
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      onClose();
+    };
+
+    document.addEventListener('keydown', onKeyDown, true);
+    return () => document.removeEventListener('keydown', onKeyDown, true);
+  }, [closeDisabled, onClose, open]);
+
   if (!open) return null;
 
   return (
-    <div className={styles.overlay} onClick={onClose} role="presentation">
+    <div
+      className={[styles.overlay, overlayClassName].filter(Boolean).join(' ')}
+      onClick={closeDisabled ? undefined : onClose}
+      role="presentation"
+    >
       <div
         className={styles.drawer}
         role="dialog"

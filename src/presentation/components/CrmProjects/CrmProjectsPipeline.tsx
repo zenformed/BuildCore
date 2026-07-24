@@ -36,6 +36,8 @@ import { DetailPanelSectionRefresh } from '@/presentation/components/CrmProjectD
 import { SubprojectsTableBulkActions } from '@/presentation/components/CrmProjectDetail/SubprojectsTableBulkActions';
 import { CrmProjectDeleteWorkflowDialog } from '@/presentation/components/CrmProjects/CrmProjectDeleteWorkflowDialog';
 import { CreateCrmProjectModal } from '@/presentation/components/CrmProjects/CreateCrmProjectModal';
+import { SpreadsheetImportWizard } from '@/presentation/components/CrmImport/SpreadsheetImportWizard';
+import importStyles from '@/presentation/components/CrmImport/SpreadsheetImportWizard.module.css';
 import { DetailToast } from '@/presentation/components/CrmProjectDetail/DetailToast';
 import { ConfirmModal } from '@/presentation/components/ConfirmModal';
 import { ProjectCompletionBlockedDialog } from '@/presentation/components/CrmProjectDetail/ProjectCompletionBlockedDialog';
@@ -98,6 +100,7 @@ export function CrmProjectsPipeline({
   );
   const [listView, setListView] = useState<DashboardListViewMode>(DEFAULT_DASHBOARD_LIST_VIEW_MODE);
   const [createOpen, setCreateOpen] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
   const [pendingBulkComplete, setPendingBulkComplete] = useState(false);
   const [bulkActionBusy, setBulkActionBusy] = useState(false);
   const {
@@ -548,6 +551,19 @@ export function CrmProjectsPipeline({
       onClick={() => setCreateOpen(true)}
     />
   ) : null;
+  const importButton =
+    !isMemberRole && isProjectsView ? (
+      <button
+        type="button"
+        className={importStyles.toolbarSecondaryButton}
+        title={panelCopy.importSpreadsheet}
+        aria-label={panelCopy.importSpreadsheetAriaLabel}
+        disabled={importOpen}
+        onClick={() => setImportOpen(true)}
+      >
+        {panelCopy.importSpreadsheet}
+      </button>
+    ) : null;
 
   const sharedTableChrome = {
     bulkSelection: bulkSelectionBindings,
@@ -597,7 +613,7 @@ export function CrmProjectsPipeline({
             </div>
             <div className={styles.projectsPanelHeaderRow}>
               <div className={styles.projectsPanelSearchWrap}>{searchInput}</div>
-              <div className={styles.projectsPanelHeaderRowActions}>{addButton}</div>
+              <div className={styles.projectsPanelHeaderRowActions}>{importButton}{addButton}</div>
             </div>
           </>
         ) : (
@@ -611,6 +627,7 @@ export function CrmProjectsPipeline({
             <div className={styles.projectsPanelHeaderTools}>
               {listViewMenu}
               {searchInput}
+              {importButton}
               {addButton}
             </div>
           </>
@@ -736,6 +753,15 @@ export function CrmProjectsPipeline({
         onClose={() => setCreateOpen(false)}
         onCreated={handleProjectCreated}
         onTemplateToast={(nextToast) => setToast(nextToast)}
+      />
+      <SpreadsheetImportWizard
+        open={importOpen && !isMemberRole}
+        onClose={() => setImportOpen(false)}
+        mode="master_hierarchy"
+        onCompleted={() => {
+          void refetch();
+          void onProjectCreated?.();
+        }}
       />
       <CrmProjectDeleteWorkflowDialog
         pendingProject={pendingDeleteProject}

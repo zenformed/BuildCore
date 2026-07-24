@@ -131,6 +131,52 @@ export function CreateCrmProjectDrawer({ open, onClose }: CreateCrmProjectDrawer
     ]
   );
 
+  const handleCreateAndImport = useCallback(
+    async () => {
+      setError(null);
+      setShowValidationErrors(true);
+
+      if (!canMutateProjects) {
+        setError(create.mockDisabledMessage);
+        return;
+      }
+
+      const formForSave = allowAssignee ? form : { ...form, assignedMemberId: '' };
+      const validated = validateCreateCrmProjectForm(formForSave);
+      if (!validated.ok) {
+        setError(validated.message);
+        return;
+      }
+
+      setSaving(true);
+      try {
+        const created = await createCrmProject(crmRepositories, validated.input);
+        onClose();
+        router.push(`${nav.routes.projectDetail(created.slug)}?importSpreadsheet=1`);
+      } catch (err) {
+        if (err instanceof CrmCreateNotAvailableError) {
+          setError(create.mockDisabledMessage);
+        } else if (err instanceof Error) {
+          setError(err.message);
+        } else {
+          setError(create.submitFailed);
+        }
+      } finally {
+        setSaving(false);
+      }
+    },
+    [
+      allowAssignee,
+      form,
+      canMutateProjects,
+      onClose,
+      router,
+      nav.routes,
+      create.mockDisabledMessage,
+      create.submitFailed,
+    ]
+  );
+
   if (!open) return null;
 
   const assigneeOptions = getCrmProjectAssigneeOptions(
@@ -182,6 +228,14 @@ export function CreateCrmProjectDrawer({ open, onClose }: CreateCrmProjectDrawer
             <div className={styles.actions}>
               <button type="button" className={styles.cancelButton} onClick={onClose} disabled={saving}>
                 {create.cancel}
+              </button>
+              <button
+                type="button"
+                className={styles.secondaryButton}
+                disabled={saving || !canMutateProjects}
+                onClick={() => void handleCreateAndImport()}
+              >
+                {saving ? create.createAndImportSpreadsheetSubmitting : create.createAndImportSpreadsheet}
               </button>
               <button type="submit" className={styles.submitButton} disabled={saving || !canMutateProjects}>
                 {saving ? create.submitting : create.submit}

@@ -70,14 +70,14 @@ export async function createCrmClientAndContactForOrg(
   return { clientId, contactId: contactRow.id };
 }
 
-async function assertParentProjectExists(
+export async function assertParentProjectExistsForOrg(
   supabase: SupabaseClient,
   organizationId: string,
   parentProjectId: string
 ): Promise<void> {
   const { data: parentRow, error: parentError } = await supabase
     .from('crm_projects')
-    .select('id')
+    .select('id, parent_project_id, archived_at, subproject_status')
     .eq('organization_id', organizationId)
     .eq('id', parentProjectId)
     .is('archived_at', null)
@@ -89,18 +89,125 @@ async function assertParentProjectExists(
   if (!parentRow) {
     throw new Error('Parent project not found.');
   }
+  if (parentRow.parent_project_id != null) {
+    throw new Error('Target must be a root project.');
+  }
+  if (parentRow.subproject_status === 'inactive') {
+    throw new Error('Parent project is inactive.');
+  }
 }
 
 type InsertCrmProjectParams = {
   readonly slug: string;
   readonly clientId: string;
-  readonly primaryContactId: string;
+  /** Null for contactless import creates. */
+  readonly primaryContactId: string | null;
 };
+
+export type CrmImportProjectWriteInput = Omit<
+  CreateCrmProjectInput,
+  'contactName' | 'initialTemplateBlueprints'
+> & {
+  readonly contactName: string | null;
+};
+
+/**
+ * Creates a project/subproject for spreadsheet import:
+ * - client always created (company_name = project name)
+ * - contact created only when contactName/emails/phones present
+ * - primary_contact_id nullable when contactless
+ * - no accountability event, no templates
+ */
+export async function createCrmProjectForImportBulk(
+  supabase: SupabaseClient,
+  organizationId: string,
+  input: CrmImportProjectWriteInput
+): Promise<{ readonly id: string; readonly slug: string }> {
+  const hasContact =
+    (input.contactName != null && input.contactName.trim() !== '') ||
+    input.emails.length > 0 ||
+    input.phones.length > 0;
+
+  let clientId: string;
+  let primaryContactId: string | null = null;
+
+  if (hasContact) {
+    const contactName =
+      input.contactName != null && input.contactName.trim() !== ''
+        ? input.contactName.trim()
+        : input.name;
+    const party = await createCrmClientAndContactForOrg(supabase, organizationId, {
+      companyName: input.name,
+      contactName,
+      emails: input.emails,
+      phones: input.phones,
+    });
+    clientId = party.clientId;
+    primaryContactId = party.contactId;
+  } else {
+    const client = await createCrmClientForOrg(supabase, organizationId, input.name);
+    clientId = client.clientId;
+    primaryContactId = null;
+  }
+
+  if (input.parentProjectId) {
+    await assertParentProjectExistsForOrg(supabase, organizationId, input.parentProjectId);
+  }
+
+  const baseSlug = slugifyProjectName(input.name);
+  const slug = await ensureUniqueProjectSlug(supabase, organizationId, baseSlug);
+  const projectRow = await insertCrmProjectForOrg(supabase, organizationId, input, {
+    slug,
+    clientId,
+    primaryContactId,
+  });
+
+  if (input.customFieldValues != null && Object.keys(input.customFieldValues).length > 0) {
+    await upsertProjectCustomFieldValuesForProject(
+      supabase,
+      organizationId,
+      {
+        id: projectRow.id,
+        parentProjectId: input.parentProjectId ?? null,
+      },
+      input.customFieldValues
+    );
+  }
+
+  return projectRow;
+}
+
+async function assertParentProjectExists(
+  supabase: SupabaseClient,
+  organizationId: string,
+  parentProjectId: string
+): Promise<void> {
+  await assertParentProjectExistsForOrg(supabase, organizationId, parentProjectId);
+}
 
 async function insertCrmProjectForOrg(
   supabase: SupabaseClient,
   organizationId: string,
-  input: CreateCrmProjectInput,
+  input: Pick<
+    CreateCrmProjectInput,
+    | 'name'
+    | 'industry'
+    | 'customIndustry'
+    | 'priority'
+    | 'currentStageSlug'
+    | 'notes'
+    | 'dealValueCents'
+    | 'balanceRemainingCents'
+    | 'assignedMemberId'
+    | 'addressLine1'
+    | 'addressLine2'
+    | 'city'
+    | 'state'
+    | 'postalCode'
+    | 'latitude'
+    | 'longitude'
+    | 'parentProjectId'
+  >,
   params: InsertCrmProjectParams
 ): Promise<{ readonly id: string; readonly slug: string }> {
   const now = new Date().toISOString();

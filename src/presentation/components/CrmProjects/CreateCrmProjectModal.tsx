@@ -3,9 +3,8 @@
 
 
 import type { FormEvent, ReactElement } from 'react';
-
 import { useCallback, useEffect, useMemo, useState } from 'react';
-
+import { createPortal } from 'react-dom';
 import { useRouter } from 'next/navigation';
 
 import type { CrmProjectDetail, CreateCrmProjectResult } from '@/domain/crm';
@@ -29,24 +28,25 @@ import { buildCoreDashboardContent as content } from '@/platform/content/buildCo
 import { useBuildCoreNavigation } from '@/presentation/providers/BuildCoreNavigationProvider';
 
 import {
-
   defaultCreateCrmProjectFormState,
   createSubprojectFormDefaultsFromParent,
   applyManualStreetAddressEdit,
   applyVerifiedGoogleAddress,
   validateCreateCrmProjectForm,
-
   type CrmProjectStreetAddressFormField,
   type CreateCrmProjectFormState,
-
 } from '@/presentation/features/crmCreate/createCrmProjectFormModel';
+import {
+  buildCreatedProjectDetailHref,
+  resolveCreateProjectImportCompletion,
+  resolveCreateProjectPrimaryCompletion,
+  shouldShowCreateAndImportAction,
+  type CreateProjectCompletionBehavior,
+} from '@/presentation/features/crmCreate/createProjectCompletion';
 
 import {
-
   projectDetailToFormState,
-
   validateProjectDetailForm,
-
 } from '@/presentation/features/crmProjectDetail/projectDetailFormModel';
 
 import { getCrmProjectAssigneeOptions } from '@/presentation/features/crmProjects/crmProjectAssigneeOptions';
@@ -63,6 +63,7 @@ import { useSaaSProfile } from '@/presentation/hooks/useSaaSProfile';
 
 import { CenterConfirmDialog } from '@/presentation/components/CenterConfirmDialog';
 import { RightSideDrawer } from '@/presentation/components/RightSideDrawer';
+import drawerShellStyles from '@/presentation/components/RightSideDrawer/RightSideDrawer.module.css';
 import { useDashboardMobileLayout } from '@/presentation/features/crmProjects/useDashboardMobileLayout';
 
 import { crmRepositories } from '@/shared/di/container';
@@ -81,65 +82,49 @@ import formStyles from './CreateCrmProjectDrawer.module.css';
 
 import styles from './CreateCrmProjectModal.module.css';
 
-
+export type { CreateProjectCompletionBehavior };
 
 export type CreateCrmProjectModalProps = {
-
   readonly open: boolean;
-
   readonly onClose: () => void;
-
   readonly mode?: 'create' | 'edit';
-
   readonly project?: CrmProjectDetail;
-
   readonly onCreated?: (created: CreateCrmProjectResult) => void | Promise<void>;
-
   readonly onUpdated?: (project: CrmProjectDetail) => void | Promise<void>;
-
   readonly onTemplateToast?: (toast: { kind: 'success' | 'error'; message: string }) => void;
-
   readonly parentProjectId?: string | null;
-
   readonly parentProjectSlug?: string | null;
-
   readonly createTitle?: string;
-
+  /**
+   * @deprecated Prefer `completionBehavior`. When `completionBehavior` is `default`,
+   * `false` skips post-create navigation for the primary Create action.
+   */
   readonly redirectOnCreate?: boolean;
-
+  /**
+   * Explicit post-create completion mode. Use `select_for_import` when nested inside
+   * the spreadsheet importer so creation never navigates or reopens import.
+   */
+  readonly completionBehavior?: CreateProjectCompletionBehavior;
   /** When creating a subproject, copy customer/contact/address fields as initial form values. */
   readonly parentProjectForDefaults?: CrmProjectDetail | null;
-
 };
 
 
 
 export function CreateCrmProjectModal({
-
   open,
-
   onClose,
-
   mode = 'create',
-
   project,
-
   onCreated,
-
   onUpdated,
-
   onTemplateToast,
-
   parentProjectId = null,
-
   parentProjectSlug = null,
-
   createTitle,
-
   redirectOnCreate = true,
-
+  completionBehavior = 'default',
   parentProjectForDefaults = null,
-
 }: CreateCrmProjectModalProps): ReactElement {
 
   const router = useRouter();
@@ -454,18 +439,21 @@ export function CreateCrmProjectModal({
         await onCreated?.(created);
         onClose();
 
-        if (redirectOnCreate) {
+        const postCreate = resolveCreateProjectPrimaryCompletion({
+          completionBehavior,
+          redirectOnCreate,
+          hasParentProject: Boolean(parentProjectId && parentProjectSlug),
+        });
 
-          if (parentProjectSlug && parentProjectId) {
-
-            router.push(nav.routes.projectSubDetail(parentProjectSlug, created.slug));
-
-          } else {
-
-            router.push(nav.routes.projectDetail(created.slug));
-
-          }
-
+        if (postCreate.type === 'navigate_subdetail' && parentProjectSlug) {
+          router.push(nav.routes.projectSubDetail(parentProjectSlug, created.slug));
+        } else if (postCreate.type === 'navigate_detail') {
+          router.push(
+            buildCreatedProjectDetailHref({
+              projectDetailPath: nav.routes.projectDetail(created.slug),
+              withImportQuery: postCreate.withImportQuery,
+            })
+          );
         }
 
       } catch (err) {
@@ -524,6 +512,8 @@ export function CreateCrmProjectModal({
 
       redirectOnCreate,
 
+      completionBehavior,
+
       router,
 
       templateDraft,
@@ -536,7 +526,98 @@ export function CreateCrmProjectModal({
 
   );
 
+  const handleCreateAndImport = useCallback(
+    async () => {
+      setError(null);
+      setShowValidationErrors(true);
 
+      if (!canMutateProjects) {
+        setError(create.mockDisabledMessage);
+        return;
+      }
+
+      if (isEditMode || parentProjectId != null) return;
+      if (completionBehavior === 'select_for_import') return;
+
+      const formForSave = allowAssignee ? form : { ...form, assignedMemberId: '' };
+      const validated = validateCreateCrmProjectForm(formForSave);
+      if (!validated.ok) {
+        setError(validated.message);
+        return;
+      }
+
+      setSaving(true);
+      try {
+        const created = await createCrmProject(crmRepositories, {
+          ...validated.input,
+          initialTemplateBlueprints: hasCreateProjectTemplateDraftContent(templateDraft)
+            ? templateDraft
+            : null,
+          customFieldValues,
+        });
+        await onCreated?.(created);
+        onClose();
+
+        const postCreate = resolveCreateProjectImportCompletion({ completionBehavior });
+        if (postCreate.type === 'navigate_detail') {
+          router.push(
+            buildCreatedProjectDetailHref({
+              projectDetailPath: nav.routes.projectDetail(created.slug),
+              withImportQuery: postCreate.withImportQuery,
+            })
+          );
+        }
+      } catch (err) {
+        if (err instanceof CrmCreateNotAvailableError) {
+          setError(create.mockDisabledMessage);
+        } else if (err instanceof Error) {
+          setError(err.message);
+        } else {
+          setError(create.submitFailed);
+        }
+      } finally {
+        setSaving(false);
+      }
+    },
+    [
+      allowAssignee,
+      completionBehavior,
+      create.mockDisabledMessage,
+      create.submitFailed,
+      customFieldValues,
+      form,
+      canMutateProjects,
+      isEditMode,
+      nav.routes,
+      onClose,
+      onCreated,
+      parentProjectId,
+      router,
+      templateDraft,
+    ]
+  );
+
+  const showCreateAndImport = shouldShowCreateAndImportAction({
+    completionBehavior,
+    isEditMode,
+    hasParentProject: parentProjectId != null,
+  });
+
+  const nestAboveImporter = completionBehavior === 'select_for_import';
+
+  useEffect(() => {
+    if (!open || !nestAboveImporter || useDesktopDrawer) return;
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape' || saving) return;
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      onClose();
+    };
+
+    document.addEventListener('keydown', onKeyDown, true);
+    return () => document.removeEventListener('keydown', onKeyDown, true);
+  }, [nestAboveImporter, onClose, open, saving, useDesktopDrawer]);
 
   const formElement = (
     <form className={styles.form} onSubmit={(event) => void handleSubmit(event)}>
@@ -590,6 +671,17 @@ export function CreateCrmProjectModal({
           {copy.cancel}
         </button>
 
+        {!isEditMode && parentProjectId == null && showCreateAndImport ? (
+          <button
+            type="button"
+            className={formStyles.secondaryButton}
+            disabled={saving || !canMutateProjects}
+            onClick={() => void handleCreateAndImport()}
+          >
+            {saving ? create.createAndImportSpreadsheetSubmitting : create.createAndImportSpreadsheet}
+          </button>
+        ) : null}
+
         <button type="submit" className={formStyles.submitButton} disabled={saving || !canMutateProjects}>
           {saving ? copy.submitting : copy.submit}
         </button>
@@ -597,35 +689,45 @@ export function CreateCrmProjectModal({
     </form>
   );
 
+  const shell = useDesktopDrawer ? (
+    <RightSideDrawer
+      open={open}
+      title={modalTitle}
+      titleId={titleId}
+      onClose={onClose}
+      closeAriaLabel={copy.closeAriaLabel}
+      closeDisabled={saving}
+      overlayClassName={nestAboveImporter ? drawerShellStyles.overlayNestedAboveModal : undefined}
+    >
+      <div className={styles.drawerFormWrap}>{formElement}</div>
+    </RightSideDrawer>
+  ) : (
+    <CenterConfirmDialog
+      isOpen={open}
+      title={modalTitle}
+      body={formElement}
+      hideActions
+      cancelLabel={copy.cancel}
+      onClose={onClose}
+      cancelDisabled={saving}
+      closeAriaLabel={copy.closeAriaLabel}
+      overlayClassName={[
+        styles.createProjectOverlay,
+        nestAboveImporter ? drawerShellStyles.overlayNestedAboveModal : '',
+      ]
+        .filter(Boolean)
+        .join(' ')}
+      panelClassName={styles.createProjectPanel}
+      titleClassName={styles.createProjectTitle}
+      bodyClassName={styles.modalBody}
+    />
+  );
+
   return (
     <>
-      {useDesktopDrawer ? (
-        <RightSideDrawer
-          open={open}
-          title={modalTitle}
-          titleId={titleId}
-          onClose={onClose}
-          closeAriaLabel={copy.closeAriaLabel}
-          closeDisabled={saving}
-        >
-          <div className={styles.drawerFormWrap}>{formElement}</div>
-        </RightSideDrawer>
-      ) : (
-        <CenterConfirmDialog
-          isOpen={open}
-          title={modalTitle}
-          body={formElement}
-          hideActions
-          cancelLabel={copy.cancel}
-          onClose={onClose}
-          cancelDisabled={saving}
-          closeAriaLabel={copy.closeAriaLabel}
-          overlayClassName={styles.createProjectOverlay}
-          panelClassName={styles.createProjectPanel}
-          titleClassName={styles.createProjectTitle}
-          bodyClassName={styles.modalBody}
-        />
-      )}
+      {open && nestAboveImporter && typeof document !== 'undefined'
+        ? createPortal(shell, document.body)
+        : shell}
 
       {!isEditMode && canManageTemplates && isApiSource ? (
         <LoadProjectTemplateDialogs

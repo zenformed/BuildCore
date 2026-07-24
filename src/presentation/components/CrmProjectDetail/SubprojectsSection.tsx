@@ -1,10 +1,11 @@
 'use client';
 
-import { useCallback, useEffect, useId, useMemo, useState, type ReactElement } from 'react';
+import { useCallback, useEffect, useId, useMemo, useRef, useState, type ReactElement } from 'react';
 import { resolvePipelineStageScopeForProject } from '@/domain/buildcore/orgPipelineStages';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import { isBuildCoreMemberRole } from '@/domain/buildcore/memberRole';
 import {
+  formatCrmProjectAddressLine,
   isCrmProjectComplete,
   isCrmProjectInactive,
   isProjectPriorityUrgent,
@@ -20,6 +21,7 @@ import { crmRepositories } from '@/shared/di/container';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
 import { CrmProjectDeleteWorkflowDialog } from '@/presentation/components/CrmProjects/CrmProjectDeleteWorkflowDialog';
 import { CreateCrmProjectModal } from '@/presentation/components/CrmProjects/CreateCrmProjectModal';
+import { SpreadsheetImportWizard } from '@/presentation/components/CrmImport/SpreadsheetImportWizard';
 import { CrmProjectsTable } from '@/presentation/components/CrmProjects/CrmProjectsTable';
 import { useDashboardMobileLayout } from '@/presentation/features/crmProjects/useDashboardMobileLayout';
 import { SubprojectsMobileList } from './SubprojectsMobileList';
@@ -72,6 +74,9 @@ export function SubprojectsSection(): ReactElement | null {
 
 function SubprojectsSectionContent(): ReactElement {
   const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const importAutoOpenedRef = useRef(false);
   const sectionId = useId();
   const panelId = useId();
   const copy = content.projectDetail.subprojects;
@@ -95,6 +100,25 @@ function SubprojectsSectionContent(): ReactElement {
   );
   const { organizationMembershipContext } = useSaaSProfile();
   const canManage = !isMemberRole && !isBuildCoreMemberRole(organizationMembershipContext?.role);
+  const [importOpen, setImportOpen] = useState(false);
+
+  useEffect(() => {
+    if (importAutoOpenedRef.current) return;
+    if (searchParams.get('importSpreadsheet') !== '1') return;
+    if (!canManage) return;
+    importAutoOpenedRef.current = true;
+    setImportOpen(true);
+    const params = new URLSearchParams(searchParams.toString());
+    params.delete('importSpreadsheet');
+    const query = params.toString();
+    router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
+  }, [canManage, pathname, router, searchParams]);
+
+  const openImportWizard = useCallback(() => {
+    guardProjectEdit(() => {
+      setImportOpen(true);
+    });
+  }, [guardProjectEdit]);
   const [expanded, setExpanded] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [listFilters, setListFilters] = useState(EMPTY_CRM_PROJECTS_LIST_FILTERS);
@@ -594,6 +618,9 @@ function SubprojectsSectionContent(): ReactElement {
                       setCreateOpen(true);
                     });
                   }}
+                  importSpreadsheetTitle={copy.importSpreadsheet}
+                  importSpreadsheetAriaLabel={copy.importSpreadsheetAriaLabel}
+                  onImportOpen={openImportWizard}
                   showMobileBulkToolbar={
                     bulkSelection.selectedCount > 0 && canUseBulkActions
                   }
@@ -652,6 +679,9 @@ function SubprojectsSectionContent(): ReactElement {
                     setCreateOpen(true);
                   });
                 }}
+                importSpreadsheetTitle={copy.importSpreadsheet}
+                importSpreadsheetAriaLabel={copy.importSpreadsheetAriaLabel}
+                onImportOpen={openImportWizard}
               />
             </div>
           </>
@@ -734,19 +764,39 @@ function SubprojectsSectionContent(): ReactElement {
       ) : null}
 
       {canManage ? (
-        <CreateCrmProjectModal
-          open={createOpen}
-          onClose={() => setCreateOpen(false)}
-          createTitle={copy.newSubprojectTitle}
-          parentProjectId={project.summary.id}
-          parentProjectSlug={parentRouteSlug}
-          parentProjectForDefaults={project}
-          redirectOnCreate={false}
-          onCreated={(created) => {
-            appendChildProjectSummary(created.summary);
-            void refetch();
-          }}
-        />
+        <>
+          <CreateCrmProjectModal
+            open={createOpen}
+            onClose={() => setCreateOpen(false)}
+            createTitle={copy.newSubprojectTitle}
+            parentProjectId={project.summary.id}
+            parentProjectSlug={parentRouteSlug}
+            parentProjectForDefaults={project}
+            redirectOnCreate={false}
+            onCreated={(created) => {
+              appendChildProjectSummary(created.summary);
+              void refetch();
+            }}
+          />
+          <SpreadsheetImportWizard
+            open={importOpen}
+            onClose={() => setImportOpen(false)}
+            mode="into_existing_parent"
+            fixedParentProjectId={project.summary.id}
+            fixedParentDisplayName={project.summary.name}
+            fixedParentContextLine={
+              [
+                project.summary.client.name,
+                formatCrmProjectAddressLine(project.summary.address),
+              ]
+                .filter((part): part is string => Boolean(part && part.trim()))
+                .join(' · ') || null
+            }
+            onCompleted={() => {
+              void refetch();
+            }}
+          />
+        </>
       ) : null}
 
       {!isMemberRole ? (

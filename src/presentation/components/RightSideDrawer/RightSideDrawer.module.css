@@ -7,6 +7,16 @@
   background: rgba(15, 23, 42, 0.22);
 }
 
+/* Nested above SpreadsheetImportModal (same base z-index family). */
+.overlayNestedAboveModal {
+  z-index: 10055;
+  background: rgba(15, 23, 42, 0.18);
+}
+
+:global([data-theme='dark']) .overlayNestedAboveModal {
+  background: rgba(0, 0, 0, 0.22);
+}
+
 :global([data-theme='dark']) .overlay {
   background: rgba(0, 0, 0, 0.28);
 }
