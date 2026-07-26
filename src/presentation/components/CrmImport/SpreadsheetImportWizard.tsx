@@ -1038,6 +1038,7 @@ export function SpreadsheetImportWizard({
           setImportStatus('cancelled');
           setError(copy.errors.importCancelled);
         } else {
+          setImportStatus('failed');
           setError(
             err instanceof Error
               ? err.message

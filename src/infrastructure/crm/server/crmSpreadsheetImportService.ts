@@ -1030,9 +1030,13 @@ export async function processImportNextChunk(
     }
     done = true;
   } else if (processed === 0) {
-    // nothing left runnable
-    nextJobStatus = 'partially_completed';
-    done = (pendingRows ?? 0) === 0;
+    // Nothing runnable in this chunk. Finish the job so the client cannot spin forever
+    // (e.g. all groups failed / unresolved while pending rows remain).
+    nextJobStatus =
+      counts.createdSubprojects > 0 || counts.createdParents > 0
+        ? 'partially_completed'
+        : 'failed';
+    done = true;
   } else {
     nextJobStatus = 'running';
   }

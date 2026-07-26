@@ -54,6 +54,7 @@ export function SelectSheetsScreen({
           width={480}
           height={400}
           priority
+          unoptimized
         />
       </div>
 

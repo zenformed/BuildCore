@@ -90,6 +90,7 @@ export function UploadScreen({
           width={480}
           height={400}
           priority
+          unoptimized
         />
       </div>
 
