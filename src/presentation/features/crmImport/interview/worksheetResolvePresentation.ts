@@ -455,6 +455,7 @@ export function buildWorksheetGroupResolutions(
       readonly type: 'create_new' | 'attach_existing' | 'ignore';
       readonly attachProjectId?: string;
       readonly attachLabel?: string;
+      readonly conflictResolutions?: never;
     }
   >
 > {
@@ -464,6 +465,7 @@ export function buildWorksheetGroupResolutions(
       readonly type: 'create_new' | 'attach_existing' | 'ignore';
       readonly attachProjectId?: string;
       readonly attachLabel?: string;
+      readonly conflictResolutions?: never;
     }
   > = {};
   for (const config of includedWorksheetConfigs(configs)) {
