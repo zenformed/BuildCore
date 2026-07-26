@@ -8,9 +8,18 @@ import {
   type KeyboardEvent,
   type ReactElement,
 } from 'react';
-import { LuCheck, LuInfo, LuPanelsTopLeft } from 'react-icons/lu';
+import {
+  LuCheck,
+  LuChevronDown,
+  LuChevronRight,
+  LuCircleCheck,
+  LuInfo,
+  LuLightbulb,
+  LuUserRound,
+} from 'react-icons/lu';
 import {
   CRM_IMPORT_NAME_SEPARATORS,
+  composeImportNameExample,
   isCompositionConfigured,
   type CrmImportColumnComposition,
   type CrmImportNameSeparator,
@@ -18,9 +27,9 @@ import {
 import { analyzeSubprojectIdentitySelection } from '@/domain/crm/spreadsheetImportSubprojectIdentityGuidance';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
 import {
-  buildSubprojectIdentityLiveExamples,
-  buildSubprojectIdentityPrimaryPreview,
+  buildSubprojectIdentityGroups,
   buildSubprojectIdentityGuidanceView,
+  buildSubprojectIdentityPreviewGroups,
   moveSubprojectIdentityListRow,
   shouldShowSubprojectIdentityCombineControl,
   subprojectIdentityColumnRowClass,
@@ -30,11 +39,6 @@ import styles from '@/presentation/components/CrmImport/SpreadsheetImportWizard.
 
 const DEFAULT_SEPARATOR: CrmImportNameSeparator = ' ';
 
-export type SampleHierarchyGroup = {
-  readonly parentLabel: string;
-  readonly childLabels: readonly string[];
-};
-
 export type SubprojectIdentityScreenProps = {
   readonly headers: readonly string[];
   readonly sampleRows: readonly (readonly string[])[];
@@ -42,11 +46,13 @@ export type SubprojectIdentityScreenProps = {
   readonly composition: CrmImportColumnComposition | null;
   readonly disabledIndexes?: ReadonlySet<number>;
   readonly disabled?: boolean;
-  readonly showSampleHierarchy?: boolean;
-  readonly sampleHierarchy?: readonly SampleHierarchyGroup[];
   readonly onChange: (composition: CrmImportColumnComposition) => void;
 };
 
+/**
+ * Subproject / row-name identity — same two-panel select+reorder chrome and
+ * Project-style preview (sample cards, would-create callout).
+ */
 export function SubprojectIdentityScreen({
   headers,
   sampleRows,
@@ -54,12 +60,11 @@ export function SubprojectIdentityScreen({
   composition,
   disabledIndexes,
   disabled = false,
-  showSampleHierarchy = false,
-  sampleHierarchy = [],
   onChange,
 }: SubprojectIdentityScreenProps): ReactElement {
   const copy = content.crm.spreadsheetImport.interview.subprojectIdentity;
   const rootId = useId();
+  const [expandedGroupKey, setExpandedGroupKey] = useState<string | null>(null);
 
   const selectedIndexes = composition?.columnIndexes ?? [];
   const separator = composition?.separator ?? DEFAULT_SEPARATOR;
@@ -83,15 +88,27 @@ export function SubprojectIdentityScreen({
     });
   }, [headers]);
 
-  const primaryPreview = useMemo(
-    () => buildSubprojectIdentityPrimaryPreview(sampleRows, composition),
-    [sampleRows, composition]
-  );
+  const primaryExample =
+    hasSelection && composition != null
+      ? composeImportNameExample(sampleRows, composition, 1)[0] ?? null
+      : null;
 
-  const liveExamples = useMemo(
-    () => buildSubprojectIdentityLiveExamples({ dataRows, composition }),
-    [dataRows, composition]
-  );
+  const groups = useMemo(() => {
+    if (!hasSelection || composition == null) return [];
+    return buildSubprojectIdentityGroups({ dataRows, composition });
+  }, [hasSelection, composition, dataRows]);
+
+  const preview = useMemo(() => {
+    if (!hasSelection || composition == null) {
+      return { visible: [] as const, remainingCount: 0 };
+    }
+    return buildSubprojectIdentityPreviewGroups({
+      groups,
+      headers,
+      dataRows,
+      composition,
+    });
+  }, [hasSelection, composition, groups, headers, dataRows]);
 
   const guidance = useMemo(
     () =>
@@ -149,33 +166,28 @@ export function SubprojectIdentityScreen({
   const visibleIndexes = listOrder.filter((index) => index >= 0 && index < headers.length);
 
   return (
-    <div className={styles.subprojectIdentityScreen}>
-      <div className={styles.subprojectIdentityIntro}>
-        <span className={styles.subprojectIdentityIntroIcon} aria-hidden>
-          <LuPanelsTopLeft size={20} />
-        </span>
-        <div>
-          <h2 className={styles.subprojectIdentityHeading}>{copy.heading}</h2>
-          <p className={styles.subprojectIdentitySubheading}>{copy.subheading}</p>
-        </div>
+    <div className={styles.projectIdentityScreen}>
+      <div className={styles.projectIdentityIntro}>
+        <h2 className={styles.projectIdentityHeading}>{copy.heading}</h2>
+        <p className={styles.projectIdentitySubheading}>{copy.subheading}</p>
       </div>
 
-      <div className={styles.subprojectIdentityPanels}>
-        <section
-          className={styles.subprojectIdentityPanel}
-          aria-labelledby={`${rootId}-left`}
-        >
-          <div className={styles.subprojectIdentityPanelHeader}>
-            <h3 id={`${rootId}-left`} className={styles.subprojectIdentityPanelTitle}>
-              {copy.selectTitle}
+      <div className={styles.projectIdentityPanels}>
+        <section className={styles.projectIdentityPanel} aria-labelledby={`${rootId}-left`}>
+          <div className={styles.projectIdentityPanelHeader}>
+            <h3 id={`${rootId}-left`} className={styles.projectIdentityPanelTitle}>
+              {copy.selectColumnsTitle}
             </h3>
-            <p className={styles.subprojectIdentityPanelBody}>{copy.selectBody}</p>
+            <span className={styles.projectIdentityInfoIcon} title={copy.selectColumnsHint}>
+              <LuInfo size={15} aria-hidden />
+              <span className={styles.srOnly}>{copy.infoIconAria}</span>
+            </span>
           </div>
 
           <div
-            className={styles.subprojectIdentityColumnList}
+            className={styles.projectIdentityColumnList}
             role="group"
-            aria-label={copy.selectTitle}
+            aria-label={copy.selectColumnsTitle}
           >
             {visibleIndexes.map((index) => {
               const header = headers[index] ?? `Column ${index + 1}`;
@@ -200,33 +212,37 @@ export function SubprojectIdentityScreen({
                     selected: isSelected,
                     disabled: isDisabled,
                     styles: {
-                      row: styles.subprojectIdentityColumnRow,
-                      selected: styles.subprojectIdentityColumnRowSelected,
-                      disabled: styles.subprojectIdentityColumnRowDisabled,
+                      row: styles.projectIdentityColumnRow,
+                      selected: styles.projectIdentityColumnRowSelected,
+                      disabled: styles.projectIdentityColumnRowDisabled,
                     },
                   })}
                   onClick={() => toggle(index)}
                   onKeyDown={(event) => onRowKeyDown(event, index)}
                 >
-                  <span className={styles.subprojectIdentityCheckboxFace} aria-hidden>
-                    {isSelected ? <LuCheck size={12} strokeWidth={3} /> : null}
+                  <span className={styles.projectIdentityColumnLabel}>
+                    <span className={styles.projectIdentityCheckboxWrap} aria-hidden>
+                      <span className={styles.projectIdentityCheckboxFace}>
+                        {isSelected ? <LuCheck size={13} strokeWidth={3} /> : null}
+                      </span>
+                    </span>
+                    {order != null ? (
+                      <span className={styles.projectIdentityOrderBadge} aria-hidden>
+                        {order}
+                      </span>
+                    ) : null}
+                    <span className={styles.projectIdentityColumnName}>{header}</span>
+                    {sample ? (
+                      <span className={styles.projectIdentityColumnSample} title={sample}>
+                        {sample}
+                      </span>
+                    ) : null}
                   </span>
-                  <span className={styles.subprojectIdentityColumnName}>{header}</span>
-                  {order != null ? (
-                    <span className={styles.subprojectIdentityOrderBadge} aria-hidden>
-                      {order}
-                    </span>
-                  ) : null}
-                  {sample ? (
-                    <span className={styles.subprojectIdentityColumnSample} title={sample}>
-                      {sample}
-                    </span>
-                  ) : null}
-                  {isSelected ? (
-                    <span className={styles.subprojectIdentityReorderGroup}>
+                  {isSelected && selectedIndexes.length > 1 ? (
+                    <span className={styles.projectIdentityReorderGroup}>
                       <button
                         type="button"
-                        className={styles.subprojectIdentityReorderButton}
+                        className={styles.projectIdentityReorderButton}
                         disabled={disabled || visibleIndexes.indexOf(index) <= 0}
                         aria-label={copy.moveEarlierAria(header)}
                         onClick={(event) => {
@@ -238,7 +254,7 @@ export function SubprojectIdentityScreen({
                       </button>
                       <button
                         type="button"
-                        className={styles.subprojectIdentityReorderButton}
+                        className={styles.projectIdentityReorderButton}
                         disabled={
                           disabled || visibleIndexes.indexOf(index) >= visibleIndexes.length - 1
                         }
@@ -257,31 +273,14 @@ export function SubprojectIdentityScreen({
             })}
           </div>
 
-          <div className={styles.subprojectIdentityTip}>
-            <LuInfo className={styles.subprojectIdentityTipIcon} size={16} aria-hidden />
-            <p className={styles.subprojectIdentityTipText}>{copy.reorderTip}</p>
-          </div>
-        </section>
-
-        <section
-          className={styles.subprojectIdentityPanel}
-          aria-labelledby={`${rootId}-right`}
-        >
-          <div className={styles.subprojectIdentityPanelHeader}>
-            <h3 id={`${rootId}-right`} className={styles.subprojectIdentityPanelTitle}>
-              {copy.joinTitle}
-            </h3>
-            <p className={styles.subprojectIdentityPanelBody}>{copy.joinBody}</p>
-          </div>
-
           {showCombine ? (
-            <div className={styles.subprojectIdentityCombine}>
-              <label className={styles.subprojectIdentityCombineLabel} htmlFor={`${rootId}-sep`}>
+            <div className={styles.projectIdentityCombine}>
+              <label className={styles.projectIdentityCombineLabel} htmlFor={`${rootId}-sep`}>
                 {copy.combineLabel}
               </label>
               <select
                 id={`${rootId}-sep`}
-                className={styles.subprojectIdentityCombineSelect}
+                className={styles.projectIdentityCombineSelect}
                 value={separator}
                 disabled={disabled}
                 onChange={(event) =>
@@ -294,105 +293,140 @@ export function SubprojectIdentityScreen({
                   </option>
                 ))}
               </select>
-            </div>
-          ) : hasSelection ? (
-            <p className={styles.subprojectIdentityCombineHint}>{copy.oneColumnHint}</p>
-          ) : (
-            <p className={styles.subprojectIdentityCombineHint}>{copy.selectToCombineHint}</p>
-          )}
-
-          <div className={styles.subprojectIdentityPreviewBlock}>
-            <p className={styles.subprojectIdentityPreviewLabel}>{copy.previewLabel}</p>
-            <div
-              className={styles.subprojectIdentityPreviewBox}
-              aria-live="polite"
-              aria-atomic="true"
-              aria-label={copy.previewLiveRegionLabel}
-            >
-              {primaryPreview ? (
-                <p className={styles.subprojectIdentityPreviewName}>{primaryPreview}</p>
-              ) : (
-                <p className={styles.subprojectIdentityPreviewEmpty}>{copy.previewEmpty}</p>
-              )}
-            </div>
-            <p className={styles.subprojectIdentityPreviewHint}>{copy.previewHint}</p>
-          </div>
-
-          {guidanceView != null ? (
-            <div
-              className={[
-                styles.subprojectIdentityGuidance,
-                guidanceView.tone === 'success'
-                  ? styles.subprojectIdentityGuidanceSuccess
-                  : styles.subprojectIdentityGuidanceWarning,
-              ].join(' ')}
-              role="status"
-              aria-live="polite"
-            >
-              <p className={styles.subprojectIdentityGuidanceTitle}>{guidanceView.title}</p>
-              {guidanceView.body ? (
-                <p className={styles.subprojectIdentityGuidanceBody}>{guidanceView.body}</p>
+              {primaryExample ? (
+                <p className={styles.projectIdentityCombineExample}>
+                  <span className={styles.projectIdentityCombineExampleLabel}>
+                    {copy.exampleNameLabel}
+                  </span>{' '}
+                  <strong>{primaryExample}</strong>
+                </p>
               ) : null}
             </div>
           ) : null}
 
-          <div className={styles.subprojectIdentityWhy}>
-            <p className={styles.subprojectIdentityWhyTitle}>{copy.whyTitle}</p>
-            <p className={styles.subprojectIdentityWhyBody}>{copy.whyBody}</p>
-            <p className={styles.subprojectIdentityWhyBody}>{copy.whyBodySecondary}</p>
+          <div className={styles.projectIdentityTip}>
+            <LuLightbulb className={styles.projectIdentityTipIcon} size={16} aria-hidden />
+            <p className={styles.projectIdentityTipText}>{copy.selectColumnsHint}</p>
           </div>
         </section>
-      </div>
 
-      <section
-        className={styles.subprojectIdentityLiveExamples}
-        aria-labelledby={`${rootId}-examples`}
-      >
-        <div className={styles.subprojectIdentityLiveExamplesCopy}>
-          <p id={`${rootId}-examples`} className={styles.subprojectIdentityLiveExamplesLabel}>
-            {copy.liveExamplesLabel}
-          </p>
-          <p className={styles.subprojectIdentityLiveExamplesBody}>{copy.liveExamplesBody}</p>
-        </div>
-        <div
-          className={styles.subprojectIdentityLiveExamplesChips}
+        <section
+          className={styles.projectIdentityPanel}
+          aria-labelledby={`${rootId}-right`}
           aria-live="polite"
-          aria-atomic="false"
+          aria-relevant="text"
         >
-          {hasSelection && liveExamples.examples.length > 0 ? (
+          <div className={styles.projectIdentityPanelHeader}>
+            <h3 id={`${rootId}-right`} className={styles.projectIdentityPanelTitle}>
+              {copy.previewTitle}
+            </h3>
+            <span className={styles.srOnly}>{copy.previewLiveRegionLabel}</span>
+          </div>
+
+          {!hasSelection ? (
+            <div className={styles.projectIdentityEmpty}>
+              <LuUserRound className={styles.projectIdentityEmptyIcon} size={36} aria-hidden />
+              <p className={styles.projectIdentityEmptyTitle}>{copy.previewEmptyTitle}</p>
+              <p className={styles.projectIdentityEmptyBody}>{copy.previewEmptyBody}</p>
+            </div>
+          ) : (
             <>
-              {liveExamples.examples.map((example) => (
-                <span key={example} className={styles.subprojectIdentityExampleChip}>
-                  {example}
-                </span>
-              ))}
-              {liveExamples.remainingCount > 0 ? (
-                <span className={styles.subprojectIdentityExampleChipMore}>
-                  {copy.moreExamples(liveExamples.remainingCount)}
-                </span>
+              <div className={styles.projectIdentitySummary}>
+                <LuCircleCheck className={styles.projectIdentitySummaryIcon} size={20} aria-hidden />
+                <div>
+                  <p className={styles.projectIdentitySummaryTitle}>
+                    {copy.foundTitle(groups.length)}
+                  </p>
+                  <p className={styles.projectIdentitySummaryBody}>{copy.foundSupporting}</p>
+                </div>
+              </div>
+
+              <ul className={styles.projectIdentityGroupList}>
+                {preview.visible.map((group) => {
+                  const expanded = expandedGroupKey === group.key;
+                  return (
+                    <li key={group.key} className={styles.projectIdentityGroupItem}>
+                      <button
+                        type="button"
+                        className={styles.projectIdentityGroupButton}
+                        aria-expanded={expanded}
+                        aria-label={
+                          expanded
+                            ? copy.collapseGroupAria(group.displayName)
+                            : copy.expandGroupAria(group.displayName)
+                        }
+                        onClick={() =>
+                          setExpandedGroupKey((current) =>
+                            current === group.key ? null : group.key
+                          )
+                        }
+                      >
+                        <span className={styles.projectIdentityGroupLeading}>
+                          <span className={styles.projectIdentityGroupIcon} aria-hidden>
+                            <LuUserRound size={16} />
+                          </span>
+                          <span className={styles.projectIdentityGroupMain}>
+                            <span className={styles.projectIdentityGroupName}>
+                              {group.displayName}
+                            </span>
+                            <span className={styles.projectIdentityGroupMeta}>
+                              {copy.sampleOfRows(
+                                Math.min(3, Math.max(1, group.sampleRowLabels.length || 1))
+                              )}
+                            </span>
+                          </span>
+                        </span>
+                        <span className={styles.projectIdentityGroupTrailing}>
+                          <span className={styles.projectIdentityGroupCount}>
+                            {copy.rowCountLabel(group.rowCount)}
+                          </span>
+                          <span className={styles.projectIdentityGroupChevron} aria-hidden>
+                            {expanded ? <LuChevronDown size={16} /> : <LuChevronRight size={16} />}
+                          </span>
+                        </span>
+                      </button>
+                      {expanded && group.sampleRowLabels.length > 0 ? (
+                        <ul className={styles.projectIdentityGroupSamples}>
+                          {group.sampleRowLabels.map((label) => (
+                            <li key={`${group.key}-${label}`}>{label}</li>
+                          ))}
+                        </ul>
+                      ) : null}
+                    </li>
+                  );
+                })}
+              </ul>
+
+              {preview.remainingCount > 0 ? (
+                <p className={styles.projectIdentityMore}>
+                  {copy.moreSubprojects(preview.remainingCount)}
+                </p>
+              ) : null}
+
+              {guidanceView != null ? (
+                <div
+                  className={[
+                    styles.projectIdentityWarning,
+                    guidanceView.tone === 'success'
+                      ? styles.subprojectIdentityGuidanceAsSuccess
+                      : '',
+                  ]
+                    .filter(Boolean)
+                    .join(' ')}
+                  role="status"
+                >
+                  <div className={styles.projectIdentityWarningBody}>
+                    <p className={styles.projectIdentityWarningTitle}>{guidanceView.title}</p>
+                    {guidanceView.body ? (
+                      <p className={styles.projectIdentityWarningText}>{guidanceView.body}</p>
+                    ) : null}
+                  </div>
+                </div>
               ) : null}
             </>
-          ) : (
-            <p className={styles.subprojectIdentityLiveExamplesEmpty}>{copy.liveExamplesEmpty}</p>
           )}
-        </div>
-      </section>
-
-      {showSampleHierarchy && sampleHierarchy.length > 0 ? (
-        <div className={styles.subprojectIdentityHierarchy}>
-          <p className={styles.subprojectIdentityHierarchyTitle}>{copy.sampleHierarchyLabel}</p>
-          <ul className={styles.subprojectIdentityHierarchyList}>
-            {sampleHierarchy.slice(0, 4).map((group) => (
-              <li key={group.parentLabel}>
-                <strong>{group.parentLabel}</strong>
-                {group.childLabels.length > 0 ? (
-                  <> — {group.childLabels.slice(0, 3).join(', ')}</>
-                ) : null}
-              </li>
-            ))}
-          </ul>
-        </div>
-      ) : null}
+        </section>
+      </div>
     </div>
   );
 }

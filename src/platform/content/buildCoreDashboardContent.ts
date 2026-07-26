@@ -510,6 +510,14 @@ const buildCoreDashboardContentSource = {
       title: 'Import spreadsheet',
       closeAriaLabel: 'Close import spreadsheet wizard',
       unavailable: 'Spreadsheet import is not available in this environment.',
+      mobileNotice: {
+        title: 'Spreadsheet importing works best on a larger screen',
+        bodyReview:
+          "Importing spreadsheets involves reviewing columns, matching fields, and verifying data before it's added to BuildCore.",
+        bodyContinue: 'Please continue on a desktop or tablet for the best experience.',
+        gotIt: 'Got it',
+        closeAriaLabel: 'Dismiss spreadsheet import notice',
+      },
       defaults: {
         newParentName: 'Imported §E1§',
       },
@@ -728,6 +736,18 @@ const buildCoreDashboardContentSource = {
           previewAriaLabel: 'Spreadsheet rows — select the header row',
           columnFallback: (index: number): string => `Column ${index + 1}`,
         },
+        worksheetHeaders: {
+          listHeading: (count: number): string =>
+            count === 1
+              ? '1 worksheet'
+              : `${count.toLocaleString()} worksheets`,
+          listAria: 'Worksheets to confirm headers',
+          selectWorksheetAria: (name: string): string => `Confirm headers for worksheet ${name}`,
+          currentWorksheetAria: (name: string): string => `Confirming headers for ${name}`,
+          sheetMeta: (rows: number, columns: number): string =>
+            `${rows.toLocaleString()} rows \u00b7 ${columns.toLocaleString()} columns`,
+          headerRowMeta: (row: number): string => `Header row ${row.toLocaleString()}`,
+        },
         structure: {
           heading: 'How is this spreadsheet organized?',
           subheading: 'Choose the option that best describes how your data is organized.',
@@ -794,9 +814,144 @@ const buildCoreDashboardContentSource = {
             body: 'Use Back to choose another organization style if this is not the layout you meant.',
           },
           worksheets: {
-            title: 'Worksheet-based §E2§',
-            body: 'Use Back to choose another organization style if this is not the layout you meant.',
+            title: 'Resolve worksheet §E2§',
+            body: 'Next you\u2019ll choose whether to create, attach, or skip each selected worksheet. Use Back to adjust worksheet selections.',
           },
+        },
+        worksheetProjects: {
+          pageHeading:
+            'Select the sheets and §E2§ that the §E3§ will be imported into',
+          pageHeadingOneProject:
+            'Select the sheets and the §E1§ the data will be imported into.',
+          pageSubheading:
+            'Choose the sheets, then pick a §E1§ from the list or create your own.',
+          listHeading: (selected: number, total: number): string =>
+            `Worksheets (${selected.toLocaleString()} of ${total.toLocaleString()} selected)`,
+          listAria: 'Worksheets',
+          selectWorksheetAria: (name: string): string => `Review worksheet ${name}`,
+          currentWorksheetAria: (name: string): string => `Current worksheet ${name}`,
+          importWorksheetAria: (name: string): string => `Import worksheet ${name}`,
+          sheetMeta: (rows: number, columns: number): string =>
+            `${rows.toLocaleString()} rows \u00b7 ${columns.toLocaleString()} columns`,
+          statusReady: 'Ready',
+          statusNeedsReview: 'Needs review',
+          statusSkipped: 'Skipped',
+          statusNoData: 'No data',
+          statusNeedsHeader: 'Check header row',
+          projectLabel: '§E1§',
+          projectSearchPlaceholder: 'Search existing §E2§\u2026',
+          projectSearchHint: 'Search by §E1§ name, customer, or address.',
+          projectSearchAria: 'Search eligible §E2§',
+          newProjectButton: '+ New §E1§',
+          changeProject: 'Change §E1§',
+          selectedProjectTitle: 'Selected §E1§',
+          headerRowLabel: 'Header row',
+          headerRowHint: 'The row that contains column names in this worksheet.',
+          headerRowAria: (name: string): string => `Header row for worksheet ${name}`,
+          headerRowOption: (row: number): string => String(row),
+          headerRowEmpty: '\u2014',
+          summaryLabel: 'Worksheet summary',
+          summaryWorksheet: 'Worksheet',
+          summaryRows: 'Rows',
+          summaryColumns: 'Columns',
+          summaryBody: (rows: number): string =>
+            rows === 1
+              ? 'This worksheet will import 1 §E3§ under the selected §E1§.'
+              : `This worksheet will import ${rows.toLocaleString()} §E8§ under the selected §E1§.`,
+          skipTitle: 'Skip this worksheet',
+          skipDescription: (name: string): string =>
+            `Nothing from ${name} will be imported.`,
+          saveAndContinue: 'Save and continue',
+          continueBlockedAria:
+            'Continue is unavailable until every selected worksheet has an assigned §E1§.',
+          // Kept for older tests / terminology checks
+          foundHeading: (count: number): string =>
+            count === 1 ? 'We found 1 worksheet' : `We found ${count.toLocaleString()} worksheets`,
+          foundSupporting:
+            'Each worksheet becomes §E8§ under a §E1§ you select or create.',
+          colProjectName: '§E1§',
+          howThisWorksTitle: 'How this works',
+          howThisWorksBody:
+            'Select a §E1§ for each worksheet, or create a new one. Rows import as §E8§ under that §E1§.',
+        },
+        worksheetResolve: {
+          questionHeading: (projectName: string): string =>
+            `What should BuildCore do with ${projectName}?`,
+          worksheetMeta: (index: number, total: number, rows: number, columns: number): string =>
+            `Worksheet ${index.toLocaleString()} of ${total.toLocaleString()} \u00b7 ${rows.toLocaleString()} rows \u00b7 ${columns.toLocaleString()} columns`,
+          supporting: 'Choose how this worksheet should be imported.',
+          progressNavAria: 'Worksheet resolution progress',
+          progressComplete: 'Complete',
+          progressNeedsReview: 'Needs review',
+          progressSkipped: 'Skipped',
+          progressCurrentAria: (name: string): string => `Current worksheet ${name}`,
+          progressSelectAria: (name: string): string => `Review worksheet ${name}`,
+          projectNameLabel: '§E1§ name',
+          projectNameAria: (worksheetName: string): string =>
+            `§E1§ name for worksheet ${worksheetName}`,
+          createTitle: 'Create a new §E1§',
+          createDescription: (name: string): string => `Create \u2018${name}\u2019 as a new §E1§.`,
+          createDetailTitle: 'New §E1§',
+          createDetailBody: (name: string, rows: number): string =>
+            `The worksheet\u2019s ${rows.toLocaleString()} rows will become §E8§ under this new §E1§.`,
+          attachTitle: 'Use an existing §E1§',
+          attachDescription: (rows: number): string =>
+            `Add these ${rows.toLocaleString()} rows beneath a §E1§ already in BuildCore.`,
+          attachPickerLabel: 'Choose an existing §E1§',
+          attachSelectedTitle: 'Selected §E1§',
+          attachChange: 'Change §E1§',
+          attachSubprojectCount: (count: number): string =>
+            count === 1
+              ? '1 existing §E3§'
+              : `${count.toLocaleString()} existing §E8§`,
+          skipTitle: 'Skip this worksheet',
+          skipDescription: (name: string): string =>
+            `Nothing from ${name} will be imported.`,
+          skipDetailTitle: 'This worksheet will be skipped.',
+          skipDetailBody: (rows: number): string =>
+            `Its ${rows.toLocaleString()} rows will not be imported.`,
+          detailEmpty: 'Select how BuildCore should handle this worksheet.',
+          resolutionGroupAria: (worksheetName: string): string =>
+            `Resolution for worksheet ${worksheetName}`,
+          errorMissingName: 'Enter a §E1§ name.',
+          errorNeedsProject: 'Choose an existing §E1§.',
+          errorDuplicateName: (name: string): string =>
+            `Another worksheet is already creating a §E1§ named ${name}.`,
+          worksheetPosition: (index: number, total: number): string =>
+            `Worksheet ${index.toLocaleString()} of ${total.toLocaleString()}`,
+          previousWorksheet: 'Previous worksheet',
+          saveAndContinue: 'Save and continue',
+          saveAndReview: 'Save and review',
+          allSkippedWarning: 'Select at least one worksheet to import.',
+          continueBlockedAria:
+            'Continue is unavailable until every worksheet has a valid create or attach resolution, and at least one worksheet is imported.',
+          summaryHeading: 'Confirm before §E3§ setup',
+          summarySupporting:
+            'Review what BuildCore will do with each worksheet, then continue.',
+          summaryWorksheetTitle: (name: string): string => `Worksheet ${name}`,
+          summaryWillAdd: (rows: number): string =>
+            rows === 1
+              ? '1 §E3§ will be added to'
+              : `${rows.toLocaleString()} §E8§ will be added to`,
+          summarySkippedDetail: 'This worksheet will be skipped.',
+          summaryCreate: (name: string): string => `Create new §E1§: ${name}`,
+          summaryAttach: (name: string): string => `Attach to: ${name}`,
+          summarySkipped: 'Skipped',
+          summaryRows: (rows: number): string =>
+            rows === 1 ? '1 row' : `${rows.toLocaleString()} rows`,
+          summaryMeta: (rows: number, headerRow: number, columns: number): string =>
+            `Rows: ${rows.toLocaleString()} \u00b7 Header row: ${headerRow.toLocaleString()} \u00b7 Columns: ${columns.toLocaleString()}`,
+          summaryReview: 'Review',
+          summaryReviewAria: (name: string): string => `Review worksheet ${name}`,
+          summaryTotals: (rows: number, projects: number): string =>
+            projects === 1
+              ? `${rows.toLocaleString()} §E8§ will be imported into 1 §E1§.`
+              : `${rows.toLocaleString()} §E8§ will be imported into ${projects.toLocaleString()} §E2§.`,
+          continueToSubprojectSetup: 'Continue to §E3§ Setup',
+          sharedHeadersNote:
+            'These worksheets use the same columns, so this setup will apply to all selected §E2§.',
+          mismatchedHeadersNote:
+            'These worksheets use different columns. You\u2019ll set the §E3§ identifier for each worksheet next.',
         },
         recommend: {
           heading: 'Here\u2019s what we found',
@@ -832,6 +987,21 @@ const buildCoreDashboardContentSource = {
             'Create a §E1§ now, then BuildCore will select it automatically.',
           listAriaLabel: 'Eligible §E2§',
           rowAriaLabel: (name: string): string => `Select ${name}`,
+        },
+        selectSheets: {
+          heading: 'Select the sheet or sheets to be imported',
+          subheading: 'Choose which worksheets from your file should be included in this import.',
+          illustrationAlt: 'Illustration of spreadsheet worksheets ready to import',
+          selectedCount: (selected: number, total: number): string =>
+            `${selected.toLocaleString()} of ${total.toLocaleString()} selected`,
+          sheetMeta: (rows: number, columns: number): string =>
+            `${rows.toLocaleString()} rows \u00b7 ${columns.toLocaleString()} columns`,
+          noData: 'No importable data',
+          selectSheetAria: (name: string): string => `Import worksheet ${name}`,
+          nextStepTip: (count: number): string =>
+            count === 1
+              ? '1 sheet will be imported to the §E1§ you choose on the next screen.'
+              : `${count.toLocaleString()} sheets will be imported to the §E1§ you choose on the next screen.`,
         },
         projectIdentity: {
           heading: 'How should BuildCore identify each §E1§?',
@@ -889,7 +1059,39 @@ const buildCoreDashboardContentSource = {
         },
         subprojectIdentity: {
           heading: 'Which column(s) identify each §E3§?',
-          subheading: 'BuildCore will use the selected column(s) to name each §E3§.',
+          subheading: 'Select the column(s) that represent the §E3§ name.',
+          selectColumnsTitle: 'Select §E3§ columns',
+          selectColumnsHint:
+            'Choose one or more columns. Use the arrows to set combine order. BuildCore will name each §E3§ from this selection.',
+          previewTitle: 'BuildCore preview',
+          previewEmptyTitle: 'Select a column to preview §E8§',
+          previewEmptyBody:
+            'Choose the identifying column(s). BuildCore will show the §E8§ it detects here.',
+          foundTitle: (count: number): string =>
+            count === 1
+              ? 'BuildCore found 1 §E3§'
+              : `BuildCore found ${count.toLocaleString()} §E8§`,
+          foundSupporting: 'Based on the column or columns you selected.',
+          sampleOfRows: (count: number): string => `Sample of ${count} rows`,
+          rowCountLabel: (count: number): string =>
+            count === 1 ? '1 row' : `${count.toLocaleString()} rows`,
+          moreSubprojects: (count: number): string =>
+            count === 1 ? '+ 1 more §E3§' : `+ ${count.toLocaleString()} more §E8§`,
+          exampleRowsTitle: 'Example rows',
+          composedNameColumn: '§E3§ name',
+          exampleNameLabel: 'Example §E3§ name:',
+          combineLabel: 'Combine selected columns using',
+          orderBadgeAria: (order: number): string => `Selection order ${order}`,
+          expandGroupAria: (name: string): string => `Show sample rows for ${name}`,
+          collapseGroupAria: (name: string): string => `Hide sample rows for ${name}`,
+          infoIconAria: 'More information',
+          previewLiveRegionLabel: '§E3§ preview updates',
+          warningWouldCreateTitle: (count: number): string =>
+            count === 1
+              ? 'BuildCore would create 1 §E3§'
+              : `BuildCore would create ${count.toLocaleString()} §E8§`,
+          warningWouldCreateBody:
+            'This selection appears to make nearly every spreadsheet row its own §E3§.',
           selectTitle: '1. Select identifying column(s)',
           selectBody: 'Choose one or more columns that uniquely identify each §E3§.',
           reorderTip:
@@ -902,13 +1104,11 @@ const buildCoreDashboardContentSource = {
           moveLaterAria: (header: string): string => `Move ${header} later in the name`,
           joinTitle: '2. How should these columns be joined?',
           joinBody: 'Choose how the selected columns should be combined to create the §E3§ name.',
-          combineLabel: 'Combine selected columns using',
           oneColumnHint: 'One column selected \u2014 no separator is needed.',
           selectToCombineHint: 'Select two or more columns to choose a separator.',
           previewLabel: 'Preview',
           previewHint: 'This is how your §E3§ names will appear.',
           previewEmpty: 'Select a column to preview the §E3§ name.',
-          previewLiveRegionLabel: '§E3§ name preview',
           whyTitle: 'Why does this matter?',
           whyBody: 'These column(s) should uniquely identify each §E3§.',
           whyBodySecondary: 'Choose columns that won\u2019t have duplicate combinations.',
@@ -1019,6 +1219,7 @@ const buildCoreDashboardContentSource = {
           blockingHeading: 'Fix these issues before importing',
           blockingBody: 'Resolve the issues below to start the import.',
           metricRowsReady: 'Rows ready',
+          metricSheetsReady: 'Sheets',
           metricFieldsMapped: 'Fields mapped',
           metricIssuesFound: 'Issues found',
           metricsAriaLabel: 'Import readiness metrics',
@@ -1028,6 +1229,10 @@ const buildCoreDashboardContentSource = {
           subprojectNamesTitle: '§E3§ Names',
           fileMetaLine: (sheet: string, headerRow: number, rows: number): string =>
             `Sheet: ${sheet} · Header row: ${headerRow} · Rows: ${rows.toLocaleString()}`,
+          fileMetaLineMulti: (sheets: number, rows: number): string =>
+            sheets === 1
+              ? `1 sheet · Rows: ${rows.toLocaleString()}`
+              : `${sheets.toLocaleString()} sheets · Rows: ${rows.toLocaleString()}`,
           exampleLabel: 'Example',
           oneProjectLabel: 'One §E1§',
           multipleProjectsLabel: 'Multiple §E2§',

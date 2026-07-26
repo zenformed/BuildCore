@@ -39,6 +39,7 @@ export type ReviewScreenGroupsSummary = {
 export type ReviewScreenProps = {
   readonly launchMode: CrmImportMode;
   readonly effectiveMode: CrmImportMode;
+  readonly multiProjectOrganization?: string | null;
   readonly fileName: string | null;
   readonly sheetName: string;
   readonly headerRowNumber: number;
@@ -48,6 +49,7 @@ export type ReviewScreenProps = {
   readonly projectComposition: CrmImportColumnComposition | null;
   readonly subprojectComposition: CrmImportColumnComposition | null;
   readonly subprojectNameExample: string | null;
+  readonly sheetsCount?: number | null;
   readonly rowsCount: number;
   readonly fieldsMappedCount: number;
   readonly ignoredColumnsCount: number;
@@ -155,6 +157,7 @@ export function ReviewScreen(props: ReviewScreenProps): ReactElement {
   const {
     launchMode,
     effectiveMode,
+    multiProjectOrganization = null,
     fileName,
     sheetName,
     headerRowNumber,
@@ -164,8 +167,8 @@ export function ReviewScreen(props: ReviewScreenProps): ReactElement {
     projectComposition,
     subprojectComposition,
     subprojectNameExample,
+    sheetsCount = null,
     rowsCount,
-    fieldsMappedCount,
     ignoredColumnsCount,
     mappedColumnsCount,
     keyFieldLabels,
@@ -217,14 +220,18 @@ export function ReviewScreen(props: ReviewScreenProps): ReactElement {
       launchMode,
       structureChoice,
       effectiveMode,
+      multiProjectOrganization,
     });
     if (target) onEdit(target);
   };
 
   const whatNextBody =
-    effectiveMode === 'master_hierarchy' && !parentLabel
+    multiProjectOrganization === 'worksheet_per_project' ||
+    (effectiveMode === 'master_hierarchy' && !parentLabel)
       ? copy.whatNextBodyMultiple(rowsCount)
       : copy.whatNextBody(rowsCount, projectDisplay);
+
+  const showSheetsMetric = sheetsCount != null && sheetsCount > 0;
 
   return (
     <div className={[styles.wideWidth, styles.reviewScreen].join(' ')}>
@@ -262,6 +269,17 @@ export function ReviewScreen(props: ReviewScreenProps): ReactElement {
           </div>
 
           <div className={styles.reviewMetrics} aria-label={copy.metricsAriaLabel}>
+            {showSheetsMetric ? (
+              <div className={styles.reviewMetric}>
+                <span className={[styles.reviewMetricIcon, styles.reviewMetricIconRows].join(' ')} aria-hidden>
+                  <LuFileSpreadsheet size={16} />
+                </span>
+                <div>
+                  <p className={styles.reviewMetricValue}>{sheetsCount.toLocaleString()}</p>
+                  <p className={styles.reviewMetricLabel}>{copy.metricSheetsReady}</p>
+                </div>
+              </div>
+            ) : null}
             <div className={styles.reviewMetric}>
               <span className={[styles.reviewMetricIcon, styles.reviewMetricIconRows].join(' ')} aria-hidden>
                 <LuTable2 size={16} />
@@ -269,15 +287,6 @@ export function ReviewScreen(props: ReviewScreenProps): ReactElement {
               <div>
                 <p className={styles.reviewMetricValue}>{rowsCount.toLocaleString()}</p>
                 <p className={styles.reviewMetricLabel}>{copy.metricRowsReady}</p>
-              </div>
-            </div>
-            <div className={styles.reviewMetric}>
-              <span className={[styles.reviewMetricIcon, styles.reviewMetricIconFields].join(' ')} aria-hidden>
-                <LuFileSpreadsheet size={16} />
-              </span>
-              <div>
-                <p className={styles.reviewMetricValue}>{fieldsMappedCount.toLocaleString()}</p>
-                <p className={styles.reviewMetricLabel}>{copy.metricFieldsMapped}</p>
               </div>
             </div>
             <div className={styles.reviewMetric}>
@@ -340,7 +349,9 @@ export function ReviewScreen(props: ReviewScreenProps): ReactElement {
             {displayFileName}
           </p>
           <p className={styles.reviewSecondary}>
-            {copy.fileMetaLine(sheetName || '—', headerRowNumber, rowsCount)}
+            {showSheetsMetric
+              ? copy.fileMetaLineMulti(sheetsCount!, rowsCount)
+              : copy.fileMetaLine(sheetName || '—', headerRowNumber, rowsCount)}
           </p>
         </ReviewRow>
 

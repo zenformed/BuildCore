@@ -25,8 +25,21 @@ import {
 function readyOneProjectState(): CrmImportInterviewState {
   return {
     ...createInitialInterviewState({ launchMode: 'master_hierarchy' }),
-    screen: 'choose_parent',
+    screen: 'review',
     structureChoice: 'one_project',
+    multiProjectOrganization: null,
+    worksheetProjects: [
+      {
+        worksheetId: 'sheet:0:Sheet1',
+        worksheetName: 'Sheet1',
+        included: true,
+        projectName: 'Test',
+        headerRowIndex: 0,
+        dataRowCount: 2,
+        columnCount: 4,
+      },
+    ],
+    worksheetResolutions: null,
     selectedParentProjectId: 'p1',
     selectedParentLabel: 'Test',
     subprojectComposition: { columnIndexes: [0, 1], separator: ' ' },
@@ -157,6 +170,56 @@ describe('reviewPresentation', () => {
     assert.equal(resolveReviewReadiness(result), 'blocking');
     assert.equal(reviewIssueMetricCount(result), result.blockingCount + result.warningCount);
     assert.equal(result.messages.length, result.blockingCount + result.warningCount);
+  });
+
+  it('skips parent-key requirement for worksheet-per-Project imports', () => {
+    const result = collectReviewClientIssues({
+      mappings: [
+        {
+          sourceIndex: 0,
+          originalHeader: 'Name',
+          ownership: 'subproject',
+          destination: { kind: 'standard_field', entity: 'subproject', key: 'subproject_name' },
+        },
+      ],
+      rows: [{ sourceRowIndex: 1, cells: { 0: 'Ann' } }],
+      importMode: 'master_hierarchy',
+      mappingErrors: [],
+      fieldsReady: true,
+      hasParent: true,
+      hasSubprojectIdentity: true,
+      requireParentKeyColumn: false,
+    });
+    assert.equal(
+      result.messages.some((message) => /parent name or parent identifier/i.test(message)),
+      false
+    );
+  });
+
+  it('ignores stale parent-key mappingErrors when parent column is not required', () => {
+    const result = collectReviewClientIssues({
+      mappings: [
+        {
+          sourceIndex: 0,
+          originalHeader: 'Name',
+          ownership: 'subproject',
+          destination: { kind: 'standard_field', entity: 'subproject', key: 'subproject_name' },
+        },
+      ],
+      rows: [{ sourceRowIndex: 1, cells: { 0: 'Ann' } }],
+      importMode: 'master_hierarchy',
+      mappingErrors: [
+        'Master hierarchy imports require a parent name or parent identifier column.',
+      ],
+      fieldsReady: true,
+      hasParent: true,
+      hasSubprojectIdentity: true,
+      requireParentKeyColumn: false,
+    });
+    assert.equal(
+      result.messages.some((message) => /parent name or parent identifier/i.test(message)),
+      false
+    );
   });
 
   it('treats mapping errors and incomplete fields as blocking', () => {
@@ -389,6 +452,15 @@ describe('reviewPresentation', () => {
       null
     );
     assert.equal(
+      reviewEditTargetForSection('destination', {
+        launchMode: 'master_hierarchy',
+        structureChoice: 'multiple_projects',
+        effectiveMode: 'master_hierarchy',
+        multiProjectOrganization: 'worksheet_per_project',
+      }),
+      'worksheet_resolve_summary'
+    );
+    assert.equal(
       reviewEditTargetForSection('subprojectNames', {
         launchMode: 'master_hierarchy',
         structureChoice: 'one_project',
@@ -420,11 +492,6 @@ describe('reviewPresentation', () => {
     let state = readyOneProjectState();
     const fields = state.remainingFields;
     state = jumpInterviewFromReview({ ...state, screen: 'review' }, 'choose_parent');
-    state = {
-      ...state,
-      selectedParentProjectId: 'p2',
-      selectedParentLabel: 'Other',
-    };
     state = continueInterviewAfterEdit(state);
     assert.equal(state.screen, 'review');
     assert.deepEqual(state.remainingFields, fields);

@@ -6,6 +6,8 @@ import type { CrmImportMode } from '@/domain/crm/spreadsheetImportTypes';
 import type { CrmImportColumnComposition } from '@/domain/crm/spreadsheetImportComposition';
 import type { CrmImportConflictResolutionMap } from '@/domain/crm/spreadsheetImportConflictResolution';
 import type { CrmImportStructureRecommendation } from '@/domain/crm/spreadsheetImportStructureAnalysis';
+import type { WorksheetProjectConfig } from '@/presentation/features/crmImport/interview/worksheetProjectsPresentation';
+import type { WorksheetResolutionDraft } from '@/presentation/features/crmImport/interview/worksheetResolvePresentation';
 
 export type CrmImportStructureChoice = 'one_project' | 'multiple_projects' | 'unsure';
 
@@ -22,6 +24,12 @@ export type CrmImportInterviewScreen =
   | 'structure'
   | 'multi_project_organization'
   | 'coming_soon_header_rows'
+  | 'select_sheets'
+  | 'worksheet_projects'
+  | 'worksheet_headers'
+  | 'worksheet_resolve'
+  | 'worksheet_resolve_summary'
+  | 'worksheet_subproject_setup'
   | 'coming_soon_worksheet'
   | 'recommend'
   | 'choose_parent'
@@ -35,6 +43,7 @@ export type CrmImportInterviewScreen =
   | 'import'
   | 'results';
 
+export type { WorksheetProjectConfig, WorksheetResolutionDraft };
 export type CrmImportProgressMilestone =
   | 'upload'
   | 'structure'
@@ -62,6 +71,18 @@ export type CrmImportInterviewState = {
   readonly projectComposition: CrmImportColumnComposition | null;
   readonly subprojectComposition: CrmImportColumnComposition | null;
   readonly contactComposition: CrmImportColumnComposition | null;
+  /** One Project per worksheet branch — persisted selections and names. */
+  readonly worksheetProjects: readonly WorksheetProjectConfig[] | null;
+  /** Per-worksheet create / attach / skip decisions. */
+  readonly worksheetResolutions: Readonly<Record<string, WorksheetResolutionDraft>> | null;
+  /** Worksheet currently focused in the one-at-a-time resolve interview. */
+  readonly activeWorksheetResolveId: string | null;
+  /**
+   * When headers differ across worksheets, queue of worksheetIds for per-sheet
+   * Subproject identity setup. Null/empty means shared single setup.
+   */
+  readonly worksheetSubprojectQueue: readonly string[] | null;
+  readonly activeWorksheetSetupId: string | null;
   readonly remainingFields: readonly CrmImportRemainingFieldDraft[];
   readonly groupResolutions: Readonly<
     Record<
@@ -101,6 +122,11 @@ export function createInitialInterviewState(input: {
     projectComposition: null,
     subprojectComposition: null,
     contactComposition: null,
+    worksheetProjects: null,
+    worksheetResolutions: null,
+    activeWorksheetResolveId: null,
+    worksheetSubprojectQueue: null,
+    activeWorksheetSetupId: null,
     remainingFields: [],
     groupResolutions: {},
     activeGroupKey: null,
@@ -120,6 +146,12 @@ export function interviewScreenToMilestone(
     case 'structure':
     case 'multi_project_organization':
     case 'coming_soon_header_rows':
+    case 'select_sheets':
+    case 'worksheet_projects':
+    case 'worksheet_headers':
+    case 'worksheet_resolve':
+    case 'worksheet_resolve_summary':
+    case 'worksheet_subproject_setup':
     case 'coming_soon_worksheet':
     case 'recommend':
     case 'choose_parent':
@@ -147,6 +179,7 @@ export function milestonesForInterview(state: CrmImportInterviewState): readonly
 
 export function resolveEffectiveImportMode(state: CrmImportInterviewState): CrmImportMode {
   if (state.launchMode === 'into_existing_parent') return 'into_existing_parent';
+  if (state.multiProjectOrganization === 'worksheet_per_project') return 'master_hierarchy';
   if (state.structureChoice === 'one_project') return 'into_existing_parent';
   return 'master_hierarchy';
 }
@@ -157,7 +190,7 @@ function nextAfterStructure(state: CrmImportInterviewState): CrmImportInterviewS
     if (state.selectedParentProjectId && state.launchMode === 'into_existing_parent') {
       return 'subproject_identity';
     }
-    return 'choose_parent';
+    return 'select_sheets';
   }
   return 'multi_project_organization';
 }
@@ -167,11 +200,12 @@ function nextAfterMultiProjectOrganization(
 ): CrmImportInterviewScreen | null {
   switch (state.multiProjectOrganization) {
     case 'repeating_column':
-      return 'project_identity';
+      // Headers were deferred until after structure for projects-page launches.
+      return 'header';
     case 'header_rows':
       return 'coming_soon_header_rows';
     case 'worksheet_per_project':
-      return 'coming_soon_worksheet';
+      return 'worksheet_projects';
     case 'unsure':
       return 'recommend';
     default:
@@ -182,33 +216,47 @@ function nextAfterMultiProjectOrganization(
 export function getNextInterviewScreen(state: CrmImportInterviewState): CrmImportInterviewScreen | null {
   switch (state.screen) {
     case 'upload':
-      return 'header';
+      // Projects-page flow: structure before headers so sheet/parent choices come first.
+      return state.launchMode === 'into_existing_parent' ? 'header' : 'structure';
     case 'header':
-      return state.launchMode === 'into_existing_parent' ? 'subproject_identity' : 'structure';
+      if (state.launchMode === 'into_existing_parent') return 'subproject_identity';
+      if (state.structureChoice === 'one_project') return 'subproject_identity';
+      if (state.multiProjectOrganization === 'repeating_column') return 'project_identity';
+      return 'structure';
     case 'structure':
       return nextAfterStructure(state);
     case 'multi_project_organization':
       return nextAfterMultiProjectOrganization(state);
+    case 'select_sheets':
+      return 'choose_parent';
+    case 'worksheet_projects':
+      return 'worksheet_headers';
+    case 'worksheet_headers':
+      return 'worksheet_resolve_summary';
+    case 'worksheet_resolve':
+      return 'worksheet_resolve_summary';
+    case 'worksheet_resolve_summary':
+      // Overridden by wizard when headers mismatch (worksheet_subproject_setup).
+      return 'subproject_identity';
+    case 'worksheet_subproject_setup':
+      return 'fields';
     case 'coming_soon_header_rows':
     case 'coming_soon_worksheet':
       return null;
     case 'recommend':
-      return state.structureChoice === 'one_project' ? 'choose_parent' : 'project_identity';
+      return state.structureChoice === 'one_project' ? 'select_sheets' : 'project_identity';
     case 'choose_parent':
-      return 'subproject_identity';
+      return 'header';
     case 'project_identity':
       return 'subproject_identity';
     case 'subproject_identity':
       return 'fields';
     case 'fields':
-      return resolveEffectiveImportMode(state) === 'master_hierarchy'
-        ? 'hierarchy_preview'
-        : 'review';
+      return 'review';
     case 'hierarchy_preview':
-      return 'parent_resolve';
     case 'parent_resolve':
-      return 'conflict';
     case 'conflict':
+      // Kept for back-compat if present in history; no longer in the forward path.
       return 'review';
     case 'review':
       return 'import';
@@ -299,6 +347,11 @@ export function applyStructureChoice(
     multiProjectOrganization: null,
     recommendationId: null,
     projectComposition: choice === 'multiple_projects' ? state.projectComposition : null,
+    worksheetProjects: choice === 'one_project' ? state.worksheetProjects : null,
+    worksheetResolutions: null,
+    activeWorksheetResolveId: null,
+    worksheetSubprojectQueue: null,
+    activeWorksheetSetupId: null,
     groupResolutions: {},
     activeGroupKey: null,
     activeConflictFieldKey: null,
@@ -317,6 +370,16 @@ export function applyMultiProjectOrganization(
     // Non-column layouts cannot use the existing project-column composition yet.
     projectComposition:
       organization === 'repeating_column' ? state.projectComposition : null,
+    worksheetProjects:
+      organization === 'worksheet_per_project' ? state.worksheetProjects : null,
+    worksheetResolutions:
+      organization === 'worksheet_per_project' ? state.worksheetResolutions : null,
+    activeWorksheetResolveId:
+      organization === 'worksheet_per_project' ? state.activeWorksheetResolveId : null,
+    worksheetSubprojectQueue:
+      organization === 'worksheet_per_project' ? state.worksheetSubprojectQueue : null,
+    activeWorksheetSetupId:
+      organization === 'worksheet_per_project' ? state.activeWorksheetSetupId : null,
     groupResolutions: {},
     activeGroupKey: null,
     activeConflictFieldKey: null,
@@ -332,7 +395,6 @@ export function applyRecommendation(
       ...applyStructureChoice(state, 'one_project'),
       recommendationId: recommendation.id,
       projectComposition: null,
-      multiProjectOrganization: null,
     };
   }
   return {
@@ -355,6 +417,11 @@ export function clearDownstreamAfterHeaderChange(
     projectComposition: null,
     subprojectComposition: null,
     contactComposition: null,
+    worksheetProjects: null,
+    worksheetResolutions: null,
+    activeWorksheetResolveId: null,
+    worksheetSubprojectQueue: null,
+    activeWorksheetSetupId: null,
     remainingFields: [],
     groupResolutions: {},
     activeGroupKey: null,

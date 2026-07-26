@@ -26,8 +26,8 @@ import type {
 } from '@/presentation/features/crmImport/interview/interviewState';
 import {
   goInterviewForward,
-  resolveEffectiveImportMode,
 } from '@/presentation/features/crmImport/interview/interviewState';
+import { canContinueWorksheetResolve } from '@/presentation/features/crmImport/interview/worksheetResolvePresentation';
 
 export type ReviewReadinessTone = 'ready' | 'warning' | 'blocking';
 
@@ -205,7 +205,8 @@ function sectionForIssueCode(code: string, field?: string): ReviewDisplayIssue['
  */
 export function collectClientMappingErrors(
   mappings: readonly CrmImportColumnMapping[],
-  importMode: CrmImportMode
+  importMode: CrmImportMode,
+  options?: { readonly requireParentKeyColumn?: boolean }
 ): readonly ReviewDisplayIssue[] {
   const out: ReviewDisplayIssue[] = [];
 
@@ -229,7 +230,9 @@ export function collectClientMappingErrors(
     });
   }
 
-  if (importMode === 'master_hierarchy') {
+  const requireParentKey =
+    options?.requireParentKeyColumn ?? importMode === 'master_hierarchy';
+  if (requireParentKey) {
     const hasParentKey = mappings.some(
       (m) =>
         m.destination.kind === 'standard_field' &&
@@ -296,6 +299,7 @@ export function collectReviewClientIssues(input: {
   readonly fieldsReady: boolean;
   readonly hasParent: boolean;
   readonly hasSubprojectIdentity: boolean;
+  readonly requireParentKeyColumn?: boolean;
   readonly maxRowsToScan?: number;
   readonly missingNameMessage?: (count: number) => string;
 }): {
@@ -307,13 +311,25 @@ export function collectReviewClientIssues(input: {
 } {
   const byId = new Map<string, ReviewDisplayIssue>();
 
-  for (const issue of collectClientMappingErrors(input.mappings, input.importMode)) {
+  for (const issue of collectClientMappingErrors(input.mappings, input.importMode, {
+    requireParentKeyColumn: input.requireParentKeyColumn,
+  })) {
     upsertDisplayIssue(byId, issue);
   }
 
   for (const message of input.mappingErrors ?? []) {
     const normalized = message.trim();
     if (!normalized) continue;
+    // Stale server errors from a prior Start attempt must not re-block worksheet imports
+    // that intentionally have no parent column (parents come from worksheet decisions).
+    if (
+      input.requireParentKeyColumn === false &&
+      /Master hierarchy imports require a parent name or parent identifier column/i.test(
+        normalized
+      )
+    ) {
+      continue;
+    }
     const fieldMatch =
       /^Duplicate mapping for (.+)\.$/i.exec(normalized) ??
       /^Too many columns mapped to (.+) \(maximum \d+\)\.$/i.exec(normalized);
@@ -487,6 +503,7 @@ export function reviewEditTargetForSection(
     readonly launchMode: CrmImportMode;
     readonly structureChoice: CrmImportStructureChoice | null;
     readonly effectiveMode: CrmImportMode;
+    readonly multiProjectOrganization?: string | null;
   }
 ): CrmImportInterviewScreen | null {
   switch (section) {
@@ -494,6 +511,12 @@ export function reviewEditTargetForSection(
       return 'upload';
     case 'destination':
       if (input.launchMode === 'into_existing_parent') return null;
+      if (input.multiProjectOrganization === 'worksheet_per_project') {
+        return 'worksheet_resolve_summary';
+      }
+      if (input.structureChoice === 'one_project') {
+        return 'choose_parent';
+      }
       if (input.structureChoice === 'multiple_projects' || input.effectiveMode === 'master_hierarchy') {
         return 'project_identity';
       }
@@ -514,8 +537,6 @@ export function reviewEditTargetForSection(
 export function findEarliestIncompleteInterviewScreen(
   state: CrmImportInterviewState
 ): CrmImportInterviewScreen | null {
-  const effectiveMode = resolveEffectiveImportMode(state);
-
   if (state.launchMode !== 'into_existing_parent') {
     if (state.structureChoice == null) return 'structure';
     if (state.structureChoice === 'unsure') return 'recommend';
@@ -524,26 +545,32 @@ export function findEarliestIncompleteInterviewScreen(
       if (state.multiProjectOrganization == null) return 'multi_project_organization';
       if (state.multiProjectOrganization === 'header_rows') return 'coming_soon_header_rows';
       if (state.multiProjectOrganization === 'worksheet_per_project') {
-        return 'coming_soon_worksheet';
+        if (
+          state.worksheetProjects == null ||
+          state.worksheetProjects.length === 0 ||
+          !canContinueWorksheetResolve(
+            state.worksheetProjects,
+            state.worksheetResolutions ?? {}
+          )
+        ) {
+          return 'worksheet_projects';
+        }
+      } else if (state.multiProjectOrganization === 'unsure') {
+        return 'recommend';
+      } else if (!isCompositionConfigured(state.projectComposition)) {
+        return 'project_identity';
       }
-      if (state.multiProjectOrganization === 'unsure') return 'recommend';
-      if (!isCompositionConfigured(state.projectComposition)) return 'project_identity';
     }
 
-    if (state.structureChoice === 'one_project' && state.selectedParentProjectId == null) {
-      return 'choose_parent';
+    if (state.structureChoice === 'one_project') {
+      const included = (state.worksheetProjects ?? []).some((config) => config.included);
+      if (!included) return 'select_sheets';
+      if (state.selectedParentProjectId == null) return 'choose_parent';
     }
   }
 
   if (!isCompositionConfigured(state.subprojectComposition)) return 'subproject_identity';
   if (!areFieldsReadyToContinue(state.remainingFields)) return 'fields';
-
-  if (
-    effectiveMode === 'master_hierarchy' &&
-    Object.keys(state.groupResolutions).length === 0
-  ) {
-    return 'hierarchy_preview';
-  }
 
   return null;
 }

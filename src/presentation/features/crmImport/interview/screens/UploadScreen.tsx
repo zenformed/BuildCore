@@ -31,6 +31,8 @@ export type UploadScreenProps = {
   readonly selectedFile: File | null;
   readonly parsedFile: ParsedSpreadsheetFile | null;
   readonly sheetName: string;
+  /** When false, sheet picker is deferred to a later interview step. */
+  readonly showSheetPicker?: boolean;
   readonly onFileChange: (file: File | null) => void;
   readonly onSheetChange: (sheetName: string) => void;
 };
@@ -48,6 +50,7 @@ export function UploadScreen({
   selectedFile,
   parsedFile,
   sheetName,
+  showSheetPicker = true,
   onFileChange,
   onSheetChange,
 }: UploadScreenProps): ReactElement {
@@ -200,34 +203,36 @@ export function UploadScreen({
         </ul>
 
         <div className={styles.uploadParseStatus} aria-live="polite">
-          <div
-            className={styles.uploadSheetSlot}
-            data-empty={parsedFile ? undefined : 'true'}
-            aria-hidden={parsedFile ? undefined : true}
-          >
-            <div className={styles.uploadSheetField}>
-              <label className={styles.label} htmlFor="spreadsheet-import-sheet">
-                {upload.sheetLabel}
-              </label>
-              <select
-                id="spreadsheet-import-sheet"
-                className={styles.select}
-                value={parsedFile ? sheetName : ''}
-                disabled={busy || !parsedFile}
-                onChange={(event) => onSheetChange(event.target.value)}
-              >
-                {parsedFile ? (
-                  parsedFile.sheetSummaries.map((summary) => (
-                    <option key={summary.name} value={summary.name}>
-                      {upload.sheetOptionLabel(summary.name, summary.rowCount, summary.columnCount)}
-                    </option>
-                  ))
-                ) : (
-                  <option value="">Select a file first</option>
-                )}
-              </select>
+          {showSheetPicker ? (
+            <div
+              className={styles.uploadSheetSlot}
+              data-empty={parsedFile ? undefined : 'true'}
+              aria-hidden={parsedFile ? undefined : true}
+            >
+              <div className={styles.uploadSheetField}>
+                <label className={styles.label} htmlFor="spreadsheet-import-sheet">
+                  {upload.sheetLabel}
+                </label>
+                <select
+                  id="spreadsheet-import-sheet"
+                  className={styles.select}
+                  value={parsedFile ? sheetName : ''}
+                  disabled={busy || !parsedFile}
+                  onChange={(event) => onSheetChange(event.target.value)}
+                >
+                  {parsedFile ? (
+                    parsedFile.sheetSummaries.map((summary) => (
+                      <option key={summary.name} value={summary.name}>
+                        {upload.sheetOptionLabel(summary.name, summary.rowCount, summary.columnCount)}
+                      </option>
+                    ))
+                  ) : (
+                    <option value="">Select a file first</option>
+                  )}
+                </select>
+              </div>
             </div>
-          </div>
+          ) : null}
         </div>
 
         <div className={styles.uploadTrustPanel} role="note">

@@ -20,10 +20,12 @@ import { buildImportPayloadFromInterview } from '@/presentation/features/crmImpo
 import type { CrmImportStructureRecommendation } from '@/domain/crm/spreadsheetImportStructureAnalysis';
 
 describe('interviewState', () => {
-  it('branches one project from projects-page launch to choose_parent', () => {
+  it('branches one project from projects-page launch to sheet selection', () => {
     let state = createInitialInterviewState({ launchMode: 'master_hierarchy' });
-    state = { ...state, screen: 'structure', structureChoice: 'one_project' };
-    assert.equal(getNextInterviewScreen(state), 'choose_parent');
+    state = applyStructureChoice(state, 'one_project');
+    state = { ...state, screen: 'structure' };
+    assert.equal(getNextInterviewScreen(state), 'select_sheets');
+    assert.equal(state.multiProjectOrganization, null);
     assert.equal(resolveEffectiveImportMode(state), 'into_existing_parent');
   });
 
@@ -35,15 +37,16 @@ describe('interviewState', () => {
     assert.equal(resolveEffectiveImportMode(state), 'master_hierarchy');
   });
 
-  it('routes repeating-column organization into project_identity', () => {
+  it('routes repeating-column organization into header then project_identity', () => {
     let state = createInitialInterviewState({ launchMode: 'master_hierarchy' });
     state = applyStructureChoice(state, 'multiple_projects');
     state = applyMultiProjectOrganization(state, 'repeating_column');
     state = { ...state, screen: 'multi_project_organization' };
-    assert.equal(getNextInterviewScreen(state), 'project_identity');
+    assert.equal(getNextInterviewScreen(state), 'header');
+    assert.equal(getNextInterviewScreen({ ...state, screen: 'header' }), 'project_identity');
   });
 
-  it('routes header-row and worksheet organizations to coming-soon placeholders', () => {
+  it('routes worksheet organization to worksheet Projects, headers, then resolution', () => {
     let state = createInitialInterviewState({ launchMode: 'master_hierarchy' });
     state = applyStructureChoice(state, 'multiple_projects');
 
@@ -54,8 +57,17 @@ describe('interviewState', () => {
 
     state = applyMultiProjectOrganization(state, 'worksheet_per_project');
     state = { ...state, screen: 'multi_project_organization' };
-    assert.equal(getNextInterviewScreen(state), 'coming_soon_worksheet');
-    assert.equal(getNextInterviewScreen({ ...state, screen: 'coming_soon_worksheet' }), null);
+    assert.equal(getNextInterviewScreen(state), 'worksheet_projects');
+    assert.equal(getNextInterviewScreen({ ...state, screen: 'worksheet_projects' }), 'worksheet_headers');
+    assert.equal(getNextInterviewScreen({ ...state, screen: 'worksheet_headers' }), 'worksheet_resolve_summary');
+    assert.equal(
+      getNextInterviewScreen({ ...state, screen: 'worksheet_resolve' }),
+      'worksheet_resolve_summary'
+    );
+    assert.equal(
+      getNextInterviewScreen({ ...state, screen: 'worksheet_resolve_summary' }),
+      'subproject_identity'
+    );
   });
 
   it('routes organization unsure into the recommendation flow', () => {
@@ -64,6 +76,30 @@ describe('interviewState', () => {
     state = applyMultiProjectOrganization(state, 'unsure');
     state = { ...state, screen: 'multi_project_organization' };
     assert.equal(getNextInterviewScreen(state), 'recommend');
+  });
+
+  it('skips hierarchy preview and parent resolve after fields', () => {
+    const multi = {
+      ...createInitialInterviewState({ launchMode: 'master_hierarchy' }),
+      structureChoice: 'multiple_projects' as const,
+      multiProjectOrganization: 'repeating_column' as const,
+      screen: 'fields' as const,
+    };
+    assert.equal(getNextInterviewScreen(multi), 'review');
+    assert.equal(
+      getNextInterviewScreen({ ...multi, screen: 'hierarchy_preview' }),
+      'review'
+    );
+    assert.equal(getNextInterviewScreen({ ...multi, screen: 'parent_resolve' }), 'review');
+    assert.equal(getNextInterviewScreen({ ...multi, screen: 'conflict' }), 'review');
+
+    const oneProject = {
+      ...createInitialInterviewState({ launchMode: 'master_hierarchy' }),
+      structureChoice: 'one_project' as const,
+      selectedParentProjectId: 'p1',
+      screen: 'fields' as const,
+    };
+    assert.equal(getNextInterviewScreen(oneProject), 'review');
   });
 
   it('branches unsure to recommend', () => {
@@ -85,12 +121,17 @@ describe('interviewState', () => {
     assert.equal(resolveEffectiveImportMode(state), 'into_existing_parent');
   });
 
-  it('projects-page one-project flow requires parent selection before continuing', () => {
+  it('projects-page one-project flow selects sheets then chooses parent then headers', () => {
     let state = createInitialInterviewState({ launchMode: 'master_hierarchy' });
     state = applyStructureChoice(state, 'one_project');
-    state = { ...state, screen: 'choose_parent', selectedParentProjectId: null };
-    assert.equal(state.selectedParentProjectId, null);
-    state = { ...state, selectedParentProjectId: 'p1', selectedParentLabel: 'Parent' };
+    assert.equal(state.multiProjectOrganization, null);
+    state = { ...state, screen: 'structure' };
+    assert.equal(getNextInterviewScreen(state), 'select_sheets');
+    state = { ...state, screen: 'select_sheets' };
+    assert.equal(getNextInterviewScreen(state), 'choose_parent');
+    state = { ...state, screen: 'choose_parent' };
+    assert.equal(getNextInterviewScreen(state), 'header');
+    state = { ...state, screen: 'header' };
     assert.equal(getNextInterviewScreen(state), 'subproject_identity');
   });
 
@@ -119,6 +160,8 @@ describe('interviewState', () => {
     state = applyMultiProjectOrganization(state, 'header_rows');
     assert.equal(state.multiProjectOrganization, 'header_rows');
     state = applyStructureChoice(state, 'one_project');
+    assert.equal(state.multiProjectOrganization, null);
+    state = applyStructureChoice(state, 'multiple_projects');
     assert.equal(state.multiProjectOrganization, null);
   });
 
@@ -163,11 +206,11 @@ describe('interviewState', () => {
   it('supports branch-aware back navigation via history', () => {
     let state = createInitialInterviewState({ launchMode: 'master_hierarchy' });
     state = goInterviewForward({ ...state, screen: 'upload' });
-    assert.equal(state.screen, 'header');
-    state = goInterviewForward(state);
     assert.equal(state.screen, 'structure');
+    state = goInterviewForward({ ...state, structureChoice: 'one_project' });
+    assert.equal(state.screen, 'select_sheets');
     state = goInterviewBack(state);
-    assert.equal(state.screen, 'header');
+    assert.equal(state.screen, 'structure');
     state = jumpInterviewTo(state, 'fields');
     assert.equal(state.screen, 'fields');
   });
@@ -180,6 +223,17 @@ describe('interviewState', () => {
       structureChoice: 'one_project',
       selectedParentProjectId: 'p1',
       selectedParentLabel: 'Parent',
+      worksheetProjects: [
+        {
+          worksheetId: 'sheet:0:Sheet1',
+          worksheetName: 'Sheet1',
+          included: true,
+          projectName: 'Parent',
+          headerRowIndex: 0,
+          dataRowCount: 2,
+          columnCount: 3,
+        },
+      ],
       subprojectComposition: { columnIndexes: [0], separator: ' ' },
       remainingFields: [
         { sourceIndex: 1, destinationKey: 'standard:subproject:notes', placement: 'subproject' },
@@ -289,6 +343,51 @@ describe('buildImportPayloadFromInterview', () => {
       payload.rows[0]?.cells[0]?.includes('Reese Reese'),
       false,
       'contact/subproject compose must read original cells, not already-injected values'
+    );
+  });
+
+  it('injects parent_name from worksheet Project decisions', () => {
+    const state = {
+      ...createInitialInterviewState({ launchMode: 'master_hierarchy' }),
+      structureChoice: 'multiple_projects' as const,
+      multiProjectOrganization: 'worksheet_per_project' as const,
+      worksheetProjects: [
+        {
+          worksheetId: 'sheet:0:Oak',
+          worksheetName: 'Oak',
+          included: true,
+          projectName: 'Oak Ridge',
+          headerRowIndex: 0,
+          dataRowCount: 1,
+          columnCount: 2,
+        },
+      ],
+      worksheetResolutions: {
+        'sheet:0:Oak': {
+          kind: 'create_new' as const,
+          existingProjectId: null,
+          existingProjectLabel: null,
+          confirmed: true,
+        },
+      },
+      activeWorksheetSetupId: 'sheet:0:Oak',
+      subprojectComposition: { columnIndexes: [0] as const, separator: ' ' as const },
+      remainingFields: [],
+    };
+    const payload = buildImportPayloadFromInterview({
+      state,
+      headers: ['Unit', 'Notes'],
+      rows: [{ sourceRowIndex: 1, cells: { 0: '101', 1: 'ok' } }],
+    });
+    assert.equal(payload.importMode, 'master_hierarchy');
+    assert.equal(payload.rows[0]?.cells[2], 'Oak Ridge');
+    assert.ok(
+      payload.mappings.some(
+        (m) =>
+          m.destination.kind === 'standard_field' &&
+          m.destination.key === 'parent_name' &&
+          m.sourceIndex === 2
+      )
     );
   });
 });

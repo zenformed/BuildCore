@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState, type ReactElement } from 'react';
+import { LuFileSpreadsheet } from 'react-icons/lu';
 import { resolvePipelineStageScopeForProject } from '@/domain/buildcore/orgPipelineStages';
 import { useRouter } from 'next/navigation';
 import {
@@ -37,6 +38,7 @@ import { SubprojectsTableBulkActions } from '@/presentation/components/CrmProjec
 import { CrmProjectDeleteWorkflowDialog } from '@/presentation/components/CrmProjects/CrmProjectDeleteWorkflowDialog';
 import { CreateCrmProjectModal } from '@/presentation/components/CrmProjects/CreateCrmProjectModal';
 import { SpreadsheetImportWizard } from '@/presentation/components/CrmImport/SpreadsheetImportWizard';
+import { SpreadsheetImportMobileNoticeDialog } from '@/presentation/components/CrmImport/SpreadsheetImportMobileNoticeDialog';
 import importStyles from '@/presentation/components/CrmImport/SpreadsheetImportWizard.module.css';
 import { DetailToast } from '@/presentation/components/CrmProjectDetail/DetailToast';
 import { ConfirmModal } from '@/presentation/components/ConfirmModal';
@@ -101,6 +103,7 @@ export function CrmProjectsPipeline({
   const [listView, setListView] = useState<DashboardListViewMode>(DEFAULT_DASHBOARD_LIST_VIEW_MODE);
   const [createOpen, setCreateOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
+  const [importMobileNoticeOpen, setImportMobileNoticeOpen] = useState(false);
   const [pendingBulkComplete, setPendingBulkComplete] = useState(false);
   const [bulkActionBusy, setBulkActionBusy] = useState(false);
   const {
@@ -555,13 +558,27 @@ export function CrmProjectsPipeline({
     !isMemberRole && isProjectsView ? (
       <button
         type="button"
-        className={importStyles.toolbarSecondaryButton}
+        className={
+          isMobileLayout
+            ? importStyles.toolbarIconButton
+            : importStyles.toolbarSecondaryButton
+        }
         title={panelCopy.importSpreadsheet}
         aria-label={panelCopy.importSpreadsheetAriaLabel}
         disabled={importOpen}
-        onClick={() => setImportOpen(true)}
+        onClick={() => {
+          if (isMobileLayout) {
+            setImportMobileNoticeOpen(true);
+            return;
+          }
+          setImportOpen(true);
+        }}
       >
-        {panelCopy.importSpreadsheet}
+        {isMobileLayout ? (
+          <LuFileSpreadsheet size={16} strokeWidth={2} aria-hidden />
+        ) : (
+          panelCopy.importSpreadsheet
+        )}
       </button>
     ) : null;
 
@@ -762,6 +779,10 @@ export function CrmProjectsPipeline({
           void refetch();
           void onProjectCreated?.();
         }}
+      />
+      <SpreadsheetImportMobileNoticeDialog
+        isOpen={importMobileNoticeOpen && !isMemberRole}
+        onClose={() => setImportMobileNoticeOpen(false)}
       />
       <CrmProjectDeleteWorkflowDialog
         pendingProject={pendingDeleteProject}

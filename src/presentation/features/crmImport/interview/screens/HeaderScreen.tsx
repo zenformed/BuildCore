@@ -14,6 +14,8 @@ export type HeaderScreenProps = {
   readonly headerRowIndex: number;
   readonly detectedHeaderRowIndex: number;
   readonly truncated: boolean;
+  /** When false, omit page heading/hint (used inside worksheet multi-sheet layout). */
+  readonly showIntro?: boolean;
   readonly onHeaderRowChange: (index: number) => void;
 };
 
@@ -23,6 +25,7 @@ export function HeaderScreen({
   headerRowIndex,
   detectedHeaderRowIndex,
   truncated,
+  showIntro = true,
   onHeaderRowChange,
 }: HeaderScreenProps): ReactElement {
   const copy = content.crm.spreadsheetImport;
@@ -51,14 +54,16 @@ export function HeaderScreen({
     panel.tone === 'success' ? LuCircleCheck : panel.tone === 'warning' ? LuTriangleAlert : LuColumns3;
 
   return (
-    <div className={styles.headerScreen}>
-      <div className={styles.headerScreenIntro}>
-        <h2 className={styles.headerScreenHeading}>
-          <LuColumns3 className={styles.headerScreenHeadingIcon} aria-hidden size={22} />
-          <span>{header.heading}</span>
-        </h2>
-        <p className={styles.headerScreenHint}>{header.hint}</p>
-      </div>
+    <div className={showIntro ? styles.headerScreen : styles.headerScreenEmbedded}>
+      {showIntro ? (
+        <div className={styles.headerScreenIntro}>
+          <h2 className={styles.headerScreenHeading}>
+            <LuColumns3 className={styles.headerScreenHeadingIcon} aria-hidden size={22} />
+            <span>{header.heading}</span>
+          </h2>
+          <p className={styles.headerScreenHint}>{header.hint}</p>
+        </div>
+      ) : null}
 
       <div
         className={[

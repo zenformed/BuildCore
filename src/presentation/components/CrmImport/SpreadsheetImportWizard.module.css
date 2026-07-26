@@ -107,6 +107,12 @@
 .scrollFit > .structureScreen,
 .scrollFit > .multiOrgScreen,
 .scrollFit > .comingSoonScreen,
+.scrollFit > .selectSheetsScreen,
+.scrollFit > .worksheetProjectsScreen,
+.scrollFit > .worksheetHeadersScreen,
+.scrollFit > .worksheetResolveScreen,
+.scrollFit > .worksheetResolveFocusScreen,
+.scrollFit > .worksheetResolveSummaryScreen,
 .scrollFit > .projectIdentityScreen,
 .scrollFit > .chooseParentScreen,
 .scrollFit > .subprojectIdentityScreen,
@@ -225,9 +231,20 @@
   flex-direction: column;
   gap: 0.85rem;
   width: 100%;
-  max-width: 100%;
+  max-width: 68rem;
+  margin: 0 auto;
   min-height: 0;
   height: 100%;
+}
+
+.headerScreenEmbedded {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  width: 100%;
+  min-height: 0;
+  height: 100%;
+  flex: 1;
 }
 
 .headerScreenIntro {
@@ -937,6 +954,46 @@
   cursor: not-allowed;
 }
 
+.toolbarIconButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 1.75rem;
+  height: 1.75rem;
+  padding: 0;
+  color: var(--color-text-muted, #64748b);
+  background: var(--color-bg, #fff);
+  border: 1px solid var(--color-border, #e2e8f0);
+  border-radius: 0.375rem;
+  cursor: pointer;
+  transition:
+    background-color 0.12s ease,
+    border-color 0.12s ease,
+    color 0.12s ease;
+}
+
+.toolbarIconButton:hover:not(:disabled) {
+  color: var(--color-text, #0f172a);
+  background: var(--color-muted, #f1f5f9);
+}
+
+.toolbarIconButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+:global([data-theme='dark']) .toolbarIconButton {
+  background: var(--theme-surface-card, #161922);
+  border-color: #3d3e4a;
+  color: #94a3b8;
+}
+
+:global([data-theme='dark']) .toolbarIconButton:hover:not(:disabled) {
+  color: #e2e8f0;
+  background: #1f222a;
+}
+
 .excludedRowToggle {
   display: inline-flex;
   align-items: center;
@@ -1004,6 +1061,268 @@
 }
 
 /* ---------------------------------------------------------------------- */
+/* Select sheets (one-project path)                                          */
+/* ---------------------------------------------------------------------- */
+
+.selectSheetsScreen {
+  display: grid;
+  grid-template-columns: minmax(12rem, 0.8fr) minmax(0, 1fr);
+  gap: 3.5rem;
+  align-items: stretch;
+  width: 100%;
+  max-width: 78rem;
+  margin: 0 auto;
+  padding: 0;
+  min-height: 0;
+  height: 100%;
+}
+
+.selectSheetsVisual {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 0;
+  height: 100%;
+  align-self: stretch;
+}
+
+.selectSheetsIllustration {
+  width: 100%;
+  max-width: min(28rem, 100%);
+  max-height: min(28rem, 100%);
+  height: auto;
+  object-fit: contain;
+}
+
+.selectSheetsContent {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-self: center;
+  gap: 1rem;
+  min-width: 0;
+  min-height: 0;
+  height: 90%;
+  max-height: 90%;
+}
+
+.selectSheetsMain {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 1rem;
+  flex: 1 1 auto;
+  min-height: 0;
+  width: 100%;
+}
+
+.selectSheetsIntro {
+  text-align: left;
+  width: 100%;
+  flex-shrink: 0;
+}
+
+.selectSheetsHeading {
+  margin: 0 0 0.35rem;
+  font-size: clamp(1.35rem, 1.8vw, 1.7rem);
+  font-weight: 700;
+  line-height: 1.25;
+  letter-spacing: -0.02em;
+  color: var(--theme-text-main, var(--color-text, #0f172a));
+}
+
+.selectSheetsSubheading {
+  margin: 0;
+  font-size: 0.9rem;
+  line-height: 1.45;
+  color: var(--theme-text-muted, var(--color-text-muted, #64748b));
+}
+
+.selectSheetsPanel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  flex: 0 0 auto;
+  height: min(50%, 20rem);
+  max-height: 50%;
+  min-height: 10rem;
+  width: 100%;
+  padding: 0.85rem;
+  border: 1px solid var(--theme-border-main, #e2e8f0);
+  border-radius: 0.85rem;
+  background: var(--theme-surface-card, #fff);
+  overflow: hidden;
+}
+
+:global([data-theme='dark']) .selectSheetsPanel {
+  background: #1f222a;
+  border-color: #3d3e4a;
+}
+
+.selectSheetsListMeta {
+  margin: 0;
+  flex-shrink: 0;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--theme-text-muted, var(--color-text-muted, #64748b));
+}
+
+.selectSheetsList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  flex: 1 1 auto;
+  overflow: auto;
+  min-height: 0;
+  overscroll-behavior: contain;
+}
+
+.selectSheetsRow {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  padding: 0.75rem 0.85rem;
+  border: 1px solid var(--theme-border-main, #e2e8f0);
+  border-radius: 0.7rem;
+  background: color-mix(in srgb, var(--theme-surface-card, #fff) 92%, #000 2%);
+  cursor: pointer;
+}
+
+:global([data-theme='dark']) .selectSheetsRow {
+  background: #161922;
+  border-color: #3d3e4a;
+}
+
+.selectSheetsRowSelected {
+  border-color: var(--color-primary, #2563eb);
+  background: color-mix(in srgb, var(--color-primary, #2563eb) 10%, transparent);
+}
+
+.selectSheetsRowDisabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.selectSheetsCheckbox {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.selectSheetsCheckboxFace {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.15rem;
+  height: 1.15rem;
+  flex-shrink: 0;
+  border-radius: 0.3rem;
+  border: 1.5px solid var(--theme-border-main, #cbd5e1);
+  background: var(--theme-surface-card, #fff);
+  color: #fff;
+}
+
+.selectSheetsRowSelected .selectSheetsCheckboxFace {
+  border-color: var(--color-primary, #2563eb);
+  background: var(--color-primary, #2563eb);
+}
+
+.selectSheetsSheetIcon {
+  flex-shrink: 0;
+  color: var(--color-primary, #2563eb);
+}
+
+.selectSheetsRowCopy {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  min-width: 0;
+}
+
+.selectSheetsSheetName {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--theme-text-main, var(--color-text, #0f172a));
+}
+
+.selectSheetsSheetMeta {
+  font-size: 0.78rem;
+  color: var(--theme-text-muted, var(--color-text-muted, #64748b));
+}
+
+.selectSheetsTip {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.55rem;
+  flex-shrink: 0;
+  padding: 0.75rem 0.85rem;
+  border-radius: 0.65rem;
+  background: color-mix(in srgb, var(--color-primary, #2563eb) 8%, transparent);
+  border: 1px solid color-mix(in srgb, var(--color-primary, #2563eb) 18%, transparent);
+}
+
+.selectSheetsTipIcon {
+  flex-shrink: 0;
+  margin-top: 0.1rem;
+  color: var(--color-primary, #2563eb);
+}
+
+.selectSheetsTipText {
+  margin: 0;
+  font-size: 0.8125rem;
+  line-height: 1.45;
+  color: var(--theme-text-muted, var(--color-text-muted, #64748b));
+}
+
+@media (max-width: 1100px) {
+  .selectSheetsScreen {
+    grid-template-columns: minmax(10rem, 0.8fr) minmax(0, 1fr);
+    gap: 3rem;
+  }
+
+  .selectSheetsIllustration {
+    max-width: 22rem;
+    max-height: 22rem;
+  }
+}
+
+@media (max-width: 767px) {
+  .selectSheetsScreen {
+    grid-template-columns: 1fr;
+    gap: 1.25rem;
+    height: auto;
+  }
+
+  .selectSheetsVisual {
+    min-height: 0;
+    height: auto;
+    order: -1;
+  }
+
+  .selectSheetsIllustration {
+    max-width: 16rem;
+    max-height: 14rem;
+  }
+
+  .selectSheetsContent {
+    height: auto;
+    max-height: none;
+    min-height: 18rem;
+    align-self: stretch;
+  }
+
+  .selectSheetsPanel {
+    flex: none;
+    height: min(14rem, 40vh);
+    max-height: min(14rem, 40vh);
+  }
+}
+
+/* ---------------------------------------------------------------------- */
 /* Choose parent — one-Project destination picker                          */
 /* ---------------------------------------------------------------------- */
 
@@ -1012,6 +1331,8 @@
   flex-direction: column;
   gap: 0.9rem;
   width: 100%;
+  max-width: 68rem;
+  margin: 0 auto;
   min-height: 0;
   height: 100%;
 }
@@ -2543,6 +2864,8 @@
   flex-direction: column;
   gap: 1.15rem;
   width: 100%;
+  max-width: 68rem;
+  margin: 0 auto;
   min-height: 0;
   height: 100%;
 }
@@ -2918,6 +3241,13 @@
   color: inherit;
 }
 
+.projectIdentityGroupButtonCentered {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 13rem minmax(0, 1fr);
+  column-gap: 0.75rem;
+  gap: 0;
+}
+
 .projectIdentityGroupButton:hover {
   background: color-mix(in srgb, var(--color-primary, #2563eb) 6%, transparent);
 }
@@ -2925,6 +3255,14 @@
 .projectIdentityGroupButton:focus-visible {
   outline: 2px solid var(--color-focus, #93c5fd);
   outline-offset: -2px;
+}
+
+.projectIdentityGroupLeading {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  flex: 1;
+  min-width: 0;
 }
 
 .projectIdentityGroupIcon {
@@ -2956,9 +3294,45 @@
   white-space: nowrap;
 }
 
+.projectIdentityGroupCompanionSlot {
+  justify-self: stretch;
+  min-width: 0;
+  width: 100%;
+}
+
+.projectIdentityGroupCompanion {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.1rem;
+  width: 100%;
+  text-align: left;
+  font-size: 0.78rem;
+  font-weight: 500;
+  line-height: 1.3;
+  color: var(--theme-text-muted, var(--color-text-muted, #64748b));
+}
+
+.projectIdentityGroupCompanion > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+}
+
 .projectIdentityGroupMeta {
   font-size: 0.72rem;
   color: var(--theme-text-muted, var(--color-text-muted, #64748b));
+}
+
+.projectIdentityGroupTrailing {
+  display: inline-flex;
+  align-items: center;
+  justify-self: end;
+  gap: 0.45rem;
+  flex-shrink: 0;
+  margin-left: auto;
+  min-width: 0;
 }
 
 .projectIdentityGroupCount {
@@ -3154,6 +3528,45 @@
   }
 }
 
+.subprojectIdentityPreviewNameInPanel {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 700;
+  line-height: 1.35;
+  color: var(--theme-text-main, var(--color-text, #0f172a));
+}
+
+.subprojectIdentityLiveExamplesChipsInPanel {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.subprojectIdentityHierarchyListInPanel {
+  margin: 0;
+  padding-left: 1.1rem;
+  font-size: 0.85rem;
+  line-height: 1.45;
+  color: var(--theme-text-muted, var(--color-text-muted, #64748b));
+}
+
+.subprojectIdentityGuidanceAsSuccess {
+  border-color: color-mix(in srgb, var(--color-success, #16a34a) 35%, transparent) !important;
+  background: color-mix(in srgb, var(--color-success, #16a34a) 10%, transparent) !important;
+}
+
+.subprojectIdentityGuidanceAsSuccess .projectIdentityWarningTitle {
+  color: var(--color-success, #16a34a);
+}
+
+.projectIdentityColumnRow[role='checkbox'] {
+  cursor: pointer;
+}
+
+.projectIdentityColumnRow[role='checkbox'] .projectIdentityColumnLabel {
+  cursor: inherit;
+}
+
 /* ---------------------------------------------------------------------- */
 /* Subproject identity                                                     */
 /* ---------------------------------------------------------------------- */
@@ -3163,6 +3576,8 @@
   flex-direction: column;
   gap: 0.9rem;
   width: 100%;
+  max-width: 68rem;
+  margin: 0 auto;
   min-height: 0;
   height: 100%;
 }
@@ -3739,6 +4154,8 @@
   flex-direction: column;
   gap: 0.75rem;
   width: 100%;
+  max-width: 68rem;
+  margin: 0 auto;
   min-height: 0;
   height: 100%;
 }
@@ -5959,6 +6376,1466 @@
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+/* ---------------------------------------------------------------------- */
+/* Worksheet headers — per-sheet header confirmation                       */
+/* ---------------------------------------------------------------------- */
+
+.worksheetHeadersScreen {
+  --wp-card-bg: #fff;
+  --wp-card-border: var(--theme-border-main, #e2e8f0);
+  --wp-input-bg: #fff;
+  --wp-input-border: var(--theme-border-main, #e2e8f0);
+  --wp-summary-bg: var(--theme-bg-surface, #f8fafc);
+  display: grid;
+  grid-template-columns: minmax(14rem, 18rem) minmax(0, 1fr);
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: 1rem;
+  min-height: 0;
+  flex: 1;
+  width: min(100%, 72rem);
+  margin-inline: auto;
+  padding-inline: clamp(0.75rem, 4vw + 1.5rem, 9.5rem);
+  box-sizing: border-box;
+}
+
+:global([data-theme='dark']) .worksheetHeadersScreen {
+  --wp-card-bg: #1f222a;
+  --wp-card-border: #3d3e4a;
+  --wp-input-bg: #161922;
+  --wp-input-border: #3d3e4a;
+  --wp-summary-bg: #20273a;
+}
+
+.worksheetHeadersIntro {
+  grid-column: 1 / -1;
+  text-align: left;
+  width: 100%;
+  margin: 0;
+  padding: 0.15rem 0.5rem 0;
+  box-sizing: border-box;
+}
+
+.worksheetHeadersHeading {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  margin: 0 0 0.35rem;
+  font-size: clamp(1.15rem, 1.8vw, 1.4rem);
+  font-weight: 700;
+  line-height: 1.3;
+  letter-spacing: -0.02em;
+  color: var(--theme-text-main, var(--color-text, #0f172a));
+}
+
+.worksheetHeadersHeadingIcon {
+  flex-shrink: 0;
+  color: var(--color-primary, #2563eb);
+}
+
+.worksheetHeadersHint {
+  margin: 0;
+  max-width: none;
+  width: 100%;
+  font-size: 0.875rem;
+  line-height: 1.45;
+  color: var(--theme-text-muted, var(--color-text-muted, #64748b));
+}
+
+.worksheetHeadersDetail {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  min-width: 0;
+  min-height: 0;
+  height: 100%;
+  overflow: hidden;
+  padding: 1rem 1.1rem;
+  border: 1px solid var(--wp-card-border);
+  border-radius: 0.85rem;
+  background: var(--wp-card-bg);
+}
+
+@media (max-width: 767px) {
+  .worksheetHeadersScreen {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto minmax(0, 1fr);
+    padding-inline: 0.5rem;
+  }
+
+  .worksheetHeadersScreen .worksheetProjectsSidebar {
+    max-height: 12rem;
+  }
+}
+
+/* ---------------------------------------------------------------------- */
+/* Worksheet-based Projects                                                */
+/* ---------------------------------------------------------------------- */
+/* Worksheet-based Projects interview (master-detail)                        */
+/* ---------------------------------------------------------------------- */
+
+.worksheetProjectsScreen {
+  --wp-card-bg: #fff;
+  --wp-card-border: var(--theme-border-main, #e2e8f0);
+  --wp-input-bg: #fff;
+  --wp-input-border: var(--theme-border-main, #e2e8f0);
+  --wp-summary-bg: var(--theme-bg-surface, #f8fafc);
+  display: grid;
+  grid-template-columns: minmax(14rem, 18rem) minmax(0, 1fr);
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: 1rem;
+  min-height: 0;
+  flex: 1;
+  width: min(100%, 72rem);
+  margin-inline: auto;
+  padding-inline: clamp(0.75rem, 4vw + 1.5rem, 9.5rem);
+  box-sizing: border-box;
+}
+
+:global([data-theme='dark']) .worksheetProjectsScreen {
+  --wp-card-bg: #1f222a;
+  --wp-card-border: #3d3e4a;
+  --wp-input-bg: #161922;
+  --wp-input-border: #3d3e4a;
+  --wp-summary-bg: #20273a;
+}
+
+.worksheetProjectsIntro {
+  grid-column: 1 / -1;
+  text-align: left;
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  padding: 0.15rem 0.5rem 0;
+  box-sizing: border-box;
+}
+
+.worksheetProjectsPageHeading {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  margin: 0;
+  font-size: clamp(1.15rem, 1.8vw, 1.4rem);
+  font-weight: 700;
+  line-height: 1.3;
+  letter-spacing: -0.02em;
+  color: var(--theme-text-main, var(--color-text, #0f172a));
+}
+
+.worksheetProjectsPageHeadingIcon {
+  flex-shrink: 0;
+  color: var(--color-primary, #2563eb);
+}
+
+.worksheetProjectsPageSubheading {
+  margin: 0.35rem 0 0;
+  width: 100%;
+  max-width: none;
+  font-size: 0.875rem;
+  line-height: 1.45;
+  color: var(--theme-text-muted, var(--color-text-muted, #64748b));
+}
+
+.worksheetProjectsSidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  min-height: 0;
+  min-width: 0;
+  padding: 0.75rem;
+  border: 1px solid var(--wp-card-border);
+  border-radius: 0.85rem;
+  background: var(--wp-card-bg);
+}
+
+.worksheetProjectsListHeading {
+  margin: 0;
+  flex-shrink: 0;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: var(--theme-text-main, var(--color-text, #0f172a));
+}
+
+.worksheetProjectsList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  min-height: 0;
+  overflow: auto;
+  padding-right: 0.15rem;
+}
+
+.worksheetProjectsListItem {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.45rem 0.5rem;
+  border: 1px solid transparent;
+  border-radius: 0.7rem;
+  background: transparent;
+}
+
+.worksheetProjectsListItemCurrent {
+  border-color: var(--color-primary, #2563eb);
+  background: color-mix(in srgb, var(--color-primary, #2563eb) 10%, transparent);
+}
+
+.worksheetProjectsListItemMuted {
+  opacity: 0.72;
+}
+
+.worksheetProjectsListItemMain {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 1;
+  min-width: 0;
+  padding: 0.15rem 0;
+  border: none;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.worksheetProjectsListItemMain:focus-visible {
+  outline: 2px solid var(--color-focus, #93c5fd);
+  outline-offset: 2px;
+  border-radius: 0.4rem;
+}
+
+.worksheetProjectsListItemCopy {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  min-width: 0;
+  flex: 1;
+}
+
+.worksheetProjectsListItemMeta {
+  font-size: 0.7rem;
+  color: var(--theme-text-muted, var(--color-text-muted, #64748b));
+}
+
+.worksheetProjectsCheckboxLabel {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.worksheetProjectsCheckbox {
+  position: absolute;
+  opacity: 0;
+  width: 1px;
+  height: 1px;
+  pointer-events: none;
+}
+
+.worksheetProjectsCheckboxFace {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.15rem;
+  height: 1.15rem;
+  border-radius: 0.3rem;
+  border: 1.5px solid var(--wp-input-border);
+  background: var(--wp-input-bg);
+  color: #fff;
+}
+
+.worksheetProjectsCheckbox:checked + .worksheetProjectsCheckboxFace {
+  border-color: var(--color-primary, #2563eb);
+  background: var(--color-primary, #2563eb);
+}
+
+.worksheetProjectsCheckbox:focus-visible + .worksheetProjectsCheckboxFace {
+  outline: 2px solid var(--color-focus, #93c5fd);
+  outline-offset: 2px;
+}
+
+.worksheetProjectsCheckbox:disabled + .worksheetProjectsCheckboxFace {
+  opacity: 0.5;
+}
+
+.worksheetProjectsSheetIcon {
+  flex-shrink: 0;
+  color: var(--color-success, #16a34a);
+}
+
+.worksheetProjectsSheetName {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.8125rem;
+  font-weight: 650;
+  color: var(--theme-text-main, var(--color-text, #0f172a));
+}
+
+.worksheetProjectsStatusReady,
+.worksheetProjectsStatusWarn,
+.worksheetProjectsStatusSkipped {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  flex-shrink: 0;
+  font-size: 0.7rem;
+  font-weight: 650;
+  white-space: nowrap;
+}
+
+.worksheetProjectsStatusReady {
+  color: var(--color-success, #16a34a);
+}
+
+.worksheetProjectsStatusWarn {
+  color: #d97706;
+}
+
+.worksheetProjectsStatusSkipped {
+  color: var(--theme-text-muted, var(--color-text-muted, #64748b));
+}
+
+.worksheetProjectsDetail {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  padding: 1rem 1.1rem;
+  border: 1px solid var(--wp-card-border);
+  border-radius: 0.85rem;
+  background: var(--wp-card-bg);
+}
+
+.worksheetProjectsDetailHeader {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.worksheetProjectsDetailIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: 0.75rem;
+  color: var(--color-success, #16a34a);
+  background: color-mix(in srgb, var(--color-success, #16a34a) 14%, transparent);
+  flex-shrink: 0;
+}
+
+.worksheetProjectsDetailTitle {
+  margin: 0;
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--theme-text-main, var(--color-text, #0f172a));
+}
+
+.worksheetProjectsDetailMeta {
+  margin: 0.15rem 0 0;
+  font-size: 0.8125rem;
+  color: var(--theme-text-muted, var(--color-text-muted, #64748b));
+}
+
+.worksheetProjectsFieldBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.worksheetProjectsFieldLabel {
+  font-size: 0.8125rem;
+  font-weight: 650;
+  color: var(--theme-text-main, var(--color-text, #0f172a));
+}
+
+.worksheetProjectsFieldHint {
+  margin: 0;
+  font-size: 0.75rem;
+  color: var(--theme-text-muted, var(--color-text-muted, #64748b));
+}
+
+.worksheetProjectsProjectToolbar {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  flex-wrap: wrap;
+}
+
+.worksheetProjectsProjectSearch {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  flex: 1 1 14rem;
+  min-width: 0;
+  padding: 0;
+  border: 1px solid var(--wp-input-border);
+  border-radius: 0.55rem;
+  background-color: var(--wp-input-bg);
+  color: var(--theme-text-muted, var(--color-text-muted, #64748b));
+  overflow: hidden;
+}
+
+.worksheetProjectsProjectSearch svg {
+  flex-shrink: 0;
+  margin-left: 0.7rem;
+}
+
+/*
+ * Beat styles/globals.css:
+ *   input:not([type=checkbox]):not([type=radio]) { background-color: var(--theme-form-input-bg) !important }
+ * Dark token is #1f222a (same as card) — must lose so #161922 shows.
+ * Specificity (0,3,1) > globals (0,2,1). Input is transparent; label carries --wp-input-bg.
+ */
+.worksheetProjectsScreen label.worksheetProjectsProjectSearch input.worksheetProjectsProjectSearchInput {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  padding: 0.55rem 0.7rem 0.55rem 0.45rem;
+  border: none !important;
+  border-radius: 0;
+  background: transparent !important;
+  background-color: transparent !important;
+  color: var(--theme-text-main, var(--color-text, #0f172a)) !important;
+  font: inherit;
+  font-size: 0.875rem;
+  box-shadow: none !important;
+  outline: none;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.worksheetProjectsScreen label.worksheetProjectsProjectSearch input.worksheetProjectsProjectSearchInput::placeholder {
+  color: var(--theme-text-muted, var(--color-text-muted, #64748b));
+}
+
+.worksheetProjectsScreen label.worksheetProjectsProjectSearch input.worksheetProjectsProjectSearchInput::-webkit-search-decoration,
+.worksheetProjectsScreen label.worksheetProjectsProjectSearch input.worksheetProjectsProjectSearchInput::-webkit-search-cancel-button,
+.worksheetProjectsScreen label.worksheetProjectsProjectSearch input.worksheetProjectsProjectSearchInput::-webkit-search-results-button,
+.worksheetProjectsScreen label.worksheetProjectsProjectSearch input.worksheetProjectsProjectSearchInput::-webkit-search-results-decoration {
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.worksheetProjectsScreen label.worksheetProjectsProjectSearch input.worksheetProjectsProjectSearchInput:focus {
+  outline: none;
+}
+
+.worksheetProjectsProjectSearch:focus-within {
+  outline: 2px solid var(--color-focus, #93c5fd);
+  outline-offset: 1px;
+}
+
+.worksheetProjectsNewProjectButton {
+  flex-shrink: 0;
+  padding: 0.55rem 0.85rem;
+  border-radius: 0.55rem;
+  border: 1.5px solid var(--color-success, #16a34a);
+  background: transparent;
+  color: var(--color-success, #16a34a);
+  font: inherit;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.worksheetProjectsNewProjectButton:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--color-success, #16a34a) 10%, transparent);
+}
+
+.worksheetProjectsNewProjectButton:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.worksheetProjectsSelectedProject {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.75rem 0.85rem;
+  border: 1px solid var(--wp-card-border);
+  border-radius: 0.75rem;
+  background: color-mix(in srgb, var(--color-primary, #2563eb) 8%, var(--wp-card-bg));
+}
+
+.worksheetProjectsSelectedTitle {
+  margin: 0;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  color: var(--theme-text-muted, var(--color-text-muted, #64748b));
+}
+
+.worksheetProjectsSelectedName {
+  margin: 0.2rem 0 0;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--theme-text-main, var(--color-text, #0f172a));
+}
+
+.worksheetProjectsSelectedMeta {
+  margin: 0.15rem 0 0;
+  font-size: 0.78rem;
+  color: var(--theme-text-muted, var(--color-text-muted, #64748b));
+}
+
+.worksheetProjectsPickerList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  height: 11rem;
+  min-height: 11rem;
+  overflow: auto;
+  padding: 0.35rem;
+  border: 1px solid var(--wp-input-border);
+  border-radius: 0.65rem;
+  background: var(--wp-input-bg);
+  box-sizing: border-box;
+}
+
+.worksheetProjectsPickerEmpty {
+  margin: 0;
+  padding: 0.65rem;
+  font-size: 0.8125rem;
+  color: var(--theme-text-muted, var(--color-text-muted, #64748b));
+}
+
+.worksheetProjectsPickerRow {
+  display: flex;
+  width: 100%;
+  padding: 0.55rem 0.65rem;
+  border: 1px solid transparent;
+  border-radius: 0.5rem;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.worksheetProjectsPickerRow:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--color-muted, #f8fafc) 80%, transparent);
+}
+
+.worksheetProjectsPickerRowSelected {
+  border-color: var(--color-primary, #2563eb);
+  background: color-mix(in srgb, var(--color-primary, #2563eb) 8%, transparent);
+}
+
+.worksheetProjectsPickerRowMain {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+  font-size: 0.78rem;
+  color: var(--theme-text-muted, var(--color-text-muted, #64748b));
+}
+
+.worksheetProjectsPickerRowMain strong {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.8125rem;
+  font-weight: 650;
+  color: var(--theme-text-main, var(--color-text, #0f172a));
+}
+
+.worksheetProjectsHeaderSelectWrap {
+  position: relative;
+  display: inline-block;
+  width: 100%;
+  max-width: 5.5rem;
+}
+
+/* Beat globals.css select { background-color: … !important } — same specificity race as search. */
+.worksheetProjectsScreen .worksheetProjectsHeaderSelectWrap select.worksheetProjectsHeaderSelect {
+  box-sizing: border-box;
+  width: 100%;
+  padding: 0.45rem 1.75rem 0.45rem 0.55rem;
+  border-radius: 0.5rem;
+  border: 1px solid var(--wp-input-border);
+  background-color: var(--wp-input-bg) !important;
+  background-image: none !important;
+  color: var(--theme-text-main, var(--color-text, #0f172a)) !important;
+  font: inherit;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  cursor: pointer;
+}
+
+:global([data-theme='dark']) .worksheetProjectsScreen .worksheetProjectsHeaderSelectWrap select.worksheetProjectsHeaderSelect {
+  color: #e2e8f0 !important;
+}
+
+.worksheetProjectsHeaderSelectChevron {
+  position: absolute;
+  right: 0.45rem;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+  color: var(--theme-text-muted, var(--color-text-muted, #64748b));
+}
+
+:global([data-theme='dark']) .worksheetProjectsHeaderSelectChevron {
+  color: #94a3b8;
+}
+
+.worksheetProjectsScreen .worksheetProjectsHeaderSelectWrap select.worksheetProjectsHeaderSelect:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.worksheetProjectsHeaderSelectWrap:has(select:disabled) .worksheetProjectsHeaderSelectChevron {
+  opacity: 0.7;
+}
+
+.worksheetProjectsEmDash {
+  color: var(--theme-text-muted, var(--color-text-muted, #64748b));
+}
+
+.worksheetProjectsSummaryCard {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 1.15rem;
+  padding: 0.9rem 1rem;
+  border: 1px solid var(--wp-input-border);
+  border-radius: 0.85rem;
+  background: var(--wp-summary-bg);
+}
+
+.worksheetProjectsSummaryBlock {
+  margin-top: auto;
+  flex-shrink: 0;
+}
+
+.worksheetProjectsSummaryIcon {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-primary, #2563eb);
+}
+
+.worksheetProjectsSummaryContent {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  min-width: 0;
+  flex: 1;
+}
+
+.worksheetProjectsSummaryGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.worksheetProjectsSummaryGrid span {
+  display: block;
+  font-size: 0.7rem;
+  font-weight: 650;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  color: var(--theme-text-muted, var(--color-text-muted, #64748b));
+}
+
+.worksheetProjectsSummaryGrid strong {
+  display: block;
+  margin-top: 0.2rem;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--theme-text-main, var(--color-text, #0f172a));
+}
+
+.worksheetProjectsSummaryBody {
+  margin: 0;
+  font-size: 0.8125rem;
+  line-height: 1.45;
+  color: var(--theme-text-muted, var(--color-text-muted, #64748b));
+}
+
+:global([data-theme='dark']) .worksheetProjectsStatusWarn {
+  color: #fbbf24;
+}
+
+@media (max-width: 900px) {
+  .worksheetProjectsScreen {
+    grid-template-columns: 1fr;
+    padding-inline: clamp(0.5rem, 3vw, 1.25rem);
+  }
+
+  .worksheetProjectsSidebar {
+    max-height: 12rem;
+  }
+
+  .worksheetProjectsList {
+    flex-direction: row;
+    overflow-x: auto;
+    overflow-y: hidden;
+  }
+
+  .worksheetProjectsListItem {
+    flex: 0 0 auto;
+    min-width: 13rem;
+  }
+
+  .worksheetProjectsSummaryCard {
+    align-items: flex-start;
+  }
+
+  .worksheetProjectsSummaryGrid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+/* ---------------------------------------------------------------------- */
+/* Worksheet Project resolution (one-at-a-time interview)                   */
+/* ---------------------------------------------------------------------- */
+
+.worksheetResolveScreen {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  min-height: 0;
+  flex: 1;
+  width: 100%;
+}
+
+.worksheetResolveFocusScreen {
+  display: grid;
+  grid-template-columns: minmax(9.5rem, 12rem) minmax(0, 1fr);
+  gap: 1rem;
+  min-height: 0;
+  flex: 1;
+  width: 100%;
+}
+
+.worksheetResolveProgressStrip {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  min-height: 0;
+  max-height: 100%;
+  overflow: auto;
+  padding: 0.15rem;
+}
+
+.worksheetResolveProgressItem {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.15rem;
+  width: 100%;
+  padding: 0.55rem 0.65rem;
+  border: 1px solid transparent;
+  border-radius: 0.65rem;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    border-color 0.15s ease,
+    background-color 0.15s ease;
+}
+
+.worksheetResolveProgressItem:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--color-muted, #f8fafc) 80%, transparent);
+}
+
+.worksheetResolveProgressItem:focus-visible {
+  outline: 2px solid var(--color-focus, #93c5fd);
+  outline-offset: 2px;
+}
+
+.worksheetResolveProgressItemCurrent {
+  border-color: var(--color-primary, #2563eb);
+  background: color-mix(in srgb, var(--color-primary, #2563eb) 8%, transparent);
+}
+
+.worksheetResolveProgressItemComplete .worksheetResolveProgressStatus,
+.worksheetResolveProgressItemSkipped .worksheetResolveProgressStatus {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.worksheetResolveProgressName {
+  display: block;
+  width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.8125rem;
+  font-weight: 650;
+  color: var(--theme-text-main, var(--color-text, #0f172a));
+}
+
+.worksheetResolveProgressStatus {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--theme-text-muted, var(--color-text-muted, #64748b));
+}
+
+.worksheetResolveProgressItemComplete .worksheetResolveProgressStatus {
+  color: var(--color-success, #16a34a);
+}
+
+.worksheetResolveFocusMain {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  min-width: 0;
+  min-height: 0;
+}
+
+.worksheetResolveFocusIntro {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.worksheetResolveFocusHeading {
+  margin: 0;
+  font-size: 1.2rem;
+  font-weight: 700;
+  line-height: 1.3;
+  color: var(--theme-text-main, var(--color-text, #0f172a));
+}
+
+.worksheetResolveFocusMeta {
+  margin: 0;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--theme-text-muted, var(--color-text-muted, #64748b));
+}
+
+.worksheetResolveFocusSupporting {
+  margin: 0;
+  font-size: 0.84rem;
+  color: var(--theme-text-muted, var(--color-text-muted, #64748b));
+}
+
+.worksheetResolveNameLabel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  font-size: 0.8125rem;
+  font-weight: 650;
+  color: var(--theme-text-main, var(--color-text, #0f172a));
+}
+
+.worksheetResolveNameInput {
+  width: 100%;
+  max-width: 28rem;
+  padding: 0.55rem 0.75rem;
+  border: 1px solid var(--theme-border-main, #e2e8f0);
+  border-radius: 0.55rem;
+  background: var(--theme-surface-card, #fff);
+  color: var(--theme-text-main, var(--color-text, #0f172a));
+  font-size: 0.875rem;
+}
+
+.worksheetResolveNameInput:focus-visible {
+  outline: 2px solid var(--color-focus, #93c5fd);
+  outline-offset: 1px;
+}
+
+.worksheetResolveNameInput:disabled {
+  opacity: 0.65;
+}
+
+.worksheetResolveChoiceGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.55rem;
+  flex-shrink: 0;
+}
+
+.worksheetResolveChoiceCard {
+  position: relative;
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 0.55rem;
+  min-width: 0;
+  min-height: 5.5rem;
+  padding: 0.75rem 0.8rem;
+  border-radius: 0.75rem;
+  border: 1px solid var(--theme-border-main, #e2e8f0);
+  background: color-mix(in srgb, var(--color-muted, #f8fafc) 70%, var(--theme-surface-card, #fff));
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    border-color 0.15s ease,
+    background-color 0.15s ease;
+}
+
+.worksheetResolveChoiceCard:hover:not(:disabled) {
+  border-color: color-mix(in srgb, var(--color-primary, #2563eb) 40%, var(--theme-border-main, #e2e8f0));
+}
+
+.worksheetResolveChoiceCard:focus-visible {
+  outline: 2px solid var(--color-focus, #93c5fd);
+  outline-offset: 2px;
+}
+
+.worksheetResolveChoiceCardSelected {
+  border-width: 2px;
+  border-color: var(--color-primary, #2563eb);
+  background: color-mix(in srgb, var(--color-primary, #2563eb) 10%, transparent);
+  padding: calc(0.75rem - 1px) calc(0.8rem - 1px);
+}
+
+.worksheetResolveChoiceCard:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.worksheetResolveChoiceCheck {
+  position: absolute;
+  top: 0.55rem;
+  right: 0.55rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.25rem;
+  height: 1.25rem;
+  border-radius: 999px;
+  border: 1.5px solid var(--theme-border-main, #cbd5e1);
+  background: var(--theme-surface-card, #fff);
+  color: transparent;
+  flex-shrink: 0;
+}
+
+.worksheetResolveChoiceCheckOn {
+  border-color: var(--color-primary, #2563eb);
+  background: var(--color-primary, #2563eb);
+  color: #fff;
+}
+
+.worksheetResolveChoiceIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.65rem;
+  height: 1.65rem;
+  border-radius: 0.45rem;
+  flex-shrink: 0;
+  margin-top: 0.1rem;
+}
+
+.worksheetResolveChoiceIconCreate {
+  color: var(--color-success, #16a34a);
+  background: color-mix(in srgb, var(--color-success, #16a34a) 14%, transparent);
+}
+
+.worksheetResolveChoiceIconAttach {
+  color: var(--color-primary, #2563eb);
+  background: color-mix(in srgb, var(--color-primary, #2563eb) 14%, transparent);
+}
+
+.worksheetResolveChoiceIconSkip {
+  color: var(--theme-text-muted, #64748b);
+  background: color-mix(in srgb, var(--theme-text-muted, #64748b) 14%, transparent);
+}
+
+.worksheetResolveChoiceCopy {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: 0;
+  padding-right: 1.1rem;
+}
+
+.worksheetResolveChoiceTitle {
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: var(--theme-text-main, var(--color-text, #0f172a));
+}
+
+.worksheetResolveChoiceBody {
+  font-size: 0.72rem;
+  line-height: 1.35;
+  color: var(--theme-text-muted, var(--color-text-muted, #64748b));
+}
+
+.worksheetResolveDetailPanel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  min-height: 14.5rem;
+  padding: 0.85rem 0.9rem;
+  border: 1px solid var(--theme-border-main, #e2e8f0);
+  border-radius: 0.85rem;
+  background: var(--theme-surface-card, #fff);
+}
+
+.worksheetResolveDetailConfirm {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  min-height: 0;
+}
+
+.worksheetResolveDetailTitle {
+  margin: 0;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--theme-text-muted, var(--color-text-muted, #64748b));
+}
+
+.worksheetResolveDetailName {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--theme-text-main, var(--color-text, #0f172a));
+}
+
+.worksheetResolveDetailBody {
+  margin: 0;
+  font-size: 0.8125rem;
+  line-height: 1.45;
+  color: var(--theme-text-muted, var(--color-text-muted, #64748b));
+}
+
+.worksheetResolveValidation {
+  margin: 0;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--color-danger, #b91c1c);
+}
+
+.worksheetResolvePicker {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  min-height: 0;
+  flex: 1;
+}
+
+.worksheetResolvePickerSearch {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.45rem 0.65rem;
+  border: 1px solid var(--theme-border-main, #e2e8f0);
+  border-radius: 0.55rem;
+  background: color-mix(in srgb, var(--color-muted, #f8fafc) 55%, transparent);
+  color: var(--theme-text-muted, var(--color-text-muted, #64748b));
+}
+
+.worksheetResolvePickerSearch input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  background: transparent;
+  color: var(--theme-text-main, var(--color-text, #0f172a));
+  font-size: 0.8125rem;
+}
+
+.worksheetResolvePickerSearch input:focus {
+  outline: none;
+}
+
+.worksheetResolvePickerList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  min-height: 0;
+  max-height: 10.5rem;
+  overflow: auto;
+  padding-right: 0.15rem;
+}
+
+.worksheetResolvePickerEmpty {
+  margin: 0;
+  padding: 0.75rem 0.35rem;
+  font-size: 0.8125rem;
+  color: var(--theme-text-muted, var(--color-text-muted, #64748b));
+}
+
+.worksheetResolvePickerRow {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+  width: 100%;
+  padding: 0.55rem 0.65rem;
+  border: 1px solid transparent;
+  border-radius: 0.55rem;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.worksheetResolvePickerRow:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--color-muted, #f8fafc) 80%, transparent);
+}
+
+.worksheetResolvePickerRow:focus-visible {
+  outline: 2px solid var(--color-focus, #93c5fd);
+  outline-offset: 1px;
+}
+
+.worksheetResolvePickerRowSelected {
+  border-color: var(--color-primary, #2563eb);
+  background: color-mix(in srgb, var(--color-primary, #2563eb) 8%, transparent);
+}
+
+.worksheetResolvePickerRowMain {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+  font-size: 0.78rem;
+  color: var(--theme-text-muted, var(--color-text-muted, #64748b));
+}
+
+.worksheetResolvePickerRowMain strong {
+  font-size: 0.8125rem;
+  font-weight: 650;
+  color: var(--theme-text-main, var(--color-text, #0f172a));
+}
+
+.worksheetResolvePickerSuggested {
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  color: var(--color-primary, #2563eb);
+}
+
+.worksheetResolvePickerRowMeta {
+  flex-shrink: 0;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--theme-text-muted, var(--color-text-muted, #64748b));
+}
+
+.worksheetResolveFocusActions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  margin-top: auto;
+  padding-top: 0.25rem;
+}
+
+.worksheetResolveFocusPosition {
+  font-size: 0.8125rem;
+  font-weight: 650;
+  color: var(--theme-text-muted, var(--color-text-muted, #64748b));
+}
+
+.worksheetResolveFocusActionButtons {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  flex-wrap: wrap;
+}
+
+.worksheetResolveSummaryScreen {
+  --wrs-row-border: var(--theme-border-main, #e2e8f0);
+  --wrs-card-bg: var(--theme-surface-card, #fff);
+  --wrs-totals-bg: var(--theme-bg-surface, #f8fafc);
+  --wrs-text: var(--theme-text-main, var(--color-text, #0f172a));
+  --wrs-muted: var(--theme-text-muted, var(--color-text-muted, #64748b));
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  min-height: 0;
+  flex: 1;
+  width: 100%;
+  max-width: 52rem;
+  margin-inline: auto;
+  padding-inline: clamp(0.75rem, 3vw, 1.5rem);
+  box-sizing: border-box;
+  overflow: auto;
+}
+
+:global([data-theme='dark']) .worksheetResolveSummaryScreen {
+  --wrs-row-border: #3d3e4a;
+  --wrs-card-bg: #1f222a;
+  --wrs-totals-bg: #20273a;
+  --wrs-text: #e2e8f0;
+  --wrs-muted: #94a3b8;
+}
+
+.worksheetResolveSummary {
+  margin: 0;
+  flex-shrink: 0;
+  font-size: 0.84rem;
+  color: var(--theme-text-muted, var(--color-text-muted, #64748b));
+}
+
+.worksheetResolveSummaryIntro {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.worksheetResolveSummaryHeading {
+  margin: 0;
+  font-size: 1.35rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--wrs-text);
+}
+
+.worksheetResolveSummarySupporting {
+  margin: 0;
+  font-size: 0.95rem;
+  line-height: 1.45;
+  color: var(--wrs-muted);
+}
+
+.worksheetResolveSummaryList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+}
+
+.worksheetResolveSummaryRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+  width: 100%;
+  padding: 1.25rem 1.35rem;
+  border: 1px solid var(--wrs-row-border);
+  border-radius: 0.85rem;
+  background: var(--wrs-card-bg);
+  box-sizing: border-box;
+}
+
+.worksheetResolveSummaryRowBody {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  min-width: 0;
+  flex: 1;
+}
+
+.worksheetResolveSummaryTitle {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  min-width: 0;
+}
+
+.worksheetResolveSummaryTitle strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--wrs-text);
+}
+
+.worksheetResolveSummaryIcon {
+  display: inline-flex;
+  flex-shrink: 0;
+  color: var(--color-success, #16a34a);
+}
+
+.worksheetResolveSummaryIconSkipped {
+  display: inline-flex;
+  flex-shrink: 0;
+  color: var(--wrs-muted);
+}
+
+.worksheetResolveSummaryAction {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.45rem 0.55rem;
+  margin: 0.15rem 0 0;
+  font-size: 1.05rem;
+  font-weight: 650;
+  line-height: 1.35;
+  color: var(--wrs-text);
+}
+
+.worksheetResolveSummaryProject {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-width: 0;
+  font-size: inherit;
+  font-weight: inherit;
+  color: inherit;
+}
+
+.worksheetResolveSummaryProject span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.worksheetResolveSummaryMeta {
+  margin: 0.15rem 0 0;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  line-height: 1.4;
+  color: var(--wrs-muted);
+}
+
+.worksheetResolveSummaryReview {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex-shrink: 0;
+  padding: 0.45rem 0.15rem;
+  border: none;
+  background: transparent;
+  color: var(--color-primary, #2563eb);
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 650;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.worksheetResolveSummaryReview:hover:not(:disabled) {
+  text-decoration: underline;
+}
+
+.worksheetResolveSummaryReview:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.worksheetResolveSummaryReview:focus-visible {
+  outline: 2px solid var(--color-focus, #93c5fd);
+  outline-offset: 2px;
+  border-radius: 0.35rem;
+}
+
+.worksheetResolveSummaryTotals {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.55rem;
+  margin: 0;
+  margin-top: auto;
+  padding: 0.85rem 1rem;
+  border: 1px solid var(--wrs-row-border);
+  border-radius: 0.85rem;
+  background: var(--wrs-totals-bg);
+  font-size: 0.84rem;
+  font-weight: 500;
+  line-height: 1.45;
+  color: var(--wrs-muted);
+  box-sizing: border-box;
+}
+
+.worksheetResolveSummaryTotalsIcon {
+  flex-shrink: 0;
+  margin-top: 0.1rem;
+  color: var(--color-primary, #2563eb);
+}
+
+:global([data-theme='dark']) .worksheetResolveNameInput,
+:global([data-theme='dark']) .worksheetResolveDetailPanel {
+  background: var(--theme-surface-card, #161922);
+  border-color: #3d3e4a;
+}
+
+:global([data-theme='dark']) .worksheetResolveChoiceCard {
+  background: rgba(255, 255, 255, 0.03);
+  border-color: #3d3e4a;
+}
+
+:global([data-theme='dark']) .worksheetResolveChoiceCardSelected {
+  background: color-mix(in srgb, var(--color-primary, #2563eb) 14%, transparent);
+  border-color: var(--color-primary, #2563eb);
+}
+
+:global([data-theme='dark']) .worksheetResolveChoiceIconSkip {
+  color: #cbd5e1;
+  background: color-mix(in srgb, #94a3b8 22%, transparent);
+}
+
+:global([data-theme='dark']) .worksheetResolveValidation {
+  color: #fca5a5;
+}
+
+@media (max-width: 1100px) {
+  .worksheetResolveChoiceGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .worksheetResolveChoiceGrid > :last-child {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 900px) {
+  .worksheetResolveFocusScreen {
+    grid-template-columns: 1fr;
+  }
+
+  .worksheetResolveProgressStrip {
+    flex-direction: row;
+    max-height: none;
+    overflow-x: auto;
+    overflow-y: hidden;
+    gap: 0.45rem;
+    padding-bottom: 0.25rem;
+  }
+
+  .worksheetResolveProgressItem {
+    flex: 0 0 auto;
+    min-width: 8.5rem;
+    max-width: 12rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .worksheetResolveChoiceGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .worksheetResolveChoiceGrid > :last-child {
+    grid-column: auto;
+  }
+
+  .worksheetResolveFocusActionButtons {
+    width: 100%;
+  }
+
+  .worksheetResolveFocusActionButtons > button {
+    flex: 1 1 auto;
+  }
+
+  .worksheetResolveSummaryRow {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.85rem;
+  }
+
+  .worksheetResolveSummaryReview {
+    align-self: flex-end;
   }
 }
 

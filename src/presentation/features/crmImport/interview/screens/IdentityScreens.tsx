@@ -29,10 +29,7 @@ import {
 import styles from '@/presentation/components/CrmImport/SpreadsheetImportWizard.module.css';
 
 export { SubprojectIdentityScreen } from '@/presentation/features/crmImport/interview/screens/SubprojectIdentityScreen';
-export type {
-  SampleHierarchyGroup,
-  SubprojectIdentityScreenProps,
-} from '@/presentation/features/crmImport/interview/screens/SubprojectIdentityScreen';
+export type { SubprojectIdentityScreenProps } from '@/presentation/features/crmImport/interview/screens/SubprojectIdentityScreen';
 
 const DEFAULT_SEPARATOR: CrmImportNameSeparator = ' ';
 

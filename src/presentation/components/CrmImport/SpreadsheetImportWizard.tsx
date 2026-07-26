@@ -19,6 +19,7 @@ import {
 import {
   areParentConflictsResolved,
   buildResolvedParentAttributesForGroup,
+  type CrmImportConflictResolutionMap,
 } from '@/domain/crm/spreadsheetImportConflictResolution';
 import {
   filterEligibleImportParentProjects,
@@ -28,7 +29,6 @@ import { detectSpreadsheetHeaderRowIndex } from '@/domain/crm/spreadsheetImportH
 import { getSpreadsheetImportWizardTitle } from '@/domain/crm/spreadsheetImportIntroCopy';
 import { suggestFieldPlacementFromGroupConsistency } from '@/domain/crm/spreadsheetImportFieldPlacement';
 import { recommendSpreadsheetStructures } from '@/domain/crm/spreadsheetImportStructureAnalysis';
-import { getSubprojectNameFromRow } from '@/domain/crm/spreadsheetImportValidation';
 import { listCrmProjectSummaries } from '@/application/use-cases/crm';
 import { getCrmDataSource } from '@/infrastructure/config/crmDataSource';
 import { canMutateCrmProjectsInCurrentRuntime } from '@/infrastructure/demo/canMutateCrmProjectsInCurrentRuntime';
@@ -85,6 +85,10 @@ import {
 } from '@/presentation/features/crmImport/interview/interviewState';
 import { buildImportPayloadFromInterview } from '@/presentation/features/crmImport/interview/buildImportPayloadFromInterview';
 import {
+  buildSelectedSheetsImportSource,
+  buildWorksheetImportSource,
+} from '@/presentation/features/crmImport/interview/buildWorksheetImportSource';
+import {
   buildKeyFieldChips,
   collectReviewClientIssues,
   continueInterviewAfterEdit,
@@ -101,6 +105,38 @@ import {
   ComingSoonImportScreen,
   MultiProjectOrganizationScreen,
 } from '@/presentation/features/crmImport/interview/screens/MultiProjectOrganizationScreen';
+import { WorksheetProjectsScreen } from '@/presentation/features/crmImport/interview/screens/WorksheetProjectsScreen';
+import { SelectSheetsScreen, canContinueSelectSheets } from '@/presentation/features/crmImport/interview/screens/SelectSheetsScreen';
+import {
+  WorksheetHeadersScreen,
+  canContinueWorksheetHeaders,
+} from '@/presentation/features/crmImport/interview/screens/WorksheetHeadersScreen';
+import { WorksheetResolveScreen } from '@/presentation/features/crmImport/interview/screens/WorksheetResolveScreen';
+import { WorksheetResolveSummaryScreen } from '@/presentation/features/crmImport/interview/screens/WorksheetResolveSummaryScreen';
+import {
+  canContinueWorksheetProjects,
+  firstWorksheetId,
+  mergeWorksheetProjectConfigs,
+  resolveActiveWorksheetId,
+  syncWorksheetResolutionsForContinue,
+  trimWorksheetProjectNames,
+  updateWorksheetProjectHeaderRow,
+  type WorksheetSheetInput,
+} from '@/presentation/features/crmImport/interview/worksheetProjectsPresentation';
+import {
+  analyzeWorksheetHeaderCompatibility,
+  canContinueWorksheetResolve,
+  confirmWorksheetResolution,
+  firstIncludedWorksheetId,
+  includedWorksheetConfigs,
+  mergeWorksheetResolutions,
+  nextScreenAfterWorksheetResolve,
+  nextUnresolvedWorksheetId,
+  previousIncludedWorksheetId,
+  buildWorksheetGroupResolutions,
+  summarizeWorksheetImportReview,
+  worksheetIndexAmongIncluded,
+} from '@/presentation/features/crmImport/interview/worksheetResolvePresentation';
 import { ChooseParentScreen } from '@/presentation/features/crmImport/interview/screens/ChooseParentScreen';
 import {
   ProjectIdentityScreen,
@@ -255,6 +291,8 @@ export function SpreadsheetImportWizard({
   const [lastChunkProcessed, setLastChunkProcessed] = useState(0);
   const [peakPercent, setPeakPercent] = useState(0);
   const [importDone, setImportDone] = useState(false);
+  /** Job row total for Import progress (worksheet imports may exceed current sheet `rows`). */
+  const [importTotalRows, setImportTotalRows] = useState(0);
   const [cancelConfirmOpen, setCancelConfirmOpen] = useState(false);
   const [cancellingImport, setCancellingImport] = useState(false);
   const [completionToast, setCompletionToast] = useState<string | null>(null);
@@ -308,6 +346,7 @@ export function SpreadsheetImportWizard({
     setLastChunkProcessed(0);
     setPeakPercent(0);
     setImportDone(false);
+    setImportTotalRows(0);
     setCancelConfirmOpen(false);
     setCancellingImport(false);
     setCompletionToast(null);
@@ -415,24 +454,6 @@ export function SpreadsheetImportWizard({
     [applyParsedSheet, copy.errors.parseFailed, parsedFile]
   );
 
-  const handleHeaderRowChange = useCallback(
-    async (nextHeaderRowIndex: number) => {
-      if (parsedFile == null || !sheetName) return;
-      setHeaderRowIndex(nextHeaderRowIndex);
-      setBusy(true);
-      setError(null);
-      try {
-        await applyParsedSheet(parsedFile.workbook, sheetName, nextHeaderRowIndex);
-        setInterview((s) => clearDownstreamAfterHeaderChange(s));
-      } catch (err) {
-        setError(err instanceof Error ? err.message : copy.errors.parseFailed);
-      } finally {
-        setBusy(false);
-      }
-    },
-    [applyParsedSheet, copy.errors.parseFailed, parsedFile, sheetName]
-  );
-
   // ---------------------------------------------------------------------
   // Derived data: grouping / mapping preview computed live from the interview
   // ---------------------------------------------------------------------
@@ -457,6 +478,177 @@ export function SpreadsheetImportWizard({
     }
     return map;
   }, [rows, headers]);
+
+  const worksheetSheets = useMemo((): readonly WorksheetSheetInput[] => {
+    if (parsedFile == null) return [];
+    return parsedFile.sheetNames.map((name, index) => ({
+      worksheetId: `sheet:${index}:${name}`,
+      worksheetName: name,
+      matrix: sheetToMatrix(parsedFile.workbook, name),
+    }));
+  }, [parsedFile]);
+
+  const worksheetSheetsById = useMemo(() => {
+    const map = new Map<string, WorksheetSheetInput>();
+    for (const sheet of worksheetSheets) map.set(sheet.worksheetId, sheet);
+    return map;
+  }, [worksheetSheets]);
+
+  const handleHeaderRowChange = useCallback(
+    async (nextHeaderRowIndex: number) => {
+      if (parsedFile == null || !sheetName) return;
+      setHeaderRowIndex(nextHeaderRowIndex);
+      setBusy(true);
+      setError(null);
+      try {
+        await applyParsedSheet(parsedFile.workbook, sheetName, nextHeaderRowIndex);
+        setInterview((s) => {
+          let next = clearDownstreamAfterHeaderChange(s);
+          if (
+            s.structureChoice === 'one_project' &&
+            s.worksheetProjects != null &&
+            s.worksheetProjects.length > 0
+          ) {
+            let configs = s.worksheetProjects;
+            for (const config of configs) {
+              if (!config.included) continue;
+              const sheet = worksheetSheetsById.get(config.worksheetId);
+              if (sheet == null) continue;
+              configs = updateWorksheetProjectHeaderRow(
+                configs,
+                config.worksheetId,
+                nextHeaderRowIndex,
+                sheet.matrix
+              );
+            }
+            next = { ...next, worksheetProjects: configs };
+          }
+          return next;
+        });
+      } catch (err) {
+        setError(err instanceof Error ? err.message : copy.errors.parseFailed);
+      } finally {
+        setBusy(false);
+      }
+    },
+    [
+      applyParsedSheet,
+      copy.errors.parseFailed,
+      parsedFile,
+      sheetName,
+      worksheetSheetsById,
+    ]
+  );
+
+  useEffect(() => {
+    if (
+      interview.screen !== 'worksheet_projects' &&
+      interview.screen !== 'select_sheets'
+    ) {
+      return;
+    }
+    if (worksheetSheets.length === 0) return;
+    setInterview((s) => {
+      if (s.screen !== 'worksheet_projects' && s.screen !== 'select_sheets') return s;
+      const merged = mergeWorksheetProjectConfigs(s.worksheetProjects, worksheetSheets);
+      const resolutions =
+        s.screen === 'worksheet_projects'
+          ? mergeWorksheetResolutions(s.worksheetResolutions, merged)
+          : (s.worksheetResolutions ?? {});
+      const activeWorksheetResolveId =
+        s.screen === 'worksheet_projects'
+          ? resolveActiveWorksheetId(merged, s.activeWorksheetResolveId)
+          : s.activeWorksheetResolveId;
+      const configsUnchanged =
+        s.worksheetProjects != null &&
+        s.worksheetProjects.length === merged.length &&
+        s.worksheetProjects.every((config, index) => {
+          const next = merged[index]!;
+          return (
+            config.worksheetId === next.worksheetId &&
+            config.included === next.included &&
+            config.projectName === next.projectName &&
+            config.headerRowIndex === next.headerRowIndex &&
+            config.dataRowCount === next.dataRowCount &&
+            config.columnCount === next.columnCount
+          );
+        });
+      if (s.screen === 'select_sheets') {
+        if (configsUnchanged) return s;
+        return { ...s, worksheetProjects: merged };
+      }
+      const prev = s.worksheetResolutions;
+      const resolutionsUnchanged =
+        prev != null &&
+        Object.keys(prev).length === Object.keys(resolutions).length &&
+        Object.keys(resolutions).every((id) => {
+          const a = prev[id];
+          const b = resolutions[id];
+          return (
+            a != null &&
+            b != null &&
+            a.kind === b.kind &&
+            a.existingProjectId === b.existingProjectId &&
+            a.existingProjectLabel === b.existingProjectLabel &&
+            a.confirmed === b.confirmed
+          );
+        });
+      if (
+        configsUnchanged &&
+        resolutionsUnchanged &&
+        s.activeWorksheetResolveId === activeWorksheetResolveId
+      ) {
+        return s;
+      }
+      return {
+        ...s,
+        worksheetProjects: merged,
+        worksheetResolutions: resolutions,
+        activeWorksheetResolveId,
+      };
+    });
+  }, [interview.screen, worksheetSheets]);
+
+  useEffect(() => {
+    if (interview.screen !== 'worksheet_resolve' && interview.screen !== 'worksheet_projects') {
+      return;
+    }
+    if (interview.screen === 'worksheet_resolve') {
+      const configs = interview.worksheetProjects ?? [];
+      if (configs.length === 0) return;
+      setInterview((s) => {
+        if (s.screen !== 'worksheet_resolve') return s;
+        const merged = mergeWorksheetResolutions(s.worksheetResolutions, configs);
+        const included = includedWorksheetConfigs(configs);
+        const activeStillValid =
+          s.activeWorksheetResolveId != null &&
+          included.some((config) => config.worksheetId === s.activeWorksheetResolveId);
+        const activeWorksheetResolveId = activeStillValid
+          ? s.activeWorksheetResolveId
+          : firstIncludedWorksheetId(configs);
+        const prev = s.worksheetResolutions;
+        const resolutionsUnchanged =
+          prev != null &&
+          Object.keys(prev).length === Object.keys(merged).length &&
+          Object.keys(merged).every((id) => {
+            const a = prev[id];
+            const b = merged[id];
+            return (
+              a != null &&
+              b != null &&
+              a.kind === b.kind &&
+              a.existingProjectId === b.existingProjectId &&
+              a.existingProjectLabel === b.existingProjectLabel &&
+              a.confirmed === b.confirmed
+            );
+          });
+        if (resolutionsUnchanged && s.activeWorksheetResolveId === activeWorksheetResolveId) {
+          return s;
+        }
+        return { ...s, worksheetResolutions: merged, activeWorksheetResolveId };
+      });
+    }
+  }, [interview.screen, interview.worksheetProjects]);
 
   const payloadPreview = useMemo(
     () => buildImportPayloadFromInterview({ state: interview, headers, rows }),
@@ -576,21 +768,13 @@ export function SpreadsheetImportWizard({
     });
   }, [headers, lockedIndexesSet, existingCustomFields, rows, localGroups]);
 
-  const sampleHierarchy = useMemo(() => {
-    if (interview.structureChoice !== 'multiple_projects') return [];
-    return localGroups.slice(0, 4).map((group) => ({
-      parentLabel: group.displayName,
-      childLabels: group.sourceRowIndexes
-        .slice(0, 3)
-        .map((sourceRowIndex) => {
-          const row = payloadPreview.rows.find((r) => r.sourceRowIndex === sourceRowIndex);
-          return row ? getSubprojectNameFromRow(row, payloadPreview.mappings) : '';
-        })
-        .filter(Boolean),
-    }));
-  }, [interview.structureChoice, localGroups, payloadPreview]);
-
   const groupsSummary = useMemo(() => {
+    if (interview.multiProjectOrganization === 'worksheet_per_project') {
+      return summarizeWorksheetImportReview({
+        configs: interview.worksheetProjects ?? [],
+        resolutions: interview.worksheetResolutions ?? {},
+      }).groupsSummary;
+    }
     if (payloadPreview.importMode !== 'master_hierarchy' || localGroups.length === 0) return null;
     let created = 0;
     let attached = 0;
@@ -602,7 +786,26 @@ export function SpreadsheetImportWizard({
       else ignored += 1;
     }
     return { created, attached, ignored };
-  }, [payloadPreview.importMode, localGroups, groupResolutionType]);
+  }, [
+    interview.multiProjectOrganization,
+    interview.worksheetProjects,
+    interview.worksheetResolutions,
+    payloadPreview.importMode,
+    localGroups,
+    groupResolutionType,
+  ]);
+
+  const worksheetReviewSummary = useMemo(() => {
+    if (interview.multiProjectOrganization !== 'worksheet_per_project') return null;
+    return summarizeWorksheetImportReview({
+      configs: interview.worksheetProjects ?? [],
+      resolutions: interview.worksheetResolutions ?? {},
+    });
+  }, [
+    interview.multiProjectOrganization,
+    interview.worksheetProjects,
+    interview.worksheetResolutions,
+  ]);
 
   const fieldsMappedCount = useMemo(
     () => payloadPreview.mappings.filter((m) => m.destination.kind !== 'ignored').length,
@@ -631,15 +834,22 @@ export function SpreadsheetImportWizard({
 
   const reviewIssues = useMemo(() => {
     const effectiveMode = resolveEffectiveImportMode(interview);
+    const isWorksheetPerProject =
+      interview.multiProjectOrganization === 'worksheet_per_project';
     return collectReviewClientIssues({
       mappings: payloadPreview.mappings,
       rows: payloadPreview.rows,
       importMode: payloadPreview.importMode,
       mappingErrors,
       fieldsReady: areFieldsReadyToContinue(interview.remainingFields),
-      hasParent:
-        effectiveMode === 'master_hierarchy' || interview.selectedParentProjectId != null,
+      hasParent: isWorksheetPerProject
+        ? canContinueWorksheetResolve(
+            interview.worksheetProjects ?? [],
+            interview.worksheetResolutions ?? {}
+          )
+        : effectiveMode === 'master_hierarchy' || interview.selectedParentProjectId != null,
       hasSubprojectIdentity: isCompositionConfigured(interview.subprojectComposition),
+      requireParentKeyColumn: !isWorksheetPerProject && effectiveMode === 'master_hierarchy',
       missingNameMessage: copy.interview.review.missingNameRows,
     });
   }, [
@@ -705,7 +915,10 @@ export function SpreadsheetImportWizard({
 
   useEffect(() => {
     if (
-      (interview.screen === 'choose_parent' || interview.screen === 'parent_resolve') &&
+      (interview.screen === 'choose_parent' ||
+        interview.screen === 'parent_resolve' ||
+        interview.screen === 'worksheet_projects' ||
+        interview.screen === 'worksheet_resolve') &&
       parentCandidates.length === 0
     ) {
       void refreshParentCandidates();
@@ -740,9 +953,17 @@ export function SpreadsheetImportWizard({
     (
       group: CrmImportValidateGroup,
       mappings: readonly CrmImportColumnMapping[],
-      rowsForGrouping: readonly CrmImportParsedRow[]
+      rowsForGrouping: readonly CrmImportParsedRow[],
+      draftOverride?: {
+        readonly type: 'create_new' | 'attach_existing' | 'ignore';
+        readonly attachProjectId?: string;
+        readonly attachLabel?: string;
+        readonly conflictResolutions?: CrmImportConflictResolutionMap;
+      }
     ): CrmImportParentResolution => {
-      const draft = interview.groupResolutions[group.groupKey] ?? { type: 'create_new' as const };
+      const draft =
+        draftOverride ??
+        interview.groupResolutions[group.groupKey] ?? { type: 'create_new' as const };
       if (draft.type === 'ignore') return { type: 'ignore' };
       if (draft.type === 'attach_existing' && draft.attachProjectId) {
         return { type: 'attach_existing', projectId: draft.attachProjectId };
@@ -779,7 +1000,7 @@ export function SpreadsheetImportWizard({
   );
 
   const handleStartImport = useCallback(
-    async (targetJobId: string) => {
+    async (targetJobId: string, totalRowsOverride?: number) => {
       const claimToken = clientClaimToken || crypto.randomUUID();
       setClientClaimToken(claimToken);
       setBusy(true);
@@ -791,7 +1012,7 @@ export function SpreadsheetImportWizard({
         const { promise } = startOrAttachImportChunkRunner({
           jobId: targetJobId,
           clientClaimToken: claimToken,
-          totalRows: rows.length,
+          totalRows: totalRowsOverride ?? rows.length,
           listener: (progress) => {
             settledStatus = progress.status;
             setImportStatus(progress.status);
@@ -866,27 +1087,69 @@ export function SpreadsheetImportWizard({
   const handleStartFromReview = useCallback(async () => {
     setBusy(true);
     setError(null);
+    setMappingErrors([]);
     try {
-      const payload = buildImportPayloadFromInterview({ state: interview, headers, rows });
+      const isWorksheetPerProject =
+        interview.multiProjectOrganization === 'worksheet_per_project';
+      const isOneProjectSheets =
+        interview.structureChoice === 'one_project' &&
+        (interview.worksheetProjects ?? []).some((config) => config.included);
 
-      let currentJobId = jobId;
-      if (currentJobId == null) {
-        const nextIdempotencyKey = idempotencyKey || crypto.randomUUID();
-        setIdempotencyKey(nextIdempotencyKey);
-        const response = await createSpreadsheetImportDraftFromApi({
-          importMode: payload.importMode,
-          fixedParentProjectId: payload.fixedParentProjectId,
-          fixedParentDisplayName: interview.selectedParentLabel ?? fixedParentDisplayName ?? null,
-          sourceFilename: selectedFile?.name ?? 'import.csv',
-          sheetName,
-          headerRowIndex,
-          idempotencyKey: nextIdempotencyKey,
-          mappings: payload.mappings,
-          rows: payload.rows,
-        });
-        currentJobId = response.jobId;
-        setJobId(currentJobId);
+      let sourceHeaders = headers;
+      let sourceRows = rows;
+      let draftSheetName = sheetName;
+      let draftHeaderRowIndex = headerRowIndex;
+
+      if (isWorksheetPerProject || isOneProjectSheets) {
+        if (parsedFile == null) {
+          throw new Error(copy.errors.parseFailed);
+        }
+        const combined = isWorksheetPerProject
+          ? await buildWorksheetImportSource({
+              workbook: parsedFile.workbook,
+              configs: interview.worksheetProjects ?? [],
+              resolutions: interview.worksheetResolutions ?? {},
+            })
+          : await buildSelectedSheetsImportSource({
+              workbook: parsedFile.workbook,
+              configs: interview.worksheetProjects ?? [],
+            });
+        sourceHeaders = [...combined.headers];
+        sourceRows = [...combined.rows];
+        draftSheetName = combined.sheetName;
+        draftHeaderRowIndex = combined.headerRowIndex;
+        // Keep wizard sheet state aligned with the combined job so progress UI
+        // and any rows.length fallbacks stay additive across worksheets.
+        setHeaders(sourceHeaders);
+        setRows(sourceRows);
+        setSheetName(draftSheetName);
+        setHeaderRowIndex(draftHeaderRowIndex);
       }
+
+      const payload = buildImportPayloadFromInterview({
+        state: interview,
+        headers: sourceHeaders,
+        rows: sourceRows,
+      });
+      setImportTotalRows(payload.rows.length);
+
+      // Always create a fresh draft so Start uses current mappings (idempotent
+      // reuse would keep a prior failed snapshot without a parent key).
+      const nextIdempotencyKey = crypto.randomUUID();
+      setIdempotencyKey(nextIdempotencyKey);
+      const response = await createSpreadsheetImportDraftFromApi({
+        importMode: payload.importMode,
+        fixedParentProjectId: payload.fixedParentProjectId,
+        fixedParentDisplayName: interview.selectedParentLabel ?? fixedParentDisplayName ?? null,
+        sourceFilename: selectedFile?.name ?? 'import.csv',
+        sheetName: draftSheetName,
+        headerRowIndex: draftHeaderRowIndex,
+        idempotencyKey: nextIdempotencyKey,
+        mappings: payload.mappings,
+        rows: payload.rows,
+      });
+      const currentJobId = response.jobId;
+      setJobId(currentJobId);
 
       const validation = await validateSpreadsheetImportJobFromApi(currentJobId);
       if (validation.mappingErrors.length > 0) {
@@ -897,9 +1160,18 @@ export function SpreadsheetImportWizard({
       setMappingErrors([]);
 
       if (payload.importMode === 'master_hierarchy') {
+        const worksheetDrafts = isWorksheetPerProject
+          ? buildWorksheetGroupResolutions(
+              interview.worksheetProjects ?? [],
+              interview.worksheetResolutions ?? {}
+            )
+          : null;
+        const resolutionDrafts = worksheetDrafts
+          ? { ...interview.groupResolutions, ...worksheetDrafts }
+          : interview.groupResolutions;
+
         const unresolved = validation.groups.filter((group) => {
-          const draft = interview.groupResolutions[group.groupKey];
-          if (draft == null) return true;
+          const draft = resolutionDrafts[group.groupKey] ?? { type: 'create_new' as const };
           if (draft.type === 'attach_existing') return !draft.attachProjectId;
           if (draft.type === 'create_new') {
             return !areParentConflictsResolved(group.conflicts, draft.conflictResolutions);
@@ -914,7 +1186,12 @@ export function SpreadsheetImportWizard({
         const saved = await saveSpreadsheetImportResolutionsFromApi(currentJobId, {
           groups: validation.groups.map((group) => ({
             groupKey: group.groupKey,
-            resolution: buildResolutionPayload(group, payload.mappings, payload.rows),
+            resolution: buildResolutionPayload(
+              group,
+              payload.mappings,
+              payload.rows,
+              resolutionDrafts[group.groupKey]
+            ),
           })),
           excludedSourceRowIndexes: Array.from(excludedRowNumbers).map((n) => n - 1),
         });
@@ -929,7 +1206,7 @@ export function SpreadsheetImportWizard({
         ...goInterviewForward(s),
         structuralLocked: true,
       }));
-      await handleStartImport(currentJobId);
+      await handleStartImport(currentJobId, payload.rows.length);
     } catch (err) {
       const message = err instanceof Error ? err.message : copy.errors.draftFailed;
       setMappingErrors([message]);
@@ -939,15 +1216,15 @@ export function SpreadsheetImportWizard({
   }, [
     buildResolutionPayload,
     copy.errors.draftFailed,
+    copy.errors.parseFailed,
     copy.errors.resolutionRequired,
     excludedRowNumbers,
     fixedParentDisplayName,
     handleStartImport,
     headerRowIndex,
     headers,
-    idempotencyKey,
     interview,
-    jobId,
+    parsedFile,
     rows,
     selectedFile?.name,
     sheetName,
@@ -985,7 +1262,12 @@ export function SpreadsheetImportWizard({
   const canContinue = useMemo(() => {
     switch (interview.screen) {
       case 'upload':
-        return parsedFile != null && rows.length > 0 && canImport;
+        // Projects-page flow picks sheets later; only require a parsed workbook.
+        return (
+          parsedFile != null &&
+          canImport &&
+          (mode === 'into_existing_parent' ? rows.length > 0 : true)
+        );
       case 'header':
         return rows.length > 0;
       case 'structure':
@@ -995,6 +1277,33 @@ export function SpreadsheetImportWizard({
       case 'coming_soon_header_rows':
       case 'coming_soon_worksheet':
         return false;
+      case 'select_sheets':
+        return canContinueSelectSheets(
+          interview.worksheetProjects ?? [],
+          worksheetSheetsById
+        );
+      case 'worksheet_projects':
+        return canContinueWorksheetProjects(
+          interview.worksheetProjects ?? [],
+          interview.worksheetResolutions ?? {},
+          worksheetSheetsById
+        );
+      case 'worksheet_headers':
+        return canContinueWorksheetHeaders(
+          interview.worksheetProjects ?? [],
+          interview.worksheetResolutions ?? {},
+          worksheetSheetsById
+        );
+      case 'worksheet_resolve':
+        // Worksheet-level Save lives in the content area.
+        return false;
+      case 'worksheet_resolve_summary':
+        return canContinueWorksheetResolve(
+          interview.worksheetProjects ?? [],
+          interview.worksheetResolutions ?? {}
+        );
+      case 'worksheet_subproject_setup':
+        return isCompositionConfigured(interview.subprojectComposition);
       case 'recommend':
         return interview.structureChoice === 'one_project' || interview.structureChoice === 'multiple_projects';
       case 'choose_parent':
@@ -1039,6 +1348,7 @@ export function SpreadsheetImportWizard({
     currentConflictValid,
     flattenedConflicts.length,
     reviewIssues.blockingCount,
+    worksheetSheetsById,
     copy.standardFields,
     copy.interview.fields,
     copy.destinations.newCustomFieldSubproject,
@@ -1066,6 +1376,60 @@ export function SpreadsheetImportWizard({
       return next;
     });
   }, [isMidGroupStepper, isMidConflictStepper, localGroups, currentGroupIndex, flattenedConflicts, currentConflictIndex]);
+
+  const handleWorksheetResolveSelect = useCallback((worksheetId: string) => {
+    setInterview((s) => ({ ...s, activeWorksheetResolveId: worksheetId }));
+  }, []);
+
+  const handleWorksheetResolvePrevious = useCallback(() => {
+    setInterview((s) => {
+      const previousId = previousIncludedWorksheetId(
+        s.worksheetProjects ?? [],
+        s.activeWorksheetResolveId
+      );
+      if (previousId == null) return s;
+      return { ...s, activeWorksheetResolveId: previousId };
+    });
+  }, []);
+
+  const handleWorksheetResolveSave = useCallback(() => {
+    setInterview((s) => {
+      const configs = trimWorksheetProjectNames(s.worksheetProjects ?? []);
+      const activeId =
+        s.activeWorksheetResolveId ?? firstIncludedWorksheetId(configs);
+      if (activeId == null) return s;
+      const resolutions = confirmWorksheetResolution(
+        s.worksheetResolutions ?? {},
+        activeId
+      );
+      const nextId = nextUnresolvedWorksheetId(configs, resolutions, activeId);
+      if (nextId == null) {
+        return {
+          ...s,
+          worksheetProjects: configs,
+          worksheetResolutions: resolutions,
+          activeWorksheetResolveId: activeId,
+          history: [...s.history, s.screen],
+          screen: 'worksheet_resolve_summary',
+        };
+      }
+      return {
+        ...s,
+        worksheetProjects: configs,
+        worksheetResolutions: resolutions,
+        activeWorksheetResolveId: nextId,
+      };
+    });
+  }, []);
+
+  const handleWorksheetResolveReview = useCallback((worksheetId: string) => {
+    setInterview((s) => ({
+      ...s,
+      history: [...s.history, s.screen],
+      screen: 'worksheet_projects',
+      activeWorksheetResolveId: worksheetId,
+    }));
+  }, []);
 
   const handleContinue = useCallback(async () => {
     setError(null);
@@ -1097,10 +1461,178 @@ export function SpreadsheetImportWizard({
       return;
     }
 
+    if (interview.screen === 'select_sheets') {
+      const configs = interview.worksheetProjects ?? [];
+      const first = includedWorksheetConfigs(configs)[0];
+      void (async () => {
+        if (first != null && parsedFile != null) {
+          setBusy(true);
+          try {
+            setSheetName(first.worksheetName);
+            setHeaderRowIndex(first.headerRowIndex);
+            setDetectedHeaderRowIndex(first.headerRowIndex);
+            await applyParsedSheet(
+              parsedFile.workbook,
+              first.worksheetName,
+              first.headerRowIndex
+            );
+          } catch (err) {
+            setError(err instanceof Error ? err.message : copy.errors.parseFailed);
+            setBusy(false);
+            return;
+          } finally {
+            setBusy(false);
+          }
+        }
+        setInterview((s) =>
+          continueInterviewAfterEdit({
+            ...s,
+            worksheetProjects: configs,
+          })
+        );
+      })();
+      return;
+    }
+
+    if (interview.screen === 'worksheet_projects') {
+      setInterview((s) => {
+        const configs = trimWorksheetProjectNames(s.worksheetProjects ?? []);
+        const resolutions = syncWorksheetResolutionsForContinue({
+          configs,
+          resolutions: s.worksheetResolutions ?? {},
+        });
+        const firstImporting = includedWorksheetConfigs(configs).find(
+          (config) => resolutions[config.worksheetId]?.kind !== 'skip'
+        );
+        return continueInterviewAfterEdit({
+          ...s,
+          worksheetProjects: configs,
+          worksheetResolutions: resolutions,
+          activeWorksheetResolveId:
+            firstImporting?.worksheetId ??
+            s.activeWorksheetResolveId ??
+            firstWorksheetId(configs),
+        });
+      });
+      return;
+    }
+
+    if (interview.screen === 'worksheet_headers') {
+      setInterview((s) =>
+        continueInterviewAfterEdit({
+          ...s,
+          worksheetProjects: trimWorksheetProjectNames(s.worksheetProjects ?? []),
+        })
+      );
+      return;
+    }
+
+    if (interview.screen === 'worksheet_resolve_summary') {
+      const configs = interview.worksheetProjects ?? [];
+      const resolutions = interview.worksheetResolutions ?? {};
+      const compatibility = analyzeWorksheetHeaderCompatibility({
+        configs,
+        resolutions,
+        sheetsById: worksheetSheetsById,
+      });
+      const nextScreen = nextScreenAfterWorksheetResolve(compatibility);
+      const activeConfigs = includedWorksheetConfigs(configs).filter(
+        (config) => resolutions[config.worksheetId]?.kind !== 'skip'
+      );
+      const first = activeConfigs[0];
+      const queue =
+        nextScreen === 'worksheet_subproject_setup'
+          ? activeConfigs.map((config) => config.worksheetId)
+          : null;
+
+      void (async () => {
+        if (first != null && parsedFile != null) {
+          setBusy(true);
+          try {
+            setSheetName(first.worksheetName);
+            setHeaderRowIndex(first.headerRowIndex);
+            setDetectedHeaderRowIndex(first.headerRowIndex);
+            await applyParsedSheet(
+              parsedFile.workbook,
+              first.worksheetName,
+              first.headerRowIndex
+            );
+          } catch (err) {
+            setError(err instanceof Error ? err.message : copy.errors.parseFailed);
+            setBusy(false);
+            return;
+          } finally {
+            setBusy(false);
+          }
+        }
+
+        setInterview((s) => {
+          const withState = {
+            ...s,
+            worksheetProjects: trimWorksheetProjectNames(s.worksheetProjects ?? []),
+            worksheetResolutions: resolutions,
+            worksheetSubprojectQueue: queue,
+            activeWorksheetSetupId: queue?.[0] ?? null,
+          };
+          if (nextScreen === 'worksheet_subproject_setup') {
+            return {
+              ...withState,
+              history: [...withState.history, withState.screen],
+              screen: 'worksheet_subproject_setup',
+            };
+          }
+          return continueInterviewAfterEdit(withState);
+        });
+      })();
+      return;
+    }
+
+    if (interview.screen === 'worksheet_subproject_setup') {
+      const queue = interview.worksheetSubprojectQueue ?? [];
+      const activeId = interview.activeWorksheetSetupId;
+      const activeIndex = activeId != null ? queue.indexOf(activeId) : -1;
+      const nextId = activeIndex >= 0 ? queue[activeIndex + 1] : null;
+      if (nextId != null && parsedFile != null) {
+        const config = (interview.worksheetProjects ?? []).find((item) => item.worksheetId === nextId);
+        void (async () => {
+          if (config != null) {
+            setBusy(true);
+            try {
+              setSheetName(config.worksheetName);
+              setHeaderRowIndex(config.headerRowIndex);
+              await applyParsedSheet(
+                parsedFile.workbook,
+                config.worksheetName,
+                config.headerRowIndex
+              );
+            } catch (err) {
+              setError(err instanceof Error ? err.message : copy.errors.parseFailed);
+              setBusy(false);
+              return;
+            } finally {
+              setBusy(false);
+            }
+          }
+          setInterview((s) => ({
+            ...s,
+            activeWorksheetSetupId: nextId,
+            subprojectComposition: null,
+          }));
+        })();
+        return;
+      }
+      setInterview((s) => continueInterviewAfterEdit(s));
+      return;
+    }
+
     setInterview((s) => continueInterviewAfterEdit(s));
   }, [
     canContinue,
     interview.screen,
+    interview.worksheetProjects,
+    interview.worksheetResolutions,
+    interview.worksheetSubprojectQueue,
+    interview.activeWorksheetSetupId,
     isLastGroup,
     isLastConflict,
     localGroups,
@@ -1108,6 +1640,10 @@ export function SpreadsheetImportWizard({
     flattenedConflicts,
     currentConflictIndex,
     handleStartFromReview,
+    worksheetSheetsById,
+    parsedFile,
+    applyParsedSheet,
+    copy.errors.parseFailed,
   ]);
 
   const showBack =
@@ -1124,11 +1660,17 @@ export function SpreadsheetImportWizard({
   const backLabel = isMidGroupStepper || isMidConflictStepper ? nav.previous : nav.back;
   const continueLabel =
     interview.screen === 'review'
-      ? copy.interview.review.startImport(rows.length)
-      : (interview.screen === 'parent_resolve' && !isLastGroup) ||
-          (interview.screen === 'conflict' && !isLastConflict)
-        ? nav.next
-        : nav.continue;
+      ? copy.interview.review.startImport(
+          worksheetReviewSummary?.rowsCount ?? rows.length
+        )
+      : interview.screen === 'worksheet_projects'
+        ? content.crm.spreadsheetImport.interview.worksheetProjects.saveAndContinue
+        : interview.screen === 'worksheet_resolve_summary'
+          ? content.crm.spreadsheetImport.interview.worksheetResolve.continueToSubprojectSetup
+          : (interview.screen === 'parent_resolve' && !isLastGroup) ||
+              (interview.screen === 'conflict' && !isLastConflict)
+            ? nav.next
+            : nav.continue;
 
   // ---------------------------------------------------------------------
   // Progress pipeline
@@ -1184,6 +1726,7 @@ export function SpreadsheetImportWizard({
           selectedFile={selectedFile}
           parsedFile={parsedFile}
           sheetName={sheetName}
+          showSheetPicker={mode === 'into_existing_parent'}
           onFileChange={(file) => void handleFileChange(file)}
           onSheetChange={(next) => void handleSheetChange(next)}
         />
@@ -1226,6 +1769,125 @@ export function SpreadsheetImportWizard({
     case 'coming_soon_header_rows':
       screenBody = <ComingSoonImportScreen kind="header_rows" />;
       break;
+    case 'select_sheets':
+      screenBody = (
+        <SelectSheetsScreen
+          sheets={worksheetSheets}
+          configs={interview.worksheetProjects ?? []}
+          disabled={busy}
+          onChangeConfigs={(configs) => setInterview((s) => ({ ...s, worksheetProjects: configs }))}
+        />
+      );
+      break;
+    case 'worksheet_projects':
+      screenBody = (
+        <WorksheetProjectsScreen
+          sheets={worksheetSheets}
+          configs={interview.worksheetProjects ?? []}
+          resolutions={interview.worksheetResolutions ?? {}}
+          activeWorksheetId={interview.activeWorksheetResolveId}
+          parentCandidates={parentCandidates}
+          disabled={busy}
+          oneProjectPath={false}
+          onChangeConfigs={(configs) => setInterview((s) => ({ ...s, worksheetProjects: configs }))}
+          onChangeResolutions={(resolutions) =>
+            setInterview((s) => ({ ...s, worksheetResolutions: resolutions }))
+          }
+          onSelectWorksheet={handleWorksheetResolveSelect}
+          onRefreshCandidates={refreshParentCandidates}
+        />
+      );
+      break;
+    case 'worksheet_headers':
+      screenBody = (
+        <WorksheetHeadersScreen
+          sheets={worksheetSheets}
+          configs={interview.worksheetProjects ?? []}
+          resolutions={interview.worksheetResolutions ?? {}}
+          activeWorksheetId={interview.activeWorksheetResolveId}
+          disabled={busy}
+          onChangeConfigs={(configs) => setInterview((s) => ({ ...s, worksheetProjects: configs }))}
+          onSelectWorksheet={handleWorksheetResolveSelect}
+        />
+      );
+      break;
+    case 'worksheet_resolve': {
+      const configs = interview.worksheetProjects ?? [];
+      const activeId = interview.activeWorksheetResolveId;
+      const index = worksheetIndexAmongIncluded(configs, activeId);
+      const resolutions = interview.worksheetResolutions ?? {};
+      const nextUnresolved =
+        activeId != null
+          ? nextUnresolvedWorksheetId(
+              configs,
+              activeId in resolutions
+                ? { ...resolutions, [activeId]: { ...resolutions[activeId]!, confirmed: true } }
+                : resolutions,
+              activeId
+            )
+          : null;
+      screenBody = (
+        <WorksheetResolveScreen
+          configs={configs}
+          resolutions={resolutions}
+          activeWorksheetId={activeId}
+          parentCandidates={parentCandidates}
+          disabled={busy}
+          onChangeConfigs={(nextConfigs) =>
+            setInterview((s) => ({ ...s, worksheetProjects: nextConfigs }))
+          }
+          onChangeResolutions={(nextResolutions) =>
+            setInterview((s) => ({ ...s, worksheetResolutions: nextResolutions }))
+          }
+          onSelectWorksheet={handleWorksheetResolveSelect}
+          onPrevious={handleWorksheetResolvePrevious}
+          onSaveAndContinue={handleWorksheetResolveSave}
+          isFirstWorksheet={index <= 0}
+          isLastWorksheet={nextUnresolved == null}
+        />
+      );
+      break;
+    }
+    case 'worksheet_resolve_summary':
+      screenBody = (
+        <WorksheetResolveSummaryScreen
+          configs={interview.worksheetProjects ?? []}
+          resolutions={interview.worksheetResolutions ?? {}}
+          disabled={busy}
+          onReviewWorksheet={handleWorksheetResolveReview}
+        />
+      );
+      break;
+    case 'worksheet_subproject_setup': {
+      const queue = interview.worksheetSubprojectQueue ?? [];
+      const activeId = interview.activeWorksheetSetupId;
+      const activeIndex = activeId != null ? queue.indexOf(activeId) : 0;
+      const activeConfig = (interview.worksheetProjects ?? []).find(
+        (config) => config.worksheetId === activeId
+      );
+      screenBody = (
+        <div className={styles.worksheetResolveScreen}>
+          <p className={styles.worksheetResolveSummary} aria-live="polite">
+            {content.crm.spreadsheetImport.interview.worksheetResolve.mismatchedHeadersNote}
+            {activeConfig != null
+              ? ` (${activeIndex + 1} of ${queue.length}: ${activeConfig.worksheetName})`
+              : null}
+          </p>
+          <SubprojectIdentityScreen
+            headers={headers}
+            sampleRows={sampleRowsMatrix}
+            dataRows={dataRowsMatrix}
+            composition={interview.subprojectComposition}
+            disabledIndexes={new Set(interview.projectComposition?.columnIndexes ?? [])}
+            disabled={busy}
+            onChange={(composition) =>
+              setInterview((s) => ({ ...s, subprojectComposition: composition }))
+            }
+          />
+        </div>
+      );
+      break;
+    }
     case 'coming_soon_worksheet':
       screenBody = <ComingSoonImportScreen kind="worksheet_per_project" />;
       break;
@@ -1294,15 +1956,18 @@ export function SpreadsheetImportWizard({
               const next = applyStructureChoice(s, 'one_project');
               return {
                 ...next,
-                screen: 'choose_parent',
+                screen: 'select_sheets',
                 history: s.history.filter(
                   (screen) =>
                     screen !== 'project_identity' &&
                     screen !== 'subproject_identity' &&
                     screen !== 'multi_project_organization' &&
                     screen !== 'coming_soon_header_rows' &&
+                    screen !== 'select_sheets' &&
+                    screen !== 'worksheet_projects' &&
                     screen !== 'coming_soon_worksheet' &&
-                    screen !== 'choose_parent'
+                    screen !== 'choose_parent' &&
+                    screen !== 'header'
                 ),
               };
             })
@@ -1319,9 +1984,9 @@ export function SpreadsheetImportWizard({
           composition={interview.subprojectComposition}
           disabledIndexes={new Set(interview.projectComposition?.columnIndexes ?? [])}
           disabled={busy}
-          showSampleHierarchy={interview.structureChoice === 'multiple_projects'}
-          sampleHierarchy={sampleHierarchy}
-          onChange={(composition) => setInterview((s) => ({ ...s, subprojectComposition: composition }))}
+          onChange={(composition) =>
+            setInterview((s) => ({ ...s, subprojectComposition: composition }))
+          }
         />
       );
       break;
@@ -1549,16 +2214,20 @@ export function SpreadsheetImportWizard({
         <ReviewScreen
           launchMode={mode}
           effectiveMode={resolveEffectiveImportMode(interview)}
+          multiProjectOrganization={interview.multiProjectOrganization}
           fileName={selectedFile?.name ?? null}
           sheetName={sheetName}
           headerRowNumber={headerRowIndex + 1}
           structureChoice={interview.structureChoice}
-          parentLabel={interview.selectedParentLabel}
+          parentLabel={
+            worksheetReviewSummary?.destinationLabel ?? interview.selectedParentLabel
+          }
           headers={headers}
           projectComposition={interview.projectComposition}
           subprojectComposition={interview.subprojectComposition}
           subprojectNameExample={subprojectNameExample}
-          rowsCount={rows.length}
+          sheetsCount={worksheetReviewSummary?.sheetsCount ?? null}
+          rowsCount={worksheetReviewSummary?.rowsCount ?? rows.length}
           fieldsMappedCount={fieldsMappedCount}
           ignoredColumnsCount={reviewColumnCounts.ignoredCount}
           mappedColumnsCount={reviewColumnCounts.mappedCount}
@@ -1582,7 +2251,11 @@ export function SpreadsheetImportWizard({
         <ImportScreen
           importStatus={importStatus}
           importCounts={importCounts}
-          totalRows={rows.length}
+          totalRows={
+            importTotalRows > 0
+              ? importTotalRows
+              : (worksheetReviewSummary?.rowsCount ?? rows.length)
+          }
           cumulativeProcessed={cumulativeProcessed}
           lastChunkProcessed={lastChunkProcessed}
           peakPercent={peakPercent}
@@ -1628,6 +2301,12 @@ export function SpreadsheetImportWizard({
           interview.screen === 'structure' ||
           interview.screen === 'multi_project_organization' ||
           interview.screen === 'coming_soon_header_rows' ||
+          interview.screen === 'select_sheets' ||
+          interview.screen === 'worksheet_projects' ||
+          interview.screen === 'worksheet_headers' ||
+          interview.screen === 'worksheet_resolve' ||
+          interview.screen === 'worksheet_resolve_summary' ||
+          interview.screen === 'worksheet_subproject_setup' ||
           interview.screen === 'coming_soon_worksheet' ||
           interview.screen === 'project_identity' ||
           interview.screen === 'choose_parent' ||
@@ -1715,14 +2394,28 @@ export function SpreadsheetImportWizard({
               >
                 {copy.actions.cancel}
               </button>
-              <button
-                type="button"
-                className={styles.primaryButton}
-                disabled={busy || !canContinue}
-                onClick={() => void handleContinue()}
-              >
-                {busy ? nav.working : continueLabel}
-              </button>
+              {interview.screen === 'worksheet_resolve' ? null : (
+                <button
+                  type="button"
+                  className={styles.primaryButton}
+                  disabled={busy || !canContinue}
+                  aria-disabled={busy || !canContinue}
+                  title={
+                    (interview.screen === 'worksheet_projects' ||
+                      interview.screen === 'worksheet_resolve_summary') &&
+                    !canContinue
+                      ? interview.screen === 'worksheet_resolve_summary'
+                        ? content.crm.spreadsheetImport.interview.worksheetResolve
+                            .continueBlockedAria
+                        : content.crm.spreadsheetImport.interview.worksheetProjects
+                            .continueBlockedAria
+                      : undefined
+                  }
+                  onClick={() => void handleContinue()}
+                >
+                  {busy ? nav.working : continueLabel}
+                </button>
+              )}
             </>
           )}
         </div>

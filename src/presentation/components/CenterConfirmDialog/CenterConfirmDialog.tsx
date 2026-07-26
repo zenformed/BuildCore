@@ -17,6 +17,8 @@ export type CenterConfirmDialogProps = {
   readonly confirmDisabled?: boolean;
   readonly cancelDisabled?: boolean;
   readonly hideActions?: boolean;
+  /** When true, only the confirm action (if any) is shown. */
+  readonly hideCancel?: boolean;
   readonly closeAriaLabel: string;
   readonly panelClassName?: string;
   readonly overlayClassName?: string;
@@ -40,6 +42,7 @@ export function CenterConfirmDialog({
   confirmDisabled = false,
   cancelDisabled = false,
   hideActions = false,
+  hideCancel = false,
   closeAriaLabel,
   panelClassName,
   overlayClassName,
@@ -87,14 +90,16 @@ export function CenterConfirmDialog({
         {hideActions ? null : (
           <div className={[styles.actions, actionsClassName].filter(Boolean).join(' ')}>
             {leadingAction}
-            <button
-              type="button"
-              className={styles.cancelBtn}
-              onClick={onClose}
-              disabled={cancelDisabled}
-            >
-              {cancelLabel}
-            </button>
+            {hideCancel ? null : (
+              <button
+                type="button"
+                className={styles.cancelBtn}
+                onClick={onClose}
+                disabled={cancelDisabled}
+              >
+                {cancelLabel}
+              </button>
+            )}
             {showConfirm ? (
               <button
                 type="button"

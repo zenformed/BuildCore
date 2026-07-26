@@ -1,8 +1,10 @@
 'use client';
 
 import type { ReactElement, ReactNode } from 'react';
+import { LuFileSpreadsheet } from 'react-icons/lu';
 import { CloseIcon } from '@/platform/icons/buildCoreDashboardShellIcons';
 import { DetailPanelHeaderButton } from './DetailPanelHeaderButton';
+import { useDashboardMobileLayout } from '@/presentation/features/crmProjects/useDashboardMobileLayout';
 import importStyles from '@/presentation/components/CrmImport/SpreadsheetImportWizard.module.css';
 import styles from './ProjectDetail.module.css';
 
@@ -50,6 +52,8 @@ export function SubprojectsListToolbar({
   mobileBulkActions = null,
   trailingActions = null,
 }: SubprojectsListToolbarProps): ReactElement {
+  const isMobileLayout = useDashboardMobileLayout();
+
   if (showMobileBulkToolbar) {
     return (
       <div
@@ -88,12 +92,20 @@ export function SubprojectsListToolbar({
       {canManage && onImportOpen ? (
         <button
           type="button"
-          className={importStyles.toolbarSecondaryButton}
+          className={
+            isMobileLayout
+              ? importStyles.toolbarIconButton
+              : importStyles.toolbarSecondaryButton
+          }
           title={importSpreadsheetTitle}
           aria-label={importSpreadsheetAriaLabel ?? importSpreadsheetTitle}
           onClick={onImportOpen}
         >
-          {importSpreadsheetTitle}
+          {isMobileLayout ? (
+            <LuFileSpreadsheet size={16} strokeWidth={2} aria-hidden />
+          ) : (
+            importSpreadsheetTitle
+          )}
         </button>
       ) : null}
       {canManage ? (

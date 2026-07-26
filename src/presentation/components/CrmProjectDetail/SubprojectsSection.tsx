@@ -22,6 +22,7 @@ import { buildCoreDashboardContent as content } from '@/platform/content/buildCo
 import { CrmProjectDeleteWorkflowDialog } from '@/presentation/components/CrmProjects/CrmProjectDeleteWorkflowDialog';
 import { CreateCrmProjectModal } from '@/presentation/components/CrmProjects/CreateCrmProjectModal';
 import { SpreadsheetImportWizard } from '@/presentation/components/CrmImport/SpreadsheetImportWizard';
+import { SpreadsheetImportMobileNoticeDialog } from '@/presentation/components/CrmImport/SpreadsheetImportMobileNoticeDialog';
 import { CrmProjectsTable } from '@/presentation/components/CrmProjects/CrmProjectsTable';
 import { useDashboardMobileLayout } from '@/presentation/features/crmProjects/useDashboardMobileLayout';
 import { SubprojectsMobileList } from './SubprojectsMobileList';
@@ -100,25 +101,35 @@ function SubprojectsSectionContent(): ReactElement {
   );
   const { organizationMembershipContext } = useSaaSProfile();
   const canManage = !isMemberRole && !isBuildCoreMemberRole(organizationMembershipContext?.role);
+  const isMobileLayout = useDashboardMobileLayout();
   const [importOpen, setImportOpen] = useState(false);
+  const [importMobileNoticeOpen, setImportMobileNoticeOpen] = useState(false);
 
   useEffect(() => {
     if (importAutoOpenedRef.current) return;
     if (searchParams.get('importSpreadsheet') !== '1') return;
     if (!canManage) return;
     importAutoOpenedRef.current = true;
-    setImportOpen(true);
+    if (isMobileLayout) {
+      setImportMobileNoticeOpen(true);
+    } else {
+      setImportOpen(true);
+    }
     const params = new URLSearchParams(searchParams.toString());
     params.delete('importSpreadsheet');
     const query = params.toString();
     router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
-  }, [canManage, pathname, router, searchParams]);
+  }, [canManage, isMobileLayout, pathname, router, searchParams]);
 
   const openImportWizard = useCallback(() => {
     guardProjectEdit(() => {
+      if (isMobileLayout) {
+        setImportMobileNoticeOpen(true);
+        return;
+      }
       setImportOpen(true);
     });
-  }, [guardProjectEdit]);
+  }, [guardProjectEdit, isMobileLayout]);
   const [expanded, setExpanded] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [listFilters, setListFilters] = useState(EMPTY_CRM_PROJECTS_LIST_FILTERS);
@@ -204,7 +215,6 @@ function SubprojectsSectionContent(): ReactElement {
       : allSubprojectCount > 0 && rows.length === 0 && isNarrowingResults
         ? content.crm.table.empty
         : copy.empty;
-  const isMobileLayout = useDashboardMobileLayout();
   const bulkSelection = useBulkSelection<string>();
   const bulkSendAttachment = useBulkSendAttachmentDialog({
     parentProjectSlug: project.summary.slug,
@@ -795,6 +805,10 @@ function SubprojectsSectionContent(): ReactElement {
             onCompleted={() => {
               void refetch();
             }}
+          />
+          <SpreadsheetImportMobileNoticeDialog
+            isOpen={importMobileNoticeOpen}
+            onClose={() => setImportMobileNoticeOpen(false)}
           />
         </>
       ) : null}

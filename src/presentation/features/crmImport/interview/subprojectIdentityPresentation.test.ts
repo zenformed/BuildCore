@@ -1,8 +1,11 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import {
+  buildSubprojectIdentityExampleTable,
+  buildSubprojectIdentityGroups,
   buildSubprojectIdentityGuidanceView,
   buildSubprojectIdentityLiveExamples,
+  buildSubprojectIdentityPreviewGroups,
   buildSubprojectIdentityPrimaryPreview,
   moveSubprojectIdentityColumn,
   moveSubprojectIdentityListRow,
@@ -24,6 +27,8 @@ const COPY = {
   guidanceBlankBody: 'Fill values.',
   guidanceWeakSingleTitle: (header: string): string => `${header} alone may not work`,
   guidanceWeakSingleBody: 'Add Last Name.',
+  warningWouldCreateTitle: (count: number): string => `BuildCore would create ${count} Subprojects`,
+  warningWouldCreateBody: 'Nearly every row its own Subproject.',
 };
 
 describe('subprojectIdentityPresentation', () => {
@@ -172,6 +177,72 @@ describe('subprojectIdentityPresentation', () => {
       )?.title ?? '',
       /First Name/
     );
+  });
+
+  it('maps high-cardinality unique selections to a would-create warning', () => {
+    const view = buildSubprojectIdentityGuidanceView(
+      {
+        kind: 'unique',
+        severity: 'success',
+        totalRows: 29,
+        uniqueNameCount: 29,
+        duplicateNameCount: 0,
+        blankRowCount: 0,
+        selectedHeaderLabel: 'First Name + Last Name',
+      },
+      COPY
+    );
+    assert.equal(view?.kind, 'would_create');
+    assert.equal(view?.tone, 'warning');
+    assert.match(view?.title ?? '', /29 Subprojects/);
+  });
+
+  it('groups rows by composed Subproject name and limits preview cards', () => {
+    const dataRows = [
+      ['Antoinette', 'Reese', 'a@example.com'],
+      ['Tonya', 'Teton', 'b@example.com'],
+      ['Emma', 'Finnsson', 'c@example.com'],
+      ['Ada', 'Lovelace', 'd@example.com'],
+    ];
+    const composition = { columnIndexes: [0, 1] as const, separator: ' ' as const };
+    const groups = buildSubprojectIdentityGroups({ dataRows, composition });
+    assert.equal(groups.length, 4);
+    assert.equal(groups[0]?.displayName, 'Antoinette Reese');
+    assert.equal(groups[0]?.rowCount, 1);
+
+    const preview = buildSubprojectIdentityPreviewGroups({
+      groups,
+      headers: ['First Name', 'Last Name', 'Email', 'Cell Phone'],
+      dataRows: [
+        ['Antoinette', 'Reese', 'a@example.com', '555-0100'],
+        ['Tonya', 'Teton', 'b@example.com', '555-0101'],
+        ['Emma', 'Finnsson', 'c@example.com', '555-0102'],
+        ['Ada', 'Lovelace', 'd@example.com', '555-0103'],
+      ],
+      composition,
+      limit: 3,
+    });
+    assert.equal(preview.visible.length, 3);
+    assert.equal(preview.remainingCount, 1);
+    assert.equal(preview.visible[0]?.displayName, 'Antoinette Reese');
+    assert.deepEqual(preview.visible[0]?.companionLabels, []);
+  });
+
+  it('builds an example table with Subproject name and City (not Email)', () => {
+    const table = buildSubprojectIdentityExampleTable({
+      headers: ['First Name', 'Last Name', 'Email', 'City'],
+      dataRows: [
+        ['Antoinette', 'Reese', 'treese6@comcast.net', 'Austin'],
+        ['Tonya', 'Teton', 'tteton@example.com', 'Dallas'],
+      ],
+      composition: { columnIndexes: [0, 1], separator: ' ' },
+      composedNameLabel: 'Subproject name',
+    });
+    assert.equal(table.columns[0]?.label, 'Subproject name');
+    assert.equal(table.columns[1]?.label, 'City');
+    assert.equal(table.columns.some((column) => /email/i.test(column.label)), false);
+    assert.equal(table.rows[0]?.cells[0], 'Antoinette Reese');
+    assert.equal(table.rows[0]?.cells[1], 'Austin');
   });
 
   it('uses configured Subproject terminology in copy', () => {

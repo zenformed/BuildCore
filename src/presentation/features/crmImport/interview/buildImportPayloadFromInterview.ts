@@ -4,6 +4,7 @@
 
 import type { CrmImportColumnComposition } from '@/domain/crm/spreadsheetImportComposition';
 import { composeImportColumnValues } from '@/domain/crm/spreadsheetImportComposition';
+import { normalizeImportText } from '@/domain/crm/spreadsheetImportGrouping';
 import type {
   CrmImportColumnMapping,
   CrmImportMode,
@@ -14,6 +15,10 @@ import type {
   CrmImportRemainingFieldDraft,
 } from '@/presentation/features/crmImport/interview/interviewState';
 import { resolveEffectiveImportMode } from '@/presentation/features/crmImport/interview/interviewState';
+import {
+  includedWorksheetConfigs,
+  worksheetParentDisplayName,
+} from '@/presentation/features/crmImport/interview/worksheetResolvePresentation';
 
 function parseDestination(
   destinationKey: string,
@@ -65,6 +70,23 @@ function injectComposedColumn(
   });
 }
 
+function resolveWorksheetParentNameForActiveSheet(
+  state: CrmImportInterviewState
+): string | null {
+  const configs = state.worksheetProjects ?? [];
+  const resolutions = state.worksheetResolutions ?? {};
+  const activeId =
+    state.activeWorksheetSetupId ??
+    includedWorksheetConfigs(configs).find(
+      (config) => resolutions[config.worksheetId]?.kind !== 'skip'
+    )?.worksheetId ??
+    null;
+  if (activeId == null) return null;
+  const config = configs.find((item) => item.worksheetId === activeId);
+  if (config == null) return null;
+  return worksheetParentDisplayName(config, resolutions[activeId]);
+}
+
 export function buildImportPayloadFromInterview(input: {
   readonly state: CrmImportInterviewState;
   readonly headers: readonly string[];
@@ -96,6 +118,25 @@ export function buildImportPayloadFromInterview(input: {
       destination: { kind: 'standard_field', entity: 'parent', key: 'parent_name' },
     });
     for (const idx of projectComp.columnIndexes) used.add(idx);
+  } else if (
+    mode === 'master_hierarchy' &&
+    input.state.multiProjectOrganization === 'worksheet_per_project'
+  ) {
+    // Parents come from worksheet create/attach decisions, not a spreadsheet column.
+    const target = input.headers.length;
+    const fallbackName = resolveWorksheetParentNameForActiveSheet(input.state) ?? 'Project';
+    rows = rows.map((row) => {
+      const existing = row.cells[target];
+      const value =
+        existing != null && normalizeImportText(existing) ? existing : fallbackName;
+      return { ...row, cells: { ...row.cells, [target]: value } };
+    });
+    mappings.push({
+      sourceIndex: target,
+      originalHeader: 'Project',
+      ownership: 'parent',
+      destination: { kind: 'standard_field', entity: 'parent', key: 'parent_name' },
+    });
   }
 
   if (subComp && subComp.columnIndexes.length > 0) {
