@@ -514,6 +514,9 @@ export function reviewEditTargetForSection(
       if (input.multiProjectOrganization === 'worksheet_per_project') {
         return 'worksheet_resolve_summary';
       }
+      if (input.multiProjectOrganization === 'header_rows') {
+        return 'header_row_projects';
+      }
       if (input.structureChoice === 'one_project') {
         return 'choose_parent';
       }
@@ -543,8 +546,21 @@ export function findEarliestIncompleteInterviewScreen(
 
     if (state.structureChoice === 'multiple_projects') {
       if (state.multiProjectOrganization == null) return 'multi_project_organization';
-      if (state.multiProjectOrganization === 'header_rows') return 'coming_soon_header_rows';
-      if (state.multiProjectOrganization === 'worksheet_per_project') {
+      if (state.multiProjectOrganization === 'header_rows') {
+        if (state.projectHeaderRowIndexes == null || state.projectHeaderRowIndexes.length === 0) {
+          return 'project_header_rows';
+        }
+        if (
+          state.worksheetProjects == null ||
+          state.worksheetProjects.length === 0 ||
+          !canContinueWorksheetResolve(
+            state.worksheetProjects,
+            state.worksheetResolutions ?? {}
+          )
+        ) {
+          return 'header_row_projects';
+        }
+      } else if (state.multiProjectOrganization === 'worksheet_per_project') {
         if (
           state.worksheetProjects == null ||
           state.worksheetProjects.length === 0 ||

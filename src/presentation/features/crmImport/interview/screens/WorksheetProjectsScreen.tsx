@@ -52,6 +52,8 @@ export type WorksheetProjectsScreenProps = {
   readonly disabled?: boolean;
   /** Solo structure path uses singular Project wording in the page heading. */
   readonly oneProjectPath?: boolean;
+  /** Header-rows branch reuses this screen with section-oriented copy. */
+  readonly headerRowsPath?: boolean;
   readonly onChangeConfigs: (configs: readonly WorksheetProjectConfig[]) => void;
   readonly onChangeResolutions: (
     resolutions: Readonly<Record<string, WorksheetResolutionDraft>>
@@ -122,13 +124,32 @@ export function WorksheetProjectsScreen({
   parentCandidates,
   disabled = false,
   oneProjectPath = false,
+  headerRowsPath = false,
   onChangeConfigs,
   onChangeResolutions,
   onSelectWorksheet,
   onRefreshCandidates,
 }: WorksheetProjectsScreenProps): ReactElement {
-  const copy = content.crm.spreadsheetImport.interview.worksheetProjects;
-  const pageHeading = oneProjectPath ? copy.pageHeadingOneProject : copy.pageHeading;
+  const baseCopy = content.crm.spreadsheetImport.interview.worksheetProjects;
+  const headerCopy = content.crm.spreadsheetImport.interview.headerRowProjects;
+  const pageHeading = oneProjectPath
+    ? baseCopy.pageHeadingOneProject
+    : headerRowsPath
+      ? headerCopy.pageHeading
+      : baseCopy.pageHeading;
+  const pageSubheading = headerRowsPath ? headerCopy.pageSubheading : baseCopy.pageSubheading;
+  const listHeading = headerRowsPath ? headerCopy.listHeading : baseCopy.listHeading;
+  const listAria = headerRowsPath ? headerCopy.listAria : baseCopy.listAria;
+  const selectWorksheetAria = headerRowsPath
+    ? headerCopy.selectWorksheetAria
+    : baseCopy.selectWorksheetAria;
+  const currentWorksheetAria = headerRowsPath
+    ? headerCopy.currentWorksheetAria
+    : baseCopy.currentWorksheetAria;
+  const importWorksheetAria = headerRowsPath
+    ? headerCopy.importWorksheetAria
+    : baseCopy.importWorksheetAria;
+  const copy = baseCopy;
   const chooseParent = content.crm.spreadsheetImport.interview.chooseParent;
   const rootId = useId();
   const createButtonRef = useRef<HTMLButtonElement>(null);
@@ -227,7 +248,7 @@ export function WorksheetProjectsScreen({
             />
             <span>{pageHeading}</span>
           </h2>
-          <p className={styles.worksheetProjectsPageSubheading}>{copy.pageSubheading}</p>
+          <p className={styles.worksheetProjectsPageSubheading}>{pageSubheading}</p>
         </header>
       </div>
     );
@@ -247,11 +268,11 @@ export function WorksheetProjectsScreen({
           />
           <span>{pageHeading}</span>
         </h2>
-        <p className={styles.worksheetProjectsPageSubheading}>{copy.pageSubheading}</p>
+        <p className={styles.worksheetProjectsPageSubheading}>{pageSubheading}</p>
       </header>
-      <aside className={styles.worksheetProjectsSidebar} aria-label={copy.listAria}>
+      <aside className={styles.worksheetProjectsSidebar} aria-label={listAria}>
         <h3 className={styles.worksheetProjectsListHeading}>
-          {copy.listHeading(summary.selectedCount, summary.totalCount)}
+          {listHeading(summary.selectedCount, summary.totalCount)}
         </h3>
         <div className={styles.worksheetProjectsList}>
           {rowViews.map((row) => {
@@ -276,7 +297,7 @@ export function WorksheetProjectsScreen({
                     className={styles.worksheetProjectsCheckbox}
                     checked={row.config.included}
                     disabled={disabled || !row.importable}
-                    aria-label={copy.importWorksheetAria(row.config.worksheetName)}
+                    aria-label={importWorksheetAria(row.config.worksheetName)}
                     onChange={(event) =>
                       applyIncludeToggle(row.config.worksheetId, event.target.checked)
                     }
@@ -292,8 +313,8 @@ export function WorksheetProjectsScreen({
                   aria-current={current ? 'true' : undefined}
                   aria-label={
                     current
-                      ? copy.currentWorksheetAria(row.config.worksheetName)
-                      : copy.selectWorksheetAria(row.config.worksheetName)
+                      ? currentWorksheetAria(row.config.worksheetName)
+                      : selectWorksheetAria(row.config.worksheetName)
                   }
                   onClick={() => onSelectWorksheet(row.config.worksheetId)}
                 >

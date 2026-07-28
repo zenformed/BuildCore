@@ -736,6 +736,59 @@ const buildCoreDashboardContentSource = {
           previewAriaLabel: 'Spreadsheet rows — select the header row',
           columnFallback: (index: number): string => `Column ${index + 1}`,
         },
+        projectHeaderRows: {
+          heading: 'Confirm your §E1§ sections',
+          hint: 'BuildCore selected the rows it believes start each §E1§. Review the sections below and adjust any incorrect selections.',
+          previewAriaLabel: 'Spreadsheet rows — confirm §E1§ section headers',
+          selectRowAsProject: (row: number): string => `Use row ${row} as a §E1§ section header`,
+          selectedAsProject: '§E1§ header',
+          columnHeaderBadge: 'Column headers',
+          groupsHeading: '§E2§ to import',
+          groupsAriaLabel: '§E1§ sections to import',
+          groupsListAria: '§E1§ section cards',
+          selectGroupCardAria: (name: string): string => `Inspect §E1§ section ${name}`,
+          emptyGroups: 'Select at least one §E1§ header row to continue.',
+          projectNameLabel: '§E1§ name',
+          projectNameAria: (row: number): string => `§E1§ name for header row ${row}`,
+          editProjectNameAria: (name: string): string => `Edit §E1§ name ${name}`,
+          statusReady: 'Ready',
+          statusNeedsReview: 'Needs review',
+          statusUnassigned: 'Unassigned rows',
+          statusInvalidName: 'Invalid name',
+          statusAria: (status: string): string => `Status: ${status}`,
+          previewLabel: 'Preview',
+          importSummary: (name: string, count: number): string =>
+            count === 1
+              ? `Will create §E1§ \u201c${name}\u201d with 1 §E3§.`
+              : `Will create §E1§ \u201c${name}\u201d with ${count.toLocaleString()} §E8§.`,
+          importSummaryEmpty: (name: string): string =>
+            `Will create §E1§ \u201c${name}\u201d with no §E8§ yet.`,
+          selectedCardAria: 'Selected §E1§ section',
+          subprojectCount: (count: number): string =>
+            count === 1 ? '1 §E3§' : `${count.toLocaleString()} §E8§`,
+          noChildren: 'No data rows under this header yet.',
+          moreChildren: (count: number): string => `+${count.toLocaleString()} more`,
+          summaryAria: '§E1§ section summary',
+          summaryProjectGroups: (count: number): string =>
+            count === 1
+              ? '1 §E1§ group detected'
+              : `${count.toLocaleString()} §E1§ groups detected`,
+          summarySubprojects: (count: number): string =>
+            count === 1 ? '1 §E3§' : `${count.toLocaleString()} §E8§`,
+          summaryUnassigned: (count: number): string =>
+            count === 1 ? '1 unassigned row' : `${count.toLocaleString()} unassigned rows`,
+          unassignedTableWarning: (count: number): string =>
+            count === 1
+              ? '1 row is not assigned to a §E1§ section.'
+              : `${count.toLocaleString()} rows are not assigned to a §E1§ section.`,
+          unassignedWarning: (count: number): string =>
+            count === 1
+              ? '1 row appears before the first §E1§ header.'
+              : `${count.toLocaleString()} rows appear before the first §E1§ header.`,
+          unassignedHint:
+            'Select an earlier §E1§ header row, or exclude these rows from the import.',
+          excludeUnassigned: 'Exclude these rows',
+        },
         worksheetHeaders: {
           listHeading: (count: number): string =>
             count === 1
@@ -873,6 +926,19 @@ const buildCoreDashboardContentSource = {
           howThisWorksTitle: 'How this works',
           howThisWorksBody:
             'Select a §E1§ for each worksheet, or create a new one. Rows import as §E8§ under that §E1§.',
+        },
+        headerRowProjects: {
+          pageHeading: 'Choose a §E1§ for each detected section',
+          pageSubheading:
+            'Assign each section to an existing §E1§, create a new one, or skip it.',
+          listHeading: (selected: number, total: number): string =>
+            `§E2§ (${selected.toLocaleString()} of ${total.toLocaleString()} selected)`,
+          listAria: 'Detected §E1§ sections',
+          selectWorksheetAria: (name: string): string => `Review §E1§ section ${name}`,
+          currentWorksheetAria: (name: string): string => `Current §E1§ section ${name}`,
+          importWorksheetAria: (name: string): string => `Import §E1§ section ${name}`,
+          continueBlockedAria:
+            'Continue is unavailable until every selected §E1§ section has an assigned §E1§.',
         },
         worksheetResolve: {
           questionHeading: (projectName: string): string =>

@@ -66,6 +66,7 @@ import {
   applyStructureChoice,
   applyMultiProjectOrganization,
   clearDownstreamAfterHeaderChange,
+  clearDownstreamAfterProjectHeaderChange,
   clearDownstreamAfterProjectIdentityChange,
   createInitialInterviewState,
   goInterviewBack,
@@ -84,10 +85,20 @@ import {
   type CrmImportStructureChoice,
 } from '@/presentation/features/crmImport/interview/interviewState';
 import { buildImportPayloadFromInterview } from '@/presentation/features/crmImport/interview/buildImportPayloadFromInterview';
+import { buildHeaderRowImportSource } from '@/presentation/features/crmImport/interview/buildHeaderRowImportSource';
 import {
   buildSelectedSheetsImportSource,
   buildWorksheetImportSource,
 } from '@/presentation/features/crmImport/interview/buildWorksheetImportSource';
+import {
+  buildHeaderRowProjectGroups,
+  canContinueProjectHeaderRows,
+  headerRowGroupsToWorksheetConfigs,
+  headerRowGroupsToWorksheetSheets,
+  initialProjectHeaderRowSelection,
+  seedHeaderRowResolutions,
+} from '@/presentation/features/crmImport/interview/projectHeaderRowsPresentation';
+import { ProjectHeaderRowsScreen } from '@/presentation/features/crmImport/interview/screens/ProjectHeaderRowsScreen';
 import {
   buildKeyFieldChips,
   collectReviewClientIssues,
@@ -494,6 +505,58 @@ export function SpreadsheetImportWizard({
     return map;
   }, [worksheetSheets]);
 
+  const headerRowGroups = useMemo(() => {
+    if (
+      interview.multiProjectOrganization !== 'header_rows' ||
+      interview.projectHeaderRowIndexes == null
+    ) {
+      return [];
+    }
+    const excludedZeroBased = Array.from(excludedRowNumbers).map((n) => n - 1);
+    return buildHeaderRowProjectGroups({
+      matrix: sheetMatrix,
+      columnHeaderRowIndex: headerRowIndex,
+      selectedHeaderRowIndexes: interview.projectHeaderRowIndexes,
+      nameOverrides: interview.projectHeaderNameOverrides,
+      excludedRowIndexes: excludedZeroBased,
+    });
+  }, [
+    interview.multiProjectOrganization,
+    interview.projectHeaderRowIndexes,
+    interview.projectHeaderNameOverrides,
+    sheetMatrix,
+    headerRowIndex,
+    excludedRowNumbers,
+  ]);
+
+  const headerRowSheets = useMemo(() => {
+    if (interview.multiProjectOrganization !== 'header_rows') return [];
+    return headerRowGroupsToWorksheetSheets(sheetMatrix, headerRowGroups, headerRowIndex);
+  }, [interview.multiProjectOrganization, sheetMatrix, headerRowGroups, headerRowIndex]);
+
+  const headerRowSheetsById = useMemo(() => {
+    const map = new Map<string, WorksheetSheetInput>();
+    for (const sheet of headerRowSheets) map.set(sheet.worksheetId, sheet);
+    return map;
+  }, [headerRowSheets]);
+
+  // Seed suggested Project header rows when entering the detection screen.
+  useEffect(() => {
+    if (interview.screen !== 'project_header_rows') return;
+    if (interview.projectHeaderRowIndexes != null) return;
+    if (sheetMatrix.length === 0) return;
+    const suggested = initialProjectHeaderRowSelection(sheetMatrix, headerRowIndex);
+    setInterview((s) => ({
+      ...s,
+      projectHeaderRowIndexes: suggested,
+    }));
+  }, [
+    interview.screen,
+    interview.projectHeaderRowIndexes,
+    sheetMatrix,
+    headerRowIndex,
+  ]);
+
   const handleHeaderRowChange = useCallback(
     async (nextHeaderRowIndex: number) => {
       if (parsedFile == null || !sheetName) return;
@@ -836,20 +899,22 @@ export function SpreadsheetImportWizard({
     const effectiveMode = resolveEffectiveImportMode(interview);
     const isWorksheetPerProject =
       interview.multiProjectOrganization === 'worksheet_per_project';
+    const isHeaderRows = interview.multiProjectOrganization === 'header_rows';
+    const parentsFromResolutions = isWorksheetPerProject || isHeaderRows;
     return collectReviewClientIssues({
       mappings: payloadPreview.mappings,
       rows: payloadPreview.rows,
       importMode: payloadPreview.importMode,
       mappingErrors,
       fieldsReady: areFieldsReadyToContinue(interview.remainingFields),
-      hasParent: isWorksheetPerProject
+      hasParent: parentsFromResolutions
         ? canContinueWorksheetResolve(
             interview.worksheetProjects ?? [],
             interview.worksheetResolutions ?? {}
           )
         : effectiveMode === 'master_hierarchy' || interview.selectedParentProjectId != null,
       hasSubprojectIdentity: isCompositionConfigured(interview.subprojectComposition),
-      requireParentKeyColumn: !isWorksheetPerProject && effectiveMode === 'master_hierarchy',
+      requireParentKeyColumn: !parentsFromResolutions && effectiveMode === 'master_hierarchy',
       missingNameMessage: copy.interview.review.missingNameRows,
     });
   }, [
@@ -1092,6 +1157,7 @@ export function SpreadsheetImportWizard({
     try {
       const isWorksheetPerProject =
         interview.multiProjectOrganization === 'worksheet_per_project';
+      const isHeaderRows = interview.multiProjectOrganization === 'header_rows';
       const isOneProjectSheets =
         interview.structureChoice === 'one_project' &&
         (interview.worksheetProjects ?? []).some((config) => config.included);
@@ -1101,7 +1167,24 @@ export function SpreadsheetImportWizard({
       let draftSheetName = sheetName;
       let draftHeaderRowIndex = headerRowIndex;
 
-      if (isWorksheetPerProject || isOneProjectSheets) {
+      if (isHeaderRows) {
+        const combined = buildHeaderRowImportSource({
+          matrix: sheetMatrix,
+          columnHeaderRowIndex: headerRowIndex,
+          sheetName,
+          groups: headerRowGroups,
+          configs: interview.worksheetProjects ?? [],
+          resolutions: interview.worksheetResolutions ?? {},
+        });
+        sourceHeaders = [...combined.headers];
+        sourceRows = [...combined.rows];
+        draftSheetName = combined.sheetName;
+        draftHeaderRowIndex = combined.headerRowIndex;
+        setHeaders(sourceHeaders);
+        setRows(sourceRows);
+        setSheetName(draftSheetName);
+        setHeaderRowIndex(draftHeaderRowIndex);
+      } else if (isWorksheetPerProject || isOneProjectSheets) {
         if (parsedFile == null) {
           throw new Error(copy.errors.parseFailed);
         }
@@ -1161,12 +1244,13 @@ export function SpreadsheetImportWizard({
       setMappingErrors([]);
 
       if (payload.importMode === 'master_hierarchy') {
-        const worksheetDrafts = isWorksheetPerProject
-          ? buildWorksheetGroupResolutions(
-              interview.worksheetProjects ?? [],
-              interview.worksheetResolutions ?? {}
-            )
-          : null;
+        const worksheetDrafts =
+          isWorksheetPerProject || isHeaderRows
+            ? buildWorksheetGroupResolutions(
+                interview.worksheetProjects ?? [],
+                interview.worksheetResolutions ?? {}
+              )
+            : null;
         const resolutionDrafts = worksheetDrafts
           ? { ...interview.groupResolutions, ...worksheetDrafts }
           : interview.groupResolutions;
@@ -1222,12 +1306,14 @@ export function SpreadsheetImportWizard({
     excludedRowNumbers,
     fixedParentDisplayName,
     handleStartImport,
+    headerRowGroups,
     headerRowIndex,
     headers,
     interview,
     parsedFile,
     rows,
     selectedFile?.name,
+    sheetMatrix,
     sheetName,
   ]);
 
@@ -1278,6 +1364,20 @@ export function SpreadsheetImportWizard({
       case 'coming_soon_header_rows':
       case 'coming_soon_worksheet':
         return false;
+      case 'project_header_rows':
+        return canContinueProjectHeaderRows({
+          matrix: sheetMatrix,
+          columnHeaderRowIndex: headerRowIndex,
+          selectedHeaderRowIndexes: interview.projectHeaderRowIndexes ?? [],
+          nameOverrides: interview.projectHeaderNameOverrides,
+          excludedRowIndexes: Array.from(excludedRowNumbers).map((n) => n - 1),
+        });
+      case 'header_row_projects':
+        return canContinueWorksheetProjects(
+          interview.worksheetProjects ?? [],
+          interview.worksheetResolutions ?? {},
+          headerRowSheetsById
+        );
       case 'select_sheets':
         return canContinueSelectSheets(
           interview.worksheetProjects ?? [],
@@ -1350,6 +1450,10 @@ export function SpreadsheetImportWizard({
     flattenedConflicts.length,
     reviewIssues.blockingCount,
     worksheetSheetsById,
+    headerRowSheetsById,
+    sheetMatrix,
+    headerRowIndex,
+    excludedRowNumbers,
     copy.standardFields,
     copy.interview.fields,
     copy.destinations.newCustomFieldSubproject,
@@ -1459,6 +1563,56 @@ export function SpreadsheetImportWizard({
 
     if (interview.screen === 'review') {
       await handleStartFromReview();
+      return;
+    }
+
+    if (interview.screen === 'project_header_rows') {
+      const excludedZeroBased = Array.from(excludedRowNumbers).map((n) => n - 1);
+      const groups = buildHeaderRowProjectGroups({
+        matrix: sheetMatrix,
+        columnHeaderRowIndex: headerRowIndex,
+        selectedHeaderRowIndexes: interview.projectHeaderRowIndexes ?? [],
+        nameOverrides: interview.projectHeaderNameOverrides,
+        excludedRowIndexes: excludedZeroBased,
+      });
+      const columnCount = Math.max(
+        ...sheetMatrix.map((row) => row.length),
+        (sheetMatrix[headerRowIndex] ?? []).length,
+        0
+      );
+      const configs = headerRowGroupsToWorksheetConfigs(groups, columnCount);
+      const resolutions = seedHeaderRowResolutions(configs);
+      setInterview((s) =>
+        continueInterviewAfterEdit({
+          ...s,
+          worksheetProjects: configs,
+          worksheetResolutions: resolutions,
+          activeWorksheetResolveId: firstWorksheetId(configs),
+        })
+      );
+      return;
+    }
+
+    if (interview.screen === 'header_row_projects') {
+      setInterview((s) => {
+        const configs = trimWorksheetProjectNames(s.worksheetProjects ?? []);
+        const resolutions = syncWorksheetResolutionsForContinue({
+          configs,
+          resolutions: s.worksheetResolutions ?? {},
+        });
+        const firstImporting = includedWorksheetConfigs(configs).find(
+          (config) => resolutions[config.worksheetId]?.kind !== 'skip'
+        );
+        return continueInterviewAfterEdit({
+          ...s,
+          worksheetProjects: configs,
+          worksheetResolutions: resolutions,
+          activeWorksheetResolveId:
+            firstImporting?.worksheetId ??
+            s.activeWorksheetResolveId ??
+            firstWorksheetId(configs),
+        });
+      });
       return;
     }
 
@@ -1634,6 +1788,8 @@ export function SpreadsheetImportWizard({
     interview.worksheetResolutions,
     interview.worksheetSubprojectQueue,
     interview.activeWorksheetSetupId,
+    interview.projectHeaderRowIndexes,
+    interview.projectHeaderNameOverrides,
     isLastGroup,
     isLastConflict,
     localGroups,
@@ -1645,6 +1801,9 @@ export function SpreadsheetImportWizard({
     parsedFile,
     applyParsedSheet,
     copy.errors.parseFailed,
+    sheetMatrix,
+    headerRowIndex,
+    excludedRowNumbers,
   ]);
 
   const showBack =
@@ -1664,7 +1823,8 @@ export function SpreadsheetImportWizard({
       ? copy.interview.review.startImport(
           worksheetReviewSummary?.rowsCount ?? rows.length
         )
-      : interview.screen === 'worksheet_projects'
+      : interview.screen === 'worksheet_projects' ||
+          interview.screen === 'header_row_projects'
         ? content.crm.spreadsheetImport.interview.worksheetProjects.saveAndContinue
         : interview.screen === 'worksheet_resolve_summary'
           ? content.crm.spreadsheetImport.interview.worksheetResolve.continueToSubprojectSetup
@@ -1769,6 +1929,60 @@ export function SpreadsheetImportWizard({
       break;
     case 'coming_soon_header_rows':
       screenBody = <ComingSoonImportScreen kind="header_rows" />;
+      break;
+    case 'project_header_rows':
+      screenBody = (
+        <ProjectHeaderRowsScreen
+          busy={busy}
+          sheetMatrix={sheetMatrix}
+          columnHeaderRowIndex={headerRowIndex}
+          selectedHeaderRowIndexes={interview.projectHeaderRowIndexes ?? []}
+          nameOverrides={interview.projectHeaderNameOverrides}
+          excludedRowNumbers={excludedRowNumbers}
+          truncated={truncated}
+          onChangeSelectedHeaderRows={(indexes) =>
+            setInterview((s) => ({
+              ...clearDownstreamAfterProjectHeaderChange(s),
+              projectHeaderRowIndexes: indexes,
+              projectHeaderNameOverrides: s.projectHeaderNameOverrides,
+            }))
+          }
+          onChangeNameOverrides={(overrides) =>
+            setInterview((s) => ({
+              ...clearDownstreamAfterProjectHeaderChange(s),
+              projectHeaderRowIndexes: s.projectHeaderRowIndexes,
+              projectHeaderNameOverrides: overrides,
+            }))
+          }
+          onExcludeRows={(rowNumbers) =>
+            setExcludedRowNumbers((current) => {
+              const next = new Set(current);
+              for (const n of rowNumbers) next.add(n);
+              return next;
+            })
+          }
+        />
+      );
+      break;
+    case 'header_row_projects':
+      screenBody = (
+        <WorksheetProjectsScreen
+          sheets={headerRowSheets}
+          configs={interview.worksheetProjects ?? []}
+          resolutions={interview.worksheetResolutions ?? {}}
+          activeWorksheetId={interview.activeWorksheetResolveId}
+          parentCandidates={parentCandidates}
+          disabled={busy}
+          oneProjectPath={false}
+          headerRowsPath
+          onChangeConfigs={(configs) => setInterview((s) => ({ ...s, worksheetProjects: configs }))}
+          onChangeResolutions={(resolutions) =>
+            setInterview((s) => ({ ...s, worksheetResolutions: resolutions }))
+          }
+          onSelectWorksheet={handleWorksheetResolveSelect}
+          onRefreshCandidates={refreshParentCandidates}
+        />
+      );
       break;
     case 'select_sheets':
       screenBody = (
@@ -2302,6 +2516,8 @@ export function SpreadsheetImportWizard({
           interview.screen === 'structure' ||
           interview.screen === 'multi_project_organization' ||
           interview.screen === 'coming_soon_header_rows' ||
+          interview.screen === 'project_header_rows' ||
+          interview.screen === 'header_row_projects' ||
           interview.screen === 'select_sheets' ||
           interview.screen === 'worksheet_projects' ||
           interview.screen === 'worksheet_headers' ||
@@ -2403,13 +2619,17 @@ export function SpreadsheetImportWizard({
                   aria-disabled={busy || !canContinue}
                   title={
                     (interview.screen === 'worksheet_projects' ||
+                      interview.screen === 'header_row_projects' ||
                       interview.screen === 'worksheet_resolve_summary') &&
                     !canContinue
                       ? interview.screen === 'worksheet_resolve_summary'
                         ? content.crm.spreadsheetImport.interview.worksheetResolve
                             .continueBlockedAria
-                        : content.crm.spreadsheetImport.interview.worksheetProjects
-                            .continueBlockedAria
+                        : interview.screen === 'header_row_projects'
+                          ? content.crm.spreadsheetImport.interview.headerRowProjects
+                              .continueBlockedAria
+                          : content.crm.spreadsheetImport.interview.worksheetProjects
+                              .continueBlockedAria
                       : undefined
                   }
                   onClick={() => void handleContinue()}

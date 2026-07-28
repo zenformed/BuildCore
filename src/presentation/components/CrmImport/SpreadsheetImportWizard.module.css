@@ -104,6 +104,7 @@
 
 .scrollFit > .uploadHero,
 .scrollFit > .headerScreen,
+.scrollFit > .projectHeaderRowsScreen,
 .scrollFit > .structureScreen,
 .scrollFit > .multiOrgScreen,
 .scrollFit > .comingSoonScreen,
@@ -473,6 +474,638 @@
 .headerRowRadio:focus-visible {
   outline: 2px solid var(--color-focus, #93c5fd);
   outline-offset: 2px;
+}
+
+.headerRowCheckbox {
+  width: 1.15rem;
+  height: 1.15rem;
+  margin: 0;
+  accent-color: var(--color-primary, #2563eb);
+  cursor: pointer;
+}
+
+.headerRowCheckbox:focus-visible {
+  outline: 2px solid var(--color-focus, #93c5fd);
+  outline-offset: 2px;
+}
+
+.projectHeaderRowsScreen {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  min-height: 0;
+  flex: 1 1 auto;
+}
+
+.projectHeaderSummaryBar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem 0.5rem;
+  padding: 0.45rem 0.7rem;
+  border-radius: 0.5rem;
+  border: 1px solid var(--theme-border-main, #e2e8f0);
+  background: color-mix(in srgb, var(--theme-surface-muted, #f8fafc) 88%, transparent);
+  font-size: 0.8125rem;
+  color: var(--theme-text-muted, #64748b);
+}
+
+.projectHeaderSummaryMetric {
+  font-weight: 600;
+  color: var(--theme-text-main, #0f172a);
+}
+
+.projectHeaderSummarySep {
+  opacity: 0.55;
+}
+
+.projectHeaderSummaryUnassignedWarn {
+  color: var(--color-warning, #92400e);
+}
+
+:global([data-theme='dark']) .projectHeaderSummaryBar {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: #3d3e4a;
+}
+
+:global([data-theme='dark']) .projectHeaderSummaryMetric {
+  color: var(--theme-text-main, #e5e7eb);
+}
+
+:global([data-theme='dark']) .projectHeaderSummaryUnassignedWarn {
+  color: #fbbf24;
+}
+
+.projectHeaderRowsLayout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(12.5rem, 22%);
+  gap: 0.85rem;
+  min-height: 0;
+  flex: 1 1 auto;
+}
+
+.projectHeaderTableColumn {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  min-width: 0;
+  min-height: 0;
+}
+
+.projectHeaderTableWarn {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.45rem 0.65rem;
+  padding: 0.45rem 0.65rem;
+  border-radius: 0.5rem;
+  border: 1px solid color-mix(in srgb, var(--color-warning, #92400e) 35%, transparent);
+  background: color-mix(in srgb, var(--color-warning, #f59e0b) 12%, transparent);
+  color: var(--color-warning, #92400e);
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+
+.projectHeaderExcludeButtonInline {
+  margin-left: auto;
+  border: 1px solid currentColor;
+  border-radius: 0.35rem;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: 0.75rem;
+  font-weight: 650;
+  padding: 0.2rem 0.5rem;
+  cursor: pointer;
+}
+
+.projectHeaderExcludeButtonInline:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.projectHeaderRowsLayout .headerPreviewWrap {
+  min-height: 16rem;
+  flex: 1 1 auto;
+}
+
+.projectHeaderGroupsPanel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  min-height: 0;
+  max-height: 100%;
+  overflow: hidden;
+  padding: 0.75rem;
+  border: 1px solid var(--theme-border-main, #e2e8f0);
+  border-radius: 0.75rem;
+  background: var(--theme-surface-card, #fff);
+}
+
+.projectHeaderGroupsHeading {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 650;
+  flex: 0 0 auto;
+}
+
+.projectHeaderGroupsEmpty {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--theme-text-muted, #64748b);
+}
+
+.projectHeaderGroupsList {
+  list-style: none;
+  margin: 0;
+  padding: 0 0.15rem 0.15rem 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  min-height: 0;
+  overflow: auto;
+  flex: 1 1 auto;
+}
+
+.projectHeaderGroupCard {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  padding: 0.8rem 0.85rem 0.75rem;
+  border: 1px solid var(--theme-border-main, #e2e8f0);
+  border-radius: 0.65rem;
+  background: var(--theme-surface-card, #fff);
+  cursor: pointer;
+  outline: none;
+  box-shadow: inset 3px 0 0 var(--ph-group-accent, var(--color-primary, #3b82f6));
+  border-color: color-mix(
+    in srgb,
+    var(--ph-group-accent, var(--color-primary, #3b82f6)) 28%,
+    var(--theme-border-main, #e2e8f0)
+  );
+}
+
+.projectHeaderGroupCard:focus-visible {
+  outline: 2px solid var(--color-focus, #93c5fd);
+  outline-offset: 2px;
+}
+
+.projectHeaderGroupCardSelected {
+  border-color: color-mix(in srgb, var(--ph-group-accent, var(--color-primary, #3b82f6)) 62%, transparent);
+  background: color-mix(
+    in srgb,
+    var(--ph-group-accent, var(--color-primary, #3b82f6)) 10%,
+    var(--theme-surface-card, #fff)
+  );
+  box-shadow:
+    inset 4px 0 0 var(--ph-group-accent, var(--color-primary, #3b82f6)),
+    0 1px 2px rgba(0, 0, 0, 0.06),
+    0 4px 12px color-mix(in srgb, var(--ph-group-accent, var(--color-primary, #3b82f6)) 18%, transparent);
+}
+
+/* Card hover uses standard surface hover — never another group's "selected" look. */
+.projectHeaderGroupCardHover {
+  background: var(--theme-surface-hover, #f0f2f5);
+}
+
+.projectHeaderCardSelectedMark {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.15rem;
+  height: 1.15rem;
+  border-radius: 999px;
+  color: #fff;
+  background: var(--ph-group-accent, var(--color-primary, #3b82f6));
+}
+
+.projectHeaderCardHeader {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding-bottom: 0.65rem;
+  border-bottom: 1px solid var(--theme-border-subtle, #e8eaed);
+}
+
+.projectHeaderGroupNameLabel {
+  display: block;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.projectHeaderNameEditWrap {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  min-width: 0;
+}
+
+.projectHeaderGroupNameInput {
+  flex: 1 1 auto;
+  min-width: 0;
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid transparent;
+  border-radius: 0.35rem;
+  padding: 0.15rem 0.25rem;
+  font: inherit;
+  font-size: 0.98rem;
+  font-weight: 750;
+  line-height: 1.25;
+  background: transparent;
+  color: var(--theme-text-main, var(--color-text, #0f172a));
+}
+
+.projectHeaderGroupNameInput:hover,
+.projectHeaderGroupNameInput:focus {
+  border-color: var(--theme-border-main, #e2e8f0);
+  background: var(--theme-surface-card, #fff);
+}
+
+.projectHeaderGroupNameInput:focus-visible {
+  outline: 2px solid var(--color-focus, #93c5fd);
+  outline-offset: 1px;
+}
+
+.projectHeaderNameEditIcon {
+  flex: 0 0 auto;
+  display: block;
+  color: var(--theme-text-muted, #64748b);
+  pointer-events: none;
+  opacity: 0.75;
+}
+
+.projectHeaderCardStatus {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  padding: 0.12rem 0.45rem;
+  border-radius: 999px;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+  line-height: 1.2;
+}
+
+.projectHeaderCardStatusReady {
+  color: var(--color-success, #166534);
+  background: color-mix(in srgb, var(--color-success, #16a34a) 14%, transparent);
+}
+
+.projectHeaderCardStatusWarn {
+  color: var(--color-warning, #92400e);
+  background: color-mix(in srgb, var(--color-warning, #f59e0b) 16%, transparent);
+}
+
+.projectHeaderCardStatusDanger {
+  color: var(--color-error, #b91c1c);
+  background: color-mix(in srgb, var(--color-error, #b91c1c) 12%, transparent);
+}
+
+.projectHeaderCardMeta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 0.75rem;
+  padding: 0.65rem 0;
+  border-bottom: 1px solid var(--theme-border-subtle, #e8eaed);
+}
+
+.projectHeaderCardMetaItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.78rem;
+  font-weight: 650;
+  color: var(--theme-text-main, var(--color-text, #0f172a));
+}
+
+.projectHeaderCardMetaItem svg {
+  color: var(--ph-group-accent, var(--color-primary, #3b82f6));
+  flex: 0 0 auto;
+}
+
+.projectHeaderCardPreviewBlock {
+  padding: 0.65rem 0;
+  border-bottom: 1px solid var(--theme-border-subtle, #e8eaed);
+}
+
+.projectHeaderCardPreviewLabel {
+  margin: 0 0 0.35rem;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--theme-text-muted, #64748b);
+}
+
+.projectHeaderGroupPreview {
+  margin: 0;
+  font-size: 0.75rem;
+  color: var(--theme-text-muted, #64748b);
+}
+
+.projectHeaderGroupPreviewList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.18rem;
+  font-size: 0.78rem;
+  color: var(--theme-text-main, var(--color-text, #0f172a));
+}
+
+.projectHeaderGroupPreviewMore {
+  font-weight: 650;
+  color: var(--theme-text-muted, #64748b);
+}
+
+.projectHeaderCardImportSummary {
+  margin: 0;
+  padding-top: 0.65rem;
+  font-size: 0.75rem;
+  line-height: 1.35;
+  color: var(--theme-text-muted, #64748b);
+}
+
+.projectHeaderGroupCount {
+  margin: 0;
+  font-size: 0.8125rem;
+  font-weight: 650;
+  color: var(--theme-text-main, #0f172a);
+}
+
+.projectHeaderGroupRange {
+  margin: 0;
+  font-size: 0.75rem;
+  color: var(--theme-text-muted, #64748b);
+}
+
+/*
+ * Per-group accent palette — reuses BuildCore theme + established report series
+ * colors already used in the product (budget pie / wizard accents).
+ */
+.projectHeaderAccent0 {
+  --ph-group-accent: var(--color-primary, #3b82f6);
+}
+.projectHeaderAccent1 {
+  --ph-group-accent: var(--color-success, #16a34a);
+}
+.projectHeaderAccent2 {
+  --ph-group-accent: #a855f7;
+}
+.projectHeaderAccent3 {
+  --ph-group-accent: #f59e0b;
+}
+.projectHeaderAccent4 {
+  --ph-group-accent: var(--color-progress, #06b6d4);
+}
+.projectHeaderAccent5 {
+  --ph-group-accent: #ec4899;
+}
+.projectHeaderAccent6 {
+  --ph-group-accent: #14b8a6;
+}
+.projectHeaderAccent7 {
+  --ph-group-accent: #f97316;
+}
+
+.projectHeaderSectionHeaderRow td {
+  background: color-mix(
+    in srgb,
+    var(--ph-group-accent, var(--color-primary, #3b82f6)) 14%,
+    var(--theme-surface-card, #fff)
+  );
+  border-top: 2.5px solid var(--ph-group-accent, var(--color-primary, #3b82f6));
+  box-shadow: inset 3px 0 0 var(--ph-group-accent, var(--color-primary, #3b82f6));
+  font-weight: 700;
+  color: var(--theme-text-main, var(--color-text, #0f172a));
+}
+
+.projectHeaderSectionIcon {
+  flex: 0 0 auto;
+  color: var(--ph-group-accent, var(--color-primary, #3b82f6));
+}
+
+.projectHeaderSectionBadge {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 0.35rem;
+  padding: 0.1rem 0.4rem;
+  border-radius: 999px;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  color: color-mix(in srgb, var(--ph-group-accent, var(--color-primary, #3b82f6)) 72%, #0f172a);
+  background: color-mix(in srgb, var(--ph-group-accent, var(--color-primary, #3b82f6)) 16%, transparent);
+  white-space: nowrap;
+}
+
+.projectHeaderSectionCheckbox {
+  accent-color: var(--ph-group-accent, var(--color-primary, #3b82f6));
+}
+
+.projectHeaderRowLabelCluster {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  flex-wrap: wrap;
+}
+
+.projectHeaderGroupChild td {
+  background: color-mix(
+    in srgb,
+    var(--ph-group-accent, var(--color-primary, #3b82f6)) 5%,
+    var(--theme-surface-card, #fff)
+  );
+  box-shadow: inset 3px 0 0
+    color-mix(in srgb, var(--ph-group-accent, var(--color-primary, #3b82f6)) 75%, transparent);
+  font-weight: 400;
+  color: var(--theme-text-main, var(--color-text, #0f172a));
+}
+
+.projectHeaderGroupFirst td:first-child {
+  border-top-left-radius: 0.4rem;
+}
+
+.projectHeaderGroupFirst td:last-child {
+  border-top-right-radius: 0.4rem;
+}
+
+.projectHeaderGroupLast td:first-child {
+  border-bottom-left-radius: 0.4rem;
+}
+
+.projectHeaderGroupLast td:last-child {
+  border-bottom-right-radius: 0.4rem;
+}
+
+/* Breathing room between Project sections without breaking the table. */
+.projectHeaderGroupLast td {
+  border-bottom: 5px solid
+    color-mix(in srgb, var(--theme-border-main, #e2e8f0) 55%, var(--theme-surface-card, #fff));
+}
+
+.projectHeaderGroupActive.projectHeaderSectionHeaderRow td {
+  background: color-mix(
+    in srgb,
+    var(--ph-group-accent, var(--color-primary, #3b82f6)) 20%,
+    var(--theme-surface-card, #fff)
+  );
+  box-shadow:
+    inset 4px 0 0 var(--ph-group-accent, var(--color-primary, #3b82f6)),
+    inset 0 0 0 1px color-mix(in srgb, var(--ph-group-accent, var(--color-primary, #3b82f6)) 35%, transparent);
+}
+
+.projectHeaderGroupActive.projectHeaderGroupChild td {
+  background: color-mix(
+    in srgb,
+    var(--ph-group-accent, var(--color-primary, #3b82f6)) 8%,
+    var(--theme-surface-card, #fff)
+  );
+  box-shadow: inset 4px 0 0 var(--ph-group-accent, var(--color-primary, #3b82f6));
+}
+
+/* Standard table hover — never recolors with the group accent. */
+.projectHeaderSectionHeaderRow:hover td,
+.projectHeaderGroupChild:hover td,
+.headerRowUnselected.projectHeaderSectionHeaderRow:hover td,
+.headerRowUnselected.projectHeaderGroupChild:hover td {
+  background: color-mix(in srgb, var(--color-primary, #2563eb) 5%, transparent);
+}
+
+.projectHeaderUnassignedDataRow td {
+  background: color-mix(in srgb, var(--color-warning, #f59e0b) 10%, var(--theme-surface-card, #fff));
+  box-shadow: inset 3px 0 0 color-mix(in srgb, var(--color-warning, #f59e0b) 70%, transparent);
+}
+
+.projectHeaderColumnHeaderRow {
+  opacity: 0.85;
+}
+
+.projectHeaderColumnHeaderRow td {
+  background: color-mix(in srgb, var(--color-primary, #2563eb) 8%, var(--theme-surface-card, #fff));
+}
+
+.projectHeaderColumnHeaderMark {
+  display: inline-block;
+  width: 1rem;
+  text-align: center;
+  color: var(--theme-text-muted, #64748b);
+}
+
+.projectHeaderExcludedRow {
+  opacity: 0.45;
+  text-decoration: line-through;
+}
+
+:global([data-theme='dark']) .projectHeaderGroupsPanel {
+  background: var(--theme-surface-card, #161922);
+  border-color: #3d3e4a;
+}
+
+:global([data-theme='dark']) .projectHeaderGroupCard {
+  background: rgba(255, 255, 255, 0.03);
+  border-color: #3d3e4a;
+}
+
+:global([data-theme='dark']) .projectHeaderGroupCardSelected {
+  background: color-mix(in srgb, var(--ph-group-accent, #3b82f6) 18%, transparent);
+  box-shadow:
+    inset 4px 0 0 var(--ph-group-accent, #3b82f6),
+    0 1px 2px rgba(0, 0, 0, 0.35),
+    0 6px 14px rgba(0, 0, 0, 0.28);
+}
+
+:global([data-theme='dark']) .projectHeaderGroupCardHover {
+  background: var(--theme-surface-hover, #1e2230);
+}
+
+:global([data-theme='dark']) .projectHeaderGroupNameInput {
+  color: var(--theme-text-main, #e5e7eb);
+}
+
+:global([data-theme='dark']) .projectHeaderGroupNameInput:hover,
+:global([data-theme='dark']) .projectHeaderGroupNameInput:focus {
+  background: var(--theme-surface-card, #161922);
+  border-color: #3d3e4a;
+}
+
+:global([data-theme='dark']) .projectHeaderCardHeader,
+:global([data-theme='dark']) .projectHeaderCardMeta,
+:global([data-theme='dark']) .projectHeaderCardPreviewBlock {
+  border-bottom-color: #3d3e4a;
+}
+
+:global([data-theme='dark']) .projectHeaderCardStatusReady {
+  color: #86efac;
+  background: rgba(22, 163, 74, 0.22);
+}
+
+:global([data-theme='dark']) .projectHeaderCardStatusWarn {
+  color: #fbbf24;
+  background: rgba(245, 158, 11, 0.18);
+}
+
+:global([data-theme='dark']) .projectHeaderCardStatusDanger {
+  color: #fca5a5;
+  background: rgba(185, 28, 28, 0.22);
+}
+
+:global([data-theme='dark']) .projectHeaderGroupCount {
+  color: var(--theme-text-main, #e5e7eb);
+}
+
+:global([data-theme='dark']) .projectHeaderSectionHeaderRow td {
+  background: color-mix(in srgb, var(--ph-group-accent, #3b82f6) 22%, transparent);
+}
+
+:global([data-theme='dark']) .projectHeaderGroupChild td {
+  background: color-mix(in srgb, var(--ph-group-accent, #3b82f6) 8%, transparent);
+}
+
+:global([data-theme='dark']) .projectHeaderGroupActive.projectHeaderSectionHeaderRow td {
+  background: color-mix(in srgb, var(--ph-group-accent, #3b82f6) 28%, transparent);
+}
+
+:global([data-theme='dark']) .projectHeaderGroupActive.projectHeaderGroupChild td {
+  background: color-mix(in srgb, var(--ph-group-accent, #3b82f6) 12%, transparent);
+}
+
+:global([data-theme='dark']) .projectHeaderSectionBadge {
+  color: color-mix(in srgb, var(--ph-group-accent, #93c5fd) 55%, #f8fafc);
+  background: color-mix(in srgb, var(--ph-group-accent, #3b82f6) 24%, transparent);
+}
+
+:global([data-theme='dark']) .projectHeaderUnassignedDataRow td {
+  background: rgba(245, 158, 11, 0.14);
+}
+
+:global([data-theme='dark']) .projectHeaderTableWarn {
+  background: rgba(245, 158, 11, 0.14);
+  border-color: rgba(245, 158, 11, 0.4);
+  color: #fbbf24;
+}
+
+:global([data-theme='dark']) .projectHeaderGroupLast td {
+  border-bottom-color: color-mix(in srgb, #3d3e4a 70%, transparent);
+}
+
+:global([data-theme='dark']) .projectHeaderSectionHeaderRow:hover td,
+:global([data-theme='dark']) .projectHeaderGroupChild:hover td {
+  background: color-mix(in srgb, var(--color-primary, #3b82f6) 10%, transparent);
+}
+
+@media (max-width: 900px) {
+  .projectHeaderRowsLayout {
+    grid-template-columns: 1fr;
+  }
 }
 
 .headerRowNumber {

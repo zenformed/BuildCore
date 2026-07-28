@@ -120,9 +120,10 @@ export function buildImportPayloadFromInterview(input: {
     for (const idx of projectComp.columnIndexes) used.add(idx);
   } else if (
     mode === 'master_hierarchy' &&
-    input.state.multiProjectOrganization === 'worksheet_per_project'
+    (input.state.multiProjectOrganization === 'worksheet_per_project' ||
+      input.state.multiProjectOrganization === 'header_rows')
   ) {
-    // Parents come from worksheet create/attach decisions, not a spreadsheet column.
+    // Parents come from create/attach decisions, not a spreadsheet column.
     const target = input.headers.length;
     const fallbackName = resolveWorksheetParentNameForActiveSheet(input.state) ?? 'Project';
     rows = rows.map((row) => {

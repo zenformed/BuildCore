@@ -24,6 +24,8 @@ export type CrmImportInterviewScreen =
   | 'structure'
   | 'multi_project_organization'
   | 'coming_soon_header_rows'
+  | 'project_header_rows'
+  | 'header_row_projects'
   | 'select_sheets'
   | 'worksheet_projects'
   | 'worksheet_headers'
@@ -83,6 +85,13 @@ export type CrmImportInterviewState = {
    */
   readonly worksheetSubprojectQueue: readonly string[] | null;
   readonly activeWorksheetSetupId: string | null;
+  /**
+   * Header-rows branch: 0-based spreadsheet rows selected as Project section headers.
+   * Null means suggestions have not been applied yet for the current column header.
+   */
+  readonly projectHeaderRowIndexes: readonly number[] | null;
+  /** Edited Project display names keyed by section-header row index. */
+  readonly projectHeaderNameOverrides: Readonly<Record<number, string>>;
   readonly remainingFields: readonly CrmImportRemainingFieldDraft[];
   readonly groupResolutions: Readonly<
     Record<
@@ -127,6 +136,8 @@ export function createInitialInterviewState(input: {
     activeWorksheetResolveId: null,
     worksheetSubprojectQueue: null,
     activeWorksheetSetupId: null,
+    projectHeaderRowIndexes: null,
+    projectHeaderNameOverrides: {},
     remainingFields: [],
     groupResolutions: {},
     activeGroupKey: null,
@@ -146,6 +157,8 @@ export function interviewScreenToMilestone(
     case 'structure':
     case 'multi_project_organization':
     case 'coming_soon_header_rows':
+    case 'project_header_rows':
+    case 'header_row_projects':
     case 'select_sheets':
     case 'worksheet_projects':
     case 'worksheet_headers':
@@ -180,6 +193,7 @@ export function milestonesForInterview(state: CrmImportInterviewState): readonly
 export function resolveEffectiveImportMode(state: CrmImportInterviewState): CrmImportMode {
   if (state.launchMode === 'into_existing_parent') return 'into_existing_parent';
   if (state.multiProjectOrganization === 'worksheet_per_project') return 'master_hierarchy';
+  if (state.multiProjectOrganization === 'header_rows') return 'master_hierarchy';
   if (state.structureChoice === 'one_project') return 'into_existing_parent';
   return 'master_hierarchy';
 }
@@ -203,7 +217,7 @@ function nextAfterMultiProjectOrganization(
       // Headers were deferred until after structure for projects-page launches.
       return 'header';
     case 'header_rows':
-      return 'coming_soon_header_rows';
+      return 'header';
     case 'worksheet_per_project':
       return 'worksheet_projects';
     case 'unsure':
@@ -222,11 +236,16 @@ export function getNextInterviewScreen(state: CrmImportInterviewState): CrmImpor
       if (state.launchMode === 'into_existing_parent') return 'subproject_identity';
       if (state.structureChoice === 'one_project') return 'subproject_identity';
       if (state.multiProjectOrganization === 'repeating_column') return 'project_identity';
+      if (state.multiProjectOrganization === 'header_rows') return 'project_header_rows';
       return 'structure';
     case 'structure':
       return nextAfterStructure(state);
     case 'multi_project_organization':
       return nextAfterMultiProjectOrganization(state);
+    case 'project_header_rows':
+      return 'header_row_projects';
+    case 'header_row_projects':
+      return 'subproject_identity';
     case 'select_sheets':
       return 'choose_parent';
     case 'worksheet_projects':
@@ -352,6 +371,8 @@ export function applyStructureChoice(
     activeWorksheetResolveId: null,
     worksheetSubprojectQueue: null,
     activeWorksheetSetupId: null,
+    projectHeaderRowIndexes: null,
+    projectHeaderNameOverrides: {},
     groupResolutions: {},
     activeGroupKey: null,
     activeConflictFieldKey: null,
@@ -380,6 +401,9 @@ export function applyMultiProjectOrganization(
       organization === 'worksheet_per_project' ? state.worksheetSubprojectQueue : null,
     activeWorksheetSetupId:
       organization === 'worksheet_per_project' ? state.activeWorksheetSetupId : null,
+    projectHeaderRowIndexes: organization === 'header_rows' ? state.projectHeaderRowIndexes : null,
+    projectHeaderNameOverrides:
+      organization === 'header_rows' ? state.projectHeaderNameOverrides : {},
     groupResolutions: {},
     activeGroupKey: null,
     activeConflictFieldKey: null,
@@ -408,25 +432,55 @@ export function applyRecommendation(
   };
 }
 
+/**
+ * Column-header change: clear answers that depend on column layout / row roles.
+ * Preserves structure + multi-project organization so the user stays on the same branch.
+ * Clears header-row Project detection (incompatible with a new column-header row).
+ */
 export function clearDownstreamAfterHeaderChange(
+  state: CrmImportInterviewState
+): CrmImportInterviewState {
+  const keepWorksheetProjects =
+    state.structureChoice === 'one_project' ||
+    state.multiProjectOrganization === 'worksheet_per_project';
+
+  return {
+    ...state,
+    projectComposition:
+      state.multiProjectOrganization === 'repeating_column' ? null : state.projectComposition,
+    subprojectComposition: null,
+    contactComposition: null,
+    worksheetProjects: keepWorksheetProjects ? state.worksheetProjects : null,
+    worksheetResolutions: keepWorksheetProjects ? state.worksheetResolutions : null,
+    activeWorksheetResolveId: keepWorksheetProjects ? state.activeWorksheetResolveId : null,
+    worksheetSubprojectQueue: null,
+    activeWorksheetSetupId: null,
+    projectHeaderRowIndexes: null,
+    projectHeaderNameOverrides: {},
+    remainingFields: [],
+    groupResolutions: {},
+    activeGroupKey: null,
+    activeConflictFieldKey: null,
+  };
+}
+
+/** Changing Project section-header selections invalidates destination resolutions / mappings. */
+export function clearDownstreamAfterProjectHeaderChange(
   state: CrmImportInterviewState
 ): CrmImportInterviewState {
   return {
     ...state,
-    multiProjectOrganization: null,
-    projectComposition: null,
-    subprojectComposition: null,
-    contactComposition: null,
     worksheetProjects: null,
     worksheetResolutions: null,
     activeWorksheetResolveId: null,
     worksheetSubprojectQueue: null,
     activeWorksheetSetupId: null,
+    subprojectComposition: null,
+    contactComposition: null,
     remainingFields: [],
     groupResolutions: {},
     activeGroupKey: null,
     activeConflictFieldKey: null,
-    recommendationId: null,
   };
 }
 

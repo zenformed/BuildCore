@@ -46,14 +46,26 @@ describe('interviewState', () => {
     assert.equal(getNextInterviewScreen({ ...state, screen: 'header' }), 'project_identity');
   });
 
+  it('routes header-rows organization through column headers, Project headers, then resolution', () => {
+    let state = createInitialInterviewState({ launchMode: 'master_hierarchy' });
+    state = applyStructureChoice(state, 'multiple_projects');
+    state = applyMultiProjectOrganization(state, 'header_rows');
+    state = { ...state, screen: 'multi_project_organization' };
+    assert.equal(getNextInterviewScreen(state), 'header');
+    assert.equal(getNextInterviewScreen({ ...state, screen: 'header' }), 'project_header_rows');
+    assert.equal(
+      getNextInterviewScreen({ ...state, screen: 'project_header_rows' }),
+      'header_row_projects'
+    );
+    assert.equal(
+      getNextInterviewScreen({ ...state, screen: 'header_row_projects' }),
+      'subproject_identity'
+    );
+  });
+
   it('routes worksheet organization to worksheet Projects, headers, then resolution', () => {
     let state = createInitialInterviewState({ launchMode: 'master_hierarchy' });
     state = applyStructureChoice(state, 'multiple_projects');
-
-    state = applyMultiProjectOrganization(state, 'header_rows');
-    state = { ...state, screen: 'multi_project_organization' };
-    assert.equal(getNextInterviewScreen(state), 'coming_soon_header_rows');
-    assert.equal(getNextInterviewScreen({ ...state, screen: 'coming_soon_header_rows' }), null);
 
     state = applyMultiProjectOrganization(state, 'worksheet_per_project');
     state = { ...state, screen: 'multi_project_organization' };
