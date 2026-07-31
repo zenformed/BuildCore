@@ -4,6 +4,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import type { CrmImportParentResolution } from '@/domain/crm/spreadsheetImportTypes';
+import type { ImportDuplicateCheckSnapshot } from '@/domain/crm/importDuplicateDecisions';
 import { requireCrmApiAuth } from '@/infrastructure/crm/server/crmApiRouteAuth';
 import { mapCrmRouteError } from '@/infrastructure/crm/server/crmApiRouteErrors';
 import { requireBuildCoreProjectManagementAccess } from '@/infrastructure/crm/server/buildCoreProjectManagementAccess';
@@ -19,6 +20,8 @@ type ResolutionsBody = {
     readonly resolution?: CrmImportParentResolution;
   }[];
   readonly excludedSourceRowIndexes?: readonly number[];
+  readonly duplicateSkipSourceRowIndexes?: readonly number[];
+  readonly duplicateCheck?: ImportDuplicateCheckSnapshot | null;
 };
 
 export async function POST(
@@ -65,13 +68,21 @@ export async function POST(
     ? body.excludedSourceRowIndexes.filter((index): index is number => Number.isInteger(index))
     : [];
 
+  const duplicateSkipSourceRowIndexes = Array.isArray(body.duplicateSkipSourceRowIndexes)
+    ? body.duplicateSkipSourceRowIndexes.filter((index): index is number => Number.isInteger(index))
+    : [];
+
   try {
     const result = await saveImportResolutions(
       auth.context.supabase,
       auth.context.organizationId,
       jobId,
       resolutions,
-      excludedSourceRowIndexes
+      excludedSourceRowIndexes,
+      {
+        duplicateCheck: body.duplicateCheck ?? null,
+        duplicateSkipSourceRowIndexes,
+      }
     );
     return NextResponse.json(result);
   } catch (err) {

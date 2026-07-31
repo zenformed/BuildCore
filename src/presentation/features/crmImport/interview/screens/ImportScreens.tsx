@@ -220,6 +220,19 @@ export function ImportScreen({
                 <span className={styles.importMetricLabel}>{exec.metricFailed}</span>
               </div>
             </div>
+            {importCounts.excludedRows > 0 ? (
+              <div className={styles.importMetricCard}>
+                <span className={`${styles.importMetricIcon} ${styles.importMetricIconProjects}`}>
+                  <LuInfo size={18} aria-hidden />
+                </span>
+                <div className={styles.importMetricText}>
+                  <span className={styles.importMetricValue} aria-live="polite">
+                    {importCounts.excludedRows.toLocaleString()}
+                  </span>
+                  <span className={styles.importMetricLabel}>{exec.metricSkipped}</span>
+                </div>
+              </div>
+            ) : null}
           </div>
         </div>
       </div>
@@ -365,6 +378,12 @@ export function ResultsScreen({ importStatus, importCounts }: ResultsScreenProps
           <span className={styles.summaryCardLabel}>{copy.results.failedRows}</span>
           <span className={styles.summaryCardValue}>{failedCount}</span>
         </div>
+        {importCounts.excludedRows > 0 ? (
+          <div className={styles.summaryCard}>
+            <span className={styles.summaryCardLabel}>{copy.results.skippedRows}</span>
+            <span className={styles.summaryCardValue}>{importCounts.excludedRows}</span>
+          </div>
+        ) : null}
       </div>
       <p className={styles.notice}>{copy.results.statusLabel(importStatus)}</p>
       {importStatus === 'partially_completed' ? (

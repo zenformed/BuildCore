@@ -37,7 +37,8 @@ export type ReviewSectionId =
   | 'spreadsheet'
   | 'destination'
   | 'subprojectNames'
-  | 'importedFields';
+  | 'importedFields'
+  | 'duplicates';
 
 export type ReviewLayoutMode = 'desktop' | 'tablet' | 'mobile';
 
@@ -528,6 +529,8 @@ export function reviewEditTargetForSection(
       return 'subproject_identity';
     case 'importedFields':
       return 'fields';
+    case 'duplicates':
+      return 'duplicate_check';
     default:
       return null;
   }
@@ -604,11 +607,29 @@ export function continueInterviewAfterEdit(
 
   const earliest = findEarliestIncompleteInterviewScreen(state);
   if (earliest == null) {
+    // From fields (or earlier), land on duplicate review first. From duplicate
+    // review, continue through merge review, then final Review.
+    if (state.screen === 'merge_review') {
+      return {
+        ...state,
+        history: [...state.history, state.screen],
+        screen: 'review',
+        returnToReview: false,
+      };
+    }
+    if (state.screen === 'duplicate_check') {
+      return {
+        ...state,
+        history: [...state.history, state.screen],
+        screen: 'merge_review',
+        returnToReview: true,
+      };
+    }
     return {
       ...state,
       history: [...state.history, state.screen],
-      screen: 'review',
-      returnToReview: false,
+      screen: 'duplicate_check',
+      returnToReview: true,
     };
   }
 

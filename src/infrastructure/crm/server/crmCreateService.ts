@@ -12,6 +12,7 @@ import { ensureUniqueProjectSlug, slugifyProjectName } from './crmSlug';
 import { generateCrmProjectLeadToken } from '@/infrastructure/lead/generateLeadToken';
 import { buildCrmContactDbWritePayload } from '@/domain/crm/contactMultiValue';
 import { upsertProjectCustomFieldValuesForProject } from './buildCoreProjectCustomFieldService';
+import { tryReindexCrmRecordIdentityValues } from './identity/crmRecordIdentityReindexService';
 
 export type CrmClientContactParty = {
   readonly clientId: string;
@@ -174,6 +175,8 @@ export async function createCrmProjectForImportBulk(
     );
   }
 
+  await tryReindexCrmRecordIdentityValues(supabase, organizationId, projectRow.id);
+
   return projectRow;
 }
 
@@ -271,6 +274,8 @@ export async function createCrmLeadSubprojectForOrg(
     primaryContactId: party.contactId,
   });
 
+  await tryReindexCrmRecordIdentityValues(supabase, organizationId, project.id);
+
   return { id: project.id, slug: project.slug, name: input.name };
 }
 
@@ -342,6 +347,7 @@ export async function createCrmProjectForOrg(
       },
       input.customFieldValues
     );
+    await tryReindexCrmRecordIdentityValues(supabase, organizationId, projectRow.id);
     return {
       id: projectRow.id,
       slug: projectRow.slug,
@@ -349,6 +355,7 @@ export async function createCrmProjectForOrg(
     };
   }
 
+  await tryReindexCrmRecordIdentityValues(supabase, organizationId, projectRow.id);
   return { id: projectRow.id, slug: projectRow.slug, summary };
 }
 

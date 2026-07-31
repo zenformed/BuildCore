@@ -1,5 +1,6 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import { crmSupabaseNoStoreFetch } from './crmSupabaseFetch';
+import { withSupabaseRealtimeTransport } from '@/infrastructure/supabase/supabaseRealtimeTransport';
 
 function getEnv(): { url: string; key: string } | null {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -15,10 +16,14 @@ function getEnv(): { url: string; key: string } | null {
 export function createCrmSupabaseClient(authHeader: string): SupabaseClient | null {
   const env = getEnv();
   if (!env) return null;
-  return createClient(env.url, env.key, {
-    global: {
-      headers: { Authorization: authHeader },
-      fetch: crmSupabaseNoStoreFetch,
-    },
-  });
+  return createClient(
+    env.url,
+    env.key,
+    withSupabaseRealtimeTransport({
+      global: {
+        headers: { Authorization: authHeader },
+        fetch: crmSupabaseNoStoreFetch,
+      },
+    })
+  );
 }

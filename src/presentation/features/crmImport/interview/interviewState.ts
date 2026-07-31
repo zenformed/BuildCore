@@ -38,6 +38,8 @@ export type CrmImportInterviewScreen =
   | 'project_identity'
   | 'subproject_identity'
   | 'fields'
+  | 'duplicate_check'
+  | 'merge_review'
   | 'hierarchy_preview'
   | 'parent_resolve'
   | 'conflict'
@@ -172,6 +174,8 @@ export function interviewScreenToMilestone(
     case 'subproject_identity':
       return 'structure';
     case 'fields':
+    case 'duplicate_check':
+    case 'merge_review':
     case 'hierarchy_preview':
     case 'parent_resolve':
     case 'conflict':
@@ -271,12 +275,16 @@ export function getNextInterviewScreen(state: CrmImportInterviewState): CrmImpor
     case 'subproject_identity':
       return 'fields';
     case 'fields':
+      return 'duplicate_check';
+    case 'duplicate_check':
+      return 'merge_review';
+    case 'merge_review':
       return 'review';
     case 'hierarchy_preview':
     case 'parent_resolve':
     case 'conflict':
       // Kept for back-compat if present in history; no longer in the forward path.
-      return 'review';
+      return 'duplicate_check';
     case 'review':
       return 'import';
     case 'import':

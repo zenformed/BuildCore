@@ -1,4 +1,5 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
+import { withSupabaseRealtimeTransport } from '@/infrastructure/supabase/supabaseRealtimeTransport';
 
 function readServiceRoleEnv(): { url: string; serviceKey: string } | null {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -11,7 +12,11 @@ function readServiceRoleEnv(): { url: string; serviceKey: string } | null {
 export function createCrmServiceRoleClient(): SupabaseClient | null {
   const env = readServiceRoleEnv();
   if (env == null) return null;
-  return createClient(env.url, env.serviceKey, {
-    auth: { persistSession: false, autoRefreshToken: false },
-  });
+  return createClient(
+    env.url,
+    env.serviceKey,
+    withSupabaseRealtimeTransport({
+      auth: { persistSession: false, autoRefreshToken: false },
+    })
+  );
 }

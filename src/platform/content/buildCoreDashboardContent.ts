@@ -505,6 +505,37 @@ const buildCoreDashboardContentSource = {
         useCoordinates: '📍 Lat / Long',
         useStreetAddress: '← Use street address instead',
       },
+      duplicates: {
+        checking: 'Checking for duplicates…',
+        title: 'Possible duplicate found',
+        subtitle: 'We found existing records that may match what you\u2019re creating.',
+        viewProject: 'View Project',
+        createMayDuplicateNote: 'Creating this §E5§ may result in duplicate records.',
+        confidenceHigh: 'High',
+        confidenceMedium: 'Medium',
+        confidenceLow: 'Low',
+        lifecycleActive: 'Active',
+        lifecycleInactive: 'Inactive',
+        lifecycleArchived: 'Archived',
+        parentLabel: 'Project',
+        contactLabel: 'Contact',
+        emailLabel: 'Email',
+        phoneLabel: 'Phone',
+        addressLabel: 'Address',
+        merge: {
+          incomingSideLabel: 'Incoming',
+          existingSideLabel: 'Existing',
+          keepValueAria: (sideLabel: string, value: string): string =>
+            `Keep ${sideLabel} value ${value}`,
+          matchedFieldMark: 'Matched',
+          actionImportNew: 'Import as new',
+          actionUpdateExisting: 'Update existing',
+          actionSkip: 'Skip row',
+          actionLegend: 'What should BuildCore do with this duplicate?',
+          fieldsDisabledHint:
+            'Choose Update existing to pick which field values to keep.',
+        },
+      },
     },
       spreadsheetImport: {
       title: 'Import spreadsheet',
@@ -634,6 +665,7 @@ const buildCoreDashboardContentSource = {
         createdSubprojects: '§E8§ created',
         createdParents: 'New §E2§ created',
         failedRows: 'Failed rows',
+        skippedRows: 'Skipped rows',
         statusLabel: (status: string): string => `Final status: ${status}`,
       },
       actions: {
@@ -1329,6 +1361,252 @@ const buildCoreDashboardContentSource = {
             `Start importing ${count.toLocaleString()} §E4§`,
           groupsSummary: (created: number, attached: number, ignored: number): string =>
             `${created.toLocaleString()} new · ${attached.toLocaleString()} attached · ${ignored.toLocaleString()} skipped`,
+          duplicatesTitle: 'Duplicate review',
+          duplicatesReviewAria: 'Review duplicate decisions',
+          duplicatesSummary: (input: {
+            readonly totalIncomingRows: number;
+            readonly rowsWithPossibleDuplicates: number;
+            readonly sameCustomerCount: number;
+            readonly differentCustomerCount: number;
+            readonly existingMatchCount: number;
+            readonly incomingToIncomingMatchCount: number;
+          }): string =>
+            `${input.totalIncomingRows.toLocaleString()} rows checked · ${input.rowsWithPossibleDuplicates.toLocaleString()} possible duplicates · ${input.sameCustomerCount.toLocaleString()} same §E7§ · ${input.differentCustomerCount.toLocaleString()} different · ${input.existingMatchCount.toLocaleString()} existing · ${input.incomingToIncomingMatchCount.toLocaleString()} in spreadsheet`,
+          duplicatesTruncationWarning:
+            'Duplicate checking was incomplete. Some possible matches may not be shown.',
+          duplicatesTruncationExistingRecords: (
+            searched: number,
+            matching: number
+          ): string =>
+            `BuildCore checked ${searched.toLocaleString()} of ${matching.toLocaleString()} existing records that shared matching customer information. Some possible duplicates may not be shown.`,
+          duplicatesTruncationIdentityValues: (
+            searched: number,
+            total: number
+          ): string =>
+            `BuildCore checked ${searched.toLocaleString()} of ${total.toLocaleString()} unique matching values from this import. Some possible duplicates may not be shown.`,
+          duplicatesTruncationMultiple:
+            'Duplicate checking reached multiple search limits.',
+          duplicatesTruncationViewDetails: 'View details.',
+          duplicatesTruncationDetailIdentity: (
+            searched: number,
+            total: number
+          ): string =>
+            `Identity values checked: ${searched.toLocaleString()} of ${total.toLocaleString()}`,
+          duplicatesTruncationDetailExisting: (
+            searched: number,
+            matching: number
+          ): string =>
+            `Existing records checked: ${searched.toLocaleString()} of ${matching.toLocaleString()}`,
+          duplicatesTruncationDetailCandidates: (
+            returned: number,
+            total: number
+          ): string =>
+            `Candidates returned: ${returned.toLocaleString()} of ${total.toLocaleString()}`,
+          duplicatesTruncationDetailGroups: (
+            returned: number,
+            total: number
+          ): string =>
+            `Duplicate groups returned: ${returned.toLocaleString()} of ${total.toLocaleString()}`,
+          duplicatesTruncationChunkFailed:
+            'Duplicate checking stopped early after a search step failed. Some possible duplicates may not be shown.',
+          duplicatesTruncationCandidatesCapped: (
+            returned: number,
+            total: number
+          ): string =>
+            `BuildCore returned the top ${returned.toLocaleString()} of ${total.toLocaleString()} candidate matches per row. Some lower-ranked matches may not be shown.`,
+          duplicatesTruncationGroupsCapped: (
+            returned: number,
+            total: number
+          ): string =>
+            `BuildCore returned ${returned.toLocaleString()} of ${total.toLocaleString()} duplicate groups. Some groups may not be shown.`,
+        },
+        duplicateCheck: {
+          heading: 'Review possible duplicates',
+          hint: 'BuildCore found rows that may already exist. Confirm whether each match is the same §E7§ — you’ll choose how to handle them on the next step.',
+          checking: 'Checking for duplicates…',
+          checkingHint: 'Comparing your mapped rows with existing BuildCore records.',
+          checkingProgress: (done: number, total: number): string =>
+            `Checking rows ${done.toLocaleString()} of ${total.toLocaleString()}…`,
+          noneFoundBody: 'No possible duplicates found. You can continue to the final review.',
+          checkFailed: 'Could not check for duplicates. Go back and try again.',
+          truncationWarning:
+            'Duplicate checking was incomplete. Some possible matches may not be shown.',
+          truncationExistingRecords: (
+            searched: number,
+            matching: number
+          ): string =>
+            `BuildCore checked ${searched.toLocaleString()} of ${matching.toLocaleString()} existing records that shared matching customer information. Some possible duplicates may not be shown.`,
+          truncationIdentityValues: (searched: number, total: number): string =>
+            `BuildCore checked ${searched.toLocaleString()} of ${total.toLocaleString()} unique matching values from this import. Some possible duplicates may not be shown.`,
+          truncationMultiple: 'Duplicate checking reached multiple search limits.',
+          truncationViewDetails: 'View details.',
+          truncationDetailIdentity: (searched: number, total: number): string =>
+            `Identity values checked: ${searched.toLocaleString()} of ${total.toLocaleString()}`,
+          truncationDetailExisting: (searched: number, matching: number): string =>
+            `Existing records checked: ${searched.toLocaleString()} of ${matching.toLocaleString()}`,
+          truncationDetailCandidates: (returned: number, total: number): string =>
+            `Candidates returned: ${returned.toLocaleString()} of ${total.toLocaleString()}`,
+          truncationDetailGroups: (returned: number, total: number): string =>
+            `Duplicate groups returned: ${returned.toLocaleString()} of ${total.toLocaleString()}`,
+          truncationChunkFailed:
+            'Duplicate checking stopped early after a search step failed. Some possible duplicates may not be shown.',
+          truncationCandidatesCapped: (returned: number, total: number): string =>
+            `BuildCore returned the top ${returned.toLocaleString()} of ${total.toLocaleString()} candidate matches per row. Some lower-ranked matches may not be shown.`,
+          truncationGroupsCapped: (returned: number, total: number): string =>
+            `BuildCore returned ${returned.toLocaleString()} of ${total.toLocaleString()} duplicate groups. Some groups may not be shown.`,
+          decisionLegend: 'Is this the same §E7§?',
+          sameCustomerYes: 'Yes, same §E7§',
+          sameCustomerNo: 'No, different §E7§',
+          decideAllToContinue:
+            'Answer Yes or No for every possible duplicate before continuing.',
+          summaryAriaLabel: 'Duplicate review summary',
+          metricTotalRows: 'Total rows',
+          metricUniqueRows: 'Unique rows',
+          metricExistingMatches: 'Match existing',
+          metricIncomingMatches: 'Match in sheet',
+          metricNeedsDecision: 'Need decision',
+          tableAriaLabel: 'Duplicate review table',
+          colSource: 'Source',
+          colIdentifier: 'Identifier',
+          colIdentifierHint: 'Primary contact or name',
+          colProject: '§E1§',
+          colStage: 'Stage',
+          matchColumnTitle: (n: number): string => `Match ${n}`,
+          matchColumnHintBest: 'Best match',
+          colSameCustomer: 'Same §E3§?',
+          colSameCustomerHint: 'Choose an action',
+          sourceSpreadsheet: 'Spreadsheet',
+          sourceExisting: 'Existing',
+          spreadsheetRow: (row: number): string => `Row ${row}`,
+          uniqueSectionTitle: (count: number): string =>
+            count === 1
+              ? 'Rows with no possible duplicates (1)'
+              : `Rows with no possible duplicates (${count.toLocaleString()})`,
+          uniqueSectionBody: (count: number): string =>
+            count === 1
+              ? '1 row has no possible matches and will be imported automatically.'
+              : `${count.toLocaleString()} rows have no possible matches and will be imported automatically.`,
+          showingGroups: (from: number, to: number, total: number): string =>
+            `Showing ${from.toLocaleString()} to ${to.toLocaleString()} of ${total.toLocaleString()} duplicate groups`,
+          decisionsRemaining: (count: number): string =>
+            count === 1
+              ? '1 decision remaining'
+              : `${count.toLocaleString()} decisions remaining`,
+        },
+        mergeReview: {
+          heading: 'Merge review',
+          hint: 'You marked this as the same §E7§. Choose how to merge the information.',
+          emptyState: 'No merge groups to review.',
+          groupOf: (current: number, total: number): string =>
+            `${current.toLocaleString()} of ${total.toLocaleString()} duplicate groups`,
+          previousGroup: 'Previous duplicate group',
+          nextGroup: 'Next duplicate group',
+          compareAriaLabel: 'Compare existing and imported records',
+          existingRecordKept: 'Existing record (kept)',
+          importedRecord: 'Imported record',
+          recordTypeLabel: '§E3§',
+          whatShouldHappen: 'Merge decision',
+          mergeDecisionHint: 'Choose what to do with the imported record.',
+          actionMergeIntoExisting: 'Merge into existing record',
+          actionKeepBoth: 'Keep both as separate records',
+          actionReplaceExisting: 'Replace existing with imported',
+          recommended: 'Recommended',
+          keepBothNotice:
+            'Both records will remain unchanged. No field merge is needed for this group.',
+          replaceNotice:
+            'The existing §E7§ will be removed and the imported row will become the surviving record.',
+          replaceConfirmLabel: 'I understand the existing record will be replaced',
+          showIdenticalFields: (count: number): string =>
+            count === 1
+              ? 'Show 1 identical field'
+              : `Show ${count.toLocaleString()} identical fields`,
+          hideIdenticalFields: (count: number): string =>
+            count === 1
+              ? 'Hide 1 identical field'
+              : `Hide ${count.toLocaleString()} identical fields`,
+          showMoreCustomFields: (count: number): string =>
+            count === 1
+              ? 'Show 1 more custom field'
+              : `Show ${count.toLocaleString()} more custom fields`,
+          tableAriaLabel: 'Merge field review table',
+          colField: 'Field',
+          colExisting: 'Existing (kept)',
+          colImported: 'Imported',
+          colAction: 'Merge action',
+          colResult: 'Result (after merge)',
+          liveBadge: 'Live',
+          emptyValue: '—',
+          fieldName: '§E3§ name',
+          fieldContact: 'Contact name',
+          fieldEmail: 'Email addresses',
+          fieldPhone: 'Phone numbers',
+          fieldAddress: 'Address',
+          fieldStage: 'Stage',
+          fieldNotes: 'Notes',
+          fieldPhotos: 'Photos',
+          fieldDocuments: 'Documents',
+          sameNoAction: 'Same — No action needed',
+          actionReplaceImported: 'Use imported',
+          actionKeepExisting: 'Keep existing',
+          actionIgnoreImported: 'Ignore imported',
+          actionUpdateStage: (stage: string): string => `Use imported stage (“${stage}”)`,
+          actionMerged: (count: number): string => `Merge • ${count.toLocaleString()} selected`,
+          choosePrimary: 'Primary',
+          contactLimitError: (max: number): string =>
+            `Select at most ${max.toLocaleString()} values.`,
+          contactPrimaryRequired: 'Choose a primary value.',
+          actionAppendNotes: 'Append imported notes',
+          actionReplaceNotes: 'Replace existing notes',
+          actionKeepNotes: 'Keep existing notes',
+          actionKeepBothFiles: 'Keep both — Files will be combined',
+          notesAppendedTag: 'Appended',
+          photosCount: (count: number): string =>
+            count === 1 ? '1 photo' : `${count.toLocaleString()} photos`,
+          documentsCount: (count: number): string =>
+            count === 1 ? '1 document' : `${count.toLocaleString()} documents`,
+          photosResult: (count: number): string =>
+            count === 1 ? '1 photo' : `${count.toLocaleString()} photos`,
+          documentsResult: (count: number): string =>
+            count === 1 ? '1 document' : `${count.toLocaleString()} documents`,
+          summaryTitle: 'Merge summary',
+          summaryExistingRemains: 'Existing §E7§ will remain',
+          summaryImportedRemoved: 'Imported §E7§ will be removed',
+          summaryKeepBoth: 'Both records will remain unchanged',
+          summaryReplaceExisting: 'Existing §E7§ will be replaced by imported',
+          summaryAddressReplaced: 'Address replaced',
+          summaryAddressKept: 'Existing address retained',
+          summaryStageKept: 'Existing stage retained',
+          summaryStageUpdated: (stage: string): string => `Stage changed to “${stage}”`,
+          summaryPhonesRetained: (count: number): string =>
+            `${count.toLocaleString()} phone numbers retained`,
+          summaryEmailsRetained: (count: number): string =>
+            `${count.toLocaleString()} email addresses retained`,
+          summaryPrimaryPhone: (value: string): string => `Primary phone remains ${value}`,
+          summaryPrimaryEmail: (value: string): string => `Primary email remains ${value}`,
+          summaryNotesAppended: 'Notes appended',
+          summaryNotesReplaced: 'Notes replaced',
+          summaryNotesKept: 'Existing notes retained',
+          summaryPhotosCombined: (existing: number, imported: number, total: number): string =>
+            `${total.toLocaleString()} photos combined (${existing.toLocaleString()} existing + ${imported.toLocaleString()} imported)`,
+          summaryDocumentsCombined: (
+            existing: number,
+            imported: number,
+            total: number
+          ): string =>
+            `${total.toLocaleString()} documents combined (${existing.toLocaleString()} existing + ${imported.toLocaleString()} imported)`,
+          summaryContactKept: 'Existing contact name retained',
+          summaryContactReplaced: (value: string): string => `Contact name changed to ${value}`,
+          summaryNameKept: 'Existing §E7§ name retained',
+          summaryNameReplaced: (value: string): string => `§E3§ name changed to ${value}`,
+          summaryCustomUpdated: (count: number): string =>
+            count === 1
+              ? '1 custom field updated'
+              : `${count.toLocaleString()} custom fields updated`,
+          decisionsRemaining: (count: number): string =>
+            count === 1
+              ? '1 decision remaining'
+              : `${count.toLocaleString()} decisions remaining`,
+          saveAndContinue: 'Save & continue',
         },
         importExecution: {
           headingRunning: 'Importing your spreadsheet',
@@ -1347,6 +1625,7 @@ const buildCoreDashboardContentSource = {
           metricSubprojects: '§E8§ created',
           metricProjects: 'New §E2§ created',
           metricFailed: 'Failed rows',
+          metricSkipped: 'Skipped rows',
           overallProgress: 'Overall progress',
           mayTakeMinutes: 'This may take a few minutes.',
           timelineHeading: 'What\u2019s happening now',

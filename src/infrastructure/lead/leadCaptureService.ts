@@ -15,6 +15,10 @@ import {
   createCrmLeadSubprojectForOrg,
 } from '@/infrastructure/crm/server/crmCreateService';
 import {
+  reindexCrmRecordsForPrimaryContact,
+  tryReindexCrmRecordIdentityValues,
+} from '@/infrastructure/crm/server/identity/crmRecordIdentityReindexService';
+import {
   buildLeadCaptureFullName,
   mergeLeadCaptureContactFields,
   type LeadCaptureContactRow,
@@ -319,6 +323,28 @@ export async function submitLeadCaptureForToken(
   } catch (err) {
     const detail = err instanceof Error ? err.message : 'Failed to create subproject.';
     throw new LeadCapturePersistenceError(detail);
+  }
+
+  // createCrmLeadSubprojectForOrg already reindexes the new subproject. When an existing
+  // contact was updated, refresh identity rows for every project that shares it.
+  if (party.contactUpdated) {
+    try {
+      await reindexCrmRecordsForPrimaryContact(
+        supabase,
+        parentProject.organization_id,
+        party.contactId
+      );
+    } catch (err) {
+      const detail = err instanceof Error ? err.message : String(err);
+      console.error(
+        `[crm_record_identity] lead contact reindex failed contact=${party.contactId}: ${detail}`
+      );
+      await tryReindexCrmRecordIdentityValues(
+        supabase,
+        parentProject.organization_id,
+        subproject.id
+      );
+    }
   }
 
   return {

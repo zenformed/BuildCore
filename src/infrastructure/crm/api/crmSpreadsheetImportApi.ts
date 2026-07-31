@@ -7,6 +7,7 @@ import type {
   CrmImportParentResolution,
   CrmImportParsedRow,
 } from '@/domain/crm/spreadsheetImportTypes';
+import type { ImportDuplicateCheckSnapshot } from '@/domain/crm/importDuplicateDecisions';
 import {
   crmApiGetJson,
   crmApiGetText,
@@ -30,6 +31,7 @@ export type CreateSpreadsheetImportDraftRequest = {
   readonly columns?: readonly CrmImportColumnMapping[];
   readonly mappings?: readonly CrmImportColumnMapping[];
   readonly rows: readonly CrmImportParsedRow[];
+  readonly duplicateCheck?: ImportDuplicateCheckSnapshot | null;
 };
 
 export type CreateSpreadsheetImportDraftResponse = {
@@ -56,6 +58,8 @@ export type SaveSpreadsheetImportResolutionsRequest = {
     readonly resolution: CrmImportParentResolution;
   }[];
   readonly excludedSourceRowIndexes?: readonly number[];
+  readonly duplicateSkipSourceRowIndexes?: readonly number[];
+  readonly duplicateCheck?: ImportDuplicateCheckSnapshot | null;
 };
 
 export type SaveSpreadsheetImportResolutionsResponse = {

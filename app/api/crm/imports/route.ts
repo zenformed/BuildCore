@@ -9,6 +9,7 @@ import type {
   CrmImportMode,
   CrmImportParsedRow,
 } from '@/domain/crm/spreadsheetImportTypes';
+import type { ImportDuplicateCheckSnapshot } from '@/domain/crm/importDuplicateDecisions';
 import { requireCrmApiAuth } from '@/infrastructure/crm/server/crmApiRouteAuth';
 import { mapCrmRouteError } from '@/infrastructure/crm/server/crmApiRouteErrors';
 import { requireBuildCoreProjectManagementAccess } from '@/infrastructure/crm/server/buildCoreProjectManagementAccess';
@@ -27,6 +28,7 @@ type CreateImportDraftBody = {
   readonly columns?: readonly CrmImportColumnMapping[];
   readonly mappings?: readonly CrmImportColumnMapping[];
   readonly rows?: readonly CrmImportParsedRow[];
+  readonly duplicateCheck?: ImportDuplicateCheckSnapshot | null;
 };
 
 function requestBodyTooLarge(request: NextRequest): boolean {
@@ -94,6 +96,7 @@ function parseCreateImportDraftBody(body: CreateImportDraftBody): {
       idempotencyKey,
       mappings,
       rows,
+      duplicateCheck: body.duplicateCheck ?? null,
     },
   };
 }

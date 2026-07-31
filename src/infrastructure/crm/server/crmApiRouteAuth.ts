@@ -3,6 +3,7 @@ import { createClient, type SupabaseClient, type User } from '@supabase/supabase
 import { crmSupabaseNoStoreFetch } from '@/infrastructure/crm/server/crmSupabaseFetch';
 import { createCrmSupabaseClient } from './createCrmSupabaseClient';
 import { resolveCrmOrganizationId } from './resolveCrmOrganizationId';
+import { withSupabaseRealtimeTransport } from '@/infrastructure/supabase/supabaseRealtimeTransport';
 
 export type CrmApiAuthContext = {
   readonly authHeader: string;
@@ -29,9 +30,13 @@ async function getCrmApiUserFromToken(bearerToken: string | null): Promise<User 
   const token = bearerToken.slice(7).trim();
   if (!token) return null;
 
-  const supabase = createClient(env.url, env.key, {
-    global: { fetch: crmSupabaseNoStoreFetch },
-  });
+  const supabase = createClient(
+    env.url,
+    env.key,
+    withSupabaseRealtimeTransport({
+      global: { fetch: crmSupabaseNoStoreFetch },
+    })
+  );
   const {
     data: { user },
     error,

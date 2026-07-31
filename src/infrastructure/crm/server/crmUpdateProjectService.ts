@@ -9,6 +9,7 @@ import {
 import { getCrmProjectDetailBySlugForOrg } from './crmReadService';
 import { buildCrmContactDbWritePayload } from '@/domain/crm/contactMultiValue';
 import { upsertProjectCustomFieldValuesForProject } from './buildCoreProjectCustomFieldService';
+import { tryReindexCrmRecordIdentityValues } from './identity/crmRecordIdentityReindexService';
 
 export async function updateCrmProjectBySlugForOrg(
   supabase: SupabaseClient,
@@ -96,6 +97,8 @@ export async function updateCrmProjectBySlugForOrg(
       previous_stage_slug: existing.summary.currentStageSlug,
     },
   });
+
+  await tryReindexCrmRecordIdentityValues(supabase, organizationId, existing.summary.id);
 
   return getCrmProjectDetailBySlugForOrg(supabase, organizationId, slug);
 }

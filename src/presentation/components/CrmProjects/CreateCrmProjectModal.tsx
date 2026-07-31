@@ -77,6 +77,9 @@ import {
 } from './ProjectCustomFieldsSection';
 import { AddProjectCustomFieldDialog } from './AddProjectCustomFieldDialog';
 import { useBuildCoreProjectCustomFieldsForScope } from '@/presentation/providers/BuildCoreProjectCustomFieldsProvider';
+import { DuplicateCandidatePanel } from '@/presentation/components/CrmDuplicates/DuplicateCandidatePanel';
+import { useDuplicateCandidateCheck } from '@/presentation/features/crmDuplicates/useDuplicateCandidateCheck';
+import duplicatePanelStyles from '@/presentation/components/CrmDuplicates/DuplicateCandidatePanel.module.css';
 
 import formStyles from './CreateCrmProjectDrawer.module.css';
 
@@ -187,6 +190,15 @@ export function CreateCrmProjectModal({
     createDefinition,
     isSaving: customFieldsSaving,
   } = useBuildCoreProjectCustomFieldsForScope(templateScope);
+
+  const duplicateCheck = useDuplicateCandidateCheck({
+    enabled: open && canMutateProjects && isApiSource,
+    form,
+    recordType: templateScope === 'subproject' ? 'subproject' : 'project',
+    customFieldDraft,
+    customFieldDefinitions: activeDefinitions,
+    excludeRecordId: isEditMode ? (project?.summary.id ?? null) : null,
+  });
 
   const handleTemplateToast = useCallback(
     (kind: 'success' | 'error', message: string) => {
@@ -663,10 +675,21 @@ export function CreateCrmProjectModal({
           />
         ) : null}
 
+        <DuplicateCandidatePanel
+          status={duplicateCheck.status}
+          candidates={duplicateCheck.candidates}
+          copy={create.duplicates}
+        />
+
         {error ? <p className={formStyles.error}>{error}</p> : null}
       </div>
 
       <div className={styles.formFooter}>
+        {duplicateCheck.hasMatches && !isEditMode ? (
+          <p className={`${duplicatePanelStyles.createNote} ${styles.duplicateCreateNote}`}>
+            {create.duplicates.createMayDuplicateNote}
+          </p>
+        ) : null}
         <button type="button" className={formStyles.cancelButton} onClick={onClose} disabled={saving}>
           {copy.cancel}
         </button>

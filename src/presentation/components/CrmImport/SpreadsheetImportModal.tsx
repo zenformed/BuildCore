@@ -16,6 +16,7 @@ export type SpreadsheetImportModalProps = {
   readonly titleId?: string;
   readonly closeAriaLabel: string;
   readonly closeDisabled?: boolean;
+  readonly panelClassName?: string;
   readonly onClose: () => void;
   readonly children: ReactNode;
 };
@@ -29,6 +30,7 @@ export function SpreadsheetImportModal({
   titleId: titleIdProp,
   closeAriaLabel,
   closeDisabled = false,
+  panelClassName,
   onClose,
   children,
 }: SpreadsheetImportModalProps): ReactElement | null {
@@ -98,7 +100,9 @@ export function SpreadsheetImportModal({
     >
       <div
         ref={panelRef}
-        className={[centerStyles.panel, styles.importModalPanel].filter(Boolean).join(' ')}
+        className={[centerStyles.panel, styles.importModalPanel, panelClassName]
+          .filter(Boolean)
+          .join(' ')}
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}

@@ -47,6 +47,7 @@ import type {
   CrmImportResolvedParentAttributes,
 } from '@/domain/crm/spreadsheetImportTypes';
 import { EMPTY_CRM_IMPORT_JOB_COUNTS } from '@/domain/crm/spreadsheetImportTypes';
+import type { ImportDuplicateCheckSnapshot } from '@/domain/crm/importDuplicateDecisions';
 import {
   getSubprojectNameFromRow,
   validateImportRow,
@@ -230,6 +231,7 @@ export type CreateImportDraftInput = {
   readonly idempotencyKey: string;
   readonly mappings: readonly CrmImportColumnMapping[];
   readonly rows: readonly CrmImportParsedRow[];
+  readonly duplicateCheck?: ImportDuplicateCheckSnapshot | null;
 };
 
 export async function createSpreadsheetImportDraft(
@@ -299,7 +301,11 @@ export async function createSpreadsheetImportDraft(
       source_filename: input.sourceFilename,
       sheet_name: input.sheetName,
       header_row_index: input.headerRowIndex,
-      mapping_snapshot: { mappings: input.mappings, rows: input.rows },
+      mapping_snapshot: {
+        mappings: input.mappings,
+        rows: input.rows,
+        ...(input.duplicateCheck != null ? { duplicateCheck: input.duplicateCheck } : {}),
+      },
       status: 'draft',
       idempotency_key: input.idempotencyKey,
       counts: EMPTY_CRM_IMPORT_JOB_COUNTS,
@@ -404,7 +410,11 @@ export async function saveImportResolutions(
     readonly groupKey: string;
     readonly resolution: CrmImportParentResolution;
   }[],
-  excludedSourceRowIndexes: readonly number[] = []
+  excludedSourceRowIndexes: readonly number[] = [],
+  options: {
+    readonly duplicateCheck?: ImportDuplicateCheckSnapshot | null;
+    readonly duplicateSkipSourceRowIndexes?: readonly number[];
+  } = {}
 ): Promise<{
   readonly status: 'draft' | 'ready';
   readonly blockingGroupKeys: readonly string[];
@@ -554,12 +564,66 @@ export async function saveImportResolutions(
       .eq('id', group.id);
   }
 
-  if (excludedSourceRowIndexes.length > 0) {
+  const duplicateSkipIndexes = [...(options.duplicateSkipSourceRowIndexes ?? [])];
+  const duplicateSkipSet = new Set(duplicateSkipIndexes);
+  const manualExcludeIndexes = excludedSourceRowIndexes.filter(
+    (index) => !duplicateSkipSet.has(index)
+  );
+
+  if (manualExcludeIndexes.length > 0) {
     await supabase
       .from('crm_import_job_rows')
       .update({ status: 'excluded', excluded: true })
       .eq('job_id', jobId)
-      .in('source_row_index', [...excludedSourceRowIndexes]);
+      .in('source_row_index', manualExcludeIndexes);
+  }
+
+  if (duplicateSkipIndexes.length > 0) {
+    await supabase
+      .from('crm_import_job_rows')
+      .update({
+        status: 'excluded',
+        excluded: true,
+        warning_codes: ['duplicate_review_skip'],
+        error_message: 'Skipped during duplicate review.',
+      })
+      .eq('job_id', jobId)
+      .in('source_row_index', [...duplicateSkipIndexes]);
+  }
+
+  if (options.duplicateCheck != null) {
+    const nextSnapshot = {
+      ...snapshot,
+      duplicateCheck: options.duplicateCheck,
+    };
+    await supabase
+      .from('crm_import_jobs')
+      .update({ mapping_snapshot: nextSnapshot })
+      .eq('id', jobId);
+  }
+
+  if (manualExcludeIndexes.length > 0 || duplicateSkipIndexes.length > 0) {
+    const { count } = await supabase
+      .from('crm_import_job_rows')
+      .select('id', { count: 'exact', head: true })
+      .eq('job_id', jobId)
+      .eq('excluded', true);
+    const { data: currentJob } = await supabase
+      .from('crm_import_jobs')
+      .select('counts')
+      .eq('id', jobId)
+      .maybeSingle();
+    const currentCounts =
+      (currentJob?.counts as CrmImportJobCounts | null) ?? EMPTY_CRM_IMPORT_JOB_COUNTS;
+    await supabase
+      .from('crm_import_jobs')
+      .update({
+        counts: {
+          ...currentCounts,
+          excludedRows: count ?? 0,
+        },
+      })
+      .eq('id', jobId);
   }
 
   const { data: unresolved } = await supabase

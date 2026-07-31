@@ -203,22 +203,13 @@ export async function listWorkflowTaskStatusesByOrg(
   return index;
 }
 
-export async function listWorkflowProgressInputsByOrg(
+export async function listWorkflowProgressInputsByProjectIds(
   supabase: SupabaseClient,
-  organizationId: string
+  organizationId: string,
+  projectIds: readonly string[]
 ): Promise<CrmProjectWorkflowProgressInputIndex> {
-  const { data: projectRows, error: projectError } = await supabase
-    .from('crm_projects')
-    .select('id')
-    .eq('organization_id', organizationId)
-    .is('archived_at', null);
-
-  if (projectError) {
-    throw new Error(projectError.message);
-  }
-
-  const projectIds = (projectRows ?? []).map((row) => row.id as string);
-  if (projectIds.length === 0) {
+  const uniqueIds = [...new Set(projectIds)];
+  if (uniqueIds.length === 0) {
     return new Map();
   }
 
@@ -226,13 +217,13 @@ export async function listWorkflowProgressInputsByOrg(
     supabase
       .from('crm_workflow_tasks')
       .select('project_id, stage_slug, status, amount_cents')
-      .in('project_id', projectIds)
+      .in('project_id', uniqueIds)
       .is('archived_at', null),
     supabase
       .from('crm_project_stage_completions')
       .select('project_id, stage_slug')
       .eq('organization_id', organizationId)
-      .in('project_id', projectIds),
+      .in('project_id', uniqueIds),
   ]);
 
   if (taskResult.error) {
@@ -244,7 +235,7 @@ export async function listWorkflowProgressInputsByOrg(
 
   const index = new Map<string, CrmProjectWorkflowProgressInput>();
 
-  for (const projectId of projectIds) {
+  for (const projectId of uniqueIds) {
     index.set(projectId, { tasks: [], manualStageCompletionSlugs: [] });
   }
 
@@ -285,6 +276,24 @@ export async function listWorkflowProgressInputsByOrg(
   }
 
   return index;
+}
+
+export async function listWorkflowProgressInputsByOrg(
+  supabase: SupabaseClient,
+  organizationId: string
+): Promise<CrmProjectWorkflowProgressInputIndex> {
+  const { data: projectRows, error: projectError } = await supabase
+    .from('crm_projects')
+    .select('id')
+    .eq('organization_id', organizationId)
+    .is('archived_at', null);
+
+  if (projectError) {
+    throw new Error(projectError.message);
+  }
+
+  const projectIds = (projectRows ?? []).map((row) => row.id as string);
+  return listWorkflowProgressInputsByProjectIds(supabase, organizationId, projectIds);
 }
 
 export async function listBudgetEntriesByOrg(

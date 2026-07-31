@@ -12,7 +12,9 @@ import {
   LuShieldCheck,
   LuTable2,
   LuUserRound,
+  LuCopy,
 } from 'react-icons/lu';
+import type { CrmDuplicateTruncationMeta } from '@/domain/crm/identity';
 import type { CrmImportColumnComposition } from '@/domain/crm/spreadsheetImportComposition';
 import type { CrmImportMode } from '@/domain/crm/spreadsheetImportTypes';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
@@ -20,6 +22,10 @@ import type {
   CrmImportInterviewScreen,
   CrmImportStructureChoice,
 } from '@/presentation/features/crmImport/interview/interviewState';
+import {
+  DuplicateTruncationNotice,
+  reviewTruncationCopyFromContent,
+} from '@/presentation/features/crmImport/interview/DuplicateTruncationNotice';
 import {
   compositionLabel,
   destinationImportingToLabel,
@@ -62,6 +68,17 @@ export type ReviewScreenProps = {
   readonly issueMessages?: readonly string[];
   readonly issueSections?: ReadonlySet<ReviewSectionId>;
   readonly groupsSummary: ReviewScreenGroupsSummary | null;
+  readonly duplicateSummary?: {
+    readonly totalIncomingRows: number;
+    readonly rowsWithPossibleDuplicates: number;
+    readonly sameCustomerCount: number;
+    readonly differentCustomerCount: number;
+    readonly existingMatchCount: number;
+    readonly incomingToIncomingMatchCount: number;
+    readonly truncated: boolean;
+    readonly truncationMeta: CrmDuplicateTruncationMeta | null;
+  } | null;
+  readonly rowsToCreateCount?: number;
   readonly disabled?: boolean;
   readonly onEdit: (screen: CrmImportInterviewScreen) => void;
 };
@@ -84,6 +101,8 @@ function SectionIcon({ section }: { readonly section: ReviewSectionId }): ReactE
       return <LuUserRound size={size} aria-hidden />;
     case 'importedFields':
       return <LuListChecks size={size} aria-hidden />;
+    case 'duplicates':
+      return <LuCopy size={size} aria-hidden />;
     default:
       return <LuTable2 size={size} aria-hidden />;
   }
@@ -179,6 +198,8 @@ export function ReviewScreen(props: ReviewScreenProps): ReactElement {
     issueMessages = [],
     issueSections,
     groupsSummary,
+    duplicateSummary = null,
+    rowsToCreateCount,
     disabled,
     onEdit,
   } = props;
@@ -228,8 +249,8 @@ export function ReviewScreen(props: ReviewScreenProps): ReactElement {
   const whatNextBody =
     multiProjectOrganization === 'worksheet_per_project' ||
     (effectiveMode === 'master_hierarchy' && !parentLabel)
-      ? copy.whatNextBodyMultiple(rowsCount)
-      : copy.whatNextBody(rowsCount, projectDisplay);
+      ? copy.whatNextBodyMultiple(rowsToCreateCount ?? rowsCount)
+      : copy.whatNextBody(rowsToCreateCount ?? rowsCount, projectDisplay);
 
   const showSheetsMetric = sheetsCount != null && sheetsCount > 0;
 
@@ -339,15 +360,12 @@ export function ReviewScreen(props: ReviewScreenProps): ReactElement {
       <div className={styles.reviewPanel}>
         <ReviewRow
           section="spreadsheet"
-          title={copy.fileTitle}
+          title={`${copy.fileTitle}: ${displayFileName}`}
           actionAriaLabel={copy.reviewFileAria}
           tone={sectionTone('spreadsheet')}
           disabled={disabled}
           onReview={() => jump('spreadsheet')}
         >
-          <p className={styles.reviewPrimary} title={fileName ?? undefined}>
-            {displayFileName}
-          </p>
           <p className={styles.reviewSecondary}>
             {showSheetsMetric
               ? copy.fileMetaLineMulti(sheetsCount!, rowsCount)
@@ -357,16 +375,13 @@ export function ReviewScreen(props: ReviewScreenProps): ReactElement {
 
         <ReviewRow
           section="destination"
-          title={copy.destinationTitle}
+          title={`${copy.destinationTitle} › ${projectDisplay}`}
           actionAriaLabel={copy.reviewDestinationAria}
           tone={sectionTone('destination')}
           disabled={disabled}
           hideAction={!canReviewDestination}
           onReview={() => jump('destination')}
         >
-          <p className={styles.reviewPrimary} title={projectDisplay}>
-            {projectDisplay}
-          </p>
           <p className={styles.reviewSecondary}>{importingTo}</p>
           {groupsSummary != null ? (
             <p className={styles.reviewSecondary}>
@@ -381,13 +396,12 @@ export function ReviewScreen(props: ReviewScreenProps): ReactElement {
 
         <ReviewRow
           section="subprojectNames"
-          title={copy.subprojectNamesTitle}
+          title={`${copy.subprojectNamesTitle}: ${builtFrom ?? '—'}`}
           actionAriaLabel={copy.reviewSubprojectNamesAria}
           tone={sectionTone('subprojectNames')}
           disabled={disabled}
           onReview={() => jump('subprojectNames')}
         >
-          <p className={styles.reviewPrimary}>{builtFrom ?? '—'}</p>
           <p className={styles.reviewSecondary}>
             {copy.exampleLabel}:{' '}
             {subprojectNameExample ? (
@@ -427,6 +441,22 @@ export function ReviewScreen(props: ReviewScreenProps): ReactElement {
             </p>
           ) : null}
         </ReviewRow>
+
+        {duplicateSummary != null ? (
+          <ReviewRow
+            section="duplicates"
+            title={`${copy.duplicatesTitle}: ${copy.duplicatesSummary(duplicateSummary)}`}
+            actionAriaLabel={copy.duplicatesReviewAria}
+            tone={duplicateSummary.truncated ? 'warning' : undefined}
+            disabled={disabled}
+            onReview={() => onEdit('duplicate_check')}
+          >
+            <DuplicateTruncationNotice
+              meta={duplicateSummary.truncationMeta}
+              copy={reviewTruncationCopyFromContent(copy)}
+            />
+          </ReviewRow>
+        ) : null}
       </div>
 
       <div className={styles.reviewWhatNext}>

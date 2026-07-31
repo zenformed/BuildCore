@@ -1,7 +1,7 @@
 'use client';
 
 import type { ReactElement } from 'react';
-import { useCallback, useEffect, useId, useMemo, useState } from 'react';
+import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
 import type * as XLSX from 'xlsx';
 import type {
   CrmImportColumnMapping,
@@ -85,11 +85,6 @@ import {
   type CrmImportStructureChoice,
 } from '@/presentation/features/crmImport/interview/interviewState';
 import { buildImportPayloadFromInterview } from '@/presentation/features/crmImport/interview/buildImportPayloadFromInterview';
-import { buildHeaderRowImportSource } from '@/presentation/features/crmImport/interview/buildHeaderRowImportSource';
-import {
-  buildSelectedSheetsImportSource,
-  buildWorksheetImportSource,
-} from '@/presentation/features/crmImport/interview/buildWorksheetImportSource';
 import {
   buildHeaderRowProjectGroups,
   canContinueProjectHeaderRows,
@@ -165,7 +160,38 @@ import {
   ParentResolveScreen,
 } from '@/presentation/features/crmImport/interview/screens/HierarchyScreens';
 import { ReviewScreen } from '@/presentation/features/crmImport/interview/screens/ReviewScreen';
+import { DuplicateCheckScreen } from '@/presentation/features/crmImport/interview/screens/DuplicateCheckScreen';
+import { MergeReviewScreen } from '@/presentation/features/crmImport/interview/screens/MergeReviewScreen';
 import { ImportScreen } from '@/presentation/features/crmImport/interview/screens/ImportScreens';
+import {
+  areImportDuplicateDecisionsComplete,
+  buildImportDuplicateReviewItems,
+  countImportRowsToCreate,
+  skippedSourceRowIndexesFromDecisions,
+  summarizeImportDuplicateDecisions,
+  type ImportDuplicateDecision,
+  type ImportDuplicateDecisionMap,
+  type ImportDuplicateCheckSnapshot,
+  type ImportDuplicateReviewItem,
+} from '@/domain/crm/importDuplicateDecisions';
+import {
+  areImportMergeDecisionsComplete,
+  countImportMergeDecisionsRemaining,
+  type ImportMergeDecisionMap,
+  type ImportMergeGroupDecision,
+} from '@/domain/crm/importMergeReview';
+import type {
+  CrmDuplicateCandidateGroup,
+  CrmDuplicateTruncationMeta,
+} from '@/domain/crm/identity';
+import { fetchCrmDuplicateCandidatesBatch } from '@/infrastructure/crm/api/crmDuplicateCandidatesApi';
+import {
+  buildImportDuplicateBatchItems,
+  buildImportDuplicateIdentityKey,
+} from '@/presentation/features/crmImport/interview/importDuplicateProbe';
+import { applyImportMergeDecisions } from '@/presentation/features/crmImport/interview/applyImportMergeDecisions';
+import { listMergeReviewItems } from '@/presentation/features/crmImport/interview/mergeReviewPresentation';
+import { resolveInterviewImportSource } from '@/presentation/features/crmImport/interview/resolveInterviewImportSource';
 import { useBuildCoreProjectCustomFieldsForScope } from '@/presentation/providers/BuildCoreProjectCustomFieldsProvider';
 import { crmRepositories } from '@/shared/di/container';
 import styles from './SpreadsheetImportWizard.module.css';
@@ -307,6 +333,23 @@ export function SpreadsheetImportWizard({
   const [cancelConfirmOpen, setCancelConfirmOpen] = useState(false);
   const [cancellingImport, setCancellingImport] = useState(false);
   const [completionToast, setCompletionToast] = useState<string | null>(null);
+  const [duplicateStatus, setDuplicateStatus] = useState<'idle' | 'loading' | 'ready' | 'error'>(
+    'idle'
+  );
+  const [duplicateError, setDuplicateError] = useState<string | null>(null);
+  const [duplicateProgress, setDuplicateProgress] = useState<string | null>(null);
+  const [duplicateGroups, setDuplicateGroups] = useState<readonly CrmDuplicateCandidateGroup[]>(
+    []
+  );
+  const [duplicateMeta, setDuplicateMeta] = useState<CrmDuplicateTruncationMeta | null>(null);
+  const [duplicateReviewItems, setDuplicateReviewItems] = useState<
+    readonly ImportDuplicateReviewItem[]
+  >([]);
+  const [duplicateDecisions, setDuplicateDecisions] = useState<ImportDuplicateDecisionMap>({});
+  const [mergeDecisions, setMergeDecisions] = useState<ImportMergeDecisionMap>({});
+  const [duplicateIdentityKey, setDuplicateIdentityKey] = useState<string | null>(null);
+  const [duplicateCheckedRowCount, setDuplicateCheckedRowCount] = useState(0);
+  const [duplicateAutoAdvancedKey, setDuplicateAutoAdvancedKey] = useState<string | null>(null);
 
   const existingCustomFields = useMemo(
     () => [
@@ -361,6 +404,17 @@ export function SpreadsheetImportWizard({
     setCancelConfirmOpen(false);
     setCancellingImport(false);
     setCompletionToast(null);
+    setDuplicateStatus('idle');
+    setDuplicateError(null);
+    setDuplicateProgress(null);
+    setDuplicateGroups([]);
+    setDuplicateMeta(null);
+    setDuplicateReviewItems([]);
+    setDuplicateDecisions({});
+    setMergeDecisions({});
+    setDuplicateIdentityKey(null);
+    setDuplicateCheckedRowCount(0);
+    setDuplicateAutoAdvancedKey(null);
   }, [fixedParentDisplayName, fixedParentProjectId, mode]);
 
   useEffect(() => {
@@ -527,6 +581,114 @@ export function SpreadsheetImportWizard({
     sheetMatrix,
     headerRowIndex,
     excludedRowNumbers,
+  ]);
+
+  const duplicateIdentityKeyRef = useRef<string | null>(null);
+  const duplicateStatusRef = useRef(duplicateStatus);
+  duplicateIdentityKeyRef.current = duplicateIdentityKey;
+  duplicateStatusRef.current = duplicateStatus;
+
+  useEffect(() => {
+    if (interview.screen !== 'duplicate_check') return;
+
+    let cancelled = false;
+
+    const run = async (): Promise<void> => {
+      try {
+        const source = await resolveInterviewImportSource({
+          interview,
+          headers,
+          rows,
+          sheetName,
+          headerRowIndex,
+          sheetMatrix,
+          headerRowGroups,
+          parsedFile,
+          parseFailedMessage: copy.errors.parseFailed,
+        });
+        if (cancelled) return;
+
+        const identityKey = buildImportDuplicateIdentityKey(source.rows, source.mappings);
+        if (
+          identityKey === duplicateIdentityKeyRef.current &&
+          duplicateStatusRef.current === 'ready'
+        ) {
+          return;
+        }
+
+        setDuplicateStatus('loading');
+        setDuplicateError(null);
+        setDuplicateProgress(copy.interview.duplicateCheck.checking);
+
+        if (identityKey !== duplicateIdentityKeyRef.current) {
+          setDuplicateDecisions({});
+          setMergeDecisions({});
+          setDuplicateAutoAdvancedKey(null);
+        }
+
+        const { items, summariesByIncomingId } = buildImportDuplicateBatchItems(
+          source.rows,
+          source.mappings
+        );
+        setDuplicateCheckedRowCount(items.length);
+        setDuplicateProgress(
+          copy.interview.duplicateCheck.checkingProgress(0, items.length)
+        );
+
+        const response = await fetchCrmDuplicateCandidatesBatch({
+          items,
+          includeIncomingMatches: true,
+        });
+        if (cancelled) return;
+
+        const reviewItems = buildImportDuplicateReviewItems({
+          groups: response.groups,
+          rowSummariesByIncomingId: summariesByIncomingId,
+        });
+
+        setDuplicateGroups(response.groups);
+        setDuplicateMeta(response.meta);
+        setDuplicateReviewItems(reviewItems);
+        setDuplicateIdentityKey(identityKey);
+        setDuplicateProgress(null);
+        setDuplicateStatus('ready');
+      } catch (err) {
+        if (cancelled) return;
+        setDuplicateStatus('error');
+        setDuplicateError(
+          err instanceof Error ? err.message : copy.interview.duplicateCheck.checkFailed
+        );
+        setDuplicateProgress(null);
+      }
+    };
+
+    void run();
+    return () => {
+      cancelled = true;
+    };
+    // Identity-relevant fields are listed explicitly; full `interview` would re-run too often.
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- see above
+  }, [
+    interview.screen,
+    interview.remainingFields,
+    interview.subprojectComposition,
+    interview.contactComposition,
+    interview.projectComposition,
+    interview.worksheetProjects,
+    interview.worksheetResolutions,
+    interview.multiProjectOrganization,
+    interview.structureChoice,
+    headers,
+    rows,
+    sheetName,
+    headerRowIndex,
+    sheetMatrix,
+    headerRowGroups,
+    parsedFile,
+    copy.errors.parseFailed,
+    copy.interview.duplicateCheck.checking,
+    copy.interview.duplicateCheck.checkingProgress,
+    copy.interview.duplicateCheck.checkFailed,
   ]);
 
   const headerRowSheets = useMemo(() => {
@@ -927,6 +1089,85 @@ export function SpreadsheetImportWizard({
   ]);
 
   const reviewIssueCount = reviewIssueMetricCount(reviewIssues);
+
+  const duplicateSummary = useMemo(() => {
+    if (duplicateStatus !== 'ready') return null;
+    return summarizeImportDuplicateDecisions({
+      totalIncomingRows: duplicateCheckedRowCount,
+      groups: duplicateGroups,
+      decisions: duplicateDecisions,
+      meta: duplicateMeta,
+    });
+  }, [
+    duplicateStatus,
+    duplicateCheckedRowCount,
+    duplicateGroups,
+    duplicateDecisions,
+    duplicateMeta,
+  ]);
+
+  const mergeReviewItems = useMemo(
+    () => listMergeReviewItems(duplicateReviewItems, duplicateDecisions),
+    [duplicateReviewItems, duplicateDecisions]
+  );
+
+  const mergeDecisionsNeeded = useMemo(() => {
+    if (interview.screen !== 'merge_review') return 0;
+    return countImportMergeDecisionsRemaining(
+      mergeReviewItems.map((item) => item.incomingId),
+      mergeDecisions
+    );
+  }, [interview.screen, mergeReviewItems, mergeDecisions]);
+
+  const advancePastDuplicateCheck = useCallback(
+    (state: CrmImportInterviewState): CrmImportInterviewState => {
+      const next = continueInterviewAfterEdit(state);
+      if (next.screen !== 'merge_review') return next;
+      if (listMergeReviewItems(duplicateReviewItems, duplicateDecisions).length > 0) {
+        return next;
+      }
+      return continueInterviewAfterEdit({
+        ...next,
+        returnToReview: next.returnToReview,
+      });
+    },
+    [duplicateReviewItems, duplicateDecisions]
+  );
+
+  useEffect(() => {
+    if (interview.screen !== 'duplicate_check') return;
+    if (duplicateStatus !== 'ready') return;
+    if (duplicateReviewItems.length > 0) return;
+    if (duplicateIdentityKey == null) return;
+    if (duplicateAutoAdvancedKey === duplicateIdentityKey) return;
+    setDuplicateAutoAdvancedKey(duplicateIdentityKey);
+    setInterview((s) => advancePastDuplicateCheck(s));
+  }, [
+    interview.screen,
+    duplicateStatus,
+    duplicateReviewItems.length,
+    duplicateIdentityKey,
+    duplicateAutoAdvancedKey,
+    advancePastDuplicateCheck,
+  ]);
+
+  const rowsToCreateCount = useMemo(() => {
+    if (duplicateStatus === 'ready') {
+      return countImportRowsToCreate(
+        duplicateCheckedRowCount,
+        duplicateDecisions,
+        mergeDecisions
+      );
+    }
+    return worksheetReviewSummary?.rowsCount ?? rows.length;
+  }, [
+    duplicateStatus,
+    duplicateCheckedRowCount,
+    duplicateDecisions,
+    mergeDecisions,
+    worksheetReviewSummary?.rowsCount,
+    rows.length,
+  ]);
   const subprojectNameExample = useMemo(
     () => buildSubprojectIdentityPrimaryPreview(sampleRowsMatrix, interview.subprojectComposition),
     [sampleRowsMatrix, interview.subprojectComposition]
@@ -1155,67 +1396,63 @@ export function SpreadsheetImportWizard({
     setError(null);
     setMappingErrors([]);
     try {
-      const isWorksheetPerProject =
-        interview.multiProjectOrganization === 'worksheet_per_project';
-      const isHeaderRows = interview.multiProjectOrganization === 'header_rows';
-      const isOneProjectSheets =
-        interview.structureChoice === 'one_project' &&
-        (interview.worksheetProjects ?? []).some((config) => config.included);
-
-      let sourceHeaders = headers;
-      let sourceRows = rows;
-      let draftSheetName = sheetName;
-      let draftHeaderRowIndex = headerRowIndex;
-
-      if (isHeaderRows) {
-        const combined = buildHeaderRowImportSource({
-          matrix: sheetMatrix,
-          columnHeaderRowIndex: headerRowIndex,
-          sheetName,
-          groups: headerRowGroups,
-          configs: interview.worksheetProjects ?? [],
-          resolutions: interview.worksheetResolutions ?? {},
-        });
-        sourceHeaders = [...combined.headers];
-        sourceRows = [...combined.rows];
-        draftSheetName = combined.sheetName;
-        draftHeaderRowIndex = combined.headerRowIndex;
-        setHeaders(sourceHeaders);
-        setRows(sourceRows);
-        setSheetName(draftSheetName);
-        setHeaderRowIndex(draftHeaderRowIndex);
-      } else if (isWorksheetPerProject || isOneProjectSheets) {
-        if (parsedFile == null) {
-          throw new Error(copy.errors.parseFailed);
-        }
-        const combined = isWorksheetPerProject
-          ? await buildWorksheetImportSource({
-              workbook: parsedFile.workbook,
-              configs: interview.worksheetProjects ?? [],
-              resolutions: interview.worksheetResolutions ?? {},
-            })
-          : await buildSelectedSheetsImportSource({
-              workbook: parsedFile.workbook,
-              configs: interview.worksheetProjects ?? [],
-            });
-        sourceHeaders = [...combined.headers];
-        sourceRows = [...combined.rows];
-        draftSheetName = combined.sheetName;
-        draftHeaderRowIndex = combined.headerRowIndex;
-        // Keep wizard sheet state aligned with the combined job so progress UI
-        // and any rows.length fallbacks stay additive across worksheets.
-        setHeaders(sourceHeaders);
-        setRows(sourceRows);
-        setSheetName(draftSheetName);
-        setHeaderRowIndex(draftHeaderRowIndex);
-      }
-
-      const payload = buildImportPayloadFromInterview({
-        state: interview,
-        headers: sourceHeaders,
-        rows: sourceRows,
+      const source = await resolveInterviewImportSource({
+        interview,
+        headers,
+        rows,
+        sheetName,
+        headerRowIndex,
+        sheetMatrix,
+        headerRowGroups,
+        parsedFile,
+        parseFailedMessage: copy.errors.parseFailed,
       });
+
+      // Keep wizard sheet state aligned with the combined job so progress UI
+      // and any rows.length fallbacks stay additive across worksheets.
+      setHeaders([...source.headers]);
+      setRows([...source.rows]);
+      setSheetName(source.sheetName);
+      setHeaderRowIndex(source.headerRowIndex);
+
+      const payload = {
+        importMode: source.importMode,
+        fixedParentProjectId: source.fixedParentProjectId,
+        mappings: source.mappings,
+        rows: source.rows,
+      };
       setImportTotalRows(payload.rows.length);
+
+      // Apply merge/replace onto existing records before creating remaining rows.
+      await applyImportMergeDecisions({
+        repositories: crmRepositories,
+        reviewItems: duplicateReviewItems,
+        duplicateDecisions,
+        mergeDecisions,
+      });
+
+      const skipIndexes = skippedSourceRowIndexesFromDecisions(
+        duplicateDecisions,
+        mergeDecisions
+      );
+      const manualExcludes = Array.from(excludedRowNumbers).map((n) => n - 1);
+      const excludedSourceRowIndexes = [
+        ...new Set([...manualExcludes, ...skipIndexes]),
+      ].sort((a, b) => a - b);
+
+      const duplicateCheckSnapshot: ImportDuplicateCheckSnapshot | null =
+        duplicateStatus === 'ready'
+          ? {
+              decisions: Object.values(duplicateDecisions),
+              meta: duplicateMeta ?? {
+                truncated: false,
+                returnedCandidateCount: 0,
+                returnedGroupCount: 0,
+              },
+              groupCount: duplicateGroups.length,
+              checkedAt: new Date().toISOString(),
+            }
+          : null;
 
       // Always create a fresh draft so Start uses current mappings (idempotent
       // reuse would keep a prior failed snapshot without a parent key).
@@ -1226,11 +1463,12 @@ export function SpreadsheetImportWizard({
         fixedParentProjectId: payload.fixedParentProjectId,
         fixedParentDisplayName: interview.selectedParentLabel ?? fixedParentDisplayName ?? null,
         sourceFilename: selectedFile?.name ?? 'import.csv',
-        sheetName: draftSheetName,
-        headerRowIndex: draftHeaderRowIndex,
+        sheetName: source.sheetName,
+        headerRowIndex: source.headerRowIndex,
         idempotencyKey: nextIdempotencyKey,
         mappings: payload.mappings,
         rows: payload.rows,
+        duplicateCheck: duplicateCheckSnapshot,
       });
       const currentJobId = response.jobId;
       setJobId(currentJobId);
@@ -1242,6 +1480,10 @@ export function SpreadsheetImportWizard({
         return;
       }
       setMappingErrors([]);
+
+      const isWorksheetPerProject =
+        interview.multiProjectOrganization === 'worksheet_per_project';
+      const isHeaderRows = interview.multiProjectOrganization === 'header_rows';
 
       if (payload.importMode === 'master_hierarchy') {
         const worksheetDrafts =
@@ -1278,20 +1520,35 @@ export function SpreadsheetImportWizard({
               resolutionDrafts[group.groupKey]
             ),
           })),
-          excludedSourceRowIndexes: Array.from(excludedRowNumbers).map((n) => n - 1),
+          excludedSourceRowIndexes,
+          duplicateSkipSourceRowIndexes: skipIndexes,
+          duplicateCheck: duplicateCheckSnapshot,
         });
         if (saved.blockingGroupKeys.length > 0) {
           setMappingErrors([copy.errors.resolutionRequired]);
           return;
         }
         await validateSpreadsheetImportJobFromApi(currentJobId);
+      } else if (
+        excludedSourceRowIndexes.length > 0 ||
+        duplicateCheckSnapshot != null
+      ) {
+        await saveSpreadsheetImportResolutionsFromApi(currentJobId, {
+          groups: [],
+          excludedSourceRowIndexes,
+          duplicateSkipSourceRowIndexes: skipIndexes,
+          duplicateCheck: duplicateCheckSnapshot,
+        });
       }
+
+      const rowsToCreate = Math.max(0, payload.rows.length - skipIndexes.length);
+      setImportTotalRows(rowsToCreate);
 
       setInterview((s) => ({
         ...goInterviewForward(s),
         structuralLocked: true,
       }));
-      await handleStartImport(currentJobId, payload.rows.length);
+      await handleStartImport(currentJobId, rowsToCreate);
     } catch (err) {
       const message = err instanceof Error ? err.message : copy.errors.draftFailed;
       setMappingErrors([message]);
@@ -1303,6 +1560,11 @@ export function SpreadsheetImportWizard({
     copy.errors.draftFailed,
     copy.errors.parseFailed,
     copy.errors.resolutionRequired,
+    duplicateDecisions,
+    duplicateGroups.length,
+    duplicateMeta,
+    duplicateReviewItems,
+    duplicateStatus,
     excludedRowNumbers,
     fixedParentDisplayName,
     handleStartImport,
@@ -1310,6 +1572,7 @@ export function SpreadsheetImportWizard({
     headerRowIndex,
     headers,
     interview,
+    mergeDecisions,
     parsedFile,
     rows,
     selectedFile?.name,
@@ -1430,6 +1693,22 @@ export function SpreadsheetImportWizard({
             },
           })
         );
+      case 'duplicate_check':
+        return (
+          duplicateStatus === 'ready' &&
+          areImportDuplicateDecisionsComplete(
+            duplicateReviewItems.map((item) => item.incomingId),
+            duplicateDecisions
+          )
+        );
+      case 'merge_review':
+        return (
+          mergeReviewItems.length === 0 ||
+          areImportMergeDecisionsComplete(
+            mergeReviewItems.map((item) => item.incomingId),
+            mergeDecisions
+          )
+        );
       case 'parent_resolve':
         return currentGroupValid;
       case 'conflict':
@@ -1457,6 +1736,12 @@ export function SpreadsheetImportWizard({
     copy.standardFields,
     copy.interview.fields,
     copy.destinations.newCustomFieldSubproject,
+    mode,
+    duplicateStatus,
+    duplicateReviewItems,
+    duplicateDecisions,
+    mergeReviewItems,
+    mergeDecisions,
   ]);
 
   const handleBack = useCallback(() => {
@@ -1563,6 +1848,16 @@ export function SpreadsheetImportWizard({
 
     if (interview.screen === 'review') {
       await handleStartFromReview();
+      return;
+    }
+
+    if (interview.screen === 'duplicate_check') {
+      setInterview((s) => advancePastDuplicateCheck(s));
+      return;
+    }
+
+    if (interview.screen === 'merge_review') {
+      setInterview((s) => continueInterviewAfterEdit(s));
       return;
     }
 
@@ -1797,6 +2092,7 @@ export function SpreadsheetImportWizard({
     flattenedConflicts,
     currentConflictIndex,
     handleStartFromReview,
+    advancePastDuplicateCheck,
     worksheetSheetsById,
     parsedFile,
     applyParsedSheet,
@@ -1818,20 +2114,26 @@ export function SpreadsheetImportWizard({
     !importSettled &&
     (busy || isImportChunkRunnerActive(jobId));
   const backLabel = isMidGroupStepper || isMidConflictStepper ? nav.previous : nav.back;
+  const duplicateDecisionsNeeded = useMemo(() => {
+    if (interview.screen !== 'duplicate_check') return 0;
+    return duplicateReviewItems.filter((item) => duplicateDecisions[item.incomingId] == null)
+      .length;
+  }, [interview.screen, duplicateReviewItems, duplicateDecisions]);
+
   const continueLabel =
     interview.screen === 'review'
-      ? copy.interview.review.startImport(
-          worksheetReviewSummary?.rowsCount ?? rows.length
-        )
-      : interview.screen === 'worksheet_projects' ||
-          interview.screen === 'header_row_projects'
-        ? content.crm.spreadsheetImport.interview.worksheetProjects.saveAndContinue
-        : interview.screen === 'worksheet_resolve_summary'
-          ? content.crm.spreadsheetImport.interview.worksheetResolve.continueToSubprojectSetup
-          : (interview.screen === 'parent_resolve' && !isLastGroup) ||
-              (interview.screen === 'conflict' && !isLastConflict)
-            ? nav.next
-            : nav.continue;
+      ? copy.interview.review.startImport(rowsToCreateCount)
+      : interview.screen === 'merge_review'
+        ? copy.interview.mergeReview.saveAndContinue
+        : interview.screen === 'worksheet_projects' ||
+            interview.screen === 'header_row_projects'
+          ? content.crm.spreadsheetImport.interview.worksheetProjects.saveAndContinue
+          : interview.screen === 'worksheet_resolve_summary'
+            ? content.crm.spreadsheetImport.interview.worksheetResolve.continueToSubprojectSetup
+            : (interview.screen === 'parent_resolve' && !isLastGroup) ||
+                (interview.screen === 'conflict' && !isLastConflict)
+              ? nav.next
+              : nav.continue;
 
   // ---------------------------------------------------------------------
   // Progress pipeline
@@ -2277,6 +2579,51 @@ export function SpreadsheetImportWizard({
       );
       break;
     }
+    case 'duplicate_check': {
+      const parentId = interview.selectedParentProjectId ?? fixedParentProjectId ?? null;
+      const targetSlug =
+        parentCandidates.find((candidate) => candidate.id === parentId)?.slug ?? null;
+      screenBody = (
+        <DuplicateCheckScreen
+          status={duplicateStatus}
+          errorMessage={duplicateError}
+          progressLabel={duplicateProgress}
+          truncationMeta={duplicateMeta}
+          totalRows={duplicateCheckedRowCount}
+          items={duplicateReviewItems}
+          decisions={duplicateDecisions}
+          disabled={busy}
+          targetProjectName={
+            interview.selectedParentLabel ?? fixedParentDisplayName ?? null
+          }
+          targetProjectHref={null}
+          targetProjectSlug={targetSlug}
+          onDecisionChange={(decision: ImportDuplicateDecision) => {
+            setDuplicateDecisions((current) => ({
+              ...current,
+              [decision.incomingId]: decision,
+            }));
+          }}
+        />
+      );
+      break;
+    }
+    case 'merge_review': {
+      screenBody = (
+        <MergeReviewScreen
+          items={mergeReviewItems}
+          decisions={mergeDecisions}
+          disabled={busy}
+          onDecisionChange={(decision: ImportMergeGroupDecision) => {
+            setMergeDecisions((current) => ({
+              ...current,
+              [decision.incomingId]: decision,
+            }));
+          }}
+        />
+      );
+      break;
+    }
     case 'hierarchy_preview':
       screenBody = <HierarchyPreviewScreen groups={localGroups} />;
       break;
@@ -2454,6 +2801,8 @@ export function SpreadsheetImportWizard({
           issueMessages={reviewIssues.messages}
           issueSections={reviewIssues.sectionsWithIssues}
           groupsSummary={groupsSummary}
+          duplicateSummary={duplicateSummary}
+          rowsToCreateCount={rowsToCreateCount}
           disabled={busy}
           onEdit={jumpTo}
         />
@@ -2529,6 +2878,8 @@ export function SpreadsheetImportWizard({
           interview.screen === 'choose_parent' ||
           interview.screen === 'subproject_identity' ||
           interview.screen === 'fields' ||
+          interview.screen === 'duplicate_check' ||
+          interview.screen === 'merge_review' ||
           interview.screen === 'review' ||
           interview.screen === 'import' ||
           interview.screen === 'results'
@@ -2634,7 +2985,25 @@ export function SpreadsheetImportWizard({
                   }
                   onClick={() => void handleContinue()}
                 >
-                  {busy ? nav.working : continueLabel}
+                  {busy ? (
+                    nav.working
+                  ) : interview.screen === 'duplicate_check' && duplicateDecisionsNeeded > 0 ? (
+                    <span className={styles.continueWithHint}>
+                      <span>{continueLabel}</span>
+                      <span className={styles.continueHint}>
+                        {copy.interview.duplicateCheck.decisionsRemaining(duplicateDecisionsNeeded)}
+                      </span>
+                    </span>
+                  ) : interview.screen === 'merge_review' && mergeDecisionsNeeded > 0 ? (
+                    <span className={styles.continueWithHint}>
+                      <span>{continueLabel}</span>
+                      <span className={styles.continueHint}>
+                        {copy.interview.mergeReview.decisionsRemaining(mergeDecisionsNeeded)}
+                      </span>
+                    </span>
+                  ) : (
+                    continueLabel
+                  )}
                 </button>
               )}
             </>
@@ -2656,6 +3025,11 @@ export function SpreadsheetImportWizard({
         titleId={titleId}
         closeAriaLabel={copy.closeAriaLabel}
         closeDisabled={cancellingImport}
+        panelClassName={
+          interview.screen === 'duplicate_check' || interview.screen === 'merge_review'
+            ? styles.importModalPanelWide
+            : undefined
+        }
         onClose={handleClose}
       >
         {wizardBody}

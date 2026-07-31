@@ -478,10 +478,16 @@ describe('reviewPresentation', () => {
     );
   });
 
-  it('returns directly to Review after a valid destination edit', () => {
+  it('returns through duplicate review after a valid destination edit', () => {
     let state = readyOneProjectState();
     state = jumpInterviewFromReview({ ...state, screen: 'review' }, 'choose_parent');
     assert.equal(state.screen, 'choose_parent');
+    assert.equal(state.returnToReview, true);
+    state = continueInterviewAfterEdit(state);
+    assert.equal(state.screen, 'duplicate_check');
+    assert.equal(state.returnToReview, true);
+    state = continueInterviewAfterEdit(state);
+    assert.equal(state.screen, 'merge_review');
     assert.equal(state.returnToReview, true);
     state = continueInterviewAfterEdit(state);
     assert.equal(state.screen, 'review');
@@ -493,7 +499,7 @@ describe('reviewPresentation', () => {
     const fields = state.remainingFields;
     state = jumpInterviewFromReview({ ...state, screen: 'review' }, 'choose_parent');
     state = continueInterviewAfterEdit(state);
-    assert.equal(state.screen, 'review');
+    assert.equal(state.screen, 'duplicate_check');
     assert.deepEqual(state.remainingFields, fields);
   });
 
@@ -505,7 +511,7 @@ describe('reviewPresentation', () => {
       subprojectComposition: { columnIndexes: [0], separator: ' ' },
     };
     state = continueInterviewAfterEdit(state);
-    assert.equal(state.screen, 'review');
+    assert.equal(state.screen, 'duplicate_check');
     assert.equal(state.remainingFields.length, 2);
   });
 

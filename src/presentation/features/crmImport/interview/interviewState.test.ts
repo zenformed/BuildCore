@@ -90,20 +90,28 @@ describe('interviewState', () => {
     assert.equal(getNextInterviewScreen(state), 'recommend');
   });
 
-  it('skips hierarchy preview and parent resolve after fields', () => {
+  it('routes fields through duplicate review before final review', () => {
     const multi = {
       ...createInitialInterviewState({ launchMode: 'master_hierarchy' }),
       structureChoice: 'multiple_projects' as const,
       multiProjectOrganization: 'repeating_column' as const,
       screen: 'fields' as const,
     };
-    assert.equal(getNextInterviewScreen(multi), 'review');
+    assert.equal(getNextInterviewScreen(multi), 'duplicate_check');
     assert.equal(
-      getNextInterviewScreen({ ...multi, screen: 'hierarchy_preview' }),
+      getNextInterviewScreen({ ...multi, screen: 'duplicate_check' }),
+      'merge_review'
+    );
+    assert.equal(
+      getNextInterviewScreen({ ...multi, screen: 'merge_review' }),
       'review'
     );
-    assert.equal(getNextInterviewScreen({ ...multi, screen: 'parent_resolve' }), 'review');
-    assert.equal(getNextInterviewScreen({ ...multi, screen: 'conflict' }), 'review');
+    assert.equal(
+      getNextInterviewScreen({ ...multi, screen: 'hierarchy_preview' }),
+      'duplicate_check'
+    );
+    assert.equal(getNextInterviewScreen({ ...multi, screen: 'parent_resolve' }), 'duplicate_check');
+    assert.equal(getNextInterviewScreen({ ...multi, screen: 'conflict' }), 'duplicate_check');
 
     const oneProject = {
       ...createInitialInterviewState({ launchMode: 'master_hierarchy' }),
@@ -111,7 +119,7 @@ describe('interviewState', () => {
       selectedParentProjectId: 'p1',
       screen: 'fields' as const,
     };
-    assert.equal(getNextInterviewScreen(oneProject), 'review');
+    assert.equal(getNextInterviewScreen(oneProject), 'duplicate_check');
   });
 
   it('branches unsure to recommend', () => {
@@ -252,6 +260,12 @@ describe('interviewState', () => {
       ],
     };
     state = jumpInterviewFromReview(state, 'choose_parent');
+    assert.equal(state.returnToReview, true);
+    state = continueInterviewAfterEdit(state);
+    assert.equal(state.screen, 'duplicate_check');
+    assert.equal(state.returnToReview, true);
+    state = continueInterviewAfterEdit(state);
+    assert.equal(state.screen, 'merge_review');
     assert.equal(state.returnToReview, true);
     state = continueInterviewAfterEdit(state);
     assert.equal(state.screen, 'review');
