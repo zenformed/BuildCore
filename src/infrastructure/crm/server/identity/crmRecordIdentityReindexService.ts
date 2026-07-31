@@ -178,6 +178,33 @@ function toInsertRows(
 }
 
 /**
+ * Remove identity lookup rows for records (e.g. after soft-delete/archive).
+ * Best-effort callers should wrap this; archive path treats failures as hard errors.
+ */
+export async function clearCrmRecordIdentityValuesForRecords(
+  supabase: SupabaseClient,
+  organizationId: string,
+  recordIds: readonly string[]
+): Promise<void> {
+  const uniqueIds = [...new Set(recordIds.map((id) => id.trim()).filter(Boolean))];
+  if (uniqueIds.length === 0) return;
+
+  const chunkSize = 100;
+  for (let offset = 0; offset < uniqueIds.length; offset += chunkSize) {
+    const chunk = uniqueIds.slice(offset, offset + chunkSize);
+    const { error } = await supabase
+      .from('crm_record_identity_values')
+      .delete()
+      .eq('organization_id', organizationId)
+      .in('record_id', chunk);
+
+    if (error) {
+      throw new Error(`crm_record_identity_clear_failed: ${error.message}`);
+    }
+  }
+}
+
+/**
  * Delete existing identity rows for a record and insert freshly extracted values.
  * Uses the same extractIdentityValues path as backfill and future candidate checks.
  */

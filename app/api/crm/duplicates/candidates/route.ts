@@ -11,6 +11,7 @@ import {
   findCrmDuplicateCandidates,
 } from '@/infrastructure/crm/server/identity/crmDuplicateCandidateService';
 import { parseDuplicateCandidatesRequest } from '@/infrastructure/crm/server/identity/validateDuplicateCandidatesRequest';
+import { listDashboardVisibleCrmProjectIdsForViewer } from '@/infrastructure/crm/server/crmMemberProjectVisibilityService';
 
 export const dynamic = 'force-dynamic';
 
@@ -45,10 +46,18 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   }
 
   try {
+    const dashboardVisibleRecordIds = await listDashboardVisibleCrmProjectIdsForViewer(
+      auth.context.supabase,
+      auth.context.organizationId,
+      auth.context.user.id
+    );
     const result = await findCrmDuplicateCandidates(
       auth.context.supabase,
       auth.context.organizationId,
-      parsed.options
+      {
+        ...parsed.options,
+        dashboardVisibleRecordIds,
+      }
     );
     return NextResponse.json(result);
   } catch (err) {

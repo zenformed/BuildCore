@@ -97,8 +97,10 @@ export function matchProbeAgainstIdentityHits(input: {
   readonly maxCandidates: number;
   readonly maxEvidenceItems: number;
   readonly minConfidence?: CrmDuplicateConfidence;
-  /** When false (default), archived/soft-deleted records are omitted. */
+  /** When true, include soft-deleted/archived CRM records. Default false. */
   readonly includeArchived?: boolean;
+  /** When true, include inactive (non-archived) CRM records. Default false. */
+  readonly includeInactive?: boolean;
 }): {
   readonly candidates: readonly CrmDuplicateCandidate[];
   readonly truncated: boolean;
@@ -106,6 +108,7 @@ export function matchProbeAgainstIdentityHits(input: {
 } {
   const exclude = input.excludeRecordId?.trim() || null;
   const includeArchived = input.includeArchived === true;
+  const includeInactive = input.includeInactive !== false;
   const incomingByKey = indexDraftsByLookup(input.probe.drafts);
   const evidenceByRecord = new Map<string, CrmDuplicateMatchEvidence[]>();
 
@@ -136,7 +139,12 @@ export function matchProbeAgainstIdentityHits(input: {
   for (const [recordId, rawEvidence] of evidenceByRecord) {
     const record = input.recordsById.get(recordId);
     if (record == null) continue;
-    if (!isDuplicateCandidateLifecycleIncluded(record.lifecycleStatus, includeArchived)) {
+    if (
+      !isDuplicateCandidateLifecycleIncluded(record.lifecycleStatus, {
+        includeArchived,
+        includeInactive,
+      })
+    ) {
       continue;
     }
     const merged = mergeDuplicateEvidence(rawEvidence);

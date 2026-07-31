@@ -190,6 +190,14 @@ export function parseDuplicateCandidatesRequest(
     includeArchived = body.includeArchived;
   }
 
+  let includeInactive: boolean | undefined;
+  if (body.includeInactive !== undefined) {
+    if (typeof body.includeInactive !== 'boolean') {
+      return { ok: false, message: 'includeInactive must be a boolean.' };
+    }
+    includeInactive = body.includeInactive;
+  }
+
   return {
     ok: true,
     options: {
@@ -198,6 +206,7 @@ export function parseDuplicateCandidatesRequest(
       maxCandidates,
       minConfidence,
       includeArchived,
+      includeInactive,
     },
   };
 }
@@ -283,6 +292,14 @@ export function parseDuplicateCandidatesBatchRequest(
     includeArchived = body.includeArchived;
   }
 
+  let includeInactive: boolean | undefined;
+  if (body.includeInactive !== undefined) {
+    if (typeof body.includeInactive !== 'boolean') {
+      return { ok: false, message: 'includeInactive must be a boolean.' };
+    }
+    includeInactive = body.includeInactive;
+  }
+
   return {
     ok: true,
     options: {
@@ -293,6 +310,7 @@ export function parseDuplicateCandidatesBatchRequest(
       minConfidence,
       includeIncomingMatches,
       includeArchived,
+      includeInactive,
     },
   };
 }

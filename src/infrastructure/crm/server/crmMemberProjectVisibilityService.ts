@@ -14,6 +14,7 @@ import { loadActiveOrganizationMemberRole } from './buildCoreWorkflowTaskVisibil
 import { resolveBuildCoreMemberTaskVisibilityInput } from './buildCorePaymentVisibilityService';
 import { resolveBuildCoreRoleAccessForUser } from './buildCoreRoleAccessService';
 import { resolveCrmProjectIdBySlug } from './resolveCrmProjectIdBySlug';
+import { listDashboardVisibleCrmProjectIdsForOrg } from './crmReadService';
 
 type DbMemberVisibilityTaskRow = {
   project_id: string;
@@ -117,6 +118,32 @@ export async function scopeCrmProjectSummariesForViewer(
   );
   if (scope == null) return summaries;
   return scopeProjectSummariesForMember(summaries, scope);
+}
+
+/**
+ * Project/subproject ids visible on the dashboard for this viewer
+ * (non-archived + member visibility scope).
+ */
+export async function listDashboardVisibleCrmProjectIdsForViewer(
+  supabase: SupabaseClient,
+  organizationId: string,
+  userId: string
+): Promise<ReadonlySet<string>> {
+  const allVisible = await listDashboardVisibleCrmProjectIdsForOrg(supabase, organizationId);
+  const scope = await resolveBuildCoreMemberProjectVisibilityScope(
+    supabase,
+    organizationId,
+    userId
+  );
+  if (scope == null) return allVisible;
+
+  const scoped = new Set<string>();
+  for (const projectId of allVisible) {
+    if (isProjectAccessibleToMember(projectId, scope)) {
+      scoped.add(projectId);
+    }
+  }
+  return scoped;
 }
 
 export async function scopeCrmProjectSummaryForViewer(

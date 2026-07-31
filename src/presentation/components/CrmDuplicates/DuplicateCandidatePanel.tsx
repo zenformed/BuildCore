@@ -1,7 +1,13 @@
 'use client';
 
-import type { ReactElement } from 'react';
-import type { CrmDuplicateCandidate, CrmDuplicateConfidence } from '@/domain/crm/identity';
+import type { ReactElement, ReactNode } from 'react';
+import type {
+  CrmDuplicateCandidate,
+  CrmDuplicateConfidence,
+  CrmDuplicateMatchEvidence,
+  CrmIdentityValueType,
+} from '@/domain/crm/identity';
+import { normalizeIdentityValue } from '@/domain/crm/identity';
 import { useBuildCoreNavigation } from '@/presentation/providers/BuildCoreNavigationProvider';
 import sharedStyles from '@/presentation/components/crmShared/crmShared.module.css';
 import styles from './DuplicateCandidatePanel.module.css';
@@ -106,6 +112,39 @@ function buildProjectHref(
   return routes.projectDetail(record.slug);
 }
 
+function evidenceNormalizedValues(
+  evidence: readonly CrmDuplicateMatchEvidence[],
+  valueType: CrmIdentityValueType
+): ReadonlySet<string> {
+  return new Set(
+    evidence.filter((item) => item.valueType === valueType).map((item) => item.normalizedValue)
+  );
+}
+
+/** True only when this exact display value is one of the matched evidence values. */
+function displayValueMatched(
+  valueType: CrmIdentityValueType,
+  displayValue: string,
+  evidence: readonly CrmDuplicateMatchEvidence[]
+): boolean {
+  const matched = evidenceNormalizedValues(evidence, valueType);
+  if (matched.size === 0) return false;
+  const normalized = normalizeIdentityValue(valueType, displayValue);
+  return normalized != null && matched.has(normalized);
+}
+
+function preferredDisplayForNormalized(
+  valueType: CrmIdentityValueType,
+  normalizedValue: string,
+  candidates: readonly string[]
+): string {
+  for (const candidate of candidates) {
+    const normalized = normalizeIdentityValue(valueType, candidate);
+    if (normalized === normalizedValue) return candidate;
+  }
+  return normalizedValue;
+}
+
 /**
  * Reusable duplicate candidate warning panel for create forms and (later) import.
  * Presentation only — callers own fetching via useDuplicateCandidateCheck / batch API.
@@ -117,6 +156,81 @@ function evidenceLine(candidate: CrmDuplicateCandidate): string | null {
     return `${label}: ${item.normalizedValue}`;
   });
   return parts.join(' · ');
+}
+
+function MatchPill({ value }: { readonly value: string }): ReactElement {
+  return (
+    <span className={styles.matchPill}>
+      <span className={styles.matchPillValue}>{value}</span>
+      <span className={styles.matchMark} aria-hidden>
+        !
+      </span>
+    </span>
+  );
+}
+
+function MetaField({
+  label,
+  value,
+  matched,
+}: {
+  readonly label: string;
+  readonly value: string;
+  readonly matched: boolean;
+}): ReactElement {
+  return (
+    <p className={styles.meta}>
+      <span className={styles.metaLabel}>{label}:</span>{' '}
+      {matched ? <MatchPill value={value} /> : <span>{value}</span>}
+    </p>
+  );
+}
+
+function ContactValueFields({
+  label,
+  valueType,
+  values,
+  evidence,
+}: {
+  readonly label: string;
+  readonly valueType: 'email' | 'phone';
+  readonly values: readonly string[];
+  readonly evidence: readonly CrmDuplicateMatchEvidence[];
+}): ReactElement | null {
+  const matchedNorms = evidenceNormalizedValues(evidence, valueType);
+  if (values.length === 0 && matchedNorms.size === 0) return null;
+
+  const shownNorms = new Set<string>();
+  const rows: ReactNode[] = [];
+
+  for (const value of values) {
+    const normalized = normalizeIdentityValue(valueType, value);
+    const matched = normalized != null && matchedNorms.has(normalized);
+    if (normalized != null) shownNorms.add(normalized);
+    rows.push(
+      <MetaField
+        key={`${valueType}:${value}`}
+        label={label}
+        value={value}
+        matched={matched}
+      />
+    );
+  }
+
+  // Matched identity values not present in the displayed primary list (stale/extra index).
+  for (const normalized of matchedNorms) {
+    if (shownNorms.has(normalized)) continue;
+    rows.push(
+      <MetaField
+        key={`${valueType}:matched:${normalized}`}
+        label={label}
+        value={preferredDisplayForNormalized(valueType, normalized, values)}
+        matched
+      />
+    );
+  }
+
+  return rows.length > 0 ? <>{rows}</> : null;
 }
 
 export function DuplicateCandidatePanel({
@@ -167,13 +281,22 @@ export function DuplicateCandidatePanel({
         {ordered.map((candidate) => {
           const href = buildProjectHref(candidate, nav.routes);
           const { record } = candidate;
-          const email = record.emails[0] ?? null;
-          const phone = record.phones[0] ?? null;
-          const evidence = showEvidence ? evidenceLine(candidate) : null;
+          const evidenceExtra = showEvidence ? evidenceLine(candidate) : null;
+          const nameMatched =
+            (record.contactName != null &&
+              displayValueMatched('name', record.contactName, candidate.evidence)) ||
+            displayValueMatched('name', record.name, candidate.evidence);
+
           return (
             <li key={record.id} className={styles.item}>
               <div className={styles.itemHeader}>
-                <p className={styles.itemName}>{record.name}</p>
+                <p className={styles.itemName}>
+                  {!record.contactName && nameMatched ? (
+                    <MatchPill value={record.name} />
+                  ) : (
+                    record.name
+                  )}
+                </p>
                 <span className={`${styles.confidence} ${confidenceClass(candidate.confidence)}`}>
                   {confidenceLabel(candidate.confidence, copy)}
                 </span>
@@ -188,26 +311,32 @@ export function DuplicateCandidatePanel({
                 </p>
               ) : null}
               {record.contactName ? (
-                <p className={styles.meta}>
-                  {copy.contactLabel}: {record.contactName}
-                </p>
+                <MetaField
+                  label={copy.contactLabel}
+                  value={record.contactName}
+                  matched={displayValueMatched('name', record.contactName, candidate.evidence)}
+                />
               ) : null}
-              {email ? (
-                <p className={styles.meta}>
-                  {copy.emailLabel}: {email}
-                </p>
-              ) : null}
-              {phone ? (
-                <p className={styles.meta}>
-                  {copy.phoneLabel}: {phone}
-                </p>
-              ) : null}
+              <ContactValueFields
+                label={copy.emailLabel}
+                valueType="email"
+                values={record.emails}
+                evidence={candidate.evidence}
+              />
+              <ContactValueFields
+                label={copy.phoneLabel}
+                valueType="phone"
+                values={record.phones}
+                evidence={candidate.evidence}
+              />
               {record.addressLine ? (
-                <p className={styles.meta}>
-                  {copy.addressLabel}: {record.addressLine}
-                </p>
+                <MetaField
+                  label={copy.addressLabel}
+                  value={record.addressLine}
+                  matched={displayValueMatched('address', record.addressLine, candidate.evidence)}
+                />
               ) : null}
-              {evidence ? <p className={styles.meta}>{evidence}</p> : null}
+              {evidenceExtra ? <p className={styles.meta}>{evidenceExtra}</p> : null}
               {href ? (
                 <a
                   className={styles.viewLink}

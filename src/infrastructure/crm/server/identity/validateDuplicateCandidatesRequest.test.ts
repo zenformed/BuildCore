@@ -1,47 +1,39 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import { CRM_DUPLICATE_DETECTION_LIMITS } from '@/domain/crm/identity/duplicateCandidateTypes';
+import { CRM_DUPLICATE_DETECTION_LIMITS } from '@/domain/crm/identity';
+import { CrmDuplicateDetectionValidationError } from './crmDuplicateCandidateService';
 import {
   parseDuplicateCandidatesBatchRequest,
   parseDuplicateCandidatesRequest,
 } from './validateDuplicateCandidatesRequest';
-import { CrmDuplicateDetectionValidationError } from './crmDuplicateCandidateService';
 
 describe('validateDuplicateCandidatesRequest', () => {
   it('parses a valid single probe request', () => {
     const parsed = parseDuplicateCandidatesRequest({
-      contactName: 'Brenda Smith',
-      emails: ['brenda@example.com'],
-      phones: ['6155551111'],
-      excludeRecordId: 'rec-1',
+      emails: ['Ada@Example.com'],
+      phones: ['(615) 555-1111'],
       maxCandidates: 5,
-      minConfidence: 'medium',
     });
     assert.equal(parsed.ok, true);
     if (!parsed.ok) return;
-    assert.equal(parsed.options.probe.contactName, 'Brenda Smith');
-    assert.equal(parsed.options.excludeRecordId, 'rec-1');
+    assert.deepEqual(parsed.options.probe.emails, ['Ada@Example.com']);
     assert.equal(parsed.options.maxCandidates, 5);
-    assert.equal(parsed.options.minConfidence, 'medium');
   });
 
   it('rejects invalid single payloads', () => {
     assert.equal(parseDuplicateCandidatesRequest(null).ok, false);
     assert.equal(parseDuplicateCandidatesRequest({ emails: 'x' }).ok, false);
-    assert.equal(parseDuplicateCandidatesRequest({ minConfidence: 'extreme' }).ok, false);
+    assert.equal(parseDuplicateCandidatesRequest({ recordType: 'widget' }).ok, false);
   });
 
   it('parses a valid batch request', () => {
     const parsed = parseDuplicateCandidatesBatchRequest({
-      items: [
-        { incomingId: 'r1', emails: ['a@b.com'] },
-        { incomingId: 'r2', phones: ['6155551111'] },
-      ],
-      includeIncomingMatches: true,
+      items: [{ incomingId: 'row:1', emails: ['a@b.com'] }],
     });
     assert.equal(parsed.ok, true);
     if (!parsed.ok) return;
-    assert.equal(parsed.options.items.length, 2);
+    assert.equal(parsed.options.items.length, 1);
+    assert.equal(parsed.options.items[0]?.incomingId, 'row:1');
   });
 
   it('rejects batch without items or missing incomingId', () => {
@@ -52,23 +44,35 @@ describe('validateDuplicateCandidatesRequest', () => {
     );
   });
 
-  it('parses includeArchived for single and batch requests', () => {
+  it('parses includeArchived and includeInactive for single and batch requests', () => {
     const single = parseDuplicateCandidatesRequest({
       emails: ['a@b.com'],
       includeArchived: true,
+      includeInactive: true,
     });
     assert.equal(single.ok, true);
-    if (single.ok) assert.equal(single.options.includeArchived, true);
+    if (single.ok) {
+      assert.equal(single.options.includeArchived, true);
+      assert.equal(single.options.includeInactive, true);
+    }
 
     const batch = parseDuplicateCandidatesBatchRequest({
       items: [{ incomingId: 'r1', emails: ['a@b.com'] }],
       includeArchived: false,
+      includeInactive: false,
     });
     assert.equal(batch.ok, true);
-    if (batch.ok) assert.equal(batch.options.includeArchived, false);
+    if (batch.ok) {
+      assert.equal(batch.options.includeArchived, false);
+      assert.equal(batch.options.includeInactive, false);
+    }
 
     assert.equal(
       parseDuplicateCandidatesRequest({ emails: ['a@b.com'], includeArchived: 'yes' }).ok,
+      false
+    );
+    assert.equal(
+      parseDuplicateCandidatesRequest({ emails: ['a@b.com'], includeInactive: 'yes' }).ok,
       false
     );
   });

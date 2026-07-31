@@ -41,6 +41,8 @@ export type CrmDuplicateCandidatesRequest = {
   readonly minConfidence?: CrmDuplicateConfidence;
   /** When true, include soft-deleted/archived CRM records. Default false. */
   readonly includeArchived?: boolean;
+  /** When true, include inactive (non-archived) CRM records. Default false. */
+  readonly includeInactive?: boolean;
 };
 
 export type CrmDuplicateCandidatesResponse = {
@@ -61,6 +63,8 @@ export type CrmDuplicateCandidatesBatchRequest = {
   readonly includeIncomingMatches?: boolean;
   /** When true, include soft-deleted/archived CRM records. Default false. */
   readonly includeArchived?: boolean;
+  /** When true, include inactive (non-archived) CRM records. Default false. */
+  readonly includeInactive?: boolean;
 };
 
 export type CrmDuplicateCandidatesBatchResponse = {
@@ -112,6 +116,7 @@ export async function fetchCrmDuplicateCandidatesBatch(
         minConfidence: request.minConfidence,
         includeIncomingMatches: request.includeIncomingMatches,
         includeArchived: request.includeArchived,
+        includeInactive: request.includeInactive,
       }
     );
     groups.push(...response.groups);

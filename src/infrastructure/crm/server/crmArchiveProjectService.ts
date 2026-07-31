@@ -1,5 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { appendCrmAccountabilityEvent } from './crmAccountability';
+import { clearCrmRecordIdentityValuesForRecords } from './identity/crmRecordIdentityReindexService';
 
 async function listActiveChildProjects(
   supabase: SupabaseClient,
@@ -49,6 +50,10 @@ async function archiveProjectsAndTasksByIds(
     .is('archived_at', null);
 
   if (archiveTasksError) throw new Error(archiveTasksError.message);
+
+  // Soft-deleted records must leave the duplicate-identity index so they cannot
+  // match create/edit/import probes after they disappear from the pipeline.
+  await clearCrmRecordIdentityValuesForRecords(supabase, organizationId, projectIds);
 
   await Promise.all(
     projects.map((project) =>

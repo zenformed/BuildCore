@@ -87,15 +87,28 @@ export function lifecycleRank(lifecycleStatus: CrmDuplicateLifecycleStatus): num
 }
 
 /**
- * Soft-deleted records use archived_at / lifecycleStatus === 'archived'.
- * They are excluded unless includeArchived is explicitly true.
+ * Soft-deleted (`archived`) records are omitted unless includeArchived is true.
+ * Inactive records are included by default (same as the dashboard list).
  */
 export function isDuplicateCandidateLifecycleIncluded(
   lifecycleStatus: CrmDuplicateLifecycleStatus,
-  includeArchived: boolean
+  options: {
+    readonly includeArchived?: boolean;
+    readonly includeInactive?: boolean;
+  } = {}
 ): boolean {
-  if (lifecycleStatus === 'archived') return includeArchived;
-  return true;
+  switch (lifecycleStatus) {
+    case 'active':
+      return true;
+    case 'inactive':
+      return options.includeInactive !== false;
+    case 'archived':
+      return options.includeArchived === true;
+    default: {
+      const _exhaustive: never = lifecycleStatus;
+      return _exhaustive;
+    }
+  }
 }
 
 export function meetsMinConfidence(

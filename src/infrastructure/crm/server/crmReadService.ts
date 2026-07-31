@@ -369,6 +369,43 @@ export async function listCrmProjectSummariesForOrg(
   return projects.map((row) => mapDbProjectSummary(row, memberById));
 }
 
+/**
+ * Same visibility gate as the dashboard project list (GET /api/crm/projects?includeSubprojects=1
+ * after orphan filtering):
+ * - `archived_at IS NULL`
+ * - subprojects only if their parent is also non-archived (matches pipeline orphan drop)
+ */
+export async function listDashboardVisibleCrmProjectIdsForOrg(
+  supabase: SupabaseClient,
+  organizationId: string
+): Promise<ReadonlySet<string>> {
+  const { data, error } = await supabase
+    .from('crm_projects')
+    .select('id, parent_project_id')
+    .eq('organization_id', organizationId)
+    .is('archived_at', null);
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  const rows = (data ?? []) as readonly {
+    readonly id: string;
+    readonly parent_project_id: string | null;
+  }[];
+
+  const rootIds = new Set(
+    rows.filter((row) => row.parent_project_id == null).map((row) => row.id)
+  );
+  const visible = new Set<string>(rootIds);
+  for (const row of rows) {
+    if (row.parent_project_id != null && rootIds.has(row.parent_project_id)) {
+      visible.add(row.id);
+    }
+  }
+  return visible;
+}
+
 export async function getCrmProjectSummaryBySlugForOrg(
   supabase: SupabaseClient,
   organizationId: string,

@@ -59,6 +59,16 @@ export type FindCrmDuplicateCandidatesOptions = {
   readonly minConfidence?: CrmDuplicateConfidence;
   /** When true, include soft-deleted/archived CRM records. Default false. */
   readonly includeArchived?: boolean;
+  /**
+   * When false, omit inactive (non-archived) CRM records. Default true so
+   * duplicates match dashboard visibility (dashboard lists inactive projects).
+   */
+  readonly includeInactive?: boolean;
+  /**
+   * Dashboard-visible project/subproject ids for this viewer. When provided,
+   * candidates outside this set are ignored (same gate as GET /api/crm/projects).
+   */
+  readonly dashboardVisibleRecordIds?: ReadonlySet<string>;
 };
 
 export type FindCrmDuplicateCandidatesResult = {
@@ -75,6 +85,16 @@ export type FindCrmDuplicateCandidatesBatchOptions = {
   readonly includeIncomingMatches?: boolean;
   /** When true, include soft-deleted/archived CRM records. Default false. */
   readonly includeArchived?: boolean;
+  /**
+   * When false, omit inactive (non-archived) CRM records. Default true so
+   * duplicates match dashboard visibility.
+   */
+  readonly includeInactive?: boolean;
+  /**
+   * Dashboard-visible project/subproject ids for this viewer. When provided,
+   * candidates outside this set are ignored (same gate as GET /api/crm/projects).
+   */
+  readonly dashboardVisibleRecordIds?: ReadonlySet<string>;
 };
 
 export type FindCrmDuplicateCandidatesBatchResult = {
@@ -165,12 +185,20 @@ function chunkArray<T>(items: readonly T[], size: number): T[][] {
 }
 
 function resolveLifecycleStatus(
-  archivedAt: string | null,
-  subprojectStatus: string
+  archivedAt: unknown,
+  subprojectStatus: string | null | undefined
 ): CrmDuplicateLifecycleStatus {
-  if (archivedAt != null) return 'archived';
+  if (isPresentArchivedAt(archivedAt)) return 'archived';
   if (subprojectStatus === 'inactive') return 'inactive';
   return 'active';
+}
+
+function isPresentArchivedAt(archivedAt: unknown): boolean {
+  if (archivedAt == null) return false;
+  if (typeof archivedAt === 'string') return archivedAt.trim().length > 0;
+  if (archivedAt instanceof Date) return !Number.isNaN(archivedAt.getTime());
+  if (typeof archivedAt === 'number') return Number.isFinite(archivedAt);
+  return false;
 }
 
 function emailsFromContact(
@@ -196,7 +224,11 @@ function phonesFromContact(
 async function loadCandidateRecordSummaries(
   supabase: SupabaseClient,
   organizationId: string,
-  recordIds: readonly string[]
+  recordIds: readonly string[],
+  options: {
+    readonly includeArchived: boolean;
+    readonly includeInactive: boolean;
+  }
 ): Promise<Map<string, CrmDuplicateCandidateRecordSummary>> {
   const map = new Map<string, CrmDuplicateCandidateRecordSummary>();
   if (recordIds.length === 0) return map;
@@ -208,7 +240,7 @@ async function loadCandidateRecordSummaries(
     uniqueIds,
     CRM_DUPLICATE_DETECTION_LIMITS.recordIdInChunkSize
   )) {
-    const { data, error } = await supabase
+    let query = supabase
       .from('crm_projects')
       .select(
         `
@@ -237,6 +269,13 @@ async function loadCandidateRecordSummaries(
       )
       .eq('organization_id', organizationId)
       .in('id', chunk);
+
+    // Match pipeline/dashboard visibility: soft-deleted rows must not hydrate.
+    if (!options.includeArchived) {
+      query = query.is('archived_at', null);
+    }
+
+    const { data, error } = await query;
 
     if (error) {
       throw new Error(`crm_duplicate_candidates_load_records_failed: ${error.message}`);
@@ -479,6 +518,23 @@ async function queryIdentityHitsForLookupKeys(
   return refreshCustomFieldLabelsOnHits(supabase, organizationId, hits);
 }
 
+function filterHitsToDashboardVisible(
+  hits: readonly CrmDuplicateIdentityHit[],
+  dashboardVisibleRecordIds: ReadonlySet<string> | undefined
+): {
+  readonly hits: readonly CrmDuplicateIdentityHit[];
+  readonly recordIds: readonly string[];
+} {
+  const filteredHits =
+    dashboardVisibleRecordIds == null
+      ? hits
+      : hits.filter((hit) => dashboardVisibleRecordIds.has(hit.recordId));
+  return {
+    hits: filteredHits,
+    recordIds: [...new Set(filteredHits.map((hit) => hit.recordId))],
+  };
+}
+
 function buildProbes(
   organizationId: string,
   items: readonly (CrmDuplicateProbeInput & { incomingId: string })[]
@@ -527,6 +583,7 @@ async function scoreExistingRecordsInChunks(input: {
   readonly maxCandidatesPerIncoming: number;
   readonly minConfidence?: CrmDuplicateConfidence;
   readonly includeArchived: boolean;
+  readonly includeInactive: boolean;
   readonly excludeRecordId?: string | null;
 }): Promise<{
   readonly perIncoming: Map<
@@ -549,7 +606,11 @@ async function scoreExistingRecordsInChunks(input: {
       const recordsById = await loadCandidateRecordSummaries(
         input.supabase,
         input.organizationId,
-        chunkIds
+        chunkIds,
+        {
+          includeArchived: input.includeArchived,
+          includeInactive: input.includeInactive,
+        }
       );
       const chunkIdSet = new Set(chunkIds);
       const chunkHits = input.hits.filter((hit) => chunkIdSet.has(hit.recordId));
@@ -565,6 +626,7 @@ async function scoreExistingRecordsInChunks(input: {
           maxEvidenceItems: CRM_DUPLICATE_DETECTION_LIMITS.maxEvidenceItems,
           minConfidence: input.minConfidence,
           includeArchived: input.includeArchived,
+          includeInactive: input.includeInactive,
         });
         scored.set(probe.incomingId, matched.candidates);
       }
@@ -620,17 +682,18 @@ export async function findCrmDuplicateCandidates(
   }
 
   const hits = await queryIdentityHitsForLookupKeys(supabase, organizationId, keyResult.keys);
-  const recordIds = [...new Set(hits.map((h) => h.recordId))];
+  const visibleHits = filterHitsToDashboardVisible(hits, options.dashboardVisibleRecordIds);
 
   const scored = await scoreExistingRecordsInChunks({
     supabase,
     organizationId,
     probes: [probe],
-    hits,
-    recordIds,
+    hits: visibleHits.hits,
+    recordIds: visibleHits.recordIds,
     maxCandidatesPerIncoming: maxCandidates,
     minConfidence: options.minConfidence,
     includeArchived: options.includeArchived === true,
+    includeInactive: options.includeInactive !== false,
     excludeRecordId: options.excludeRecordId,
   });
 
@@ -645,7 +708,7 @@ export async function findCrmDuplicateCandidates(
     incomingRowCount: 1,
     uniqueIdentityValueCount: keyResult.uniqueIdentityValueCount,
     searchedIdentityValueCount: keyResult.searchedIdentityValueCount,
-    matchingExistingRecordCount: recordIds.length,
+    matchingExistingRecordCount: visibleHits.recordIds.length,
     searchedExistingRecordCount: scored.searchedExistingRecordCount,
     totalCandidateCount: scored.totalCandidateCount,
     returnedCandidateCount: candidates.length,
@@ -731,17 +794,21 @@ export async function findCrmDuplicateCandidatesBatch(
   );
 
   const filteredHits = hits.filter((h) => !excludeSet.has(h.recordId));
-  const recordIds = [...new Set(filteredHits.map((h) => h.recordId))];
+  const visibleHits = filterHitsToDashboardVisible(
+    filteredHits,
+    options.dashboardVisibleRecordIds
+  );
 
   const scored = await scoreExistingRecordsInChunks({
     supabase,
     organizationId,
     probes,
-    hits: filteredHits,
-    recordIds,
+    hits: visibleHits.hits,
+    recordIds: visibleHits.recordIds,
     maxCandidatesPerIncoming,
     minConfidence: options.minConfidence,
     includeArchived: options.includeArchived === true,
+    includeInactive: options.includeInactive !== false,
   });
 
   if (scored.chunkFailed) reasons.push('existing_record_chunk_failed');
@@ -772,7 +839,7 @@ export async function findCrmDuplicateCandidatesBatch(
     incomingRowCount: items.length,
     uniqueIdentityValueCount: keyResult.uniqueIdentityValueCount,
     searchedIdentityValueCount: keyResult.searchedIdentityValueCount,
-    matchingExistingRecordCount: recordIds.length,
+    matchingExistingRecordCount: visibleHits.recordIds.length,
     searchedExistingRecordCount: scored.searchedExistingRecordCount,
     totalCandidateCount: scored.totalCandidateCount,
     returnedCandidateCount: scored.returnedCandidateCount,

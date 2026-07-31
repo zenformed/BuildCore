@@ -204,7 +204,7 @@ describe('duplicateMatchingCore', () => {
     assert.equal(withSelf.candidates[0]?.confidence, 'high');
   });
 
-  it('returns inactive candidates and excludes archived by default', () => {
+  it('excludes archived by default and includes inactive (dashboard parity)', () => {
     const hits: CrmDuplicateIdentityHit[] = [
       {
         recordId: 'archived-1',
@@ -252,11 +252,19 @@ describe('duplicateMatchingCore', () => {
     });
     assert.equal(defaultResult.candidates.length, 2);
     assert.ok(defaultResult.candidates.every((c) => c.record.lifecycleStatus !== 'archived'));
-    assert.ok(defaultResult.candidates.some((c) => c.record.lifecycleStatus === 'inactive'));
-    assert.ok(defaultResult.candidates.some((c) => c.record.lifecycleStatus === 'active'));
-    // Active before inactive
     assert.equal(defaultResult.candidates[0]?.record.lifecycleStatus, 'active');
     assert.equal(defaultResult.candidates[1]?.record.lifecycleStatus, 'inactive');
+
+    const withoutInactive = matchProbeAgainstIdentityHits({
+      probe,
+      hits,
+      recordsById,
+      maxCandidates: 10,
+      maxEvidenceItems: 20,
+      includeInactive: false,
+    });
+    assert.equal(withoutInactive.candidates.length, 1);
+    assert.equal(withoutInactive.candidates[0]?.record.lifecycleStatus, 'active');
 
     const withArchived = matchProbeAgainstIdentityHits({
       probe,
