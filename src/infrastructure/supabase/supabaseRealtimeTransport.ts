@@ -3,8 +3,7 @@
  * unless a transport (e.g. `ws`) is provided. Browsers / Node 22+ need no change.
  */
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type RealtimeTransport = new (...args: any[]) => any;
+type RealtimeTransport = new (...args: never[]) => unknown;
 
 let cachedTransport: RealtimeTransport | null | undefined;
 
@@ -13,7 +12,7 @@ export function resolveSupabaseRealtimeTransport(): RealtimeTransport | undefine
   if (cachedTransport !== undefined) return cachedTransport ?? undefined;
 
   try {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    // Dynamic require: only needed in Node without global WebSocket.
     const ws = require('ws') as RealtimeTransport;
     cachedTransport = ws;
     return ws;
