@@ -92,20 +92,13 @@ export function SubprojectsListToolbar({
       {canManage && onImportOpen ? (
         <button
           type="button"
-          className={
-            isMobileLayout
-              ? importStyles.toolbarIconButton
-              : importStyles.toolbarSecondaryButton
-          }
+          className={importStyles.toolbarImportButton}
           title={importSpreadsheetTitle}
           aria-label={importSpreadsheetAriaLabel ?? importSpreadsheetTitle}
           onClick={onImportOpen}
         >
-          {isMobileLayout ? (
-            <LuFileSpreadsheet size={16} strokeWidth={2} aria-hidden />
-          ) : (
-            importSpreadsheetTitle
-          )}
+          <LuFileSpreadsheet size={16} strokeWidth={2} aria-hidden />
+          {isMobileLayout ? null : importSpreadsheetTitle}
         </button>
       ) : null}
       {canManage ? (

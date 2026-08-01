@@ -90,7 +90,8 @@ function computeMenuPosition(
   menu: HTMLElement | null,
   align: 'start' | 'end',
   sizeToContent: boolean,
-  menuGapPx: number
+  menuGapPx: number,
+  menuMaxHeightPx: number
 ): MenuPosition {
   const rect = anchor.getBoundingClientRect();
   const minWidth = sizeToContent ? 0 : Math.max(rect.width, 136);
@@ -116,7 +117,7 @@ function computeMenuPosition(
 
   const maxHeight = Math.max(
     96,
-    Math.min(MENU_MAX_HEIGHT_PX, window.innerHeight - top - VIEWPORT_PADDING_PX)
+    Math.min(menuMaxHeightPx, window.innerHeight - top - VIEWPORT_PADDING_PX)
   );
 
   return { top, left, minWidth, effectiveAlign, maxHeight };
@@ -134,6 +135,8 @@ export type WorkflowInlineMenuProps = {
   sizeToContent?: boolean;
   /** Gap between anchor and menu in px; defaults to 4. */
   menuGapPx?: number;
+  /** Cap portal scroll height; defaults to 320. */
+  maxHeightPx?: number;
   /** Optional hover handlers for the portaled menu panel. */
   portalHandlers?: {
     onMouseEnter?: () => void;
@@ -152,6 +155,7 @@ export function WorkflowInlineMenu({
   portalClassName,
   sizeToContent = false,
   menuGapPx = MENU_GAP_PX,
+  maxHeightPx = MENU_MAX_HEIGHT_PX,
   portalHandlers,
   disablePortalScroll = false,
 }: WorkflowInlineMenuProps): ReactElement | null {
@@ -161,8 +165,10 @@ export function WorkflowInlineMenu({
   const updatePosition = useCallback(() => {
     const anchor = anchorRef.current;
     if (!anchor) return;
-    setPosition(computeMenuPosition(anchor, menuRef.current, align, sizeToContent, menuGapPx));
-  }, [align, anchorRef, menuGapPx, sizeToContent]);
+    setPosition(
+      computeMenuPosition(anchor, menuRef.current, align, sizeToContent, menuGapPx, maxHeightPx)
+    );
+  }, [align, anchorRef, maxHeightPx, menuGapPx, sizeToContent]);
 
   useLayoutEffect(() => {
     if (!open) {
@@ -193,7 +199,8 @@ export function WorkflowInlineMenu({
   if (anchor == null) return null;
 
   const resolvedPosition =
-    position ?? computeMenuPosition(anchor, menuRef.current, align, sizeToContent, menuGapPx);
+    position ??
+    computeMenuPosition(anchor, menuRef.current, align, sizeToContent, menuGapPx, maxHeightPx);
 
   const menuStyle: CSSProperties = {
     top: resolvedPosition.top,

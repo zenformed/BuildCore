@@ -29,7 +29,7 @@ export function ProjectPriorityToggle({
   return (
     <button
       type="button"
-      className={styles.headerIconBtn}
+      className={`${styles.headerIconBtn} ${styles.headerLabeledActionBtn}`}
       disabled={disabled || busy}
       title={label}
       aria-label={label}
@@ -38,6 +38,7 @@ export function ProjectPriorityToggle({
       onClick={() => void onToggle(toggleProjectPriority(priority))}
     >
       <CrmProjectStatusCircleIcon kind="priority" active={active} size={18} />
+      <span className={styles.headerLabeledActionText}>{label}</span>
     </button>
   );
 }

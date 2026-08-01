@@ -558,11 +558,7 @@ export function CrmProjectsPipeline({
     !isMemberRole && isProjectsView ? (
       <button
         type="button"
-        className={
-          isMobileLayout
-            ? importStyles.toolbarIconButton
-            : importStyles.toolbarSecondaryButton
-        }
+        className={importStyles.toolbarImportButton}
         title={panelCopy.importSpreadsheet}
         aria-label={panelCopy.importSpreadsheetAriaLabel}
         disabled={importOpen}
@@ -574,11 +570,8 @@ export function CrmProjectsPipeline({
           setImportOpen(true);
         }}
       >
-        {isMobileLayout ? (
-          <LuFileSpreadsheet size={16} strokeWidth={2} aria-hidden />
-        ) : (
-          panelCopy.importSpreadsheet
-        )}
+        <LuFileSpreadsheet size={16} strokeWidth={2} aria-hidden />
+        {isMobileLayout ? null : panelCopy.importSpreadsheet}
       </button>
     ) : null;
 

@@ -87,10 +87,23 @@ export async function fetchCrmDuplicateCandidates(
  */
 export async function fetchCrmDuplicateCandidatesBatch(
   request: CrmDuplicateCandidatesBatchRequest,
-  chunkSize: number = CRM_DUPLICATE_DETECTION_LIMITS.maxBatchRows
+  chunkSize: number = CRM_DUPLICATE_DETECTION_LIMITS.maxBatchRows,
+  options?: {
+    readonly onProgress?: (progress: {
+      readonly totalRows: number;
+      readonly checkedRows: number;
+      readonly possibleDuplicatesFound: number;
+    }) => void;
+  }
 ): Promise<CrmDuplicateCandidatesBatchResponse> {
+  const totalRows = request.items.length;
   const chunks = chunkArrayForImportDuplicateBatch(request.items, chunkSize);
   if (chunks.length === 0) {
+    options?.onProgress?.({
+      totalRows: 0,
+      checkedRows: 0,
+      possibleDuplicatesFound: 0,
+    });
     return {
       groups: [],
       meta: {
@@ -104,6 +117,14 @@ export async function fetchCrmDuplicateCandidatesBatch(
 
   const groups: CrmDuplicateCandidateGroup[] = [];
   const metas: CrmDuplicateTruncationMeta[] = [];
+  let checkedRows = 0;
+  const matchedIncomingIds = new Set<string>();
+
+  options?.onProgress?.({
+    totalRows,
+    checkedRows: 0,
+    possibleDuplicatesFound: 0,
+  });
 
   for (const chunk of chunks) {
     const response = await crmApiPostJson<CrmDuplicateCandidatesBatchResponse>(
@@ -121,6 +142,17 @@ export async function fetchCrmDuplicateCandidatesBatch(
     );
     groups.push(...response.groups);
     metas.push(response.meta);
+    checkedRows += chunk.length;
+    for (const group of response.groups) {
+      for (const incomingId of group.incomingIds) {
+        matchedIncomingIds.add(incomingId);
+      }
+    }
+    options?.onProgress?.({
+      totalRows,
+      checkedRows,
+      possibleDuplicatesFound: matchedIncomingIds.size,
+    });
   }
 
   return {

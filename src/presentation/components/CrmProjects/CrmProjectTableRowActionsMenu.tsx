@@ -1,13 +1,20 @@
 'use client';
 
-import type { ReactElement } from 'react';
+import type { ReactElement, ReactNode } from 'react';
 import { useEffect, useRef, useState } from 'react';
+import {
+  LuBan,
+  LuCheck,
+  LuCircleAlert,
+  LuPlay,
+  LuRotateCcw,
+  LuTrash2,
+} from 'react-icons/lu';
 import type { CrmProjectSummary } from '@/domain/crm';
 import { isCrmProjectComplete, isCrmProjectInactive } from '@/domain/crm';
 import { isProjectPriorityUrgent } from '@/domain/crm/projectPriorityToggle';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
 import { WorkflowInlineMenu } from '@/presentation/components/CrmProjectDetail/WorkflowInlineMenu';
-import { CrmProjectStatusCircleIcon } from '@/presentation/components/crmShared/CrmProjectStatusCircleIcon';
 import detailStyles from '@/presentation/components/CrmProjectDetail/ProjectDetail.module.css';
 import styles from './CrmProjects.module.css';
 
@@ -21,6 +28,27 @@ export type CrmProjectTableRowActionsMenuProps = {
   readonly onRequestMarkInactive?: (project: CrmProjectSummary) => void;
   readonly onRequestMarkActive?: (project: CrmProjectSummary) => void | Promise<void>;
 };
+
+type ActionIconTone = 'delete' | 'inactive' | 'priority' | 'complete' | 'active';
+
+function ActionIcon({
+  tone,
+  children,
+}: {
+  readonly tone: ActionIconTone;
+  readonly children: ReactNode;
+}): ReactElement {
+  return (
+    <span
+      className={[styles.rowActionsMenuIconTile, styles[`rowActionsMenuIconTile_${tone}`]].join(
+        ' '
+      )}
+      aria-hidden
+    >
+      {children}
+    </span>
+  );
+}
 
 export function CrmProjectTableRowActionsMenu({
   project,
@@ -87,33 +115,13 @@ export function CrmProjectTableRowActionsMenu({
         anchorRef={anchorRef}
         align="end"
         sizeToContent
-        portalClassName={`${detailStyles.inlineMenu_portal} ${detailStyles.actionsMenu_portal}`}
+        portalClassName={`${detailStyles.inlineMenu_portal} ${styles.rowActionsMenuPortal}`}
       >
-        {canDelete ? (
-          <button
-            type="button"
-            role="menuitem"
-            className={`${detailStyles.inlineMenuAction} ${detailStyles.actionsMenuItem} ${detailStyles.actionsMenuItemDanger}`}
-            disabled={menuDisabled}
-            aria-label={deleteCopy.actionAriaLabel(project.name)}
-            onClick={(event) => {
-              event.stopPropagation();
-              closeMenu();
-              onRequestDelete?.(project);
-            }}
-          >
-            <span
-              className={`${detailStyles.actionsMenuIcon} ${detailStyles.actionsMenuDeleteIcon}`}
-              aria-hidden
-            />
-            {tableCopy.deleteAction}
-          </button>
-        ) : null}
         {!isComplete && !isInactive ? (
           <button
             type="button"
             role="menuitem"
-            className={`${detailStyles.inlineMenuAction} ${detailStyles.actionsMenuItem}`}
+            className={styles.rowActionsMenuItem}
             disabled={menuDisabled}
             onClick={(event) => {
               event.stopPropagation();
@@ -121,9 +129,9 @@ export function CrmProjectTableRowActionsMenu({
               void onTogglePriority?.(project);
             }}
           >
-            <span className={styles.rowActionsMenuStatusIcon} aria-hidden>
-              <CrmProjectStatusCircleIcon kind="priority" active={!isPriority} size={14} />
-            </span>
+            <ActionIcon tone="priority">
+              <LuCircleAlert size={15} strokeWidth={2.25} />
+            </ActionIcon>
             {priorityLabel}
           </button>
         ) : null}
@@ -131,7 +139,7 @@ export function CrmProjectTableRowActionsMenu({
           <button
             type="button"
             role="menuitem"
-            className={`${detailStyles.inlineMenuAction} ${detailStyles.actionsMenuItem}`}
+            className={styles.rowActionsMenuItem}
             disabled={menuDisabled}
             aria-label={activeCopy.menuActionAriaLabel(project.name)}
             onClick={(event) => {
@@ -140,17 +148,16 @@ export function CrmProjectTableRowActionsMenu({
               void onRequestMarkActive?.(project);
             }}
           >
-            <span
-              className={`${detailStyles.actionsMenuIcon} ${detailStyles.actionsMenuMarkActiveIcon}`}
-              aria-hidden
-            />
-            {activeCopy.menuAction}
+            <ActionIcon tone="active">
+              <LuPlay size={15} strokeWidth={2.25} />
+            </ActionIcon>
+            {tableCopy.markActive}
           </button>
         ) : (
           <button
             type="button"
             role="menuitem"
-            className={`${detailStyles.inlineMenuAction} ${detailStyles.actionsMenuItem}`}
+            className={styles.rowActionsMenuItem}
             disabled={menuDisabled}
             aria-label={inactiveCopy.menuActionAriaLabel(project.name)}
             onClick={(event) => {
@@ -159,17 +166,16 @@ export function CrmProjectTableRowActionsMenu({
               onRequestMarkInactive?.(project);
             }}
           >
-            <span
-              className={`${detailStyles.actionsMenuIcon} ${detailStyles.actionsMenuMarkInactiveIcon}`}
-              aria-hidden
-            />
-            {inactiveCopy.menuAction}
+            <ActionIcon tone="inactive">
+              <LuBan size={15} strokeWidth={2.25} />
+            </ActionIcon>
+            {tableCopy.markInactive}
           </button>
         )}
         <button
           type="button"
           role="menuitem"
-          className={`${detailStyles.inlineMenuAction} ${detailStyles.actionsMenuItem}`}
+          className={styles.rowActionsMenuItem}
           disabled={menuDisabled}
           onClick={(event) => {
             event.stopPropagation();
@@ -177,15 +183,34 @@ export function CrmProjectTableRowActionsMenu({
             onRequestCompletionChange?.(project);
           }}
         >
-          <span className={styles.rowActionsMenuStatusIcon} aria-hidden>
+          <ActionIcon tone="complete">
             {isComplete ? (
-              <CrmProjectStatusCircleIcon kind="incomplete" active size={14} />
+              <LuRotateCcw size={15} strokeWidth={2.25} />
             ) : (
-              <CrmProjectStatusCircleIcon kind="complete" active size={14} />
+              <LuCheck size={15} strokeWidth={2.5} />
             )}
-          </span>
+          </ActionIcon>
           {completionLabel}
         </button>
+        {canDelete ? (
+          <button
+            type="button"
+            role="menuitem"
+            className={styles.rowActionsMenuItem}
+            disabled={menuDisabled}
+            aria-label={deleteCopy.actionAriaLabel(project.name)}
+            onClick={(event) => {
+              event.stopPropagation();
+              closeMenu();
+              onRequestDelete?.(project);
+            }}
+          >
+            <ActionIcon tone="delete">
+              <LuTrash2 size={15} strokeWidth={2.25} />
+            </ActionIcon>
+            {tableCopy.deleteAction}
+          </button>
+        ) : null}
       </WorkflowInlineMenu>
     </>
   );

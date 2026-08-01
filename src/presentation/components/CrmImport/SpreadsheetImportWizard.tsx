@@ -160,7 +160,10 @@ import {
   ParentResolveScreen,
 } from '@/presentation/features/crmImport/interview/screens/HierarchyScreens';
 import { ReviewScreen } from '@/presentation/features/crmImport/interview/screens/ReviewScreen';
-import { DuplicateCheckScreen } from '@/presentation/features/crmImport/interview/screens/DuplicateCheckScreen';
+import {
+  DuplicateCheckScreen,
+  type DuplicateCheckScanProgress,
+} from '@/presentation/features/crmImport/interview/screens/DuplicateCheckScreen';
 import { MergeReviewScreen } from '@/presentation/features/crmImport/interview/screens/MergeReviewScreen';
 import { ImportScreen } from '@/presentation/features/crmImport/interview/screens/ImportScreens';
 import {
@@ -337,7 +340,8 @@ export function SpreadsheetImportWizard({
     'idle'
   );
   const [duplicateError, setDuplicateError] = useState<string | null>(null);
-  const [duplicateProgress, setDuplicateProgress] = useState<string | null>(null);
+  const [duplicateScanProgress, setDuplicateScanProgress] =
+    useState<DuplicateCheckScanProgress | null>(null);
   const [duplicateGroups, setDuplicateGroups] = useState<readonly CrmDuplicateCandidateGroup[]>(
     []
   );
@@ -349,7 +353,6 @@ export function SpreadsheetImportWizard({
   const [mergeDecisions, setMergeDecisions] = useState<ImportMergeDecisionMap>({});
   const [duplicateIdentityKey, setDuplicateIdentityKey] = useState<string | null>(null);
   const [duplicateCheckedRowCount, setDuplicateCheckedRowCount] = useState(0);
-  const [duplicateAutoAdvancedKey, setDuplicateAutoAdvancedKey] = useState<string | null>(null);
 
   const existingCustomFields = useMemo(
     () => [
@@ -406,7 +409,7 @@ export function SpreadsheetImportWizard({
     setCompletionToast(null);
     setDuplicateStatus('idle');
     setDuplicateError(null);
-    setDuplicateProgress(null);
+    setDuplicateScanProgress(null);
     setDuplicateGroups([]);
     setDuplicateMeta(null);
     setDuplicateReviewItems([]);
@@ -414,7 +417,6 @@ export function SpreadsheetImportWizard({
     setMergeDecisions({});
     setDuplicateIdentityKey(null);
     setDuplicateCheckedRowCount(0);
-    setDuplicateAutoAdvancedKey(null);
   }, [fixedParentDisplayName, fixedParentProjectId, mode]);
 
   useEffect(() => {
@@ -618,12 +620,11 @@ export function SpreadsheetImportWizard({
 
         setDuplicateStatus('loading');
         setDuplicateError(null);
-        setDuplicateProgress(copy.interview.duplicateCheck.checking);
+        setDuplicateScanProgress(null);
 
         if (identityKey !== duplicateIdentityKeyRef.current) {
           setDuplicateDecisions({});
           setMergeDecisions({});
-          setDuplicateAutoAdvancedKey(null);
         }
 
         const { items, summariesByIncomingId } = buildImportDuplicateBatchItems(
@@ -631,14 +632,25 @@ export function SpreadsheetImportWizard({
           source.mappings
         );
         setDuplicateCheckedRowCount(items.length);
-        setDuplicateProgress(
-          copy.interview.duplicateCheck.checkingProgress(0, items.length)
-        );
-
-        const response = await fetchCrmDuplicateCandidatesBatch({
-          items,
-          includeIncomingMatches: true,
+        setDuplicateScanProgress({
+          totalRows: items.length,
+          checkedRows: 0,
+          possibleDuplicatesFound: 0,
         });
+
+        const response = await fetchCrmDuplicateCandidatesBatch(
+          {
+            items,
+            includeIncomingMatches: true,
+          },
+          undefined,
+          {
+            onProgress: (progress) => {
+              if (cancelled) return;
+              setDuplicateScanProgress(progress);
+            },
+          }
+        );
         if (cancelled) return;
 
         const reviewItems = buildImportDuplicateReviewItems({
@@ -650,7 +662,11 @@ export function SpreadsheetImportWizard({
         setDuplicateMeta(response.meta);
         setDuplicateReviewItems(reviewItems);
         setDuplicateIdentityKey(identityKey);
-        setDuplicateProgress(null);
+        setDuplicateScanProgress({
+          totalRows: items.length,
+          checkedRows: items.length,
+          possibleDuplicatesFound: reviewItems.length,
+        });
         setDuplicateStatus('ready');
       } catch (err) {
         if (cancelled) return;
@@ -658,7 +674,7 @@ export function SpreadsheetImportWizard({
         setDuplicateError(
           err instanceof Error ? err.message : copy.interview.duplicateCheck.checkFailed
         );
-        setDuplicateProgress(null);
+        setDuplicateScanProgress(null);
       }
     };
 
@@ -1134,23 +1150,6 @@ export function SpreadsheetImportWizard({
     [duplicateReviewItems, duplicateDecisions]
   );
 
-  useEffect(() => {
-    if (interview.screen !== 'duplicate_check') return;
-    if (duplicateStatus !== 'ready') return;
-    if (duplicateReviewItems.length > 0) return;
-    if (duplicateIdentityKey == null) return;
-    if (duplicateAutoAdvancedKey === duplicateIdentityKey) return;
-    setDuplicateAutoAdvancedKey(duplicateIdentityKey);
-    setInterview((s) => advancePastDuplicateCheck(s));
-  }, [
-    interview.screen,
-    duplicateStatus,
-    duplicateReviewItems.length,
-    duplicateIdentityKey,
-    duplicateAutoAdvancedKey,
-    advancePastDuplicateCheck,
-  ]);
-
   const rowsToCreateCount = useMemo(() => {
     if (duplicateStatus === 'ready') {
       return countImportRowsToCreate(
@@ -1395,6 +1394,31 @@ export function SpreadsheetImportWizard({
     setBusy(true);
     setError(null);
     setMappingErrors([]);
+    setImportDone(false);
+    setCompletionToast(null);
+    setImportStatus('running');
+    setImportCounts(EMPTY_COUNTS);
+    setCumulativeProcessed(0);
+    setLastChunkProcessed(0);
+    setPeakPercent(0);
+    setImportTotalRows(rowsToCreateCount);
+
+    // Show overall progress immediately — merge patches + job setup run on this screen.
+    setInterview((s) => ({
+      ...goInterviewForward(s),
+      structuralLocked: true,
+    }));
+
+    const returnToReviewWithErrors = (errors: readonly string[]): void => {
+      setMappingErrors([...errors]);
+      setImportStatus('');
+      setInterview((s) => ({
+        ...s,
+        screen: 'review',
+        structuralLocked: false,
+      }));
+    };
+
     try {
       const source = await resolveInterviewImportSource({
         interview,
@@ -1475,8 +1499,7 @@ export function SpreadsheetImportWizard({
 
       const validation = await validateSpreadsheetImportJobFromApi(currentJobId);
       if (validation.mappingErrors.length > 0) {
-        setMappingErrors([...validation.mappingErrors]);
-        // Issues render in the Review reserved region — do not also set footer error.
+        returnToReviewWithErrors(validation.mappingErrors);
         return;
       }
       setMappingErrors([]);
@@ -1506,7 +1529,7 @@ export function SpreadsheetImportWizard({
           return false;
         });
         if (unresolved.length > 0) {
-          setMappingErrors([copy.errors.resolutionRequired]);
+          returnToReviewWithErrors([copy.errors.resolutionRequired]);
           return;
         }
 
@@ -1525,7 +1548,7 @@ export function SpreadsheetImportWizard({
           duplicateCheck: duplicateCheckSnapshot,
         });
         if (saved.blockingGroupKeys.length > 0) {
-          setMappingErrors([copy.errors.resolutionRequired]);
+          returnToReviewWithErrors([copy.errors.resolutionRequired]);
           return;
         }
         await validateSpreadsheetImportJobFromApi(currentJobId);
@@ -1544,14 +1567,10 @@ export function SpreadsheetImportWizard({
       const rowsToCreate = Math.max(0, payload.rows.length - skipIndexes.length);
       setImportTotalRows(rowsToCreate);
 
-      setInterview((s) => ({
-        ...goInterviewForward(s),
-        structuralLocked: true,
-      }));
       await handleStartImport(currentJobId, rowsToCreate);
     } catch (err) {
       const message = err instanceof Error ? err.message : copy.errors.draftFailed;
-      setMappingErrors([message]);
+      returnToReviewWithErrors([message]);
     } finally {
       setBusy(false);
     }
@@ -1575,6 +1594,7 @@ export function SpreadsheetImportWizard({
     mergeDecisions,
     parsedFile,
     rows,
+    rowsToCreateCount,
     selectedFile?.name,
     sheetMatrix,
     sheetName,
@@ -2587,7 +2607,7 @@ export function SpreadsheetImportWizard({
         <DuplicateCheckScreen
           status={duplicateStatus}
           errorMessage={duplicateError}
-          progressLabel={duplicateProgress}
+          scanProgress={duplicateScanProgress}
           truncationMeta={duplicateMeta}
           totalRows={duplicateCheckedRowCount}
           items={duplicateReviewItems}

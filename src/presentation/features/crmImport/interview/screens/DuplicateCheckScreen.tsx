@@ -1,11 +1,15 @@
 'use client';
 
 import { Fragment, useMemo, type ReactElement, type ReactNode } from 'react';
+import Image from 'next/image';
 import {
   LuBuilding2,
   LuCircleAlert,
+  LuClock3,
   LuExternalLink,
   LuFileSpreadsheet,
+  LuSearch,
+  LuUsers,
 } from 'react-icons/lu';
 import type { CrmDuplicateCandidate, CrmDuplicateTruncationMeta } from '@/domain/crm/identity';
 import type {
@@ -30,10 +34,18 @@ import {
 } from '@/presentation/features/crmImport/interview/duplicateReviewTablePresentation';
 import dupStyles from '@/presentation/features/crmImport/interview/screens/DuplicateCheckScreen.module.css';
 
+const DUPLICATE_CHECK_ILLUSTRATION = '/images/import/duplicate.svg';
+
+export type DuplicateCheckScanProgress = {
+  readonly totalRows: number;
+  readonly checkedRows: number;
+  readonly possibleDuplicatesFound: number;
+};
+
 export type DuplicateCheckScreenProps = {
   readonly status: 'idle' | 'loading' | 'ready' | 'error';
   readonly errorMessage: string | null;
-  readonly progressLabel: string | null;
+  readonly scanProgress: DuplicateCheckScanProgress | null;
   readonly truncationMeta: CrmDuplicateTruncationMeta | null;
   readonly totalRows: number;
   readonly items: readonly ImportDuplicateReviewItem[];
@@ -348,20 +360,139 @@ function DuplicatePairGroup({
   );
 }
 
+function DuplicateScanStatusCard({
+  copy,
+  scanProgress,
+  complete = false,
+}: {
+  readonly copy: DuplicateCheckCopy;
+  readonly scanProgress: DuplicateCheckScanProgress | null;
+  readonly complete?: boolean;
+}): ReactElement {
+  const totalRows = scanProgress?.totalRows ?? 0;
+  const checkedRows = scanProgress?.checkedRows ?? 0;
+  const found = scanProgress?.possibleDuplicatesFound ?? 0;
+  const hasDeterminateProgress = totalRows > 0 && (checkedRows > 0 || complete);
+  const percent =
+    totalRows > 0
+      ? Math.min(100, Math.round(((complete ? totalRows : checkedRows) / totalRows) * 100))
+      : complete
+        ? 100
+        : null;
+  const displayChecked = complete ? totalRows : checkedRows;
+
+  return (
+    <div
+      className={dupStyles.scanCard}
+      role="status"
+      aria-live="polite"
+      aria-busy={complete ? undefined : true}
+    >
+      <div className={dupStyles.scanCardInner}>
+        <div className={dupStyles.scanArt} aria-hidden>
+          <Image
+            className={dupStyles.scanArtImage}
+            src={DUPLICATE_CHECK_ILLUSTRATION}
+            alt=""
+            width={671}
+            height={755}
+            priority
+            unoptimized
+          />
+        </div>
+
+        <div className={dupStyles.scanContent}>
+          <h3 className={dupStyles.scanHeadline}>{copy.checkingHeadline}</h3>
+
+          <div className={dupStyles.scanProgressBlock} aria-label={copy.checkingProgressAria}>
+            <div className={dupStyles.scanProgressHeader}>
+              <span className={dupStyles.scanProgressTitle}>{copy.checkingProgressAria}</span>
+              {hasDeterminateProgress && percent != null ? (
+                <span className={dupStyles.scanProgressPercent}>{percent}%</span>
+              ) : null}
+            </div>
+            <div
+              className={[
+                dupStyles.scanProgressTrack,
+                !hasDeterminateProgress ? dupStyles.scanProgressTrackIndeterminate : '',
+              ]
+                .filter(Boolean)
+                .join(' ')}
+            >
+              <div
+                className={[
+                  dupStyles.scanProgressFill,
+                  !hasDeterminateProgress ? dupStyles.scanProgressFillIndeterminate : '',
+                ]
+                  .filter(Boolean)
+                  .join(' ')}
+                style={
+                  hasDeterminateProgress && percent != null
+                    ? { width: `${percent}%` }
+                    : undefined
+                }
+              />
+            </div>
+          </div>
+
+          <div className={dupStyles.scanStats} role="group">
+            <div className={dupStyles.scanStat}>
+              <LuFileSpreadsheet className={dupStyles.scanStatIcon} size={36} strokeWidth={1.75} aria-hidden />
+              <div className={dupStyles.scanStatText}>
+                <p className={dupStyles.scanStatLabel}>{copy.checkingStatRowsToCheck}</p>
+                <p className={dupStyles.scanStatValue}>{totalRows.toLocaleString()}</p>
+              </div>
+            </div>
+            <div className={dupStyles.scanStat}>
+              <LuSearch className={dupStyles.scanStatIcon} size={36} strokeWidth={1.75} aria-hidden />
+              <div className={dupStyles.scanStatText}>
+                <p className={dupStyles.scanStatLabel}>{copy.checkingStatRowsChecked}</p>
+                <p className={dupStyles.scanStatValue}>{displayChecked.toLocaleString()}</p>
+              </div>
+            </div>
+            <div className={dupStyles.scanStat}>
+              <LuUsers className={dupStyles.scanStatIcon} size={36} strokeWidth={1.75} aria-hidden />
+              <div className={dupStyles.scanStatText}>
+                <p className={dupStyles.scanStatLabel}>{copy.checkingStatDuplicatesFound}</p>
+                <p className={dupStyles.scanStatValue}>{found.toLocaleString()}</p>
+              </div>
+            </div>
+          </div>
+
+          <p className={dupStyles.scanDurationHint}>
+            <LuClock3 size={14} aria-hidden />
+            <span>{copy.checkingDurationHint}</span>
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function ScreenShell({
   children,
   heading,
   hint,
+  narrow = false,
 }: {
   readonly children: ReactNode;
   readonly heading: string;
   readonly hint?: string | null;
+  readonly narrow?: boolean;
 }): ReactElement {
   return (
-    <div className={[styles.duplicateCheckScreen, dupStyles.screen].join(' ')}>
+    <div
+      className={[
+        styles.duplicateCheckScreen,
+        dupStyles.screen,
+        narrow ? dupStyles.screenNarrow : '',
+      ]
+        .filter(Boolean)
+        .join(' ')}
+    >
       <div className={dupStyles.header}>
-        <h2 className={styles.screenHeading}>{heading}</h2>
-        {hint ? <p className={styles.screenHint}>{hint}</p> : null}
+        <h1 className={styles.screenHeading}>{heading}</h1>
+        {hint ? <p className={dupStyles.screenHint}>{hint}</p> : null}
       </div>
       {children}
     </div>
@@ -371,7 +502,7 @@ function ScreenShell({
 export function DuplicateCheckScreen({
   status,
   errorMessage,
-  progressLabel,
+  scanProgress,
   truncationMeta,
   totalRows,
   items,
@@ -386,32 +517,26 @@ export function DuplicateCheckScreen({
   const truncationCopy = duplicateCheckTruncationCopyFromContent(copy);
   const sortedItems = useMemo(() => sortDuplicateReviewItemsForTable(items), [items]);
 
-  if (status === 'loading' || status === 'idle') {
+  if (status === 'loading' || status === 'idle' || (status === 'ready' && items.length === 0)) {
     return (
-      <ScreenShell heading={copy.heading} hint={copy.checkingHint}>
-        <p className={dupStyles.checking} role="status" aria-live="polite">
-          <span className={dupStyles.spinner} aria-hidden />
-          {progressLabel ?? copy.checking}
-        </p>
+      <ScreenShell heading={copy.heading} hint={copy.checkingHint} narrow>
+        <DuplicateTruncationNotice meta={truncationMeta} copy={truncationCopy} />
+        <DuplicateScanStatusCard
+          copy={copy}
+          scanProgress={scanProgress}
+          complete={status === 'ready'}
+        />
       </ScreenShell>
     );
   }
 
   if (status === 'error') {
     return (
-      <ScreenShell heading={copy.heading}>
+      <ScreenShell heading={copy.heading} narrow>
         <div className={dupStyles.errorBanner} role="alert">
           <LuCircleAlert size={16} aria-hidden />
           <span>{errorMessage ?? copy.checkFailed}</span>
         </div>
-      </ScreenShell>
-    );
-  }
-
-  if (items.length === 0) {
-    return (
-      <ScreenShell heading={copy.heading} hint={copy.noneFoundBody}>
-        <DuplicateTruncationNotice meta={truncationMeta} copy={truncationCopy} />
       </ScreenShell>
     );
   }

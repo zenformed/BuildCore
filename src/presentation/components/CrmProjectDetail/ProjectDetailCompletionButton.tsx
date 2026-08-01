@@ -26,7 +26,7 @@ export function ProjectDetailCompletionButton({
   return (
     <button
       type="button"
-      className={styles.headerIconBtn}
+      className={`${styles.headerIconBtn} ${styles.headerLabeledActionBtn}`}
       disabled={busy}
       title={label}
       aria-label={label}
@@ -35,6 +35,7 @@ export function ProjectDetailCompletionButton({
       onClick={isComplete ? onMarkIncomplete : onMarkComplete}
     >
       <CrmProjectStatusCircleIcon kind="complete" active={isComplete} size={18} />
+      <span className={styles.headerLabeledActionText}>{label}</span>
     </button>
   );
 }

@@ -1,8 +1,20 @@
 'use client';
 
-import type { ReactElement } from 'react';
+import type { ReactElement, ReactNode } from 'react';
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import {
+  LuBan,
+  LuClipboardList,
+  LuDollarSign,
+  LuDownload,
+  LuFolder,
+  LuPlay,
+  LuQrCode,
+  LuSave,
+  LuShield,
+  LuTrash2,
+} from 'react-icons/lu';
 import type { CrmProjectSummary } from '@/domain/crm';
 import { isCrmProjectInactive } from '@/domain/crm';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
@@ -29,8 +41,37 @@ export type ProjectDetailActionsMenuProps = {
   lifecycleBusy?: boolean;
 };
 
+type ActionIconTone =
+  | 'workflow'
+  | 'accountability'
+  | 'financials'
+  | 'documents'
+  | 'qr'
+  | 'load'
+  | 'save'
+  | 'inactive'
+  | 'active'
+  | 'delete';
+
 function ActionsMenuSeparator(): ReactElement {
   return <div className={styles.actionsMenuSeparator} role="separator" aria-hidden />;
+}
+
+function ActionIcon({
+  tone,
+  children,
+}: {
+  readonly tone: ActionIconTone;
+  readonly children: ReactNode;
+}): ReactElement {
+  return (
+    <span
+      className={[styles.actionsMenuIconTile, styles[`actionsMenuIconTile_${tone}`]].join(' ')}
+      aria-hidden
+    >
+      {children}
+    </span>
+  );
 }
 
 export function ProjectDetailActionsMenu({
@@ -132,6 +173,7 @@ export function ProjectDetailActionsMenu({
         anchorRef={anchorRef}
         align="end"
         sizeToContent
+        maxHeightPx={640}
         portalClassName={`${styles.inlineMenu_portal} ${styles.actionsMenu_portal}`}
       >
         <button
@@ -141,7 +183,9 @@ export function ProjectDetailActionsMenu({
           disabled={menuDisabled}
           onClick={() => closeAndNavigate(routes.workflowTasks)}
         >
-          <span className={`${styles.actionsMenuIcon} ${styles.actionsMenuWorkflowIcon}`} aria-hidden />
+          <ActionIcon tone="workflow">
+            <LuClipboardList size={15} strokeWidth={2.25} />
+          </ActionIcon>
           {detail.actions.workflowTasks}
         </button>
         <button
@@ -151,10 +195,9 @@ export function ProjectDetailActionsMenu({
           disabled={menuDisabled}
           onClick={() => closeAndNavigate(routes.accountability)}
         >
-          <span
-            className={`${styles.actionsMenuIcon} ${styles.actionsMenuAccountabilityIcon}`}
-            aria-hidden
-          />
+          <ActionIcon tone="accountability">
+            <LuShield size={15} strokeWidth={2.25} />
+          </ActionIcon>
           {detail.actions.accountability}
         </button>
         <button
@@ -164,7 +207,9 @@ export function ProjectDetailActionsMenu({
           disabled={menuDisabled}
           onClick={() => closeAndNavigate(routes.financials)}
         >
-          <span className={`${styles.actionsMenuIcon} ${styles.actionsMenuFinancialsIcon}`} aria-hidden />
+          <ActionIcon tone="financials">
+            <LuDollarSign size={15} strokeWidth={2.25} />
+          </ActionIcon>
           {detail.actions.financials}
         </button>
         <button
@@ -174,7 +219,9 @@ export function ProjectDetailActionsMenu({
           disabled={menuDisabled}
           onClick={() => closeAndNavigate(routes.documents)}
         >
-          <span className={`${styles.actionsMenuIcon} ${styles.actionsMenuFolderIcon}`} aria-hidden />
+          <ActionIcon tone="documents">
+            <LuFolder size={15} strokeWidth={2.25} />
+          </ActionIcon>
           {wf.openDocuments}
         </button>
         {canShowQrCode ? (
@@ -185,7 +232,9 @@ export function ProjectDetailActionsMenu({
             disabled={menuDisabled}
             onClick={handleShowQrCode}
           >
-            <span className={`${styles.actionsMenuIcon} ${styles.actionsMenuQrIcon}`} aria-hidden />
+            <ActionIcon tone="qr">
+              <LuQrCode size={15} strokeWidth={2.25} />
+            </ActionIcon>
             {detail.actions.showQrCode}
           </button>
         ) : null}
@@ -199,10 +248,9 @@ export function ProjectDetailActionsMenu({
               disabled={menuDisabled}
               onClick={handleLoadTemplate}
             >
-              <span
-                className={`${styles.actionsMenuIcon} ${styles.actionsMenuLoadTemplateIcon}`}
-                aria-hidden
-              />
+              <ActionIcon tone="load">
+                <LuDownload size={15} strokeWidth={2.25} />
+              </ActionIcon>
               {loadTemplateLabel}
             </button>
             <button
@@ -212,10 +260,9 @@ export function ProjectDetailActionsMenu({
               disabled={menuDisabled}
               onClick={handleSaveTemplate}
             >
-              <span
-                className={`${styles.actionsMenuIcon} ${styles.actionsMenuSaveTemplateIcon}`}
-                aria-hidden
-              />
+              <ActionIcon tone="save">
+                <LuSave size={15} strokeWidth={2.25} />
+              </ActionIcon>
               {saveTemplateLabel}
             </button>
           </>
@@ -231,10 +278,9 @@ export function ProjectDetailActionsMenu({
               aria-label={activeCopy.menuActionAriaLabel(projectSummary.name)}
               onClick={handleMarkActive}
             >
-              <span
-                className={`${styles.actionsMenuIcon} ${styles.actionsMenuMarkActiveIcon}`}
-                aria-hidden
-              />
+              <ActionIcon tone="active">
+                <LuPlay size={15} strokeWidth={2.25} />
+              </ActionIcon>
               {activeCopy.menuAction}
             </button>
           ) : (
@@ -246,10 +292,9 @@ export function ProjectDetailActionsMenu({
               aria-label={inactiveCopy.menuActionAriaLabel(projectSummary.name)}
               onClick={handleMarkInactive}
             >
-              <span
-                className={`${styles.actionsMenuIcon} ${styles.actionsMenuMarkInactiveIcon}`}
-                aria-hidden
-              />
+              <ActionIcon tone="inactive">
+                <LuBan size={15} strokeWidth={2.25} />
+              </ActionIcon>
               {inactiveCopy.menuAction}
             </button>
           )
@@ -258,12 +303,14 @@ export function ProjectDetailActionsMenu({
           <button
             type="button"
             role="menuitem"
-            className={`${styles.inlineMenuAction} ${styles.actionsMenuItem} ${styles.actionsMenuItemDanger}`}
+            className={`${styles.inlineMenuAction} ${styles.actionsMenuItem}`}
             disabled={menuDisabled}
             aria-label={deleteCopy.actionAriaLabel(projectSummary.name)}
             onClick={handleRequestDelete}
           >
-            <span className={`${styles.actionsMenuIcon} ${styles.actionsMenuDeleteIcon}`} aria-hidden />
+            <ActionIcon tone="delete">
+              <LuTrash2 size={15} strokeWidth={2.25} />
+            </ActionIcon>
             {deleteCopy.action}
           </button>
         ) : null}
