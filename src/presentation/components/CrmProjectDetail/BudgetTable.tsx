@@ -23,9 +23,11 @@ import { BudgetCategoryFilterMenu } from './BudgetCategoryFilterMenu';
 import { BudgetDraftRow } from './BudgetDraftRow';
 import { BudgetInlineRow } from './BudgetInlineRow';
 import { BudgetTableHeaderRow } from './BudgetTableHeaderRow';
+import { BudgetTableBulkActions } from './BudgetTableBulkActions';
 import { DetailPanelHeader } from './DetailPanelHeader';
 import { DetailPanelHeaderActions } from './DetailPanelHeaderActions';
 import { DetailPanelHeaderButton } from './DetailPanelHeaderButton';
+import { FolderTabToolbarPortal } from '@/presentation/features/crmProjectDetail/folderTabToolbarContext';
 import { CrmDirectUploadStatusHost } from './CrmDirectUploadStatus';
 import { DetailPanelSectionRefresh } from './DetailPanelSectionRefresh';
 import { DetailPanelSectionSearch } from './DetailPanelSectionSearch';
@@ -35,13 +37,79 @@ import {
   BudgetMobileSearchToolsRow,
 } from './MobileBulkSelectionChrome';
 import { useDashboardMobileLayout } from '@/presentation/features/crmProjects/useDashboardMobileLayout';
+import { BulkSelectCheckbox } from '@/presentation/components/BulkSelection/BulkSelectCheckbox';
+import { useBudgetEntryRowSelection } from '@/presentation/features/crmProjectDetail/budgetEntryRowSelectionContext';
 import styles from './ProjectDetail.module.css';
 
 export type BudgetTableProps = {
   onError: (message: string) => void;
+  /** When true, header actions render in the shared folder tab bar. */
+  embeddedInFolderTabs?: boolean;
 };
 
-export function BudgetTable({ onError }: BudgetTableProps): ReactElement {
+function BudgetHeaderSelectCell(): ReactElement {
+  const rowSelection = useBudgetEntryRowSelection();
+  if (rowSelection == null) return <span aria-hidden />;
+  return (
+    <BulkSelectCheckbox
+      checked={rowSelection.allVisibleSelected}
+      indeterminate={rowSelection.someVisibleSelected}
+      ariaLabel={rowSelection.selectAllAriaLabel}
+      onChange={() => rowSelection.onToggleAllVisible()}
+    />
+  );
+}
+
+function BudgetHeaderPrimaryCell({
+  label,
+  collapsed,
+  onToggle,
+  itemCount,
+}: {
+  readonly label: string;
+  readonly collapsed: boolean;
+  readonly onToggle: () => void;
+  readonly itemCount: number;
+}): ReactElement {
+  const rowSelection = useBudgetEntryRowSelection();
+  const showBulkActions = rowSelection != null && rowSelection.selectedCount > 0;
+  const itemCountLabel = itemCount === 1 ? '1 item' : `${itemCount} items`;
+  return (
+    <span className={styles.stageGroupPrimary}>
+      <span className={styles.stageGroupPrimaryCluster}>
+        <button
+          type="button"
+          className={styles.stageGroupHeaderBtn}
+          onClick={onToggle}
+          aria-expanded={!collapsed}
+          aria-label={`${collapsed ? 'Expand' : 'Collapse'} ${label}`}
+        >
+          <span className={styles.stageGroupTitle}>
+            <span className={styles.stageGroupName}>{label}</span>
+            {!showBulkActions ? <span className={styles.stageGroupCount}>{itemCountLabel}</span> : null}
+            <span className={styles.stageGroupChevronWrap} aria-hidden>
+              <span className={collapsed ? styles.stageGroupChevron : styles.stageGroupChevron_expanded} />
+            </span>
+          </span>
+        </button>
+        {showBulkActions ? (
+          <span
+            className={styles.stageGroupHeaderBulk}
+            onClick={(event) => event.stopPropagation()}
+            onKeyDown={(event) => event.stopPropagation()}
+          >
+            <BudgetTableBulkActions />
+          </span>
+        ) : null}
+      </span>
+    </span>
+  );
+}
+
+export function BudgetTable({
+  onError,
+  embeddedInFolderTabs = false,
+}: BudgetTableProps): ReactElement {
   const {
     project,
     handleBudgetEntryPatched,
@@ -61,6 +129,7 @@ export function BudgetTable({ onError }: BudgetTableProps): ReactElement {
   const [searchQuery, setSearchQuery] = useState('');
   const [draftOpen, setDraftOpen] = useState(false);
   const [deleteConfirmEntry, setDeleteConfirmEntry] = useState<CrmBudgetEntry | null>(null);
+  const [tableCollapsed, setTableCollapsed] = useState(false);
   const isMobileLayout = useDashboardMobileLayout();
   const filtersActive = isBudgetListFiltersActive(filters);
 
@@ -173,6 +242,28 @@ export function BudgetTable({ onError }: BudgetTableProps): ReactElement {
     />
   );
 
+  const filterGhost = (
+    <BudgetCategoryFilterMenu
+      filters={filters}
+      onChange={setFilters}
+      triggerVariant="ghost"
+      menuAlign="end"
+    />
+  );
+
+  const desktopAddButton = canCreate ? (
+    <DetailPanelHeaderButton
+      variant="add"
+      disabled={draftOpen}
+      title={b.addItem}
+      onClick={() => {
+        guardProjectEdit(() => {
+          setDraftOpen(true);
+        });
+      }}
+    />
+  ) : null;
+
   const handleConfirmDelete = async () => {
     if (!deleteConfirmEntry) return;
     const entryId = deleteConfirmEntry.id;
@@ -192,9 +283,20 @@ export function BudgetTable({ onError }: BudgetTableProps): ReactElement {
     >
       <section
         className={`${styles.paymentsPanel} ${styles.budgetTablePanel}`}
-        aria-labelledby="budget-table-heading"
+        aria-label={embeddedInFolderTabs ? b.tableTitle : undefined}
+        aria-labelledby={embeddedInFolderTabs ? undefined : 'budget-table-heading'}
       >
-        {isMobileLayout ? (
+        {embeddedInFolderTabs ? (
+          <FolderTabToolbarPortal>
+            <DetailPanelHeaderActions>
+              {filterGhost}
+              {searchInput}
+              {refreshButton}
+              {desktopAddButton}
+              <CrmDirectUploadStatusHost />
+            </DetailPanelHeaderActions>
+          </FolderTabToolbarPortal>
+        ) : isMobileLayout ? (
           <div
             className={[styles.detailPanelHeader, styles.detailPanelHeader_mobile]
               .filter(Boolean)
@@ -283,68 +385,74 @@ export function BudgetTable({ onError }: BudgetTableProps): ReactElement {
             </article>
           </div>
         ) : (
-          <div className={styles.detailPanelTableCard}>
-            <div className={styles.paymentsList}>
-              <BudgetTableHeaderRow leadingFilter={filterCaret} />
-              {draftOpen ? (
-                <BudgetDraftRow onSave={handleDraftSave} onCancel={() => setDraftOpen(false)} />
-              ) : canCreate ? (
-                <button
-                  type="button"
-                  className={`${styles.budgetAddPromptRow} ${styles.budgetGrid} ${styles.budgetDraftSwap}`}
-                  onClick={() => {
-                    guardProjectEdit(() => {
-                      setDraftOpen(true);
-                    });
-                  }}
-                >
-                  <span className={styles.budgetAddPromptLabel}>
-                    <span className={styles.budgetAddPromptPlusBtn} aria-hidden>
-                      +
+          <div className={`${styles.stageGroup_unifiedTableSection} ${styles.budgetStageTableSection}`}>
+            <div
+              className={`${styles.stageGroupTable} ${styles.stageGroup_accentBorder} ${styles.budgetStageTable}`}
+              style={{ ['--stage-accent' as string]: '#d97706' }}
+            >
+              <BudgetTableHeaderRow
+                leadingFilter={embeddedInFolderTabs ? null : filterCaret}
+                showStatusRefresh={false}
+                rowClassName={styles.stageGroupUnifiedHeaderRow}
+                stageHeaderSelect={<BudgetHeaderSelectCell />}
+                stageHeaderPrimary={
+                  <BudgetHeaderPrimaryCell
+                    label={b.tableTitle}
+                    collapsed={tableCollapsed}
+                    onToggle={() => setTableCollapsed((current) => !current)}
+                    itemCount={filtered.length}
+                  />
+                }
+              />
+              {!tableCollapsed ? (
+                <>
+                  {draftOpen ? (
+                    <BudgetDraftRow onSave={handleDraftSave} onCancel={() => setDraftOpen(false)} />
+                  ) : null}
+                  {filtered.length === 0 && !draftOpen ? (
+                    <div
+                      className={`${styles.tableRow} ${styles.budgetGrid} ${styles.workflowStageEmptyRow}`}
+                      role="row"
+                    >
+                      <span className={styles.workflowSelectCell} aria-hidden />
+                      <span className={styles.taskTitleCell}>
+                        <span className={styles.workflowStageEmptyMessage}>{b.empty}</span>
+                      </span>
+                    </div>
+                  ) : null}
+                  {filtered.map((entry) => (
+                    <BudgetInlineRow
+                      key={entry.id}
+                      projectSlug={project.summary.slug}
+                      entry={entry}
+                      entryDocuments={project.documents.filter((doc) => doc.budgetEntryId === entry.id)}
+                      onSave={updateEntry}
+                      onError={onError}
+                      onRequestDelete={canDelete ? () => setDeleteConfirmEntry(entry) : undefined}
+                    />
+                  ))}
+                  <div
+                    className={`${styles.tableRow} ${styles.budgetGrid} ${styles.budgetTotalsRow}`}
+                    role="row"
+                  >
+                    <span className={styles.workflowSelectCell} aria-hidden />
+                    <span className={styles.budgetTotalsLabel}>{b.totalsLabel}</span>
+                    <span aria-hidden />
+                    <span className={styles.budgetTotalsValue}>{formatCentsAsUsd(totals.cost)}</span>
+                    <span className={styles.budgetTotalsValue}>{formatCentsAsUsd(totals.budget)}</span>
+                    <span
+                      className={`${styles.budgetTotalsValue} ${
+                        totals.diff >= 0 ? styles.budgetRemainingUnder : styles.budgetRemainingOver
+                      }`}
+                    >
+                      {formatCentsAsUsd(totals.diff)}
                     </span>
-                    {b.addItemRowLabel}
-                  </span>
-                </button>
+                    <span aria-hidden />
+                    <span aria-hidden />
+                    <span className={styles.taskDeleteCell} aria-hidden />
+                  </div>
+                </>
               ) : null}
-              {filtered.length === 0 && !draftOpen ? (
-                <div className={`${styles.tableRow} ${styles.budgetGrid}`} role="row">
-                  <span className={styles.workflowSelectCell} aria-hidden />
-                  <span className={styles.taskTitleCell}>
-                    <span className={styles.workflowStageEmptyMessage}>{b.empty}</span>
-                  </span>
-                </div>
-              ) : null}
-              {filtered.map((entry) => (
-                <BudgetInlineRow
-                  key={entry.id}
-                  projectSlug={project.summary.slug}
-                  entry={entry}
-                  entryDocuments={project.documents.filter((doc) => doc.budgetEntryId === entry.id)}
-                  onSave={updateEntry}
-                  onError={onError}
-                  onRequestDelete={canDelete ? () => setDeleteConfirmEntry(entry) : undefined}
-                />
-              ))}
-              <div
-                className={`${styles.tableRow} ${styles.budgetGrid} ${styles.budgetTotalsRow}`}
-                role="row"
-              >
-                <span className={styles.workflowSelectCell} aria-hidden />
-                <span className={styles.budgetTotalsLabel}>{b.totalsLabel}</span>
-                <span aria-hidden />
-                <span className={styles.budgetTotalsValue}>{formatCentsAsUsd(totals.cost)}</span>
-                <span className={styles.budgetTotalsValue}>{formatCentsAsUsd(totals.budget)}</span>
-                <span
-                  className={`${styles.budgetTotalsValue} ${
-                    totals.diff >= 0 ? styles.budgetRemainingUnder : styles.budgetRemainingOver
-                  }`}
-                >
-                  {formatCentsAsUsd(totals.diff)}
-                </span>
-                <span aria-hidden />
-                <span aria-hidden />
-                <span className={styles.taskDeleteCell} aria-hidden />
-              </div>
             </div>
           </div>
         )}

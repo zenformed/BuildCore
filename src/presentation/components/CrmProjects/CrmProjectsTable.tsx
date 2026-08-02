@@ -70,6 +70,14 @@ export type CrmProjectsTableProps = {
   readonly onRefreshError?: (message: string) => void;
   /** Shown in the primary header instead of refresh when rows are selected. */
   readonly bulkHeaderActions?: ReactNode;
+  /** Apply workflow-stage-like table shell/cell chrome (used in detail tabs). */
+  readonly workflowLikeTableChrome?: boolean;
+  /** Optional inline-header collapse state/toggle (used by detail tab tables). */
+  readonly headerCollapsed?: boolean;
+  readonly onToggleHeaderCollapse?: () => void;
+  readonly showHeaderCollapseToggle?: boolean;
+  /** Optional extra metric appended to the inline header count pill. */
+  readonly inlineHeaderCountSuffix?: string | null;
 };
 
 export function CrmProjectsTable({
@@ -110,6 +118,11 @@ export function CrmProjectsTable({
   onRefresh,
   onRefreshError,
   bulkHeaderActions = null,
+  workflowLikeTableChrome = false,
+  headerCollapsed = false,
+  onToggleHeaderCollapse,
+  showHeaderCollapseToggle = false,
+  inlineHeaderCountSuffix = null,
 }: CrmProjectsTableProps): ReactElement {
   const displayRoots = useMemo(
     () => (enableSubprojectExpansion ? (rootRows ?? []) : (rows ?? [])),
@@ -138,6 +151,11 @@ export function CrmProjectsTable({
     .filter(Boolean)
     .join(' ');
   const projectHeader = projectColumnLabel ?? COLUMNS.project;
+  const inlineHeaderCountLabel = displayRoots.length === 1 ? '1 item' : `${displayRoots.length} items`;
+  const inlineHeaderPillLabel =
+    inlineHeaderCountSuffix != null && inlineHeaderCountSuffix.trim().length > 0
+      ? `${inlineHeaderCountLabel} ${inlineHeaderCountSuffix}`
+      : inlineHeaderCountLabel;
 
   const rowModels = useMemo(() => {
     const resolvedPaymentTasksIndex = paymentTasksIndex ?? new Map<string, never>();
@@ -170,8 +188,15 @@ export function CrmProjectsTable({
     parentById,
   ]);
 
+  const tableWrapClass = [
+    styles.tableWrap,
+    workflowLikeTableChrome ? styles.tableWrap_workflowLikeChrome : '',
+  ]
+    .filter(Boolean)
+    .join(' ');
+
   return (
-    <div className={styles.tableWrap}>
+    <div className={tableWrapClass}>
       <div className={styles.scrollContainer} role="region" aria-label={content.crm.table.regionAriaLabel}>
         <div className={tableInnerClass}>
           <div className={styles.tableGridShell}>
@@ -191,9 +216,72 @@ export function CrmProjectsTable({
               {showInlineChrome ? (
                 <span
                   role="columnheader"
-                  className={styles.gridHeaderPrimary}
+                  className={[
+                    styles.gridHeaderPrimary,
+                    workflowLikeTableChrome ? styles.gridHeaderPrimary_workflowLike : '',
+                  ]
+                    .filter(Boolean)
+                    .join(' ')}
                   aria-label={bulkHeaderActions != null ? undefined : projectHeader}
                 >
+                  {workflowLikeTableChrome ? (
+                    <button
+                      type="button"
+                      className={styles.gridHeaderPrimaryWorkflowButton}
+                      aria-expanded={!headerCollapsed}
+                      aria-label={`${headerCollapsed ? 'Expand' : 'Collapse'} ${projectHeader}`}
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        onToggleHeaderCollapse?.();
+                      }}
+                    >
+                      <span className={styles.gridHeaderPrimaryWorkflowTitle}>
+                        <span className={styles.gridHeaderPrimaryWorkflowName}>{projectHeader}</span>
+                        {bulkHeaderActions == null ? (
+                          <span className={styles.gridHeaderPrimaryWorkflowCount}>
+                            {inlineHeaderPillLabel}
+                          </span>
+                        ) : null}
+                        {showHeaderCollapseToggle ? (
+                          <span className={styles.projectsExpandAllChevronWrap} aria-hidden>
+                            <span
+                              className={
+                                headerCollapsed
+                                  ? styles.projectsExpandAllChevron
+                                  : styles.projectsExpandAllChevron_expanded
+                              }
+                            />
+                          </span>
+                        ) : null}
+                      </span>
+                    </button>
+                  ) : (
+                    <span className={styles.gridHeaderPrimaryLabelWrap}>
+                      <span className={styles.gridHeaderPrimaryLabel}>{projectHeader}</span>
+                      {showHeaderCollapseToggle ? (
+                        <button
+                          type="button"
+                          className={styles.gridHeaderCollapseBtn}
+                          aria-expanded={!headerCollapsed}
+                          aria-label={`${headerCollapsed ? 'Expand' : 'Collapse'} ${projectHeader}`}
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            onToggleHeaderCollapse?.();
+                          }}
+                        >
+                          <span className={styles.projectsExpandAllChevronWrap} aria-hidden>
+                            <span
+                              className={
+                                headerCollapsed
+                                  ? styles.projectsExpandAllChevron
+                                  : styles.projectsExpandAllChevron_expanded
+                              }
+                            />
+                          </span>
+                        </button>
+                      ) : null}
+                    </span>
+                  )}
                   {leadingFilter}
                   {bulkHeaderActions != null ? (
                     bulkHeaderActions
@@ -229,8 +317,12 @@ export function CrmProjectsTable({
                 {COLUMNS.assigned}
               </span>
               {!isMemberRole && showActions ? (
-                <span role="columnheader" className={styles.gridHeaderActions}>
-                  {COLUMNS.actions}
+                <span
+                  role="columnheader"
+                  className={styles.gridHeaderActions}
+                  aria-label={workflowLikeTableChrome ? COLUMNS.actions : undefined}
+                >
+                  {workflowLikeTableChrome ? null : COLUMNS.actions}
                 </span>
               ) : null}
             </div>
@@ -267,6 +359,7 @@ export function CrmProjectsTable({
                     showParentProjectColumn={showParentProjectColumn}
                     parentProjectName={row.parentProjectName}
                     progressTone={progressTone}
+                    showContactIcons={workflowLikeTableChrome}
                   />
                 ))
               )}

@@ -1,6 +1,7 @@
 'use client';
 
-import type { ReactElement, MouseEvent } from 'react';
+import type { ReactElement, MouseEvent, CSSProperties } from 'react';
+import { useMemo } from 'react';
 import type { CrmProjectStageCompletion, CrmWorkflowTask, PipelineStageSlug } from '@/domain/crm';
 import { isStageManuallyCompleted } from '@/domain/crm/projectStageCompletion';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
@@ -13,12 +14,14 @@ import {
 } from '@/presentation/features/crmProjectDetail/workflowTaskGroups';
 import { useWorkflowStageExpanded } from '@/presentation/features/crmProjectDetail/useWorkflowStageExpanded';
 import { BsCheckLg } from 'react-icons/bs';
+import { BulkSelectCheckbox } from '@/presentation/components/BulkSelection/BulkSelectCheckbox';
 import { WorkflowTaskInlineRow } from './WorkflowTaskInlineRow';
 import { WorkflowTaskTableHeaderRow } from './WorkflowTaskTableHeaderRow';
 import { WorkflowTaskTableCustomColumnEmptyCells, resolveWorkflowOpsGridClassName } from './WorkflowTaskTableCustomColumns';
 import { useBuildCoreWorkflowTaskTableColumns } from '@/presentation/providers/BuildCoreWorkflowTaskTableColumnsProvider';
 import { useWorkflowTaskRowSelection } from '@/presentation/features/crmProjectDetail/workflowTaskRowSelectionContext';
 import { useProjectDetailShell } from '@/presentation/features/crmProjectDetail/ProjectDetailShellContext';
+import { WorkflowTableBulkActions } from './WorkflowTableBulkActions';
 import styles from './ProjectDetail.module.css';
 
 export type ManualStageCompletionToggleAction = 'complete' | 'incomplete';
@@ -54,6 +57,8 @@ export type WorkflowStageTaskGroupProps = {
   /** Desktop unified table: column headers render once at the parent; stages are flat sections. */
   unifiedDesktopTable?: boolean;
   draftRow?: ReactElement | null;
+  /** Temporary Monday-style left accent color for this stage. */
+  accentColor?: string;
 };
 
 export function WorkflowStageTaskGroup({
@@ -77,6 +82,7 @@ export function WorkflowStageTaskGroup({
   layoutAsStageCard = false,
   unifiedDesktopTable = false,
   draftRow = null,
+  accentColor,
 }: WorkflowStageTaskGroupProps): ReactElement {
   const wf = content.projectDetail.workflow;
   const isMobileLayout = useDashboardMobileLayout();
@@ -93,9 +99,13 @@ export function WorkflowStageTaskGroup({
     unifiedDesktopTable ? styles.stageGroup_unifiedTableSection : styles.stageGroup,
     layoutAsStageCard ? styles.stageGroup_stageCardColumn : '',
     collapsible && !expanded ? styles.stageGroup_collapsed : '',
+    /* Card mode: accent wraps header + body. Table mode: accent stays on the inner table. */
+    showCardLayout && accentColor ? styles.stageGroup_accentBorder : '',
   ]
     .filter(Boolean)
     .join(' ');
+  const tasksAccentClass =
+    accentColor && !showCardLayout ? styles.stageGroup_accentBorder : '';
   const panelId = `workflow-stage-${projectSlug}-${group.collapseKey}`;
   const { gridClassName } = useBuildCoreWorkflowTaskTableColumns();
   const rowSelection = useWorkflowTaskRowSelection();
@@ -107,6 +117,15 @@ export function WorkflowStageTaskGroup({
     : enableCustomColumns
       ? resolveWorkflowOpsGridClassName(true, gridClassName)
       : styles.workflowGrid;
+  const stageTaskIds = useMemo(() => group.tasks.map((task) => task.id), [group.tasks]);
+  const stageAllSelected =
+    showRowSelect &&
+    stageTaskIds.length > 0 &&
+    stageTaskIds.every((id) => rowSelection.selectedIds.has(id));
+  const stageSomeSelected =
+    showRowSelect &&
+    stageTaskIds.some((id) => rowSelection.selectedIds.has(id)) &&
+    !stageAllSelected;
   const stageIsComplete = isWorkflowStageGroupComplete(
     group.stageSlug,
     group.tasks,
@@ -138,6 +157,15 @@ export function WorkflowStageTaskGroup({
     event.stopPropagation();
     if (markStageCompleteBusy || !canToggleManualStageCompletion) return;
     onRequestToggleManualStageCompletion?.(group.stageSlug, manualToggleAction, group.stageLabel);
+  };
+
+  const handleToggleStageSelection = (checked: boolean): void => {
+    if (rowSelection == null || stageTaskIds.length === 0) return;
+    if (checked) {
+      rowSelection.selectMany(stageTaskIds);
+    } else {
+      rowSelection.deselectMany(stageTaskIds);
+    }
   };
 
   const completeIcon = (
@@ -173,10 +201,36 @@ export function WorkflowStageTaskGroup({
     </span>
   );
 
+  const taskCount = (
+    <span className={styles.stageGroupCount}>
+      {taskCountText} · {completionPercentLabel}
+    </span>
+  );
+
+  const stageSelectControl =
+    unifiedDesktopTable && showRowSelect ? (
+      <span
+        className={styles.stageGroupSelect}
+        onClick={(event) => event.stopPropagation()}
+        onKeyDown={(event) => event.stopPropagation()}
+      >
+        <BulkSelectCheckbox
+          checked={stageAllSelected}
+          indeterminate={stageSomeSelected}
+          disabled={stageTaskIds.length === 0}
+          ariaLabel={`${rowSelection.selectAllAriaLabel}: ${group.stageLabel}`}
+          onChange={handleToggleStageSelection}
+        />
+      </span>
+    ) : null;
+
+  const hasStageSelection = stageAllSelected || stageSomeSelected;
+
   const stageTitle = (
     <span className={styles.stageGroupTitle}>
       <span className={styles.stageGroupName}>{group.stageLabel}</span>
-      {collapsible ? (
+      {!hasStageSelection ? taskCount : null}
+      {!hasStageSelection && collapsible && !showCardLayout ? (
         <span className={styles.stageGroupChevronWrap} aria-hidden>
           <span className={expanded ? styles.stageGroupChevron_expanded : styles.stageGroupChevron} />
         </span>
@@ -184,46 +238,38 @@ export function WorkflowStageTaskGroup({
     </span>
   );
 
-  const taskCount = (
-    <span className={styles.stageGroupCount}>
-      {taskCountText} · {completionPercentLabel}
+  const stagePrimaryControl = (
+    <span className={styles.stageGroupPrimary}>
+      <span className={styles.stageGroupPrimaryCluster}>
+        {collapsible ? (
+          <button
+            type="button"
+            className={styles.stageGroupHeaderBtn}
+            onClick={persisted.toggle}
+            aria-expanded={expanded}
+            aria-controls={panelId}
+            aria-label={`${expanded ? wf.collapseStageTasks : wf.expandStageTasks}: ${group.stageLabel}`}
+          >
+            {stageTitle}
+          </button>
+        ) : (
+          <div className={styles.stageGroupHeaderStatic}>{stageTitle}</div>
+        )}
+        {hasStageSelection ? (
+          <span
+            className={styles.stageGroupHeaderBulk}
+            onClick={(event) => event.stopPropagation()}
+            onKeyDown={(event) => event.stopPropagation()}
+          >
+            <WorkflowTableBulkActions />
+          </span>
+        ) : null}
+      </span>
     </span>
   );
 
-  const table = showCardLayout ? (
-    <div id={panelId} className={styles.stageGroupMobileTaskList}>
-      {group.tasks.map((task) => (
-        <WorkflowTaskInlineRow
-          key={task.id}
-          variant={taskRowVariant}
-          projectSlug={resolveTaskProjectSlug?.(task.id) ?? projectSlug}
-          task={task}
-          docCount={docCounts.get(task.id) ?? 0}
-          taskDocuments={projectDocuments.filter((doc) => doc.workflowTaskId === task.id)}
-          showAmountColumn={group.isPaymentsGroup}
-          enableCustomColumns={enableCustomColumns}
-          contextLine={taskContextLineById?.get(task.id) ?? null}
-          isApiSource={isApiSource}
-          onUpdated={onTaskUpdated}
-          onTaskError={onTaskError}
-          onRequestArchiveTask={onRequestArchiveTask}
-        />
-      ))}
-      {showEmptyRow ? (
-        <p className={styles.workflowStageMobileEmpty}>{wf.stageNoTasks}</p>
-      ) : null}
-      {draftRow}
-    </div>
-  ) : (
-    <div id={panelId} className={styles.stageGroupTable}>
-      {!unifiedDesktopTable ? (
-        <WorkflowTaskTableHeaderRow
-          showAmount={group.isPaymentsGroup}
-          enableCustomColumns={enableCustomColumns}
-          showStatusRefresh={!group.isPaymentsGroup}
-          gridClassName={enableCustomColumns ? gridClass : undefined}
-        />
-      ) : null}
+  const renderTaskRows = (): ReactElement => (
+    <>
       {group.tasks.map((task) => (
         <WorkflowTaskInlineRow
           key={task.id}
@@ -265,43 +311,108 @@ export function WorkflowStageTaskGroup({
               <span className={styles.workflowStageEmptyCell} aria-hidden />
             </>
           ) : null}
+          {/* Docs | Assigned | Due | Actions — must match workflowGrid column count (no extra cell or the row wraps). */}
           <span className={styles.workflowStageEmptyCell} aria-hidden />
           <span className={styles.workflowStageEmptyCell} aria-hidden />
           <span className={styles.workflowStageEmptyCell} aria-hidden />
-          <span className={styles.workflowStageEmptyCell} aria-hidden />
-          <span aria-hidden />
+          <span className={styles.taskDeleteCell} aria-hidden />
         </div>
       ) : null}
       {draftRow}
+    </>
+  );
+
+  const legacyHeader = (
+    <div className={styles.stageGroupHeaderRow}>
+      {completeIconControl}
+      {collapsible ? (
+        <button
+          type="button"
+          className={styles.stageGroupHeaderBtn}
+          onClick={persisted.toggle}
+          aria-expanded={expanded}
+          aria-controls={panelId}
+          aria-label={`${expanded ? wf.collapseStageTasks : wf.expandStageTasks}: ${group.stageLabel}`}
+        >
+          {stageTitle}
+        </button>
+      ) : (
+        <div className={styles.stageGroupHeaderStatic}>{stageTitle}</div>
+      )}
+    </div>
+  );
+
+  const table = showCardLayout ? (
+    <div
+      id={panelId}
+      className={[styles.stageGroupMobileTaskList, tasksAccentClass].filter(Boolean).join(' ')}
+    >
+      {group.tasks.map((task) => (
+        <WorkflowTaskInlineRow
+          key={task.id}
+          variant={taskRowVariant}
+          projectSlug={resolveTaskProjectSlug?.(task.id) ?? projectSlug}
+          task={task}
+          docCount={docCounts.get(task.id) ?? 0}
+          taskDocuments={projectDocuments.filter((doc) => doc.workflowTaskId === task.id)}
+          showAmountColumn={group.isPaymentsGroup}
+          enableCustomColumns={enableCustomColumns}
+          contextLine={taskContextLineById?.get(task.id) ?? null}
+          isApiSource={isApiSource}
+          onUpdated={onTaskUpdated}
+          onTaskError={onTaskError}
+          onRequestArchiveTask={onRequestArchiveTask}
+        />
+      ))}
+      {showEmptyRow ? (
+        <p className={styles.workflowStageMobileEmpty}>{wf.stageNoTasks}</p>
+      ) : null}
+      {draftRow}
+    </div>
+  ) : unifiedDesktopTable ? (
+    <div
+      id={panelId}
+      className={[styles.stageGroupTable, tasksAccentClass].filter(Boolean).join(' ')}
+    >
+      {showStageHeader ? (
+        <WorkflowTaskTableHeaderRow
+          showAmount={group.isPaymentsGroup}
+          enableCustomColumns={enableCustomColumns}
+          gridClassName={enableCustomColumns ? gridClass : undefined}
+          rowClassName={styles.stageGroupUnifiedHeaderRow}
+          stageHeaderSelect={showRowSelect ? stageSelectControl : false}
+          stageHeaderPrimary={stagePrimaryControl}
+        />
+      ) : null}
+      {expanded || !showStageHeader ? renderTaskRows() : null}
+    </div>
+  ) : (
+    <div
+      id={panelId}
+      className={[styles.stageGroupTable, tasksAccentClass].filter(Boolean).join(' ')}
+    >
+      <WorkflowTaskTableHeaderRow
+        showAmount={group.isPaymentsGroup}
+        enableCustomColumns={enableCustomColumns}
+        showStatusRefresh={!group.isPaymentsGroup}
+        gridClassName={enableCustomColumns ? gridClass : undefined}
+      />
+      {renderTaskRows()}
     </div>
   );
 
   return (
-    <section className={groupClass} aria-label={group.stageLabel}>
-      {showStageHeader ? (
-        <div className={styles.stageGroupHeaderRow}>
-          {completeIconControl}
-          {collapsible ? (
-            <button
-              type="button"
-              className={styles.stageGroupHeaderBtn}
-              onClick={persisted.toggle}
-              aria-expanded={expanded}
-              aria-controls={panelId}
-              aria-label={`${expanded ? wf.collapseStageTasks : wf.expandStageTasks}: ${group.stageLabel}`}
-            >
-              {stageTitle}
-              {taskCount}
-            </button>
-          ) : (
-            <div className={styles.stageGroupHeaderStatic}>
-              {stageTitle}
-              {taskCount}
-            </div>
-          )}
-        </div>
-      ) : null}
-      {expanded || !showStageHeader ? table : null}
+    <section
+      className={groupClass}
+      aria-label={group.stageLabel}
+      style={
+        accentColor
+          ? ({ ['--stage-accent' as string]: accentColor } as CSSProperties)
+          : undefined
+      }
+    >
+      {!unifiedDesktopTable && showStageHeader ? legacyHeader : null}
+      {expanded || !showStageHeader || unifiedDesktopTable ? table : null}
     </section>
   );
 }

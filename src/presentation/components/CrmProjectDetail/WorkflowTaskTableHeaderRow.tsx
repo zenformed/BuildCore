@@ -35,6 +35,17 @@ export type WorkflowTaskTableHeaderRowProps = {
   readonly gridClassName?: string;
   /** Ops/payments: select | unlabeled primary (status+task; refresh ↔ bulk). */
   readonly showStatusRefresh?: boolean;
+  /**
+   * When true with showStatusRefresh false, still emit select + primary tracks so the
+   * ops grid aligns with task rows (stage header owns the real select/refresh controls).
+   */
+  readonly showSelectionColumnSpacers?: boolean;
+  /**
+   * Stage header mode: select + primary cells come from the stage (name/count/chevron),
+   * remaining cells are the usual column labels on the same row.
+   */
+  readonly stageHeaderSelect?: ReactNode | false;
+  readonly stageHeaderPrimary?: ReactNode;
   /** Gmail-style filter caret shown between select and refresh/bulk actions. */
   readonly leadingFilter?: ReactNode;
   /** Override table-header refresh (e.g. member parent+child rollup). */
@@ -51,6 +62,9 @@ export function WorkflowTaskTableHeaderRow({
   rowClassName,
   gridClassName,
   showStatusRefresh = false,
+  showSelectionColumnSpacers = false,
+  stageHeaderSelect = null,
+  stageHeaderPrimary = null,
   leadingFilter = null,
   onRefreshTasks,
 }: WorkflowTaskTableHeaderRowProps): ReactElement {
@@ -58,8 +72,13 @@ export function WorkflowTaskTableHeaderRow({
   const rowSelection = useWorkflowTaskRowSelection();
   const { refreshWorkflowTasks, setToast, isMemberRole } = useProjectDetailShell();
   const handleRefresh = onRefreshTasks ?? refreshWorkflowTasks;
-  const showSelectionChrome = showStatusRefresh;
+  const isStageHeaderRow = stageHeaderPrimary != null;
+  const showStageSelectColumn = isStageHeaderRow && stageHeaderSelect !== false;
+  const showSelectionChrome = showStatusRefresh && !isStageHeaderRow;
   const showBulkSelect = rowSelection != null && showSelectionChrome && !isMemberRole;
+  const showSelectSpacer =
+    showSelectionColumnSpacers && !showBulkSelect && !isStageHeaderRow && rowSelection != null && !isMemberRole;
+  const showPrimarySpacer = showSelectionColumnSpacers && !showSelectionChrome && !isStageHeaderRow;
   const hasSelection = (rowSelection?.selectedCount ?? 0) > 0;
   const bulk = rowSelection?.bulkActions;
   const showBulkChrome =
@@ -88,7 +107,11 @@ export function WorkflowTaskTableHeaderRow({
 
   return (
     <div className={rowClass} role="row">
-      {showBulkSelect ? (
+      {showStageSelectColumn ? (
+        <span role="columnheader" className={styles.workflowSelectHeader}>
+          {stageHeaderSelect}
+        </span>
+      ) : isStageHeaderRow ? null : showBulkSelect ? (
         <span role="columnheader" className={styles.workflowSelectHeader}>
           <BulkSelectCheckbox
             checked={rowSelection.allVisibleSelected}
@@ -97,8 +120,14 @@ export function WorkflowTaskTableHeaderRow({
             onChange={() => rowSelection.onToggleAllVisible()}
           />
         </span>
+      ) : showSelectSpacer ? (
+        <span role="columnheader" className={styles.workflowSelectHeader} aria-hidden />
       ) : null}
-      {showSelectionChrome ? (
+      {isStageHeaderRow ? (
+        <span role="columnheader" className={styles.workflowPrimaryHeader}>
+          {stageHeaderPrimary}
+        </span>
+      ) : showSelectionChrome ? (
         <span
           role="columnheader"
           className={styles.workflowPrimaryHeader}
@@ -114,6 +143,8 @@ export function WorkflowTaskTableHeaderRow({
             />
           )}
         </span>
+      ) : showPrimarySpacer ? (
+        <span role="columnheader" className={styles.workflowPrimaryHeader} aria-hidden />
       ) : (
         <>
           <EditableFieldLabelHeader

@@ -1,4 +1,5 @@
 import type { CrmBudgetCategoryCost } from '@/domain/crm';
+import type { WorkflowTaskStatus } from '@/domain/crm/workflowTask';
 import type { ReportCategoryTotalRow, ReportPieSlice, ReportScope } from '../types';
 
 export type ProjectFinancialSummary = {
@@ -14,6 +15,7 @@ export type ProjectFinancialReportPaymentRow = {
   readonly title: string;
   readonly projectLabel: string | null;
   readonly amountCents: number;
+  readonly status: WorkflowTaskStatus;
   readonly statusLabel: string;
   readonly paidAtLabel: string;
   readonly paidIndicator: 'paid' | 'unpaid';

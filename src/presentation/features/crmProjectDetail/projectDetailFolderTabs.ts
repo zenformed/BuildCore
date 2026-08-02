@@ -1,6 +1,7 @@
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
 
 export type ProjectDetailFolderTabId =
+  | 'subprojects'
   | 'workflow'
   | 'budget'
   | 'payments'
@@ -15,15 +16,20 @@ export type ProjectDetailFolderTabDef = {
 
 export function buildProjectDetailFolderTabs(input: {
   readonly isMemberRole: boolean;
+  /** Parent project overview only — hidden on subprojects. */
+  readonly showSubprojects: boolean;
   readonly paymentIsReady: boolean;
   readonly paymentCanView: boolean;
   readonly budgetIsReady: boolean;
   readonly budgetCanView: boolean;
 }): readonly ProjectDetailFolderTabDef[] {
   const detail = content.projectDetail;
-  const items: ProjectDetailFolderTabDef[] = [
-    { id: 'workflow', label: detail.actions.workflowTasks },
-  ];
+  const items: ProjectDetailFolderTabDef[] = [];
+
+  if (input.showSubprojects) {
+    items.push({ id: 'subprojects', label: detail.subprojects.title });
+  }
+  items.push({ id: 'workflow', label: detail.actions.workflowTasks });
 
   if (input.paymentIsReady && input.paymentCanView) {
     items.push({ id: 'payments', label: detail.payments.title });

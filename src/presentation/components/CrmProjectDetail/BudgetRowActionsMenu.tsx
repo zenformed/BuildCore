@@ -1,7 +1,8 @@
 'use client';
 
-import type { ReactElement } from 'react';
+import type { ReactElement, ReactNode } from 'react';
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { LuPaperclip, LuTrash2 } from 'react-icons/lu';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
 import { WorkflowInlineMenu } from './WorkflowInlineMenu';
 import styles from './ProjectDetail.module.css';
@@ -14,13 +15,38 @@ export type BudgetRowActionsMenuProps = {
   readonly onDelete?: () => void;
 };
 
+type ActionIconTone = 'attachment' | 'delete';
+
 type BudgetRowMenuItem = {
   readonly key: string;
   readonly label: string;
   readonly onSelect: () => void;
   readonly variant?: 'danger';
-  readonly iconClass?: string;
+  readonly tone: ActionIconTone;
+  readonly icon: ReactNode;
 };
+
+const ACTION_ICON_TONE_CLASS: Record<ActionIconTone, string> = {
+  attachment: styles.actionsMenuIconTile_attachment,
+  delete: styles.actionsMenuIconTile_delete,
+};
+
+function ActionIconTile({
+  tone,
+  children,
+}: {
+  readonly tone: ActionIconTone;
+  readonly children: ReactNode;
+}): ReactElement {
+  return (
+    <span
+      className={[styles.actionsMenuIconTile, ACTION_ICON_TONE_CLASS[tone]].join(' ')}
+      aria-hidden
+    >
+      {children}
+    </span>
+  );
+}
 
 export function BudgetRowActionsMenu({
   itemName,
@@ -33,6 +59,7 @@ export function BudgetRowActionsMenu({
   const wf = content.projectDetail.workflow;
   const [open, setOpen] = useState(false);
   const anchorRef = useRef<HTMLButtonElement>(null);
+  const iconProps = { size: 15, strokeWidth: 2.25 } as const;
 
   const menuItems = useMemo((): readonly BudgetRowMenuItem[] => {
     const items: BudgetRowMenuItem[] = [];
@@ -41,7 +68,8 @@ export function BudgetRowActionsMenu({
         key: 'send-attachment',
         label: wf.sendAttachment,
         onSelect: onSendAttachment,
-        iconClass: styles.actionsMenuAttachmentIcon,
+        tone: 'attachment',
+        icon: <LuPaperclip {...iconProps} />,
       });
     }
     if (onDelete) {
@@ -50,7 +78,8 @@ export function BudgetRowActionsMenu({
         label: b.deleteItem,
         onSelect: onDelete,
         variant: 'danger',
-        iconClass: styles.actionsMenuDeleteIcon,
+        tone: 'delete',
+        icon: <LuTrash2 {...iconProps} />,
       });
     }
     return items;
@@ -118,9 +147,7 @@ export function BudgetRowActionsMenu({
               item.onSelect();
             }}
           >
-            {item.iconClass ? (
-              <span className={`${styles.actionsMenuIcon} ${item.iconClass}`} aria-hidden />
-            ) : null}
+            <ActionIconTile tone={item.tone}>{item.icon}</ActionIconTile>
             {item.label}
           </button>
         ))}

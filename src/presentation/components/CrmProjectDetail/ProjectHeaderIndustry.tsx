@@ -28,6 +28,7 @@ export function ProjectHeaderIndustry({
   const [editing, setEditing] = useState(false);
   const [draftIndustry, setDraftIndustry] = useState(industry);
   const [draftCustomIndustry, setDraftCustomIndustry] = useState(customIndustry ?? '');
+  const rootRef = useRef<HTMLDivElement>(null);
   const selectRef = useRef<HTMLSelectElement>(null);
   const customInputRef = useRef<HTMLInputElement>(null);
 
@@ -42,6 +43,23 @@ export function ProjectHeaderIndustry({
     if (editing) {
       selectRef.current?.focus();
     }
+  }, [editing]);
+
+  useEffect(() => {
+    if (editing && draftIndustry === 'other') {
+      customInputRef.current?.focus();
+    }
+  }, [draftIndustry, editing]);
+
+  useEffect(() => {
+    if (!editing) return;
+    const handlePointerDown = (event: MouseEvent) => {
+      if (rootRef.current == null) return;
+      if (rootRef.current.contains(event.target as Node)) return;
+      setEditing(false);
+    };
+    window.addEventListener('mousedown', handlePointerDown);
+    return () => window.removeEventListener('mousedown', handlePointerDown);
   }, [editing]);
 
   const commitChange = useCallback(
@@ -72,76 +90,74 @@ export function ProjectHeaderIndustry({
         return;
       }
       setDraftCustomIndustry('');
-      customInputRef.current?.focus();
     },
     [commitChange]
   );
 
-  if (editing) {
-    return (
-      <div className={`${styles.subtitle} ${styles.headerTradeSubtitle} ${styles.headerIndustryEdit}`}>
-        <select
-          ref={selectRef}
-          className={styles.headerTradeSelect}
-          value={draftIndustry}
-          disabled={isSaving}
-          aria-label={fields.industry}
-          onChange={(e) => onSelectChange(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === 'Escape') {
-              e.preventDefault();
-              setEditing(false);
-            }
-          }}
-        >
-          {CRM_INDUSTRY_OPTIONS.map((option) => (
-            <option key={option.value} value={option.value}>
-              {option.label}
-            </option>
-          ))}
-        </select>
-        {draftIndustry === 'other' ? (
-          <input
-            ref={customInputRef}
-            className={styles.headerIndustryCustomInput}
-            value={draftCustomIndustry}
+  return (
+    <div ref={rootRef} className={`${styles.subtitle} ${styles.headerTradeSubtitle} ${styles.headerIndustryEditor}`}>
+      <button
+        type="button"
+        className={`${styles.headerTradeBtn}${editing ? ` ${styles.headerTradeBtn_active}` : ''}`}
+        disabled={isSaving}
+        aria-expanded={editing}
+        aria-haspopup="listbox"
+        onClick={() => setEditing((open) => !open)}
+      >
+        {displayLabel}
+      </button>
+      {editing ? (
+        <div className={styles.headerIndustryMenu}>
+          <select
+            ref={selectRef}
+            className={styles.headerTradeSelect}
+            value={draftIndustry}
             disabled={isSaving}
-            aria-label={fields.customIndustry}
-            placeholder={fields.customIndustry}
-            onChange={(e) => setDraftCustomIndustry(e.target.value)}
-            onBlur={() => {
-              if (draftCustomIndustry.trim()) {
-                void commitChange('other', draftCustomIndustry);
-              }
-            }}
+            aria-label={fields.industry}
+            onChange={(e) => onSelectChange(e.target.value)}
             onKeyDown={(e) => {
-              if (e.key === 'Enter') {
-                e.preventDefault();
-                if (draftCustomIndustry.trim()) {
-                  void commitChange('other', draftCustomIndustry);
-                }
-              }
               if (e.key === 'Escape') {
                 e.preventDefault();
                 setEditing(false);
               }
             }}
-          />
-        ) : null}
-      </div>
-    );
-  }
-
-  return (
-    <p className={`${styles.subtitle} ${styles.headerTradeSubtitle}`}>
-      <button
-        type="button"
-        className={styles.headerTradeBtn}
-        disabled={isSaving}
-        onClick={() => setEditing(true)}
-      >
-        {displayLabel}
-      </button>
-    </p>
+          >
+            {CRM_INDUSTRY_OPTIONS.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+          {draftIndustry === 'other' ? (
+            <input
+              ref={customInputRef}
+              className={styles.headerIndustryCustomInput}
+              value={draftCustomIndustry}
+              disabled={isSaving}
+              aria-label={fields.customIndustry}
+              placeholder={fields.customIndustry}
+              onChange={(e) => setDraftCustomIndustry(e.target.value)}
+              onBlur={() => {
+                if (draftCustomIndustry.trim()) {
+                  void commitChange('other', draftCustomIndustry);
+                }
+              }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  if (draftCustomIndustry.trim()) {
+                    void commitChange('other', draftCustomIndustry);
+                  }
+                }
+                if (e.key === 'Escape') {
+                  e.preventDefault();
+                  setEditing(false);
+                }
+              }}
+            />
+          ) : null}
+        </div>
+      ) : null}
+    </div>
   );
 }

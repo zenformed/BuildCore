@@ -16,7 +16,7 @@ import { ProjectNotesInline } from './ProjectNotesInline';
 import { useDashboardMobileLayout } from '@/presentation/features/crmProjects/useDashboardMobileLayout';
 import { useProjectDetailShell } from '@/presentation/features/crmProjectDetail/ProjectDetailShellContext';
 import { ProjectSummaryStrip } from './ProjectSummaryStrip';
-import { StageProgressBar } from './StageProgressBar';
+import { ProjectDetailOverviewHeader } from './ProjectDetailOverviewHeader';
 import styles from './ProjectDetail.module.css';
 
 export type ProjectDetailContextBlockProps = {
@@ -103,6 +103,7 @@ export function ProjectDetailContextBlock({
           />
         )
       }
+      desktopSummaryContent={isMobileLayout ? undefined : null}
     />
   );
 
@@ -145,12 +146,23 @@ export function ProjectDetailContextBlock({
   return (
     <div className={styles.detailTop}>
       {header}
-      {summaryStrip}
-      {notes}
-      {isMobileLayout || isMemberRole ? null : (
-        <StageProgressBar
-          workflowTasks={project.workflowTasks}
-          manualStageCompletions={project.manualStageCompletions}
+      {isMobileLayout ? (
+        <>
+          {summaryStrip}
+          {notes}
+        </>
+      ) : (
+        <ProjectDetailOverviewHeader
+          project={project}
+          parentProject={parentProject}
+          isApiSource={isApiSource}
+          isMemberRole={isMemberRole}
+          readOnly={readOnly}
+          savingField={savingField}
+          patchField={patchField}
+          patchIndustry={patchIndustry}
+          onPrimaryPhotoUpdated={onPrimaryPhotoUpdated}
+          onPrimaryPhotoError={onPrimaryPhotoError}
         />
       )}
     </div>

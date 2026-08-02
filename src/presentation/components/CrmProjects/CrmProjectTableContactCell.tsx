@@ -1,6 +1,6 @@
 'use client';
 
-import type { MouseEvent, ReactElement, Ref } from 'react';
+import type { MouseEvent, ReactElement, ReactNode, Ref } from 'react';
 import { nonEmptyContactValues } from '@/domain/crm/contactMultiValue';
 import { useDashboardMobileLayout } from '@/presentation/features/crmProjects/useDashboardMobileLayout';
 import {
@@ -18,6 +18,9 @@ export type CrmProjectTableContactCellProps = {
   readonly getCopyValue: (value: string) => string;
   readonly onCopied?: (message: string) => void;
   readonly title?: string;
+  readonly leadingIcon?: ReactNode;
+  readonly href?: string | null;
+  readonly getRowHref?: (value: string) => string | null;
 };
 
 export function CrmProjectTableContactCell({
@@ -28,6 +31,9 @@ export function CrmProjectTableContactCell({
   getCopyValue,
   onCopied,
   title,
+  leadingIcon = null,
+  href = null,
+  getRowHref,
 }: CrmProjectTableContactCellProps): ReactElement {
   const isMobileLayout = useDashboardMobileLayout();
   const popoverValues = nonEmptyContactValues(values);
@@ -41,6 +47,7 @@ export function CrmProjectTableContactCell({
     onCopied: onCopied ?? (() => undefined),
     enabled: hasPopover,
     interactionMode: isMobileLayout ? 'tap' : 'hover',
+    getRowHref,
   });
 
   const displayText = displayValue || '—';
@@ -62,6 +69,7 @@ export function CrmProjectTableContactCell({
         ref={contactPopover.anchorRef as Ref<HTMLDivElement>}
         className={[
           styles.tableContactCell,
+          leadingIcon != null ? styles.tableContactCell_withIcon : '',
           hasPopover && isMobileLayout ? summaryStyles.summaryContactValueSlot_mobile : '',
         ]
           .filter(Boolean)
@@ -69,9 +77,23 @@ export function CrmProjectTableContactCell({
         {...(hasPopover && !isMobileLayout ? contactPopover.anchorHandlers : {})}
         onClick={(event) => event.stopPropagation()}
       >
-        <span className={styles.tableContactCellValue} title={title ?? displayText}>
-          {displayText}
-        </span>
+        {leadingIcon}
+        {href && displayText !== '—' ? (
+          <a
+            className={styles.tableContactCellValueLink}
+            href={href}
+            title={title ?? displayText}
+            onClick={(event) => {
+              event.stopPropagation();
+            }}
+          >
+            {displayText}
+          </a>
+        ) : (
+          <span className={styles.tableContactCellValue} title={title ?? displayText}>
+            {displayText}
+          </span>
+        )}
         {contactPopover.toggleButtonProps ? (
           <button
             type="button"

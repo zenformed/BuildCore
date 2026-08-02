@@ -11,7 +11,7 @@ import {
 import { WorkflowInlineMenu } from './WorkflowInlineMenu';
 import projectStyles from '../CrmProjects/CrmProjects.module.css';
 
-export type DocumentFilterMenuTriggerVariant = 'filter' | 'caret';
+export type DocumentFilterMenuTriggerVariant = 'filter' | 'caret' | 'ghost';
 
 export type DocumentPanelFilterMenuProps = {
   readonly filter: DocumentPanelFilter;
@@ -32,12 +32,19 @@ export function DocumentPanelFilterMenu({
   const anchorRef = useRef<HTMLDivElement>(null);
   const active = filter !== 'all';
   const isCaret = triggerVariant === 'caret';
+  const isGhost = triggerVariant === 'ghost';
   const triggerClass = [
-    isCaret ? projectStyles.projectsFilterCaretBtn : projectStyles.projectsFilterBtn,
+    isCaret
+      ? projectStyles.projectsFilterCaretBtn
+      : isGhost
+        ? projectStyles.projectsFilterBtn_ghost
+        : projectStyles.projectsFilterBtn,
     active
       ? isCaret
         ? projectStyles.projectsFilterCaretBtn_active
-        : projectStyles.projectsFilterBtn_active
+        : isGhost
+          ? projectStyles.projectsFilterBtn_ghostActive
+          : projectStyles.projectsFilterBtn_active
       : '',
   ]
     .filter(Boolean)

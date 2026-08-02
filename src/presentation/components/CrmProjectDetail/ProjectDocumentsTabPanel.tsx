@@ -33,6 +33,7 @@ import { useBuildCoreProjectSectionAccess } from '@/presentation/providers/Build
 import { resolveCrmDocumentDownloadPermissionDomain } from '@/presentation/features/crmProjectDetail/crmDocumentDownloadPermission';
 import { DetailPanelHeader } from './DetailPanelHeader';
 import { DetailPanelHeaderActions } from './DetailPanelHeaderActions';
+import { FolderTabToolbarPortal } from '@/presentation/features/crmProjectDetail/folderTabToolbarContext';
 import { DetailPanelSectionRefresh } from './DetailPanelSectionRefresh';
 import { DetailPanelSectionSearch } from './DetailPanelSectionSearch';
 import { DocumentPanelFilterMenu } from './DocumentPanelFilterMenu';
@@ -52,12 +53,15 @@ export type ProjectDocumentsTabPanelProps = {
   readonly className?: string;
   readonly titleId?: string;
   readonly onError?: (message: string) => void;
+  /** When true, header actions render in the shared folder tab bar. */
+  readonly embeddedInFolderTabs?: boolean;
 };
 
 export function ProjectDocumentsTabPanel({
   className = `${styles.paymentsPanel} ${styles.documentsTabPanel}`,
   titleId = 'project-documents-tab-heading',
   onError,
+  embeddedInFolderTabs = false,
 }: ProjectDocumentsTabPanelProps): ReactElement {
   const {
     project,
@@ -259,6 +263,15 @@ export function ProjectDocumentsTabPanel({
     />
   );
 
+  const filterGhost = (
+    <DocumentPanelFilterMenu
+      filter={filter}
+      onChange={setFilter}
+      triggerVariant="ghost"
+      menuAlign="end"
+    />
+  );
+
   const viewToggle = (
     <DocumentsViewToggleButton viewMode={viewMode} onToggle={handleToggleViewMode} />
   );
@@ -288,13 +301,32 @@ export function ProjectDocumentsTabPanel({
     />
   );
 
+  const listLeadingFilter = embeddedInFolderTabs ? null : filterCaret;
+  const listShowStatusRefresh = !embeddedInFolderTabs;
+
   return (
     <DocumentRowSelectionProvider
       visibleDocumentIds={visibleDocumentIds}
       bulkActions={selectionBulkActions}
     >
-      <section className={className} aria-labelledby={titleId}>
-        {isMobileLayout ? (
+      <section
+        className={className}
+        aria-label={
+          embeddedInFolderTabs ? content.projectDetail.sections.documents : undefined
+        }
+        aria-labelledby={embeddedInFolderTabs ? undefined : titleId}
+      >
+        {embeddedInFolderTabs ? (
+          <FolderTabToolbarPortal>
+            <DetailPanelHeaderActions>
+              {filterGhost}
+              {viewToggle}
+              {searchInput}
+              {refreshButton}
+              {uploadButton}
+            </DetailPanelHeaderActions>
+          </FolderTabToolbarPortal>
+        ) : isMobileLayout ? (
           <div
             className={[styles.detailPanelHeader, styles.detailPanelHeader_mobile]
               .filter(Boolean)
@@ -334,9 +366,10 @@ export function ProjectDocumentsTabPanel({
             ) : null}
             {visibleDocuments.length > 0 && !isMobileLayout ? (
               <DocumentsListHeaderRow
-                leadingFilter={filterCaret}
+                leadingFilter={listLeadingFilter}
                 onRefresh={handleRefresh}
                 onError={handleError}
+                showStatusRefresh={listShowStatusRefresh}
               />
             ) : null}
             <DocumentsGallery
@@ -354,9 +387,10 @@ export function ProjectDocumentsTabPanel({
             project={project}
             filter={filter}
             searchQuery={searchQuery}
-            leadingFilter={filterCaret}
+            leadingFilter={listLeadingFilter}
             onRefresh={handleRefresh}
             onError={handleError}
+            showStatusRefresh={listShowStatusRefresh}
           />
         )}
       </section>

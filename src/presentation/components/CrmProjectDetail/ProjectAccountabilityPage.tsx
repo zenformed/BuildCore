@@ -6,6 +6,7 @@ import { useProjectDetailShell } from '@/presentation/features/crmProjectDetail/
 import { useBuildCorePipelineStages } from '@/presentation/providers/BuildCorePipelineStagesProvider';
 import { filterAccountabilityEntriesBySearch } from '@/presentation/features/crmProjectDetail/projectSectionSearchModel';
 import { useDashboardMobileLayout } from '@/presentation/features/crmProjects/useDashboardMobileLayout';
+import { FolderTabToolbarPortal } from '@/presentation/features/crmProjectDetail/folderTabToolbarContext';
 import { DetailPanelHeader } from './DetailPanelHeader';
 import { DetailPanelHeaderActions } from './DetailPanelHeaderActions';
 import { DetailPanelSectionRefresh } from './DetailPanelSectionRefresh';
@@ -17,13 +18,21 @@ import {
 } from './AccountabilityLogTable';
 import styles from './ProjectDetail.module.css';
 
-export function ProjectAccountabilityContent(): ReactElement {
+export type ProjectAccountabilityContentProps = {
+  /** When true, header actions render in the shared folder tab bar. */
+  readonly embeddedInFolderTabs?: boolean;
+};
+
+export function ProjectAccountabilityContent({
+  embeddedInFolderTabs = false,
+}: ProjectAccountabilityContentProps): ReactElement {
   const { project, onRefresh, setToast } = useProjectDetailShell();
   const acc = content.projectDetail.accountability;
   const { catalogForProject } = useBuildCorePipelineStages();
   const stageCatalog = catalogForProject({ parentProjectId: project.summary.parentProjectId });
   const [searchQuery, setSearchQuery] = useState('');
   const isMobileLayout = useDashboardMobileLayout();
+  const sectionTitle = content.projectDetail.sections.accountability;
   const entries = useMemo(() => {
     const sorted = sortAccountabilityEntries(project.accountabilityLog);
     return filterAccountabilityEntriesBySearch(sorted, searchQuery, stageCatalog);
@@ -40,10 +49,17 @@ export function ProjectAccountabilityContent(): ReactElement {
 
   const refreshButton = (
     <DetailPanelSectionRefresh
-      sectionLabel={content.projectDetail.sections.accountability}
+      sectionLabel={sectionTitle}
       onRefresh={onRefresh}
       onError={(message) => setToast({ kind: 'error', message })}
     />
+  );
+
+  const headerActions = (
+    <DetailPanelHeaderActions>
+      {searchInput}
+      {refreshButton}
+    </DetailPanelHeaderActions>
   );
 
   return (
@@ -51,9 +67,12 @@ export function ProjectAccountabilityContent(): ReactElement {
       className={`${styles.workflowPanel} ${styles.accountabilityPagePanel}${
         isMobileLayout ? ` ${styles.accountabilityPagePanel_mobile}` : ''
       }`}
-      aria-labelledby="project-accountability-heading"
+      aria-label={embeddedInFolderTabs ? sectionTitle : undefined}
+      aria-labelledby={embeddedInFolderTabs ? undefined : 'project-accountability-heading'}
     >
-      {isMobileLayout ? (
+      {embeddedInFolderTabs ? (
+        <FolderTabToolbarPortal>{headerActions}</FolderTabToolbarPortal>
+      ) : isMobileLayout ? (
         <div
           className={[styles.detailPanelHeader, styles.detailPanelHeader_mobile]
             .filter(Boolean)
@@ -62,7 +81,7 @@ export function ProjectAccountabilityContent(): ReactElement {
           <div className={styles.detailPanelHeaderRow}>
             <div className={styles.detailPanelHeaderTitleGroup}>
               <h3 id="project-accountability-heading" className={styles.detailPanelTitle}>
-                {content.projectDetail.sections.accountability}
+                {sectionTitle}
               </h3>
             </div>
           </div>
@@ -72,14 +91,8 @@ export function ProjectAccountabilityContent(): ReactElement {
           </div>
         </div>
       ) : (
-        <DetailPanelHeader
-          title={content.projectDetail.sections.accountability}
-          titleId="project-accountability-heading"
-        >
-          <DetailPanelHeaderActions>
-            {searchInput}
-            {refreshButton}
-          </DetailPanelHeaderActions>
+        <DetailPanelHeader title={sectionTitle} titleId="project-accountability-heading">
+          {headerActions}
         </DetailPanelHeader>
       )}
       {entries.length === 0 ? (

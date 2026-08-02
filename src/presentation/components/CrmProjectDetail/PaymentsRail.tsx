@@ -26,6 +26,7 @@ import { DetailPanelHeaderActions } from './DetailPanelHeaderActions';
 import { DetailPanelHeaderButton } from './DetailPanelHeaderButton';
 import { DetailPanelSectionRefresh } from './DetailPanelSectionRefresh';
 import { DetailPanelSectionSearch } from './DetailPanelSectionSearch';
+import { FolderTabToolbarPortal } from '@/presentation/features/crmProjectDetail/folderTabToolbarContext';
 import { CrmDirectUploadStatusHost } from './CrmDirectUploadStatus';
 import {
   WorkflowMobileBulkSelectAllRow,
@@ -34,13 +35,75 @@ import {
 } from './MobileBulkSelectionChrome';
 import { WorkflowTaskInlineRow } from './WorkflowTaskInlineRow';
 import { WorkflowTaskTableHeaderRow } from './WorkflowTaskTableHeaderRow';
+import { WorkflowTableBulkActions } from './WorkflowTableBulkActions';
+import { BulkSelectCheckbox } from '@/presentation/components/BulkSelection/BulkSelectCheckbox';
 import {
   isMemberCompletedWorkflowTask,
   MemberCompletedTasksSection,
 } from './MemberCompletedTasksSection';
 import { MemberNoActiveTasksRow } from './MemberNoActiveTasksRow';
 import { useBuildCorePaymentTableColumns } from '@/presentation/providers/BuildCorePaymentTableColumnsProvider';
+import { useWorkflowTaskRowSelection } from '@/presentation/features/crmProjectDetail/workflowTaskRowSelectionContext';
 import styles from './ProjectDetail.module.css';
+
+function PaymentsHeaderSelectCell(): ReactElement {
+  const rowSelection = useWorkflowTaskRowSelection();
+  if (rowSelection == null) return <span aria-hidden />;
+  return (
+    <BulkSelectCheckbox
+      checked={rowSelection.allVisibleSelected}
+      indeterminate={rowSelection.someVisibleSelected}
+      ariaLabel={rowSelection.selectAllAriaLabel}
+      onChange={() => rowSelection.onToggleAllVisible()}
+    />
+  );
+}
+
+function PaymentsHeaderPrimaryCell({
+  label,
+  collapsed,
+  onToggle,
+  taskCount,
+}: {
+  readonly label: string;
+  readonly collapsed: boolean;
+  readonly onToggle: () => void;
+  readonly taskCount: number;
+}): ReactElement {
+  const rowSelection = useWorkflowTaskRowSelection();
+  const showBulkActions = rowSelection != null && rowSelection.selectedCount > 0;
+  const paymentTaskCountLabel = taskCount === 1 ? '1 task' : `${taskCount} tasks`;
+  return (
+    <span className={styles.stageGroupPrimary}>
+      <span className={styles.stageGroupPrimaryCluster}>
+        <button
+          type="button"
+          className={styles.stageGroupHeaderBtn}
+          onClick={onToggle}
+          aria-expanded={!collapsed}
+          aria-label={`${collapsed ? 'Expand' : 'Collapse'} ${label}`}
+        >
+          <span className={styles.stageGroupTitle}>
+            <span className={styles.stageGroupName}>{label}</span>
+            {!showBulkActions ? <span className={styles.stageGroupCount}>{paymentTaskCountLabel}</span> : null}
+            <span className={styles.stageGroupChevronWrap} aria-hidden>
+              <span className={collapsed ? styles.stageGroupChevron : styles.stageGroupChevron_expanded} />
+            </span>
+          </span>
+        </button>
+        {showBulkActions ? (
+          <span
+            className={styles.stageGroupHeaderBulk}
+            onClick={(event) => event.stopPropagation()}
+            onKeyDown={(event) => event.stopPropagation()}
+          >
+            <WorkflowTableBulkActions />
+          </span>
+        ) : null}
+      </span>
+    </span>
+  );
+}
 
 export type PaymentsRailProps = {
   project: CrmProjectDetail;
@@ -52,6 +115,8 @@ export type PaymentsRailProps = {
   resolveTaskProjectSlug?: (taskId: string) => string;
   taskContextLineById?: ReadonlyMap<string, string>;
   onRefreshTasks?: () => Promise<void>;
+  /** When true, header actions render in the shared folder tab bar. */
+  embeddedInFolderTabs?: boolean;
 };
 
 export function PaymentsRail({
@@ -64,6 +129,7 @@ export function PaymentsRail({
   resolveTaskProjectSlug,
   taskContextLineById,
   onRefreshTasks,
+  embeddedInFolderTabs = false,
 }: PaymentsRailProps): ReactElement {
   const payments = content.projectDetail.payments;
   const paymentPermissionsCopy = content.teams.paymentPermissions;
@@ -82,6 +148,7 @@ export function PaymentsRail({
   );
   const [searchQuery, setSearchQuery] = useState('');
   const [filters, setFilters] = useState<CrmProjectsListFilters>(EMPTY_CRM_PROJECTS_LIST_FILTERS);
+  const [tableCollapsed, setTableCollapsed] = useState(false);
   const filtersActive = isCrmProjectsListFiltersActive(filters);
   const assigneeFilterOptions = useMemo(
     () =>
@@ -162,6 +229,16 @@ export function PaymentsRail({
     />
   );
 
+  const statusFilterGhost = (
+    <CrmProjectsFilterMenu
+      filters={filters}
+      onChange={setFilters}
+      sections={['status', 'assigned', 'documentsRequired']}
+      assigneeFilterOptions={assigneeFilterOptions}
+      triggerVariant="ghost"
+    />
+  );
+
   const searchInput = (
     <DetailPanelSectionSearch
       value={searchQuery}
@@ -238,10 +315,19 @@ export function PaymentsRail({
       context="payments"
       showAmount
       enablePaymentCustomColumns
-      showStatusRefresh
-      leadingFilter={statusFilterCaret}
+      showStatusRefresh={false}
+      stageHeaderSelect={isMemberRole ? false : <PaymentsHeaderSelectCell />}
+      stageHeaderPrimary={
+        <PaymentsHeaderPrimaryCell
+          label={paymentsPanelTitle}
+          collapsed={tableCollapsed}
+          onToggle={() => setTableCollapsed((current) => !current)}
+          taskCount={activeMilestones.length}
+        />
+      }
+      leadingFilter={embeddedInFolderTabs ? null : statusFilterCaret}
       onRefreshTasks={onRefreshTasks}
-      rowClassName={styles.paymentsTableHeader}
+      rowClassName={`${styles.paymentsTableHeader} ${styles.stageGroupUnifiedHeaderRow}`}
       gridClassName={styles.paymentsAlignedGrid}
       trailingHeaders={
         <>
@@ -287,9 +373,19 @@ export function PaymentsRail({
     >
       <section
         className={`${styles.paymentsPanel} ${styles.workflowPanelFull}`}
-        aria-labelledby="payments-rail-heading"
+        aria-label={embeddedInFolderTabs ? paymentsPanelTitle : undefined}
+        aria-labelledby={embeddedInFolderTabs ? undefined : 'payments-rail-heading'}
       >
-        {isMobileLayout ? (
+        {embeddedInFolderTabs ? (
+          <FolderTabToolbarPortal>
+            <DetailPanelHeaderActions>
+              {statusFilterGhost}
+              {searchInput}
+              {refreshButton}
+              {addButton}
+            </DetailPanelHeaderActions>
+          </FolderTabToolbarPortal>
+        ) : isMobileLayout ? (
           <div
             className={[styles.detailPanelHeader, styles.detailPanelHeader_mobile]
               .filter(Boolean)
@@ -339,20 +435,20 @@ export function PaymentsRail({
           <>
             <div className={`${styles.paymentsMemberUnifiedTable} ${paymentsUnifiedShellClass}`}>
               {paymentTableHeader}
-              <div className={styles.stageGroup_unifiedTableSection}>
-                <div className={styles.stageGroupTable}>{paymentTableRows}</div>
-              </div>
+              {!tableCollapsed ? (
+                <div className={styles.stageGroup_unifiedTableSection}>
+                  <div className={styles.stageGroupTable}>{paymentTableRows}</div>
+                </div>
+              ) : null}
             </div>
             {memberCompletedSection}
           </>
         ) : (
           <>
-            <div className={styles.detailPanelTableCard}>
-              <div className={styles.paymentsTableScroll}>
-                <div className={paymentsUnifiedShellClass}>
-                  {paymentTableHeader}
-                  {paymentTableRows}
-                </div>
+            <div className={styles.paymentsTableScroll}>
+              <div className={paymentsUnifiedShellClass}>
+                {paymentTableHeader}
+                {!tableCollapsed ? paymentTableRows : null}
               </div>
             </div>
             {memberCompletedSection}

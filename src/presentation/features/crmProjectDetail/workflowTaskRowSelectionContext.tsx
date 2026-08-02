@@ -28,6 +28,8 @@ export type WorkflowTaskRowSelectionBulkActions = {
 export type WorkflowTaskRowSelectionContextValue = BulkSelectionBindings & {
   readonly selectedCount: number;
   readonly clearSelection: () => void;
+  readonly selectMany: (ids: readonly string[]) => void;
+  readonly deselectMany: (ids: readonly string[]) => void;
   readonly bulkActions: WorkflowTaskRowSelectionBulkActions | null;
 };
 
@@ -62,6 +64,8 @@ export function WorkflowTaskRowSelectionProvider({
           bulk.selectAllVisible(visibleTaskIds);
         }
       },
+      selectMany: bulk.selectMany,
+      deselectMany: bulk.deselectMany,
       selectItemAriaLabel: bulkCopy.selectItemAriaLabel,
       selectAllAriaLabel: bulkCopy.selectAllAriaLabel,
       bulkActions,

@@ -36,6 +36,7 @@ export type ProjectDetailHeaderProps = {
   canEditPrimaryPhoto?: boolean;
   mobileStageWorkflowTasks?: readonly CrmWorkflowTask[];
   mobileStageCompletions?: readonly CrmProjectStageCompletion[];
+  desktopSummaryContent?: ReactNode | null;
 };
 
 export function ProjectDetailHeader({
@@ -53,6 +54,7 @@ export function ProjectDetailHeader({
   canEditPrimaryPhoto = false,
   mobileStageWorkflowTasks,
   mobileStageCompletions,
+  desktopSummaryContent,
 }: ProjectDetailHeaderProps): ReactElement {
   const isComplete = isCrmProjectComplete(project);
   const isInactive = isCrmProjectInactive(project);
@@ -75,6 +77,30 @@ export function ProjectDetailHeader({
       {!isMobileLayout ? assigneeControl : null}
     </div>
   );
+
+  const desktopSummary = desktopSummaryContent === undefined
+    ? (
+        <>
+          <ProjectPrimaryPhoto
+            summary={project}
+            parentSummary={parentProject}
+            canEdit={canEditPrimaryPhoto && project.parentProjectId == null}
+            onPhotoUpdated={(summary) => onPrimaryPhotoUpdated?.(summary)}
+            onError={onPrimaryPhotoError}
+          />
+          <div className={styles.titleBlockContent}>
+            {titleRow}
+            {industryOrTrade}
+            {progress ? <div className={styles.titleBlockProgress}>{progress}</div> : null}
+          </div>
+          {isInactive ? (
+            <div className={styles.titleBlockInactiveBanner}>
+              <ProjectDetailInactiveStatus project={project} variant="banner" />
+            </div>
+          ) : null}
+        </>
+      )
+    : desktopSummaryContent;
 
   return (
     <header
@@ -140,25 +166,11 @@ export function ProjectDetailHeader({
                 pageContext={pageContext}
                 navigation={breadcrumbNavigation}
               />
-              <div className={styles.titleBlockBody}>
-                <ProjectPrimaryPhoto
-                  summary={project}
-                  parentSummary={parentProject}
-                  canEdit={canEditPrimaryPhoto && project.parentProjectId == null}
-                  onPhotoUpdated={(summary) => onPrimaryPhotoUpdated?.(summary)}
-                  onError={onPrimaryPhotoError}
-                />
-                <div className={styles.titleBlockContent}>
-                  {titleRow}
-                  {industryOrTrade}
-                  {progress ? <div className={styles.titleBlockProgress}>{progress}</div> : null}
+              {desktopSummary != null ? (
+                <div className={styles.titleBlockBody}>
+                  {desktopSummary}
                 </div>
-                {isInactive ? (
-                  <div className={styles.titleBlockInactiveBanner}>
-                    <ProjectDetailInactiveStatus project={project} variant="banner" />
-                  </div>
-                ) : null}
-              </div>
+              ) : null}
             </div>
           </div>
           {actions ? (

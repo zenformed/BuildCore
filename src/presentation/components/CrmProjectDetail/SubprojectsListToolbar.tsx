@@ -88,7 +88,6 @@ export function SubprojectsListToolbar({
           className={styles.subprojectsSearch}
         />
       ) : null}
-      {trailingActions}
       {canManage && onImportOpen ? (
         <button
           type="button"
@@ -101,6 +100,7 @@ export function SubprojectsListToolbar({
           {isMobileLayout ? null : importSpreadsheetTitle}
         </button>
       ) : null}
+      {trailingActions}
       {canManage ? (
         <DetailPanelHeaderButton
           variant="add"

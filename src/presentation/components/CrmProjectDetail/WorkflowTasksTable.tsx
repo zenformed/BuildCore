@@ -42,17 +42,17 @@ import {
 import { useBuildCoreWorkflowTaskAccess } from '@/presentation/providers/BuildCoreWorkflowTaskAccessProvider';
 import { useBuildCorePipelineStages } from '@/presentation/providers/BuildCorePipelineStagesProvider';
 import { useDashboardMobileLayout } from '@/presentation/features/crmProjects/useDashboardMobileLayout';
-import { DetailPanelHeader } from './DetailPanelHeader';
 import { DetailPanelHeaderActions } from './DetailPanelHeaderActions';
 import { DetailPanelSectionRefresh } from './DetailPanelSectionRefresh';
 import { DetailPanelSectionSearch } from './DetailPanelSectionSearch';
+import { FolderTabToolbarPortal } from '@/presentation/features/crmProjectDetail/folderTabToolbarContext';
 import {
   WorkflowMobileBulkSelectAllRow,
   WorkflowMobileBulkToolbar,
   WorkflowMobileSearchToolsRow,
 } from './MobileBulkSelectionChrome';
 import { WorkflowStageTaskGroup, type ManualStageCompletionToggleAction } from './WorkflowStageTaskGroup';
-import { WorkflowTasksTableColumnHeader } from './WorkflowTasksTableColumnHeader';
+import { workflowStageAccentColor } from '@/presentation/features/crmProjectDetail/workflowStageAccentColors';
 import { WorkflowTaskStageAddButton } from './WorkflowTaskStageAddButton';
 import { CrmDirectUploadStatusHost } from './CrmDirectUploadStatus';
 import { WorkflowTasksBatchCompleteButton } from './WorkflowTasksBatchCompleteButton';
@@ -95,6 +95,8 @@ export type WorkflowTasksTableProps = {
   taskContextLineById?: ReadonlyMap<string, string>;
   /** Override panel refresh (e.g. parent+child rollup reload). */
   onRefreshTasks?: () => Promise<void>;
+  /** When true, header actions render in the shared folder tab bar. */
+  embeddedInFolderTabs?: boolean;
 };
 
 export function WorkflowTasksTable({
@@ -110,6 +112,7 @@ export function WorkflowTasksTable({
   resolveTaskProjectSlug,
   taskContextLineById,
   onRefreshTasks,
+  embeddedInFolderTabs = false,
 }: WorkflowTasksTableProps): ReactElement {
   const router = useRouter();
   const {
@@ -391,6 +394,7 @@ export function WorkflowTasksTable({
       })}
       sections={['stage', 'priority', 'status', 'assigned', 'documentsRequired']}
       assigneeFilterOptions={assigneeFilterOptions}
+      triggerVariant={embeddedInFolderTabs ? 'ghost' : 'filter'}
     />
   );
   const tableFilterCaret = (
@@ -431,7 +435,7 @@ export function WorkflowTasksTable({
       onError={(message) => setToast({ kind: 'error', message })}
     />
   );
-  const showPanelRefresh = useCardTaskLayout || isMobileLayout;
+  const showPanelRefresh = true;
 
   const addButton = canCreate ? (
     <WorkflowTaskStageAddButton onSelectStage={handleSelectStage} />
@@ -441,7 +445,6 @@ export function WorkflowTasksTable({
     </div>
   );
 
-  const showUnifiedTableAmount = displayGroups.some((group) => group.isPaymentsGroup);
   const visibleTaskIds = useMemo(
     () => displayGroups.flatMap((group) => group.tasks.map((task) => task.id)),
     [displayGroups]
@@ -479,7 +482,7 @@ export function WorkflowTasksTable({
     ]
   );
 
-  const stageGroupElements = displayGroups.map((group) => (
+  const stageGroupElements = displayGroups.map((group, stageIndex) => (
     <WorkflowStageTaskGroup
       key={group.collapseKey}
       projectSlug={project.summary.slug}
@@ -507,6 +510,7 @@ export function WorkflowTasksTable({
       useCardLayout={useCardTaskLayout}
       layoutAsStageCard={isDesktopStageCardMode && groupByStage}
       unifiedDesktopTable={useUnifiedDesktopTable}
+      accentColor={workflowStageAccentColor(stageIndex, displayGroups.length)}
     />
   ));
 
@@ -572,12 +576,6 @@ export function WorkflowTasksTable({
     )
   ) : useUnifiedDesktopTable ? (
     <div className={styles.workflowUnifiedTable}>
-      <WorkflowTasksTableColumnHeader
-        showAmount={showUnifiedTableAmount}
-        showStatusRefresh
-        leadingFilter={tableFilterCaret}
-        onRefreshTasks={onRefreshTasks}
-      />
       <div className={styles.workflowUnifiedTableBody}>
         {memberNoActiveTasksRow ?? stageGroupElements}
         {memberCompletedSection}
@@ -590,43 +588,42 @@ export function WorkflowTasksTable({
     </>
   );
 
+  const headerActions = (
+    <DetailPanelHeaderActions>
+      {filterMenu}
+      {viewToggleButton}
+      {searchInput}
+      {batchCompleteLeading}
+      {showPanelRefresh ? refreshButton : null}
+      {addButton}
+    </DetailPanelHeaderActions>
+  );
+
   const panel = (
-    <section className={panelClass} aria-labelledby="workflow-tasks-heading">
-      {isMobileLayout ? (
+    <section
+      className={panelClass}
+      aria-label={content.projectDetail.sections.workflow}
+    >
+      {embeddedInFolderTabs ? (
+        <FolderTabToolbarPortal>{headerActions}</FolderTabToolbarPortal>
+      ) : isMobileLayout ? (
         <div
           className={[styles.detailPanelHeader, styles.detailPanelHeader_mobile]
             .filter(Boolean)
             .join(' ')}
         >
           <div className={styles.detailPanelHeaderRow}>
-            <div className={styles.detailPanelHeaderTitleGroup}>
-              {batchCompleteLeading}
-              <h3 id="workflow-tasks-heading" className={styles.detailPanelTitle}>
-                {content.projectDetail.sections.workflow}
-              </h3>
-              {tableFilterCaret}
-            </div>
+            <div className={styles.detailPanelHeaderTitleGroup}>{tableFilterCaret}</div>
             <div className={styles.detailPanelHeaderRowActions}>
               {showPanelRefresh ? refreshButton : null}
+              {batchCompleteLeading}
               <WorkflowMobileBulkToolbar />
             </div>
           </div>
           <WorkflowMobileSearchToolsRow searchInput={searchInput} trailingActions={addButton} />
         </div>
       ) : (
-        <DetailPanelHeader
-          title={content.projectDetail.sections.workflow}
-          titleId="workflow-tasks-heading"
-          leading={batchCompleteLeading}
-        >
-          <DetailPanelHeaderActions>
-            {useUnifiedDesktopTable ? null : filterMenu}
-            {viewToggleButton}
-            {searchInput}
-            {showPanelRefresh ? refreshButton : null}
-            {addButton}
-          </DetailPanelHeaderActions>
-        </DetailPanelHeader>
+        <div className={styles.detailPanelHeader}>{headerActions}</div>
       )}
       {isLoading && !isReady ? (
         <div className={isFullLayout ? undefined : styles.workflowPanelGrow}>

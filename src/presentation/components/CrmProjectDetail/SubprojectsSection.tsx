@@ -56,8 +56,10 @@ import {
   useAssignmentIdentityState,
 } from '@/presentation/providers/AssignmentIdentityProvider';
 import { useBuildCoreDashboardContext } from '@/presentation/providers/BuildCoreDashboardProvider';
+import { FolderTabToolbarPortal } from '@/presentation/features/crmProjectDetail/folderTabToolbarContext';
 import { SubprojectsListToolbar } from './SubprojectsListToolbar';
 import { SubprojectsTableBulkActions } from './SubprojectsTableBulkActions';
+import { DetailPanelHeaderActions } from './DetailPanelHeaderActions';
 import { DetailPanelSectionRefresh } from './DetailPanelSectionRefresh';
 import shared from '@/presentation/components/crmShared/crmShared.module.css';
 import styles from './ProjectDetail.module.css';
@@ -65,15 +67,23 @@ import tableStyles from '../CrmProjects/CrmProjects.module.css';
 
 type SubprojectsToast = { kind: 'success' | 'error'; message: string };
 
-export function SubprojectsSection(): ReactElement | null {
+export function SubprojectsSection({
+  embeddedInFolderTabs = false,
+}: {
+  readonly embeddedInFolderTabs?: boolean;
+} = {}): ReactElement | null {
   const { project, subSlug } = useProjectDetailShell();
   if (subSlug != null || project.summary.parentProjectId != null) {
     return null;
   }
-  return <SubprojectsSectionContent />;
+  return <SubprojectsSectionContent embeddedInFolderTabs={embeddedInFolderTabs} />;
 }
 
-function SubprojectsSectionContent(): ReactElement {
+function SubprojectsSectionContent({
+  embeddedInFolderTabs = false,
+}: {
+  readonly embeddedInFolderTabs?: boolean;
+}): ReactElement {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -130,7 +140,8 @@ function SubprojectsSectionContent(): ReactElement {
       setImportOpen(true);
     });
   }, [guardProjectEdit, isMobileLayout]);
-  const [expanded, setExpanded] = useState(true);
+  const [expandedState, setExpanded] = useState(true);
+  const expanded = expandedState;
   const [searchQuery, setSearchQuery] = useState('');
   const [listFilters, setListFilters] = useState(EMPTY_CRM_PROJECTS_LIST_FILTERS);
   const [radiusFilter, setRadiusFilter] = useState<RadiusFilterState>(EMPTY_RADIUS_FILTER);
@@ -532,8 +543,72 @@ function SubprojectsSectionContent(): ReactElement {
     .filter(Boolean)
     .join(' ');
 
+  const filterMenu = (
+    <CrmProjectsFilterMenu
+      filters={listFilters}
+      onChange={setListFilters}
+      stageScopeMode="subproject"
+      radiusFilter={radiusFilter}
+      onRadiusFilterChange={setRadiusFilter}
+      triggerVariant={embeddedInFolderTabs ? 'ghost' : 'caret'}
+      menuAlign="start"
+    />
+  );
+
+  const refreshButton = (
+    <DetailPanelSectionRefresh
+      sectionLabel={copy.title}
+      onRefresh={refetch}
+      onError={(message) => setToast({ kind: 'error', message })}
+    />
+  );
+
+  const listToolbar = (
+    <SubprojectsListToolbar
+      expanded={expanded}
+      searchQuery={searchQuery}
+      searchPlaceholder={copy.searchPlaceholder}
+      searchAriaLabel={copy.searchAriaLabel}
+      onSearchQueryChange={setSearchQuery}
+      canManage={canManage}
+      newSubprojectTitle={copy.newSubprojectTitle}
+      newSubprojectAriaLabel={copy.newSubprojectAriaLabel}
+      onCreateOpen={() => {
+        guardProjectEdit(() => {
+          setCreateOpen(true);
+        });
+      }}
+      importSpreadsheetTitle={copy.importSpreadsheet}
+      importSpreadsheetAriaLabel={copy.importSpreadsheetAriaLabel}
+      onImportOpen={openImportWizard}
+      showMobileBulkToolbar={
+        isMobileLayout && bulkSelection.selectedCount > 0 && canUseBulkActions
+      }
+      selectedCountLabel={bulkSelectionCopy.selectedCount(bulkSelection.selectedCount)}
+      bulkToolbarAriaLabel={bulkSelectionCopy.toolbarAriaLabel}
+      bulkCancelLabel={bulkSelectionCopy.cancel}
+      onClearSelection={() => bulkSelection.clearSelection()}
+      mobileBulkActions={selectionBulkActions}
+      trailingActions={embeddedInFolderTabs ? refreshButton : null}
+    />
+  );
+
+  const averagePill =
+    subprojectAveragePercent != null ? (
+      <span
+        className={`${shared.stagePill} ${styles.subprojectsAveragePill}`}
+        title={`${copy.projectColumn} average ${subprojectAveragePercent}`}
+      >
+        {subprojectAveragePercent}
+      </span>
+    ) : null;
+
   return (
-    <section className={panelClass} aria-labelledby={sectionId}>
+    <section
+      className={panelClass}
+      aria-label={embeddedInFolderTabs ? copy.title : undefined}
+      aria-labelledby={embeddedInFolderTabs ? undefined : sectionId}
+    >
       {toast ? (
         <DetailToast
           kind={toast.kind}
@@ -541,57 +616,87 @@ function SubprojectsSectionContent(): ReactElement {
           onDismiss={() => setToast(null)}
         />
       ) : null}
-      <div
-        className={[
-          styles.subprojectsPanelHeader,
-          isMobileLayout ? styles.subprojectsPanelHeader_mobile : '',
-          isMobileLayout ? styles.detailPanelHeader_mobile : '',
-          isMobileLayout && bulkSelection.selectedCount > 0 && canUseBulkActions
-            ? 'subprojectsPanelHeader_selectionMode'
-            : '',
-        ]
-          .filter(Boolean)
-          .join(' ')}
-      >
-        {isMobileLayout ? (
-          <>
-            <div className={styles.detailPanelHeaderRow}>
-              <div className={styles.detailPanelHeaderTitleGroup}>
-                {subprojectAveragePercent != null ? (
-                  <span
-                    className={`${shared.stagePill} ${styles.subprojectsAveragePill}`}
-                    title={`${copy.projectColumn} average ${subprojectAveragePercent}`}
-                  >
-                    {subprojectAveragePercent}
+      {embeddedInFolderTabs ? (
+        <FolderTabToolbarPortal>
+          <DetailPanelHeaderActions>
+            {filterMenu}
+            {listToolbar}
+          </DetailPanelHeaderActions>
+        </FolderTabToolbarPortal>
+      ) : (
+        <div
+          className={[
+            styles.subprojectsPanelHeader,
+            isMobileLayout ? styles.subprojectsPanelHeader_mobile : '',
+            isMobileLayout ? styles.detailPanelHeader_mobile : '',
+            isMobileLayout && bulkSelection.selectedCount > 0 && canUseBulkActions
+              ? 'subprojectsPanelHeader_selectionMode'
+              : '',
+          ]
+            .filter(Boolean)
+            .join(' ')}
+        >
+          {isMobileLayout ? (
+            <>
+              <div className={styles.detailPanelHeaderRow}>
+                <div className={styles.detailPanelHeaderTitleGroup}>
+                  {averagePill}
+                  <span id={sectionId} className={styles.subprojectsPanelTitle}>
+                    {copy.title}
                   </span>
-                ) : null}
-                <span id={sectionId} className={styles.subprojectsPanelTitle}>
-                  {copy.title}
-                </span>
-                <CrmProjectsFilterMenu
-                  filters={listFilters}
-                  onChange={setListFilters}
-                  stageScopeMode="subproject"
-                  radiusFilter={radiusFilter}
-                  onRadiusFilterChange={setRadiusFilter}
-                  triggerVariant="caret"
-                  menuAlign="start"
-                />
+                  {filterMenu}
+                </div>
+                <div className={styles.detailPanelHeaderRowActions}>
+                  {refreshButton}
+                  <button
+                    type="button"
+                    className={styles.subprojectsPanelHeaderToggle}
+                    aria-expanded={expanded}
+                    aria-controls={panelId}
+                    aria-label={`${expanded ? copy.collapse : copy.expand}: ${copy.title}`}
+                    onClick={() => setExpanded((open) => !open)}
+                  >
+                    <span className={styles.stageGroupChevronWrap} aria-hidden>
+                      <span
+                        className={
+                          expanded ? styles.stageGroupChevron_expanded : styles.stageGroupChevron
+                        }
+                      />
+                    </span>
+                  </button>
+                </div>
               </div>
-              <div className={styles.detailPanelHeaderRowActions}>
-                <DetailPanelSectionRefresh
-                  sectionLabel={copy.title}
-                  onRefresh={refetch}
-                  onError={(message) => setToast({ kind: 'error', message })}
-                />
-                <button
-                  type="button"
-                  className={styles.subprojectsPanelHeaderToggle}
-                  aria-expanded={expanded}
-                  aria-controls={panelId}
-                  aria-label={`${expanded ? copy.collapse : copy.expand}: ${copy.title}`}
-                  onClick={() => setExpanded((open) => !open)}
+              {expanded || (bulkSelection.selectedCount > 0 && canUseBulkActions) ? (
+                <div
+                  className={[
+                    styles.detailPanelHeaderRow,
+                    styles.subprojectsPanelHeaderTools,
+                    bulkSelection.selectedCount > 0 && canUseBulkActions
+                      ? styles.subprojectsPanelHeaderTools_selectionMode
+                      : '',
+                  ]
+                    .filter(Boolean)
+                    .join(' ')}
                 >
+                  {listToolbar}
+                </div>
+              ) : null}
+            </>
+          ) : (
+            <>
+              <button
+                type="button"
+                className={styles.subprojectsPanelHeaderToggle}
+                aria-expanded={expanded}
+                aria-controls={panelId}
+                aria-label={`${expanded ? copy.collapse : copy.expand}: ${copy.title}`}
+                onClick={() => setExpanded((open) => !open)}
+              >
+                <span className={styles.subprojectsPanelHeaderTitle}>
+                  {averagePill}
+                  <span id={sectionId} className={styles.subprojectsPanelTitle}>
+                    {copy.title}
+                  </span>
                   <span className={styles.stageGroupChevronWrap} aria-hidden>
                     <span
                       className={
@@ -599,104 +704,13 @@ function SubprojectsSectionContent(): ReactElement {
                       }
                     />
                   </span>
-                </button>
-              </div>
-            </div>
-            {expanded || (bulkSelection.selectedCount > 0 && canUseBulkActions) ? (
-              <div
-                className={[
-                  styles.detailPanelHeaderRow,
-                  styles.subprojectsPanelHeaderTools,
-                  bulkSelection.selectedCount > 0 && canUseBulkActions
-                    ? styles.subprojectsPanelHeaderTools_selectionMode
-                    : '',
-                ]
-                  .filter(Boolean)
-                  .join(' ')}
-              >
-                <SubprojectsListToolbar
-                  expanded={expanded}
-                  searchQuery={searchQuery}
-                  searchPlaceholder={copy.searchPlaceholder}
-                  searchAriaLabel={copy.searchAriaLabel}
-                  onSearchQueryChange={setSearchQuery}
-                  canManage={canManage}
-                  newSubprojectTitle={copy.newSubprojectTitle}
-                  newSubprojectAriaLabel={copy.newSubprojectAriaLabel}
-                  onCreateOpen={() => {
-                    guardProjectEdit(() => {
-                      setCreateOpen(true);
-                    });
-                  }}
-                  importSpreadsheetTitle={copy.importSpreadsheet}
-                  importSpreadsheetAriaLabel={copy.importSpreadsheetAriaLabel}
-                  onImportOpen={openImportWizard}
-                  showMobileBulkToolbar={
-                    bulkSelection.selectedCount > 0 && canUseBulkActions
-                  }
-                  selectedCountLabel={bulkSelectionCopy.selectedCount(bulkSelection.selectedCount)}
-                  bulkToolbarAriaLabel={bulkSelectionCopy.toolbarAriaLabel}
-                  bulkCancelLabel={bulkSelectionCopy.cancel}
-                  onClearSelection={() => bulkSelection.clearSelection()}
-                  mobileBulkActions={selectionBulkActions}
-                />
-              </div>
-            ) : null}
-          </>
-        ) : (
-          <>
-            <button
-              type="button"
-              className={styles.subprojectsPanelHeaderToggle}
-              aria-expanded={expanded}
-              aria-controls={panelId}
-              aria-label={`${expanded ? copy.collapse : copy.expand}: ${copy.title}`}
-              onClick={() => setExpanded((open) => !open)}
-            >
-              <span className={styles.subprojectsPanelHeaderTitle}>
-                {subprojectAveragePercent != null ? (
-                  <span
-                    className={`${shared.stagePill} ${styles.subprojectsAveragePill}`}
-                    title={`${copy.projectColumn} average ${subprojectAveragePercent}`}
-                  >
-                    {subprojectAveragePercent}
-                  </span>
-                ) : null}
-                <span id={sectionId} className={styles.subprojectsPanelTitle}>
-                  {copy.title}
                 </span>
-                <span className={styles.stageGroupChevronWrap} aria-hidden>
-                  <span
-                    className={
-                      expanded ? styles.stageGroupChevron_expanded : styles.stageGroupChevron
-                    }
-                  />
-                </span>
-              </span>
-            </button>
-            <div className={styles.subprojectsPanelHeaderTools}>
-              <SubprojectsListToolbar
-                expanded={expanded}
-                searchQuery={searchQuery}
-                searchPlaceholder={copy.searchPlaceholder}
-                searchAriaLabel={copy.searchAriaLabel}
-                onSearchQueryChange={setSearchQuery}
-                canManage={canManage}
-                newSubprojectTitle={copy.newSubprojectTitle}
-                newSubprojectAriaLabel={copy.newSubprojectAriaLabel}
-                onCreateOpen={() => {
-                  guardProjectEdit(() => {
-                    setCreateOpen(true);
-                  });
-                }}
-                importSpreadsheetTitle={copy.importSpreadsheet}
-                importSpreadsheetAriaLabel={copy.importSpreadsheetAriaLabel}
-                onImportOpen={openImportWizard}
-              />
-            </div>
-          </>
-        )}
-      </div>
+              </button>
+              <div className={styles.subprojectsPanelHeaderTools}>{listToolbar}</div>
+            </>
+          )}
+        </div>
+      )}
 
       {expanded ? (
         <div id={panelId} className={styles.subprojectsTableBody}>
@@ -749,24 +763,23 @@ function SubprojectsSectionContent(): ReactElement {
                 onContactCopied={onContactCopied}
                 progressTone="progress"
                 inlineSelectionChrome
-                leadingFilter={
-                  <CrmProjectsFilterMenu
-                    filters={listFilters}
-                    onChange={setListFilters}
-                    stageScopeMode="subproject"
-                    radiusFilter={radiusFilter}
-                    onRadiusFilterChange={setRadiusFilter}
-                    triggerVariant="caret"
-                    menuAlign="start"
-                  />
+                leadingFilter={embeddedInFolderTabs ? null : filterMenu}
+                onRefresh={embeddedInFolderTabs ? undefined : refetch}
+                onRefreshError={
+                  embeddedInFolderTabs
+                    ? undefined
+                    : (message) => setToast({ kind: 'error', message })
                 }
-                onRefresh={refetch}
-                onRefreshError={(message) => setToast({ kind: 'error', message })}
                 bulkHeaderActions={
                   canUseBulkActions && bulkSelection.selectedCount > 0
                     ? selectionBulkActions
                     : null
                 }
+                workflowLikeTableChrome={embeddedInFolderTabs}
+                headerCollapsed={!expanded}
+                onToggleHeaderCollapse={() => setExpanded((open) => !open)}
+                showHeaderCollapseToggle={embeddedInFolderTabs}
+                inlineHeaderCountSuffix={embeddedInFolderTabs ? subprojectAveragePercent : null}
               />
             </div>
           )}

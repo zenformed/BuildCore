@@ -260,7 +260,7 @@
 
   --theme-workflow-unified-canvas-bg: var(--theme-surface-main);
 
-  --theme-workflow-stage-table-bg: var(--theme-surface-muted);
+  --theme-workflow-stage-table-bg: var(--theme-surface-card);
 
   --theme-surface-list-item: transparent;
 

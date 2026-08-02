@@ -3,7 +3,7 @@
 import type { ReactElement } from 'react';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
 import { GridIcon, ListIcon } from '@/platform/icons/buildCoreDashboardShellIcons';
-import styles from '@/presentation/components/CrmProjects/CrmProjects.module.css';
+import styles from './ProjectDetail.module.css';
 
 export type WorkflowTaskViewMode = 'table' | 'cards';
 
@@ -25,9 +25,12 @@ export function WorkflowTasksViewToggleButton({
   return (
     <button
       type="button"
-      className={`${styles.projectsFilterBtn}${
-        viewMode === 'cards' ? ` ${styles.projectsFilterBtn_active}` : ''
-      }`}
+      className={[
+        styles.workflowViewToggleBtn,
+        viewMode === 'cards' ? styles.workflowViewToggleBtn_active : '',
+      ]
+        .filter(Boolean)
+        .join(' ')}
       title={label}
       aria-label={label}
       aria-pressed={viewMode === 'cards'}
@@ -35,9 +38,9 @@ export function WorkflowTasksViewToggleButton({
       onClick={onToggle}
     >
       {switchToCards ? (
-        <GridIcon className={styles.projectsFilterBtnIcon} />
+        <GridIcon className={styles.workflowViewToggleBtnIcon} />
       ) : (
-        <ListIcon className={styles.projectsFilterBtnIcon} />
+        <ListIcon className={styles.workflowViewToggleBtnIcon} />
       )}
     </button>
   );

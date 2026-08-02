@@ -6,12 +6,20 @@ import type { ProjectPaymentFinancials } from '@/domain/crm/projectPaymentValue'
 import type { CrmProjectWorkflowProgressInputIndex } from '@/domain/crm/projectWorkflowProgressInput';
 import { isCrmProjectComplete, isCrmProjectInactive } from '@/domain/crm';
 import { nonEmptyContactValues } from '@/domain/crm/contactMultiValue';
+import {
+  projectPrimaryPhotoCircleColor,
+  projectPrimaryPhotoInitials,
+} from '@/domain/crm/projectPrimaryPhoto';
 import { formatCrmProjectLocationLine } from '@/domain/crm/projectAddress';
 import { isProjectPriorityUrgent } from '@/domain/crm/projectPriorityToggle';
 import { ProjectProgressPercent } from '@/presentation/components/CrmProjectDetail/ProjectProgressPercent';
 import { CrmProjectCompleteIcon } from '@/presentation/components/crmShared/CrmProjectCompleteIcon';
 import { CrmProjectAddressEnvelope } from '@/presentation/components/crmShared/CrmProjectAddressEnvelope';
 import { CrmProjectPriorityIcon } from '@/presentation/components/crmShared/CrmProjectPriorityIcon';
+import {
+  buildProjectPrimaryPhotoApiPath,
+  useProjectPrimaryPhotoBlob,
+} from '@/presentation/features/crmProjectDetail/useProjectPrimaryPhotoBlob';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
 import {
   formatCentsAsUsd,
@@ -27,12 +35,31 @@ import { CrmProjectTableRowActionsMenu } from './CrmProjectTableRowActionsMenu';
 import { CrmProjectTableContactCell } from './CrmProjectTableContactCell';
 import { ProjectPreviewNameAnchor } from './ProjectPreviewNameAnchor';
 import { CrmProjectInactiveIcon, CrmProjectInactiveInlineLabel } from './CrmProjectInactiveBadge';
+import { LuMail, LuPhone, LuMapPin, LuUser, LuBuilding2, LuStickyNote } from 'react-icons/lu';
 import shared from '@/presentation/components/crmShared/crmShared.module.css';
 import styles from './CrmProjects.module.css';
 export type CrmProjectTableRowDeleteLabels = {
   readonly action: string;
   readonly actionAriaLabel: (name: string) => string;
 };
+
+function buildTelHref(phone: string): string | null {
+  const trimmed = phone.trim();
+  if (!trimmed) return null;
+  const normalized = trimmed.replace(/[^\d+]/g, '');
+  if (!normalized) return null;
+  return `tel:${normalized}`;
+}
+
+function buildMapsHref(addressLine: string | null, latitude?: number | null, longitude?: number | null): string | null {
+  if (addressLine != null && addressLine.trim().length > 0) {
+    return `https://maps.google.com/?q=${encodeURIComponent(addressLine)}`;
+  }
+  if (latitude != null && longitude != null) {
+    return `https://maps.google.com/?q=${encodeURIComponent(`${latitude},${longitude}`)}`;
+  }
+  return null;
+}
 
 export type CrmProjectTableRowProps = {
   project: CrmProjectSummary;
@@ -61,6 +88,7 @@ export type CrmProjectTableRowProps = {
   showParentProjectColumn?: boolean;
   parentProjectName?: string;
   progressTone?: 'success' | 'progress';
+  showContactIcons?: boolean;
 };
 
 export function CrmProjectTableRow({
@@ -90,6 +118,7 @@ export function CrmProjectTableRow({
   showParentProjectColumn = false,
   parentProjectName,
   progressTone = 'progress',
+  showContactIcons = false,
 }: CrmProjectTableRowProps): ReactElement {
   const tableCopy = content.crm.table;
   const { catalog, industrySubtitle, progress, derivedStageSlug } = useCrmProjectRowPresentation(
@@ -128,6 +157,30 @@ export function CrmProjectTableRow({
     project.latitude,
     project.longitude
   );
+  const displayContactName = project.contact.name?.trim() || '—';
+  const hasContactValue = displayContactName !== '—';
+  const hasEmailValue = displayEmail !== '—';
+  const hasPhoneValue = displayPhone !== '—';
+  const hasAddressValue = typeof formattedAddress === 'string' && formattedAddress.trim().length > 0;
+  const hasNotesValue = (project.notesPreview ?? '').trim().length > 0;
+  const emailHref =
+    showContactIcons && !isMemberRole && project.contact.email.trim().length > 0
+      ? `mailto:${project.contact.email.trim()}`
+      : null;
+  const phoneHref =
+    showContactIcons && !isMemberRole ? buildTelHref(project.contact.phone) : null;
+  const addressHref =
+    showContactIcons && !isMemberRole
+      ? buildMapsHref(formattedAddress, project.latitude, project.longitude)
+      : null;
+  const projectPhotoApiPath = buildProjectPrimaryPhotoApiPath(project.slug, project.primaryPhotoPath);
+  const projectPhotoUrl = useProjectPrimaryPhotoBlob(showContactIcons ? projectPhotoApiPath : null);
+  const projectPhotoInitials = projectPrimaryPhotoInitials({
+    parentProjectId: project.parentProjectId,
+    projectName: project.name,
+    clientName: project.client.name,
+  });
+  const projectPhotoLabel = project.parentProjectId != null ? project.name : project.client.name;
   const rowAriaLabel = isChild
     ? tableCopy.subprojectRowAriaLabel(project.name)
     : tableCopy.rowAriaLabel(project.name);
@@ -169,79 +222,122 @@ export function CrmProjectTableRow({
         </span>
       ) : null}
       <span className={projectCellClass} role="cell">
-        <span className={styles.projectNameRow}>
-          {isInactive ? (
-            <CrmProjectInactiveIcon ariaLabel={tableCopy.inactiveBadge} />
-          ) : isProjectPriorityUrgent(project.priority) ? (
-            <CrmProjectPriorityIcon ariaLabel={tableCopy.priorityMarkAriaLabel} />
-          ) : null}
-          {isCrmProjectComplete(project) ? (
-            <CrmProjectCompleteIcon ariaLabel={tableCopy.completionCheckAriaLabel} />
-          ) : null}
-          <span className={styles.projectNameGroup}>
-            <ProjectPreviewNameAnchor
-              project={project}
-              financials={financials ?? null}
-              stageLabel={
-                derivedStageSlug != null ? formatStageLabel(derivedStageSlug, catalog) : null
-              }
-              progressPercent={progress?.textPercent ?? null}
-            >
-              <span className={styles.projectName}>{project.name}</span>
-            </ProjectPreviewNameAnchor>
-          </span>
-          {!isChild && hasChildren ? (
-            <button
-              type="button"
-              className={styles.expandToggle}
-              aria-expanded={isExpanded}
-              aria-label={
-                isExpanded ? tableCopy.collapseSubprojects : tableCopy.expandSubprojects
-              }
-              onClick={(event) => {
-                event.stopPropagation();
-                onToggleExpand?.();
-              }}
-            >
-              <span className={styles.expandChevronWrap} aria-hidden>
+        <span className={showContactIcons ? styles.subprojectsProjectCell : undefined}>
+          {showContactIcons ? (
+            <span className={styles.subprojectsProjectPhoto}>
+              {projectPhotoUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={projectPhotoUrl} alt="" className={styles.subprojectsProjectPhotoImg} />
+              ) : (
                 <span
-                  className={
-                    isExpanded ? styles.expandChevron_expanded : styles.expandChevron
-                  }
-                />
-              </span>
-            </button>
+                  className={styles.subprojectsProjectPhotoInitial}
+                  style={{ backgroundColor: projectPrimaryPhotoCircleColor(projectPhotoLabel) }}
+                  aria-hidden
+                >
+                  {projectPhotoInitials}
+                </span>
+              )}
+            </span>
           ) : null}
-        </span>
-        {showParentProjectColumn && parentProjectName ? (
-          <span className={styles.projectParentName}>{parentProjectName}</span>
-        ) : null}
-        {industrySubtitle ? <span className={styles.projectMeta}>{industrySubtitle}</span> : null}
-        {!isMemberRole ? (
-          <span className={styles.projectProgressRow}>
-            {isInactive ? (
-              <CrmProjectInactiveInlineLabel project={project} />
-            ) : (
-              <>
-                {progress != null ? (
-                  <ProjectProgressPercent
-                    variant="compact"
-                    progress={progress}
-                    tone={progressTone}
-                  />
-                ) : null}
-                {derivedStageSlug != null ? (
-                  <span className={`${shared.stagePill} ${styles.projectMetaStagePill}`}>
-                    {formatStageLabel(derivedStageSlug, catalog)}
+          <span className={showContactIcons ? styles.subprojectsProjectCellBody : undefined}>
+            <span className={styles.projectNameRow}>
+              {isInactive ? (
+                <CrmProjectInactiveIcon ariaLabel={tableCopy.inactiveBadge} />
+              ) : isProjectPriorityUrgent(project.priority) ? (
+                <CrmProjectPriorityIcon ariaLabel={tableCopy.priorityMarkAriaLabel} />
+              ) : null}
+              {isCrmProjectComplete(project) ? (
+                <CrmProjectCompleteIcon ariaLabel={tableCopy.completionCheckAriaLabel} />
+              ) : null}
+              <span className={styles.projectNameGroup}>
+                <ProjectPreviewNameAnchor
+                  project={project}
+                  financials={financials ?? null}
+                  stageLabel={
+                    derivedStageSlug != null ? formatStageLabel(derivedStageSlug, catalog) : null
+                  }
+                  progressPercent={progress?.textPercent ?? null}
+                >
+                  <span className={showContactIcons ? styles.gridCellWithIcon : undefined}>
+                    {showContactIcons ? <LuBuilding2 className={styles.gridCellInlineIcon} aria-hidden /> : null}
+                    <span className={styles.projectName}>{project.name}</span>
                   </span>
-                ) : null}
-              </>
-            )}
+                </ProjectPreviewNameAnchor>
+              </span>
+              {!isChild && hasChildren ? (
+                <button
+                  type="button"
+                  className={styles.expandToggle}
+                  aria-expanded={isExpanded}
+                  aria-label={
+                    isExpanded ? tableCopy.collapseSubprojects : tableCopy.expandSubprojects
+                  }
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    onToggleExpand?.();
+                  }}
+                >
+                  <span className={styles.expandChevronWrap} aria-hidden>
+                    <span
+                      className={
+                        isExpanded ? styles.expandChevron_expanded : styles.expandChevron
+                      }
+                    />
+                  </span>
+                </button>
+              ) : null}
+            </span>
+            {showParentProjectColumn && parentProjectName ? (
+              <span className={styles.projectParentName}>{parentProjectName}</span>
+            ) : null}
+            {!showContactIcons && industrySubtitle ? (
+              <span className={styles.projectMeta}>{industrySubtitle}</span>
+            ) : null}
+            {!isMemberRole ? (
+              <span className={styles.projectProgressRow}>
+                {isInactive ? (
+                  <CrmProjectInactiveInlineLabel project={project} />
+                ) : (
+                  <>
+                    {progress != null ? (
+                      showContactIcons ? (
+                        <span className={styles.subprojectsProgressPercent}>
+                          {progress.textPercent}%
+                        </span>
+                      ) : (
+                        <ProjectProgressPercent
+                          variant="compact"
+                          progress={progress}
+                          tone={progressTone}
+                        />
+                      )
+                    ) : null}
+                    {derivedStageSlug != null ? (
+                      <span className={`${shared.stagePill} ${styles.projectMetaStagePill}`}>
+                        {formatStageLabel(derivedStageSlug, catalog)}
+                      </span>
+                    ) : null}
+                  </>
+                )}
+              </span>
+            ) : null}
           </span>
-        ) : null}
+        </span>
       </span>
       <span className={`${styles.gridCell} ${styles.gridCellAlignCenter}`} role="cell">
-        {project.contact.name}
+        <span
+          className={[
+            showContactIcons ? styles.gridCellWithIcon : '',
+            showContactIcons ? styles.subprojectsContactBadge : '',
+          ]
+            .filter(Boolean)
+            .join(' ')}
+        >
+          {showContactIcons && hasContactValue ? (
+            <LuUser className={styles.gridCellInlineIcon} aria-hidden />
+          ) : null}
+          <span>{displayContactName}</span>
+        </span>
       </span>
       <span className={`${styles.gridCell} ${styles.gridCellAlignCenter}`} role="cell">
         <CrmProjectTableContactCell
@@ -252,6 +348,20 @@ export function CrmProjectTableRow({
           getCopyValue={getEmailCopyValue}
           onCopied={onContactCopied}
           title={displayEmail}
+          href={emailHref}
+          getRowHref={
+            showContactIcons && !isMemberRole
+              ? (value) => `mailto:${value.trim()}`
+              : undefined
+          }
+          leadingIcon={
+            showContactIcons && hasEmailValue ? (
+              <LuMail
+                className={`${styles.gridCellInlineIcon} ${styles.subprojectsContactInfoIcon}`}
+                aria-hidden
+              />
+            ) : null
+          }
         />
       </span>
       <span className={`${styles.gridCell} ${styles.gridCellAlignCenter}`} role="cell">
@@ -262,6 +372,20 @@ export function CrmProjectTableRow({
           formatDisplayValue={formatPhonePopoverValue}
           getCopyValue={getPhoneCopyValue}
           onCopied={onContactCopied}
+          href={phoneHref}
+          getRowHref={
+            showContactIcons && !isMemberRole
+              ? (value) => buildTelHref(value)
+              : undefined
+          }
+          leadingIcon={
+            showContactIcons && hasPhoneValue ? (
+              <LuPhone
+                className={`${styles.gridCellInlineIcon} ${styles.subprojectsContactInfoIcon}`}
+                aria-hidden
+              />
+            ) : null
+          }
         />
       </span>
       <span
@@ -269,18 +393,50 @@ export function CrmProjectTableRow({
         role="cell"
         title={formattedAddress ?? undefined}
       >
-        <CrmProjectAddressEnvelope
-          address={project.address}
-          latitude={project.latitude}
-          longitude={project.longitude}
-        />
+        <span className={showContactIcons ? styles.gridCellWithIcon : undefined}>
+          {showContactIcons && hasAddressValue ? (
+            <LuMapPin
+              className={`${styles.gridCellInlineIcon} ${styles.subprojectsContactInfoIcon}`}
+              aria-hidden
+            />
+          ) : null}
+          {addressHref != null ? (
+            <a
+              href={addressHref}
+              className={styles.tableContactCellValueLink}
+              onClick={(event) => {
+                event.stopPropagation();
+              }}
+            >
+              <CrmProjectAddressEnvelope
+                address={project.address}
+                latitude={project.latitude}
+                longitude={project.longitude}
+              />
+            </a>
+          ) : (
+            <CrmProjectAddressEnvelope
+              address={project.address}
+              latitude={project.latitude}
+              longitude={project.longitude}
+            />
+          )}
+        </span>
       </span>
       <span
         className={`${styles.gridCell} ${styles.gridCellAlignCenter}`}
         role="cell"
         title={project.notesPreview ?? undefined}
       >
-        <span className={styles.gridCellWrap}>{project.notesPreview ?? '—'}</span>
+        <span className={showContactIcons ? styles.gridCellWithIcon : undefined}>
+          {showContactIcons && hasNotesValue ? (
+            <LuStickyNote
+              className={`${styles.gridCellInlineIcon} ${styles.subprojectsContactInfoIcon}`}
+              aria-hidden
+            />
+          ) : null}
+          <span className={styles.gridCellWrap}>{project.notesPreview ?? '—'}</span>
+        </span>
       </span>
       {!isMemberRole ? (
         <>

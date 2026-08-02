@@ -1,7 +1,8 @@
 'use client';
 
-import type { MutableRefObject, ReactElement, RefObject } from 'react';
+import type { MutableRefObject, ReactElement, ReactNode } from 'react';
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { LuFileText, LuMail, LuPaperclip, LuPencil, LuTrash2 } from 'react-icons/lu';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
 import { WorkflowInlineMenu } from './WorkflowInlineMenu';
 import styles from './ProjectDetail.module.css';
@@ -24,13 +25,41 @@ export type WorkflowTaskRowActionsMenuProps = {
   readonly onNotifyAssigned?: () => void;
 };
 
+type ActionIconTone = 'attachment' | 'edit' | 'notes' | 'notify' | 'delete';
+
 type WorkflowTaskRowMenuItem = {
   readonly key: string;
   readonly label: string;
   readonly onSelect: () => void;
   readonly variant?: 'danger';
-  readonly iconClass?: string;
+  readonly tone: ActionIconTone;
+  readonly icon: ReactNode;
 };
+
+const ACTION_ICON_TONE_CLASS: Record<ActionIconTone, string> = {
+  attachment: styles.actionsMenuIconTile_attachment,
+  edit: styles.actionsMenuIconTile_edit,
+  notes: styles.actionsMenuIconTile_notes,
+  notify: styles.actionsMenuIconTile_notify,
+  delete: styles.actionsMenuIconTile_delete,
+};
+
+function ActionIconTile({
+  tone,
+  children,
+}: {
+  readonly tone: ActionIconTone;
+  readonly children: ReactNode;
+}): ReactElement {
+  return (
+    <span
+      className={[styles.actionsMenuIconTile, ACTION_ICON_TONE_CLASS[tone]].join(' ')}
+      aria-hidden
+    >
+      {children}
+    </span>
+  );
+}
 
 export function WorkflowTaskRowActionsMenu({
   taskTitle,
@@ -52,6 +81,7 @@ export function WorkflowTaskRowActionsMenu({
   const wf = content.projectDetail.workflow;
   const [open, setOpen] = useState(false);
   const internalButtonRef = useRef<HTMLButtonElement | null>(null);
+  const iconProps = { size: 15, strokeWidth: 2.25 } as const;
 
   const setButtonRef = (element: HTMLButtonElement | null): void => {
     internalButtonRef.current = element;
@@ -67,7 +97,8 @@ export function WorkflowTaskRowActionsMenu({
         key: 'send-attachment',
         label: wf.sendAttachment,
         onSelect: onSendAttachment,
-        iconClass: styles.actionsMenuAttachmentIcon,
+        tone: 'attachment',
+        icon: <LuPaperclip {...iconProps} />,
       });
     }
     if (canEdit && onEdit) {
@@ -75,7 +106,8 @@ export function WorkflowTaskRowActionsMenu({
         key: 'edit',
         label: wf.editTask,
         onSelect: onEdit,
-        iconClass: styles.actionsMenuEditIcon,
+        tone: 'edit',
+        icon: <LuPencil {...iconProps} />,
       });
     }
     if (showEditNotes && onEditNotes) {
@@ -83,7 +115,8 @@ export function WorkflowTaskRowActionsMenu({
         key: 'notes',
         label: editNotesLabel ?? wf.addNotes,
         onSelect: onEditNotes,
-        iconClass: styles.actionsMenuNotesIcon,
+        tone: 'notes',
+        icon: <LuFileText {...iconProps} />,
       });
     }
     if (showAssignedNotification && onNotifyAssigned) {
@@ -91,7 +124,8 @@ export function WorkflowTaskRowActionsMenu({
         key: 'notify',
         label: wf.notifyAssigned,
         onSelect: onNotifyAssigned,
-        iconClass: styles.actionsMenuMailIcon,
+        tone: 'notify',
+        icon: <LuMail {...iconProps} />,
       });
     }
     if (canDelete && onDelete) {
@@ -100,7 +134,8 @@ export function WorkflowTaskRowActionsMenu({
         label: wf.deleteTask,
         onSelect: onDelete,
         variant: 'danger',
-        iconClass: styles.actionsMenuDeleteIcon,
+        tone: 'delete',
+        icon: <LuTrash2 {...iconProps} />,
       });
     }
     return items;
@@ -194,12 +229,7 @@ export function WorkflowTaskRowActionsMenu({
               item.onSelect();
             }}
           >
-            {item.iconClass ? (
-              <span
-                className={`${styles.actionsMenuIcon} ${item.iconClass}`}
-                aria-hidden
-              />
-            ) : null}
+            <ActionIconTile tone={item.tone}>{item.icon}</ActionIconTile>
             {item.label}
           </button>
         ))}

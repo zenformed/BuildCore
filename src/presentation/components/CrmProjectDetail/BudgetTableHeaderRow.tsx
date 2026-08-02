@@ -11,23 +11,40 @@ import styles from './ProjectDetail.module.css';
 
 export type BudgetTableHeaderRowProps = {
   readonly leadingFilter?: ReactNode;
+  /** When false, hide the inline status refresh (e.g. moved to folder tab bar). */
+  readonly showStatusRefresh?: boolean;
+  /** Optional extra class names for the header row wrapper. */
+  readonly rowClassName?: string;
+  /** Stage-header mode: select + primary cells are supplied by caller. */
+  readonly stageHeaderSelect?: ReactNode | false;
+  readonly stageHeaderPrimary?: ReactNode;
 };
 
 export function BudgetTableHeaderRow({
   leadingFilter = null,
+  showStatusRefresh = true,
+  rowClassName,
+  stageHeaderSelect = null,
+  stageHeaderPrimary = null,
 }: BudgetTableHeaderRowProps): ReactElement {
   const cols = content.projectDetail.budget.columns;
   const rowSelection = useBudgetEntryRowSelection();
   const { refreshBudgetSection, setToast } = useProjectDetailShell();
+  const isStageHeaderRow = stageHeaderPrimary != null;
+  const showStageSelectColumn = isStageHeaderRow && stageHeaderSelect !== false;
   const hasSelection = (rowSelection?.selectedCount ?? 0) > 0;
   const showBulkChrome = hasSelection && rowSelection?.bulkActions?.canDelete === true;
+  const rowClass = [styles.tableHeader, styles.budgetGrid, styles.budgetTableHeader, rowClassName]
+    .filter(Boolean)
+    .join(' ');
 
   return (
-    <div
-      className={`${styles.tableHeader} ${styles.budgetGrid} ${styles.budgetTableHeader}`}
-      role="row"
-    >
-      {rowSelection != null ? (
+    <div className={rowClass} role="row">
+      {showStageSelectColumn ? (
+        <span role="columnheader" className={styles.workflowSelectHeader}>
+          {stageHeaderSelect}
+        </span>
+      ) : isStageHeaderRow ? null : rowSelection != null ? (
         <span role="columnheader" className={styles.workflowSelectHeader}>
           <BulkSelectCheckbox
             checked={rowSelection.allVisibleSelected}
@@ -39,21 +56,27 @@ export function BudgetTableHeaderRow({
       ) : (
         <span role="columnheader" className={styles.workflowSelectHeader} aria-hidden />
       )}
-      <span
-        role="columnheader"
-        className={styles.workflowPrimaryHeader}
-        aria-label={showBulkChrome ? undefined : cols.itemName}
-      >
-        {leadingFilter}
-        {showBulkChrome ? (
-          <BudgetTableBulkActions />
-        ) : (
-          <WorkflowTableStatusRefresh
-            onRefresh={refreshBudgetSection}
-            onError={(message) => setToast({ kind: 'error', message })}
-          />
-        )}
-      </span>
+      {isStageHeaderRow ? (
+        <span role="columnheader" className={styles.workflowPrimaryHeader}>
+          {stageHeaderPrimary}
+        </span>
+      ) : (
+        <span
+          role="columnheader"
+          className={styles.workflowPrimaryHeader}
+          aria-label={showBulkChrome ? undefined : cols.itemName}
+        >
+          {leadingFilter}
+          {showBulkChrome ? (
+            <BudgetTableBulkActions />
+          ) : showStatusRefresh ? (
+            <WorkflowTableStatusRefresh
+              onRefresh={refreshBudgetSection}
+              onError={(message) => setToast({ kind: 'error', message })}
+            />
+          ) : null}
+        </span>
+      )}
       <span role="columnheader">{cols.category}</span>
       <span role="columnheader">{cols.cost}</span>
       <span role="columnheader">{cols.budget}</span>

@@ -48,7 +48,7 @@ export type CrmProjectsFilterMenuSection =
   | 'assigned'
   | 'documentsRequired';
 
-export type CrmProjectsFilterMenuTriggerVariant = 'filter' | 'caret';
+export type CrmProjectsFilterMenuTriggerVariant = 'filter' | 'caret' | 'ghost';
 
 export type CrmWorkflowTaskStatusFilterOption = {
   readonly label: string;
@@ -165,6 +165,7 @@ export function CrmProjectsFilterMenu({
     (showRadiusFilter && isRadiusFilterActive(radiusFilter)) ||
     (showAssigneeScope && assigneeScope !== assigneeScopeDefault);
   const isCaret = triggerVariant === 'caret';
+  const isGhost = triggerVariant === 'ghost';
 
   const toggleStage = (slug: PipelineStageSlug): void => {
     const next = filters.stageSlugs.includes(slug)
@@ -211,11 +212,17 @@ export function CrmProjectsFilterMenu({
     value === 'yes' ? copy.documentsRequiredYes : copy.documentsRequiredNo;
 
   const triggerBtnClass = [
-    isCaret ? styles.projectsFilterCaretBtn : styles.projectsFilterBtn,
+    isCaret
+      ? styles.projectsFilterCaretBtn
+      : isGhost
+        ? styles.projectsFilterBtn_ghost
+        : styles.projectsFilterBtn,
     active
       ? isCaret
         ? styles.projectsFilterCaretBtn_active
-        : styles.projectsFilterBtn_active
+        : isGhost
+          ? styles.projectsFilterBtn_ghostActive
+          : styles.projectsFilterBtn_active
       : '',
     triggerClassName,
   ]

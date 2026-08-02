@@ -190,6 +190,14 @@ export function useSummaryContactValuesPopover({
                     hide();
                   }}
                 >
+                  <span
+                    className={`${styles.summaryContactPopoverTypeIcon} ${
+                      kind === 'email'
+                        ? styles.summaryContactPopoverTypeIcon_email
+                        : styles.summaryContactPopoverTypeIcon_phone
+                    }`}
+                    aria-hidden
+                  />
                   <span className={styles.summaryContactPopoverValue}>{display}</span>
                 </a>
               );
@@ -201,6 +209,14 @@ export function useSummaryContactValuesPopover({
 
             return (
               <div key={`${index}-${value}`} className={styles.summaryContactPopoverRow}>
+                <span
+                  className={`${styles.summaryContactPopoverTypeIcon} ${
+                    kind === 'email'
+                      ? styles.summaryContactPopoverTypeIcon_email
+                      : styles.summaryContactPopoverTypeIcon_phone
+                  }`}
+                  aria-hidden
+                />
                 <span className={styles.summaryContactPopoverValue}>{display}</span>
                 <button
                   type="button"

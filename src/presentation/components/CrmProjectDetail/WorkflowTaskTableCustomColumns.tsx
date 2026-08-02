@@ -8,8 +8,10 @@ import {
   useState,
   type KeyboardEvent,
   type ReactElement,
+  type ReactNode,
   type RefObject,
 } from 'react';
+import { LuArchive, LuPencil, LuReplace, LuTableProperties } from 'react-icons/lu';
 import type { CrmWorkflowTask } from '@/domain/crm';
 import type { WorkflowTaskTableColumnPosition } from '@/domain/buildcore/workflowTaskTableColumns';
 import { BUILDCORE_WORKFLOW_TASK_CUSTOM_FIELD_LABEL_MAX_LENGTH } from '@/domain/buildcore/workflowTaskCustomFields';
@@ -24,6 +26,32 @@ import styles from './ProjectDetail.module.css';
 const copy = content.projectDetail.workflow;
 const tableCopy = copy.tableColumns;
 const customFieldCopy = copy.customFields;
+
+type CustomColumnMenuTone = 'replace' | 'remove' | 'edit' | 'archive';
+
+const CUSTOM_COLUMN_MENU_TONE_CLASS: Record<CustomColumnMenuTone, string> = {
+  replace: styles.actionsMenuIconTile_replace,
+  remove: styles.actionsMenuIconTile_remove,
+  edit: styles.actionsMenuIconTile_edit,
+  archive: styles.actionsMenuIconTile_archive,
+};
+
+function CustomColumnMenuIconTile({
+  tone,
+  children,
+}: {
+  readonly tone: CustomColumnMenuTone;
+  readonly children: ReactNode;
+}): ReactElement {
+  return (
+    <span
+      className={[styles.actionsMenuIconTile, CUSTOM_COLUMN_MENU_TONE_CLASS[tone]].join(' ')}
+      aria-hidden
+    >
+      {children}
+    </span>
+  );
+}
 
 const WORKFLOW_TASK_TABLE_CUSTOM_COLUMN_TEXT_MAX_LENGTH = 30;
 
@@ -204,33 +232,54 @@ function EditableCustomFieldColumnHeader({
         anchorRef={menuButtonRef}
         align="end"
         sizeToContent
+        portalClassName={`${styles.inlineMenu_portal} ${styles.actionsMenu_portal}`}
         onClose={() => setMenuOpen(false)}
       >
             <button
               type="button"
-              className={styles.inlineMenuAction}
+              className={`${styles.inlineMenuAction} ${styles.actionsMenuItem}`}
               onClick={() => {
                 setMenuOpen(false);
                 setPickerOpen(true);
               }}
             >
+              <CustomColumnMenuIconTile tone="replace">
+                <LuReplace size={15} strokeWidth={2.25} />
+              </CustomColumnMenuIconTile>
               {tableCopy.replaceColumn}
             </button>
-            <button type="button" className={styles.inlineMenuAction} onClick={() => void handleRemove()}>
+            <button
+              type="button"
+              className={`${styles.inlineMenuAction} ${styles.actionsMenuItem}`}
+              onClick={() => void handleRemove()}
+            >
+              <CustomColumnMenuIconTile tone="remove">
+                <LuTableProperties size={15} strokeWidth={2.25} />
+              </CustomColumnMenuIconTile>
               {tableCopy.removeFromTable}
             </button>
             <button
               type="button"
-              className={styles.inlineMenuAction}
+              className={`${styles.inlineMenuAction} ${styles.actionsMenuItem}`}
               onClick={() => {
                 setMenuOpen(false);
                 setDraft(label);
                 setEditing(true);
               }}
             >
+              <CustomColumnMenuIconTile tone="edit">
+                <LuPencil size={15} strokeWidth={2.25} />
+              </CustomColumnMenuIconTile>
               {tableCopy.renameField}
             </button>
-            <button type="button" className={styles.inlineMenuAction} onClick={() => void handleArchive()}>
+            <button
+              type="button"
+              className={`${styles.inlineMenuAction} ${styles.actionsMenuItem}`}
+              onClick={() => void handleArchive()}
+            >
+              <CustomColumnMenuIconTile tone="archive">
+                <LuArchive size={15} strokeWidth={2.25} />
+              </CustomColumnMenuIconTile>
               {tableCopy.archiveField}
             </button>
           </WorkflowInlineMenu>

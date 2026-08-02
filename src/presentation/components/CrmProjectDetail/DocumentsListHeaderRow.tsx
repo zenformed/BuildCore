@@ -11,6 +11,8 @@ export type DocumentsListHeaderRowProps = {
   readonly leadingFilter?: ReactNode;
   readonly onRefresh: () => Promise<void>;
   readonly onError?: (message: string) => void;
+  /** When false, hide the inline status refresh (e.g. moved to folder tab bar). */
+  readonly showStatusRefresh?: boolean;
 };
 
 /**
@@ -21,6 +23,7 @@ export function DocumentsListHeaderRow({
   leadingFilter = null,
   onRefresh,
   onError,
+  showStatusRefresh = true,
 }: DocumentsListHeaderRowProps): ReactElement | null {
   const rowSelection = useDocumentRowSelection();
   if (rowSelection == null) return null;
@@ -44,9 +47,9 @@ export function DocumentsListHeaderRow({
         {leadingFilter}
         {showBulkChrome ? (
           <DocumentsPanelBulkActions />
-        ) : (
+        ) : showStatusRefresh ? (
           <WorkflowTableStatusRefresh onRefresh={onRefresh} onError={onError} />
-        )}
+        ) : null}
       </span>
     </div>
   );

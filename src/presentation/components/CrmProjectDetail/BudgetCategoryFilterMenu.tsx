@@ -20,7 +20,7 @@ const DOCUMENTS_REQUIRED_FILTER_VALUES: readonly CrmDocumentsRequiredFilterValue
   'no',
 ];
 
-export type BudgetFilterMenuTriggerVariant = 'filter' | 'caret';
+export type BudgetFilterMenuTriggerVariant = 'filter' | 'caret' | 'ghost';
 
 export type BudgetCategoryFilterMenuProps = {
   readonly filters: BudgetListFilters;
@@ -41,6 +41,7 @@ export function BudgetCategoryFilterMenu({
   const anchorRef = useRef<HTMLDivElement>(null);
   const active = isBudgetListFiltersActive(filters);
   const isCaret = triggerVariant === 'caret';
+  const isGhost = triggerVariant === 'ghost';
 
   const toggleCategory = (category: CrmBudgetCategory): void => {
     const next = filters.categories.includes(category)
@@ -60,11 +61,17 @@ export function BudgetCategoryFilterMenu({
     value === 'yes' ? filterCopy.documentsRequiredYes : filterCopy.documentsRequiredNo;
 
   const triggerBtnClass = [
-    isCaret ? projectStyles.projectsFilterCaretBtn : projectStyles.projectsFilterBtn,
+    isCaret
+      ? projectStyles.projectsFilterCaretBtn
+      : isGhost
+        ? projectStyles.projectsFilterBtn_ghost
+        : projectStyles.projectsFilterBtn,
     active
       ? isCaret
         ? projectStyles.projectsFilterCaretBtn_active
-        : projectStyles.projectsFilterBtn_active
+        : isGhost
+          ? projectStyles.projectsFilterBtn_ghostActive
+          : projectStyles.projectsFilterBtn_active
       : '',
   ]
     .filter(Boolean)

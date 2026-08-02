@@ -71,11 +71,30 @@
 }
 
 .stageGroupStackFull {
-  gap: 1rem;
+  gap: 0.75rem;
+}
+
+.folderTabPanelInner .stageGroupStackFull {
+  gap: 0.5rem;
+  padding-bottom: 0.75rem;
+}
+
+.folderTabPanelInner .workflowUnifiedTableBody {
+  gap: 0.75rem;
+  padding-bottom: 0.75rem;
+}
+
+/* Workflow tab (full layout): make stage stack itself own vertical scroll so
+ * the last stage is never clipped against panel bounds. */
+.workflowPanel.workflowPanelFull > .stageGroupStackFull {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
 .workflowPanelFull .workflowGrid {
-  grid-template-columns: 1.125rem minmax(0, 1.65fr) 7rem 6.5rem 7.5rem 2rem;
+  grid-template-columns: var(--workflow-select-col, 1.125rem) minmax(0, 1.65fr) 7rem 6.5rem 7.5rem 2rem;
 }
 
 .workflowPanelFull .workflowGridPayments {
@@ -114,6 +133,14 @@
   flex-shrink: 0;
 }
 
+.accountabilityPagePanel .detailPanelTableCard {
+  border: 1px solid var(--theme-border-main, var(--color-border, #e2e8f0));
+  border-left: 4px solid #1f6f8a;
+  border-radius: 0.375rem;
+  overflow: hidden;
+  background: var(--theme-workflow-stage-table-bg);
+}
+
 .accountabilityPageTableScroll {
   flex: 1;
   min-height: 0;
@@ -128,6 +155,65 @@
   z-index: 2;
 }
 
+:global([data-theme='dark']) .folderTabPanelInner .accountabilityPagePanel .detailPanelTableCard,
+:global([data-theme='dark']) .accountabilityPagePanel .detailPanelTableCard {
+  border: 1px solid var(--theme-stage-group-border-color, #80808052);
+  border-left: 4px solid #1f6f8a;
+  background: #1d2029;
+}
+
+.folderTabPanelInner .accountabilityPagePanel .accountabilityTableWrap .tableHeader,
+.folderTabPanelInner .accountabilityPagePanel .accountabilityTableWrap .tableRow {
+  padding: 0;
+  gap: 0;
+  column-gap: 0;
+  align-items: stretch;
+  border-bottom: none;
+}
+
+.folderTabPanelInner .accountabilityPagePanel .accountabilityTableWrap .tableHeader > *,
+.folderTabPanelInner .accountabilityPagePanel .accountabilityTableWrap .tableRow > * {
+  box-sizing: border-box;
+  min-width: 0;
+  min-height: 2.25rem;
+  padding-block: 0.5rem;
+  padding-inline: 0.5rem;
+  border-right: 1px solid var(--theme-border-main, var(--color-border, #e2e8f0));
+  border-bottom: 1px solid var(--theme-border-main, var(--color-border, #e2e8f0));
+  display: flex;
+  align-items: center;
+}
+
+.folderTabPanelInner .accountabilityPagePanel .accountabilityTableWrap .tableHeader > *:last-child,
+.folderTabPanelInner .accountabilityPagePanel .accountabilityTableWrap .tableRow > *:last-child {
+  border-right: none;
+}
+
+.folderTabPanelInner .accountabilityPagePanel .accountabilityTableWrap > .tableRow:last-child > * {
+  border-bottom: none;
+}
+
+:global([data-theme='light']) .folderTabPanelInner .accountabilityPagePanel .accountabilityTableWrap .tableRow > * {
+  background: #f2f4f7;
+}
+
+:global([data-theme='dark']) .folderTabPanelInner .accountabilityPagePanel .accountabilityTableWrap .tableRow > * {
+  background: #1d2029;
+  border-right-color: var(--theme-border-main, #3d3e4a);
+  border-bottom-color: var(--theme-border-main, #3d3e4a);
+}
+
+:global([data-theme='dark']) .folderTabPanelInner .accountabilityPagePanel .accountabilityTableWrap .tableRow:hover,
+:global([data-theme='dark']) .folderTabPanelInner .accountabilityPagePanel .accountabilityTableWrap .tableRow.tableRow_current,
+:global([data-theme='dark']) .folderTabPanelInner .accountabilityPagePanel .accountabilityTableWrap .tableRow.tableRow_selected,
+:global([data-theme='dark'])
+  .folderTabPanelInner
+  .accountabilityPagePanel
+  .accountabilityTableWrap
+  .tableRow.tableRow_selected:hover {
+  background: transparent;
+}
+
 .budgetTablePanel {
   min-width: 0;
 }
@@ -140,6 +226,15 @@
   gap: 0.5rem;
 }
 
+/* Documents tab only: remove inherited card/surface shadows. */
+.folderTabPanelInner .documentsTabPanel,
+.folderTabPanelInner .documentsTabPanel.detailSurface,
+.folderTabPanelInner .documentsTabPanel.paymentsPanel,
+.folderTabPanelInner .documentsTabPanel .card,
+.folderTabPanelInner .documentsTabPanel .detailPanelTableCard {
+  box-shadow: none !important;
+}
+
 .budgetSummaryPanel {
   width: 100%;
   min-height: unset;
@@ -149,7 +244,7 @@
 
 .budgetGrid {
   grid-template-columns:
-    1.125rem minmax(8rem, 1.15fr) 9.75rem 5rem 5rem 5.25rem 7.5rem 5.75rem 3.25rem;
+    1.75rem minmax(8rem, 1.15fr) 9.75rem 5rem 5rem 5.25rem 7.5rem 5.75rem 3.25rem;
 }
 
 .budgetTableHeader > .workflowPrimaryHeader,
@@ -159,9 +254,13 @@
 
 .budgetTableHeader > *:nth-child(4),
 .budgetTableHeader > *:nth-child(5),
-.budgetTableHeader > *:nth-child(6),
-.budgetTableHeader > *:nth-child(7) {
+.budgetTableHeader > *:nth-child(6) {
   text-align: right;
+}
+
+.budgetTableHeader > *:nth-child(7) {
+  justify-content: center;
+  text-align: center;
 }
 
 .budgetTableHeader > *:nth-child(8):not(.taskDeleteHeader) {
@@ -179,6 +278,23 @@
 
 .budgetTableHeader > .workflowPrimaryHeader {
   gap: 0.15rem;
+}
+
+.budgetStageTableSection {
+  margin-top: 0.5rem;
+}
+
+.budgetStageTable {
+  --workflow-select-col: 1.75rem;
+}
+
+/* Keep totals row visually distinct even with per-cell table borders. */
+.stageGroup_unifiedTableSection .stageGroupTable .budgetTotalsRow > * {
+  background: var(--color-muted, #f8fafc);
+}
+
+:global([data-theme='dark']) .stageGroup_unifiedTableSection .stageGroupTable .budgetTotalsRow > * {
+  background: #1a1d26;
 }
 
 .budgetMutedCell {
@@ -458,13 +574,70 @@
 }
 
 .projectFinancialReportTableCard {
+  border: 1px solid var(--theme-border-main, var(--color-border, #e2e8f0));
+  border-radius: 0.375rem;
   overflow: hidden;
 }
 
 .projectFinancialTableScroll {
   min-width: 0;
+  width: 100%;
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
+}
+
+:global([data-theme='dark']) .projectFinancialReportTableCard {
+  border-color: var(--theme-stage-group-border-color, #80808052);
+}
+
+/* Reports tab tables: rounded shell + per-cell grid lines like other detail tables. */
+.projectFinancialPaymentsTableWrap .tableHeader,
+.projectFinancialPaymentsTableWrap .tableRow,
+.projectFinancialCostsTableWrap .tableHeader,
+.projectFinancialCostsTableWrap .tableRow {
+  width: 100%;
+  min-width: 0;
+  padding: 0;
+  gap: 0;
+  column-gap: 0;
+  align-items: stretch;
+  border-bottom: none;
+}
+
+.projectFinancialPaymentsTableWrap .tableHeader > *,
+.projectFinancialPaymentsTableWrap .tableRow > *,
+.projectFinancialCostsTableWrap .tableHeader > *,
+.projectFinancialCostsTableWrap .tableRow > * {
+  box-sizing: border-box;
+  min-width: 0;
+  min-height: 2.25rem;
+  padding-block: 0.5rem;
+  padding-inline: 0.5rem;
+  border-right: 1px solid var(--theme-border-main, var(--color-border, #e2e8f0));
+  border-bottom: 1px solid var(--theme-border-main, var(--color-border, #e2e8f0));
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+}
+
+.projectFinancialPaymentsTableWrap .tableHeader > *:last-child,
+.projectFinancialPaymentsTableWrap .tableRow > *:last-child,
+.projectFinancialCostsTableWrap .tableHeader > *:last-child,
+.projectFinancialCostsTableWrap .tableRow > *:last-child {
+  border-right: none;
+}
+
+.projectFinancialPaymentsTableWrap .projectFinancialTableScroll > .tableRow:last-child > *,
+.projectFinancialCostsTableWrap .projectFinancialTableScroll > .tableRow:last-child > * {
+  border-bottom: none;
+}
+
+:global([data-theme='dark']) .projectFinancialPaymentsTableWrap .tableHeader > *,
+:global([data-theme='dark']) .projectFinancialPaymentsTableWrap .tableRow > *,
+:global([data-theme='dark']) .projectFinancialCostsTableWrap .tableHeader > *,
+:global([data-theme='dark']) .projectFinancialCostsTableWrap .tableRow > * {
+  border-right-color: var(--theme-border-main, #3d3e4a);
+  border-bottom-color: var(--theme-border-main, #3d3e4a);
 }
 
 .projectFinancialKpiGrid {
@@ -533,25 +706,112 @@
 }
 
 .projectFinancialPaymentsGrid {
-  grid-template-columns: minmax(0, 1.4fr) 5rem 5.5rem 5.5rem 3.5rem;
+  grid-template-columns: minmax(0, 2.3fr) minmax(0, 0.27fr) minmax(0, 0.27fr) minmax(0, 0.32fr) minmax(0, 0.22fr);
 }
 
 .projectFinancialPaymentsGridParent {
-  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr) 4.5rem 4.5rem 4.5rem 3.5rem;
+  grid-template-columns:
+    minmax(0, 2.3fr)
+    minmax(0, 0.27fr)
+    minmax(0, 0.27fr)
+    minmax(0, 0.32fr)
+    minmax(0, 0.22fr);
 }
 
 .projectFinancialPaymentChildLabel {
   padding-left: 0.375rem;
 }
 
-.projectFinancialCostsGrid {
-  grid-template-columns: minmax(0, 1fr) 4.5rem 4.5rem 3rem;
+.projectFinancialProjectCellWithIcon {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
-.projectFinancialPaymentsGrid.tableHeader > *:nth-child(n + 2),
-.projectFinancialPaymentsGrid.tableRow > *:nth-child(n + 2),
-.projectFinancialPaymentsGridParent.tableHeader > *:nth-child(n + 3),
-.projectFinancialPaymentsGridParent.tableRow > *:nth-child(n + 3),
+.projectFinancialProjectIcon {
+  width: 0.875rem;
+  height: 0.875rem;
+  flex: 0 0 auto;
+  color: #0f766e;
+}
+
+:global([data-theme='dark']) .projectFinancialProjectIcon {
+  color: var(--color-text-muted, #94a3b8);
+}
+
+.projectFinancialStatusIndicator {
+  width: 100%;
+  max-width: 100%;
+  justify-content: flex-end !important;
+  padding-right: 0.5rem !important;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.projectFinancialPaymentsGrid.tableHeader > *:nth-child(3),
+.projectFinancialPaymentsGrid.tableRow > *:nth-child(3),
+.projectFinancialPaymentsGridParent.tableHeader > *:nth-child(3),
+.projectFinancialPaymentsGridParent.tableRow > *:nth-child(3) {
+  text-align: right !important;
+  justify-content: flex-end !important;
+  position: relative;
+}
+
+.projectFinancialPaymentsGrid.tableHeader > *:nth-child(3)::after,
+.projectFinancialPaymentsGrid.tableRow > *:nth-child(3)::after,
+.projectFinancialPaymentsGridParent.tableHeader > *:nth-child(3)::after,
+.projectFinancialPaymentsGridParent.tableRow > *:nth-child(3)::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 1px;
+  background: var(--theme-border-main, var(--color-border, #e2e8f0));
+  pointer-events: none;
+}
+
+:global([data-theme='dark']) .projectFinancialPaymentsGrid.tableHeader > *:nth-child(3)::after,
+:global([data-theme='dark']) .projectFinancialPaymentsGrid.tableRow > *:nth-child(3)::after,
+:global([data-theme='dark']) .projectFinancialPaymentsGridParent.tableHeader > *:nth-child(3)::after,
+:global([data-theme='dark']) .projectFinancialPaymentsGridParent.tableRow > *:nth-child(3)::after {
+  background: var(--theme-border-main, #3d3e4a);
+}
+
+.projectFinancialCostsGrid {
+  grid-template-columns: minmax(0, 2.52fr) minmax(0, 0.27fr) minmax(0, 0.32fr) minmax(0, 0.22fr);
+}
+
+.projectFinancialPaidIndicator {
+  text-transform: uppercase;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.projectFinancialPaidIndicator_paid {
+  color: #16a34a;
+}
+
+.projectFinancialPaidIndicator_unpaid {
+  color: #dc2626;
+}
+
+:global([data-theme='dark']) .projectFinancialPaidIndicator_paid {
+  color: #22c55e;
+}
+
+:global([data-theme='dark']) .projectFinancialPaidIndicator_unpaid {
+  color: #f87171;
+}
+
+.projectFinancialPaymentsGrid.tableHeader > *:nth-child(2),
+.projectFinancialPaymentsGrid.tableRow > *:nth-child(2),
+.projectFinancialPaymentsGrid.tableHeader > *:nth-child(n + 4),
+.projectFinancialPaymentsGrid.tableRow > *:nth-child(n + 4),
+.projectFinancialPaymentsGridParent.tableHeader > *:nth-child(2),
+.projectFinancialPaymentsGridParent.tableRow > *:nth-child(2),
+.projectFinancialPaymentsGridParent.tableHeader > *:nth-child(n + 4),
+.projectFinancialPaymentsGridParent.tableRow > *:nth-child(n + 4),
 .projectFinancialCostsGrid.tableHeader > *:nth-child(n + 2),
 .projectFinancialCostsGrid.tableRow > *:nth-child(n + 2) {
   text-align: right;
@@ -737,12 +997,15 @@
 
 .inlineMenu_portal.actionsMenu_portal {
   width: max-content;
-  min-width: 15.5rem;
+  min-width: 18.5rem;
+  /* Icon tiles + labels need more room than the default inline menu max. */
+  max-width: min(28rem, calc(100vw - 1rem));
   max-height: min(40rem, calc(100vh - 1rem));
   padding: 0.45rem;
   border-radius: 0.75rem;
   box-shadow: 0 10px 28px rgba(15, 23, 42, 0.14);
   align-items: stretch;
+  overflow-x: visible;
 }
 
 /* Above RightSideDrawer (10001) and ConfirmModal snackbar (10050) */
@@ -760,6 +1023,8 @@
   text-align: left;
   white-space: nowrap;
   border-radius: 0.5rem;
+  overflow: visible;
+  text-overflow: unset;
 }
 
 .inlineMenuAction.actionsMenuItem:hover:not(:disabled) {
@@ -796,6 +1061,10 @@
   background: #2aa8a0;
 }
 
+.actionsMenuIconTile_subprojects {
+  background: #0f766e;
+}
+
 .actionsMenuIconTile_accountability {
   background: #1f6f8a;
 }
@@ -806,6 +1075,14 @@
 
 .actionsMenuIconTile_documents {
   background: #6366f1;
+}
+
+.actionsMenuIconTile_payments {
+  background: #0ea5e9;
+}
+
+.actionsMenuIconTile_budget {
+  background: #d97706;
 }
 
 .actionsMenuIconTile_qr {
@@ -830,6 +1107,34 @@
 
 .actionsMenuIconTile_delete {
   background: #ef6b6b;
+}
+
+.actionsMenuIconTile_attachment {
+  background: #6366f1;
+}
+
+.actionsMenuIconTile_edit {
+  background: #8b5cf6;
+}
+
+.actionsMenuIconTile_notes {
+  background: #0ea5e9;
+}
+
+.actionsMenuIconTile_notify {
+  background: #0284c7;
+}
+
+.actionsMenuIconTile_replace {
+  background: #0ea5e9;
+}
+
+.actionsMenuIconTile_remove {
+  background: #f08c3a;
+}
+
+.actionsMenuIconTile_archive {
+  background: #64748b;
 }
 
 .actionsMenuIcon {
@@ -1146,27 +1451,99 @@
   display: flex;
   flex-direction: column;
   gap: 0.625rem;
+  padding: 0 0.25rem 0.25rem;
   overflow-x: hidden;
-  overflow-y: auto;
+  overflow-y: hidden;
 }
 
 .folderTabsRoot {
   display: flex;
   flex-direction: column;
-  flex: none;
-  align-self: flex-start;
+  flex: 1 1 auto;
+  min-height: 0;
+  align-self: stretch;
   width: 100%;
   min-width: 0;
+  margin-top: 0.75rem;
+  border: 1px solid var(--theme-border-main, var(--color-border, #e2e8f0));
+  border-radius: 0.625rem;
+  background: var(--theme-surface-main, var(--color-surface, #fff));
+  box-shadow:
+    0 1px 1px rgba(15, 23, 42, 0.05),
+    0 2px 6px rgba(15, 23, 42, 0.05);
+  overflow: hidden;
+}
+
+.folderTabsRoot.folderTabsRootReportsActive {
+  box-shadow:
+    0 1px 1px rgba(15, 23, 42, 0.05),
+    0 2px 6px rgba(15, 23, 42, 0.05);
+}
+
+:global([data-theme='dark']) .folderTabsRoot {
+  border-color: var(--theme-border-main, #3d3e4a);
+  background: var(--theme-surface-main, #252836);
+  box-shadow:
+    0 1px 1px rgba(0, 0, 0, 0.22),
+    0 3px 8px rgba(0, 0, 0, 0.18);
+}
+
+:global([data-theme='dark']) .folderTabsRoot.folderTabsRootReportsActive {
+  box-shadow:
+    0 1px 1px rgba(0, 0, 0, 0.22),
+    0 3px 8px rgba(0, 0, 0, 0.18);
+}
+
+.folderTabBar {
+  --folder-tab-bar-inline-pad: 0.75rem;
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem 1rem;
+  width: 100%;
+  min-width: 0;
+  padding-top: 0.5rem;
+  padding-inline: var(--folder-tab-bar-inline-pad);
+  /* Baseline is drawn inset (not full-bleed) so it lines up with the first tab underline. */
+  border-bottom: none;
+}
+
+.folderTabBar::after {
+  display: none;
+}
+
+.folderTabBar_mobile {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.625rem;
+  padding-bottom: 0.75rem;
 }
 
 .folderTabList {
   display: flex;
   flex-wrap: wrap;
-  align-items: flex-end;
-  gap: 0.125rem;
-  padding: 0 0.125rem;
+  align-items: stretch;
+  gap: 0.25rem 1rem;
+  padding: 0;
   margin: 0;
-  border-bottom: 1px solid var(--theme-border-main, var(--color-border, #e2e8f0));
+  border-bottom: none;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.folderTabActions {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 0.75rem;
+  margin-left: auto;
+  min-width: 0;
+}
+
+.folderTabActions :global(.detailPanelHeaderActions) {
+  margin-left: 0;
 }
 
 .folderTabMobileSelector {
@@ -1175,8 +1552,8 @@
   gap: 0.375rem;
   width: 100%;
   min-width: 0;
-  padding: 0 0.125rem 0.75rem;
-  border-bottom: 1px solid var(--theme-border-main, var(--color-border, #e2e8f0));
+  padding: 0;
+  border-bottom: none;
 }
 
 .folderTabMobileSelectorLabel {
@@ -1196,108 +1573,125 @@
 }
 
 :global([data-theme='dark']) .folderTabMobileSelector {
-  border-bottom-color: var(--theme-border-main, #3d3e4a);
+  border-bottom-color: transparent;
 }
 
 .folderTab,
 .folderTabActive {
   position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
   margin: 0;
-  padding: 0.4375rem 0.875rem;
+  padding: 0.625rem 0.75rem;
   font: inherit;
-  font-size: 0.8125rem;
+  font-size: 0.875rem;
   font-weight: 500;
   line-height: 1.35;
-  border: 1px solid transparent;
-  border-bottom: none;
-  border-radius: 0.375rem 0.375rem 0 0;
+  border: none;
+  border-radius: 0;
   background: transparent;
   color: var(--theme-text-muted, var(--color-text-muted, #64748b));
   cursor: pointer;
-  transition:
-    background-color 0.15s ease,
-    color 0.15s ease,
-    border-color 0.15s ease;
+  transition: color 0.15s ease;
 }
 
-.folderTab {
-  margin-bottom: -1px;
-  border-color: var(--theme-border-main, var(--color-border, #e2e8f0));
-  background: var(--theme-surface-muted, rgba(15, 23, 42, 0.04));
+.folderTabList > :first-child {
+  padding-inline-start: 0.25rem;
+}
+
+.folderTabIconTile {
+  width: 1.2em;
+  height: 1.2em;
+  border-radius: 0.25em;
+}
+
+.folderTabIconTile :global(svg) {
+  width: 0.75em;
+  height: 0.75em;
 }
 
 .folderTab:hover {
   color: var(--theme-text-main, var(--color-text, #0f172a));
-  background: var(--theme-surface-main, var(--color-surface, #fff));
 }
 
 .folderTabActive {
   z-index: 1;
-  margin-bottom: -1px;
-  border-color: var(--theme-border-main, var(--color-border, #e2e8f0));
-  border-bottom-color: var(--theme-surface-main, var(--color-surface, #fff));
-  background: var(--theme-surface-main, var(--color-surface, #fff));
   color: var(--theme-text-main, var(--color-text, #0f172a));
+  font-weight: 600;
 }
 
-:global([data-theme='dark']) .folderTabList {
-  border-bottom-color: var(--theme-border-main, #3d3e4a);
+.folderTabActive::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0.75rem;
+  bottom: -1px;
+  height: 2px;
+  border-radius: 1px 1px 0 0;
+  background: var(--color-primary, #2563eb);
+}
+
+.folderTabList > :first-child.folderTabActive::after {
+  left: 0;
 }
 
 :global([data-theme='dark']) .folderTab {
-  border-color: var(--theme-border-main, #3d3e4a);
-  background: var(--theme-surface-muted, #1e1f28);
   color: var(--theme-text-muted, #9ca3af);
 }
 
 :global([data-theme='dark']) .folderTab:hover {
   color: var(--theme-text-main, #e5e7eb);
-  background: var(--theme-surface-elevated, #2a2b36);
 }
 
 :global([data-theme='dark']) .folderTabActive {
-  border-color: var(--theme-border-main, #3d3e4a);
-  border-bottom-color: var(--theme-surface-main, #252836);
-  background: var(--theme-surface-main, #252836);
   color: var(--theme-text-main, #e5e7eb);
+}
+
+:global([data-theme='dark']) .folderTabActive::after {
+  background: var(--color-primary, #60a5fa);
 }
 
 .folderTabPanel {
   display: flex;
   flex-direction: column;
-  flex: none;
-  border: 1px solid var(--theme-border-main, var(--color-border, #e2e8f0));
-  border-top: none;
-  border-radius: 0 0.5rem 0.5rem 0.5rem;
-  background: var(--theme-tab-panel-bg, var(--theme-surface-main, var(--color-surface, #fff)));
+  flex: 1 1 auto;
+  min-height: 0;
+  border: none;
+  border-radius: 0;
+  background: transparent;
   overflow: hidden;
-  box-shadow: 0 1px 0 rgba(15, 23, 42, 0.04);
+  box-shadow: none;
 }
 
 :global([data-theme='dark']) .folderTabPanel {
-  background: var(--theme-tab-panel-bg, #161922);
-  border-color: var(--theme-border-main, #3d3e4a);
-  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.22);
+  background: transparent;
+  border: none;
+  box-shadow: none;
 }
 
 .folderTabPanelInner {
-  flex: none;
+  flex: 1 1 auto;
   min-height: 0;
   display: flex;
   flex-direction: column;
   gap: 0.625rem;
-  padding: 0.75rem 0.875rem;
+  padding: 0.75rem 0.75rem 0.75rem;
+  background: transparent;
+  overflow-x: hidden;
+  overflow-y: auto;
 }
 
 :global([data-theme='dark']) .folderTabPanelInner {
-  background: var(--theme-tab-panel-bg, #161922);
+  background: transparent;
 }
 
 .folderTabPanelInner .paymentsPanel,
 .folderTabPanelInner .workflowPanel,
 .folderTabPanelInner .accountabilityPanel,
 .folderTabPanelInner .budgetTablePanel,
-.folderTabPanelInner .documentsTabPanel {
+.folderTabPanelInner .documentsTabPanel,
+.folderTabPanelInner .subprojectsPanel {
   border: none;
   border-radius: 0;
   box-shadow: none;
@@ -1309,10 +1703,10 @@
 }
 
 .folderTabPanelInner .workflowPanel.workflowPanelFull > .detailPanelHeader {
-  /* Match .workflowUnifiedTable full-bleed so the title/check align with stage headers */
+  /* Align title/check with stage headers (no folder panel inset to bleed against). */
   padding: 0;
-  margin-inline: -0.875rem;
-  width: calc(100% + 1.75rem);
+  margin-inline: 0;
+  width: 100%;
   padding-inline: var(--theme-workflow-unified-inset, 0.3125rem) 0.5625rem;
 }
 
@@ -1698,6 +2092,656 @@
   color: var(--color-success, #4ade80);
 }
 
+.overviewHeaderCard {
+  border: 1px solid var(--theme-border-main, var(--color-border, #e2e8f0));
+  border-radius: 0.625rem;
+  background: var(--theme-surface-main, var(--color-surface, #fff));
+  box-shadow:
+    0 1px 2px rgba(15, 23, 42, 0.08),
+    0 6px 16px rgba(15, 23, 42, 0.08);
+  overflow: hidden;
+}
+
+:global([data-theme='dark']) .overviewHeaderCard {
+  border-color: var(--theme-border-main, #3d3e4a);
+  background: var(--theme-surface-main, #252836);
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.34),
+    0 8px 20px rgba(0, 0, 0, 0.28);
+}
+
+.overviewHeaderTop {
+  display: grid;
+  grid-template-columns: minmax(0, 1.85fr) minmax(13rem, 1.2fr) minmax(12rem, 1fr);
+  align-items: stretch;
+  gap: 0;
+}
+
+.overviewIdentity,
+.overviewPipeline,
+.overviewValue {
+  min-width: 0;
+  padding: 0.875rem 1rem;
+}
+
+.overviewPipeline,
+.overviewValue {
+  position: relative;
+  border-left: none;
+}
+
+.overviewPipeline::before,
+.overviewValue::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 10%;
+  bottom: 10%;
+  width: 1px;
+  background: var(--theme-border-main, var(--color-border, #e2e8f0));
+  pointer-events: none;
+}
+
+:global([data-theme='dark']) .overviewPipeline,
+:global([data-theme='dark']) .overviewValue {
+  border-left-color: transparent;
+}
+
+:global([data-theme='dark']) .overviewPipeline::before,
+:global([data-theme='dark']) .overviewValue::before {
+  background: #34384a;
+}
+
+.overviewIdentity {
+  display: flex;
+  min-width: 0;
+}
+
+.overviewIdentityMain {
+  min-width: 0;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+
+.overviewIdentityPhoto {
+  flex: 0 0 auto;
+  display: flex;
+}
+
+.overviewIdentityPhoto .titleBlockImageWrap {
+  height: auto;
+}
+
+.overviewIdentityPhoto .titleBlockImageBtn {
+  height: auto;
+}
+
+.overviewIdentityPhoto .titleBlockImagePhoto,
+.overviewIdentityPhoto .titleBlockImageInitial {
+  width: 6.5rem;
+  height: 6.5rem;
+  min-height: 0;
+}
+
+.overviewIdentityContent {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3125rem;
+}
+
+.overviewIdentityTitleRow {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+.overviewIdentityTitleRow .title {
+  font-size: 1.45rem;
+  line-height: 1.08;
+}
+
+.overviewStatusBadgeActive,
+.overviewStatusBadgeInactive {
+  flex: 0 0 auto;
+  font-size: 0.625rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 0.18rem 0.42rem;
+  border-radius: 999px;
+  border: 1px solid transparent;
+}
+
+.overviewStatusBadgeActive {
+  color: #166534;
+  border-color: rgba(34, 197, 94, 0.45);
+  background: rgba(34, 197, 94, 0.14);
+}
+
+:global([data-theme='dark']) .overviewStatusBadgeActive {
+  color: #86efac;
+  border-color: rgba(74, 222, 128, 0.5);
+  background: rgba(74, 222, 128, 0.14);
+}
+
+.overviewStatusBadgeInactive {
+  color: #b45309;
+  border-color: rgba(245, 158, 11, 0.45);
+  background: rgba(245, 158, 11, 0.14);
+}
+
+:global([data-theme='dark']) .overviewStatusBadgeInactive {
+  color: #fcd34d;
+  border-color: rgba(252, 211, 77, 0.4);
+  background: rgba(252, 211, 77, 0.12);
+}
+
+.overviewIdentityMetaRow {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  min-width: 0;
+}
+
+.overviewIndustryBadge {
+  display: inline-flex;
+  align-items: center;
+  max-width: 100%;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--color-text-muted, #64748b);
+  padding: 0.125rem 0.375rem;
+  border-radius: 999px;
+  background: var(--color-muted, #eef2f7);
+}
+
+:global([data-theme='dark']) .overviewIndustryInlineEditor .headerTradeSubtitle {
+  color: #cbd5e1;
+}
+
+.overviewIndustryInlineEditor .headerTradeSubtitle {
+  margin: 0;
+  padding-left: 0;
+}
+
+.overviewIndustryInlineEditor .headerTradeBtn,
+.overviewIndustryInlineEditor .headerTradeSelect {
+  min-width: 0;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+:global([data-theme='dark']) .overviewIndustryBadge {
+  color: #cbd5e1;
+  background: #323645;
+}
+
+.overviewDot,
+.overviewEntityType {
+  color: var(--color-text-muted, #64748b);
+  font-size: 0.75rem;
+}
+
+.overviewIdentityContactRow {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.375rem 0.625rem;
+  min-width: 0;
+}
+
+.overviewContactItem {
+  min-width: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.28rem;
+}
+
+.overviewContactItemPhone {
+  margin-left: 0.25rem;
+}
+
+.overviewContactIcon {
+  flex: 0 0 auto;
+  color: var(--color-text-muted, #64748b);
+}
+
+.overviewIdentityContactRow .summaryValueOnly {
+  min-width: 0;
+}
+
+.overviewIdentityContactRow .summaryValueSlot {
+  min-width: 0;
+  overflow: visible;
+}
+
+.overviewIdentityContactRow .summaryInlineGhost,
+.overviewIdentityContactRow .summaryInlineDisplayOverlay,
+.overviewIdentityContactRow .summaryInlineInputOverlay {
+  overflow: visible;
+  text-overflow: clip;
+  white-space: nowrap;
+  font-weight: 500;
+}
+
+.overviewInlineValue {
+  font-size: 0.8125rem;
+  line-height: 1.25;
+  color: var(--color-text, #0f172a);
+  font-weight: 500;
+}
+
+.overviewIdentityContactRow .summaryInlineDisplayOverlay:hover:not(:disabled) {
+  color: inherit;
+  text-decoration: none;
+}
+
+:global([data-theme='dark']) .overviewIdentityContactRow .summaryInlineDisplayOverlay:hover:not(:disabled) {
+  color: inherit;
+}
+
+.overviewIdentityActionsRow {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.0625rem;
+}
+
+.overviewEditButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.32rem 0.62rem;
+  border-radius: 0.4rem;
+  border: 1px solid var(--theme-border-main, var(--color-border, #e2e8f0));
+  background: var(--theme-surface-elevated, #f8fafc);
+  color: var(--color-text-muted, #334155);
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.overviewEditButton:hover:not(:disabled) {
+  color: var(--color-text, #0f172a);
+  background: var(--color-muted, #eef2f7);
+}
+
+.overviewEditButton:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+:global([data-theme='dark']) .overviewEditButton {
+  color: #e2e8f0;
+  border-color: #3d3e4a;
+  background: #2c3040;
+}
+
+:global([data-theme='dark']) .overviewEditButton:hover:not(:disabled) {
+  background: #353a4a;
+}
+
+.overviewSectionTitleRow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  color: #334155;
+}
+
+:global([data-theme='dark']) .overviewSectionTitleRow {
+  color: #94a3b8;
+}
+
+.overviewSectionIconBadge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.55rem;
+  height: 1.55rem;
+  border-radius: 999px;
+  flex: 0 0 auto;
+}
+
+.overviewSectionIconBadge :global(svg) {
+  width: 0.9rem;
+  height: 0.9rem;
+}
+
+.overviewSectionIconBadge_pipeline {
+  color: #4338ca;
+  background: rgba(99, 102, 241, 0.18);
+  border: 1px solid rgba(79, 70, 229, 0.5);
+}
+
+:global([data-theme='dark']) .overviewSectionIconBadge_pipeline {
+  color: #c4b5fd;
+  background: rgba(99, 102, 241, 0.24);
+  border-color: rgba(129, 140, 248, 0.5);
+}
+
+.overviewSectionIconBadge_value {
+  color: #15803d;
+  background: rgba(34, 197, 94, 0.18);
+  border: 1px solid rgba(22, 163, 74, 0.5);
+}
+
+:global([data-theme='dark']) .overviewSectionIconBadge_value {
+  color: #86efac;
+  background: rgba(34, 197, 94, 0.24);
+  border-color: rgba(74, 222, 128, 0.5);
+}
+
+.overviewSectionTitle {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.overviewMetaLabel {
+  font-size: 0.6875rem;
+  line-height: 1.2;
+  color: #334155;
+}
+
+:global([data-theme='dark']) .overviewMetaLabel {
+  color: #94a3b8;
+}
+
+.overviewMetadataItem {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  column-gap: 0.35rem;
+  align-items: start;
+}
+
+.overviewMetadataIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.85rem;
+  min-height: 2rem;
+  color: #334155;
+  line-height: 1;
+  margin-top: 0.03rem;
+}
+
+:global([data-theme='dark']) .overviewMetadataIcon {
+  color: #94a3b8;
+}
+
+.overviewMetadataIcon :global(svg) {
+  width: 1.45rem;
+  height: 1.45rem;
+  flex: 0 0 auto;
+}
+
+.overviewMetadataText {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.overviewMetaValue {
+  font-size: 0.8125rem;
+  line-height: 1.25;
+  font-weight: 600;
+  color: var(--color-text, #0f172a);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+:global([data-theme='dark']) .overviewMetaValue,
+:global([data-theme='dark']) .overviewInlineValue {
+  color: #f1f5f9;
+}
+
+.overviewPipeline {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+}
+
+.overviewPipelineCurrent {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  min-width: 0;
+}
+
+.overviewPipelineStagePill {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  max-width: 100%;
+  padding: 0.18rem 0.48rem;
+  border-radius: 999px;
+  border: 1px solid rgba(59, 130, 246, 0.32);
+  background: rgba(59, 130, 246, 0.14);
+  color: #1d4ed8;
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+:global([data-theme='dark']) .overviewPipelineStagePill {
+  border-color: rgba(96, 165, 250, 0.4);
+  background: rgba(59, 130, 246, 0.2);
+  color: #bfdbfe;
+}
+
+.overviewPipelineProgress .projectProgressPercent {
+  width: 100%;
+}
+
+.overviewPipelineStageCount {
+  font-size: 0.75rem;
+  color: var(--color-text-muted, #64748b);
+}
+
+.overviewValue {
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+}
+
+.overviewValueMetrics {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  min-width: 0;
+}
+
+.overviewValueMetric {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 0.2rem;
+  padding-right: 0.5rem;
+}
+
+.overviewValueMetric + .overviewValueMetric {
+  border-left: 1px solid var(--theme-border-main, var(--color-border, #e2e8f0));
+  padding-left: 0.5rem;
+}
+
+:global([data-theme='dark']) .overviewValueMetric + .overviewValueMetric {
+  border-left-color: #34384a;
+}
+
+.overviewValueMetricAmount {
+  font-size: 1.125rem;
+  line-height: 1.1;
+  font-weight: 700;
+  color: var(--color-text, #0f172a);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+:global([data-theme='dark']) .overviewValueMetricAmount {
+  color: #f8fafc;
+}
+
+.overviewMetadataStrip {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  border-top: 1px solid var(--theme-border-main, var(--color-border, #e2e8f0));
+}
+
+:global([data-theme='dark']) .overviewMetadataStrip {
+  border-top-color: #34384a;
+}
+
+.overviewMetadataCell {
+  position: relative;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.22rem;
+  padding: 0.75rem 0.75rem;
+}
+
+.overviewMetadataCell + .overviewMetadataCell {
+  border-left: none;
+}
+
+.overviewMetadataCell + .overviewMetadataCell::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 10%;
+  bottom: 10%;
+  width: 1px;
+  background: var(--theme-border-main, var(--color-border, #e2e8f0));
+  pointer-events: none;
+}
+
+:global([data-theme='dark']) .overviewMetadataCell + .overviewMetadataCell {
+  border-left-color: transparent;
+}
+
+:global([data-theme='dark']) .overviewMetadataCell + .overviewMetadataCell::before {
+  background: #34384a;
+}
+
+.overviewOwnerValue {
+  min-width: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.overviewUnassignedAvatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 999px;
+  border: 1px solid var(--theme-border-main, var(--color-border, #e2e8f0));
+  font-size: 0.75rem;
+  color: var(--color-text-muted, #64748b);
+}
+
+:global([data-theme='dark']) .overviewUnassignedAvatar {
+  border-color: #3d3e4a;
+  color: #94a3b8;
+}
+
+.overviewMetadataCell .projectNotesCard {
+  padding: 0 !important;
+  margin: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+}
+
+.overviewMetadataCell .projectNotesCard .nextStepLabel {
+  display: none;
+}
+
+.overviewMetadataCell .projectNotesCard .notesDisplayOverlay,
+.overviewMetadataCell .projectNotesCard .notesTextareaOverlay {
+  padding: 0 0.1875rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  line-height: 1.25;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.overviewMetadataCell .projectNotesCard .notesDisplayOverlay_empty {
+  color: var(--color-text-muted, #64748b);
+}
+
+.overviewMetadataCell .projectNotesCard .notesInlineSavingHint {
+  display: none;
+}
+
+.overviewMetadataCell .projectNotesCard .notesValueSlot {
+  width: 100%;
+  display: block;
+  min-width: 0;
+}
+
+.overviewMetadataCell .projectNotesCard .notesGhost {
+  display: block;
+  max-width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  word-break: normal;
+}
+
+.overviewMetadataCell .projectNotesCard {
+  margin-top: 0;
+}
+
+@media (max-width: 1420px) {
+  .overviewHeaderTop {
+    grid-template-columns: minmax(0, 1fr) minmax(13rem, 0.85fr);
+  }
+
+  .overviewValue {
+    grid-column: 1 / -1;
+    border-left: 0;
+    border-top: 1px solid var(--theme-border-main, var(--color-border, #e2e8f0));
+  }
+
+  :global([data-theme='dark']) .overviewValue {
+    border-top-color: #34384a;
+  }
+}
+
+@media (max-width: 1200px) {
+  .overviewIdentityContactRow {
+    gap: 0.375rem 0.5rem;
+  }
+
+  .overviewMetadataStrip {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .overviewMetadataCell:nth-child(4) {
+    border-left: 0;
+  }
+}
+
 .breadcrumb {
   position: relative;
   z-index: 30;
@@ -1862,7 +2906,7 @@
 .summaryContactPopover_portal {
   min-width: unset;
   max-width: min(20rem, calc(100vw - 1rem));
-  padding: 0.25rem;
+  padding: 0;
   z-index: 200;
 }
 
@@ -1873,9 +2917,10 @@
 }
 
 .summaryContactPopoverRow {
-  display: flex;
+  display: grid;
+  grid-template-columns: 0.875rem minmax(0, 1fr) auto;
   align-items: center;
-  gap: 0.375rem;
+  column-gap: 0.5rem;
   padding: 0.25rem 0.375rem;
   border-radius: 0.25rem;
 }
@@ -1885,8 +2930,30 @@
 }
 
 .summaryContactPopoverRow_link {
+  grid-template-columns: 0.875rem minmax(0, 1fr);
   text-decoration: none;
   color: inherit;
+}
+
+.summaryContactPopoverTypeIcon {
+  display: inline-block;
+  width: 0.875rem;
+  height: 0.875rem;
+  background: var(--color-text-muted, #64748b);
+}
+
+.summaryContactPopoverTypeIcon_email {
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3' y='5' width='18' height='14' rx='2'/%3E%3Cpath d='m3 7 9 6 9-6'/%3E%3C/svg%3E")
+    center / contain no-repeat;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3' y='5' width='18' height='14' rx='2'/%3E%3Cpath d='m3 7 9 6 9-6'/%3E%3C/svg%3E")
+    center / contain no-repeat;
+}
+
+.summaryContactPopoverTypeIcon_phone {
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M22 16.92v3a2 2 0 0 1-2.18 2 19.86 19.86 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.86 19.86 0 0 1 2.11 4.18 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.72c.12.89.3 1.76.56 2.59a2 2 0 0 1-.45 2.11L8 9.63a16 16 0 0 0 6.37 6.37l1.21-1.21a2 2 0 0 1 2.11-.45c.83.26 1.7.44 2.59.56A2 2 0 0 1 22 16.92z'/%3E%3C/svg%3E")
+    center / contain no-repeat;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M22 16.92v3a2 2 0 0 1-2.18 2 19.86 19.86 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.86 19.86 0 0 1 2.11 4.18 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.72c.12.89.3 1.76.56 2.59a2 2 0 0 1-.45 2.11L8 9.63a16 16 0 0 0 6.37 6.37l1.21-1.21a2 2 0 0 1 2.11-.45c.83.26 1.7.44 2.59.56A2 2 0 0 1 22 16.92z'/%3E%3C/svg%3E")
+    center / contain no-repeat;
 }
 
 :global([data-theme='dark']) .summaryContactPopoverRow:hover {
@@ -1907,6 +2974,10 @@
 
 :global([data-theme='dark']) .summaryContactPopoverValue {
   color: #f1f5f9;
+}
+
+:global([data-theme='dark']) .summaryContactPopoverTypeIcon {
+  background: #94a3b8;
 }
 
 .summaryContactPopoverCopyBtn {
@@ -2720,6 +3791,7 @@
 .folderTabPanelInner .stageGroup,
 .workflowUnifiedTable {
   box-shadow: none;
+  background: transparent;
 }
 
 :global([data-theme='dark']) .folderTabPanelInner .workflowPanel,
@@ -2739,6 +3811,11 @@
   .paymentsPanel.projectFinancialReport
   .card.projectFinancialPaymentMobileCard {
   box-shadow: none;
+}
+
+:global([data-theme='dark']) .folderTabPanelInner .workflowPanel,
+:global([data-theme='dark']) .workflowUnifiedTable {
+  background: transparent;
 }
 
 /* Reports tab: detailSurface compose re-applies shadow after .folderTabPanelInner resets */
@@ -3390,6 +4467,32 @@
   margin-top: 0;
 }
 
+.headerIndustryEditor {
+  position: relative;
+}
+
+.headerIndustryMenu {
+  position: absolute;
+  top: calc(100% + 0.35rem);
+  left: 0;
+  z-index: 120;
+  min-width: max(11rem, 100%);
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding: 0.5rem;
+  border: 1px solid var(--theme-border-main, var(--color-border, #e2e8f0));
+  border-radius: 0.4rem;
+  background: var(--theme-surface-main, var(--color-surface, #fff));
+  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.18);
+}
+
+:global([data-theme='dark']) .headerIndustryMenu {
+  border-color: #3d3e4a;
+  background: #232635;
+  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.35);
+}
+
 .headerIndustryEdit {
   display: flex;
   flex-direction: column;
@@ -3444,7 +4547,15 @@
   color: #2563eb;
 }
 
+.headerTradeBtn_active {
+  color: #2563eb;
+}
+
 :global([data-theme='dark']) .headerTradeBtn:hover:not(:disabled) {
+  color: #93c5fd;
+}
+
+:global([data-theme='dark']) .headerTradeBtn_active {
   color: #93c5fd;
 }
 
@@ -3977,41 +5088,41 @@
 
 /* Col 1 = select; col 2 = status + title (+ notes under title); then Docs | Assigned | Due | Actions */
 .workflowGrid {
-  grid-template-columns: 1.125rem minmax(0, 1.65fr) 6.5rem 5.5rem 7.25rem 1.75rem;
+  grid-template-columns: var(--workflow-select-col, 1.125rem) minmax(0, 1.65fr) 6.5rem 5.5rem 7.25rem 1.75rem;
 }
 
 .workflowGridOps {
-  grid-template-columns: 1.125rem minmax(0, 1.65fr) 6.5rem 5.5rem 7.25rem 1.75rem;
+  grid-template-columns: var(--workflow-select-col, 1.125rem) minmax(0, 1.65fr) 6.5rem 5.5rem 7.25rem 1.75rem;
 }
 
 .workflowGridOpsCustom1 {
   grid-template-columns:
-    1.125rem minmax(0, 1.55fr) minmax(0, 0.5fr) 6.5rem 5.5rem 7.25rem 1.75rem;
+    var(--workflow-select-col, 1.125rem) minmax(0, 1.55fr) minmax(0, 0.5fr) 6.5rem 5.5rem 7.25rem 1.75rem;
 }
 
 .workflowGridOpsCustom2 {
   grid-template-columns:
-    1.125rem minmax(0, 1.4fr) minmax(0, 0.5fr) minmax(0, 0.5fr) 6.5rem 5.5rem 7.25rem 1.75rem;
+    var(--workflow-select-col, 1.125rem) minmax(0, 1.4fr) minmax(0, 0.5fr) minmax(0, 0.5fr) 6.5rem 5.5rem 7.25rem 1.75rem;
 }
 
 .workflowGrid.workflowGridOpsCustom1 {
   grid-template-columns:
-    1.125rem minmax(0, 1.55fr) minmax(0, 0.5fr) 6.5rem 5.5rem 7.25rem 1.75rem;
+    var(--workflow-select-col, 1.125rem) minmax(0, 1.55fr) minmax(0, 0.5fr) 6.5rem 5.5rem 7.25rem 1.75rem;
 }
 
 .workflowGrid.workflowGridOpsCustom2 {
   grid-template-columns:
-    1.125rem minmax(0, 1.4fr) minmax(0, 0.5fr) minmax(0, 0.5fr) 6.5rem 5.5rem 7.25rem 1.75rem;
+    var(--workflow-select-col, 1.125rem) minmax(0, 1.4fr) minmax(0, 0.5fr) minmax(0, 0.5fr) 6.5rem 5.5rem 7.25rem 1.75rem;
 }
 
 .workflowPanelFull .workflowGrid.workflowGridOpsCustom1 {
   grid-template-columns:
-    1.125rem minmax(0, 1.65fr) minmax(0, 0.5fr) 7rem 6.5rem 7.5rem 2rem;
+    var(--workflow-select-col, 1.125rem) minmax(0, 1.65fr) minmax(0, 0.5fr) 7rem 6.5rem 7.5rem 2rem;
 }
 
 .workflowPanelFull .workflowGrid.workflowGridOpsCustom2 {
   grid-template-columns:
-    1.125rem minmax(0, 1.5fr) minmax(0, 0.5fr) minmax(0, 0.5fr) 7rem 6.5rem 7.5rem 2rem;
+    var(--workflow-select-col, 1.125rem) minmax(0, 1.5fr) minmax(0, 0.5fr) minmax(0, 0.5fr) 7rem 6.5rem 7.5rem 2rem;
 }
 
 .workflowSelectHeader,
@@ -4555,11 +5666,14 @@
 .budgetGrid.tableRow > :nth-child(4),
 .budgetGrid.tableRow > :nth-child(5),
 .budgetGrid.tableRow > :nth-child(6),
-.budgetGrid.tableRow > :nth-child(7),
 .budgetGrid .budgetAmountCell,
-.budgetGrid .budgetRemainingCell,
+.budgetGrid .budgetRemainingCell {
+  justify-content: flex-start;
+}
+
+.budgetGrid.tableRow > :nth-child(7),
 .budgetGrid .budgetCostDateCell {
-  justify-content: flex-end;
+  justify-content: center;
 }
 
 .budgetGrid .budgetCategoryCell .inlineCellBtn,
@@ -4572,21 +5686,21 @@
 .budgetGrid .workflowMetaCell.budgetAmountCell.inlineAmountCell,
 .budgetGrid .workflowMetaCell.budgetAmountCell.inlineAmountCell .inlineCellBtn,
 .budgetGrid .workflowMetaCell.budgetAmountCell.inlineAmountCell .inlineFieldInput {
-  justify-content: flex-end;
-  text-align: right;
+  justify-content: flex-start;
+  text-align: left;
 }
 
 .budgetGrid .budgetAmountCell .inlineCellBtn,
 .budgetGrid .budgetAmountCell .inlineFieldInput {
   width: 100%;
-  text-align: right;
+  text-align: left;
 }
 
 .budgetGrid .budgetRemainingCell .budgetRemainingUnder,
 .budgetGrid .budgetRemainingCell .budgetRemainingOver,
 .budgetGrid .budgetRemainingCell .budgetMutedCell {
   width: 100%;
-  text-align: right;
+  text-align: left;
 }
 
 .budgetGrid .budgetCostDateCell .inlineCellBtn,
@@ -4595,8 +5709,8 @@
   width: 100%;
   min-width: 0;
   font-size: 0.75rem;
-  text-align: right;
-  justify-content: flex-end;
+  text-align: center;
+  justify-content: center;
 }
 
 .budgetGrid .budgetCategoryCell .inlineCellBtn,
@@ -4659,6 +5773,11 @@
 
 :global([data-theme='dark']) .statusDotText {
   color: var(--color-text, #f1f5f9);
+}
+
+/* Reports payments status cell needs right inset from divider. */
+.projectFinancialPaymentsTableWrap .projectFinancialStatusIndicator {
+  padding-right: 0.5rem !important;
 }
 
 .cellHoverPreviewTrigger {
@@ -5790,12 +6909,12 @@
   overflow: hidden;
 }
 
-/* Must follow .workflowPanel so full-layout panels are content-sized, not viewport-stretched. */
+/* Full-layout workflow panel should stretch to fill the detail container. */
 .workflowPanel.workflowPanelFull {
-  min-height: unset;
-  height: auto;
-  flex: none;
-  overflow: visible;
+  min-height: 100%;
+  height: 100%;
+  flex: 1 1 auto;
+  overflow: hidden;
 }
 
 .workflowPanel.workflowPanelFull .workflowUnifiedTable {
@@ -6284,7 +7403,7 @@
    * Trailing Docs/Assigned/Due/Actions match workflowPanelFull ops tracks so stacked tables align.
    */
   --payments-grid-columns:
-    1.125rem minmax(0, 1fr) 4.75rem 5rem 5rem 7rem 6.5rem 7.5rem 2rem;
+    1.75rem minmax(0, 1fr) 4.75rem 5rem 5rem 7rem 6.5rem 7.5rem 2rem;
   --payments-table-min-width: 52rem;
   display: grid;
   grid-template-columns: var(--payments-grid-columns);
@@ -6300,19 +7419,19 @@
 .paymentsUnifiedTable {
   --payments-grid-gap: 0.625rem;
   --payments-grid-columns:
-    1.125rem minmax(0, 1fr) 4.75rem 5rem 5rem 7rem 6.5rem 7.5rem 2rem;
+    1.75rem minmax(0, 1fr) 4.75rem 5rem 5rem 7rem 6.5rem 7.5rem 2rem;
   --payments-table-min-width: 52rem;
 }
 
 .paymentsUnifiedTable.paymentsTableGridShellCustom1 {
   --payments-grid-columns:
-    1.125rem minmax(0, 1fr) minmax(0, 0.5fr) 4.75rem 5rem 5rem 7rem 6.5rem 7.5rem 2rem;
+    1.75rem minmax(0, 1fr) minmax(0, 0.5fr) 4.75rem 5rem 5rem 7rem 6.5rem 7.5rem 2rem;
   --payments-table-min-width: 58rem;
 }
 
 .paymentsUnifiedTable.paymentsTableGridShellCustom2 {
   --payments-grid-columns:
-    1.125rem minmax(0, 1fr) minmax(0, 0.5fr) minmax(0, 0.5fr) 4.75rem 5rem 5rem 7rem 6.5rem 7.5rem 2rem;
+    1.75rem minmax(0, 1fr) minmax(0, 0.5fr) minmax(0, 0.5fr) 4.75rem 5rem 5rem 7rem 6.5rem 7.5rem 2rem;
   --payments-table-min-width: 64rem;
 }
 
@@ -6340,6 +7459,16 @@
 .paymentsUnifiedTable .paymentsTableHeader > *:not(:last-child),
 .paymentsList .paymentsTableHeader > *:not(:last-child) {
   border-right: none;
+}
+
+.paymentsUnifiedTable .paymentsTableHeader > .workflowSelectHeader,
+.paymentsList .paymentsTableHeader > .workflowSelectHeader {
+  padding-inline: 0.5rem 0;
+}
+
+.paymentsUnifiedTable .paymentsTableHeader > .workflowPrimaryHeader,
+.paymentsList .paymentsTableHeader > .workflowPrimaryHeader {
+  padding-inline-start: 0.5rem;
 }
 
 .paymentsUnifiedTable .paymentsTableHeader .workflowSelectHeader :global(input),
@@ -6416,14 +7545,14 @@
 /* Select | Primary | Custom1 | Amount | Invoiced | Paid | Docs | Assigned | Due | Actions */
 .paymentsTableGridShellCustom1 {
   --payments-grid-columns:
-    1.125rem minmax(0, 1fr) minmax(0, 0.5fr) 4.75rem 5rem 5rem 7rem 6.5rem 7.5rem 2rem;
+    1.75rem minmax(0, 1fr) minmax(0, 0.5fr) 4.75rem 5rem 5rem 7rem 6.5rem 7.5rem 2rem;
   --payments-table-min-width: 58rem;
 }
 
 /* Select | Primary | Custom1 | Custom2 | Amount | Invoiced | Paid | Docs | Assigned | Due | Actions */
 .paymentsTableGridShellCustom2 {
   --payments-grid-columns:
-    1.125rem minmax(0, 1fr) minmax(0, 0.5fr) minmax(0, 0.5fr) 4.75rem 5rem 5rem 7rem 6.5rem 7.5rem 2rem;
+    1.75rem minmax(0, 1fr) minmax(0, 0.5fr) minmax(0, 0.5fr) 4.75rem 5rem 5rem 7rem 6.5rem 7.5rem 2rem;
   --payments-table-min-width: 64rem;
 }
 
@@ -6508,7 +7637,7 @@
 .paymentsTableGridShell .tableRow > .workflowPrimaryCell,
 .paymentsUnifiedTable .tableHeader.paymentsAlignedGrid > .workflowPrimaryHeader,
 .paymentsTableRows .tableRow > .workflowPrimaryCell {
-  padding-inline-start: 0.125rem;
+  padding-inline-start: 0.5rem;
 }
 
 .paymentsTableGridShell .tableHeader > .workflowPrimaryHeader,
@@ -6533,26 +7662,199 @@
 .folderTabPanelInner
   .paymentsPanel:not(.budgetTablePanel):not(.documentsTabPanel)
   .detailPanelTableCard:not(.projectFinancialReportGraphCard),
-.folderTabPanelInner .budgetTablePanel .detailPanelTableCard,
-.paymentsPanel.projectFinancialReport .detailPanelTableCard.projectFinancialReportTableCard {
+.folderTabPanelInner .budgetTablePanel .detailPanelTableCard {
   border-radius: 0;
   overflow: hidden;
   border: 1px solid var(--theme-border-main, var(--color-border, #e2e8f0));
   box-shadow: none;
 }
 
+/* Payments tab: render as one workflow-style stage table shell. */
+.folderTabPanelInner
+  .paymentsPanel:not(.budgetTablePanel):not(.documentsTabPanel)
+  .paymentsUnifiedTable.paymentsList {
+  background: var(--theme-workflow-stage-table-bg);
+  border: 1px solid var(--theme-border-main, var(--color-border, #e2e8f0));
+  border-left: 4px solid #60a5fa;
+  border-radius: 0.375rem;
+  overflow: hidden;
+}
+
+/* Match workflow stage-table outer placement (slight inset + top offset). */
+.folderTabPanelInner
+  .paymentsPanel:not(.budgetTablePanel):not(.documentsTabPanel)
+  .paymentsTableScroll {
+  padding-top: 0.5rem;
+  padding-inline: var(--theme-workflow-unified-inset, 0.3125rem);
+}
+
+/* Match workflow table grid behavior: no row gutters, per-cell borders. */
+.folderTabPanelInner
+  .paymentsPanel:not(.budgetTablePanel):not(.documentsTabPanel)
+  .paymentsUnifiedTable
+  .paymentsAlignedGrid {
+  column-gap: 0;
+  gap: 0;
+}
+
+.folderTabPanelInner
+  .paymentsPanel:not(.budgetTablePanel):not(.documentsTabPanel)
+  .paymentsUnifiedTable
+  .paymentsTableHeader,
+.folderTabPanelInner
+  .paymentsPanel:not(.budgetTablePanel):not(.documentsTabPanel)
+  .paymentsUnifiedTable
+  .tableRow.paymentsAlignedGrid,
+.folderTabPanelInner
+  .paymentsPanel:not(.budgetTablePanel):not(.documentsTabPanel)
+  .paymentsUnifiedTable
+  .paymentDraftRow.paymentsAlignedGrid {
+  padding: 0;
+  gap: 0;
+  column-gap: 0;
+  align-items: stretch;
+  border-bottom: none;
+}
+
+.folderTabPanelInner
+  .paymentsPanel:not(.budgetTablePanel):not(.documentsTabPanel)
+  .paymentsUnifiedTable
+  .paymentsTableHeader
+  > *,
+.folderTabPanelInner
+  .paymentsPanel:not(.budgetTablePanel):not(.documentsTabPanel)
+  .paymentsUnifiedTable
+  .tableRow.paymentsAlignedGrid
+  > *,
+.folderTabPanelInner
+  .paymentsPanel:not(.budgetTablePanel):not(.documentsTabPanel)
+  .paymentsUnifiedTable
+  .paymentDraftRow.paymentsAlignedGrid
+  > * {
+  box-sizing: border-box;
+  min-width: 0;
+  min-height: 2.25rem;
+  padding-block: 0.5rem;
+  padding-inline: 0.5rem;
+  border-right: 1px solid var(--theme-border-main, var(--color-border, #e2e8f0));
+  border-bottom: 1px solid var(--theme-border-main, var(--color-border, #e2e8f0));
+  display: flex;
+  align-items: center;
+}
+
+.folderTabPanelInner
+  .paymentsPanel:not(.budgetTablePanel):not(.documentsTabPanel)
+  .paymentsUnifiedTable
+  .paymentsTableHeader
+  > *:last-child,
+.folderTabPanelInner
+  .paymentsPanel:not(.budgetTablePanel):not(.documentsTabPanel)
+  .paymentsUnifiedTable
+  .tableRow.paymentsAlignedGrid
+  > *:last-child,
+.folderTabPanelInner
+  .paymentsPanel:not(.budgetTablePanel):not(.documentsTabPanel)
+  .paymentsUnifiedTable
+  .paymentDraftRow.paymentsAlignedGrid
+  > *:last-child {
+  border-right: none;
+}
+
+/* Match workflow stage table: no divider between select and primary/status area. */
+.folderTabPanelInner
+  .paymentsPanel:not(.budgetTablePanel):not(.documentsTabPanel)
+  .paymentsUnifiedTable
+  .paymentsTableHeader
+  > .workflowSelectHeader,
+.folderTabPanelInner
+  .paymentsPanel:not(.budgetTablePanel):not(.documentsTabPanel)
+  .paymentsUnifiedTable
+  .tableRow.paymentsAlignedGrid
+  > .workflowSelectCell,
+.folderTabPanelInner
+  .paymentsPanel:not(.budgetTablePanel):not(.documentsTabPanel)
+  .paymentsUnifiedTable
+  .paymentDraftRow.paymentsAlignedGrid
+  > .workflowSelectCell {
+  border-right: none;
+}
+
+/* Match workflow select-column geometry/alignment (not flush-left). */
+.folderTabPanelInner
+  .paymentsPanel:not(.budgetTablePanel):not(.documentsTabPanel)
+  .paymentsUnifiedTable
+  .paymentsTableHeader
+  > .workflowSelectHeader,
+.folderTabPanelInner
+  .paymentsPanel:not(.budgetTablePanel):not(.documentsTabPanel)
+  .paymentsUnifiedTable
+  .tableRow.paymentsAlignedGrid
+  > .workflowSelectCell,
+.folderTabPanelInner
+  .paymentsPanel:not(.budgetTablePanel):not(.documentsTabPanel)
+  .paymentsUnifiedTable
+  .paymentDraftRow.paymentsAlignedGrid
+  > .workflowSelectCell {
+  justify-content: center;
+  padding-inline: 0.5rem 0;
+}
+
+.folderTabPanelInner
+  .paymentsPanel:not(.budgetTablePanel):not(.documentsTabPanel)
+  .paymentsUnifiedTable
+  > :last-child
+  > * {
+  border-bottom: none;
+}
+
+:global([data-theme='light'])
+  .folderTabPanelInner
+  .paymentsPanel:not(.budgetTablePanel):not(.documentsTabPanel)
+  .paymentsUnifiedTable
+  .tableRow.paymentsAlignedGrid
+  > *,
+:global([data-theme='light'])
+  .folderTabPanelInner
+  .paymentsPanel:not(.budgetTablePanel):not(.documentsTabPanel)
+  .paymentsUnifiedTable
+  .paymentDraftRow.paymentsAlignedGrid
+  > * {
+  background: #f2f4f7;
+}
+
 :global([data-theme='dark'])
   .folderTabPanelInner
   .paymentsPanel:not(.budgetTablePanel):not(.documentsTabPanel)
   .detailPanelTableCard:not(.projectFinancialReportGraphCard),
-:global([data-theme='dark']) .folderTabPanelInner .budgetTablePanel .detailPanelTableCard,
-:global([data-theme='dark'])
-  .paymentsPanel.projectFinancialReport
-  .detailPanelTableCard.projectFinancialReportTableCard {
+:global([data-theme='dark']) .folderTabPanelInner .budgetTablePanel .detailPanelTableCard {
   border-radius: 0;
   overflow: hidden;
   border: 1px solid var(--theme-stage-group-border-color, #80808052);
   box-shadow: none;
+}
+
+:global([data-theme='dark'])
+  .folderTabPanelInner
+  .paymentsPanel:not(.budgetTablePanel):not(.documentsTabPanel)
+  .paymentsUnifiedTable.paymentsList {
+  background: #1d2029;
+  border: var(--theme-stage-group-border-width, 1px) solid var(--theme-stage-group-border-color, #80808052);
+  border-left: 4px solid #60a5fa;
+}
+
+:global([data-theme='dark'])
+  .folderTabPanelInner
+  .paymentsPanel:not(.budgetTablePanel):not(.documentsTabPanel)
+  .paymentsUnifiedTable
+  .tableRow.paymentsAlignedGrid
+  > *,
+:global([data-theme='dark'])
+  .folderTabPanelInner
+  .paymentsPanel:not(.budgetTablePanel):not(.documentsTabPanel)
+  .paymentsUnifiedTable
+  .paymentDraftRow.paymentsAlignedGrid
+  > * {
+  background: #1d2029;
 }
 
 .folderTabPanelInner
@@ -6581,8 +7883,8 @@
   .paymentsPanel:not(.budgetTablePanel):not(.documentsTabPanel)
   .paymentsList
   .tableRow.paymentsAlignedGrid {
-  background: #f2f4f7;
-  border: 1px solid var(--theme-border-main, #e2e8f0);
+  background: transparent;
+  border: none;
   border-radius: 0;
 }
 
@@ -6849,6 +8151,20 @@
   border: 1px solid var(--theme-stage-group-border-color, #80808052);
   border-radius: 0;
   box-shadow: none;
+}
+
+/* Reports tab shell should stay rounded even with shared table overrides. */
+.paymentsPanel.projectFinancialReport .detailPanelTableCard.projectFinancialReportTableCard {
+  border-radius: 0.5rem !important;
+  overflow: hidden !important;
+}
+
+.paymentsPanel.projectFinancialReport .projectFinancialPaymentsTableWrap .tableHeader,
+.paymentsPanel.projectFinancialReport .projectFinancialPaymentsTableWrap .tableRow,
+.paymentsPanel.projectFinancialReport .projectFinancialCostsTableWrap .tableHeader,
+.paymentsPanel.projectFinancialReport .projectFinancialCostsTableWrap .tableRow {
+  border: none !important;
+  border-radius: 0 !important;
 }
 
 .paymentDraftBlock {
@@ -7160,7 +8476,7 @@
 .stageGroupStack {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 1.75rem;
 }
 
 .workflowUnifiedTable {
@@ -7172,9 +8488,9 @@
   min-height: 0;
   overflow: hidden;
   border: none;
-  border-radius: 0 0 var(--theme-radius-md, 0.5rem) var(--theme-radius-md, 0.5rem);
-  margin-inline: -0.875rem;
-  width: calc(100% + 1.75rem);
+  border-radius: 0;
+  margin-inline: 0;
+  width: 100%;
   background: transparent;
   box-shadow: none;
 }
@@ -7188,9 +8504,14 @@
   /* Align with stage section inset; select lives in the grid, not as header padding. */
   padding-inline: var(--theme-workflow-unified-inset, 0.3125rem) 0;
   padding-bottom: 0;
-  background: #ffffff;
+  background: transparent;
   color: #64748b;
   border-bottom-color: var(--theme-border-main, var(--color-border, #e2e8f0));
+}
+
+.tableHeader.workflowUnifiedTableHeader,
+:global([data-theme='dark']) .tableHeader.workflowUnifiedTableHeader {
+  background: transparent;
 }
 
 /* Vertical dividers between workflow task column headers (not after select, Due, or last). */
@@ -7410,15 +8731,15 @@
   min-height: 0;
   min-width: 0;
   overflow-y: auto;
-  gap: 0.5rem;
+  gap: 1.75rem;
   padding-block: 0.5rem;
   padding-inline: 0;
-  background: var(--theme-workflow-unified-canvas-bg);
+  background: transparent;
 }
 
 .stageGroup_unifiedTableSection {
   overflow: hidden;
-  border: 1px solid var(--theme-border-main, var(--color-border, #e2e8f0));
+  border: none;
   border-radius: 0;
   box-shadow: none;
   background: transparent;
@@ -7427,13 +8748,230 @@
 }
 
 .stageGroup_unifiedTableSection .stageGroupHeaderRow {
+  border: none;
   border-radius: 0;
-  background: var(--theme-stage-header-bg);
+  background: transparent;
   color: var(--theme-stage-header-text);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+}
+
+.stageGroupSelect {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+}
+
+.stageGroupPrimary {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  width: 100%;
+  min-height: 1.75rem;
+}
+
+.stageGroupPrimaryCluster {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  max-width: 100%;
+  min-width: 0;
+  min-height: 1.75rem;
+}
+
+.stageGroupHeaderBulk {
+  position: absolute;
+  left: 100%;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 3;
+  display: inline-flex;
+  align-items: center;
+  margin-left: 0.5rem;
+  padding: 0.125rem 0.375rem;
+  border-radius: 0.25rem;
+  background: var(--theme-bg-shell, var(--theme-surface-main, #fff));
+  white-space: nowrap;
+}
+
+:global([data-theme='dark']) .stageGroupHeaderBulk {
+  background: var(--theme-bg-shell, #0f1117);
+}
+
+/* Stage header is a normal table header row inside the bordered stage box. */
+.stageGroupUnifiedHeaderRow {
+  background: var(--theme-table-header-bg) !important;
+  border: none !important;
+  border-bottom: none !important;
+  color: var(--theme-table-header-text) !important;
+  padding: 0 !important;
+  column-gap: 0 !important;
+  gap: 0 !important;
+  align-items: stretch !important;
+  position: static;
+  /* Keep default .tableHeader size (0.6875rem / uppercase) for Docs, Assigned, Due, customs.
+   * Stage name uses its own .stageGroupName sizing. */
+}
+
+.stageGroupUnifiedHeaderRow .stageGroupHeaderBtn,
+.stageGroupUnifiedHeaderRow .stageGroupHeaderStatic {
+  width: auto;
+  flex: 0 1 auto;
+  min-width: 0;
+  padding: 0;
+  background: transparent;
+  color: inherit;
+  justify-content: flex-start;
+  /* Don't inherit uppercase/letter-spacing onto the stage title control. */
+  text-transform: none;
+  letter-spacing: normal;
+  font-size: inherit;
+  font-weight: inherit;
+}
+
+.stageGroupUnifiedHeaderRow .stageGroupChevron,
+.stageGroupUnifiedHeaderRow .stageGroupChevron_expanded {
+  border-right-color: currentColor;
+  border-bottom-color: currentColor;
+}
+
+/* Navy/dark table-header fill: light checkbox edges (same as payments/budget headers). */
+.stageGroupUnifiedHeaderRow.workflowTaskTableHeader .workflowSelectHeader :global(input) {
+  background: transparent;
+  border-color: color-mix(in srgb, var(--theme-table-header-text) 88%, transparent);
+}
+
+.stageGroupUnifiedHeaderRow.workflowTaskTableHeader .workflowSelectHeader :global(input:checked),
+.stageGroupUnifiedHeaderRow.workflowTaskTableHeader .workflowSelectHeader :global(input:indeterminate) {
+  background: var(--color-primary, #2563eb);
+  border-color: color-mix(in srgb, var(--theme-table-header-text) 92%, transparent);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--theme-table-header-text) 55%, transparent);
+}
+
+:global([data-theme='dark']) .stageGroupUnifiedHeaderRow {
+  background: var(--theme-table-header-bg) !important;
+  border: none !important;
+  color: var(--theme-table-header-text) !important;
+}
+
+.stageGroupTablePanel {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  min-width: 0;
+}
+
+.stageGroupColumnHeader {
+  min-width: 0;
+}
+
+.stageGroup_unifiedTableSection .stageGroupColumnHeader .tableHeader {
+  background: transparent;
+  border: none;
+  border-bottom: none;
+  color: var(--theme-text-muted, var(--color-text-muted, #64748b));
+}
+
+.stageGroup_unifiedTableSection .stageGroupColumnHeader .workflowTaskTableHeader > *:not(:last-child) {
+  border-right: none;
+}
+
+:global([data-theme='dark']) .stageGroup_unifiedTableSection .stageGroupColumnHeader .tableHeader {
+  background: transparent;
+  border: none;
+  color: var(--theme-text-muted, #9ca3af);
 }
 
 .stageGroup_unifiedTableSection .stageGroupTable {
+  --workflow-select-col: 1.75rem;
   background: var(--theme-workflow-stage-table-bg);
+  border: 1px solid var(--theme-border-main, var(--color-border, #e2e8f0));
+  border-radius: 0.375rem;
+  overflow: hidden;
+}
+
+.stageGroup_unifiedTableSection .stageGroupTable.stageGroup_accentBorder {
+  border-left: 4px solid var(--stage-accent, transparent);
+}
+
+/*
+ * Normal table grid: header + task rows share the same cell borders.
+ * Each cell draws right + bottom; the table frame supplies the outer top/left.
+ */
+.stageGroup_unifiedTableSection .stageGroupTable .tableHeader,
+.stageGroup_unifiedTableSection .stageGroupTable .tableRow,
+.stageGroup_unifiedTableSection .stageGroupTable .paymentDraftRow,
+.stageGroup_unifiedTableSection .stageGroupTable .paymentDraftBlock .paymentDraftRow {
+  column-gap: 0;
+  gap: 0;
+  align-items: stretch;
+  border-bottom: none;
+  padding: 0;
+}
+
+.stageGroup_unifiedTableSection .stageGroupTable .tableHeader > *,
+.stageGroup_unifiedTableSection .stageGroupTable .tableRow > *,
+.stageGroup_unifiedTableSection .stageGroupTable .paymentDraftRow > * {
+  box-sizing: border-box;
+  min-width: 0;
+  min-height: 2.25rem;
+  padding-block: 0.5rem;
+  padding-inline: 0.5rem;
+  border-right: 1px solid var(--theme-border-main, var(--color-border, #e2e8f0));
+  border-bottom: 1px solid var(--theme-border-main, var(--color-border, #e2e8f0));
+  display: flex;
+  align-items: center;
+}
+
+:global([data-theme='light']) .stageGroup_unifiedTableSection .stageGroupTable .tableRow > * {
+  background: #f2f4f7;
+}
+
+.stageGroup_unifiedTableSection .stageGroupTable .tableHeader > *:last-child,
+.stageGroup_unifiedTableSection .stageGroupTable .tableRow > *:last-child,
+.stageGroup_unifiedTableSection .stageGroupTable .paymentDraftRow > *:last-child {
+  border-right: none;
+}
+
+.stageGroup_unifiedTableSection .stageGroupTable > :last-child > *,
+.stageGroup_unifiedTableSection .stageGroupTable > .paymentDraftBlock:last-child .paymentDraftRow > * {
+  border-bottom: none;
+}
+
+.stageGroup_unifiedTableSection .stageGroupTable .tableHeader > .workflowSelectHeader,
+.stageGroup_unifiedTableSection .stageGroupTable .tableRow > .workflowSelectCell,
+.stageGroup_unifiedTableSection .stageGroupTable .paymentDraftRow > .workflowSelectCell {
+  margin-inline-end: 0;
+  justify-content: center;
+  padding-inline: 0.5rem 0;
+  /* No vertical border between select and status/task. */
+  border-right: none;
+}
+
+.stageGroup_unifiedTableSection .stageGroupTable .tableHeader > .taskDeleteHeader,
+.stageGroup_unifiedTableSection .stageGroupTable .tableRow > .taskDeleteCell,
+.stageGroup_unifiedTableSection .stageGroupTable .paymentDraftRow > .taskDeleteCell {
+  justify-content: center;
+  padding-inline: 0.25rem;
+}
+
+/* Empty stages: message row only — no cell grid borders. */
+.stageGroup_unifiedTableSection .stageGroupTable .workflowStageEmptyRow > * {
+  border-right: none;
+  border-bottom: none;
+}
+
+.stageGroup_unifiedTableSection .stageGroupTable .budgetGrid.workflowStageEmptyRow > .taskTitleCell {
+  grid-column: 2 / -1;
+}
+
+:global([data-theme='dark']) .stageGroup_unifiedTableSection .stageGroupTable .tableHeader > *,
+:global([data-theme='dark']) .stageGroup_unifiedTableSection .stageGroupTable .tableRow > *,
+:global([data-theme='dark']) .stageGroup_unifiedTableSection .stageGroupTable .paymentDraftRow > * {
+  border-right-color: var(--theme-border-main, #3d3e4a);
+  border-bottom-color: var(--theme-border-main, #3d3e4a);
 }
 
 .stageGroup_unifiedTableSection .paymentsTableScroll,
@@ -7449,7 +8987,8 @@
 .stageGroup_unifiedTableSection .stageGroupHeaderBtn,
 .stageGroup_unifiedTableSection .stageGroupHeaderStatic {
   border-radius: 0;
-  padding-inline: 0.35rem 0.625rem;
+  padding-inline: 0;
+  justify-content: flex-start;
   background: transparent;
   color: inherit;
 }
@@ -7459,26 +8998,18 @@
   margin-left: 0.2rem;
 }
 
-.stageGroup_unifiedTableSection .stageGroupTable .tableRow,
-.stageGroup_unifiedTableSection .stageGroupTable .paymentDraftRow,
-.stageGroup_unifiedTableSection .stageGroupTable .paymentDraftBlock .paymentDraftRow {
-  /* Select is its own 1.125rem grid track — do not pad again or it opens a dead column. */
-  padding-inline: 0;
-}
-
-.stageGroup_unifiedTableSection .stageGroupTable .tableHeader {
-  padding-inline: 0;
-}
-
 .stageGroupStackDesktopCardsLayout {
   display: grid;
   grid-template-columns: minmax(0, 5fr) minmax(0, 1fr);
   gap: 0.75rem;
   align-items: stretch;
+  min-height: 0;
+  height: 100%;
 }
 
 .stageGroupStackDesktopCardsLayout > .stageGroupStack {
   min-width: 0;
+  min-height: 0;
 }
 
 .stageGroupStackDesktopCards {
@@ -7493,6 +9024,8 @@
   display: flex;
   flex-direction: column;
   min-height: 10rem;
+  height: 100%;
+  align-self: stretch;
 }
 
 .workflowUsersColumnHeader {
@@ -7657,6 +9190,13 @@
   min-width: 0;
   display: flex;
   flex-direction: column;
+  border-radius: 0.5rem;
+  overflow: hidden;
+}
+
+:global([data-theme='light']) .stageGroupStackDesktopCards > .stageGroup,
+:global([data-theme='light']) .stageGroupStackDesktopCards .stageGroupMobileTaskList {
+  background: #f2f4f7;
 }
 
 .stageGroup_stageCardColumn {
@@ -7880,8 +9420,8 @@
   min-height: 0;
   max-height: min(28rem, 55vh);
   overflow-y: auto;
-  gap: 0.375rem;
-  padding: 0.375rem 0.5rem 0.5rem;
+  gap: 0;
+  padding: 0;
 }
 
 .stageGroupStackDesktopCards .stageGroupMobileTaskList > .workflowTaskCompactCard,
@@ -7889,16 +9429,27 @@
   .stageGroupMobileTaskList
   > .paymentDraftBlock
   > .workflowTaskCompactCard {
+  position: relative;
+  z-index: 1;
   box-shadow: none;
   background: #f2f4f7;
   border: 1px solid var(--theme-border-main, #e2e8f0);
   border-radius: 2px;
 }
 
+:global([data-theme='light'])
+  .folderTabPanelInner
+  .workflowPanel
+  .stageGroupMobileTaskList
+  .workflowTaskCompactCard {
+  background: #f2f4f7;
+}
+
 .stageGroupStackDesktopCardsLayout .workflowUsersColumnRow {
   background: #f2f4f7;
-  border: 1px solid var(--theme-border-main, #e2e8f0);
-  border-radius: 2px;
+  border: none;
+  border-radius: 0;
+  padding: 0.375rem 0.5rem;
 }
 
 .stageGroupStackDesktopCardsLayout .workflowUsersColumnRow_draggable:hover {
@@ -7907,9 +9458,14 @@
 
 :global([data-theme='dark']) .stageGroupStackDesktopCards > .stageGroup {
   border: var(--theme-stage-group-border-width, 1px) solid var(--theme-stage-group-border-color, #80808052);
-  border-radius: var(--theme-stage-group-radius, 2px);
-  background: #161922;
+  border-radius: 0.5rem;
+  background: #1d2029;
   box-shadow: none;
+}
+
+:global([data-theme='dark']) .stageGroupStackDesktopCards > .stageGroup.stageGroup_accentBorder,
+.stageGroupStackDesktopCards > .stageGroup.stageGroup_accentBorder {
+  border-left: 4px solid var(--stage-accent, transparent);
 }
 
 :global([data-theme='dark']) .stageGroupStackDesktopCards .stageGroupHeaderRow,
@@ -7919,7 +9475,7 @@
 }
 
 :global([data-theme='dark']) .stageGroupStackDesktopCards .stageGroupMobileTaskList {
-  background: #161922;
+  background: #1d2029;
 }
 
 :global([data-theme='dark']) .stageGroupStackDesktopCards .stageGroupMobileTaskList > .workflowTaskCompactCard,
@@ -7928,9 +9484,12 @@
   .stageGroupMobileTaskList
   > .paymentDraftBlock
   > .workflowTaskCompactCard {
+  position: relative;
+  z-index: 1;
   background: #1d2029;
   border: var(--theme-stage-group-border-width, 1px) solid var(--theme-stage-group-border-color, #80808052);
   border-radius: var(--theme-stage-group-radius, 2px);
+  box-shadow: none;
 }
 
 .stageGroupStackDesktopCardsLayout .workflowUsersColumn {
@@ -7939,6 +9498,7 @@
   overflow: hidden;
   background: var(--theme-surface-main, var(--color-surface, #fff));
   box-shadow: 0 1px 0 rgba(15, 23, 42, 0.04);
+  min-height: 100%;
 }
 
 :global([data-theme='dark']) .stageGroupStackDesktopCardsLayout .workflowUsersColumn {
@@ -7949,13 +9509,20 @@
 }
 
 :global([data-theme='dark']) .stageGroupStackDesktopCardsLayout .workflowUsersColumnList {
-  background: #161922;
+  background: #1d2029;
+}
+
+.stageGroupStackDesktopCardsLayout .workflowUsersColumnList {
+  background: #f2f4f7;
+  max-height: none;
+  gap: 0;
+  padding: 0.375rem 0.5rem;
 }
 
 :global([data-theme='dark']) .stageGroupStackDesktopCardsLayout .workflowUsersColumnRow {
   background: #1d2029;
-  border: var(--theme-stage-group-border-width, 1px) solid var(--theme-stage-group-border-color, #80808052);
-  border-radius: var(--theme-stage-group-radius, 2px);
+  border: none;
+  border-radius: 0;
 }
 
 :global([data-theme='dark'])
@@ -8398,7 +9965,7 @@
 }
 
 .accountabilityGrid_modal {
-  grid-template-columns: 7.25rem 8rem minmax(6rem, 0.85fr) 6.5rem minmax(10rem, 1.4fr);
+  grid-template-columns: 8.25rem 12.25rem minmax(5.25rem, 0.7fr) 7.5rem minmax(6.5rem, 0.95fr);
   min-width: 40rem;
 }
 
@@ -8414,6 +9981,11 @@
 .stageGroup {
   composes: detailSurface;
   overflow: hidden;
+}
+
+.stageGroup_accentBorder {
+  border-left: 4px solid var(--stage-accent, transparent);
+  border-radius: 0.375rem;
 }
 
 .stageGroup_collapsed {
@@ -8445,7 +10017,7 @@
 .stageGroupHeaderStatic {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
   gap: 0.5rem;
   width: 100%;
   padding: 0.5rem 0.625rem 0.25rem;
@@ -8574,7 +10146,9 @@
 
 .stageGroupName {
   font-size: 0.8125rem;
-  font-weight: 600;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
   color: inherit;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -9782,7 +11356,7 @@
 }
 
 .accountabilityGrid {
-  grid-template-columns: 7.25rem 7.75rem minmax(6rem, 0.9fr) 6.25rem minmax(8rem, 1.2fr);
+  grid-template-columns: 8rem 12rem minmax(5.25rem, 0.72fr) 7.25rem minmax(5rem, 0.8fr);
 }
 
 .accountabilityUser {
@@ -10099,11 +11673,66 @@
   background: transparent;
 }
 
-.detailPanelHeaderBtn_download,
-.detailPanelHeaderBtn_refresh {
+.workflowViewToggleBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 1.75rem;
+  height: 1.75rem;
+  padding: 0;
+  border: none;
+  border-radius: 0.375rem;
+  cursor: pointer;
+  color: var(--color-text-muted, #64748b);
+  background: transparent;
+  transition: color 0.12s ease;
+}
+
+.workflowViewToggleBtn:hover:not(:disabled) {
+  background: transparent;
+  color: var(--color-text, #0f172a);
+}
+
+.workflowViewToggleBtn_active {
+  color: var(--color-primary, #2563eb);
+  background: transparent;
+  border: none;
+}
+
+.workflowViewToggleBtnIcon {
+  display: block;
+  width: 0.9375rem;
+  height: 0.9375rem;
+}
+
+:global([data-theme='dark']) .workflowViewToggleBtn {
+  background: transparent;
+  border: none;
+  color: #94a3b8;
+}
+
+:global([data-theme='dark']) .workflowViewToggleBtn:hover:not(:disabled) {
+  background: transparent;
+  color: #f1f5f9;
+}
+
+:global([data-theme='dark']) .workflowViewToggleBtn_active {
+  color: #93c5fd;
+  background: transparent;
+  border: none;
+}
+
+.detailPanelHeaderBtn_download {
   color: var(--color-text-muted, #64748b);
   background: var(--color-bg, #fff);
   border: 1px solid var(--color-border, #e2e8f0);
+}
+
+.detailPanelHeaderBtn_refresh {
+  color: var(--color-text-muted, #64748b);
+  background: transparent;
+  border: none;
 }
 
 .detailPanelHeaderBtn_complete {
@@ -10132,10 +11761,15 @@
   color: #94a3b8;
 }
 
-.detailPanelHeaderBtn_download:hover:not(:disabled),
-.detailPanelHeaderBtn_refresh:hover:not(:disabled) {
+.detailPanelHeaderBtn_download:hover:not(:disabled) {
   background: var(--color-muted, #f8fafc);
   border-color: #cbd5e1;
+  color: var(--color-text, #0f172a);
+}
+
+.detailPanelHeaderBtn_refresh:hover:not(:disabled) {
+  background: transparent;
+  border: none;
   color: var(--color-text, #0f172a);
 }
 
@@ -10154,7 +11788,8 @@
   opacity: 1;
   cursor: wait;
   color: var(--color-primary, #2563eb);
-  border-color: var(--color-primary, #2563eb);
+  border: none;
+  background: transparent;
   animation: detailPanelRefreshPulse 0.9s ease-in-out infinite;
 }
 
@@ -10171,7 +11806,8 @@
 
 :global([data-theme='dark']) .detailPanelHeaderBtn_refreshing {
   color: #93c5fd;
-  border-color: #3b82f6;
+  border: none;
+  background: transparent;
 }
 
 .detailPanelHeaderBtnIcon_download {
@@ -10197,10 +11833,15 @@
   color: #86efac;
 }
 
-:global([data-theme='dark']) .detailPanelHeaderBtn_download,
-:global([data-theme='dark']) .detailPanelHeaderBtn_refresh {
+:global([data-theme='dark']) .detailPanelHeaderBtn_download {
   background: var(--color-surface, #1e1f2a);
   border-color: var(--theme-border-main, #3d3e4a);
+  color: #94a3b8;
+}
+
+:global([data-theme='dark']) .detailPanelHeaderBtn_refresh {
+  background: transparent;
+  border: none;
   color: #94a3b8;
 }
 
@@ -10210,10 +11851,15 @@
   color: inherit;
 }
 
-:global([data-theme='dark']) .detailPanelHeaderBtn_download:hover:not(:disabled),
-:global([data-theme='dark']) .detailPanelHeaderBtn_refresh:hover:not(:disabled) {
+:global([data-theme='dark']) .detailPanelHeaderBtn_download:hover:not(:disabled) {
   background: #2a2b38;
   border-color: #4b4c5c;
+  color: #f1f5f9;
+}
+
+:global([data-theme='dark']) .detailPanelHeaderBtn_refresh:hover:not(:disabled) {
+  background: transparent;
+  border: none;
   color: #f1f5f9;
 }
 
@@ -10672,6 +12318,12 @@
 
 :global([data-theme='dark']) .subprojectsPanel {
   border: 1px solid var(--theme-border-main, #3d3e4a);
+}
+
+:global([data-theme='dark']) .folderTabPanelInner .subprojectsPanel {
+  border: none;
+  box-shadow: none;
+  background: transparent;
 }
 
 .subprojectsPanelHeader {
@@ -11715,6 +13367,10 @@
   font-size: 0.8125rem;
   line-height: 1.35;
   color: var(--theme-text-muted, var(--color-text-muted, #64748b));
+}
+
+:global([data-theme='dark']) .stageGroupStackDesktopCards .workflowStageMobileEmpty {
+  background: #1d2029;
 }
 
 .workflowTaskMobileCard {

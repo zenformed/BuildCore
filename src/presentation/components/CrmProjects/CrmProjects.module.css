@@ -249,6 +249,50 @@
   background: rgba(37, 99, 235, 0.08);
 }
 
+.projectsFilterBtn_ghost {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 1.75rem;
+  height: 1.75rem;
+  padding: 0;
+  border: none;
+  border-radius: 0.375rem;
+  cursor: pointer;
+  color: var(--color-text-muted, #64748b);
+  background: transparent;
+  transition: color 0.12s ease;
+}
+
+.projectsFilterBtn_ghost:hover:not(:disabled) {
+  background: transparent;
+  color: var(--color-text, #0f172a);
+}
+
+.projectsFilterBtn_ghostActive {
+  color: var(--color-primary, #2563eb);
+  background: transparent;
+  border: none;
+}
+
+:global([data-theme='dark']) .projectsFilterBtn_ghost {
+  background: transparent;
+  border: none;
+  color: #94a3b8;
+}
+
+:global([data-theme='dark']) .projectsFilterBtn_ghost:hover:not(:disabled) {
+  background: transparent;
+  color: #f1f5f9;
+}
+
+:global([data-theme='dark']) .projectsFilterBtn_ghostActive {
+  color: #93c5fd;
+  background: transparent;
+  border: none;
+}
+
 :global([data-theme='dark']) .projectsFilterBtn {
   background: var(--color-surface, #1e1f2a);
   border-color: var(--theme-border-main, #3d3e4a);
@@ -491,6 +535,27 @@
   overflow: hidden;
 }
 
+/* Project detail subprojects tab: align with workflow/payments stage-table chrome. */
+.tableWrap_workflowLikeChrome {
+  box-sizing: border-box;
+  padding-top: 0.5rem;
+  padding-inline: var(--theme-workflow-unified-inset, 0.3125rem);
+}
+
+.tableWrap_workflowLikeChrome .scrollContainer {
+  border: 1px solid var(--theme-border-main, var(--color-border, #e2e8f0));
+  border-left: 4px solid #0f766e;
+  border-radius: 0.375rem;
+  background: var(--theme-workflow-stage-table-bg);
+  overflow: hidden;
+}
+
+:global([data-theme='dark']) .tableWrap_workflowLikeChrome .scrollContainer {
+  border: 1px solid var(--theme-stage-group-border-color, #80808052);
+  border-left: 4px solid #0f766e;
+  background: #1d2029;
+}
+
 .scrollContainer {
   flex: 1;
   min-height: 8rem;
@@ -574,16 +639,133 @@
   margin-inline-end: 0;
 }
 
+.tableWrap_workflowLikeChrome
+  .tableInnerWithInlineSelection.tableInnerWithBulkSelection
+  .gridHeaderBulkSelect,
+.tableWrap_workflowLikeChrome
+  .tableInnerWithInlineSelection.tableInnerWithBulkSelection
+  .gridCellBulkSelect {
+  padding-inline: 0.5rem 0;
+}
+
 .tableInnerWithInlineSelection .gridHeaderPrimary {
   display: inline-flex;
   align-items: center;
   justify-content: flex-start;
-  gap: 0;
+  gap: 0.375rem;
   min-width: 0;
-  text-transform: none;
-  letter-spacing: 0;
   /* Keep caret tight to the select column. */
   padding-inline: 0.125rem var(--theme-table-cell-padding-inline);
+}
+
+.gridHeaderPrimary_workflowLike {
+  min-height: 1.75rem;
+}
+
+.gridHeaderPrimaryWorkflowButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+  width: auto;
+  min-width: 0;
+  max-width: 100%;
+  padding: 0;
+  margin: 0;
+  border: none;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  text-transform: none;
+  letter-spacing: normal;
+  cursor: pointer;
+}
+
+.gridHeaderPrimaryWorkflowButton:focus {
+  outline: none;
+}
+
+.gridHeaderPrimaryWorkflowButton:focus-visible {
+  outline: 2px solid var(--color-primary, #2563eb);
+  outline-offset: 1px;
+}
+
+.gridHeaderPrimaryWorkflowTitle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  min-width: 0;
+}
+
+.gridHeaderPrimaryWorkflowName {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: inherit;
+}
+
+.gridHeaderPrimaryWorkflowCount {
+  flex-shrink: 0;
+  padding: 0.125rem 0.4375rem;
+  font-size: 0.625rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  color: var(--theme-stage-count-text);
+  background: var(--theme-stage-count-bg);
+  border: 1px solid var(--theme-stage-count-border);
+  border-radius: 999px;
+}
+
+.gridHeaderPrimary_workflowLike .projectsExpandAllChevronWrap {
+  margin-left: 0.125rem;
+}
+
+.gridHeaderPrimaryLabelWrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  min-width: 0;
+}
+
+.gridHeaderPrimaryLabel {
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: inherit;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-weight: 600;
+}
+
+.gridHeaderCollapseBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1rem;
+  height: 1rem;
+  padding: 0;
+  margin: 0;
+  border: none;
+  border-radius: 0.25rem;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+
+.gridHeaderCollapseBtn:focus {
+  outline: none;
+}
+
+.gridHeaderCollapseBtn:focus-visible {
+  outline: 2px solid var(--color-primary, #2563eb);
+  outline-offset: 1px;
 }
 
 .tableInnerWithInlineSelection.tableInnerWithBulkSelection .gridHeader > .gridHeaderPrimary {
@@ -600,6 +782,10 @@
   column-gap: var(--projects-grid-gap);
   width: max(100%, var(--projects-table-min-width));
   min-width: max(100%, var(--projects-table-min-width));
+}
+
+.tableWrap_workflowLikeChrome .tableGridShell {
+  column-gap: 0;
 }
 
 .projectsGrid {
@@ -628,9 +814,45 @@
   z-index: 1;
 }
 
+.tableWrap_workflowLikeChrome .gridHeader,
+.tableWrap_workflowLikeChrome .gridRow {
+  padding: 0;
+  column-gap: 0;
+  gap: 0;
+  align-items: stretch;
+  border-bottom: none;
+}
+
 .gridHeader > * {
   padding-inline: var(--theme-table-cell-padding-inline);
   min-width: 0;
+}
+
+.tableWrap_workflowLikeChrome .gridHeader > *,
+.tableWrap_workflowLikeChrome .gridRow > * {
+  box-sizing: border-box;
+  min-width: 0;
+  min-height: 2.25rem;
+  padding-block: 0.5rem;
+  padding-inline: 0.5rem;
+  border-right: 1px solid var(--theme-border-main, var(--color-border, #e2e8f0));
+  border-bottom: 1px solid var(--theme-border-main, var(--color-border, #e2e8f0));
+  display: flex;
+  align-items: center;
+}
+
+.tableWrap_workflowLikeChrome .gridHeader > *:last-child,
+.tableWrap_workflowLikeChrome .gridRow > *:last-child {
+  border-right: none;
+}
+
+.tableWrap_workflowLikeChrome .gridBody > .gridRow:last-child > * {
+  border-bottom: none;
+}
+
+/* Workflow-style chrome draws row separators per-cell, not with row pseudo lines. */
+.tableWrap_workflowLikeChrome .gridRow::after {
+  content: none;
 }
 
 :global([data-theme='dark']) .gridHeader {
@@ -658,6 +880,85 @@
 .gridRow > * {
   padding-inline: var(--theme-table-cell-padding-inline);
   min-width: 0;
+}
+
+/* No divider between select and primary columns (matches workflow/payments). */
+.tableWrap_workflowLikeChrome .tableInnerWithBulkSelection .gridHeader > :nth-child(1),
+.tableWrap_workflowLikeChrome .tableInnerWithBulkSelection .gridRow > :nth-child(1) {
+  border-right: none;
+  justify-content: center;
+  padding-inline: 0.5rem 0;
+}
+
+/* Normalize Subprojects inline-selection spacing to match other detail-tab tables. */
+.tableWrap_workflowLikeChrome .tableInnerWithInlineSelection.tableInnerWithBulkSelection {
+  --projects-grid-gap: 0;
+  --projects-grid-columns:
+    1.75rem minmax(9rem, 1.15fr) minmax(6.5rem, 0.9fr) minmax(8.5rem, 1fr) minmax(6rem, 0.7fr)
+    minmax(7.5rem, 0.9fr) minmax(8rem, 0.95fr) minmax(4.5rem, 0.5fr) minmax(4.5rem, 0.5fr)
+    minmax(4.5rem, 0.5fr) minmax(4.25rem, 0.45fr) 2rem;
+}
+
+.tableWrap_workflowLikeChrome .tableInnerWithInlineSelection .gridHeaderPrimary,
+.tableWrap_workflowLikeChrome .tableInnerWithInlineSelection.tableInnerWithBulkSelection .gridHeader > .gridHeaderPrimary {
+  padding-inline: 0.5rem;
+}
+
+.tableWrap_workflowLikeChrome .tableInnerWithInlineSelection.tableInnerWithBulkSelection .gridRow > :nth-child(2) {
+  padding-inline-start: 0.5rem;
+}
+
+/* First data column (project/subproject info) must stay left-aligned. */
+.tableWrap_workflowLikeChrome .gridRow > .gridCellProject,
+.tableWrap_workflowLikeChrome .gridRow > .gridCellProject.gridCellProject_child {
+  align-items: flex-start;
+  text-align: left;
+}
+
+/* Keep actions column as thin dots-only track like workflow stage tables. */
+.tableWrap_workflowLikeChrome .gridHeaderActions,
+.tableWrap_workflowLikeChrome .gridCellActions {
+  padding-inline: 0.25rem;
+  justify-content: center;
+}
+
+/* Subprojects tab: financial columns match workflow/budget right alignment. */
+.tableWrap_workflowLikeChrome .gridHeaderFinancial,
+.tableWrap_workflowLikeChrome .gridCellFinancial {
+  justify-content: flex-end;
+  text-align: right;
+}
+
+/* Subprojects tab: Assigned header label centered over avatar column. */
+.tableWrap_workflowLikeChrome .gridHeaderAssignee {
+  justify-content: center;
+  text-align: center;
+}
+
+/* Match workflow row checkbox styling (header keeps navy-header treatment below). */
+.tableWrap_workflowLikeChrome .gridCellBulkSelect :global(input) {
+  background: #fff;
+  border: 1.5px solid #94a3b8;
+}
+
+.tableWrap_workflowLikeChrome .gridCellBulkSelect :global(input:checked),
+.tableWrap_workflowLikeChrome .gridCellBulkSelect :global(input:indeterminate) {
+  background: var(--color-primary, #2563eb);
+  border-color: #94a3b8;
+  box-shadow: none;
+}
+
+/* Match workflow/budget/payments header checkbox outline on navy header fill. */
+.tableWrap_workflowLikeChrome .gridHeaderBulkSelect :global(input) {
+  background: transparent;
+  border: 1.5px solid color-mix(in srgb, var(--theme-table-header-text) 88%, transparent);
+}
+
+.tableWrap_workflowLikeChrome .gridHeaderBulkSelect :global(input:checked),
+.tableWrap_workflowLikeChrome .gridHeaderBulkSelect :global(input:indeterminate) {
+  background: var(--color-primary, #2563eb);
+  border-color: color-mix(in srgb, var(--theme-table-header-text) 92%, transparent);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--theme-table-header-text) 55%, transparent);
 }
 
 .projectsGrid.gridRow > * {
@@ -692,6 +993,32 @@
 
 :global([data-theme='dark']) .gridRow {
   color: #f1f5f9;
+}
+
+:global([data-theme='dark']) .tableWrap_workflowLikeChrome .gridRow > * {
+  background: #1d2029;
+  border-right-color: var(--theme-border-main, #3d3e4a);
+  border-bottom-color: var(--theme-border-main, #3d3e4a);
+}
+
+:global([data-theme='dark']) .tableWrap_workflowLikeChrome .gridCellBulkSelect :global(input) {
+  background: #1a1d26;
+  border-color: #6b7280;
+}
+
+:global([data-theme='dark']) .tableWrap_workflowLikeChrome .gridCellBulkSelect :global(input:checked),
+:global([data-theme='dark']) .tableWrap_workflowLikeChrome .gridCellBulkSelect :global(input:indeterminate) {
+  background: var(--color-primary, #2563eb);
+  border-color: var(--color-primary, #2563eb);
+}
+
+:global([data-theme='dark']) .tableWrap_workflowLikeChrome .gridHeaderBulkSelect :global(input) {
+  border-color: color-mix(in srgb, var(--theme-table-header-text) 88%, transparent);
+}
+
+:global([data-theme='dark']) .tableWrap_workflowLikeChrome .gridHeaderBulkSelect :global(input:checked),
+:global([data-theme='dark']) .tableWrap_workflowLikeChrome .gridHeaderBulkSelect :global(input:indeterminate) {
+  border-color: color-mix(in srgb, var(--theme-table-header-text) 92%, transparent);
 }
 
 .gridRow:hover {
@@ -789,6 +1116,52 @@
   min-height: 100%;
 }
 
+.gridCellWithIcon {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+.gridCellInlineIcon {
+  flex-shrink: 0;
+  width: 0.8rem;
+  height: 0.8rem;
+  color: var(--color-text-muted, #64748b);
+}
+
+:global([data-theme='dark']) .gridCellInlineIcon {
+  color: var(--theme-text-muted, #94a3b8);
+}
+
+.subprojectsContactBadge {
+  padding: 0.375rem 0.75rem;
+  border: 1px solid #0f766e;
+  border-radius: 0.375rem;
+  background: color-mix(in srgb, #25ffdd 22%, transparent);
+}
+
+:global([data-theme='dark']) .subprojectsContactBadge {
+  border-color: #0f766e;
+  background: color-mix(in srgb, #25ffdd 28%, transparent);
+}
+
+.subprojectsContactBadge .gridCellInlineIcon {
+  color: #0f766e;
+}
+
+:global([data-theme='dark']) .subprojectsContactBadge .gridCellInlineIcon {
+  color: #2dd4bf;
+}
+
+.subprojectsContactInfoIcon {
+  color: #0f766e;
+}
+
+:global([data-theme='dark']) .subprojectsContactInfoIcon {
+  color: #0f766e;
+}
+
 .gridCellWrap {
   min-width: 0;
   width: 100%;
@@ -808,11 +1181,29 @@
   max-width: 100%;
 }
 
+.tableContactCell_withIcon {
+  gap: 0.5rem;
+}
+
 .tableContactCellValue {
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.tableContactCellValueLink {
+  min-width: 0;
+  max-width: 100%;
+  color: inherit;
+  text-decoration: none;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tableContactCellValueLink:hover {
+  text-decoration: underline;
 }
 
 .projectNameRow {
@@ -841,6 +1232,52 @@
 
 :global([data-theme='dark']) .projectParentName {
   color: var(--theme-text-muted, #94a3b8);
+}
+
+.subprojectsProjectCell {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.625rem;
+  min-width: 0;
+}
+
+.subprojectsProjectCellBody {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.subprojectsProjectPhoto {
+  display: inline-flex;
+  width: 2.5rem;
+  height: 2.5rem;
+  flex-shrink: 0;
+  border: 1px solid var(--theme-border-main, var(--color-border, #e2e8f0));
+  border-radius: 0.375rem;
+  overflow: hidden;
+}
+
+.subprojectsProjectPhotoImg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.subprojectsProjectPhotoInitial {
+  display: inline-flex;
+  width: 100%;
+  height: 100%;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: #ffffff;
+}
+
+:global([data-theme='dark']) .subprojectsProjectPhoto {
+  border-color: var(--theme-border-main, #3d3e4a);
 }
 
 .projectNameGroup {
@@ -1031,6 +1468,13 @@
   gap: 0.35rem 0.5rem;
   min-width: 0;
   max-width: 100%;
+}
+
+.subprojectsProgressPercent {
+  font-size: 0.75rem;
+  font-weight: 700;
+  line-height: 1.2;
+  color: var(--color-text-muted, #64748b);
 }
 
 .gridCellAssignee {

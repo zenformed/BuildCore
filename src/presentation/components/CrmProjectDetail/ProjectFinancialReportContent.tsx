@@ -13,11 +13,14 @@ import { formatCentsAsUsd } from '@/presentation/features/crmProjects/crmProject
 import { useProjectFinancialReport } from '@/presentation/features/crmProjectDetail/useProjectFinancialReport';
 import { useProjectProfitAndLossPdfExport } from '@/presentation/features/crmProjectDetail/useProjectProfitAndLossPdfExport';
 import { useDashboardMobileLayout } from '@/presentation/features/crmProjects/useDashboardMobileLayout';
+import { workflowTaskStatusBadgeClass } from '@/presentation/components/crmShared/workflowTaskStatusBadge';
 import { BudgetCategoryPieChart } from './BudgetCategoryPieChart';
 import { DetailPanelHeader } from './DetailPanelHeader';
 import { DetailPanelHeaderActions } from './DetailPanelHeaderActions';
 import { DetailPanelHeaderButton } from './DetailPanelHeaderButton';
 import { DetailPanelSectionRefresh } from './DetailPanelSectionRefresh';
+import { FolderTabToolbarPortal } from '@/presentation/features/crmProjectDetail/folderTabToolbarContext';
+import { LuBuilding2 } from 'react-icons/lu';
 import styles from './ProjectDetail.module.css';
 
 export type ProjectFinancialReportContentProps = {
@@ -25,6 +28,8 @@ export type ProjectFinancialReportContentProps = {
   readonly onRefresh: () => Promise<void>;
   readonly onRefreshError: (message: string) => void;
   readonly onError: (message: string) => void;
+  /** When true, header actions render in the shared folder tab bar. */
+  readonly embeddedInFolderTabs?: boolean;
 };
 
 export function ProjectFinancialReportContent({
@@ -32,6 +37,7 @@ export function ProjectFinancialReportContent({
   onRefresh,
   onRefreshError,
   onError,
+  embeddedInFolderTabs = false,
 }: ProjectFinancialReportContentProps): ReactElement {
   const copy = content.projectDetail.projectReport;
   const report = useProjectFinancialReport(project);
@@ -39,23 +45,39 @@ export function ProjectFinancialReportContent({
   const isMobileLayout = useDashboardMobileLayout();
   const showProjectColumn = report.isParentRollup;
 
+  const headerActions = (
+    <DetailPanelHeaderActions>
+      <DetailPanelSectionRefresh
+        sectionLabel={copy.title}
+        onRefresh={onRefresh}
+        onError={onRefreshError}
+      />
+      <DetailPanelHeaderButton
+        variant="download"
+        title={copy.downloadPdf}
+        disabled={exporting}
+        onClick={() => void exportPdf()}
+      />
+    </DetailPanelHeaderActions>
+  );
+
   return (
-    <section className={`${styles.paymentsPanel} ${styles.projectFinancialReport}`} aria-labelledby="project-financial-report-heading">
-      <DetailPanelHeader title={copy.title} titleId="project-financial-report-heading">
-        <DetailPanelHeaderActions>
-          <DetailPanelSectionRefresh
-            sectionLabel={copy.title}
-            onRefresh={onRefresh}
-            onError={onRefreshError}
-          />
-          <DetailPanelHeaderButton
-            variant="download"
-            title={copy.downloadPdf}
-            disabled={exporting}
-            onClick={() => void exportPdf()}
-          />
-        </DetailPanelHeaderActions>
-      </DetailPanelHeader>
+    <section
+      className={`${styles.paymentsPanel} ${styles.projectFinancialReport}`}
+      aria-labelledby="project-financial-report-heading"
+    >
+      {embeddedInFolderTabs ? (
+        <>
+          <FolderTabToolbarPortal>{headerActions}</FolderTabToolbarPortal>
+          <h2 id="project-financial-report-heading" className={styles.detailPanelTitle}>
+            {copy.title}
+          </h2>
+        </>
+      ) : (
+        <DetailPanelHeader title={copy.title} titleId="project-financial-report-heading">
+          {headerActions}
+        </DetailPanelHeader>
+      )}
 
       <div
         className={
@@ -140,7 +162,7 @@ export function ProjectFinancialReportContent({
                     role="row"
                   >
                     {showProjectColumn ? <span role="columnheader">{copy.projectColumn}</span> : null}
-                    <span role="columnheader">{copy.paymentColumn}</span>
+                    {!showProjectColumn ? <span role="columnheader">{copy.paymentColumn}</span> : null}
                     <span role="columnheader">{copy.amount}</span>
                     <span role="columnheader">{copy.status}</span>
                     <span role="columnheader">{copy.paidDate}</span>
@@ -157,21 +179,35 @@ export function ProjectFinancialReportContent({
                           <span
                             className={
                               isProjectFinancialChildPaymentRow(row.projectLabel)
-                                ? `${styles.gridCellWrap} ${styles.projectFinancialPaymentChildLabel}`
-                                : styles.gridCellWrap
+                                ? `${styles.gridCellWrap} ${styles.projectFinancialPaymentChildLabel} ${styles.projectFinancialProjectCellWithIcon}`
+                                : `${styles.gridCellWrap} ${styles.projectFinancialProjectCellWithIcon}`
                             }
                           >
+                            <LuBuilding2 className={styles.projectFinancialProjectIcon} aria-hidden />
                             {formatProjectFinancialPaymentHierarchyLabel(
                               row.projectLabel,
                               project.summary.name
                             )}
                           </span>
                         ) : null}
-                        <span className={styles.gridCellWrap}>{row.title}</span>
+                        {!showProjectColumn ? <span className={styles.gridCellWrap}>{row.title}</span> : null}
                         <span>{formatCentsAsUsd(row.amountCents)}</span>
-                        <span>{row.statusLabel}</span>
+                        <span
+                          className={`${styles.statusDotIndicator} ${styles.projectFinancialStatusIndicator} ${workflowTaskStatusBadgeClass(row.status)}`}
+                        >
+                          <span className={styles.statusDot} aria-hidden />
+                          <span className={styles.statusDotText}>{row.statusLabel}</span>
+                        </span>
                         <span>{row.paidAtLabel}</span>
-                        <span>{row.paidIndicator === 'paid' ? copy.paid : copy.unpaid}</span>
+                        <span
+                          className={
+                            row.paidIndicator === 'paid'
+                              ? `${styles.projectFinancialPaidIndicator} ${styles.projectFinancialPaidIndicator_paid}`
+                              : `${styles.projectFinancialPaidIndicator} ${styles.projectFinancialPaidIndicator_unpaid}`
+                          }
+                        >
+                          {row.paidIndicator === 'paid' ? copy.paid : copy.unpaid}
+                        </span>
                       </div>
                     ))}
                   </div>

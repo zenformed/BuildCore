@@ -39,6 +39,8 @@ export type ProjectDocumentsPanelContentProps = {
   leadingFilter?: ReactNode;
   onRefresh: () => Promise<void>;
   onError?: (message: string) => void;
+  /** When false, hide the inline status refresh (e.g. moved to folder tab bar). */
+  showStatusRefresh?: boolean;
 };
 
 export function ProjectDocumentsPanelContent({
@@ -48,6 +50,7 @@ export function ProjectDocumentsPanelContent({
   leadingFilter = null,
   onRefresh,
   onError,
+  showStatusRefresh = true,
 }: ProjectDocumentsPanelContentProps): ReactElement {
   const { catalogForProject } = useBuildCorePipelineStages();
   const workflowAccess = useBuildCoreWorkflowTaskAccess();
@@ -141,6 +144,7 @@ export function ProjectDocumentsPanelContent({
                 leadingFilter={leadingFilter}
                 onRefresh={onRefresh}
                 onError={onError}
+                showStatusRefresh={showStatusRefresh}
               />
             ) : null}
             <ul className={styles.docList}>
