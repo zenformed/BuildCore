@@ -13,6 +13,8 @@ export type RightSideDrawerProps = {
   readonly children: ReactNode;
   /** Extra class on the fixed overlay (e.g. nested-above-importer z-index). */
   readonly overlayClassName?: string;
+  /** Optional drawer width preset for larger forms. */
+  readonly drawerWidth?: 'default' | 'wide';
 };
 
 /**
@@ -28,6 +30,7 @@ export function RightSideDrawer({
   closeDisabled = false,
   children,
   overlayClassName,
+  drawerWidth = 'default',
 }: RightSideDrawerProps): ReactElement | null {
   useEffect(() => {
     if (!open) return;
@@ -54,7 +57,7 @@ export function RightSideDrawer({
       role="presentation"
     >
       <div
-        className={styles.drawer}
+        className={[styles.drawer, drawerWidth === 'wide' ? styles.drawer_wide : ''].filter(Boolean).join(' ')}
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}

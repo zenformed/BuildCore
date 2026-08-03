@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useState, type ReactElement } from 'react';
+import { useCallback, useState, type ReactElement, type ReactNode } from 'react';
 import { MAX_CONTACT_EMAILS, MAX_CONTACT_PHONES } from '@/domain/crm/contactMultiValue';
 import { formatUsPhoneInput } from '@/domain/crm/phoneFormat';
 import { CenterConfirmDialog } from '@/presentation/components/CenterConfirmDialog';
@@ -15,7 +15,7 @@ export type ContactMultiValueRemoveConfirmCopy = {
 };
 
 export type ContactMultiValueFieldsProps = {
-  readonly label: string;
+  readonly label: ReactNode;
   readonly values: readonly string[];
   readonly inputType: 'email' | 'tel';
   readonly disabled: boolean;

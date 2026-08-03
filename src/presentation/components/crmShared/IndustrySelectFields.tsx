@@ -1,6 +1,6 @@
 'use client';
 
-import type { ReactElement } from 'react';
+import type { ReactElement, ReactNode } from 'react';
 import type { CrmIndustry } from '@/domain/crm';
 import { CRM_INDUSTRY_OPTIONS } from '@/presentation/features/crmProjects/crmProjectFormatters';
 import formStyles from '@/presentation/components/CrmProjects/CreateCrmProjectDrawer.module.css';
@@ -8,8 +8,8 @@ import formStyles from '@/presentation/components/CrmProjects/CreateCrmProjectDr
 export type IndustrySelectFieldsProps = {
   readonly industry: CrmIndustry;
   readonly customIndustry: string;
-  readonly industryLabel: string;
-  readonly customIndustryLabel: string;
+  readonly industryLabel: ReactNode;
+  readonly customIndustryLabel: ReactNode;
   readonly disabled?: boolean;
   readonly required?: boolean;
   readonly industryId?: string;

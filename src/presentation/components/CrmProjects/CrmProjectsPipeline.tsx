@@ -437,6 +437,7 @@ export function CrmProjectsPipeline({
     memberNoAssignmentsMessage: content.crm.table.emptyMemberNoAssignments,
     searchOrFiltersMessage: content.crm.table.empty,
   });
+  const showFirstProjectEmptyState = !listIsLoading && totalCount === 0;
 
   const panelTitle = panelCopy.title;
   const searchInput = (
@@ -581,6 +582,13 @@ export function CrmProjectsPipeline({
             onRequestMarkInactive={handleRequestMarkInactive}
             onRequestMarkActive={handleRequestMarkActive}
             emptyMessage={tableEmptyMessage}
+            firstRunEmptyTitle={showFirstProjectEmptyState ? 'No Projects Yet' : null}
+            firstRunEmptyActionLabel={
+              showFirstProjectEmptyState && !isMemberRole ? 'Add your first Project' : null
+            }
+            onFirstRunEmptyAction={
+              showFirstProjectEmptyState && !isMemberRole ? () => setCreateOpen(true) : null
+            }
             {...sharedTableChrome}
           />
         )}

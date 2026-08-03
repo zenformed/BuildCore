@@ -1,6 +1,15 @@
 'use client';
 
-import type { ReactElement } from 'react';
+import type { ReactElement, ReactNode } from 'react';
+import {
+  LuBuilding2,
+  LuListChecks,
+  LuMail,
+  LuMapPin,
+  LuPhone,
+  LuStickyNote,
+  LuUser,
+} from 'react-icons/lu';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
 import {
   validateCrmProjectCoordinateFormFields,
@@ -69,6 +78,21 @@ export function CreateCrmProjectFormFields({
     showValidationErrors || form.longitude.trim().length > 0
       ? coordinateErrors.longitude
       : undefined;
+  const labelWithIcon = (
+    label: string,
+    icon: ReactNode,
+    required: boolean = false
+  ): ReactNode => (
+    <span className={formStyles.labelWithIcon}>
+      <span className={formStyles.labelIcon} aria-hidden>
+        {icon}
+      </span>
+      <span>
+        {label}
+        {required ? ' *' : null}
+      </span>
+    </span>
+  );
 
   return (
     <>
@@ -77,7 +101,7 @@ export function CreateCrmProjectFormFields({
       >
         <div className={formStyles.field}>
           <label className={formStyles.label} htmlFor="crm-create-name">
-            {create.fields.name} *
+            {labelWithIcon(create.fields.name, <LuBuilding2 />, true)}
           </label>
           <input
             id="crm-create-name"
@@ -93,7 +117,7 @@ export function CreateCrmProjectFormFields({
           variant="industryOnly"
           industry={form.industry}
           customIndustry={form.customIndustry}
-          industryLabel={create.fields.industry}
+          industryLabel={labelWithIcon(create.fields.industry, <LuListChecks />)}
           customIndustryLabel={create.fields.customIndustry}
           disabled={saving}
           required
@@ -106,7 +130,7 @@ export function CreateCrmProjectFormFields({
         <div className={formStyles.rowTopContactAssignee}>
           <div className={formStyles.field}>
             <label className={formStyles.label} htmlFor="crm-create-contact">
-              {create.fields.contactName} *
+              {labelWithIcon(create.fields.contactName, <LuUser />, true)}
             </label>
             <input
               id="crm-create-contact"
@@ -119,7 +143,9 @@ export function CreateCrmProjectFormFields({
 
           {showAssignee ? (
             <div className={formStyles.fieldAssigneeCompact}>
-              <span className={formStyles.label}>{create.fields.assignedShort}</span>
+              <span className={formStyles.label}>
+                {labelWithIcon(create.fields.assignedShort, <LuUser />)}
+              </span>
               <CreateFormAssigneePicker
                 value={form.assignedMemberId}
                 options={assigneeOptions}
@@ -136,7 +162,7 @@ export function CreateCrmProjectFormFields({
       {form.industry === 'other' ? (
         <div className={formStyles.field}>
           <label className={formStyles.label} htmlFor="crm-create-custom-industry">
-            {create.fields.customIndustry} *
+            {labelWithIcon(create.fields.customIndustry, <LuListChecks />, true)}
           </label>
           <input
             id="crm-create-custom-industry"
@@ -151,7 +177,7 @@ export function CreateCrmProjectFormFields({
       <div className={formStyles.rowContactEmailPhone}>
         <div className={formStyles.rowContactEmailCol}>
           <ContactMultiValueFields
-            label={create.fields.emailAddresses}
+            label={labelWithIcon(create.fields.emailAddresses, <LuMail />)}
             values={form.emails}
             inputType="email"
             disabled={saving}
@@ -166,7 +192,7 @@ export function CreateCrmProjectFormFields({
         </div>
         <div className={formStyles.rowContactPhoneCol}>
           <ContactMultiValueFields
-            label={create.fields.phoneNumbers}
+            label={labelWithIcon(create.fields.phoneNumbers, <LuPhone />)}
             values={form.phones}
             inputType="tel"
             disabled={saving}
@@ -187,7 +213,7 @@ export function CreateCrmProjectFormFields({
             <div className={formStyles.field}>
               <div className={formStyles.addressLabelRow}>
                 <label className={formStyles.label} htmlFor="crm-create-address-line-1">
-                  {create.fields.addressLine1}
+                  {labelWithIcon(create.fields.addressLine1, <LuMapPin />)}
                 </label>
                 <button
                   type="button"
@@ -211,7 +237,7 @@ export function CreateCrmProjectFormFields({
 
             <div className={formStyles.field}>
               <label className={formStyles.label} htmlFor="crm-create-address-line-2">
-                {create.fields.addressLine2}
+                {labelWithIcon(create.fields.addressLine2, <LuMapPin />)}
               </label>
               <input
                 id="crm-create-address-line-2"
@@ -227,7 +253,7 @@ export function CreateCrmProjectFormFields({
             <div className={formStyles.rowCityStateZip}>
               <div className={formStyles.field}>
                 <label className={formStyles.label} htmlFor="crm-create-city">
-                  {create.fields.city}
+                  {labelWithIcon(create.fields.city, <LuMapPin />)}
                 </label>
                 <input
                   id="crm-create-city"
@@ -242,7 +268,7 @@ export function CreateCrmProjectFormFields({
               </div>
               <div className={formStyles.field}>
                 <label className={formStyles.label} htmlFor="crm-create-state">
-                  {create.fields.state}
+                  {labelWithIcon(create.fields.state, <LuMapPin />)}
                 </label>
                 <UsStateCombobox
                   id="crm-create-state"
@@ -255,7 +281,7 @@ export function CreateCrmProjectFormFields({
               </div>
               <div className={formStyles.field}>
                 <label className={formStyles.label} htmlFor="crm-create-postal-code">
-                  {create.fields.postalCode}
+                  {labelWithIcon(create.fields.postalCode, <LuMapPin />)}
                 </label>
                 <input
                   id="crm-create-postal-code"
@@ -280,7 +306,7 @@ export function CreateCrmProjectFormFields({
             <div className={formStyles.rowCoordinates}>
               <div className={formStyles.field}>
                 <label className={formStyles.label} htmlFor="crm-create-latitude">
-                  {create.fields.latitude}
+                  {labelWithIcon(create.fields.latitude, <LuMapPin />)}
                 </label>
                 <input
                   id="crm-create-latitude"
@@ -309,7 +335,7 @@ export function CreateCrmProjectFormFields({
               </div>
               <div className={formStyles.field}>
                 <label className={formStyles.label} htmlFor="crm-create-longitude">
-                  {create.fields.longitude}
+                  {labelWithIcon(create.fields.longitude, <LuMapPin />)}
                 </label>
                 <input
                   id="crm-create-longitude"
@@ -351,7 +377,7 @@ export function CreateCrmProjectFormFields({
 
       <div className={formStyles.field}>
         <label className={formStyles.label} htmlFor="crm-create-notes">
-          {create.fields.notes}
+          {labelWithIcon(create.fields.notes, <LuStickyNote />)}
         </label>
         <textarea
           id="crm-create-notes"

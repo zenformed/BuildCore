@@ -2,6 +2,7 @@
 
 import type { ReactElement } from 'react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { LuListChecks } from 'react-icons/lu';
 import type { BuildCoreProjectTemplate } from '@/domain/crm/projectTemplate';
 import type { BuildCoreProjectTemplateScope } from '@/domain/crm/projectTemplateScope';
 import {
@@ -119,7 +120,12 @@ export function ProjectTemplateDraftSelect({
   return (
     <div className={formStyles.field}>
       <label className={formStyles.label} htmlFor={`crm-create-template-${templateScope}`}>
-        {copy.createSelectLabel}
+        <span className={formStyles.labelWithIcon}>
+          <span className={formStyles.labelIcon} aria-hidden>
+            <LuListChecks />
+          </span>
+          <span>{copy.createSelectLabel}</span>
+        </span>
       </label>
       <div className={formStyles.templateFieldRow}>
         <CreateFormSelectPicker

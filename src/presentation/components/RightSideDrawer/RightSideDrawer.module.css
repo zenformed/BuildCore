@@ -35,6 +35,11 @@
   animation: rightSideDrawerIn 200ms ease-out;
 }
 
+.drawer_wide {
+  width: min(660px, 46.2vw);
+  min-width: min(30.8rem, 100%);
+}
+
 :global([data-theme='dark']) .drawer {
   background: var(--theme-surface-card, #161922);
   border-left-color: #334155;

@@ -720,6 +720,7 @@ export function CreateCrmProjectModal({
       onClose={onClose}
       closeAriaLabel={copy.closeAriaLabel}
       closeDisabled={saving}
+      drawerWidth="wide"
       overlayClassName={nestAboveImporter ? drawerShellStyles.overlayNestedAboveModal : undefined}
     >
       <div className={styles.drawerFormWrap}>{formElement}</div>

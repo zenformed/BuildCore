@@ -80,6 +80,10 @@ export type CrmProjectsTableProps = {
   readonly showHeaderCollapseToggle?: boolean;
   /** Optional extra metric appended to the inline header count pill. */
   readonly inlineHeaderCountSuffix?: string | null;
+  /** Optional centered first-run empty state (e.g. no projects in DB yet). */
+  readonly firstRunEmptyTitle?: string | null;
+  readonly firstRunEmptyActionLabel?: string | null;
+  readonly onFirstRunEmptyAction?: (() => void) | null;
 };
 
 export function CrmProjectsTable({
@@ -126,6 +130,9 @@ export function CrmProjectsTable({
   onToggleHeaderCollapse,
   showHeaderCollapseToggle = false,
   inlineHeaderCountSuffix = null,
+  firstRunEmptyTitle = null,
+  firstRunEmptyActionLabel = null,
+  onFirstRunEmptyAction = null,
 }: CrmProjectsTableProps): ReactElement {
   const displayRoots = useMemo(
     () => (enableSubprojectExpansion ? (rootRows ?? []) : (rows ?? [])),
@@ -142,6 +149,7 @@ export function CrmProjectsTable({
   });
 
   const showTable = displayRoots.length > 0 || isLoading;
+  const showFirstRunEmptyState = !showTable && firstRunEmptyTitle != null;
   const tableCopy = content.crm.table;
   const valueLabels = tableCopy.columns;
   const showSelectColumn = bulkSelection?.mode === true;
@@ -330,9 +338,43 @@ export function CrmProjectsTable({
                 </span>
               ) : null}
             </div>
-            <div className={styles.gridBody} role="rowgroup">
+            <div
+              className={[
+                styles.gridBody,
+                showFirstRunEmptyState ? styles.gridBodyWithCenteredEmpty : '',
+              ]
+                .filter(Boolean)
+                .join(' ')}
+              role="rowgroup"
+            >
               {!showTable ? (
-                <p className={styles.emptyState}>{emptyMessage ?? content.crm.table.empty}</p>
+                showFirstRunEmptyState ? (
+                  <div className={styles.emptyStateCenterWrap}>
+                    {firstRunEmptyActionLabel != null && onFirstRunEmptyAction != null ? (
+                      <button
+                        type="button"
+                        className={styles.emptyStateCardButton}
+                        aria-label={firstRunEmptyActionLabel}
+                        onClick={onFirstRunEmptyAction}
+                      >
+                        <span className={styles.emptyStateActionRow}>
+                          <span className={styles.emptyStateActionPlus} aria-hidden>
+                            +
+                          </span>
+                          <span className={styles.emptyStateActionText}>
+                            {firstRunEmptyActionLabel}
+                          </span>
+                        </span>
+                      </button>
+                    ) : (
+                      <div className={styles.emptyStateCardButtonStatic}>
+                        <span className={styles.emptyStateTitle}>{firstRunEmptyTitle}</span>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <p className={styles.emptyState}>{emptyMessage ?? content.crm.table.empty}</p>
+                )
               ) : (
                 rowModels.map((row) => (
                   <CrmProjectTableRow

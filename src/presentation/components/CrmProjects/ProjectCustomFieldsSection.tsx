@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useState, type ReactElement } from 'react';
+import { LuListChecks } from 'react-icons/lu';
 import type {
   ProjectCustomFieldDefinition,
   ProjectCustomFieldScope,
@@ -144,7 +145,14 @@ export function ProjectCustomFieldsSection({
         aria-label={copy.sectionTitle}
       >
         <div className={formStyles.contactMultiHeader}>
-          <span className={formStyles.label}>{copy.sectionTitle}</span>
+          <span className={formStyles.label}>
+            <span className={formStyles.labelWithIcon}>
+              <span className={formStyles.labelIcon} aria-hidden>
+                <LuListChecks />
+              </span>
+              <span>{copy.sectionTitle}</span>
+            </span>
+          </span>
           {canManageDefinitions ? (
             <button
               type="button"
