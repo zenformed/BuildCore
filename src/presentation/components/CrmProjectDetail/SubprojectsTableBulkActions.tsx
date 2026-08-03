@@ -1,7 +1,7 @@
 'use client';
 
 import { useRef, useState, type ReactElement } from 'react';
-import { BsCheckLg, BsExclamationOctagon, BsThreeDotsVertical } from 'react-icons/bs';
+import { LuCheck, LuCircleAlert } from 'react-icons/lu';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
 import type { AssigneeOption } from '@/presentation/features/crmAssignment/buildAssigneeOptions';
 import { BulkAssignMemberMenu } from '@/presentation/components/crmShared/BulkAssignMemberMenu';
@@ -50,7 +50,12 @@ export function SubprojectsTableBulkActions({
         aria-label={tableCopy.makePriority}
         onClick={onMakePriority}
       >
-        <BsExclamationOctagon className={styles.workflowBulkActionGlyph} aria-hidden />
+        <LuCircleAlert
+          className={styles.workflowBulkActionGlyph}
+          size={16}
+          strokeWidth={2}
+          aria-hidden
+        />
       </button>
       <button
         type="button"
@@ -60,7 +65,7 @@ export function SubprojectsTableBulkActions({
         aria-label={tableCopy.markComplete}
         onClick={onMarkComplete}
       >
-        <BsCheckLg className={styles.workflowBulkActionGlyph} aria-hidden />
+        <LuCheck className={styles.workflowBulkActionGlyph} size={16} strokeWidth={2.5} aria-hidden />
       </button>
       <BulkAssignMemberMenu
         busy={busy}
@@ -80,7 +85,18 @@ export function SubprojectsTableBulkActions({
           aria-haspopup="menu"
           onClick={() => setMoreOpen((open) => !open)}
         >
-          <BsThreeDotsVertical className={styles.workflowBulkActionGlyph} aria-hidden />
+          <svg
+            className={styles.workflowBulkActionGlyph}
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            aria-hidden
+          >
+            <circle cx="12" cy="5" r="1.75" fill="currentColor" />
+            <circle cx="12" cy="12" r="1.75" fill="currentColor" />
+            <circle cx="12" cy="19" r="1.75" fill="currentColor" />
+          </svg>
         </button>
         <WorkflowInlineMenu
           open={moreOpen}

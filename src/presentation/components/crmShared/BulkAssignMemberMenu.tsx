@@ -1,7 +1,7 @@
 'use client';
 
 import { useRef, useState, type ReactElement } from 'react';
-import { BsPeople } from 'react-icons/bs';
+import { LuUsers } from 'react-icons/lu';
 import type { AssigneeOption } from '@/presentation/features/crmAssignment/buildAssigneeOptions';
 import { AssigneeMenuOptionLabel } from '@/presentation/features/crmAssignment/AssigneeMenuOptionLabel';
 import { WorkflowInlineMenu } from '@/presentation/components/CrmProjectDetail/WorkflowInlineMenu';
@@ -42,7 +42,7 @@ export function BulkAssignMemberMenu({
           setMenuOpen((open) => !open);
         }}
       >
-        <BsPeople className={styles.workflowBulkActionGlyph} aria-hidden />
+        <LuUsers className={styles.workflowBulkActionGlyph} size={16} strokeWidth={2} aria-hidden />
       </button>
       <WorkflowInlineMenu
         open={menuOpen}
