@@ -72,6 +72,8 @@ export type CrmProjectsTableProps = {
   readonly bulkHeaderActions?: ReactNode;
   /** Apply workflow-stage-like table shell/cell chrome (used in detail tabs). */
   readonly workflowLikeTableChrome?: boolean;
+  /** Desktop dashboard: keep table header fixed and scroll only row body. */
+  readonly rowsScrollOnly?: boolean;
   /** Optional inline-header collapse state/toggle (used by detail tab tables). */
   readonly headerCollapsed?: boolean;
   readonly onToggleHeaderCollapse?: () => void;
@@ -119,6 +121,7 @@ export function CrmProjectsTable({
   onRefreshError,
   bulkHeaderActions = null,
   workflowLikeTableChrome = false,
+  rowsScrollOnly = false,
   headerCollapsed = false,
   onToggleHeaderCollapse,
   showHeaderCollapseToggle = false,
@@ -191,6 +194,7 @@ export function CrmProjectsTable({
   const tableWrapClass = [
     styles.tableWrap,
     workflowLikeTableChrome ? styles.tableWrap_workflowLikeChrome : '',
+    rowsScrollOnly ? styles.tableWrap_rowsScrollOnly : '',
   ]
     .filter(Boolean)
     .join(' ');
@@ -358,6 +362,7 @@ export function CrmProjectsTable({
                     onContactCopied={onContactCopied}
                     showParentProjectColumn={showParentProjectColumn}
                     parentProjectName={row.parentProjectName}
+                    subprojectCount={row.subprojectCount}
                     progressTone={progressTone}
                     showContactIcons={workflowLikeTableChrome}
                   />

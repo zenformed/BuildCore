@@ -23,17 +23,20 @@ export function PreviewMetaColumn({
   value,
   align = 'start',
   labelPosition = 'below',
+  leadingIcon = null,
 }: {
   readonly label: ReactNode;
   readonly value: ReactNode;
   readonly align?: 'start' | 'center' | 'end';
   readonly labelPosition?: 'above' | 'below';
+  readonly leadingIcon?: ReactNode;
 }): ReactElement {
   const columnClass = [
     cardStyles.metaColumn,
     align === 'center' ? cardStyles.metaColumn_center : '',
     align === 'end' ? cardStyles.metaColumn_end : '',
     labelPosition === 'above' ? cardStyles.metaColumn_labelsFirst : '',
+    leadingIcon != null ? cardStyles.metaColumn_withIcon : '',
   ]
     .filter(Boolean)
     .join(' ');
@@ -41,19 +44,29 @@ export function PreviewMetaColumn({
   const labelEl = <div className={cardStyles.metaLabel}>{label}</div>;
   const valueEl = <div className={cardStyles.metaValue}>{value}</div>;
 
+  const columnContent =
+    labelPosition === 'above' ? (
+      <>
+        {labelEl}
+        {valueEl}
+      </>
+    ) : (
+      <>
+        {valueEl}
+        {labelEl}
+      </>
+    );
+
+  if (leadingIcon == null) {
+    return <div className={columnClass}>{columnContent}</div>;
+  }
+
   return (
     <div className={columnClass}>
-      {labelPosition === 'above' ? (
-        <>
-          {labelEl}
-          {valueEl}
-        </>
-      ) : (
-        <>
-          {valueEl}
-          {labelEl}
-        </>
-      )}
+      <span className={cardStyles.metaColumnIcon} aria-hidden>
+        {leadingIcon}
+      </span>
+      <div className={cardStyles.metaColumnContent}>{columnContent}</div>
     </div>
   );
 }

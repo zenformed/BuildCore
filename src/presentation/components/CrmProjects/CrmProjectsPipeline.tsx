@@ -49,10 +49,6 @@ import { useCrmProjectInactiveActions } from '@/presentation/features/crmProject
 import { assignCrmProjectMember } from '@/presentation/features/crmProjects/assignCrmProjectMember';
 import { getCrmProjectAssigneeOptions } from '@/presentation/features/crmProjects/crmProjectAssigneeOptions';
 import { useDashboardMobileLayout } from '@/presentation/features/crmProjects/useDashboardMobileLayout';
-import {
-  DEFAULT_DASHBOARD_LIST_VIEW_MODE,
-  type DashboardListViewMode,
-} from '@/presentation/features/crmProjects/dashboardListViewMode';
 import { useBulkSelection } from '@/presentation/features/bulkSelection/useBulkSelection';
 import type { BulkSelectionBindings } from '@/presentation/features/bulkSelection/BulkSelectionBindings';
 import {
@@ -61,8 +57,6 @@ import {
 } from '@/presentation/providers/AssignmentIdentityProvider';
 import { useBuildCoreDashboardContext } from '@/presentation/providers/BuildCoreDashboardProvider';
 import { CrmProjectsFilterMenu } from './CrmProjectsFilterMenu';
-import { CrmProjectsExpandAllButton } from './CrmProjectsExpandAllButton';
-import { CrmProjectsListViewMenu } from './CrmProjectsListViewMenu';
 import { CrmProjectsTable } from './CrmProjectsTable';
 import { CrmProjectsMobileList } from './CrmProjectsMobileList';
 import { MarkInactiveDialog } from './MarkInactiveDialog';
@@ -97,10 +91,6 @@ export function CrmProjectsPipeline({
   const [searchQuery, setSearchQuery] = useState('');
   const [filters, setFilters] = useState<CrmProjectsListFilters>(EMPTY_CRM_PROJECTS_LIST_FILTERS);
   const [radiusFilter, setRadiusFilter] = useState<RadiusFilterState>(EMPTY_RADIUS_FILTER);
-  const [expandedParentIds, setExpandedParentIds] = useState<ReadonlySet<string>>(
-    () => new Set()
-  );
-  const [listView, setListView] = useState<DashboardListViewMode>(DEFAULT_DASHBOARD_LIST_VIEW_MODE);
   const [createOpen, setCreateOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
   const [importMobileNoticeOpen, setImportMobileNoticeOpen] = useState(false);
@@ -109,9 +99,6 @@ export function CrmProjectsPipeline({
   const {
     rootRows,
     allChildrenByParentId,
-    visibleChildrenByParentId,
-    parentById,
-    subprojectRows,
     paymentTasksIndex,
     workflowProgressInputIndex,
     totalCount,
@@ -211,31 +198,7 @@ export function CrmProjectsPipeline({
 
   const rowActionsBusyProjectId = busyProjectId ?? markingActiveProjectId;
 
-  const priorityFilterActive = filters.priorities.length > 0;
-  const isProjectsView = listView === 'projects';
-  const isSubprojectsView = listView === 'subprojects';
-  const subprojectColumnLabel = content.projectDetail.subprojects.projectColumn;
-
-  const visibleProjects = useMemo(() => {
-    if (isSubprojectsView) {
-      return [...subprojectRows];
-    }
-    const list: CrmProjectSummary[] = [];
-    for (const root of rootRows) {
-      list.push(root);
-      if (expandedParentIds.has(root.id)) {
-        const children = visibleChildrenByParentId.get(root.id) ?? [];
-        list.push(...children);
-      }
-    }
-    return list;
-  }, [
-    expandedParentIds,
-    isSubprojectsView,
-    rootRows,
-    subprojectRows,
-    visibleChildrenByParentId,
-  ]);
+  const visibleProjects = useMemo(() => [...rootRows], [rootRows]);
 
   const visibleIds = useMemo(() => visibleProjects.map((project) => project.id), [visibleProjects]);
   const selectedProjects = useMemo(
@@ -424,14 +387,14 @@ export function CrmProjectsPipeline({
     />
   );
 
-  const tableLeadingFilter = (
+  const headerFilterButton = (
     <CrmProjectsFilterMenu
       filters={filters}
       onChange={setFilters}
       radiusFilter={radiusFilter}
       onRadiusFilterChange={setRadiusFilter}
-      triggerVariant="caret"
-      menuAlign="start"
+      triggerVariant="ghost"
+      menuAlign="end"
     />
   );
 
@@ -468,36 +431,6 @@ export function CrmProjectsPipeline({
     [nav.routes, router]
   );
 
-  const expandableParentIds = useMemo(() => {
-    const ids = new Set<string>();
-    for (const project of rootRows) {
-      if ((allChildrenByParentId.get(project.id)?.length ?? 0) > 0) {
-        ids.add(project.id);
-      }
-    }
-    return ids;
-  }, [allChildrenByParentId, rootRows]);
-
-  const allSubprojectsExpanded = useMemo(() => {
-    if (expandableParentIds.size === 0) {
-      return false;
-    }
-    for (const parentId of expandableParentIds) {
-      if (!expandedParentIds.has(parentId)) {
-        return false;
-      }
-    }
-    return true;
-  }, [expandableParentIds, expandedParentIds]);
-
-  const handleToggleExpandAllSubprojects = useCallback((): void => {
-    if (allSubprojectsExpanded) {
-      setExpandedParentIds(new Set());
-      return;
-    }
-    setExpandedParentIds(new Set(expandableParentIds));
-  }, [allSubprojectsExpanded, expandableParentIds]);
-
   const tableEmptyMessage = resolveCrmProjectsTableEmptyMessage({
     isMemberRole,
     totalProjectCount: totalCount,
@@ -505,29 +438,7 @@ export function CrmProjectsPipeline({
     searchOrFiltersMessage: content.crm.table.empty,
   });
 
-  const filterCaret = (
-    <CrmProjectsFilterMenu
-      filters={filters}
-      onChange={setFilters}
-      radiusFilter={radiusFilter}
-      onRadiusFilterChange={setRadiusFilter}
-      triggerVariant="caret"
-      menuAlign="start"
-    />
-  );
-  const expandAllButton = isProjectsView ? (
-    <CrmProjectsExpandAllButton
-      allExpanded={allSubprojectsExpanded}
-      disabled={expandableParentIds.size === 0}
-      onToggle={handleToggleExpandAllSubprojects}
-    />
-  ) : null;
-  const panelTitle = isSubprojectsView
-    ? panelCopy.listView.subprojects
-    : panelCopy.title;
-  const listViewMenu = (
-    <CrmProjectsListViewMenu viewMode={listView} onChange={setListView} />
-  );
+  const panelTitle = panelCopy.title;
   const searchInput = (
     <input
       type="search"
@@ -555,7 +466,7 @@ export function CrmProjectsPipeline({
     />
   ) : null;
   const importButton =
-    !isMemberRole && isProjectsView ? (
+    !isMemberRole ? (
       <button
         type="button"
         className={importStyles.toolbarImportButton}
@@ -578,9 +489,8 @@ export function CrmProjectsPipeline({
   const sharedTableChrome = {
     bulkSelection: bulkSelectionBindings,
     inlineSelectionChrome: true as const,
-    leadingFilter: tableLeadingFilter,
-    onRefresh: refetch,
-    onRefreshError: (message: string) => setToast({ kind: 'error', message }),
+    workflowLikeTableChrome: true as const,
+    rowsScrollOnly: true as const,
     bulkHeaderActions:
       canUseBulkActions && bulkSelection.selectedCount > 0 ? selectionBulkActions : null,
   };
@@ -589,7 +499,7 @@ export function CrmProjectsPipeline({
     <section
       className={styles.projectsPanel}
       data-crm-projects-dashboard
-      aria-labelledby="crm-projects-heading"
+      aria-label={panelTitle}
     >
       {toast ? (
         <DetailToast
@@ -607,111 +517,31 @@ export function CrmProjectsPipeline({
           .join(' ')}
       >
         {isMobileLayout ? (
-          <>
-            <div className={styles.projectsPanelHeaderRow}>
-              <div className={styles.projectsPanelTitleRow}>
-                <h2 id="crm-projects-heading" className={styles.projectsPanelTitle}>
-                  {panelTitle}
-                </h2>
-                {filterCaret}
-              </div>
-              <div className={styles.projectsPanelHeaderRowActions}>
-                {refreshButton}
-                {listViewMenu}
-                {expandAllButton}
-              </div>
-            </div>
-            <div className={styles.projectsPanelHeaderRow}>
-              <div className={styles.projectsPanelSearchWrap}>{searchInput}</div>
-              <div className={styles.projectsPanelHeaderRowActions}>{importButton}{addButton}</div>
-            </div>
-          </>
+          <div className={styles.projectsPanelHeaderRow}>
+            <div className={styles.projectsPanelSearchWrap}>{headerFilterButton}{searchInput}</div>
+            <div className={styles.projectsPanelHeaderRowActions}>{importButton}{refreshButton}{addButton}</div>
+          </div>
         ) : (
-          <>
-            <div className={styles.projectsPanelTitleRow}>
-              <h2 id="crm-projects-heading" className={styles.projectsPanelTitle}>
-                {panelTitle}
-              </h2>
-              {expandAllButton}
-            </div>
-            <div className={styles.projectsPanelHeaderTools}>
-              {listViewMenu}
-              {searchInput}
-              {importButton}
-              {addButton}
-            </div>
-          </>
+          <div className={styles.projectsPanelHeaderTools}>
+            {headerFilterButton}
+            {searchInput}
+            {importButton}
+            {refreshButton}
+            {addButton}
+          </div>
         )}
       </div>
       <div
         className={[
           styles.pipeline,
           styles.projectsPanelBody,
-          isSubprojectsView ? styles.pipelineSubprojectsView : '',
         ]
           .filter(Boolean)
           .join(' ')}
       >
         {isMobileLayout ? (
-          isProjectsView ? (
-            <CrmProjectsMobileList
-              enableSubprojectExpansion
-              autoExpandParentsWithSubprojects={priorityFilterActive}
-              expandedParentIds={expandedParentIds}
-              onExpandedParentIdsChange={setExpandedParentIds}
-              rootRows={rootRows}
-              allChildrenByParentId={allChildrenByParentId}
-              visibleChildrenByParentId={visibleChildrenByParentId}
-              paymentTasksIndex={paymentTasksIndex}
-              workflowProgressInputIndex={workflowProgressInputIndex}
-              isWorkflowProgressLoading={isWorkflowProgressLoading}
-              isLoading={listIsLoading}
-              isPaymentFinancialsLoading={isPaymentFinancialsLoading}
-              onRowClick={onProjectRowClick}
-              onSubprojectRowClick={handleSubprojectRowClick}
-              isMemberRole={isMemberRole}
-              canDelete={canDelete && !isMemberRole}
-              deletingProjectId={deletingProjectId}
-              busyProjectId={rowActionsBusyProjectId}
-              onRequestDelete={setPendingDeleteProject}
-              onTogglePriority={togglePriority}
-              onRequestCompletionChange={requestCompletionChange}
-              onRequestMarkInactive={handleRequestMarkInactive}
-              onRequestMarkActive={handleRequestMarkActive}
-              emptyMessage={tableEmptyMessage}
-            />
-          ) : (
-            <CrmProjectsMobileList
-              rows={subprojectRows}
-              parentById={parentById}
-              paymentTasksIndex={paymentTasksIndex}
-              workflowProgressInputIndex={workflowProgressInputIndex}
-              isWorkflowProgressLoading={isWorkflowProgressLoading}
-              isLoading={listIsLoading}
-              isPaymentFinancialsLoading={isPaymentFinancialsLoading}
-              onRowClick={onProjectRowClick}
-              onSubprojectRowClick={handleSubprojectRowClick}
-              isMemberRole={isMemberRole}
-              canDelete={canDelete && !isMemberRole}
-              deletingProjectId={deletingProjectId}
-              busyProjectId={rowActionsBusyProjectId}
-              onRequestDelete={setPendingDeleteProject}
-              onTogglePriority={togglePriority}
-              onRequestCompletionChange={requestCompletionChange}
-              onRequestMarkInactive={handleRequestMarkInactive}
-              onRequestMarkActive={handleRequestMarkActive}
-              emptyMessage={content.projectDetail.subprojects.empty}
-            />
-          )
-        ) : isProjectsView ? (
-          <CrmProjectsTable
-            enableSubprojectExpansion
-            autoExpandParentsWithSubprojects={priorityFilterActive}
-            expandedParentIds={expandedParentIds}
-            onExpandedParentIdsChange={setExpandedParentIds}
-            rootRows={rootRows}
-            allChildrenByParentId={allChildrenByParentId}
-            visibleChildrenByParentId={visibleChildrenByParentId}
+          <CrmProjectsMobileList
+            rows={rootRows}
             paymentTasksIndex={paymentTasksIndex}
             workflowProgressInputIndex={workflowProgressInputIndex}
             isWorkflowProgressLoading={isWorkflowProgressLoading}
@@ -729,14 +559,11 @@ export function CrmProjectsPipeline({
             onRequestMarkInactive={handleRequestMarkInactive}
             onRequestMarkActive={handleRequestMarkActive}
             emptyMessage={tableEmptyMessage}
-            {...sharedTableChrome}
           />
         ) : (
           <CrmProjectsTable
-            rows={subprojectRows}
-            parentById={parentById}
-            showParentProjectColumn
-            projectColumnLabel={subprojectColumnLabel}
+            rows={rootRows}
+            allChildrenByParentId={allChildrenByParentId}
             paymentTasksIndex={paymentTasksIndex}
             workflowProgressInputIndex={workflowProgressInputIndex}
             isWorkflowProgressLoading={isWorkflowProgressLoading}
@@ -753,7 +580,7 @@ export function CrmProjectsPipeline({
             onRequestCompletionChange={requestCompletionChange}
             onRequestMarkInactive={handleRequestMarkInactive}
             onRequestMarkActive={handleRequestMarkActive}
-            emptyMessage={content.projectDetail.subprojects.empty}
+            emptyMessage={tableEmptyMessage}
             {...sharedTableChrome}
           />
         )}

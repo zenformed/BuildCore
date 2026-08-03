@@ -1,6 +1,17 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState, type ReactElement } from 'react';
+import {
+  LuClipboardList,
+  LuBuilding2,
+  LuGitBranch,
+  LuListChecks,
+  LuMail,
+  LuMapPin,
+  LuPhone,
+  LuStickyNote,
+  LuUser,
+} from 'react-icons/lu';
 import type { CrmIndustry, CrmTeamMemberRef } from '@/domain/crm';
 import type { CrmProjectPreview } from '@/domain/crm/projectPreview';
 import type { ProjectCustomFieldDefinition } from '@/domain/buildcore/projectCustomFields';
@@ -69,6 +80,12 @@ function resolveFinancials(
 
 function MultilineMetaValue({ text }: { readonly text: string }): ReactElement {
   return <span className={cardStyles.metaValueMultiline}>{text}</span>;
+}
+
+function truncatePreviewProjectName(value: string): string {
+  const trimmed = value.trim();
+  if (trimmed.length <= 25) return trimmed;
+  return `${trimmed.slice(0, 25)}...`;
 }
 
 function ProjectDetailsMetaAssignee({
@@ -278,6 +295,7 @@ export function ProjectDetailsCardContent({
   const paymentFinancials = resolveFinancials(summary, financials);
   const progressDisplay =
     progressPercent != null ? `${Math.round(progressPercent)}%` : emptyValue;
+  const previewProjectName = truncatePreviewProjectName(summary.name || emptyValue);
 
   const patchField = useCallback(
     async (field: SummaryEditableField, value: string) => {
@@ -480,6 +498,7 @@ export function ProjectDetailsCardContent({
             <PreviewMetaColumn
               label={previewCopy.labels.contact}
               labelPosition={labelPosition}
+            leadingIcon={<LuUser />}
               value={summary.contact.name || emptyValue}
             />
           </div>
@@ -487,6 +506,7 @@ export function ProjectDetailsCardContent({
             <PreviewMetaColumn
               label={previewCopy.labels.email}
               labelPosition={labelPosition}
+            leadingIcon={<LuMail />}
               value={<StackedMetaList values={emails} emptyValue={emptyValue} />}
             />
           </div>
@@ -494,6 +514,7 @@ export function ProjectDetailsCardContent({
             <PreviewMetaColumn
               label={previewCopy.labels.phone}
               labelPosition={labelPosition}
+            leadingIcon={<LuPhone />}
               value={<StackedMetaList values={phones} emptyValue={emptyValue} />}
             />
           </div>
@@ -503,6 +524,7 @@ export function ProjectDetailsCardContent({
             <PreviewMetaColumn
               label={previewCopy.labels.notes}
               labelPosition={labelPosition}
+            leadingIcon={<LuStickyNote />}
               value={notesText || emptyValue}
             />
           </div>
@@ -523,16 +545,21 @@ export function ProjectDetailsCardContent({
           <PreviewMetaColumn
             label={projectKindLabel}
             labelPosition={previewLabelPosition}
-            value={summary.name || emptyValue}
+            leadingIcon={<LuBuilding2 />}
+            value={previewProjectName}
           />
           <PreviewMetaColumn
             label={previewCopy.labels.industry}
             labelPosition={previewLabelPosition}
+            align="center"
+            leadingIcon={<LuClipboardList />}
             value={industryDisplay}
           />
           <PreviewMetaColumn
             label={previewCopy.labels.assigned}
             labelPosition={previewLabelPosition}
+            align="end"
+            leadingIcon={<LuUser />}
             value={assignedDisplay}
           />
         </div>
@@ -540,16 +567,21 @@ export function ProjectDetailsCardContent({
           <PreviewMetaColumn
             label={previewCopy.labels.contact}
             labelPosition={previewLabelPosition}
+            leadingIcon={<LuUser />}
             value={summary.contact.name || emptyValue}
           />
           <PreviewMetaColumn
             label={previewCopy.labels.email}
             labelPosition={previewLabelPosition}
+            align="center"
+            leadingIcon={<LuMail />}
             value={<StackedMetaList values={emails} emptyValue={emptyValue} />}
           />
           <PreviewMetaColumn
             label={previewCopy.labels.phone}
             labelPosition={previewLabelPosition}
+            align="end"
+            leadingIcon={<LuPhone />}
             value={<StackedMetaList values={phones} emptyValue={emptyValue} />}
           />
         </div>
@@ -557,6 +589,7 @@ export function ProjectDetailsCardContent({
           <PreviewMetaColumn
             label={previewCopy.labels.address}
             labelPosition={previewLabelPosition}
+            leadingIcon={<LuMapPin />}
             value={
               addressDisplay ? <MultilineMetaValue text={addressDisplay} /> : emptyValue
             }
@@ -566,12 +599,15 @@ export function ProjectDetailsCardContent({
           <PreviewMetaColumn
             label={previewCopy.labels.stage}
             labelPosition={previewLabelPosition}
+            leadingIcon={<LuGitBranch />}
             value={stageDisplay}
           />
           <div className={cardStyles.metaColumn_spacer} aria-hidden />
           <PreviewMetaColumn
             label={previewCopy.labels.progress}
             labelPosition={previewLabelPosition}
+            align="end"
+            leadingIcon={<LuListChecks />}
             value={progressDisplay}
           />
         </div>
@@ -579,8 +615,14 @@ export function ProjectDetailsCardContent({
 
       {notesText ? (
         <section className={cardStyles.previewSection} aria-label={previewCopy.sections.notes}>
-          <h4 className={cardStyles.previewSectionHeading}>{previewCopy.labels.notes}</h4>
-          <p className={`${cardStyles.metaValue} ${cardStyles.previewNotes}`}>{notesText}</p>
+          <div className={cardStyles.previewMetaRow}>
+            <PreviewMetaColumn
+              label={previewCopy.labels.notes}
+              labelPosition={previewLabelPosition}
+              leadingIcon={<LuStickyNote />}
+              value={<span className={cardStyles.previewNotes}>{notesText}</span>}
+            />
+          </div>
         </section>
       ) : null}
 

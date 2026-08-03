@@ -18,6 +18,32 @@
   box-shadow: 0 1px 0 rgba(0, 0, 0, 0.22);
 }
 
+/* Dashboard projects page: no outer shell chrome. */
+.projectsPanel[data-crm-projects-dashboard] {
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  padding: 0;
+}
+
+:global([data-theme='dark']) .projectsPanel[data-crm-projects-dashboard] {
+  border: none;
+  background: transparent;
+  box-shadow: none;
+}
+
+/* Dashboard projects: keep fallback photo tiles neutral (no random accent colors). */
+.projectsPanel[data-crm-projects-dashboard] .subprojectsProjectPhotoInitial {
+  background: #6b7280 !important;
+}
+
+:global([data-theme='dark'])
+  .projectsPanel[data-crm-projects-dashboard]
+  .subprojectsProjectPhotoInitial {
+  background: #6b7280 !important;
+}
+
 .projectsPanelHeader {
   display: flex;
   align-items: center;
@@ -788,6 +814,63 @@
   column-gap: 0;
 }
 
+/* Dashboard projects: fixed search + table header; only rows scroll. */
+.tableWrap_rowsScrollOnly {
+  min-height: 0;
+}
+
+.tableWrap_rowsScrollOnly .scrollContainer {
+  border: 1px solid var(--theme-border-main, var(--color-border, #e2e8f0));
+  border-left: 4px solid #0f766e;
+  border-radius: 0.375rem;
+  background: var(--theme-workflow-stage-table-bg);
+  overflow: hidden;
+  min-height: 0;
+}
+
+:global([data-theme='dark']) .tableWrap_rowsScrollOnly .scrollContainer {
+  border: 1px solid var(--theme-stage-group-border-color, #80808052);
+  border-left: 4px solid #0f766e;
+  background: #1d2029;
+}
+
+.tableWrap_rowsScrollOnly .tableInner {
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.tableWrap_rowsScrollOnly .tableGridShell {
+  width: 100%;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.tableWrap_rowsScrollOnly .gridHeader {
+  position: relative;
+  top: auto;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: var(--projects-grid-columns);
+  flex: 0 0 auto;
+}
+
+.tableWrap_rowsScrollOnly .gridBody {
+  display: block;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.tableWrap_rowsScrollOnly .gridRow {
+  display: grid;
+  grid-template-columns: var(--projects-grid-columns);
+}
+
 .projectsGrid {
   display: grid;
   grid-template-columns: var(--projects-grid-columns);
@@ -1207,15 +1290,24 @@
 }
 
 .projectNameRow {
-  display: inline-flex;
+  display: flex;
   align-items: center;
   gap: 0.35rem;
   min-width: 0;
+  width: 100%;
+  max-width: 100%;
+  overflow: hidden;
 }
 
 .projectName {
+  display: inline-block;
   font-weight: 600;
   min-width: 0;
+  flex: 1 1 auto;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .projectParentName {
@@ -1281,11 +1373,31 @@
 }
 
 .projectNameGroup {
-  display: inline-flex;
+  display: flex;
   align-items: center;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   gap: 0.375rem;
   min-width: 0;
+  flex: 1 1 auto;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.projectNameAnchor {
+  min-width: 0;
+  max-width: 100%;
+  flex: 1 1 auto;
+  overflow: hidden;
+}
+
+.projectNameWithIcon {
+  display: flex;
+  align-items: center;
+  flex: 1 1 auto;
+  min-width: 0;
+  max-width: 100%;
+  width: 100%;
+  overflow: hidden;
 }
 
 .inactiveInlineLabel {
@@ -1448,6 +1560,11 @@
   display: block;
   font-size: 0.75rem;
   color: var(--color-text-muted, #64748b);
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .projectMetaStagePill {
@@ -1475,6 +1592,14 @@
   font-weight: 700;
   line-height: 1.2;
   color: var(--color-text-muted, #64748b);
+}
+
+.subprojectsCountText {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  line-height: 1.2;
+  color: var(--color-text-muted, #64748b);
+  white-space: nowrap;
 }
 
 .gridCellAssignee {

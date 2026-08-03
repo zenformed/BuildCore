@@ -12,6 +12,7 @@ export type CrmProjectsDashboardRowModel = {
   readonly financials: ProjectPaymentFinancials;
   readonly valueLabel: string;
   readonly parentProjectName?: string;
+  readonly subprojectCount: number;
   readonly hasChildren: boolean;
   readonly isExpanded: boolean;
   readonly onToggleExpand: (() => void) | undefined;
@@ -72,6 +73,7 @@ export function buildCrmProjectsDashboardRowModels(
       financials: rowFinancials,
       valueLabel: rowValueLabel,
       parentProjectName: parent?.name,
+      subprojectCount: childCount,
       hasChildren,
       isExpanded,
       onToggleExpand: hasChildren ? () => toggleExpanded(project.id) : undefined,
@@ -95,6 +97,7 @@ export function buildCrmProjectsDashboardRowModels(
       financials: resolveDashboardChildRowFinancials(child, paymentTasksIndex),
       valueLabel: subValueLabel,
       parentProjectName: project.name,
+      subprojectCount: 0,
       hasChildren: false,
       isExpanded: false,
       onToggleExpand: undefined,

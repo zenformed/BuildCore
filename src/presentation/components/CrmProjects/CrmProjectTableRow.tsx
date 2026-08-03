@@ -61,6 +61,12 @@ function buildMapsHref(addressLine: string | null, latitude?: number | null, lon
   return null;
 }
 
+function truncateTo25(value: string): string {
+  const trimmed = value.trim();
+  if (trimmed.length <= 25) return trimmed;
+  return `${trimmed.slice(0, 25)}...`;
+}
+
 export type CrmProjectTableRowProps = {
   project: CrmProjectSummary;
   variant?: 'root' | 'child';
@@ -87,6 +93,7 @@ export type CrmProjectTableRowProps = {
   onContactCopied?: (message: string) => void;
   showParentProjectColumn?: boolean;
   parentProjectName?: string;
+  subprojectCount?: number;
   progressTone?: 'success' | 'progress';
   showContactIcons?: boolean;
 };
@@ -117,6 +124,7 @@ export function CrmProjectTableRow({
   onContactCopied,
   showParentProjectColumn = false,
   parentProjectName,
+  subprojectCount = 0,
   progressTone = 'progress',
   showContactIcons = false,
 }: CrmProjectTableRowProps): ReactElement {
@@ -159,10 +167,17 @@ export function CrmProjectTableRow({
   );
   const displayContactName = project.contact.name?.trim() || '—';
   const hasContactValue = displayContactName !== '—';
+  const displayProjectName = truncateTo25(project.name);
+  const displayIndustrySubtitle = industrySubtitle ? truncateTo25(industrySubtitle) : null;
+  const displayParentProjectName = parentProjectName ? truncateTo25(parentProjectName) : null;
   const hasEmailValue = displayEmail !== '—';
   const hasPhoneValue = displayPhone !== '—';
   const hasAddressValue = typeof formattedAddress === 'string' && formattedAddress.trim().length > 0;
   const hasNotesValue = (project.notesPreview ?? '').trim().length > 0;
+  const showSubprojectCount =
+    showContactIcons && variant === 'root';
+  const subprojectCountLabel =
+    subprojectCount === 1 ? '1 Subproject' : `${subprojectCount} Subprojects`;
   const emailHref =
     showContactIcons && !isMemberRole && project.contact.email.trim().length > 0
       ? `mailto:${project.contact.email.trim()}`
@@ -257,10 +272,17 @@ export function CrmProjectTableRow({
                     derivedStageSlug != null ? formatStageLabel(derivedStageSlug, catalog) : null
                   }
                   progressPercent={progress?.textPercent ?? null}
+                  className={styles.projectNameAnchor}
                 >
-                  <span className={showContactIcons ? styles.gridCellWithIcon : undefined}>
+                  <span
+                    className={
+                      showContactIcons
+                        ? `${styles.gridCellWithIcon} ${styles.projectNameWithIcon}`
+                        : styles.projectNameWithIcon
+                    }
+                  >
                     {showContactIcons ? <LuBuilding2 className={styles.gridCellInlineIcon} aria-hidden /> : null}
-                    <span className={styles.projectName}>{project.name}</span>
+                    <span className={styles.projectName} title={project.name}>{displayProjectName}</span>
                   </span>
                 </ProjectPreviewNameAnchor>
               </span>
@@ -287,11 +309,11 @@ export function CrmProjectTableRow({
                 </button>
               ) : null}
             </span>
-            {showParentProjectColumn && parentProjectName ? (
-              <span className={styles.projectParentName}>{parentProjectName}</span>
+            {showParentProjectColumn && displayParentProjectName ? (
+              <span className={styles.projectParentName} title={parentProjectName}>{displayParentProjectName}</span>
             ) : null}
-            {!showContactIcons && industrySubtitle ? (
-              <span className={styles.projectMeta}>{industrySubtitle}</span>
+            {!showContactIcons && displayIndustrySubtitle ? (
+              <span className={styles.projectMeta} title={industrySubtitle ?? undefined}>{displayIndustrySubtitle}</span>
             ) : null}
             {!isMemberRole ? (
               <span className={styles.projectProgressRow}>
@@ -316,6 +338,9 @@ export function CrmProjectTableRow({
                       <span className={`${shared.stagePill} ${styles.projectMetaStagePill}`}>
                         {formatStageLabel(derivedStageSlug, catalog)}
                       </span>
+                    ) : null}
+                    {showSubprojectCount ? (
+                      <span className={styles.subprojectsCountText}>{subprojectCountLabel}</span>
                     ) : null}
                   </>
                 )}
