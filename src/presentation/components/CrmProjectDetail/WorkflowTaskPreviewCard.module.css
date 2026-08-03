@@ -670,24 +670,33 @@
 
 .previewInfoIcon {
   display: block;
-  width: 1rem;
+  width: 0.8125rem;
   height: 1rem;
   border: 1.5px solid currentColor;
-  border-radius: 50%;
+  border-radius: 0.1875rem;
   position: relative;
+  box-sizing: border-box;
+}
+
+.previewInfoIcon::before,
+.previewInfoIcon::after {
+  content: '';
+  position: absolute;
+  left: 0.125rem;
+  right: 0.125rem;
+  height: 1px;
+  background: currentColor;
+  opacity: 0.85;
+}
+
+.previewInfoIcon::before {
+  top: 0.28rem;
 }
 
 .previewInfoIcon::after {
-  content: 'i';
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.625rem;
-  font-weight: 700;
-  font-style: italic;
-  line-height: 1;
+  top: 0.52rem;
+  width: 55%;
+  right: auto;
 }
 
 .previewCardIcon {

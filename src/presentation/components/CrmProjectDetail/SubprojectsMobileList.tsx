@@ -7,7 +7,6 @@ import type { CrmProjectWorkflowProgressInputIndex } from '@/domain/crm/projectW
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
 import { resolveDashboardChildRowFinancials } from '@/presentation/features/crmProjects/projectPaymentFinancials';
 import type { BulkSelectionBindings } from '@/presentation/features/bulkSelection/BulkSelectionBindings';
-import { BulkSelectCheckbox } from '@/presentation/components/BulkSelection';
 import { SubprojectMobileCard } from './SubprojectMobileCard';
 import styles from './ProjectDetail.module.css';
 
@@ -64,20 +63,6 @@ export function SubprojectsMobileList({
         <p className={styles.subprojectsMobileEmptyState}>{emptyMessage}</p>
       ) : (
         <>
-          {bulkSelection?.mode ? (
-            <div className={styles.subprojectsMobileSelectAllRow}>
-              <BulkSelectCheckbox
-                className={styles.subprojectsMobileSelectAllCheckbox}
-                checked={bulkSelection.allVisibleSelected}
-                indeterminate={bulkSelection.someVisibleSelected}
-                ariaLabel={bulkSelection.selectAllAriaLabel}
-                onChange={() => bulkSelection.onToggleAllVisible()}
-              />
-              <span className={styles.subprojectsMobileSelectAllLabel}>
-                {bulkSelection.selectAllAriaLabel}
-              </span>
-            </div>
-          ) : null}
           <ul className={styles.subprojectsMobileList}>
           {rows.map((project) => (
             <li key={project.id} className={styles.subprojectsMobileListItem}>

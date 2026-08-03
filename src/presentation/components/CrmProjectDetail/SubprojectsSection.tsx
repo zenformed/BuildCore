@@ -581,9 +581,8 @@ function SubprojectsSectionContent({
       importSpreadsheetTitle={copy.importSpreadsheet}
       importSpreadsheetAriaLabel={copy.importSpreadsheetAriaLabel}
       onImportOpen={openImportWizard}
-      showMobileBulkToolbar={
-        isMobileLayout && bulkSelection.selectedCount > 0 && canUseBulkActions
-      }
+      showMobileBulkToolbar={isMobileLayout && bulkSelection.selectedCount > 0 && canUseBulkActions}
+      selectedCount={bulkSelection.selectedCount}
       selectedCountLabel={bulkSelectionCopy.selectedCount(bulkSelection.selectedCount)}
       bulkToolbarAriaLabel={bulkSelectionCopy.toolbarAriaLabel}
       bulkCancelLabel={bulkSelectionCopy.cancel}
@@ -618,10 +617,20 @@ function SubprojectsSectionContent({
       ) : null}
       {embeddedInFolderTabs ? (
         <FolderTabToolbarPortal>
-          <DetailPanelHeaderActions>
-            {filterMenu}
-            {listToolbar}
-          </DetailPanelHeaderActions>
+          <div
+            className={
+              isMobileLayout && bulkSelection.selectedCount > 0 && canUseBulkActions
+                ? styles.subprojectsFolderToolbarSelection
+                : ''
+            }
+          >
+            <DetailPanelHeaderActions>
+              {isMobileLayout && bulkSelection.selectedCount > 0 && canUseBulkActions
+                ? null
+                : filterMenu}
+              {listToolbar}
+            </DetailPanelHeaderActions>
+          </div>
         </FolderTabToolbarPortal>
       ) : (
         <div

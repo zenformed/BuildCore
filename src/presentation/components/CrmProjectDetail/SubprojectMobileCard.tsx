@@ -1,13 +1,22 @@
 'use client';
 
-import { useCallback, type KeyboardEvent, type ReactElement } from 'react';
+import { useCallback, useEffect, useRef, type KeyboardEvent, type ReactElement } from 'react';
+import { LuMail, LuPhone, LuUser } from 'react-icons/lu';
 import type { CrmProjectSummary } from '@/domain/crm';
 import type { ProjectPaymentFinancials } from '@/domain/crm/projectPaymentValue';
 import type { CrmProjectWorkflowProgressInputIndex } from '@/domain/crm/projectWorkflowProgressInput';
 import { isCrmProjectComplete, isCrmProjectInactive } from '@/domain/crm';
 import { nonEmptyContactValues } from '@/domain/crm/contactMultiValue';
+import {
+  projectPrimaryPhotoCircleColor,
+  projectPrimaryPhotoInitials,
+} from '@/domain/crm/projectPrimaryPhoto';
 import { isProjectPriorityUrgent } from '@/domain/crm/projectPriorityToggle';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
+import {
+  buildProjectPrimaryPhotoApiPath,
+  useProjectPrimaryPhotoBlob,
+} from '@/presentation/features/crmProjectDetail/useProjectPrimaryPhotoBlob';
 import {
   formatCentsAsUsd,
   formatContactEmailDisplay,
@@ -16,9 +25,9 @@ import {
 } from '@/presentation/features/crmProjects/crmProjectFormatters';
 import { useCrmProjectRowPresentation } from '@/presentation/features/crmProjects/useCrmProjectRowPresentation';
 import type { BulkSelectionBindings } from '@/presentation/features/bulkSelection/BulkSelectionBindings';
-import { BulkSelectCheckbox } from '@/presentation/components/BulkSelection';
 import { CrmProjectCompleteIcon } from '@/presentation/components/crmShared/CrmProjectCompleteIcon';
 import { CrmProjectPriorityIcon } from '@/presentation/components/crmShared/CrmProjectPriorityIcon';
+import { TeamMemberAvatar } from '@/presentation/components/CrmProjectDetail/TeamMemberAvatar';
 import { CrmProjectInactiveIcon, CrmProjectInactiveInlineLabel } from '@/presentation/components/CrmProjects/CrmProjectInactiveBadge';
 import { CrmProjectTableRowActionsMenu } from '@/presentation/components/CrmProjects/CrmProjectTableRowActionsMenu';
 import { SubprojectMobileContactValue } from '@/presentation/components/CrmProjectDetail/SubprojectMobileContactValue';
@@ -95,10 +104,85 @@ export function SubprojectMobileCard({
   );
   const financialDisplay = (cents: number): string =>
     financialsLoading ? '…' : formatCentsAsUsd(cents);
+  const isSelected = bulkSelection?.selectedIds.has(project.id) ?? false;
+  const selectionModeActive = (bulkSelection?.selectedIds.size ?? 0) > 0;
+  const projectPhotoApiPath = buildProjectPrimaryPhotoApiPath(project.slug, project.primaryPhotoPath);
+  const projectPhotoUrl = useProjectPrimaryPhotoBlob(projectPhotoApiPath);
+  const photoInitials = projectPrimaryPhotoInitials({
+    parentProjectId: project.parentProjectId,
+    projectName: project.name,
+    clientName: project.client.name,
+  });
+  const photoLabel = project.parentProjectId != null ? project.name : project.client.name;
+  const stageMetaContent =
+    derivedStageSlug != null ? (
+      <span className={styles.subprojectMobileCardStageRow}>
+        <span
+          className={`${shared.stagePill} ${styles.subprojectMobileCardStagePill}`}
+          title={formatStageLabel(derivedStageSlug, catalog)}
+        >
+          {formatStageLabel(derivedStageSlug, catalog)}
+        </span>
+        {!isMemberRole && progress != null ? (
+          <span
+            className={styles.subprojectMobileCardProgressPercent}
+            aria-label={`Project progress ${progress.textPercent}%`}
+          >
+            {progress.textPercent}%
+          </span>
+        ) : null}
+      </span>
+    ) : (
+      <span className={styles.subprojectMobileCardMeta}>—</span>
+    );
+  const longPressTimerRef = useRef<number | null>(null);
+  const longPressTriggeredRef = useRef(false);
+
+  useEffect(
+    () => () => {
+      if (longPressTimerRef.current != null) {
+        window.clearTimeout(longPressTimerRef.current);
+      }
+    },
+    []
+  );
+
+  const clearLongPressTimer = useCallback(() => {
+    if (longPressTimerRef.current != null) {
+      window.clearTimeout(longPressTimerRef.current);
+      longPressTimerRef.current = null;
+    }
+  }, []);
+
+  const handleTouchStart = useCallback(() => {
+    if (bulkSelection == null || selectionModeActive) return;
+    longPressTriggeredRef.current = false;
+    clearLongPressTimer();
+    longPressTimerRef.current = window.setTimeout(() => {
+      bulkSelection.onToggle(project.id);
+      longPressTriggeredRef.current = true;
+    }, 420);
+  }, [bulkSelection, clearLongPressTimer, project.id, selectionModeActive]);
+
+  const handleCardActivate = useCallback(() => {
+    if (longPressTriggeredRef.current) {
+      longPressTriggeredRef.current = false;
+      return;
+    }
+    if (selectionModeActive && bulkSelection != null) {
+      bulkSelection.onToggle(project.id);
+      return;
+    }
+    onRowClick();
+  }, [bulkSelection, onRowClick, project.id, selectionModeActive]);
 
   const handleKeyDown = (event: KeyboardEvent<HTMLElement>): void => {
     if (event.key === 'Enter' || event.key === ' ') {
       event.preventDefault();
+      if (selectionModeActive && bulkSelection != null) {
+        bulkSelection.onToggle(project.id);
+        return;
+      }
       onRowClick();
     }
   };
@@ -109,10 +193,8 @@ export function SubprojectMobileCard({
         styles.card,
         styles.subprojectMobileCard,
         isInactive ? styles.subprojectMobileCard_inactive : '',
-        bulkSelection?.mode ? styles.subprojectMobileCard_selectionMode : '',
-        bulkSelection?.mode && bulkSelection.selectedIds.has(project.id)
-          ? styles.subprojectMobileCard_selected
-          : '',
+        selectionModeActive ? styles.subprojectMobileCard_selectionMode : '',
+        isSelected ? styles.subprojectMobileCard_selected : '',
       ]
         .filter(Boolean)
         .join(' ')}
@@ -124,92 +206,144 @@ export function SubprojectMobileCard({
           role="button"
           tabIndex={0}
           className={styles.subprojectMobileCardBody}
-          onClick={onRowClick}
+          onClick={handleCardActivate}
           onKeyDown={handleKeyDown}
+          onTouchStart={handleTouchStart}
+          onTouchEnd={clearLongPressTimer}
+          onTouchCancel={clearLongPressTimer}
         >
-          <div className={styles.subprojectMobileCardGrid}>
-            <div className={styles.subprojectMobileCardCol}>
-              <span className={styles.subprojectMobileCardNameRow}>
-                {bulkSelection?.mode ? (
-                  <BulkSelectCheckbox
-                    className={styles.subprojectMobileCardCheckbox}
-                    checked={bulkSelection.selectedIds.has(project.id)}
-                    ariaLabel={bulkSelection.selectItemAriaLabel(project.name)}
-                    onChange={() => bulkSelection.onToggle(project.id)}
-                  />
-                ) : null}
-                {isInactive ? (
-                  <CrmProjectInactiveIcon ariaLabel={tableCopy.inactiveBadge} />
-                ) : isProjectPriorityUrgent(project.priority) ? (
-                  <CrmProjectPriorityIcon ariaLabel={tableCopy.priorityMarkAriaLabel} />
-                ) : null}
-                {isCrmProjectComplete(project) ? (
-                  <CrmProjectCompleteIcon ariaLabel={tableCopy.completionCheckAriaLabel} />
-                ) : null}
-                <span className={styles.subprojectMobileCardNameGroup}>
-                  <ProjectPreviewNameAnchor
-                    project={project}
-                    financials={financials}
-                    stageLabel={
-                      derivedStageSlug != null ? formatStageLabel(derivedStageSlug, catalog) : null
-                    }
-                    progressPercent={progress?.textPercent ?? null}
-                  >
-                    <span className={styles.subprojectMobileCardName} title={project.name}>
-                      {project.name}
-                    </span>
-                  </ProjectPreviewNameAnchor>
-                  {isInactive ? <CrmProjectInactiveInlineLabel project={project} /> : null}
-                </span>
-              </span>
-              {industrySubtitle ? (
-                <span className={styles.subprojectMobileCardMeta}>{industrySubtitle}</span>
+          <div className={styles.subprojectMobileCardSplit}>
+            <div className={styles.subprojectMobileCardPhotoWrap}>
+              {bulkSelection != null ? (
+                <button
+                  type="button"
+                  className={[
+                    styles.subprojectMobileCardSelectToggle,
+                    selectionModeActive ? styles.subprojectMobileCardSelectToggle_visible : '',
+                    isSelected ? styles.subprojectMobileCardSelectToggle_checked : '',
+                  ]
+                    .filter(Boolean)
+                    .join(' ')}
+                  aria-pressed={isSelected}
+                  aria-label={bulkSelection.selectItemAriaLabel(project.name)}
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    bulkSelection.onToggle(project.id);
+                  }}
+                >
+                  <span className={styles.subprojectMobileCardSelectToggleMark} aria-hidden />
+                </button>
+              ) : null}
+              {projectPhotoUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={projectPhotoUrl} alt="" className={styles.subprojectMobileCardPhotoImg} />
               ) : (
-                <span className={styles.subprojectMobileCardMeta}>—</span>
-              )}
-              {derivedStageSlug != null ? (
-                <span className={styles.subprojectMobileCardStageRow}>
-                  <span
-                    className={`${shared.stagePill} ${styles.subprojectMobileCardStagePill}`}
-                    title={formatStageLabel(derivedStageSlug, catalog)}
-                  >
-                    {formatStageLabel(derivedStageSlug, catalog)}
-                  </span>
-                  {!isMemberRole && progress != null ? (
-                    <span
-                      className={styles.subprojectMobileCardProgressPercent}
-                      aria-label={`Project progress ${progress.textPercent}%`}
-                    >
-                      {progress.textPercent}%
-                    </span>
-                  ) : null}
+                <span
+                  className={styles.subprojectMobileCardPhotoInitial}
+                  style={{ backgroundColor: projectPrimaryPhotoCircleColor(photoLabel) }}
+                  aria-hidden
+                >
+                  {photoInitials}
                 </span>
-              ) : (
-                <span className={styles.subprojectMobileCardMeta}>—</span>
               )}
             </div>
-            <div className={`${styles.subprojectMobileCardCol} ${styles.subprojectMobileCardColRight}`}>
-              <span className={styles.subprojectMobileCardValue}>
-                {project.contact.name || '—'}
-              </span>
-              <SubprojectMobileContactValue
-                kind="email"
-                values={contactEmails}
-                displayValue={displayEmail}
-                formatDisplayValue={formatEmailPopoverValue}
-                getCopyValue={getEmailCopyValue}
-                onCopied={onContactCopied}
-                isMemberRole={isMemberRole}
-              />
-              <SubprojectMobileContactValue
-                kind="phone"
-                values={contactPhones}
-                displayValue={displayPhone}
-                formatDisplayValue={formatPhonePopoverValue}
-                getCopyValue={getPhoneCopyValue}
-                onCopied={onContactCopied}
-                isMemberRole={isMemberRole}
-              />
+            <div className={styles.subprojectMobileCardDetailsStack}>
+              <div className={styles.subprojectMobileCardTopRow}>
+                <span className={styles.subprojectMobileCardNameRow}>
+                  {isInactive ? (
+                    <CrmProjectInactiveIcon ariaLabel={tableCopy.inactiveBadge} />
+                  ) : isProjectPriorityUrgent(project.priority) ? (
+                    <CrmProjectPriorityIcon ariaLabel={tableCopy.priorityMarkAriaLabel} />
+                  ) : null}
+                  {isCrmProjectComplete(project) ? (
+                    <CrmProjectCompleteIcon ariaLabel={tableCopy.completionCheckAriaLabel} />
+                  ) : null}
+                  <span className={styles.subprojectMobileCardNameGroup}>
+                    <ProjectPreviewNameAnchor
+                      project={project}
+                      financials={financials}
+                      stageLabel={
+                        derivedStageSlug != null ? formatStageLabel(derivedStageSlug, catalog) : null
+                      }
+                      progressPercent={progress?.textPercent ?? null}
+                    >
+                      <span className={styles.subprojectMobileCardName} title={project.name}>
+                        {project.name}
+                      </span>
+                    </ProjectPreviewNameAnchor>
+                    {isInactive ? <CrmProjectInactiveInlineLabel project={project} /> : null}
+                  </span>
+                </span>
+                <div className={styles.subprojectMobileCardHeaderEnd}>
+                  <span className={styles.subprojectMobileCardAssignee}>
+                    {project.assignedTo ? (
+                      <TeamMemberAvatar member={project.assignedTo} />
+                    ) : (
+                      <span
+                        className={`${shared.avatar} ${shared.avatarUnassigned}`}
+                        title={tableCopy.unassigned}
+                      >
+                        —
+                      </span>
+                    )}
+                  </span>
+                  {!isMemberRole && showActions && !selectionModeActive ? (
+                    <span
+                      className={styles.subprojectMobileCardActions}
+                      onClick={(event) => event.stopPropagation()}
+                      onKeyDown={(event) => event.stopPropagation()}
+                    >
+                      <CrmProjectTableRowActionsMenu
+                        project={project}
+                        busy={busy || deleting}
+                        canDelete={canDelete}
+                        onRequestDelete={onRequestDelete}
+                        onTogglePriority={onTogglePriority}
+                        onRequestCompletionChange={onRequestCompletionChange}
+                        onRequestMarkInactive={onRequestMarkInactive}
+                        onRequestMarkActive={onRequestMarkActive}
+                      />
+                    </span>
+                  ) : null}
+                </div>
+              </div>
+              <div className={styles.subprojectMobileCardInfoRow}>
+                <span className={styles.subprojectMobileCardInfoIcon} aria-hidden>
+                  <LuUser />
+                </span>
+                <span className={styles.subprojectMobileCardValue}>{project.contact.name || '—'}</span>
+              </div>
+              <div className={styles.subprojectMobileCardInfoRow}>
+                <span className={styles.subprojectMobileCardInfoIcon} aria-hidden>
+                  <LuMail />
+                </span>
+                <SubprojectMobileContactValue
+                  kind="email"
+                  values={contactEmails}
+                  displayValue={displayEmail}
+                  formatDisplayValue={formatEmailPopoverValue}
+                  getCopyValue={getEmailCopyValue}
+                  onCopied={onContactCopied}
+                  isMemberRole={isMemberRole}
+                />
+              </div>
+              <div className={styles.subprojectMobileCardInfoRow}>
+                <span className={styles.subprojectMobileCardInfoIcon} aria-hidden>
+                  <LuPhone />
+                </span>
+                <SubprojectMobileContactValue
+                  kind="phone"
+                  values={contactPhones}
+                  displayValue={displayPhone}
+                  formatDisplayValue={formatPhonePopoverValue}
+                  getCopyValue={getPhoneCopyValue}
+                  onCopied={onContactCopied}
+                  isMemberRole={isMemberRole}
+                />
+              </div>
+              <div className={styles.subprojectMobileCardStageRow}>
+                {stageMetaContent}
+              </div>
             </div>
           </div>
         </div>
@@ -236,20 +370,6 @@ export function SubprojectMobileCard({
           </span>
         </div>
       )}
-      {!isMemberRole && showActions && !bulkSelection?.mode ? (
-        <div className={styles.subprojectMobileCardActionsRow}>
-          <CrmProjectTableRowActionsMenu
-            project={project}
-            busy={busy || deleting}
-            canDelete={canDelete}
-            onRequestDelete={onRequestDelete}
-            onTogglePriority={onTogglePriority}
-            onRequestCompletionChange={onRequestCompletionChange}
-            onRequestMarkInactive={onRequestMarkInactive}
-            onRequestMarkActive={onRequestMarkActive}
-          />
-        </div>
-      ) : null}
     </article>
   );
 }

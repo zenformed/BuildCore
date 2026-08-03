@@ -1521,6 +1521,14 @@
   padding-bottom: 0.75rem;
 }
 
+@media (max-width: 767px) {
+  .folderTabActions {
+    margin-left: 0 !important;
+    width: 100%;
+    justify-content: space-between;
+  }
+}
+
 .folderTabList {
   display: flex;
   flex-wrap: wrap;
@@ -12412,7 +12420,29 @@
   min-width: 0;
 }
 
+.subprojectsFolderToolbarSelection {
+  width: 100%;
+  min-width: 0;
+}
+
+.subprojectsFolderToolbarSelection .detailPanelHeaderActions {
+  margin-left: 0 !important;
+  width: 100%;
+  justify-content: space-between;
+}
+
 @media (max-width: 767px) {
+  :global(.subprojectsPanelHeader_selectionMode) .folderTabActions {
+    margin-left: 0 !important;
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  :global(.subprojectsPanelHeader_selectionMode) .folderTabActions :global(.detailPanelHeaderActions) {
+    margin-left: 0 !important;
+    width: 100%;
+  }
+
   :global(.subprojectsPanelHeader_selectionMode).subprojectsPanelHeader {
     display: grid;
     grid-template-columns: 1fr auto;
@@ -12429,7 +12459,10 @@
   }
 
   :global(.subprojectsPanelHeader_selectionMode) .subprojectsPanelHeaderTools_selectionMode {
-    display: contents;
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    min-width: 0;
   }
 }
 
@@ -12493,6 +12526,7 @@
   padding: 0;
   width: 100%;
   box-sizing: border-box;
+  border-left: 4px solid #0f766e;
   overflow: hidden;
 }
 
@@ -12573,24 +12607,19 @@
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  width: 1.75rem;
-  height: 1.75rem;
+  width: 1.5rem;
+  height: 1.5rem;
   padding: 0;
-  border-radius: 0.375rem;
+  border-radius: 999px;
   cursor: pointer;
-  color: var(--color-text-muted, #64748b);
-  background: var(--color-bg, #fff);
-  border: 1px solid var(--color-border, #e2e8f0);
-  transition:
-    background-color 0.12s ease,
-    border-color 0.12s ease,
-    color 0.12s ease;
+  color: #ffffff;
+  background: var(--color-primary, #2563eb);
+  border: none;
+  transition: background-color 0.12s ease;
 }
 
 .subprojectsSelectBtn:hover:not(:disabled) {
-  background: var(--color-muted, #f8fafc);
-  border-color: #cbd5e1;
-  color: var(--color-text, #0f172a);
+  background: #1d4ed8;
 }
 
 .subprojectsSelectBtn:disabled {
@@ -12599,30 +12628,64 @@
 }
 
 :global([data-theme='dark']) .subprojectsSelectBtn {
-  background: var(--color-surface, #1e1f2a);
-  border-color: var(--theme-border-main, #3d3e4a);
-  color: #94a3b8;
+  background: #3b82f6;
 }
 
 :global([data-theme='dark']) .subprojectsSelectBtn:hover:not(:disabled) {
-  background: #2a2b38;
-  border-color: #4b4c5c;
-  color: #f1f5f9;
+  background: #2563eb;
 }
 
 .subprojectsSelectBtnIcon {
-  display: block;
-  width: 0.9375rem;
-  height: 0.9375rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1rem;
+  font-size: 0.6875rem;
+  line-height: 1;
+  font-weight: 700;
+  letter-spacing: 0;
+}
+
+.subprojectsMobileSelectionLayout {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  flex: 1 1 auto;
+  width: 100%;
+  min-width: 0;
 }
 
 .subprojectsMobileBulkToolbar {
   display: inline-flex;
   align-items: center;
+  justify-content: flex-start;
   gap: 0.5rem;
   min-width: 0;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   color: var(--color-text, #0f172a);
+}
+
+.subprojectsMobileBulkToolbar .workflowBulkActionBtn {
+  color: var(--color-text-muted, #64748b) !important;
+}
+
+.subprojectsMobileBulkToolbar .workflowBulkActionBtn:hover:not(:disabled) {
+  color: var(--color-text, #0f172a) !important;
+}
+
+.subprojectsMobileSelectionRightActions {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  flex-shrink: 0;
+}
+
+.subprojectsMobileBulkMenu {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.125rem;
 }
 
 .subprojectsMobileBulkCount {
@@ -12630,6 +12693,14 @@
   font-weight: 600;
   color: var(--color-text-muted, #64748b);
   white-space: nowrap;
+}
+
+:global([data-theme='dark']) .subprojectsMobileBulkToolbar .workflowBulkActionBtn {
+  color: #94a3b8 !important;
+}
+
+:global([data-theme='dark']) .subprojectsMobileBulkToolbar .workflowBulkActionBtn:hover:not(:disabled) {
+  color: #e2e8f0 !important;
 }
 
 @media (max-width: 767px) {
@@ -12701,7 +12772,7 @@
 }
 
 .subprojectMobileCardContent {
-  padding: 0.625rem 0.75rem 0.625rem;
+  padding: 0;
   min-width: 0;
 }
 
@@ -12809,6 +12880,139 @@
   border-radius: 0.25rem;
 }
 
+.subprojectMobileCardSplit {
+  display: grid;
+  grid-template-columns: 7.5rem minmax(0, 1fr);
+  gap: 0.75rem;
+  align-items: stretch;
+  min-width: 0;
+}
+
+.subprojectMobileCardPhotoWrap {
+  position: relative;
+  display: flex;
+  width: 100%;
+  min-height: 100%;
+  overflow: hidden;
+  border-radius: 0;
+  background: var(--color-muted, #e5e7eb);
+  border-right: 1px solid var(--theme-border-main, var(--color-border, #3d3e4a));
+}
+
+.subprojectMobileCardSelectToggle {
+  position: absolute;
+  top: 0.45rem;
+  left: 0.45rem;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.35rem;
+  height: 1.35rem;
+  padding: 0;
+  border: 1.5px solid rgba(255, 255, 255, 0.75);
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.2);
+  color: transparent;
+  opacity: 0;
+  pointer-events: none;
+  cursor: pointer;
+  transition:
+    opacity 0.12s ease,
+    background-color 0.12s ease,
+    border-color 0.12s ease;
+}
+
+.subprojectMobileCard:hover .subprojectMobileCardSelectToggle,
+.subprojectMobileCardSelectToggle_visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.subprojectMobileCardSelectToggle_checked {
+  border-color: #2563eb;
+  background: #2563eb;
+  color: #fff;
+}
+
+.subprojectMobileCardSelectToggleMark {
+  display: inline-block;
+  width: 0.5rem;
+  height: 0.32rem;
+  border-left: 2px solid currentColor;
+  border-bottom: 2px solid currentColor;
+  transform: rotate(-45deg) translate(0.02rem, -0.03rem);
+  opacity: 0;
+}
+
+.subprojectMobileCardSelectToggle_checked .subprojectMobileCardSelectToggleMark {
+  opacity: 1;
+}
+
+.subprojectMobileCardPhotoImg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.subprojectMobileCardPhotoInitial {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  font-size: 2rem;
+  font-weight: 600;
+  line-height: 1;
+  color: #fff;
+}
+
+.subprojectMobileCardDetailsStack {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  min-width: 0;
+  padding: 0.75rem 0.875rem 0.75rem 0;
+}
+
+.subprojectMobileCardTopRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+.subprojectMobileCardHeaderEnd {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  flex-shrink: 0;
+}
+
+.subprojectMobileCardInfoRow {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 0.3125rem;
+  min-width: 0;
+}
+
+.subprojectMobileCardInfoIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 0.8rem;
+  height: 0.8rem;
+  color: #0f766e;
+  flex-shrink: 0;
+}
+
+.subprojectMobileCardInfoIcon > svg {
+  width: 0.8rem;
+  height: 0.8rem;
+}
+
 .subprojectMobileCardGrid {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
@@ -12914,8 +13118,9 @@
 }
 
 .subprojectMobileCardStageRow {
-  display: inline-flex;
+  display: flex;
   align-items: center;
+  justify-content: flex-start;
   gap: 0.375rem;
   max-width: 100%;
   min-width: 0;
@@ -12932,6 +13137,10 @@
 
 :global([data-theme='dark']) .subprojectMobileCardProgressPercent {
   color: #94a3b8;
+}
+
+:global([data-theme='dark']) .subprojectMobileCardInfoIcon {
+  color: #0f766e;
 }
 
 /* Mobile project detail overview (< 768px) */
@@ -13045,8 +13254,27 @@
     .detailPanelHeaderRowActions
     .subprojectsMobileBulkToolbar
     .workflowBulkActionBtn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.125rem;
+    height: 2.125rem;
+    border: none;
+    border-radius: 0.375rem;
+    background: transparent;
     color: var(--color-text-muted, #64748b);
     opacity: 1;
+    transition:
+      color 0.12s ease,
+      background-color 0.12s ease;
+  }
+
+  .detailPanelHeader_mobile
+    .detailPanelHeaderRowActions
+    .subprojectsMobileBulkToolbar
+    .workflowBulkActionGlyph {
+    width: 1rem;
+    height: 1rem;
   }
 
   .detailPanelHeader_mobile
@@ -13054,7 +13282,8 @@
     .subprojectsMobileBulkToolbar
     .workflowBulkActionBtn:hover:not(:disabled) {
     color: var(--color-text, #0f172a);
-    opacity: 0.9;
+    background: var(--color-muted, #f1f5f9);
+    opacity: 1;
   }
 
   .detailPanelHeader_mobile
@@ -13078,6 +13307,7 @@
     .subprojectsMobileBulkToolbar
     .workflowBulkActionBtn:hover:not(:disabled) {
     color: #e2e8f0;
+    background: rgba(255, 255, 255, 0.06);
   }
 
   :global([data-theme='dark'])

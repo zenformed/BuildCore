@@ -7,6 +7,7 @@ import type { CrmProjectWorkflowProgressInputIndex } from '@/domain/crm/projectW
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
 import { buildCrmProjectsDashboardRowModels } from '@/presentation/features/crmProjects/buildCrmProjectsDashboardRowModels';
 import { useDashboardSubprojectExpansion } from '@/presentation/features/crmProjects/useDashboardSubprojectExpansion';
+import type { BulkSelectionBindings } from '@/presentation/features/bulkSelection/BulkSelectionBindings';
 import { CrmProjectMobileCard } from './CrmProjectMobileCard';
 import styles from './CrmProjects.module.css';
 
@@ -29,6 +30,7 @@ export type CrmProjectsMobileListProps = {
   onSubprojectRowClick?: (parent: CrmProjectSummary, child: CrmProjectSummary) => void;
   isMemberRole?: boolean;
   canDelete?: boolean;
+  bulkSelection?: BulkSelectionBindings;
   deletingProjectId?: string | null;
   busyProjectId?: string | null;
   onRequestDelete?: (project: CrmProjectSummary) => void;
@@ -59,6 +61,7 @@ export function CrmProjectsMobileList({
   onSubprojectRowClick,
   isMemberRole = false,
   canDelete = false,
+  bulkSelection,
   deletingProjectId = null,
   busyProjectId = null,
   onRequestDelete,
@@ -69,7 +72,10 @@ export function CrmProjectsMobileList({
   showActions = true,
   emptyMessage,
 }: CrmProjectsMobileListProps): ReactElement {
-  const displayRoots = enableSubprojectExpansion ? rootRows : (rows ?? []);
+  const displayRoots = useMemo(
+    () => (enableSubprojectExpansion ? rootRows : (rows ?? [])),
+    [enableSubprojectExpansion, rootRows, rows]
+  );
   const { expandedParentIds, toggleExpanded } = useDashboardSubprojectExpansion({
     expandedParentIds: expandedParentIdsProp,
     onExpandedParentIdsChange,
@@ -130,6 +136,7 @@ export function CrmProjectsMobileList({
                 onRowClick={row.onRowClick}
                 isMemberRole={isMemberRole}
                 canDelete={canDelete && showActions}
+                bulkSelection={bulkSelection}
                 showActions={showActions}
                 busy={busyProjectId === row.project.id}
                 deleting={deletingProjectId === row.project.id}
@@ -142,7 +149,7 @@ export function CrmProjectsMobileList({
                 isExpanded={row.isExpanded}
                 onToggleExpand={row.onToggleExpand}
                 parentProjectName={row.parentProjectName}
-                showContactInfo={!enableSubprojectExpansion}
+                showContactInfo
                 workflowProgressInputIndex={workflowProgressInputIndex}
                 isWorkflowProgressLoading={isWorkflowProgressLoading}
               />

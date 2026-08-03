@@ -495,6 +495,9 @@ export function CrmProjectsPipeline({
     bulkHeaderActions:
       canUseBulkActions && bulkSelection.selectedCount > 0 ? selectionBulkActions : null,
   };
+  const showMobileBulkToolbar = isMobileLayout && canUseBulkActions && bulkSelection.selectedCount > 0;
+  const selectedCountDisplay =
+    bulkSelection.selectedCount > 99 ? '99+' : String(Math.max(0, bulkSelection.selectedCount));
 
   return (
     <section
@@ -519,7 +522,33 @@ export function CrmProjectsPipeline({
       >
         {isMobileLayout ? (
           <div className={styles.projectsPanelHeaderRow}>
-            <div className={styles.projectsPanelSearchWrap}>{headerFilterButton}{searchInput}</div>
+            <div className={styles.projectsPanelSearchWrap}>
+              {showMobileBulkToolbar ? (
+                <div
+                  className={styles.projectsMobileBulkToolbar}
+                  role="toolbar"
+                  aria-label={bulkSelectionCopy.toolbarAriaLabel}
+                >
+                  <button
+                    type="button"
+                    className={styles.projectsMobileSelectBtn}
+                    aria-label={bulkSelectionCopy.cancel}
+                    title={`${selectedCountDisplay} selected`}
+                    onClick={() => bulkSelection.clearSelection()}
+                  >
+                    <span className={styles.projectsMobileSelectBtnIcon} aria-hidden>
+                      {selectedCountDisplay}
+                    </span>
+                  </button>
+                  {selectionBulkActions}
+                </div>
+              ) : (
+                <>
+                  {headerFilterButton}
+                  {searchInput}
+                </>
+              )}
+            </div>
             <div className={styles.projectsPanelHeaderRowActions}>{importButton}{refreshButton}{addButton}</div>
           </div>
         ) : (
@@ -560,6 +589,7 @@ export function CrmProjectsPipeline({
             onRequestMarkInactive={handleRequestMarkInactive}
             onRequestMarkActive={handleRequestMarkActive}
             emptyMessage={tableEmptyMessage}
+            bulkSelection={bulkSelectionBindings}
           />
         ) : (
           <CrmProjectsTable

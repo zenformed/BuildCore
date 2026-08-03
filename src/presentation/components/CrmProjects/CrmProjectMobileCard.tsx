@@ -1,16 +1,25 @@
 'use client';
 
-import { useCallback, type KeyboardEvent, type ReactElement } from 'react';
+import { useCallback, useEffect, useRef, type KeyboardEvent, type ReactElement } from 'react';
+import { LuMail, LuPhone, LuUser } from 'react-icons/lu';
 import type { CrmProjectSummary } from '@/domain/crm';
 import type { ProjectPaymentFinancials } from '@/domain/crm/projectPaymentValue';
 import type { CrmProjectWorkflowProgressInputIndex } from '@/domain/crm/projectWorkflowProgressInput';
 import { isCrmProjectComplete, isCrmProjectInactive } from '@/domain/crm';
 import { nonEmptyContactValues } from '@/domain/crm/contactMultiValue';
+import {
+  projectPrimaryPhotoCircleColor,
+  projectPrimaryPhotoInitials,
+} from '@/domain/crm/projectPrimaryPhoto';
 import { isProjectPriorityUrgent } from '@/domain/crm/projectPriorityToggle';
 import { CrmProjectCompleteIcon } from '@/presentation/components/crmShared/CrmProjectCompleteIcon';
 import { CrmProjectPriorityIcon } from '@/presentation/components/crmShared/CrmProjectPriorityIcon';
 import { TeamMemberAvatar } from '@/presentation/components/CrmProjectDetail/TeamMemberAvatar';
 import { SubprojectMobileContactValue } from '@/presentation/components/CrmProjectDetail/SubprojectMobileContactValue';
+import {
+  buildProjectPrimaryPhotoApiPath,
+  useProjectPrimaryPhotoBlob,
+} from '@/presentation/features/crmProjectDetail/useProjectPrimaryPhotoBlob';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
 import {
   formatCentsAsUsd,
@@ -19,6 +28,7 @@ import {
   formatStageLabel,
 } from '@/presentation/features/crmProjects/crmProjectFormatters';
 import { useCrmProjectRowPresentation } from '@/presentation/features/crmProjects/useCrmProjectRowPresentation';
+import type { BulkSelectionBindings } from '@/presentation/features/bulkSelection/BulkSelectionBindings';
 import { CrmProjectTableRowActionsMenu } from './CrmProjectTableRowActionsMenu';
 import { ProjectPreviewNameAnchor } from './ProjectPreviewNameAnchor';
 import { CrmProjectInactiveIcon, CrmProjectInactiveInlineLabel } from './CrmProjectInactiveBadge';
@@ -35,6 +45,7 @@ export type CrmProjectMobileCardProps = {
   readonly onRowClick: () => void;
   readonly isMemberRole?: boolean;
   readonly canDelete?: boolean;
+  readonly bulkSelection?: BulkSelectionBindings;
   readonly showActions?: boolean;
   readonly deleting?: boolean;
   readonly busy?: boolean;
@@ -61,6 +72,7 @@ export function CrmProjectMobileCard({
   onRowClick,
   isMemberRole = false,
   canDelete = false,
+  bulkSelection,
   showActions = true,
   deleting = false,
   busy = false,
@@ -94,6 +106,8 @@ export function CrmProjectMobileCard({
   const rowAriaLabel = isChild
     ? tableCopy.subprojectRowAriaLabel(project.name)
     : tableCopy.rowAriaLabel(project.name);
+  const isSelected = bulkSelection?.selectedIds.has(project.id) ?? false;
+  const selectionModeActive = (bulkSelection?.selectedIds.size ?? 0) > 0;
   const displayEmail = formatContactEmailDisplay(project.contact.email, { maskForMember: isMemberRole });
   const displayPhone = formatPhoneDisplay(project.contact.phone);
   const contactEmails = nonEmptyContactValues(project.contact.emails);
@@ -113,37 +127,87 @@ export function CrmProjectMobileCard({
     []
   );
 
-  const stageMetaRow =
+  const stageMetaContent =
     !isMemberRole && (isInactive || derivedStageSlug != null || progress != null) ? (
-      <div className={showContactInfo ? styles.mobileCardStageRow : styles.mobileCardMetaRow}>
-        {isInactive ? (
-          <CrmProjectInactiveInlineLabel project={project} />
-        ) : (
-          <span className={projectStyles.subprojectMobileCardStageRow}>
-            {derivedStageSlug != null ? (
-              <span
-                className={`${shared.stagePill} ${styles.projectMetaStagePill}`}
-                title={formatStageLabel(derivedStageSlug, catalog)}
-              >
-                {formatStageLabel(derivedStageSlug, catalog)}
-              </span>
-            ) : null}
-            {progress != null ? (
-              <span
-                className={projectStyles.subprojectMobileCardProgressPercent}
-                aria-label={`Project progress ${progress.textPercent}%`}
-              >
-                {progress.textPercent}%
-              </span>
-            ) : null}
-          </span>
-        )}
-      </div>
+      isInactive ? (
+        <CrmProjectInactiveInlineLabel project={project} />
+      ) : (
+        <span className={projectStyles.subprojectMobileCardStageRow}>
+          {derivedStageSlug != null ? (
+            <span
+              className={`${shared.stagePill} ${styles.projectMetaStagePill}`}
+              title={formatStageLabel(derivedStageSlug, catalog)}
+            >
+              {formatStageLabel(derivedStageSlug, catalog)}
+            </span>
+          ) : null}
+          {progress != null ? (
+            <span
+              className={projectStyles.subprojectMobileCardProgressPercent}
+              aria-label={`Project progress ${progress.textPercent}%`}
+            >
+              {progress.textPercent}%
+            </span>
+          ) : null}
+        </span>
+      )
     ) : null;
+  const projectPhotoApiPath = buildProjectPrimaryPhotoApiPath(project.slug, project.primaryPhotoPath);
+  const projectPhotoUrl = useProjectPrimaryPhotoBlob(showContactInfo ? projectPhotoApiPath : null);
+  const projectPhotoInitials = projectPrimaryPhotoInitials({
+    parentProjectId: project.parentProjectId,
+    projectName: project.name,
+    clientName: project.client.name,
+  });
+  const projectPhotoLabel = project.parentProjectId != null ? project.name : project.client.name;
+  const longPressTimerRef = useRef<number | null>(null);
+  const longPressTriggeredRef = useRef(false);
+
+  useEffect(
+    () => () => {
+      if (longPressTimerRef.current != null) {
+        window.clearTimeout(longPressTimerRef.current);
+      }
+    },
+    []
+  );
+
+  const clearLongPressTimer = useCallback(() => {
+    if (longPressTimerRef.current != null) {
+      window.clearTimeout(longPressTimerRef.current);
+      longPressTimerRef.current = null;
+    }
+  }, []);
+
+  const handleTouchStart = useCallback(() => {
+    if (bulkSelection == null || selectionModeActive) return;
+    longPressTriggeredRef.current = false;
+    clearLongPressTimer();
+    longPressTimerRef.current = window.setTimeout(() => {
+      bulkSelection.onToggle(project.id);
+      longPressTriggeredRef.current = true;
+    }, 420);
+  }, [bulkSelection, clearLongPressTimer, project.id, selectionModeActive]);
+
+  const handleCardActivate = useCallback(() => {
+    if (longPressTriggeredRef.current) {
+      longPressTriggeredRef.current = false;
+      return;
+    }
+    if (selectionModeActive && bulkSelection != null) {
+      bulkSelection.onToggle(project.id);
+      return;
+    }
+    onRowClick();
+  }, [bulkSelection, onRowClick, project.id, selectionModeActive]);
 
   const handleKeyDown = (event: KeyboardEvent<HTMLElement>): void => {
     if (event.key === 'Enter' || event.key === ' ') {
       event.preventDefault();
+      if (selectionModeActive && bulkSelection != null) {
+        bulkSelection.onToggle(project.id);
+        return;
+      }
       onRowClick();
     }
   };
@@ -164,120 +228,219 @@ export function CrmProjectMobileCard({
       aria-busy={busy || deleting || undefined}
       role="button"
       tabIndex={0}
-      onClick={onRowClick}
+      onClick={handleCardActivate}
       onKeyDown={handleKeyDown}
+      onTouchStart={handleTouchStart}
+      onTouchEnd={clearLongPressTimer}
+      onTouchCancel={clearLongPressTimer}
     >
-      <div className={styles.mobileCardBody}>
-        <div className={styles.mobileCardHeader}>
-          <div className={styles.mobileCardTitleBlock}>
-            <span
-              className={[
-                styles.mobileCardTitleRow,
-                showContactInfo ? styles.mobileCardTitleRow_withContact : '',
-              ]
-                .filter(Boolean)
-                .join(' ')}
-            >
-              {isInactive ? (
-                <CrmProjectInactiveIcon ariaLabel={tableCopy.inactiveBadge} />
-              ) : isProjectPriorityUrgent(project.priority) ? (
-                <CrmProjectPriorityIcon ariaLabel={tableCopy.priorityMarkAriaLabel} />
+      <div
+        className={[
+          styles.mobileCardBody,
+          showContactInfo ? styles.mobileCardBody_withPhotoLayout : '',
+        ]
+          .filter(Boolean)
+          .join(' ')}
+      >
+        {showContactInfo ? (
+          <div className={styles.mobileCardSplit}>
+            <div className={styles.mobileCardPhotoWrap}>
+              {bulkSelection != null ? (
+                <button
+                  type="button"
+                  className={[
+                    styles.mobileCardSelectToggle,
+                    selectionModeActive ? styles.mobileCardSelectToggle_visible : '',
+                    isSelected ? styles.mobileCardSelectToggle_checked : '',
+                  ]
+                    .filter(Boolean)
+                    .join(' ')}
+                  aria-pressed={isSelected}
+                  aria-label={bulkSelection.selectItemAriaLabel(project.name)}
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    bulkSelection.onToggle(project.id);
+                  }}
+                >
+                  <span className={styles.mobileCardSelectToggleMark} aria-hidden />
+                </button>
               ) : null}
-              {isCrmProjectComplete(project) ? (
-                <CrmProjectCompleteIcon ariaLabel={tableCopy.completionCheckAriaLabel} />
-              ) : null}
-              <ProjectPreviewNameAnchor
-                project={project}
-                financials={financials ?? null}
-                stageLabel={
-                  derivedStageSlug != null ? formatStageLabel(derivedStageSlug, catalog) : null
-                }
-                progressPercent={progress?.textPercent ?? null}
-                className={showContactInfo ? styles.mobileCardPreviewAnchor : undefined}
-              >
-                <span className={styles.mobileCardTitle}>{project.name}</span>
-              </ProjectPreviewNameAnchor>
-            </span>
-            {!showContactInfo && parentProjectName ? (
-              <span className={styles.mobileCardParentProject}>{parentProjectName}</span>
-            ) : null}
-            {!showContactInfo && industrySubtitle ? (
-              <span className={styles.mobileCardIndustry}>{industrySubtitle}</span>
-            ) : null}
-          </div>
-          <div className={styles.mobileCardHeaderEnd}>
-            <span className={styles.mobileCardAssignee}>
-              {project.assignedTo ? (
-                <TeamMemberAvatar member={project.assignedTo} />
+              {projectPhotoUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={projectPhotoUrl} alt="" className={styles.mobileCardPhotoImg} />
               ) : (
                 <span
-                  className={`${shared.avatar} ${shared.avatarUnassigned}`}
-                  title={tableCopy.unassigned}
+                  className={styles.mobileCardPhotoInitial}
+                  style={{ backgroundColor: projectPrimaryPhotoCircleColor(projectPhotoLabel) }}
+                  aria-hidden
                 >
-                  —
+                  {projectPhotoInitials}
                 </span>
               )}
-            </span>
-            {!isMemberRole && showActions ? (
-              <span
-                className={styles.mobileCardActions}
-                onClick={(event) => event.stopPropagation()}
-                onKeyDown={(event) => event.stopPropagation()}
-              >
-                <CrmProjectTableRowActionsMenu
-                  project={project}
-                  busy={busy || deleting}
-                  canDelete={canDelete}
-                  onRequestDelete={onRequestDelete}
-                  onTogglePriority={onTogglePriority}
-                  onRequestCompletionChange={onRequestCompletionChange}
-                  onRequestMarkInactive={onRequestMarkInactive}
-                  onRequestMarkActive={onRequestMarkActive}
-                />
-              </span>
-            ) : null}
-          </div>
-        </div>
-
-        {showContactInfo ? (
-          <div className={styles.mobileCardDetailsGrid}>
-            <div className={styles.mobileCardDetailsCol}>
-              {parentProjectName ? (
-                <span className={styles.mobileCardParentProject}>{parentProjectName}</span>
-              ) : null}
-              {industrySubtitle ? (
-                <span className={styles.mobileCardIndustry}>{industrySubtitle}</span>
-              ) : (
-                <span className={styles.mobileCardIndustry}>—</span>
-              )}
-              {stageMetaRow}
             </div>
-            <div className={styles.mobileCardDetailsColRight}>
-              <span className={styles.mobileCardContactValue}>
-                {project.contact.name || '—'}
-              </span>
-              <SubprojectMobileContactValue
-                kind="email"
-                values={contactEmails}
-                displayValue={displayEmail}
-                formatDisplayValue={formatEmailPopoverValue}
-                getCopyValue={getEmailCopyValue}
-                isMemberRole={isMemberRole}
-                valueClassName={styles.mobileCardContactValue}
-              />
-              <SubprojectMobileContactValue
-                kind="phone"
-                values={contactPhones}
-                displayValue={displayPhone}
-                formatDisplayValue={formatPhonePopoverValue}
-                getCopyValue={getPhoneCopyValue}
-                isMemberRole={isMemberRole}
-                valueClassName={styles.mobileCardContactValue}
-              />
+            <div className={styles.mobileCardDetailsStack}>
+              <div className={styles.mobileCardTopRow}>
+                <div className={styles.mobileCardInfoRow}>
+                  <ProjectPreviewNameAnchor
+                    project={project}
+                    financials={financials ?? null}
+                    stageLabel={
+                      derivedStageSlug != null ? formatStageLabel(derivedStageSlug, catalog) : null
+                    }
+                    progressPercent={progress?.textPercent ?? null}
+                    className={styles.mobileCardPreviewAnchor}
+                  >
+                    <span className={styles.mobileCardTitle}>{project.name}</span>
+                  </ProjectPreviewNameAnchor>
+                </div>
+                <div className={styles.mobileCardHeaderEnd}>
+                  <span className={styles.mobileCardAssignee}>
+                    {project.assignedTo ? (
+                      <TeamMemberAvatar member={project.assignedTo} />
+                    ) : (
+                      <span
+                        className={`${shared.avatar} ${shared.avatarUnassigned}`}
+                        title={tableCopy.unassigned}
+                      >
+                        —
+                      </span>
+                    )}
+                  </span>
+                  {!isMemberRole && showActions && !selectionModeActive ? (
+                    <span
+                      className={styles.mobileCardActions}
+                      onClick={(event) => event.stopPropagation()}
+                      onKeyDown={(event) => event.stopPropagation()}
+                    >
+                      <CrmProjectTableRowActionsMenu
+                        project={project}
+                        busy={busy || deleting}
+                        canDelete={canDelete}
+                        onRequestDelete={onRequestDelete}
+                        onTogglePriority={onTogglePriority}
+                        onRequestCompletionChange={onRequestCompletionChange}
+                        onRequestMarkInactive={onRequestMarkInactive}
+                        onRequestMarkActive={onRequestMarkActive}
+                      />
+                    </span>
+                  ) : null}
+                </div>
+              </div>
+              <div className={styles.mobileCardInfoRow}>
+                <span className={styles.mobileCardInfoIcon} aria-hidden>
+                  <LuUser />
+                </span>
+                <span className={styles.mobileCardContactValue}>{project.contact.name || '—'}</span>
+              </div>
+              <div className={styles.mobileCardInfoRow}>
+                <span className={styles.mobileCardInfoIcon} aria-hidden>
+                  <LuMail />
+                </span>
+                <SubprojectMobileContactValue
+                  kind="email"
+                  values={contactEmails}
+                  displayValue={displayEmail}
+                  formatDisplayValue={formatEmailPopoverValue}
+                  getCopyValue={getEmailCopyValue}
+                  isMemberRole={isMemberRole}
+                  valueClassName={styles.mobileCardContactValue}
+                />
+              </div>
+              <div className={styles.mobileCardInfoRow}>
+                <span className={styles.mobileCardInfoIcon} aria-hidden>
+                  <LuPhone />
+                </span>
+                <SubprojectMobileContactValue
+                  kind="phone"
+                  values={contactPhones}
+                  displayValue={displayPhone}
+                  formatDisplayValue={formatPhonePopoverValue}
+                  getCopyValue={getPhoneCopyValue}
+                  isMemberRole={isMemberRole}
+                  valueClassName={styles.mobileCardContactValue}
+                />
+              </div>
+              {stageMetaContent != null ? (
+                <div className={styles.mobileCardStageRow}>{stageMetaContent}</div>
+              ) : null}
             </div>
           </div>
         ) : (
-          stageMetaRow
+          <>
+            <div className={styles.mobileCardHeader}>
+              <div className={styles.mobileCardTitleBlock}>
+                <span
+                  className={[
+                    styles.mobileCardTitleRow,
+                    showContactInfo ? styles.mobileCardTitleRow_withContact : '',
+                  ]
+                    .filter(Boolean)
+                    .join(' ')}
+                >
+                  {isInactive ? (
+                    <CrmProjectInactiveIcon ariaLabel={tableCopy.inactiveBadge} />
+                  ) : isProjectPriorityUrgent(project.priority) ? (
+                    <CrmProjectPriorityIcon ariaLabel={tableCopy.priorityMarkAriaLabel} />
+                  ) : null}
+                  {isCrmProjectComplete(project) ? (
+                    <CrmProjectCompleteIcon ariaLabel={tableCopy.completionCheckAriaLabel} />
+                  ) : null}
+                  <ProjectPreviewNameAnchor
+                    project={project}
+                    financials={financials ?? null}
+                    stageLabel={
+                      derivedStageSlug != null ? formatStageLabel(derivedStageSlug, catalog) : null
+                    }
+                    progressPercent={progress?.textPercent ?? null}
+                    className={showContactInfo ? styles.mobileCardPreviewAnchor : undefined}
+                  >
+                    <span className={styles.mobileCardTitle}>{project.name}</span>
+                  </ProjectPreviewNameAnchor>
+                </span>
+                {!showContactInfo && parentProjectName ? (
+                  <span className={styles.mobileCardParentProject}>{parentProjectName}</span>
+                ) : null}
+                {!showContactInfo && industrySubtitle ? (
+                  <span className={styles.mobileCardIndustry}>{industrySubtitle}</span>
+                ) : null}
+              </div>
+              <div className={styles.mobileCardHeaderEnd}>
+                <span className={styles.mobileCardAssignee}>
+                  {project.assignedTo ? (
+                    <TeamMemberAvatar member={project.assignedTo} />
+                  ) : (
+                    <span
+                      className={`${shared.avatar} ${shared.avatarUnassigned}`}
+                      title={tableCopy.unassigned}
+                    >
+                      —
+                    </span>
+                  )}
+                </span>
+                {!isMemberRole && showActions && !selectionModeActive ? (
+                  <span
+                    className={styles.mobileCardActions}
+                    onClick={(event) => event.stopPropagation()}
+                    onKeyDown={(event) => event.stopPropagation()}
+                  >
+                    <CrmProjectTableRowActionsMenu
+                      project={project}
+                      busy={busy || deleting}
+                      canDelete={canDelete}
+                      onRequestDelete={onRequestDelete}
+                      onTogglePriority={onTogglePriority}
+                      onRequestCompletionChange={onRequestCompletionChange}
+                      onRequestMarkInactive={onRequestMarkInactive}
+                      onRequestMarkActive={onRequestMarkActive}
+                    />
+                  </span>
+                ) : null}
+              </div>
+            </div>
+            {!isMemberRole && (isInactive || derivedStageSlug != null || progress != null) ? (
+              <div className={styles.mobileCardMetaRow}>{stageMetaContent}</div>
+            ) : null}
+          </>
         )}
       </div>
 

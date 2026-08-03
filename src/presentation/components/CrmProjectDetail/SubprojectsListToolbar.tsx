@@ -2,7 +2,6 @@
 
 import type { ReactElement, ReactNode } from 'react';
 import { LuFileSpreadsheet } from 'react-icons/lu';
-import { CloseIcon } from '@/platform/icons/buildCoreDashboardShellIcons';
 import { DetailPanelHeaderButton } from './DetailPanelHeaderButton';
 import { useDashboardMobileLayout } from '@/presentation/features/crmProjects/useDashboardMobileLayout';
 import importStyles from '@/presentation/components/CrmImport/SpreadsheetImportWizard.module.css';
@@ -23,6 +22,7 @@ export type SubprojectsListToolbarProps = {
   readonly onImportOpen?: () => void;
   /** Mobile: show bulk chrome when rows are selected. */
   readonly showMobileBulkToolbar?: boolean;
+  readonly selectedCount?: number;
   readonly selectedCountLabel?: string;
   readonly bulkToolbarAriaLabel?: string;
   readonly bulkCancelLabel?: string;
@@ -45,7 +45,7 @@ export function SubprojectsListToolbar({
   importSpreadsheetAriaLabel,
   onImportOpen,
   showMobileBulkToolbar = false,
-  selectedCountLabel = '',
+  selectedCount = 0,
   bulkToolbarAriaLabel = '',
   bulkCancelLabel = '',
   onClearSelection,
@@ -53,32 +53,55 @@ export function SubprojectsListToolbar({
   trailingActions = null,
 }: SubprojectsListToolbarProps): ReactElement {
   const isMobileLayout = useDashboardMobileLayout();
-
-  if (showMobileBulkToolbar) {
-    return (
-      <div
-        className={styles.subprojectsMobileBulkToolbar}
-        role="toolbar"
-        aria-label={bulkToolbarAriaLabel}
-      >
-        <span className={styles.subprojectsMobileBulkCount}>{selectedCountLabel}</span>
-        {mobileBulkActions}
-        <button
-          type="button"
-          className={styles.workflowBulkActionBtn}
-          aria-label={bulkCancelLabel}
-          title={bulkCancelLabel}
-          onClick={onClearSelection}
-        >
-          <CloseIcon className={styles.workflowBulkActionGlyph} />
-        </button>
-      </div>
-    );
-  }
+  const selectedCountDisplay = selectedCount > 99 ? '99+' : String(Math.max(0, selectedCount));
 
   return (
     <>
-      {expanded ? (
+      {showMobileBulkToolbar ? (
+        <div className={styles.subprojectsMobileSelectionLayout}>
+          <div
+            className={styles.subprojectsMobileBulkToolbar}
+            role="toolbar"
+            aria-label={bulkToolbarAriaLabel}
+          >
+            <button
+              type="button"
+              className={styles.subprojectsSelectBtn}
+              aria-label={bulkCancelLabel}
+              title={`${selectedCountDisplay} selected`}
+              onClick={onClearSelection}
+            >
+              <span className={styles.subprojectsSelectBtnIcon} aria-hidden>
+                {selectedCountDisplay}
+              </span>
+            </button>
+            {mobileBulkActions}
+          </div>
+          <div className={styles.subprojectsMobileSelectionRightActions}>
+            {canManage && onImportOpen ? (
+              <button
+                type="button"
+                className={importStyles.toolbarImportButton}
+                title={importSpreadsheetTitle}
+                aria-label={importSpreadsheetAriaLabel ?? importSpreadsheetTitle}
+                onClick={onImportOpen}
+              >
+                <LuFileSpreadsheet size={16} strokeWidth={2} aria-hidden />
+                {isMobileLayout ? null : importSpreadsheetTitle}
+              </button>
+            ) : null}
+            {trailingActions}
+            {canManage ? (
+              <DetailPanelHeaderButton
+                variant="add"
+                title={newSubprojectTitle}
+                aria-label={newSubprojectAriaLabel}
+                onClick={onCreateOpen}
+              />
+            ) : null}
+          </div>
+        </div>
+      ) : expanded ? (
         <input
           type="search"
           value={searchQuery}
@@ -88,7 +111,7 @@ export function SubprojectsListToolbar({
           className={styles.subprojectsSearch}
         />
       ) : null}
-      {canManage && onImportOpen ? (
+      {!showMobileBulkToolbar && canManage && onImportOpen ? (
         <button
           type="button"
           className={importStyles.toolbarImportButton}
@@ -100,8 +123,8 @@ export function SubprojectsListToolbar({
           {isMobileLayout ? null : importSpreadsheetTitle}
         </button>
       ) : null}
-      {trailingActions}
-      {canManage ? (
+      {!showMobileBulkToolbar ? trailingActions : null}
+      {!showMobileBulkToolbar && canManage ? (
         <DetailPanelHeaderButton
           variant="add"
           title={newSubprojectTitle}
