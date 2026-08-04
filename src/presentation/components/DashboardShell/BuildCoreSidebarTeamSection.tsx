@@ -31,6 +31,43 @@ type SidebarTeamRow = {
   readonly organizationRoleLabel: string;
 };
 
+const DEMO_EXTRA_TEAM_ROWS: readonly SidebarTeamRow[] = [
+  {
+    id: 'tm-taylor',
+    name: 'Taylor Nguyen',
+    email: 'taylor.nguyen@zenformed.test',
+    organizationRole: 'member',
+    organizationRoleLabel: 'Member',
+  },
+  {
+    id: 'tm-emery',
+    name: 'Emery Stone',
+    email: 'emery.stone@zenformed.test',
+    organizationRole: 'coordinator',
+    organizationRoleLabel: 'Coordinator',
+  },
+  {
+    id: 'tm-logan',
+    name: 'Logan Pierce',
+    email: 'logan.pierce@zenformed.test',
+    organizationRole: 'member',
+    organizationRoleLabel: 'Member',
+  },
+];
+
+type SidebarPresenceStatus = keyof typeof PRESENCE_EFFECTIVE_STATUS_LABELS;
+
+const DEMO_PRESENCE_BY_MEMBER_ID: Readonly<Record<string, SidebarPresenceStatus>> = {
+  'tm-alex': 'online',
+  'tm-jordan': 'away',
+  'tm-sam': 'online',
+  'tm-casey': 'offline',
+  'tm-riley': 'away',
+  'tm-taylor': 'online',
+  'tm-emery': 'away',
+  'tm-logan': 'offline',
+};
+
 type AssignmentIdentitiesRelayResponse = ZenformedCoreOrganizationAssignmentIdentitiesResponse & {
   error?: string;
 };
@@ -148,7 +185,8 @@ export function BuildCoreSidebarTeamSection({
           organizationRole: row.organizationRole,
           organizationRoleLabel: row.organizationRoleLabel,
         })
-      );
+      )
+      .concat(DEMO_EXTRA_TEAM_ROWS);
   }, [isDemoRuntime, subscriptionActive]);
 
   const members = useMemo(() => {
@@ -172,7 +210,7 @@ export function BuildCoreSidebarTeamSection({
   return (
     <ul className={styles.teamList} aria-label="BuildCore team members">
       {members.map((member) => (
-        <BuildCoreSidebarTeamMemberRow key={member.id} member={member} />
+        <BuildCoreSidebarTeamMemberRow key={member.id} member={member} isDemoRuntime={isDemoRuntime} />
       ))}
     </ul>
   );
@@ -180,12 +218,15 @@ export function BuildCoreSidebarTeamSection({
 
 function BuildCoreSidebarTeamMemberRow({
   member,
+  isDemoRuntime = false,
 }: {
   readonly member: SidebarTeamRow;
+  readonly isDemoRuntime?: boolean;
 }): ReactElement {
   const { firstLast, initialsSource } = memberDisplayName(member.name);
   const email = member.email ?? member.id;
-  const status = useUserPresence(member.id);
+  const liveStatus = useUserPresence(member.id);
+  const status = isDemoRuntime ? (DEMO_PRESENCE_BY_MEMBER_ID[member.id] ?? 'offline') : liveStatus;
   const statusLabel = PRESENCE_EFFECTIVE_STATUS_LABELS[status];
 
   useEffect(() => {

@@ -36,6 +36,7 @@ import { CurrentUserAvatarProvider } from '@/presentation/providers/CurrentUserA
 import { useBuildCoreNotificationsConfig } from '@/presentation/features/notifications/useBuildCoreNotificationsConfig';
 import { isBuildCoreMemberRole } from '@/domain/buildcore/memberRole';
 import { useSaaSProfile } from '@/presentation/hooks/useSaaSProfile';
+import { DEMO_USER_EMAIL, DEMO_USER_ID } from '@/infrastructure/demo/demoProfileFixtures';
 import { CorePlatformDegradedBanner } from '@/presentation/components/CorePlatform/CorePlatformDegradedBanner';
 import { DemoDisabledAppsLauncher } from '@/presentation/components/Demo/DemoDisabledShellControls';
 import { BuildCoreDashboardModals } from './BuildCoreDashboardModals';
@@ -97,11 +98,16 @@ export function BuildCoreDashboardShell({
   });
 
   const accountUser = useMemo(() => {
+    if (demoMode != null) {
+      return resolveAccountMenuUser(DEMO_USER_EMAIL, { full_name: 'Alex Rivera' }, {
+        displayName: 'Alex Rivera',
+      });
+    }
     if (dash.user == null) return null;
     return resolveAccountMenuUser(dash.user.email, saasUser?.user_metadata, {
       displayName: dash.user.displayName ?? null,
     });
-  }, [dash.user, saasUser?.user_metadata]);
+  }, [dash.user, demoMode, saasUser?.user_metadata]);
 
   const accountDisplayName = useZenformedShellUserDisplay({
     settingsApiUrl: nav.apis.usersMeSettings,
@@ -292,7 +298,7 @@ export function BuildCoreDashboardShell({
   }
 
   const railDisplayName =
-    accountDisplayName.trim() || accountUser?.email?.trim() || '';
+    accountDisplayName.trim() || accountUser?.displayName?.trim() || accountUser?.email?.trim() || '';
 
   return (
     <ZenformedDashboardAppShell classNames={{ appLayout: shellStyles.appLayout }}>
@@ -309,16 +315,17 @@ export function BuildCoreDashboardShell({
         otherSectionCollapsedLabel="OTHER"
         holdExpanded={appsOpen}
         settings={
-          demoMode != null
-            ? null
-            : {
-                label: 'Settings',
-                icon: <SettingsIcon />,
-                onSelect: () => dash.setSettingsOpen(true),
-              }
+          {
+            label: 'Settings',
+            icon: <SettingsIcon />,
+            onSelect: () => {
+              if (demoMode != null) return;
+              dash.setSettingsOpen(true);
+            },
+          }
         }
         account={
-          demoMode != null || accountUser == null
+          accountUser == null
             ? null
             : {
                 user: accountUser,
@@ -329,10 +336,19 @@ export function BuildCoreDashboardShell({
                 organizationRoleLabel: dash.organizationRoleLabel,
                 labels: accountMenuLabels,
                 classNames: headerShellClassNames,
-                onOpenSettings: () => dash.setSettingsOpen(true),
-                onRequestSignOutConfirm: () => dash.setSignOutModalOpen(true),
-                onRequestProfilePhotoModal: () => dash.setProfilePhotoModalOpen(true),
-                profilePhotoChangeEnabled: false,
+                onOpenSettings: () => {
+                  if (demoMode != null) return;
+                  dash.setSettingsOpen(true);
+                },
+                onRequestSignOutConfirm: () => {
+                  if (demoMode != null) return;
+                  dash.setSignOutModalOpen(true);
+                },
+                onRequestProfilePhotoModal: () => {
+                  if (demoMode != null) return;
+                  dash.setProfilePhotoModalOpen(true);
+                },
+                profilePhotoChangeEnabled: demoMode == null,
                 showSettingsButton: false,
                 signOutIcon: <SignOutIcon className={headerShellClassNames.accountMenuBtnIcon} />,
                 profilePhotoCameraIcon: <CameraIcon />,
@@ -343,7 +359,7 @@ export function BuildCoreDashboardShell({
         <main className={shellStyles.mainContent}>
           {title != null ? <h1 className={shellStyles.headerTitle}>{title}</h1> : null}
           <CurrentUserAvatarProvider
-            currentUserId={dash.user?.id ?? null}
+            currentUserId={demoMode != null ? DEMO_USER_ID : (dash.user?.id ?? null)}
             currentUserAvatarUrl={dash.avatarUrl}
           >
             <div className={shellStyles.listViewWrap}>{children}</div>
