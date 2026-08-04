@@ -225,11 +225,12 @@ export function WorkflowStageTaskGroup({
     ) : null;
 
   const hasStageSelection = stageAllSelected || stageSomeSelected;
+  const showMobileRightTaskCount = isMobileLayout && !group.isPaymentsGroup;
 
   const stageTitle = (
     <span className={styles.stageGroupTitle}>
       <span className={styles.stageGroupName}>{group.stageLabel}</span>
-      {!hasStageSelection ? taskCount : null}
+      {!hasStageSelection && !showMobileRightTaskCount ? taskCount : null}
       {!hasStageSelection && collapsible && !showCardLayout ? (
         <span className={styles.stageGroupChevronWrap} aria-hidden>
           <span className={expanded ? styles.stageGroupChevron_expanded : styles.stageGroupChevron} />
@@ -251,9 +252,21 @@ export function WorkflowStageTaskGroup({
             aria-label={`${expanded ? wf.collapseStageTasks : wf.expandStageTasks}: ${group.stageLabel}`}
           >
             {stageTitle}
+            {!hasStageSelection && showMobileRightTaskCount ? (
+              <span className={`${styles.stageGroupCount} ${styles.stageGroupCount_mobileRight}`}>
+                {taskCountText} · {completionPercentLabel}
+              </span>
+            ) : null}
           </button>
         ) : (
-          <div className={styles.stageGroupHeaderStatic}>{stageTitle}</div>
+          <div className={styles.stageGroupHeaderStatic}>
+            {stageTitle}
+            {!hasStageSelection && showMobileRightTaskCount ? (
+              <span className={`${styles.stageGroupCount} ${styles.stageGroupCount_mobileRight}`}>
+                {taskCountText} · {completionPercentLabel}
+              </span>
+            ) : null}
+          </div>
         )}
         {hasStageSelection ? (
           <span
@@ -335,9 +348,21 @@ export function WorkflowStageTaskGroup({
           aria-label={`${expanded ? wf.collapseStageTasks : wf.expandStageTasks}: ${group.stageLabel}`}
         >
           {stageTitle}
+          {!hasStageSelection && showMobileRightTaskCount ? (
+            <span className={`${styles.stageGroupCount} ${styles.stageGroupCount_mobileRight}`}>
+              {taskCountText} · {completionPercentLabel}
+            </span>
+          ) : null}
         </button>
       ) : (
-        <div className={styles.stageGroupHeaderStatic}>{stageTitle}</div>
+        <div className={styles.stageGroupHeaderStatic}>
+          {stageTitle}
+          {!hasStageSelection && showMobileRightTaskCount ? (
+            <span className={`${styles.stageGroupCount} ${styles.stageGroupCount_mobileRight}`}>
+              {taskCountText} · {completionPercentLabel}
+            </span>
+          ) : null}
+        </div>
       )}
     </div>
   );

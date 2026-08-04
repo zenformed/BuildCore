@@ -48,10 +48,9 @@ import { DetailPanelSectionRefresh } from './DetailPanelSectionRefresh';
 import { DetailPanelSectionSearch } from './DetailPanelSectionSearch';
 import { FolderTabToolbarPortal } from '@/presentation/features/crmProjectDetail/folderTabToolbarContext';
 import {
-  WorkflowMobileBulkToolbar,
   WorkflowMobileHideWhenBulkActive,
-  WorkflowMobileShowWhenBulkActive,
   WorkflowMobileSearchToolsRow,
+  WorkflowMobileSelectedFloatingPill,
 } from './MobileBulkSelectionChrome';
 import { WorkflowStageTaskGroup, type ManualStageCompletionToggleAction } from './WorkflowStageTaskGroup';
 import { workflowStageAccentColor } from '@/presentation/features/crmProjectDetail/workflowStageAccentColors';
@@ -469,14 +468,6 @@ export function WorkflowTasksTable({
   );
   const mobileHeaderContent = (
     <>
-      <WorkflowMobileShowWhenBulkActive>
-        <div className={styles.detailPanelHeaderRow}>
-          <div className={styles.detailPanelHeaderTitleGroup} />
-          <div className={styles.detailPanelHeaderRowActions}>
-            <WorkflowMobileBulkToolbar />
-          </div>
-        </div>
-      </WorkflowMobileShowWhenBulkActive>
       <WorkflowMobileSearchToolsRow
         searchInput={searchInput}
         trailingActions={mobileSearchTrailingActions}
@@ -660,9 +651,12 @@ export function WorkflowTasksTable({
         <div className={styles.detailPanelHeader}>{headerActions}</div>
       )}
       {isMobileLayout ? (
-        <WorkflowMobileHideWhenBulkActive>
-          {mobileFloatingAddButton}
-        </WorkflowMobileHideWhenBulkActive>
+        <>
+          <WorkflowMobileSelectedFloatingPill />
+          <WorkflowMobileHideWhenBulkActive>
+            {mobileFloatingAddButton}
+          </WorkflowMobileHideWhenBulkActive>
+        </>
       ) : null}
       {isLoading && !isReady ? (
         <div className={isFullLayout ? undefined : styles.workflowPanelGrow}>

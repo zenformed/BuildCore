@@ -2,6 +2,8 @@
 
 import type { ReactElement } from 'react';
 import { useMemo, useState } from 'react';
+import { BsCheckLg } from 'react-icons/bs';
+import { LuSearch } from 'react-icons/lu';
 import type { CrmProjectDetail, CrmWorkflowTask } from '@/domain/crm';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
 import { countDocumentsByTaskId } from '@/presentation/features/crmProjectDetail/workflowDocumentCounts';
@@ -29,9 +31,9 @@ import { DetailPanelSectionSearch } from './DetailPanelSectionSearch';
 import { FolderTabToolbarPortal } from '@/presentation/features/crmProjectDetail/folderTabToolbarContext';
 import { CrmDirectUploadStatusHost } from './CrmDirectUploadStatus';
 import {
-  WorkflowMobileBulkSelectAllRow,
-  WorkflowMobileBulkToolbar,
+  WorkflowMobileHideWhenBulkActive,
   WorkflowMobileSearchToolsRow,
+  WorkflowMobileSelectedFloatingPill,
 } from './MobileBulkSelectionChrome';
 import { WorkflowTaskInlineRow } from './WorkflowTaskInlineRow';
 import { WorkflowTaskTableHeaderRow } from './WorkflowTaskTableHeaderRow';
@@ -239,7 +241,19 @@ export function PaymentsRail({
     />
   );
 
-  const searchInput = (
+  const searchInput = isMobileLayout ? (
+    <div className={styles.subprojectsSearchFieldWrap}>
+      <LuSearch className={styles.subprojectsSearchIcon} size={14} strokeWidth={2} aria-hidden />
+      <input
+        type="search"
+        value={searchQuery}
+        onChange={(event) => setSearchQuery(event.target.value)}
+        placeholder={payments.searchPlaceholder}
+        aria-label={payments.searchAriaLabel}
+        className={`${styles.subprojectsSearch} ${styles.subprojectsSearch_withIcon}`}
+      />
+    </div>
+  ) : (
     <DetailPanelSectionSearch
       value={searchQuery}
       onChange={setSearchQuery}
@@ -269,6 +283,42 @@ export function PaymentsRail({
     <div className={styles.detailPanelHeaderBtnWrap}>
       <CrmDirectUploadStatusHost />
     </div>
+  );
+  const mobileFloatingAddButton = canCreate ? (
+    <button
+      type="button"
+      className={styles.subprojectsMobileCreateFloatingBtn}
+      title={payments.addMilestone}
+      aria-label={payments.addMilestone}
+      onClick={() => openCreateWorkflowTask({ context: 'payment' })}
+    >
+      + Create
+    </button>
+  ) : null;
+  const mobileCheckButton = (
+    <button
+      type="button"
+      className={`${styles.detailPanelHeaderBtn} ${styles.detailPanelHeaderBtn_complete}`}
+      title={tableCollapsed ? 'Expand payments list' : 'Collapse payments list'}
+      aria-label={tableCollapsed ? 'Expand payments list' : 'Collapse payments list'}
+      onClick={() => setTableCollapsed((current) => !current)}
+    >
+      <BsCheckLg className={styles.detailPanelHeaderCompleteCheck_pending} size={17} aria-hidden />
+    </button>
+  );
+  const mobileSearchTrailingActions = (
+    <div className={styles.workflowMobileSearchActions}>
+      {mobileCheckButton}
+      {statusFilterGhost}
+    </div>
+  );
+  const mobileHeaderContent = (
+    <>
+      <WorkflowMobileSearchToolsRow
+        searchInput={searchInput}
+        trailingActions={mobileSearchTrailingActions}
+      />
+    </>
   );
 
   const renderPaymentRow = (task: CrmWorkflowTask, variant: 'table' | 'mobile') => (
@@ -376,7 +426,11 @@ export function PaymentsRail({
         aria-label={embeddedInFolderTabs ? paymentsPanelTitle : undefined}
         aria-labelledby={embeddedInFolderTabs ? undefined : 'payments-rail-heading'}
       >
-        {embeddedInFolderTabs ? (
+        {isMobileLayout && embeddedInFolderTabs ? (
+          <FolderTabToolbarPortal>
+            <div className={styles.workflowFolderToolbar}>{mobileHeaderContent}</div>
+          </FolderTabToolbarPortal>
+        ) : embeddedInFolderTabs ? (
           <FolderTabToolbarPortal>
             <DetailPanelHeaderActions>
               {statusFilterGhost}
@@ -391,19 +445,7 @@ export function PaymentsRail({
               .filter(Boolean)
               .join(' ')}
           >
-            <div className={styles.detailPanelHeaderRow}>
-              <div className={styles.detailPanelHeaderTitleGroup}>
-                <h3 id="payments-rail-heading" className={styles.detailPanelTitle}>
-                  {paymentsPanelTitle}
-                </h3>
-                {statusFilterCaret}
-              </div>
-              <div className={styles.detailPanelHeaderRowActions}>
-                {refreshButton}
-                <WorkflowMobileBulkToolbar />
-              </div>
-            </div>
-            <WorkflowMobileSearchToolsRow searchInput={searchInput} trailingActions={addButton} />
+            {mobileHeaderContent}
           </div>
         ) : (
           <DetailPanelHeader title={paymentsPanelTitle} titleId="payments-rail-heading">
@@ -413,6 +455,12 @@ export function PaymentsRail({
             </DetailPanelHeaderActions>
           </DetailPanelHeader>
         )}
+        {isMobileLayout ? (
+          <>
+            <WorkflowMobileSelectedFloatingPill />
+            <WorkflowMobileHideWhenBulkActive>{mobileFloatingAddButton}</WorkflowMobileHideWhenBulkActive>
+          </>
+        ) : null}
         {isLoading && !isReady ? (
           <p className={styles.subtitle}>{paymentPermissionsCopy.loading}</p>
         ) : !canView ? (
@@ -421,11 +469,8 @@ export function PaymentsRail({
           <p className={styles.subtitle}>{payments.empty}</p>
         ) : isMobileLayout ? (
           <div className={styles.paymentsMobileList}>
-            <WorkflowMobileBulkSelectAllRow />
             {activePaymentsEmpty ? (
               <MemberNoActiveTasksRow gridClassName={styles.paymentsAlignedGrid} variant="mobile" />
-            ) : activeMilestones.length === 0 ? (
-              <p className={styles.subtitle}>{payments.empty}</p>
             ) : (
               activeMilestones.map((task) => renderPaymentRow(task, 'mobile'))
             )}

@@ -1,7 +1,7 @@
 'use client';
 
 import type { MutableRefObject, ReactElement, ReactNode, RefObject } from 'react';
-import { useId, useRef, useState } from 'react';
+import { useCallback, useEffect, useId, useRef, useState } from 'react';
 import { WORKFLOW_TASK_STATUSES } from '@/domain/crm/workflowTaskStatuses';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
 import {
@@ -21,6 +21,7 @@ import {
   WORKFLOW_TASK_DUE_FIELD_KEY,
   WORKFLOW_TASK_NOTES_FIELD_KEY,
   WORKFLOW_TASK_STATUS_FIELD_KEY,
+  WORKFLOW_TASK_TASK_FIELD_KEY,
 } from '@/domain/buildcore/fieldLabels';
 import { useBuildCoreFieldLabels } from '@/presentation/providers/BuildCoreFieldLabelsProvider';
 import { WorkflowFieldLabelText } from './EditableFieldLabelHeader';
@@ -1735,15 +1736,28 @@ function WorkflowTaskMobileCardBulkSelect({
 }): ReactElement | null {
   const { isMemberRole } = useProjectDetailShell();
   const rowSelection = useWorkflowTaskRowSelection();
-  if (rowSelection == null || isMemberRole) return null;
+  const selectionModeActive = rowSelection != null && rowSelection.selectedCount > 0;
+  if (rowSelection == null || isMemberRole || !selectionModeActive) return null;
   const isSelected = rowSelection.selectedIds.has(taskId);
   return (
     <span className={styles.workflowTaskMobileCardSelect}>
-      <BulkSelectCheckbox
-        checked={isSelected}
-        ariaLabel={rowSelection.selectItemAriaLabel(taskTitle)}
-        onChange={() => rowSelection.onToggle(taskId)}
-      />
+      <button
+        type="button"
+        className={[
+          styles.workflowTaskMobileCardSelectToggle,
+          isSelected ? styles.workflowTaskMobileCardSelectToggle_checked : '',
+        ]
+          .filter(Boolean)
+          .join(' ')}
+        aria-pressed={isSelected}
+        aria-label={rowSelection.selectItemAriaLabel(taskTitle)}
+        onClick={(event) => {
+          event.stopPropagation();
+          rowSelection.onToggle(taskId);
+        }}
+      >
+        <span className={styles.workflowTaskMobileCardSelectToggleMark} aria-hidden />
+      </button>
     </span>
   );
 }
@@ -1795,15 +1809,12 @@ function WorkflowTaskMobileCardPreviewIcon({
 }
 
 function WorkflowTaskMobileCardHeaderActions({
-  model,
   children = null,
 }: {
-  readonly model: WorkflowTaskInlineRowModel;
   readonly children?: ReactNode;
 }): ReactElement {
   return (
     <div className={styles.workflowTaskMobileCardActions}>
-      <WorkflowTaskMobileCardPreviewIcon model={model} />
       {children}
     </div>
   );
@@ -1811,13 +1822,60 @@ function WorkflowTaskMobileCardHeaderActions({
 
 function useWorkflowTaskMobileCardSelection(taskId: string): {
   readonly showBulkSelect: boolean;
+  readonly selectionModeActive: boolean;
   readonly isSelected: boolean;
+  readonly rowSelection: ReturnType<typeof useWorkflowTaskRowSelection>;
 } {
   const { isMemberRole } = useProjectDetailShell();
   const rowSelection = useWorkflowTaskRowSelection();
-  const showBulkSelect = rowSelection != null && !isMemberRole;
-  const isSelected = showBulkSelect && rowSelection.selectedIds.has(taskId);
-  return { showBulkSelect, isSelected };
+  const selectionModeActive = rowSelection != null && !isMemberRole && rowSelection.selectedCount > 0;
+  const showBulkSelect = selectionModeActive;
+  const isSelected = rowSelection != null && rowSelection.selectedIds.has(taskId);
+  return { showBulkSelect, selectionModeActive, isSelected, rowSelection };
+}
+
+function useWorkflowTaskMobileLongPressSelection(
+  taskId: string,
+  rowSelection: ReturnType<typeof useWorkflowTaskRowSelection>,
+  selectionModeActive: boolean
+): {
+  readonly onTouchStart: () => void;
+  readonly onTouchEnd: () => void;
+  readonly onTouchCancel: () => void;
+  readonly onTouchMove: () => void;
+} {
+  const longPressTimerRef = useRef<number | null>(null);
+
+  const clearLongPressTimer = useCallback(() => {
+    if (longPressTimerRef.current != null) {
+      window.clearTimeout(longPressTimerRef.current);
+      longPressTimerRef.current = null;
+    }
+  }, []);
+
+  useEffect(
+    () => () => {
+      if (longPressTimerRef.current != null) {
+        window.clearTimeout(longPressTimerRef.current);
+      }
+    },
+    []
+  );
+
+  const onTouchStart = useCallback(() => {
+    if (rowSelection == null || selectionModeActive) return;
+    clearLongPressTimer();
+    longPressTimerRef.current = window.setTimeout(() => {
+      rowSelection.onToggle(taskId);
+    }, 420);
+  }, [clearLongPressTimer, rowSelection, selectionModeActive, taskId]);
+
+  return {
+    onTouchStart,
+    onTouchEnd: clearLongPressTimer,
+    onTouchCancel: clearLongPressTimer,
+    onTouchMove: clearLongPressTimer,
+  };
 }
 
 function WorkflowTaskRowWorkflowMobileView({
@@ -1827,10 +1885,17 @@ function WorkflowTaskRowWorkflowMobileView({
 }): ReactElement {
   const { isMemberRole } = useProjectDetailShell();
   const { task, saving, documentActions, rowDragOver, rowDropHandlers } = model;
-  const { showBulkSelect, isSelected } = useWorkflowTaskMobileCardSelection(task.id);
+  const { showBulkSelect, selectionModeActive, isSelected, rowSelection } =
+    useWorkflowTaskMobileCardSelection(task.id);
+  const longPressHandlers = useWorkflowTaskMobileLongPressSelection(
+    task.id,
+    rowSelection,
+    selectionModeActive
+  );
   const cardClass = [
     styles.card,
     styles.workflowTaskMobileCard,
+    selectionModeActive ? styles.subprojectMobileCard_selectionMode : '',
     rowDragOver ? styles.workflowInlineRow_fileDragOver : '',
     isSelected ? styles.workflowTaskMobileCard_selected : '',
   ]
@@ -1848,9 +1913,12 @@ function WorkflowTaskRowWorkflowMobileView({
         <MemberMobileStatusBanner status={task.status} />
         <div className={styles.workflowTaskMobileCardHeader}>
           <div className={styles.workflowTaskMobileCardTitleWrap}>
-            <WorkflowTaskRowTitleField model={model} mobileHeader hidePreviewIcon />
+            <span className={styles.workflowTaskMobileCardTitleMain}>
+              <WorkflowTaskRowTitleField model={model} mobileHeader hidePreviewIcon />
+            </span>
+            <WorkflowTaskMobileCardPreviewIcon model={model} />
           </div>
-          <WorkflowTaskMobileCardHeaderActions model={model}>
+          <WorkflowTaskMobileCardHeaderActions>
             <WorkflowTaskRowMemberApprovalCheckbox model={model} embedded />
           </WorkflowTaskMobileCardHeaderActions>
         </div>
@@ -1896,18 +1964,33 @@ function WorkflowTaskRowWorkflowMobileView({
       aria-label={task.title}
       aria-busy={saving || documentActions.uploading}
       aria-selected={showBulkSelect ? isSelected : undefined}
+      onTouchStart={longPressHandlers.onTouchStart}
+      onTouchEnd={longPressHandlers.onTouchEnd}
+      onTouchCancel={longPressHandlers.onTouchCancel}
+      onTouchMove={longPressHandlers.onTouchMove}
       {...rowDropHandlers}
     >
-      <div className={styles.workflowTaskMobileCardHeader}>
-        <WorkflowTaskMobileCardBulkSelect taskId={task.id} taskTitle={task.title} />
-        <div className={styles.workflowTaskMobileCardTitleWrap}>
-          <WorkflowTaskRowTitleField model={model} mobileHeader hidePreviewIcon />
-        </div>
-        <WorkflowTaskMobileCardHeaderActions model={model}>
-          {model.showActionsMenu ? <WorkflowTaskRowActionsMenuSlot model={model} /> : null}
-        </WorkflowTaskMobileCardHeaderActions>
-      </div>
       <div className={styles.workflowTaskMobileCardBody}>
+        <div className={styles.workflowTaskMobileTaskTop}>
+          <WorkflowFieldLabelText
+            fieldKey={WORKFLOW_TASK_TASK_FIELD_KEY}
+            className={styles.projectInfoMobileLabel}
+          />
+          <div className={styles.workflowTaskMobileTaskTopRow}>
+            {showBulkSelect ? (
+              <WorkflowTaskMobileCardBulkSelect taskId={task.id} taskTitle={task.title} />
+            ) : null}
+            <div className={styles.workflowTaskMobileCardTitleWrap}>
+              <span className={styles.workflowTaskMobileCardTitleMain}>
+                <WorkflowTaskRowTitleField model={model} mobileHeader hidePreviewIcon />
+              </span>
+              <WorkflowTaskMobileCardPreviewIcon model={model} />
+            </div>
+            <WorkflowTaskMobileCardHeaderActions>
+              {model.showActionsMenu ? <WorkflowTaskRowActionsMenuSlot model={model} /> : null}
+            </WorkflowTaskMobileCardHeaderActions>
+          </div>
+        </div>
         <div className={styles.workflowTaskMobileCardGrid2}>
           <div className={styles.workflowTaskMobileCardCell}>
             <WorkflowFieldLabelText
@@ -1960,10 +2043,17 @@ function WorkflowTaskRowPaymentMobileView({
   const { isMemberRole } = useProjectDetailShell();
   const { cols, task, saving, documentActions, rowDragOver, rowDropHandlers } = model;
   const payCols = content.projectDetail.payments.columns;
-  const { showBulkSelect, isSelected } = useWorkflowTaskMobileCardSelection(task.id);
+  const { showBulkSelect, selectionModeActive, isSelected, rowSelection } =
+    useWorkflowTaskMobileCardSelection(task.id);
+  const longPressHandlers = useWorkflowTaskMobileLongPressSelection(
+    task.id,
+    rowSelection,
+    selectionModeActive
+  );
   const cardClass = [
     styles.card,
     styles.workflowTaskMobileCard,
+    selectionModeActive ? styles.subprojectMobileCard_selectionMode : '',
     rowDragOver ? styles.workflowInlineRow_fileDragOver : '',
     isSelected ? styles.workflowTaskMobileCard_selected : '',
   ]
@@ -1981,9 +2071,12 @@ function WorkflowTaskRowPaymentMobileView({
         <MemberMobileStatusBanner status={task.status} />
         <div className={styles.workflowTaskMobileCardHeader}>
           <div className={styles.workflowTaskMobileCardTitleWrap}>
-            <WorkflowTaskRowTitleField model={model} mobileHeader hidePreviewIcon />
+            <span className={styles.workflowTaskMobileCardTitleMain}>
+              <WorkflowTaskRowTitleField model={model} mobileHeader hidePreviewIcon />
+            </span>
+            <WorkflowTaskMobileCardPreviewIcon model={model} />
           </div>
-          <WorkflowTaskMobileCardHeaderActions model={model}>
+          <WorkflowTaskMobileCardHeaderActions>
             <WorkflowTaskRowMemberApprovalCheckbox model={model} embedded />
           </WorkflowTaskMobileCardHeaderActions>
         </div>
@@ -2043,14 +2136,21 @@ function WorkflowTaskRowPaymentMobileView({
       aria-label={task.title}
       aria-busy={saving || documentActions.uploading}
       aria-selected={showBulkSelect ? isSelected : undefined}
+      onTouchStart={longPressHandlers.onTouchStart}
+      onTouchEnd={longPressHandlers.onTouchEnd}
+      onTouchCancel={longPressHandlers.onTouchCancel}
+      onTouchMove={longPressHandlers.onTouchMove}
       {...rowDropHandlers}
     >
       <div className={styles.workflowTaskMobileCardHeader}>
         <WorkflowTaskMobileCardBulkSelect taskId={task.id} taskTitle={task.title} />
         <div className={styles.workflowTaskMobileCardTitleWrap}>
-          <WorkflowTaskRowTitleField model={model} mobileHeader hidePreviewIcon />
+          <span className={styles.workflowTaskMobileCardTitleMain}>
+            <WorkflowTaskRowTitleField model={model} mobileHeader hidePreviewIcon />
+          </span>
+          <WorkflowTaskMobileCardPreviewIcon model={model} />
         </div>
-        <WorkflowTaskMobileCardHeaderActions model={model}>
+        <WorkflowTaskMobileCardHeaderActions>
           {model.showActionsMenu ? <WorkflowTaskRowActionsMenuSlot model={model} /> : null}
         </WorkflowTaskMobileCardHeaderActions>
       </div>

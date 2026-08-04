@@ -132,18 +132,9 @@ export function WorkflowMobileBulkSelectAllRow(): ReactElement | null {
  * Returns null when nothing is selected.
  */
 export function WorkflowMobileBulkToolbar(): ReactElement | null {
-  const bulkCopy = content.bulkSelection;
-  const { showBulkToolbar, selectedCount, clearSelection } = useWorkflowMobileBulkSelection();
+  const { showBulkToolbar } = useWorkflowMobileBulkSelection();
   if (!showBulkToolbar) return null;
-  return (
-    <MobileBulkSelectionToolbar
-      selectedCountLabel={bulkCopy.selectedCount(selectedCount)}
-      toolbarAriaLabel={bulkCopy.toolbarAriaLabel}
-      cancelLabel={bulkCopy.cancel}
-      onClearSelection={clearSelection}
-      actions={<WorkflowTableBulkActions />}
-    />
-  );
+  return <div className={styles.subprojectsMobileBulkToolbar}><WorkflowTableBulkActions /></div>;
 }
 
 /** Workflow / payments mobile: render only when bulk toolbar is hidden. */
@@ -180,12 +171,37 @@ export function WorkflowMobileSearchToolsRow({
   readonly trailingActions?: ReactNode;
 }): ReactElement | null {
   const { showBulkToolbar } = useWorkflowMobileBulkSelection();
-  if (showBulkToolbar) return null;
+  if (showBulkToolbar) {
+    return (
+      <div className={styles.subprojectsMobileSearchRow}>
+        <div className={styles.subprojectsMobileSelectionLayout}>
+          <WorkflowMobileBulkToolbar />
+        </div>
+      </div>
+    );
+  }
   return (
     <div className={styles.subprojectsMobileSearchRow}>
       <div className={styles.detailPanelSearchWrap}>{searchInput}</div>
       {trailingActions}
     </div>
+  );
+}
+
+/** Workflow / payments mobile: bottom-center selected count pill (matches subprojects). */
+export function WorkflowMobileSelectedFloatingPill(): ReactElement | null {
+  const { showBulkToolbar, selectedCount, clearSelection } = useWorkflowMobileBulkSelection();
+  if (!showBulkToolbar) return null;
+  return (
+    <button
+      type="button"
+      className={styles.subprojectsMobileSelectedFloatingPill}
+      aria-label={content.bulkSelection.cancel}
+      title={content.bulkSelection.cancel}
+      onClick={clearSelection}
+    >
+      {`${selectedCount > 99 ? '99+' : selectedCount} Selected`}
+    </button>
   );
 }
 

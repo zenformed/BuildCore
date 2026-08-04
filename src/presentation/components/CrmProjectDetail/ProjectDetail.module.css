@@ -4013,6 +4013,20 @@
   background: transparent;
 }
 
+:global([data-theme='dark'])
+  .folderTabPanelInner
+  .paymentsPanel:not(.projectFinancialReport):not(.budgetTablePanel):not(.documentsTabPanel) {
+  background: transparent;
+  box-shadow: none;
+}
+
+:global([data-theme='dark'])
+  .folderTabPanelInner
+  .paymentsPanel:not(.projectFinancialReport):not(.budgetTablePanel):not(.documentsTabPanel)
+  > .paymentsMobileList {
+  background: transparent;
+}
+
 /* Reports tab: detailSurface compose re-applies shadow after .folderTabPanelInner resets */
 :global([data-theme='dark'])
   .folderTabPanelInner.folderTabPanelInnerReportsActive
@@ -8117,7 +8131,9 @@
   .workflowTaskMobileCard {
   background: #f2f4f7;
   border: 1px solid var(--theme-border-main, #e2e8f0);
-  border-radius: 0;
+  border-radius: 0.625rem;
+  border-left: 4px solid #60a5fa;
+  box-shadow: var(--theme-shadow-card);
 }
 
 .folderTabPanelInner
@@ -8268,7 +8284,9 @@
   .workflowTaskMobileCard {
   background: #1d2029;
   border: 1px solid var(--theme-stage-group-border-color, #80808052);
-  border-radius: 0;
+  border-radius: 0.625rem;
+  border-left: 4px solid #60a5fa;
+  box-shadow: var(--theme-shadow-card);
 }
 
 :global([data-theme='dark'])
@@ -9620,7 +9638,7 @@
     .stageGroupMobileTaskList
     > .paymentDraftBlock
     + .paymentDraftBlock {
-    border-top: 1px solid var(--theme-border-main, #e2e8f0);
+    border-top: 2px solid var(--theme-border-main, #e2e8f0);
   }
 
   :global([data-theme='dark'])
@@ -9728,7 +9746,130 @@
     .stageGroupMobileTaskList
     > .paymentDraftBlock
     + .paymentDraftBlock {
+    border-top: 2px solid var(--theme-stage-group-border-color, #80808052);
+  }
+
+  /* Payments mobile mirrors workflow mobile stage-card treatment. */
+  :global([data-theme='light'])
+    .folderTabPanelInner
+    .paymentsPanel
+    .stageGroup:not(.stageGroup_stageCardColumn) {
+    border: 1px solid var(--theme-border-main, #e2e8f0);
+    border-radius: 0.625rem;
+    box-shadow: var(--theme-shadow-card);
+    overflow: hidden;
+    background: transparent;
+  }
+
+  :global([data-theme='light'])
+    .folderTabPanelInner
+    .paymentsPanel
+    .stageGroup:not(.stageGroup_stageCardColumn).stageGroup_accentBorder {
+    border-left: 4px solid var(--stage-accent, transparent);
+  }
+
+  :global([data-theme='light'])
+    .folderTabPanelInner
+    .paymentsPanel
+    .stageGroup:not(.stageGroup_stageCardColumn)
+    .stageGroupMobileTaskList {
+    gap: 0;
+    padding: 0;
+  }
+
+  :global([data-theme='light'])
+    .folderTabPanelInner
+    .paymentsPanel
+    .stageGroup:not(.stageGroup_stageCardColumn)
+    .stageGroupMobileTaskList
+    > .workflowTaskMobileCard {
+    background: transparent;
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
+  }
+
+  :global([data-theme='light'])
+    .folderTabPanelInner
+    .paymentsPanel
+    .stageGroup:not(.stageGroup_stageCardColumn)
+    .stageGroupMobileTaskList
+    > .workflowTaskMobileCard
+    .workflowTaskMobileCardBody {
+    background: #f2f4f7;
+  }
+
+  :global([data-theme='light'])
+    .folderTabPanelInner
+    .paymentsPanel
+    .stageGroup:not(.stageGroup_stageCardColumn)
+    .stageGroupMobileTaskList
+    > .workflowTaskMobileCard
+    + .workflowTaskMobileCard {
+    border-top: 1px solid var(--theme-border-main, #e2e8f0);
+  }
+
+  :global([data-theme='dark'])
+    .folderTabPanelInner
+    .paymentsPanel
+    .stageGroup:not(.stageGroup_stageCardColumn) {
+    border: 1px solid var(--theme-stage-group-border-color, #80808052);
+    border-radius: 0.625rem;
+    box-shadow: var(--theme-shadow-card);
+    overflow: hidden;
+    background: transparent;
+  }
+
+  :global([data-theme='dark'])
+    .folderTabPanelInner
+    .paymentsPanel
+    .stageGroup:not(.stageGroup_stageCardColumn).stageGroup_accentBorder {
+    border-left: 4px solid var(--stage-accent, transparent);
+  }
+
+  :global([data-theme='dark'])
+    .folderTabPanelInner
+    .paymentsPanel
+    .stageGroup:not(.stageGroup_stageCardColumn)
+    .stageGroupMobileTaskList {
+    gap: 0;
+    padding: 0;
+  }
+
+  :global([data-theme='dark'])
+    .folderTabPanelInner
+    .paymentsPanel
+    .stageGroup:not(.stageGroup_stageCardColumn)
+    .stageGroupMobileTaskList
+    > .workflowTaskMobileCard {
+    background: transparent;
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
+  }
+
+  :global([data-theme='dark'])
+    .folderTabPanelInner
+    .paymentsPanel
+    .stageGroup:not(.stageGroup_stageCardColumn)
+    .stageGroupMobileTaskList
+    > .workflowTaskMobileCard
+    .workflowTaskMobileCardBody {
+    background: #1d2029;
+  }
+
+  :global([data-theme='dark'])
+    .folderTabPanelInner
+    .paymentsPanel
+    .stageGroup:not(.stageGroup_stageCardColumn)
+    .stageGroupMobileTaskList
+    > .workflowTaskMobileCard
+    + .workflowTaskMobileCard {
     border-top: 1px solid var(--theme-stage-group-border-color, #80808052);
+  }
+
+  .folderTabPanelInner .paymentsPanel > .stageGroupStack {
+    padding-top: 0.5rem;
   }
 
   /* Member rollup (no folder tabs): same card body contrast as payments mobile. */
@@ -10502,6 +10643,10 @@
   border: 1px solid var(--theme-stage-count-border);
   border-radius: 999px;
   white-space: nowrap;
+}
+
+.stageGroupCount_mobileRight {
+  margin-left: auto;
 }
 
 .stageGroupTable {
@@ -13325,7 +13470,8 @@
     align-items: center;
   }
 
-  .pageShell:has([data-project-detail-page]) .folderTabPanelInner .workflowPanel {
+  .pageShell:has([data-project-detail-page]) .folderTabPanelInner .workflowPanel,
+  .pageShell:has([data-project-detail-page]) .folderTabPanelInner .paymentsPanel {
     padding-top: 0;
   }
 
@@ -14306,11 +14452,42 @@
   flex-shrink: 0;
 }
 
-.workflowTaskMobileCardSelect :global(input[type='checkbox']) {
-  width: 1.125rem;
-  height: 1.125rem;
-  margin: 0;
-  accent-color: var(--color-primary, #2563eb);
+.workflowTaskMobileCardSelectToggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.35rem;
+  height: 1.35rem;
+  padding: 0;
+  border: 1.5px solid var(--theme-border-main, #94a3b8);
+  border-radius: 999px;
+  background: transparent;
+  color: transparent;
+  cursor: pointer;
+  transition:
+    background-color 0.12s ease,
+    border-color 0.12s ease,
+    color 0.12s ease;
+}
+
+.workflowTaskMobileCardSelectToggle_checked {
+  border-color: #2563eb;
+  background: #2563eb;
+  color: #fff;
+}
+
+.workflowTaskMobileCardSelectToggleMark {
+  display: inline-block;
+  width: 0.5rem;
+  height: 0.32rem;
+  border-left: 2px solid currentColor;
+  border-bottom: 2px solid currentColor;
+  transform: rotate(-45deg) translate(0.02rem, -0.03rem);
+  opacity: 0;
+}
+
+.workflowTaskMobileCardSelectToggle_checked .workflowTaskMobileCardSelectToggleMark {
+  opacity: 1;
 }
 
 .workflowTaskMobileCard_selected {
@@ -14339,6 +14516,45 @@
   min-width: 0;
   box-sizing: border-box;
   padding-block: 0.75rem 0.625rem;
+}
+
+.workflowTaskMobileTaskTop {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: 0;
+  padding-bottom: 0.5rem;
+  margin-bottom: 0.5rem;
+  border-bottom: 1px solid var(--theme-border-main, var(--color-border, #e2e8f0));
+}
+
+:global([data-theme='dark']) .workflowTaskMobileTaskTop {
+  border-bottom-color: var(--theme-border-main, #3d3e4a);
+}
+
+.workflowTaskMobileTaskTopRow {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  min-width: 0;
+}
+
+.workflowTaskMobileTaskTopRow .workflowTaskMobileCardTitleWrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.125rem;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.workflowTaskMobileTaskTopRow .workflowTaskMobileCardTitleMain {
+  flex: 0 1 auto;
+  min-width: 0;
+}
+
+.workflowTaskMobileTaskTopRow .workflowTaskMobileCardTitle,
+.workflowTaskMobileTaskTopRow .workflowTaskMobileCardTitleBtn {
+  width: auto;
 }
 
 /* Member mobile cards (workflow + payment): fixed dark-mode colors, light mode untouched. */
@@ -14382,6 +14598,12 @@
 .workflowTaskMobileCardTitleWrap {
   display: flex;
   align-items: center;
+  gap: 0.125rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.workflowTaskMobileCardTitleMain {
   flex: 1;
   min-width: 0;
 }
@@ -14450,6 +14672,104 @@
 .workflowTaskMobileCardHeader .workflowTaskMobileCardActions button:hover:not(:disabled) {
   background: color-mix(in srgb, var(--theme-table-header-text) 14%, transparent);
   color: var(--theme-table-header-text);
+}
+
+@media (max-width: 767px) {
+  :global([data-theme='light'])
+    .folderTabPanelInner
+    .workflowPanel
+    .stageGroupMobileTaskList
+    > .workflowTaskMobileCard
+    .workflowTaskMobileCardHeader {
+    background: transparent;
+    color: var(--color-text, #0f172a);
+  }
+
+  :global([data-theme='light'])
+    .folderTabPanelInner
+    .workflowPanel
+    .stageGroupMobileTaskList
+    > .workflowTaskMobileCard
+    .workflowTaskMobileCardTitle,
+  :global([data-theme='light'])
+    .folderTabPanelInner
+    .workflowPanel
+    .stageGroupMobileTaskList
+    > .workflowTaskMobileCard
+    .workflowTaskMobileCardTitleBtn {
+    color: var(--color-text, #0f172a);
+  }
+
+  :global([data-theme='light'])
+    .folderTabPanelInner
+    .workflowPanel
+    .stageGroupMobileTaskList
+    > .workflowTaskMobileCard
+    .workflowTaskMobileCardHeader
+    .workflowTaskMobileCardActions
+    button {
+    color: var(--color-text-muted, #64748b);
+  }
+
+  :global([data-theme='light'])
+    .folderTabPanelInner
+    .workflowPanel
+    .stageGroupMobileTaskList
+    > .workflowTaskMobileCard
+    .workflowTaskMobileCardHeader
+    .workflowTaskMobileCardActions
+    button:hover:not(:disabled) {
+    background: var(--color-muted, #f1f5f9);
+    color: var(--color-text, #0f172a);
+  }
+
+  :global([data-theme='dark'])
+    .folderTabPanelInner
+    .workflowPanel
+    .stageGroupMobileTaskList
+    > .workflowTaskMobileCard
+    .workflowTaskMobileCardHeader {
+    background: transparent;
+    color: #e2e8f0;
+  }
+
+  :global([data-theme='dark'])
+    .folderTabPanelInner
+    .workflowPanel
+    .stageGroupMobileTaskList
+    > .workflowTaskMobileCard
+    .workflowTaskMobileCardTitle,
+  :global([data-theme='dark'])
+    .folderTabPanelInner
+    .workflowPanel
+    .stageGroupMobileTaskList
+    > .workflowTaskMobileCard
+    .workflowTaskMobileCardTitleBtn {
+    color: #e2e8f0;
+  }
+
+  :global([data-theme='dark'])
+    .folderTabPanelInner
+    .workflowPanel
+    .stageGroupMobileTaskList
+    > .workflowTaskMobileCard
+    .workflowTaskMobileCardHeader
+    .workflowTaskMobileCardActions
+    button {
+    color: #94a3b8;
+  }
+
+  :global([data-theme='dark'])
+    .folderTabPanelInner
+    .workflowPanel
+    .stageGroupMobileTaskList
+    > .workflowTaskMobileCard
+    .workflowTaskMobileCardHeader
+    .workflowTaskMobileCardActions
+    button:hover:not(:disabled) {
+    background: rgba(255, 255, 255, 0.06);
+    color: #e2e8f0;
+  }
 }
 
 /* Member completed: locked checkbox sits across from the title in the header. */
@@ -14628,8 +14948,9 @@
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
-  padding: 0.375rem 0 0.5rem;
+  padding: 0.375rem 0 0;
   min-width: 0;
+  background: transparent;
 }
 
 .paymentsMobileList .paymentDraftBlock {
