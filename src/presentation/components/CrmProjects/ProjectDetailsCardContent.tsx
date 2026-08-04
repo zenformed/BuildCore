@@ -677,111 +677,113 @@ export function ProjectDetailsCardContent({
           </div>
           <h3 className={cardStyles.previewMobileHeroTitle}>{projectNameValue}</h3>
         </section>
-        <section className={cardStyles.previewSection} aria-label={previewCopy.sections.overview}>
-          <div className={cardStyles.previewMobileList}>
-            <MobilePreviewMetaItem
-              label={previewCopy.labels.industry}
-              icon={<LuClipboardList />}
-              value={industryDisplay}
-            />
-            <MobilePreviewMetaItem
-              label={previewCopy.labels.assigned}
-              icon={<LuUser />}
-              value={assignedDisplay}
-            />
-            <MobilePreviewMetaItem
-              label={previewCopy.labels.contact}
-              icon={<LuUser />}
-              value={summary.contact.name || emptyValue}
-            />
-            <MobilePreviewMetaItem
-              label={previewCopy.labels.email}
-              icon={<LuMail />}
-              value={<LinkedStackedMetaList entries={emailEntries} emptyValue={emptyValue} />}
-            />
-            <MobilePreviewMetaItem
-              label={previewCopy.labels.phone}
-              icon={<LuPhone />}
-              value={<LinkedStackedMetaList entries={phoneEntries} emptyValue={emptyValue} />}
-            />
-            <MobilePreviewMetaItem
-              label={previewCopy.labels.address}
-              icon={<LuMapPin />}
-              value={
-                addressDisplay ? (
-                  addressHref ? (
-                    <a
-                      className={`${cardStyles.metaValueMultiline} ${cardStyles.metaStackedListItemLink}`}
-                      href={addressHref}
-                      target="_blank"
-                      rel="noreferrer noopener"
-                      onClick={(event) => event.stopPropagation()}
-                    >
-                      {addressDisplay}
-                    </a>
-                  ) : (
-                    <MultilineMetaValue text={addressDisplay} />
-                  )
-                ) : (
-                  emptyValue
-                )
-              }
-            />
-            <MobilePreviewMetaItem
-              label={previewCopy.labels.stage}
-              icon={<LuGitBranch />}
-              value={stageDisplay}
-            />
-            <MobilePreviewMetaItem
-              label={previewCopy.labels.progress}
-              icon={<LuListChecks />}
-              value={progressDisplay}
-            />
-          </div>
-        </section>
-
-        {notesText ? (
-          <section className={cardStyles.previewSection} aria-label={previewCopy.sections.notes}>
+        <div className={cardStyles.previewMobileScrollableContent}>
+          <section className={cardStyles.previewSection} aria-label={previewCopy.sections.overview}>
             <div className={cardStyles.previewMobileList}>
               <MobilePreviewMetaItem
-                label={previewCopy.labels.notes}
-                icon={<LuStickyNote />}
-                value={<span className={cardStyles.previewNotes}>{notesText}</span>}
+                label={previewCopy.labels.industry}
+                icon={<LuClipboardList />}
+                value={industryDisplay}
+              />
+              <MobilePreviewMetaItem
+                label={previewCopy.labels.assigned}
+                icon={<LuUser />}
+                value={assignedDisplay}
+              />
+              <MobilePreviewMetaItem
+                label={previewCopy.labels.contact}
+                icon={<LuUser />}
+                value={summary.contact.name || emptyValue}
+              />
+              <MobilePreviewMetaItem
+                label={previewCopy.labels.email}
+                icon={<LuMail />}
+                value={<LinkedStackedMetaList entries={emailEntries} emptyValue={emptyValue} />}
+              />
+              <MobilePreviewMetaItem
+                label={previewCopy.labels.phone}
+                icon={<LuPhone />}
+                value={<LinkedStackedMetaList entries={phoneEntries} emptyValue={emptyValue} />}
+              />
+              <MobilePreviewMetaItem
+                label={previewCopy.labels.address}
+                icon={<LuMapPin />}
+                value={
+                  addressDisplay ? (
+                    addressHref ? (
+                      <a
+                        className={`${cardStyles.metaValueMultiline} ${cardStyles.metaStackedListItemLink}`}
+                        href={addressHref}
+                        target="_blank"
+                        rel="noreferrer noopener"
+                        onClick={(event) => event.stopPropagation()}
+                      >
+                        {addressDisplay}
+                      </a>
+                    ) : (
+                      <MultilineMetaValue text={addressDisplay} />
+                    )
+                  ) : (
+                    emptyValue
+                  )
+                }
+              />
+              <MobilePreviewMetaItem
+                label={previewCopy.labels.stage}
+                icon={<LuGitBranch />}
+                value={stageDisplay}
+              />
+              <MobilePreviewMetaItem
+                label={previewCopy.labels.progress}
+                icon={<LuListChecks />}
+                value={progressDisplay}
               />
             </div>
           </section>
-        ) : null}
 
-        {customFieldDefinitions.length > 0 ? (
-          <section className={cardStyles.previewSection} aria-label={previewCopy.sections.customFields}>
-            <h4 className={cardStyles.previewCustomFieldsHeading}>{previewCopy.sections.customFields}</h4>
-            <dl className={cardStyles.customFieldList}>
-              {customFieldDefinitions.map((definition) => {
-                const raw = summary.customFields?.[definition.fieldKey];
-                const value = raw != null && raw.trim().length > 0 ? raw.trim() : emptyValue;
-                const displayValue =
-                  value === emptyValue ? value : truncatePreviewCustomFieldValue(value);
-                const valueTitle = previewCustomFieldValueTitle(value, emptyValue);
-                return (
-                  <div key={definition.fieldKey} className={cardStyles.customFieldRow}>
-                    <dt className={cardStyles.customFieldLabel}>{definition.label}</dt>
-                    <dd
-                      className={[
-                        cardStyles.customFieldValue,
-                        value === emptyValue ? cardStyles.customFieldValue_muted : '',
-                      ]
-                        .filter(Boolean)
-                        .join(' ')}
-                      title={valueTitle}
-                    >
-                      {displayValue}
-                    </dd>
-                  </div>
-                );
-              })}
-            </dl>
-          </section>
-        ) : null}
+          {notesText ? (
+            <section className={cardStyles.previewSection} aria-label={previewCopy.sections.notes}>
+              <div className={cardStyles.previewMobileList}>
+                <MobilePreviewMetaItem
+                  label={previewCopy.labels.notes}
+                  icon={<LuStickyNote />}
+                  value={<span className={cardStyles.previewNotes}>{notesText}</span>}
+                />
+              </div>
+            </section>
+          ) : null}
+
+          {customFieldDefinitions.length > 0 ? (
+            <section className={cardStyles.previewSection} aria-label={previewCopy.sections.customFields}>
+              <h4 className={cardStyles.previewCustomFieldsHeading}>{previewCopy.sections.customFields}</h4>
+              <dl className={cardStyles.customFieldList}>
+                {customFieldDefinitions.map((definition) => {
+                  const raw = summary.customFields?.[definition.fieldKey];
+                  const value = raw != null && raw.trim().length > 0 ? raw.trim() : emptyValue;
+                  const displayValue =
+                    value === emptyValue ? value : truncatePreviewCustomFieldValue(value);
+                  const valueTitle = previewCustomFieldValueTitle(value, emptyValue);
+                  return (
+                    <div key={definition.fieldKey} className={cardStyles.customFieldRow}>
+                      <dt className={cardStyles.customFieldLabel}>{definition.label}</dt>
+                      <dd
+                        className={[
+                          cardStyles.customFieldValue,
+                          value === emptyValue ? cardStyles.customFieldValue_muted : '',
+                        ]
+                          .filter(Boolean)
+                          .join(' ')}
+                        title={valueTitle}
+                      >
+                        {displayValue}
+                      </dd>
+                    </div>
+                  );
+                })}
+              </dl>
+            </section>
+          ) : null}
+        </div>
       </div>
     );
   }
