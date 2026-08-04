@@ -94,6 +94,10 @@ export function useProjectPreviewPopover({
     }
   }, []);
 
+  const stopEventPropagation = useCallback((event: { stopPropagation: () => void }) => {
+    event.stopPropagation();
+  }, []);
+
   const hide = useCallback(() => {
     clearHideTimer();
     setOpen(false);
@@ -161,6 +165,26 @@ export function useProjectPreviewPopover({
     return () => document.removeEventListener('keydown', onKeyDown);
   }, [hide, open]);
 
+  useEffect(() => {
+    if (!isTapMode || !open || typeof document === 'undefined') return;
+    const { body } = document;
+    const previousOverflow = body.style.overflow;
+    const previousOverscrollBehavior = body.style.overscrollBehavior;
+    const previousPreviewOpen = body.dataset.projectPreviewOpen;
+    body.style.overflow = 'hidden';
+    body.style.overscrollBehavior = 'none';
+    body.dataset.projectPreviewOpen = 'true';
+    return () => {
+      body.style.overflow = previousOverflow;
+      body.style.overscrollBehavior = previousOverscrollBehavior;
+      if (previousPreviewOpen == null || previousPreviewOpen.length === 0) {
+        delete body.dataset.projectPreviewOpen;
+      } else {
+        body.dataset.projectPreviewOpen = previousPreviewOpen;
+      }
+    };
+  }, [isTapMode, open]);
+
   const menu =
     isActive && open
       ? isTapMode && typeof document !== 'undefined'
@@ -169,11 +193,23 @@ export function useProjectPreviewPopover({
               className={cardStyles.previewMobileOverlay}
               role="presentation"
               onClick={() => hide()}
+              onPointerDownCapture={stopEventPropagation}
+              onTouchStartCapture={stopEventPropagation}
+              onContextMenu={(event) => {
+                event.preventDefault();
+                event.stopPropagation();
+              }}
             >
               <div
                 className={cardStyles.previewMobileSheet}
                 role="presentation"
                 onClick={(event) => event.stopPropagation()}
+                onPointerDownCapture={stopEventPropagation}
+                onTouchStartCapture={stopEventPropagation}
+                onContextMenu={(event) => {
+                  event.preventDefault();
+                  event.stopPropagation();
+                }}
               >
                 <ProjectPreviewCard
                   preview={preview}

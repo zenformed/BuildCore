@@ -181,7 +181,13 @@ export function CrmProjectMobileCard({
     }
   }, []);
 
+  const isPreviewModalOpen = useCallback((): boolean => {
+    if (typeof document === 'undefined') return false;
+    return document.body?.dataset.projectPreviewOpen === 'true';
+  }, []);
+
   const handleTouchStart = useCallback(() => {
+    if (isPreviewModalOpen()) return;
     if (bulkSelection == null || selectionModeActive) return;
     longPressTriggeredRef.current = false;
     clearLongPressTimer();
@@ -189,9 +195,10 @@ export function CrmProjectMobileCard({
       bulkSelection.onToggle(project.id);
       longPressTriggeredRef.current = true;
     }, 420);
-  }, [bulkSelection, clearLongPressTimer, project.id, selectionModeActive]);
+  }, [bulkSelection, clearLongPressTimer, isPreviewModalOpen, project.id, selectionModeActive]);
 
   const handleCardActivate = useCallback(() => {
+    if (isPreviewModalOpen()) return;
     if (longPressTriggeredRef.current) {
       longPressTriggeredRef.current = false;
       return;
@@ -201,9 +208,10 @@ export function CrmProjectMobileCard({
       return;
     }
     onRowClick();
-  }, [bulkSelection, onRowClick, project.id, selectionModeActive]);
+  }, [bulkSelection, isPreviewModalOpen, onRowClick, project.id, selectionModeActive]);
 
   const handleKeyDown = (event: KeyboardEvent<HTMLElement>): void => {
+    if (isPreviewModalOpen()) return;
     if (event.key === 'Enter' || event.key === ' ') {
       event.preventDefault();
       if (selectionModeActive && bulkSelection != null) {

@@ -93,6 +93,63 @@ function MultilineMetaValue({ text }: { readonly text: string }): ReactElement {
   return <span className={cardStyles.metaValueMultiline}>{text}</span>;
 }
 
+function buildTelHref(phone: string): string | null {
+  const trimmed = phone.trim();
+  if (!trimmed) return null;
+  const normalized = trimmed.replace(/[^\d+]/g, '');
+  if (!normalized) return null;
+  return `tel:${normalized}`;
+}
+
+function buildMapsHref(
+  addressLine: string | null,
+  latitude?: number | null,
+  longitude?: number | null
+): string | null {
+  if (addressLine != null && addressLine.trim().length > 0) {
+    return `https://maps.google.com/?q=${encodeURIComponent(addressLine)}`;
+  }
+  if (latitude != null && longitude != null) {
+    return `https://maps.google.com/?q=${encodeURIComponent(`${latitude},${longitude}`)}`;
+  }
+  return null;
+}
+
+function LinkedStackedMetaList({
+  entries,
+  emptyValue,
+}: {
+  readonly entries: readonly { label: string; href: string | null }[];
+  readonly emptyValue: string;
+}): ReactElement {
+  if (entries.length === 0) {
+    return <span className={cardStyles.metaValue}>{emptyValue}</span>;
+  }
+
+  return (
+    <div className={cardStyles.metaStackedList}>
+      {entries.map((entry, index) =>
+        entry.href ? (
+          <a
+            key={`${entry.label}-${index}`}
+            className={`${cardStyles.metaStackedListItem} ${cardStyles.metaStackedListItemLink}`}
+            href={entry.href}
+            target={entry.href.startsWith('http') ? '_blank' : undefined}
+            rel={entry.href.startsWith('http') ? 'noreferrer noopener' : undefined}
+            onClick={(event) => event.stopPropagation()}
+          >
+            {entry.label}
+          </a>
+        ) : (
+          <span key={`${entry.label}-${index}`} className={cardStyles.metaStackedListItem}>
+            {entry.label}
+          </span>
+        )
+      )}
+    </div>
+  );
+}
+
 function MobilePreviewMetaItem({
   label,
   icon,
@@ -328,12 +385,24 @@ export function ProjectDetailsCardContent({
     summary.industry === 'other'
       ? summary.customIndustry?.trim() || INDUSTRY_LABELS.other
       : INDUSTRY_LABELS[summary.industry];
-  const emails = nonEmptyContactValues(summary.contact.emails).map((email) =>
+  const rawEmails = nonEmptyContactValues(summary.contact.emails);
+  const rawPhones = nonEmptyContactValues(summary.contact.phones);
+  const emails = rawEmails.map((email) =>
     formatContactEmailDisplay(email, { maskForMember: edit?.memberView })
   );
-  const phones = nonEmptyContactValues(summary.contact.phones).map((phone) =>
-    formatPhoneDisplay(phone)
-  );
+  const phones = rawPhones.map((phone) => formatPhoneDisplay(phone));
+  const canOpenContactLinks = !edit?.memberView;
+  const emailEntries = rawEmails.map((email) => ({
+    label: formatContactEmailDisplay(email, { maskForMember: edit?.memberView }),
+    href: canOpenContactLinks && email.trim().length > 0 ? `mailto:${encodeURIComponent(email.trim())}` : null,
+  }));
+  const phoneEntries = rawPhones.map((phone) => ({
+    label: formatPhoneDisplay(phone) || phone.trim(),
+    href: canOpenContactLinks ? buildTelHref(phone) : null,
+  }));
+  const addressHref = canOpenContactLinks
+    ? buildMapsHref(addressDisplay, summary.latitude, summary.longitude)
+    : null;
   const paymentFinancials = resolveFinancials(summary, financials);
   const progressDisplay =
     progressPercent != null ? `${Math.round(progressPercent)}%` : emptyValue;
@@ -628,17 +697,35 @@ export function ProjectDetailsCardContent({
             <MobilePreviewMetaItem
               label={previewCopy.labels.email}
               icon={<LuMail />}
-              value={<StackedMetaList values={emails} emptyValue={emptyValue} />}
+              value={<LinkedStackedMetaList entries={emailEntries} emptyValue={emptyValue} />}
             />
             <MobilePreviewMetaItem
               label={previewCopy.labels.phone}
               icon={<LuPhone />}
-              value={<StackedMetaList values={phones} emptyValue={emptyValue} />}
+              value={<LinkedStackedMetaList entries={phoneEntries} emptyValue={emptyValue} />}
             />
             <MobilePreviewMetaItem
               label={previewCopy.labels.address}
               icon={<LuMapPin />}
-              value={addressDisplay ? <MultilineMetaValue text={addressDisplay} /> : emptyValue}
+              value={
+                addressDisplay ? (
+                  addressHref ? (
+                    <a
+                      className={`${cardStyles.metaValueMultiline} ${cardStyles.metaStackedListItemLink}`}
+                      href={addressHref}
+                      target="_blank"
+                      rel="noreferrer noopener"
+                      onClick={(event) => event.stopPropagation()}
+                    >
+                      {addressDisplay}
+                    </a>
+                  ) : (
+                    <MultilineMetaValue text={addressDisplay} />
+                  )
+                ) : (
+                  emptyValue
+                )
+              }
             />
             <MobilePreviewMetaItem
               label={previewCopy.labels.stage}
