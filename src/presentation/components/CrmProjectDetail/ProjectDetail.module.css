@@ -4027,6 +4027,13 @@
   background: transparent;
 }
 
+:global([data-theme='dark']) .folderTabPanelInner .documentsTabPanel,
+:global([data-theme='dark']) .folderTabPanelInner .documentsTabPanel .documentsPanelContent,
+:global([data-theme='dark']) .folderTabPanelInner .documentsTabPanel .documentsPanelScroll {
+  background: transparent;
+  box-shadow: none;
+}
+
 /* Reports tab: detailSurface compose re-applies shadow after .folderTabPanelInner resets */
 :global([data-theme='dark'])
   .folderTabPanelInner.folderTabPanelInnerReportsActive
@@ -8136,6 +8143,21 @@
   box-shadow: var(--theme-shadow-card);
 }
 
+@media (max-width: 767px) {
+  .folderTabPanelInner .documentsTabPanel .docList {
+    background: transparent;
+    gap: 0.375rem;
+  }
+
+  .folderTabPanelInner .documentsTabPanel .docListItem {
+    background: #f2f4f7;
+    border: 1px solid var(--theme-border-main, #e2e8f0);
+    border-radius: 0.625rem;
+    border-left: 4px solid #6366f1;
+    box-shadow: var(--theme-shadow-card);
+  }
+}
+
 .folderTabPanelInner
   .budgetTablePanel
   .paymentsList
@@ -8162,7 +8184,9 @@
   .workflowTaskMobileCard:not(.budgetMobileTotalsCard) {
   background: #f2f4f7;
   border: 1px solid var(--theme-border-main, #e2e8f0);
-  border-radius: 0;
+  border-radius: 0.625rem;
+  border-left: 4px solid #d97706;
+  box-shadow: var(--theme-shadow-card);
 }
 
 :global([data-theme='light'])
@@ -8289,6 +8313,15 @@
   box-shadow: var(--theme-shadow-card);
 }
 
+@media (max-width: 767px) {
+  :global([data-theme='dark']) .folderTabPanelInner .documentsTabPanel .docListItem {
+    background: #1d2029;
+    border: 1px solid var(--theme-stage-group-border-color, #80808052);
+    border-left: 4px solid #6366f1;
+    box-shadow: var(--theme-shadow-card);
+  }
+}
+
 :global([data-theme='dark'])
   .folderTabPanelInner
   .budgetTablePanel
@@ -8319,7 +8352,9 @@
   .workflowTaskMobileCard:not(.budgetMobileTotalsCard) {
   background: #1d2029;
   border: 1px solid var(--theme-stage-group-border-color, #80808052);
-  border-radius: 0;
+  border-radius: 0.625rem;
+  border-left: 4px solid #d97706;
+  box-shadow: var(--theme-shadow-card);
 }
 
 :global([data-theme='dark'])
@@ -10439,6 +10474,16 @@
 
 .documentsPanelScroll {
   padding-right: 0.125rem;
+}
+
+@media (max-width: 767px) {
+  .folderTabPanelInner .documentsTabPanel .documentsPanelContent {
+    gap: 0.375rem;
+  }
+
+  .folderTabPanelInner .documentsTabPanel .documentsPanelScroll {
+    padding-right: 0;
+  }
 }
 
 .accountabilityGrid_modal {
@@ -14315,6 +14360,16 @@
     gap: 0.5rem;
   }
 
+  .projectFinancialPaymentMobileMeta {
+    padding-bottom: 0.5rem;
+    margin-bottom: 0.5rem;
+    border-bottom: 1.5px solid var(--theme-border-main, var(--color-border, #e2e8f0));
+  }
+
+  :global([data-theme='dark']) .projectFinancialPaymentMobileMeta {
+    border-bottom-color: var(--theme-border-main, #3d3e4a);
+  }
+
   .projectFinancialPaymentStatusStrip {
     display: flex;
     flex-direction: column;
@@ -14350,6 +14405,20 @@
     font-weight: 600;
     line-height: 1.35;
     color: #f87171;
+  }
+
+  .projectFinancialPaymentMobileCard .workflowTaskMobileCardGrid3 .statusDotIndicator {
+    justify-content: center;
+    padding-right: 0;
+  }
+
+  .projectFinancialPaymentMobileCard .workflowTaskMobileCardGrid3 .statusDotText {
+    text-transform: none;
+    letter-spacing: 0;
+  }
+
+  .projectFinancialCostsGrid {
+    grid-template-columns: minmax(0, 1.55fr) minmax(0, 0.6fr) minmax(0, 0.6fr) minmax(0, 0.5fr);
   }
 
   .pageShell:has([data-project-detail-page]) .accountabilityPagePanel,
@@ -15034,8 +15103,9 @@
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
-  padding: 0.375rem 0 0.5rem;
+  padding: 0.375rem 0 0;
   min-width: 0;
+  background: transparent;
 }
 
 .budgetMobileList .paymentDraftBlock {
@@ -15055,6 +15125,25 @@
 .budgetMobileTotalsCard .workflowTaskMobileCardValue.budgetRemainingOver,
 .budgetMobileTotalsCard .workflowTaskMobileCardValue.budgetMutedCell {
   font-weight: 600;
+}
+
+.budgetMobileList
+  .workflowTaskMobileCard:not(.budgetMobileTotalsCard)
+  .workflowTaskMobileCardBody
+  > .workflowTaskMobileCardGrid3
+  + .workflowTaskMobileCardGrid3 {
+  margin-top: 0.5rem;
+  padding-top: 0.5rem;
+  border-top: 1.5px solid var(--theme-border-main, #e2e8f0);
+}
+
+:global([data-theme='dark'])
+  .budgetMobileList
+  .workflowTaskMobileCard:not(.budgetMobileTotalsCard)
+  .workflowTaskMobileCardBody
+  > .workflowTaskMobileCardGrid3
+  + .workflowTaskMobileCardGrid3 {
+  border-top-color: var(--theme-stage-group-border-color, #80808052);
 }
 
 .workflowTaskMobileCardActions .rowDeleteBtn {

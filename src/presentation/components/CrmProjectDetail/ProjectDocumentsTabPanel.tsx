@@ -2,6 +2,7 @@
 
 import type { ReactElement } from 'react';
 import { useCallback, useMemo, useState } from 'react';
+import { LuSearch } from 'react-icons/lu';
 import type { CrmDocumentMetadata } from '@/domain/crm';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
 import {
@@ -42,9 +43,9 @@ import { DocumentsGallery } from './DocumentsGallery';
 import { DocumentsListHeaderRow } from './DocumentsListHeaderRow';
 import { DocumentsViewToggleButton } from './DocumentsViewToggleButton';
 import {
-  DocumentsMobileBulkSelectAllRow,
-  DocumentsMobileBulkToolbar,
+  DocumentsMobileHideWhenBulkActive,
   DocumentsMobileSearchToolsRow,
+  DocumentsMobileSelectedFloatingPill,
 } from './MobileBulkSelectionChrome';
 import { ProjectDocumentsPanelContent } from './ProjectDocumentsPanelContent';
 import styles from './ProjectDetail.module.css';
@@ -273,10 +274,26 @@ export function ProjectDocumentsTabPanel({
   );
 
   const viewToggle = (
-    <DocumentsViewToggleButton viewMode={viewMode} onToggle={handleToggleViewMode} />
+    <DocumentsViewToggleButton
+      viewMode={viewMode}
+      onToggle={handleToggleViewMode}
+      variant={isMobileLayout ? 'ghost' : 'default'}
+    />
   );
 
-  const searchInput = (
+  const searchInput = isMobileLayout ? (
+    <div className={styles.subprojectsSearchFieldWrap}>
+      <LuSearch className={styles.subprojectsSearchIcon} size={14} strokeWidth={2} aria-hidden />
+      <input
+        type="search"
+        value={searchQuery}
+        onChange={(event) => setSearchQuery(event.target.value)}
+        placeholder={docs.searchPlaceholder}
+        aria-label={docs.searchAriaLabel}
+        className={`${styles.subprojectsSearch} ${styles.subprojectsSearch_withIcon}`}
+      />
+    </div>
+  ) : (
     <DetailPanelSectionSearch
       value={searchQuery}
       onChange={setSearchQuery}
@@ -300,6 +317,27 @@ export function ProjectDocumentsTabPanel({
       onError={handleError}
     />
   );
+  const mobileFloatingAddButton = (
+    <DocumentPanelUploadButton
+      projectSlug={project.summary.slug}
+      onRefresh={handleRefresh}
+      onError={handleError}
+      floatingLabel="+ Add Documents"
+      floatingClassName={styles.subprojectsMobileCreateFloatingBtn}
+    />
+  );
+  const mobileSearchTrailingActions = (
+    <div className={styles.workflowMobileSearchActions}>
+      {filterGhost}
+      {viewToggle}
+    </div>
+  );
+  const mobileHeaderContent = (
+    <DocumentsMobileSearchToolsRow
+      searchInput={searchInput}
+      trailingActions={mobileSearchTrailingActions}
+    />
+  );
 
   const listLeadingFilter = embeddedInFolderTabs ? null : filterCaret;
   const listShowStatusRefresh = !embeddedInFolderTabs;
@@ -316,7 +354,11 @@ export function ProjectDocumentsTabPanel({
         }
         aria-labelledby={embeddedInFolderTabs ? undefined : titleId}
       >
-        {embeddedInFolderTabs ? (
+        {isMobileLayout && embeddedInFolderTabs ? (
+          <FolderTabToolbarPortal>
+            <div className={styles.workflowFolderToolbar}>{mobileHeaderContent}</div>
+          </FolderTabToolbarPortal>
+        ) : embeddedInFolderTabs ? (
           <FolderTabToolbarPortal>
             <DetailPanelHeaderActions>
               {filterGhost}
@@ -332,23 +374,7 @@ export function ProjectDocumentsTabPanel({
               .filter(Boolean)
               .join(' ')}
           >
-            <div className={styles.detailPanelHeaderRow}>
-              <div className={styles.detailPanelHeaderTitleGroup}>
-                <h3 id={titleId} className={styles.detailPanelTitle}>
-                  {content.projectDetail.sections.documents}
-                </h3>
-                {filterCaret}
-              </div>
-              <div className={styles.detailPanelHeaderRowActions}>
-                {refreshButton}
-                <DocumentsMobileBulkToolbar />
-              </div>
-            </div>
-            <DocumentsMobileSearchToolsRow
-              leadingActions={viewToggle}
-              searchInput={searchInput}
-              trailingActions={uploadButton}
-            />
+            {mobileHeaderContent}
           </div>
         ) : (
           <DetailPanelHeader title={content.projectDetail.sections.documents} titleId={titleId}>
@@ -359,11 +385,14 @@ export function ProjectDocumentsTabPanel({
             </DetailPanelHeaderActions>
           </DetailPanelHeader>
         )}
+        {isMobileLayout ? (
+          <>
+            <DocumentsMobileSelectedFloatingPill />
+            <DocumentsMobileHideWhenBulkActive>{mobileFloatingAddButton}</DocumentsMobileHideWhenBulkActive>
+          </>
+        ) : null}
         {viewMode === 'gallery' ? (
           <>
-            {visibleDocuments.length > 0 && isMobileLayout ? (
-              <DocumentsMobileBulkSelectAllRow />
-            ) : null}
             {visibleDocuments.length > 0 && !isMobileLayout ? (
               <DocumentsListHeaderRow
                 leadingFilter={listLeadingFilter}

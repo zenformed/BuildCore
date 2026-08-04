@@ -2,7 +2,6 @@
 
 import type { ReactElement } from 'react';
 import { useMemo, useState } from 'react';
-import { BsCheckLg } from 'react-icons/bs';
 import { LuSearch } from 'react-icons/lu';
 import type { CrmProjectDetail, CrmWorkflowTask } from '@/domain/crm';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
@@ -295,20 +294,8 @@ export function PaymentsRail({
       + Create
     </button>
   ) : null;
-  const mobileCheckButton = (
-    <button
-      type="button"
-      className={`${styles.detailPanelHeaderBtn} ${styles.detailPanelHeaderBtn_complete}`}
-      title={tableCollapsed ? 'Expand payments list' : 'Collapse payments list'}
-      aria-label={tableCollapsed ? 'Expand payments list' : 'Collapse payments list'}
-      onClick={() => setTableCollapsed((current) => !current)}
-    >
-      <BsCheckLg className={styles.detailPanelHeaderCompleteCheck_pending} size={17} aria-hidden />
-    </button>
-  );
   const mobileSearchTrailingActions = (
     <div className={styles.workflowMobileSearchActions}>
-      {mobileCheckButton}
       {statusFilterGhost}
     </div>
   );

@@ -224,18 +224,9 @@ export function BudgetMobileBulkSelectAllRow(): ReactElement | null {
  * Returns null when nothing is selected.
  */
 export function BudgetMobileBulkToolbar(): ReactElement | null {
-  const bulkCopy = content.bulkSelection;
-  const { showBulkToolbar, selectedCount, clearSelection } = useBudgetMobileBulkSelection();
+  const { showBulkToolbar } = useBudgetMobileBulkSelection();
   if (!showBulkToolbar) return null;
-  return (
-    <MobileBulkSelectionToolbar
-      selectedCountLabel={bulkCopy.selectedCount(selectedCount)}
-      toolbarAriaLabel={bulkCopy.toolbarAriaLabel}
-      cancelLabel={bulkCopy.cancel}
-      onClearSelection={clearSelection}
-      actions={<BudgetTableBulkActions />}
-    />
-  );
+  return <div className={styles.subprojectsMobileBulkToolbar}><BudgetTableBulkActions /></div>;
 }
 
 /**
@@ -250,14 +241,48 @@ export function BudgetMobileSearchToolsRow({
   readonly trailingActions?: ReactNode;
 }): ReactElement | null {
   const { showBulkToolbar } = useBudgetMobileBulkSelection();
-  if (showBulkToolbar) return null;
+  if (showBulkToolbar) {
+    return (
+      <div className={styles.subprojectsMobileSearchRow}>
+        <div className={styles.subprojectsMobileSelectionLayout}>
+          <BudgetMobileBulkToolbar />
+        </div>
+      </div>
+    );
+  }
   return (
-    <div className={styles.detailPanelHeaderRow}>
+    <div className={styles.subprojectsMobileSearchRow}>
       <div className={styles.detailPanelSearchWrap}>{searchInput}</div>
-      {trailingActions != null ? (
-        <div className={styles.detailPanelHeaderRowActions}>{trailingActions}</div>
-      ) : null}
+      {trailingActions}
     </div>
+  );
+}
+
+/** Budget mobile: render only when bulk toolbar is hidden. */
+export function BudgetMobileHideWhenBulkActive({
+  children,
+}: {
+  readonly children: ReactNode;
+}): ReactElement | null {
+  const { showBulkToolbar } = useBudgetMobileBulkSelection();
+  if (showBulkToolbar) return null;
+  return <>{children}</>;
+}
+
+/** Budget mobile: bottom-center selected count pill (matches payments/subprojects). */
+export function BudgetMobileSelectedFloatingPill(): ReactElement | null {
+  const { showBulkToolbar, selectedCount, clearSelection } = useBudgetMobileBulkSelection();
+  if (!showBulkToolbar) return null;
+  return (
+    <button
+      type="button"
+      className={styles.subprojectsMobileSelectedFloatingPill}
+      aria-label={content.bulkSelection.cancel}
+      title={content.bulkSelection.cancel}
+      onClick={clearSelection}
+    >
+      {`${selectedCount > 99 ? '99+' : selectedCount} Selected`}
+    </button>
   );
 }
 
@@ -292,17 +317,12 @@ export function DocumentsMobileBulkSelectAllRow(): ReactElement | null {
 
 /** Documents: bulk toolbar for the top header actions row (after refresh). */
 export function DocumentsMobileBulkToolbar(): ReactElement | null {
-  const bulkCopy = content.bulkSelection;
-  const { showBulkToolbar, selectedCount, clearSelection } = useDocumentsMobileBulkSelection();
+  const { showBulkToolbar } = useDocumentsMobileBulkSelection();
   if (!showBulkToolbar) return null;
   return (
-    <MobileBulkSelectionToolbar
-      selectedCountLabel={bulkCopy.selectedCount(selectedCount)}
-      toolbarAriaLabel={bulkCopy.toolbarAriaLabel}
-      cancelLabel={bulkCopy.cancel}
-      onClearSelection={clearSelection}
-      actions={<DocumentsPanelBulkActions />}
-    />
+    <div className={styles.subprojectsMobileBulkToolbar}>
+      <DocumentsPanelBulkActions />
+    </div>
   );
 }
 
@@ -312,25 +332,54 @@ export function DocumentsMobileBulkToolbar(): ReactElement | null {
  */
 export function DocumentsMobileSearchToolsRow({
   searchInput,
-  leadingActions = null,
   trailingActions = null,
 }: {
   readonly searchInput: ReactNode;
-  readonly leadingActions?: ReactNode;
   readonly trailingActions?: ReactNode;
 }): ReactElement | null {
   const { showBulkToolbar } = useDocumentsMobileBulkSelection();
-  if (showBulkToolbar) return null;
+  if (showBulkToolbar) {
+    return (
+      <div className={styles.subprojectsMobileSearchRow}>
+        <div className={styles.subprojectsMobileSelectionLayout}>
+          <DocumentsMobileBulkToolbar />
+        </div>
+      </div>
+    );
+  }
   return (
-    <div className={styles.detailPanelHeaderRow}>
-      {leadingActions != null ? (
-        <div className={styles.detailPanelHeaderRowActions}>{leadingActions}</div>
-      ) : null}
+    <div className={styles.subprojectsMobileSearchRow}>
       <div className={styles.detailPanelSearchWrap}>{searchInput}</div>
-      {trailingActions != null ? (
-        <div className={styles.detailPanelHeaderRowActions}>{trailingActions}</div>
-      ) : null}
+      {trailingActions}
     </div>
+  );
+}
+
+/** Documents mobile: render only when bulk toolbar is hidden. */
+export function DocumentsMobileHideWhenBulkActive({
+  children,
+}: {
+  readonly children: ReactNode;
+}): ReactElement | null {
+  const { showBulkToolbar } = useDocumentsMobileBulkSelection();
+  if (showBulkToolbar) return null;
+  return <>{children}</>;
+}
+
+/** Documents mobile: bottom-center selected count pill. */
+export function DocumentsMobileSelectedFloatingPill(): ReactElement | null {
+  const { showBulkToolbar, selectedCount, clearSelection } = useDocumentsMobileBulkSelection();
+  if (!showBulkToolbar) return null;
+  return (
+    <button
+      type="button"
+      className={styles.subprojectsMobileSelectedFloatingPill}
+      aria-label={content.bulkSelection.cancel}
+      title={content.bulkSelection.cancel}
+      onClick={clearSelection}
+    >
+      {`${selectedCount > 99 ? '99+' : selectedCount} Selected`}
+    </button>
   );
 }
 

@@ -17,12 +17,16 @@ export type DocumentPanelUploadButtonProps = {
   readonly projectSlug: string;
   readonly onRefresh: () => Promise<void>;
   readonly onError?: (message: string) => void;
+  readonly floatingLabel?: string;
+  readonly floatingClassName?: string;
 };
 
 export function DocumentPanelUploadButton({
   projectSlug,
   onRefresh,
   onError,
+  floatingLabel,
+  floatingClassName,
 }: DocumentPanelUploadButtonProps): ReactElement {
   const wf = content.projectDetail.workflow;
   const { guardProjectEdit } = useProjectDetailShell();
@@ -83,17 +87,34 @@ export function DocumentPanelUploadButton({
 
   return (
     <span className={styles.uploadControl}>
-      <DetailPanelHeaderButton
-        variant="add"
-        title={uploading ? wf.taskSubmitting : wf.documentsUpload}
-        aria-label={wf.documentsUpload}
-        disabled={uploading}
-        onClick={() => {
-          guardProjectEdit(() => {
-            fileInputRef.current?.click();
-          });
-        }}
-      />
+      {floatingLabel != null ? (
+        <button
+          type="button"
+          className={floatingClassName}
+          title={uploading ? wf.taskSubmitting : floatingLabel}
+          aria-label={floatingLabel}
+          disabled={uploading}
+          onClick={() => {
+            guardProjectEdit(() => {
+              fileInputRef.current?.click();
+            });
+          }}
+        >
+          {floatingLabel}
+        </button>
+      ) : (
+        <DetailPanelHeaderButton
+          variant="add"
+          title={uploading ? wf.taskSubmitting : wf.documentsUpload}
+          aria-label={wf.documentsUpload}
+          disabled={uploading}
+          onClick={() => {
+            guardProjectEdit(() => {
+              fileInputRef.current?.click();
+            });
+          }}
+        />
+      )}
       <input
         ref={fileInputRef}
         type="file"

@@ -217,7 +217,9 @@ export function BudgetInlineRow({
   const showDocumentsIcon = hasDocuments || entry.documentsRequired;
 
   const rowSelection = useBudgetEntryRowSelection();
-  const showRowSelect = rowSelection != null && (variant === 'table' || variant === 'mobile');
+  const selectionModeActive = rowSelection != null && variant === 'mobile' && rowSelection.selectedCount > 0;
+  const showRowSelect =
+    rowSelection != null && (variant === 'table' || (variant === 'mobile' && selectionModeActive));
   const isSelected = showRowSelect && rowSelection.selectedIds.has(entry.id);
   const mobileCardTitle = formatWorkflowTaskMobileCardTitle(entry.itemName);
   const rowClass = [
@@ -272,6 +274,29 @@ export function BudgetInlineRow({
       />
     ) : null;
 
+  const longPressTimerRef = useRef<number | null>(null);
+  const clearLongPressTimer = useCallback(() => {
+    if (longPressTimerRef.current != null) {
+      window.clearTimeout(longPressTimerRef.current);
+      longPressTimerRef.current = null;
+    }
+  }, []);
+  useEffect(
+    () => () => {
+      if (longPressTimerRef.current != null) {
+        window.clearTimeout(longPressTimerRef.current);
+      }
+    },
+    []
+  );
+  const handleMobileTouchStart = useCallback(() => {
+    if (variant !== 'mobile' || rowSelection == null || selectionModeActive) return;
+    clearLongPressTimer();
+    longPressTimerRef.current = window.setTimeout(() => {
+      rowSelection.onToggle(entry.id);
+    }, 420);
+  }, [clearLongPressTimer, entry.id, rowSelection, selectionModeActive, variant]);
+
   if (variant === 'mobile') {
     const mobileValueBtn = styles.workflowTaskMobileCardValueBtn;
     const mobileValue = styles.workflowTaskMobileCardValue;
@@ -283,6 +308,7 @@ export function BudgetInlineRow({
         className={[
           styles.card,
           styles.workflowTaskMobileCard,
+          selectionModeActive ? styles.subprojectMobileCard_selectionMode : '',
           isSelected ? styles.workflowTaskMobileCard_selected : '',
         ]
           .filter(Boolean)
@@ -290,15 +316,31 @@ export function BudgetInlineRow({
         aria-label={entry.itemName}
         aria-busy={saving}
         aria-selected={showRowSelect ? isSelected : undefined}
+        onTouchStart={handleMobileTouchStart}
+        onTouchEnd={clearLongPressTimer}
+        onTouchCancel={clearLongPressTimer}
+        onTouchMove={clearLongPressTimer}
       >
         <div className={styles.workflowTaskMobileCardHeader}>
           {showRowSelect && rowSelection != null ? (
             <span className={styles.workflowTaskMobileCardSelect}>
-              <BulkSelectCheckbox
-                checked={isSelected}
-                ariaLabel={rowSelection.selectItemAriaLabel(entry.itemName)}
-                onChange={() => rowSelection.onToggle(entry.id)}
-              />
+              <button
+                type="button"
+                className={[
+                  styles.workflowTaskMobileCardSelectToggle,
+                  isSelected ? styles.workflowTaskMobileCardSelectToggle_checked : '',
+                ]
+                  .filter(Boolean)
+                  .join(' ')}
+                aria-pressed={isSelected}
+                aria-label={rowSelection.selectItemAriaLabel(entry.itemName)}
+                onClick={(event) => {
+                  event.stopPropagation();
+                  rowSelection.onToggle(entry.id);
+                }}
+              >
+                <span className={styles.workflowTaskMobileCardSelectToggleMark} aria-hidden />
+              </button>
             </span>
           ) : null}
           <div className={styles.workflowTaskMobileCardTitleWrap}>

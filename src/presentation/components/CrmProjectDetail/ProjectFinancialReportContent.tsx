@@ -316,7 +316,7 @@ function FinancialReportPaymentMobileCard({
       aria-label={`${labels.payment}: ${row.title}`}
     >
       <div className={styles.workflowTaskMobileCardBody}>
-        <div className={styles.workflowTaskMobileCardGrid2}>
+        <div className={`${styles.workflowTaskMobileCardGrid2} ${styles.projectFinancialPaymentMobileMeta}`}>
           <div className={styles.workflowTaskMobileCardCell}>
             <span className={styles.projectInfoMobileLabel}>{labels.payment}</span>
             <span className={styles.workflowTaskMobileCardValue}>{row.title}</span>
@@ -335,7 +335,12 @@ function FinancialReportPaymentMobileCard({
           </div>
           <div className={`${styles.workflowTaskMobileCardCell} ${styles.workflowTaskMobileCardCell_center}`}>
             <span className={styles.projectInfoMobileLabel}>{labels.status}</span>
-            <span className={styles.workflowTaskMobileCardValue}>{row.statusLabel}</span>
+            <span
+              className={`${styles.statusDotIndicator} ${workflowTaskStatusBadgeClass(row.status)}`}
+            >
+              <span className={styles.statusDot} aria-hidden />
+              <span className={styles.statusDotText}>{row.statusLabel}</span>
+            </span>
           </div>
           <div className={`${styles.workflowTaskMobileCardCell} ${styles.workflowTaskMobileCardCell_right}`}>
             <span className={styles.projectInfoMobileLabel}>{labels.paidDate}</span>
