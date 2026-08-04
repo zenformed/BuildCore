@@ -9,23 +9,31 @@ import projectStyles from '@/presentation/components/CrmProjects/CrmProjects.mod
 export type DocumentsViewToggleButtonProps = {
   readonly viewMode: DocumentsViewMode;
   readonly onToggle: () => void;
+  readonly variant?: 'default' | 'ghost';
 };
 
 /** Compact list/gallery toggle — place immediately left of document search. */
 export function DocumentsViewToggleButton({
   viewMode,
   onToggle,
+  variant = 'default',
 }: DocumentsViewToggleButtonProps): ReactElement {
   const copy = content.projectDetail.documents.viewMode;
   const switchToGallery = viewMode === 'list';
   const label = switchToGallery ? copy.switchToGallery : copy.switchToList;
+  const buttonClassName =
+    variant === 'ghost'
+      ? `${projectStyles.projectsFilterBtn_ghost}${
+          viewMode === 'gallery' ? ` ${projectStyles.projectsFilterBtn_ghostActive}` : ''
+        }`
+      : `${projectStyles.projectsFilterBtn}${
+          viewMode === 'gallery' ? ` ${projectStyles.projectsFilterBtn_active}` : ''
+        }`;
 
   return (
     <button
       type="button"
-      className={`${projectStyles.projectsFilterBtn}${
-        viewMode === 'gallery' ? ` ${projectStyles.projectsFilterBtn_active}` : ''
-      }`}
+      className={buttonClassName}
       title={label}
       aria-label={label}
       aria-pressed={viewMode === 'gallery'}
