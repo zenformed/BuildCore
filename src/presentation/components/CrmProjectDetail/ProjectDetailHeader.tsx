@@ -18,6 +18,7 @@ import {
   ProjectDetailMobileStageEnd,
 } from './ProjectDetailMobileStageSummary';
 import { ProjectDetailInactiveStatus } from './ProjectDetailInactiveStatus';
+import { ProjectPreviewNameAnchor } from '@/presentation/components/CrmProjects/ProjectPreviewNameAnchor';
 import styles from './ProjectDetail.module.css';
 
 export type ProjectDetailHeaderProps = {
@@ -73,7 +74,13 @@ export function ProjectDetailHeader({
       ) : !isInactive && isComplete ? (
         <CrmProjectCompleteIcon ariaLabel={content.crm.table.completionCheckAriaLabel} />
       ) : null}
-      <h1 className={styles.title}>{project.client.name}</h1>
+      {isMobileLayout ? (
+        <ProjectPreviewNameAnchor project={project}>
+          <h1 className={styles.title}>{project.client.name}</h1>
+        </ProjectPreviewNameAnchor>
+      ) : (
+        <h1 className={styles.title}>{project.client.name}</h1>
+      )}
       {!isMobileLayout ? assigneeControl : null}
     </div>
   );

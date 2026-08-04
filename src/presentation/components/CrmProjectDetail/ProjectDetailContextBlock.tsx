@@ -135,9 +135,7 @@ export function ProjectDetailContextBlock({
           {header}
         </div>
         <div className={styles.detailMobileScroll}>
-          {summaryStrip}
-          {notes}
-          {scrollBody}
+          <div className={styles.detailMobileContentInset}>{scrollBody}</div>
         </div>
       </div>
     );

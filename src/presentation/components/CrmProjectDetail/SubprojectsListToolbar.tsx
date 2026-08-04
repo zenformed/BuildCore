@@ -1,7 +1,7 @@
 'use client';
 
 import type { ReactElement, ReactNode } from 'react';
-import { LuFileSpreadsheet } from 'react-icons/lu';
+import { LuFileSpreadsheet, LuSearch } from 'react-icons/lu';
 import { DetailPanelHeaderButton } from './DetailPanelHeaderButton';
 import { useDashboardMobileLayout } from '@/presentation/features/crmProjects/useDashboardMobileLayout';
 import importStyles from '@/presentation/components/CrmImport/SpreadsheetImportWizard.module.css';
@@ -62,41 +62,35 @@ export function SubprojectsListToolbar({
           >
             {mobileBulkActions}
           </div>
-          <div className={styles.subprojectsMobileSelectionRightActions}>
-            {canManage && onImportOpen ? (
-              <button
-                type="button"
-                className={importStyles.toolbarImportButton}
-                title={importSpreadsheetTitle}
-                aria-label={importSpreadsheetAriaLabel ?? importSpreadsheetTitle}
-                onClick={onImportOpen}
-              >
-                <LuFileSpreadsheet size={16} strokeWidth={2} aria-hidden />
-                {isMobileLayout ? null : importSpreadsheetTitle}
-              </button>
-            ) : null}
-            {trailingActions}
-            {canManage ? (
-              <DetailPanelHeaderButton
-                variant="add"
-                title={newSubprojectTitle}
-                aria-label={newSubprojectAriaLabel}
-                onClick={onCreateOpen}
-              />
-            ) : null}
-          </div>
         </div>
       ) : expanded ? (
-        <input
-          type="search"
-          value={searchQuery}
-          onChange={(event) => onSearchQueryChange(event.target.value)}
-          placeholder={searchPlaceholder}
-          aria-label={searchAriaLabel}
-          className={styles.subprojectsSearch}
-        />
+        isMobileLayout ? (
+          <div className={styles.subprojectsMobileSearchRow}>
+            <div className={styles.subprojectsSearchFieldWrap}>
+              <LuSearch className={styles.subprojectsSearchIcon} size={14} strokeWidth={2} aria-hidden />
+              <input
+                type="search"
+                value={searchQuery}
+                onChange={(event) => onSearchQueryChange(event.target.value)}
+                placeholder={searchPlaceholder}
+                aria-label={searchAriaLabel}
+                className={`${styles.subprojectsSearch} ${styles.subprojectsSearch_withIcon}`}
+              />
+            </div>
+            {trailingActions}
+          </div>
+        ) : (
+          <input
+            type="search"
+            value={searchQuery}
+            onChange={(event) => onSearchQueryChange(event.target.value)}
+            placeholder={searchPlaceholder}
+            aria-label={searchAriaLabel}
+            className={styles.subprojectsSearch}
+          />
+        )
       ) : null}
-      {!showMobileBulkToolbar && canManage && onImportOpen ? (
+      {!showMobileBulkToolbar && !isMobileLayout && canManage && onImportOpen ? (
         <button
           type="button"
           className={importStyles.toolbarImportButton}
@@ -108,8 +102,8 @@ export function SubprojectsListToolbar({
           {isMobileLayout ? null : importSpreadsheetTitle}
         </button>
       ) : null}
-      {!showMobileBulkToolbar ? trailingActions : null}
-      {!showMobileBulkToolbar && canManage ? (
+      {!showMobileBulkToolbar && !isMobileLayout ? trailingActions : null}
+      {!showMobileBulkToolbar && !isMobileLayout && canManage ? (
         <DetailPanelHeaderButton
           variant="add"
           title={newSubprojectTitle}

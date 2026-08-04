@@ -546,7 +546,7 @@ function SubprojectsSectionContent({
       stageScopeMode="subproject"
       radiusFilter={radiusFilter}
       onRadiusFilterChange={setRadiusFilter}
-      triggerVariant={embeddedInFolderTabs ? 'ghost' : 'caret'}
+      triggerVariant={isMobileLayout ? 'ghost' : embeddedInFolderTabs ? 'ghost' : 'caret'}
       menuAlign="start"
     />
   );
@@ -582,7 +582,7 @@ function SubprojectsSectionContent({
       bulkCancelLabel={bulkSelectionCopy.cancel}
       onClearSelection={() => bulkSelection.clearSelection()}
       mobileBulkActions={selectionBulkActions}
-      trailingActions={embeddedInFolderTabs ? refreshButton : null}
+      trailingActions={isMobileLayout ? filterMenu : embeddedInFolderTabs ? refreshButton : null}
     />
   );
 
@@ -612,15 +612,20 @@ function SubprojectsSectionContent({
       {embeddedInFolderTabs ? (
         <FolderTabToolbarPortal>
           <div
-            className={
+            className={[
+              styles.subprojectsFolderToolbar,
               isMobileLayout && bulkSelection.selectedCount > 0 && canUseBulkActions
                 ? styles.subprojectsFolderToolbarSelection
-                : ''
-            }
+                : '',
+            ]
+              .filter(Boolean)
+              .join(' ')}
           >
             <DetailPanelHeaderActions>
               {isMobileLayout && bulkSelection.selectedCount > 0 && canUseBulkActions
                 ? null
+                : isMobileLayout
+                  ? null
                 : filterMenu}
               {listToolbar}
             </DetailPanelHeaderActions>
@@ -647,10 +652,8 @@ function SubprojectsSectionContent({
                   <span id={sectionId} className={styles.subprojectsPanelTitle}>
                     {copy.title}
                   </span>
-                  {filterMenu}
                 </div>
                 <div className={styles.detailPanelHeaderRowActions}>
-                  {refreshButton}
                   <button
                     type="button"
                     className={styles.subprojectsPanelHeaderToggle}
@@ -723,6 +726,19 @@ function SubprojectsSectionContent({
           onClick={() => bulkSelection.clearSelection()}
         >
           {`${bulkSelection.selectedCount > 99 ? '99+' : bulkSelection.selectedCount} Selected`}
+        </button>
+      ) : null}
+      {isMobileLayout && canManage && !(bulkSelection.selectedCount > 0 && canUseBulkActions) ? (
+        <button
+          type="button"
+          className={styles.subprojectsMobileCreateFloatingBtn}
+          onClick={() => {
+            guardProjectEdit(() => {
+              setCreateOpen(true);
+            });
+          }}
+        >
+          + Create
         </button>
       ) : null}
 
