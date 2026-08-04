@@ -5,12 +5,21 @@ import { isDemoRuntimeClient } from '@/infrastructure/runtime/buildCoreRuntime';
 import { resolveCrmRepositoryResult } from '@/infrastructure/crm/types';
 import { isCrmDocumentImage } from '@/presentation/features/crmProjectDetail/documentGalleryMedia';
 import { crmRepositories } from '@/shared/di/container';
+import { DEMO_TEAM_MEMBER_ID } from '@/infrastructure/demo/demoProfileFixtures';
+import { resolveMockCrmTeamMember } from '@/platform/mock/crm/teamMembers';
 
 export async function loadCrmOrganizationPhotos(input: {
   readonly search: string;
   readonly cursor?: string | null;
   readonly limit?: number;
 }): Promise<CrmOrganizationPhotosPage> {
+  const demoUploader = resolveMockCrmTeamMember(DEMO_TEAM_MEMBER_ID) ?? {
+    id: DEMO_TEAM_MEMBER_ID,
+    displayName: 'Alex Rivera',
+    initials: 'AR',
+    avatarUrl: null,
+    email: 'alex.rivera@zenformed.test',
+  };
   if (isDemoRuntimeClient()) {
     const summaries = await resolveCrmRepositoryResult(
       crmRepositories.projects.listSummaries({ rootsOnly: false })
@@ -22,6 +31,63 @@ export async function loadCrmOrganizationPhotos(input: {
       )
     );
     const normalizedSearch = input.search.trim().toLocaleLowerCase();
+    const primaryPhotoDocs = summaries
+      .filter((summary) => summary.parentProjectId == null)
+      .filter((summary) => {
+        const path = summary.primaryPhotoPath?.trim() ?? '';
+        return path.startsWith('/images/') || path.startsWith('images/');
+      })
+      .filter((summary) => {
+        if (!normalizedSearch) return true;
+        return [
+          summary.primaryPhotoPath ?? null,
+          summary.name,
+          summary.client.name || null,
+          summary.contact.name || null,
+        ].some((value) => value?.toLocaleLowerCase().includes(normalizedSearch));
+      })
+      .map((summary) => {
+        const path = summary.primaryPhotoPath!.trim();
+        const normalizedPath = path.startsWith('/') ? path : `/${path}`;
+        const lower = normalizedPath.toLowerCase();
+        const mimeType = lower.endsWith('.png')
+          ? 'image/png'
+          : lower.endsWith('.webp')
+            ? 'image/webp'
+            : 'image/jpeg';
+        return {
+          document: {
+            id: `demo-primary-photo-${summary.id}`,
+            workflowTaskId: null,
+            budgetEntryId: null,
+            name: normalizedPath,
+            kind: 'photo' as const,
+            stageSlug: null,
+            uploadedAt: summary.lastUpdatedAt,
+            uploadedBy: summary.assignedTo ?? demoUploader,
+            reviewedAt: null,
+            reviewedBy: null,
+            mimeType,
+            sizeBytes: 0,
+            latitude: null,
+            longitude: null,
+            locationAccuracyMeters: null,
+            locationSource: null,
+            locationCapturedAt: null,
+          },
+          projectId: summary.id,
+          projectSlug: summary.slug,
+          projectName: summary.name,
+          parentProjectId: null,
+          parentProjectSlug: null,
+          parentProjectName: null,
+          taskName: null,
+          customerName: summary.client.name || summary.contact.name || null,
+          canDownload: false,
+          canDelete: false,
+        };
+      });
+
     const all = details
       .filter((detail): detail is NonNullable<typeof detail> => detail != null)
       .flatMap((detail) => {
@@ -57,6 +123,7 @@ export async function loadCrmOrganizationPhotos(input: {
             canDelete: false,
           }));
       })
+      .concat(primaryPhotoDocs)
       .sort(
         (a, b) =>
           new Date(b.document.uploadedAt).getTime() -

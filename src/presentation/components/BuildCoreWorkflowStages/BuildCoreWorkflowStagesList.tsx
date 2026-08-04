@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState, type DragEvent, type ReactElement } from 'react';
+import { useMemo, useState, type CSSProperties, type DragEvent, type ReactElement } from 'react';
 import { createPortal } from 'react-dom';
 import type { BuildCoreEntityTerminologyKey } from '@/domain/buildcore/entityTerminology';
 import type { OrgPipelineStageRecord, PipelineStageScope } from '@/domain/buildcore/orgPipelineStages';
@@ -14,6 +14,7 @@ import { WorkflowStagesEntityHeading } from '@/presentation/components/BuildCore
 import { useDashboardMobileLayout } from '@/presentation/features/crmProjects/useDashboardMobileLayout';
 import { useBuildCorePipelineStages } from '@/presentation/providers/BuildCorePipelineStagesProvider';
 import { useBuildCoreWorkflowStagesPage } from '@/presentation/features/buildCoreWorkflowStages/useBuildCoreWorkflowStagesPage';
+import { workflowStageAccentColor } from '@/presentation/features/crmProjectDetail/workflowStageAccentColors';
 import styles from './BuildCoreWorkflowStages.module.css';
 
 type StageEditorState =
@@ -73,6 +74,14 @@ export function BuildCoreWorkflowStagesList({
     () => sortedStages.find((stage) => isReservedPipelineStageSlug(stage.slug)) ?? null,
     [sortedStages]
   );
+  const stageAccentById = useMemo(() => {
+    const map = new Map<string, string>();
+    const stageCount = sortedStages.length;
+    for (const [index, stage] of sortedStages.entries()) {
+      map.set(stage.id, workflowStageAccentColor(index, stageCount));
+    }
+    return map;
+  }, [sortedStages]);
 
   const isStageReorderable = (stage: OrgPipelineStageRecord): boolean =>
     !isReservedPipelineStageSlug(stage.slug);
@@ -181,6 +190,11 @@ export function BuildCoreWorkflowStagesList({
         key={stage.id}
         role="listitem"
         className={rowClass}
+        style={
+          stageAccentById.has(stage.id)
+            ? ({ ['--stage-accent' as string]: stageAccentById.get(stage.id) } as CSSProperties)
+            : undefined
+        }
         draggable={reorderable && canManage && busyStageId == null}
         onDragStart={reorderable ? handleDragStart(stage) : undefined}
         onDragOver={reorderable ? handleDragOver(stage) : undefined}

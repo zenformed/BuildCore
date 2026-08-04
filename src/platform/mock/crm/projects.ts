@@ -448,7 +448,7 @@ function buildGeneratedSubprojectInput(
     customIndustry: parent.summary.customIndustry,
     contact: c(
       `${parent.summary.id}-sub-contact-${index}`,
-      `${parent.summary.contact.name} (Subproject ${index})`,
+      parent.summary.contact.name,
       `${cleanClientBase || 'client'}.sub${index}@example.com`,
       subprojectPhone(parent.summary.id, index),
       parent.summary.contact.title

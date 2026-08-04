@@ -29,7 +29,30 @@ import type { BuildCorePipelineStagesResponse } from '@/infrastructure/crm/serve
 import { buildDefaultBuildCorePipelineStagesResponse } from '@/infrastructure/crm/server/pipelineStageService';
 import { isDemoRuntimeClient } from '@/infrastructure/runtime/buildCoreRuntime';
 
+const DEMO_PROJECT_PIPELINE_STAGES: readonly PipelineStage[] = [
+  { slug: 'scope-of-work', label: 'Scope of Work', sortOrder: 1 },
+  { slug: 'site-walk', label: 'Site Walk', sortOrder: 2 },
+  { slug: 'contract-signed', label: 'Contract Signed', sortOrder: 3 },
+  { slug: 'invoiced', label: 'Invoiced', sortOrder: 4 },
+  { slug: 'complete', label: 'Complete', sortOrder: 5 },
+];
+
+function defaultDemoProjectStageRecords(): OrgPipelineStageRecord[] {
+  return DEMO_PROJECT_PIPELINE_STAGES.map((stage, index) => ({
+    id: `mock-stage-project-${stage.slug}`,
+    organizationId: DEMO_ORGANIZATION_ID,
+    stageScope: 'project',
+    slug: stage.slug,
+    label: stage.label,
+    sortOrder: index + 1,
+    isActive: true,
+  }));
+}
+
 function defaultStagesForScope(scope: PipelineStageScope): OrgPipelineStageRecord[] {
+  if (scope === 'project') {
+    return defaultDemoProjectStageRecords();
+  }
   return defaultOrgPipelineStageRecords(DEMO_ORGANIZATION_ID, scope);
 }
 

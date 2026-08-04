@@ -191,6 +191,17 @@ function withPrimaryPhotoFallback(detail: CrmProjectDetail): CrmProjectDetail {
   const nextSummary = { ...detail.summary };
   let changed = false;
 
+  const normalizedContactName = nextSummary.contact.name
+    .replace(/\s*\(subproject\s*\d+\)\s*$/i, '')
+    .trim();
+  if (normalizedContactName !== nextSummary.contact.name) {
+    nextSummary.contact = {
+      ...nextSummary.contact,
+      name: normalizedContactName,
+    };
+    changed = true;
+  }
+
   if (nextSummary.primaryPhotoPath == null || nextSummary.primaryPhotoPath.trim() === '') {
     const seededPath = seeded?.summary.primaryPhotoPath?.trim() ?? '';
     if (seededPath !== '') {

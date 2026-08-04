@@ -23,6 +23,7 @@ import { truncateDisplayText } from '@/presentation/features/crmProjectDetail/cr
 import { WorkflowDocumentFileIcon } from './WorkflowDocumentFileIcon';
 import { DocumentsGallerySelectCircle } from './DocumentsGallerySelectCircle';
 import { TeamMemberAvatar } from './TeamMemberAvatar';
+import { isDemoRuntimeClient } from '@/infrastructure/runtime/buildCoreRuntime';
 import styles from './ProjectDetail.module.css';
 
 export type DocumentsGalleryTileProps = {
@@ -57,6 +58,7 @@ export function DocumentsGalleryTile({
   const isImage = isCrmDocumentImage(doc.name, doc.mimeType);
   const isVideo = isCrmDocumentVideo(doc.name, doc.mimeType);
   const isPdf = isCrmDocumentPdf(doc.name, doc.mimeType);
+  const isDemoRuntime = isDemoRuntimeClient();
   const wantsBlob = (isImage || isVideo || isPdf) && !mediaFailed;
   const blobUrl = useCrmDocumentPreviewBlob(
     projectSlug,
@@ -80,9 +82,10 @@ export function DocumentsGalleryTile({
   const showPdf = pdfThumb.status === 'ready' && Boolean(pdfThumb.url) && !mediaFailed && isPdf;
   const showMedia = showImage || showVideo || showPdf;
   const pdfFailed = isPdf && (mediaFailed || pdfThumb.status === 'error');
-  const mediaPending = wantsBlob && !showMedia && !mediaFailed && !pdfFailed;
+  const mediaPending = wantsBlob && !showMedia && !mediaFailed && !pdfFailed && !isDemoRuntime;
+  const demoNoPreview = isDemoRuntime && (isImage || isVideo || isPdf) && !showMedia;
   const showDocumentFallback =
-    (!isImage && !isVideo && !isPdf) || mediaFailed || pdfFailed;
+    (!isImage && !isVideo && !isPdf) || mediaFailed || pdfFailed || demoNoPreview;
 
   useEffect(() => {
     const node = tileRef.current;

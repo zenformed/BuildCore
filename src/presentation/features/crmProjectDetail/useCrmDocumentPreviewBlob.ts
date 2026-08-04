@@ -32,9 +32,19 @@ export function useCrmDocumentPreviewBlob(
   );
 
   useEffect(() => {
-    if (!enabled || !doc || !cacheKey || isDemoRuntimeClient()) {
+    if (!enabled || !doc || !cacheKey) {
       if (!enabled) return;
       setBlobUrl(cacheKey ? (peekSessionBlobUrl(cacheKey) ?? null) : null);
+      return;
+    }
+    if (isDemoRuntimeClient()) {
+      const rawName = doc.name.trim();
+      const directPath = rawName.startsWith('/images/')
+        ? rawName
+        : rawName.startsWith('images/')
+          ? `/${rawName}`
+          : null;
+      setBlobUrl(directPath);
       return;
     }
 
