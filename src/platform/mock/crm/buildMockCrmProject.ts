@@ -92,19 +92,21 @@ type AddressTemplate = {
   readonly state: string;
   readonly postalCode: string;
   readonly street: string;
+  readonly latitude: number;
+  readonly longitude: number;
 };
 
 const ADDRESS_TEMPLATES: readonly AddressTemplate[] = [
-  { city: 'Austin', state: 'TX', postalCode: '78701', street: 'Congress Ave' },
-  { city: 'Dallas', state: 'TX', postalCode: '75201', street: 'Elm St' },
-  { city: 'Houston', state: 'TX', postalCode: '77002', street: 'Main St' },
-  { city: 'Fort Worth', state: 'TX', postalCode: '76102', street: 'Throckmorton St' },
-  { city: 'San Antonio', state: 'TX', postalCode: '78205', street: 'Houston St' },
-  { city: 'Plano', state: 'TX', postalCode: '75074', street: '14th St' },
-  { city: 'Irving', state: 'TX', postalCode: '75060', street: 'Irving Blvd' },
-  { city: 'Arlington', state: 'TX', postalCode: '76010', street: 'Abram St' },
-  { city: 'Frisco', state: 'TX', postalCode: '75034', street: 'Main St' },
-  { city: 'Round Rock', state: 'TX', postalCode: '78664', street: 'Mays St' },
+  { city: 'Austin', state: 'TX', postalCode: '78701', street: 'Congress Ave', latitude: 30.2672, longitude: -97.7431 },
+  { city: 'Dallas', state: 'TX', postalCode: '75201', street: 'Elm St', latitude: 32.7767, longitude: -96.797 },
+  { city: 'Houston', state: 'TX', postalCode: '77002', street: 'Main St', latitude: 29.7604, longitude: -95.3698 },
+  { city: 'Fort Worth', state: 'TX', postalCode: '76102', street: 'Throckmorton St', latitude: 32.7555, longitude: -97.3308 },
+  { city: 'San Antonio', state: 'TX', postalCode: '78205', street: 'Houston St', latitude: 29.4241, longitude: -98.4936 },
+  { city: 'Plano', state: 'TX', postalCode: '75074', street: '14th St', latitude: 33.0198, longitude: -96.6989 },
+  { city: 'Irving', state: 'TX', postalCode: '75060', street: 'Irving Blvd', latitude: 32.814, longitude: -96.9489 },
+  { city: 'Arlington', state: 'TX', postalCode: '76010', street: 'Abram St', latitude: 32.7357, longitude: -97.1081 },
+  { city: 'Frisco', state: 'TX', postalCode: '75034', street: 'Main St', latitude: 33.1507, longitude: -96.8236 },
+  { city: 'Round Rock', state: 'TX', postalCode: '78664', street: 'Mays St', latitude: 30.5083, longitude: -97.6789 },
 ];
 
 function stableIndex(seed: string, modulo: number): number {
@@ -138,6 +140,33 @@ function defaultAddressForProject(id: string): CrmProjectAddress {
     city: template.city,
     state: template.state,
     postalCode: template.postalCode,
+  };
+}
+
+function pickCoordinateTemplate(address: CrmProjectAddress, id: string): AddressTemplate {
+  const city = address.city?.trim().toLowerCase() ?? '';
+  const state = address.state?.trim().toLowerCase() ?? '';
+  const fromAddress =
+    city !== ''
+      ? ADDRESS_TEMPLATES.find(
+          (entry) =>
+            entry.city.toLowerCase() === city &&
+            (state === '' || entry.state.toLowerCase() === state)
+        )
+      : null;
+  return fromAddress ?? ADDRESS_TEMPLATES[stableIndex(id, ADDRESS_TEMPLATES.length)]!;
+}
+
+function resolveDefaultCoordinates(
+  id: string,
+  address: CrmProjectAddress
+): { readonly latitude: number; readonly longitude: number } {
+  const template = pickCoordinateTemplate(address, id);
+  const latOffset = (stableIndex(`${id}-lat`, 1000) - 500) / 50_000;
+  const lngOffset = (stableIndex(`${id}-lng`, 1000) - 500) / 50_000;
+  return {
+    latitude: template.latitude + latOffset,
+    longitude: template.longitude + lngOffset,
   };
 }
 
@@ -504,6 +533,8 @@ export function buildMockCrmProjectDetail(input: BuildMockCrmProjectInput): CrmP
   );
   const workflowTasks = [...opsTasks, ...paymentTasks];
   const balanceRemainingCents = computeProjectBalanceCents(workflowTasks, input.dealValueCents);
+  const resolvedAddress = input.address ?? defaultAddressForProject(input.id) ?? emptyCrmProjectAddress();
+  const derivedCoordinates = resolveDefaultCoordinates(input.id, resolvedAddress);
 
   const summary: CrmProjectSummary = {
     id: input.id,
@@ -514,7 +545,7 @@ export function buildMockCrmProjectDetail(input: BuildMockCrmProjectInput): CrmP
     customIndustry: input.customIndustry ?? null,
     contact: input.contact,
     client: input.client,
-    address: input.address ?? defaultAddressForProject(input.id) ?? emptyCrmProjectAddress(),
+    address: resolvedAddress,
     priority: input.priority,
     currentStageSlug: input.currentStageSlug,
     notesPreview: notesPreview(input.notes),
@@ -528,8 +559,8 @@ export function buildMockCrmProjectDetail(input: BuildMockCrmProjectInput): CrmP
         ? getMockCrmTeamMember(input.completedById)
         : null,
     primaryPhotoPath: defaultPrimaryPhotoPathForProject(input),
-    latitude: input.latitude ?? null,
-    longitude: input.longitude ?? null,
+    latitude: input.latitude ?? derivedCoordinates.latitude,
+    longitude: input.longitude ?? derivedCoordinates.longitude,
     leadToken: input.leadToken ?? `00000000-0000-4000-8000-${input.id.replace(/\D/g, '').padStart(12, '0').slice(-12)}`,
     subprojectStatus: deriveCrmSubprojectStatus({
       priority: input.priority,

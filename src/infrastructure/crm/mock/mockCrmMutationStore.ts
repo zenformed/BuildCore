@@ -187,29 +187,38 @@ function withStageProgress(detail: CrmProjectDetail): CrmProjectDetail {
 }
 
 function withPrimaryPhotoFallback(detail: CrmProjectDetail): CrmProjectDetail {
-  if (detail.summary.primaryPhotoPath != null && detail.summary.primaryPhotoPath.trim() !== '') {
-    return detail;
-  }
   const seeded = getMockCrmProjectDetailBySlug(detail.summary.slug);
-  const seededPath = seeded?.summary.primaryPhotoPath?.trim() ?? '';
-  if (seededPath !== '') {
-    return {
-      ...detail,
-      summary: {
-        ...detail.summary,
-        primaryPhotoPath: seededPath,
-      },
-    };
+  const nextSummary = { ...detail.summary };
+  let changed = false;
+
+  if (nextSummary.primaryPhotoPath == null || nextSummary.primaryPhotoPath.trim() === '') {
+    const seededPath = seeded?.summary.primaryPhotoPath?.trim() ?? '';
+    if (seededPath !== '') {
+      nextSummary.primaryPhotoPath = seededPath;
+      changed = true;
+    } else if (nextSummary.parentProjectId == null) {
+      const numeric = Number.parseInt(nextSummary.id.replace(/\D/g, ''), 10);
+      if (Number.isFinite(numeric) && numeric >= 1 && numeric <= 20) {
+        nextSummary.primaryPhotoPath = `/images/demo-projects/demoProject (${numeric}).png`;
+        changed = true;
+      }
+    }
   }
-  if (detail.summary.parentProjectId != null) return detail;
-  const numeric = Number.parseInt(detail.summary.id.replace(/\D/g, ''), 10);
-  if (!Number.isFinite(numeric) || numeric < 1 || numeric > 20) return detail;
+
+  if (nextSummary.latitude == null && seeded?.summary.latitude != null) {
+    nextSummary.latitude = seeded.summary.latitude;
+    changed = true;
+  }
+
+  if (nextSummary.longitude == null && seeded?.summary.longitude != null) {
+    nextSummary.longitude = seeded.summary.longitude;
+    changed = true;
+  }
+
+  if (!changed) return detail;
   return {
     ...detail,
-    summary: {
-      ...detail.summary,
-      primaryPhotoPath: `/images/demo-projects/demoProject (${numeric}).png`,
-    },
+    summary: nextSummary,
   };
 }
 

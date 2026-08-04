@@ -23,7 +23,7 @@ import { ProjectCluster } from './ProjectCluster';
 import styles from './CrmMap.module.css';
 
 export type MapViewSelection = {
-  readonly parentProjectId: string;
+  readonly projectId: string;
   readonly latitude: number;
   readonly longitude: number;
   readonly nonce: number;
@@ -94,7 +94,7 @@ function MapCameraController({
     selection?.latitude,
     selection?.longitude,
     selection?.nonce,
-    selection?.parentProjectId,
+    selection?.projectId,
   ]);
 
   return null;
@@ -148,7 +148,7 @@ function MapInner({
         />
         <ProjectCluster
           markers={markers}
-          selectedParentProjectId={selection?.parentProjectId ?? null}
+          selectedProjectId={selection?.projectId ?? null}
           onMarkerClick={onMarkerClick}
         />
       </Map>

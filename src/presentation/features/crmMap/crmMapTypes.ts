@@ -20,8 +20,11 @@ export function hasValidProjectCoordinates(
   );
 }
 
-/** Parent markers only — one pin per parent project with valid coordinates. */
 export type CrmMapMarker = {
+  readonly projectId: string;
+  readonly projectSlug: string;
+  readonly projectName: string;
+  readonly isSubproject: boolean;
   readonly parentProjectId: string;
   readonly parentProjectSlug: string;
   readonly parentProjectName: string;
@@ -32,7 +35,7 @@ export type CrmMapMarker = {
 
 /**
  * Searchable/selectable map entry.
- * Subprojects locate via their parent's marker while keeping their own details.
+ * Subprojects can use their own marker when coordinates exist, otherwise fall back to parent marker.
  */
 export type CrmMapSearchableProject = {
   readonly projectId: string;

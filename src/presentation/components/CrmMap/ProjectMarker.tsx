@@ -9,7 +9,7 @@ export type ProjectMarkerProps = {
   readonly selected: boolean;
   readonly onClick: (marker: CrmMapMarker) => void;
   readonly onMarkerReady: (
-    parentProjectId: string,
+    projectId: string,
     marker: google.maps.marker.AdvancedMarkerElement | null
   ) => void;
 };
@@ -23,15 +23,15 @@ export function ProjectMarker({
   const [markerRef, markerInstance] = useAdvancedMarkerRef();
 
   useEffect(() => {
-    onMarkerReady(marker.parentProjectId, markerInstance);
-    return () => onMarkerReady(marker.parentProjectId, null);
-  }, [marker.parentProjectId, markerInstance, onMarkerReady]);
+    onMarkerReady(marker.projectId, markerInstance);
+    return () => onMarkerReady(marker.projectId, null);
+  }, [marker.projectId, markerInstance, onMarkerReady]);
 
   return (
     <AdvancedMarker
       ref={markerRef}
       position={{ lat: marker.latitude, lng: marker.longitude }}
-      title={marker.parentProjectName}
+      title={marker.projectName}
       onClick={() => onClick(marker)}
       zIndex={selected ? 10 : 1}
     >

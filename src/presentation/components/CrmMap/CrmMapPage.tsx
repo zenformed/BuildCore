@@ -64,12 +64,14 @@ export function CrmMapPage(): ReactElement {
 
   const onMarkerClick = useCallback(
     (marker: CrmMapMarker) => {
-      const parentEntry =
+      const entry =
+        searchable.find((item) => item.projectId === marker.projectId) ??
         searchable.find(
-          (entry) => entry.projectId === marker.parentProjectId && !entry.isSubproject
-        ) ?? searchable.find((entry) => entry.parentProjectId === marker.parentProjectId);
-      if (parentEntry) {
-        selectEntry(parentEntry);
+          (item) => item.parentProjectId === marker.parentProjectId && !item.isSubproject
+        ) ??
+        searchable.find((item) => item.parentProjectId === marker.parentProjectId);
+      if (entry) {
+        selectEntry(entry);
       }
     },
     [searchable, selectEntry]
@@ -78,7 +80,7 @@ export function CrmMapPage(): ReactElement {
   const mapSelection = useMemo(() => {
     if (selected == null) return null;
     return {
-      parentProjectId: selected.parentProjectId,
+      projectId: selected.marker.projectId,
       latitude: selected.marker.latitude,
       longitude: selected.marker.longitude,
       nonce: selectionToken,

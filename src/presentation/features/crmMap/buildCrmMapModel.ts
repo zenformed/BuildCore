@@ -15,10 +15,6 @@ function resolveParentSummary(
   return byId.get(project.parentProjectId) ?? null;
 }
 
-/**
- * Build parent-only markers and searchable entries.
- * Subprojects without their own coordinates still appear in search when the parent has coordinates.
- */
 export function buildCrmMapModel(
   summaries: readonly CrmProjectSummary[]
 ): {
@@ -27,29 +23,39 @@ export function buildCrmMapModel(
 } {
   const byId = new Map(summaries.map((summary) => [summary.id, summary] as const));
   const markers: CrmMapMarker[] = [];
+  const markerByProjectId = new Map<string, CrmMapMarker>();
   const markerByParentId = new Map<string, CrmMapMarker>();
 
   for (const summary of summaries) {
-    if (summary.parentProjectId != null) continue;
     if (!hasValidProjectCoordinates(summary)) continue;
+    const parent = resolveParentSummary(summary, byId);
+    if (parent == null) continue;
+    const isSubproject = summary.parentProjectId != null;
     const marker: CrmMapMarker = {
-      parentProjectId: summary.id,
-      parentProjectSlug: summary.slug,
-      parentProjectName: summary.name,
+      projectId: summary.id,
+      projectSlug: summary.slug,
+      projectName: summary.name,
+      isSubproject,
+      parentProjectId: parent.id,
+      parentProjectSlug: parent.slug,
+      parentProjectName: parent.name,
       latitude: summary.latitude,
       longitude: summary.longitude,
       addressLabel:
         formatCrmProjectLocationLine(summary.address, summary.latitude, summary.longitude) || '—',
     };
     markers.push(marker);
-    markerByParentId.set(summary.id, marker);
+    markerByProjectId.set(summary.id, marker);
+    if (parent.id === summary.id && !markerByParentId.has(parent.id)) {
+      markerByParentId.set(parent.id, marker);
+    }
   }
 
   const searchable: CrmMapSearchableProject[] = [];
   for (const summary of summaries) {
     const parent = resolveParentSummary(summary, byId);
     if (parent == null) continue;
-    const marker = markerByParentId.get(parent.id);
+    const marker = markerByProjectId.get(summary.id) ?? markerByParentId.get(parent.id);
     if (marker == null) continue;
 
     const isSubproject = summary.parentProjectId != null;
@@ -79,7 +85,12 @@ export function buildCrmMapModel(
     });
   }
 
-  markers.sort((a, b) => a.parentProjectName.localeCompare(b.parentProjectName));
+  markers.sort(
+    (a, b) =>
+      a.parentProjectName.localeCompare(b.parentProjectName) ||
+      Number(a.isSubproject) - Number(b.isSubproject) ||
+      a.projectName.localeCompare(b.projectName)
+  );
   searchable.sort((a, b) => a.projectName.localeCompare(b.projectName));
 
   return { markers, searchable };

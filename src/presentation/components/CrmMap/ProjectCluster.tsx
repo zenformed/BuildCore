@@ -8,13 +8,13 @@ import { ProjectMarker } from './ProjectMarker';
 
 export type ProjectClusterProps = {
   readonly markers: readonly CrmMapMarker[];
-  readonly selectedParentProjectId: string | null;
+  readonly selectedProjectId: string | null;
   readonly onMarkerClick: (marker: CrmMapMarker) => void;
 };
 
 export function ProjectCluster({
   markers,
-  selectedParentProjectId,
+  selectedProjectId,
   onMarkerClick,
 }: ProjectClusterProps): ReactElement {
   const map = useMap();
@@ -23,10 +23,10 @@ export function ProjectCluster({
   >({});
 
   const onMarkerReady = useCallback(
-    (parentProjectId: string, marker: google.maps.marker.AdvancedMarkerElement | null) => {
+    (projectId: string, marker: google.maps.marker.AdvancedMarkerElement | null) => {
       setMarkerMap((previous) => {
-        if (previous[parentProjectId] === marker) return previous;
-        return { ...previous, [parentProjectId]: marker };
+        if (previous[projectId] === marker) return previous;
+        return { ...previous, [projectId]: marker };
       });
     },
     []
@@ -56,9 +56,9 @@ export function ProjectCluster({
     <>
       {markers.map((marker) => (
         <ProjectMarker
-          key={marker.parentProjectId}
+          key={marker.projectId}
           marker={marker}
-          selected={selectedParentProjectId === marker.parentProjectId}
+          selected={selectedProjectId === marker.projectId}
           onClick={onMarkerClick}
           onMarkerReady={onMarkerReady}
         />
