@@ -6,6 +6,8 @@ import {
   LuClock3,
   LuGitBranch,
   LuMail,
+  LuMapPin,
+  LuPencil,
   LuPhone,
   LuStickyNote,
   LuUser,
@@ -33,6 +35,7 @@ import { ProjectHeaderIndustry } from './ProjectHeaderIndustry';
 import { ProjectNotesInline } from './ProjectNotesInline';
 import { ProjectPrimaryPhoto } from './ProjectPrimaryPhoto';
 import { ProjectProgressPercent } from './ProjectProgressPercent';
+import { ProjectSummaryAddress } from './ProjectSummaryAddress';
 import { SummaryInlineText } from './ProjectSummaryStrip';
 import { TeamMemberAvatar } from './TeamMemberAvatar';
 import styles from './ProjectDetail.module.css';
@@ -255,6 +258,16 @@ export function ProjectDetailOverviewHeader({
                   />
                 </div>
               </div>
+              <div className={styles.overviewIdentityAddressRow}>
+                <LuMapPin size={13} aria-hidden className={styles.overviewContactIcon} />
+                <ProjectSummaryAddress
+                  address={summary.address}
+                  latitude={summary.latitude}
+                  longitude={summary.longitude}
+                  label={fields.address}
+                  layout="value"
+                />
+              </div>
               {!isMemberRole ? (
                 <div className={styles.overviewIdentityActionsRow}>
                   <button
@@ -266,8 +279,9 @@ export function ProjectDetailOverviewHeader({
                       });
                     }}
                     aria-label={fullDetailsCopy.viewEdit}
+                    title={fullDetailsCopy.viewEdit}
                   >
-                    {fullDetailsCopy.viewEdit}
+                    <LuPencil size={14} aria-hidden />
                   </button>
                 </div>
               ) : null}

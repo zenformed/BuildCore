@@ -2327,6 +2327,8 @@
   display: flex;
   flex-direction: column;
   gap: 0.3125rem;
+  position: relative;
+  padding-right: 2rem;
 }
 
 .overviewIdentityTitleRow {
@@ -2481,30 +2483,47 @@
   color: inherit;
 }
 
-.overviewIdentityActionsRow {
-  display: flex;
+.overviewIdentityAddressRow {
+  min-width: 0;
+  display: inline-flex;
   align-items: center;
-  gap: 0.5rem;
-  margin-top: 0.0625rem;
+  gap: 0.28rem;
+}
+
+.overviewIdentityAddressRow .summaryText {
+  font-size: 0.8125rem;
+  line-height: 1.25;
+  font-weight: 500;
+}
+
+.overviewIdentityAddressRow .summaryLink:hover {
+  text-decoration: underline;
+}
+
+.overviewIdentityActionsRow {
+  position: absolute;
+  top: 0;
+  right: 0;
+  display: inline-flex;
 }
 
 .overviewEditButton {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 0.32rem 0.62rem;
+  width: 1.75rem;
+  height: 1.75rem;
+  padding: 0;
   border-radius: 0.4rem;
-  border: 1px solid var(--theme-border-main, var(--color-border, #e2e8f0));
-  background: var(--theme-surface-elevated, #f8fafc);
+  border: none;
+  background: transparent;
   color: var(--color-text-muted, #334155);
-  font-size: 0.75rem;
-  font-weight: 600;
   cursor: pointer;
 }
 
 .overviewEditButton:hover:not(:disabled) {
   color: var(--color-text, #0f172a);
-  background: var(--color-muted, #eef2f7);
+  background: color-mix(in srgb, var(--color-muted, #eef2f7) 65%, transparent);
 }
 
 .overviewEditButton:disabled {
@@ -2514,12 +2533,11 @@
 
 :global([data-theme='dark']) .overviewEditButton {
   color: #e2e8f0;
-  border-color: #3d3e4a;
-  background: #2c3040;
+  background: transparent;
 }
 
 :global([data-theme='dark']) .overviewEditButton:hover:not(:disabled) {
-  background: #353a4a;
+  background: color-mix(in srgb, #353a4a 70%, transparent);
 }
 
 .overviewSectionTitleRow {

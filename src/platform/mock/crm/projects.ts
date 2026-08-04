@@ -1,5 +1,5 @@
 import { toProjectSummary, type CrmProjectDetail, type CrmProjectSummary } from '@/domain/crm';
-import { buildMockCrmProjectDetail } from './buildMockCrmProject';
+import { buildMockCrmProjectDetail, type BuildMockCrmProjectInput } from './buildMockCrmProject';
 
 const c = (
   id: string,
@@ -23,7 +23,7 @@ const client = (id: string, name: string, segment: string | null = null) => ({
   segment,
 });
 
-export const MOCK_CRM_PROJECT_DETAILS: readonly CrmProjectDetail[] = [
+const BASE_MOCK_CRM_PROJECT_DETAILS: readonly CrmProjectDetail[] = [
   buildMockCrmProjectDetail({
     id: 'proj-001',
     slug: 'oak-ridge-hvac-retrofit',
@@ -95,7 +95,7 @@ export const MOCK_CRM_PROJECT_DETAILS: readonly CrmProjectDetail[] = [
     currentStageSlug: 'in-progress',
     notes: 'Burst pipe level 3. Equipment on site. Monitoring daily moisture logs; rebuild phase queued.',
     dealValueCents: 6_750_000,
-    paidCents: 2_025_000,
+    paidCents: 5_062_500,
     invoicedCents: 4_050_000,
     assignedToId: 'tm-sam',
     lastUpdatedAt: '2026-05-16T08:45:00.000Z',
@@ -219,7 +219,7 @@ export const MOCK_CRM_PROJECT_DETAILS: readonly CrmProjectDetail[] = [
     currentStageSlug: 'completed',
     notes: 'Pack-out complete. Smoke seal and rebuild done. Final clean scheduled; invoice draft ready.',
     dealValueCents: 3_850_000,
-    paidCents: 1_155_000,
+    paidCents: 2_887_500,
     invoicedCents: 3_850_000,
     assignedToId: 'tm-casey',
     lastUpdatedAt: '2026-05-14T19:00:00.000Z',
@@ -268,7 +268,7 @@ export const MOCK_CRM_PROJECT_DETAILS: readonly CrmProjectDetail[] = [
     currentStageSlug: 'invoiced',
     notes: 'Addition weather-tight. Final inspection passed. Invoice sent 5/12; payment expected this week.',
     dealValueCents: 7_900_000,
-    paidCents: 2_370_000,
+    paidCents: 5_925_000,
     invoicedCents: 7_900_000,
     assignedToId: 'tm-jordan',
     lastUpdatedAt: '2026-05-15T20:10:00.000Z',
@@ -294,7 +294,7 @@ export const MOCK_CRM_PROJECT_DETAILS: readonly CrmProjectDetail[] = [
     currentStageSlug: 'in-progress',
     notes: 'Failed RTU on surgical wing. Temporary cooling in place. Crane pick scheduled pending city permit.',
     dealValueCents: 14_300_000,
-    paidCents: 4_290_000,
+    paidCents: 10_725_000,
     assignedToId: 'tm-sam',
     lastUpdatedAt: '2026-05-16T10:20:00.000Z',
   }),
@@ -385,7 +385,7 @@ export const MOCK_CRM_PROJECT_DETAILS: readonly CrmProjectDetail[] = [
     currentStageSlug: 'scheduled',
     notes: '32 buildings phase 1 of 2. Material on order. Start 6/2 pending color selection from board.',
     dealValueCents: 28_500_000,
-    paidCents: 8_550_000,
+    paidCents: 21_375_000,
     assignedToId: 'tm-casey',
     lastUpdatedAt: '2026-05-16T07:50:00.000Z',
   }),
@@ -404,6 +404,94 @@ export const MOCK_CRM_PROJECT_DETAILS: readonly CrmProjectDetail[] = [
     assignedToId: 'tm-riley',
     lastUpdatedAt: '2026-05-16T05:00:00.000Z',
   }),
+] as const;
+
+const SUBPROJECT_STAGE_SEQUENCE = [
+  'contacted',
+  'inspection-scheduled',
+  'estimate-sent',
+  'approved',
+  'scheduled',
+  'in-progress',
+] as const;
+
+function stableIndex(seed: string, modulo: number): number {
+  let hash = 0;
+  for (const ch of seed) hash = (hash * 33 + ch.charCodeAt(0)) >>> 0;
+  return hash % modulo;
+}
+
+function targetSubprojectCount(parentId: string): number {
+  return 1 + stableIndex(`${parentId}-subs`, 6);
+}
+
+function subprojectPhone(parentId: string, index: number): string {
+  const base = 1000 + stableIndex(`${parentId}-${index}-phone`, 8999);
+  return `(512) 555-${String(base).padStart(4, '0')}`;
+}
+
+function buildGeneratedSubprojectInput(
+  parent: CrmProjectDetail,
+  index: number
+): BuildMockCrmProjectInput {
+  const stage = SUBPROJECT_STAGE_SEQUENCE[(index - 1) % SUBPROJECT_STAGE_SEQUENCE.length] ?? 'contacted';
+  const cleanSlugBase = parent.summary.slug.replace(/[^a-z0-9-]/gi, '-').replace(/-+/g, '-').toLowerCase();
+  const cleanClientBase = parent.summary.client.name.replace(/[^a-z0-9]+/gi, '').toLowerCase();
+  const valueRatio = 0.14 + ((index - 1) % 6) * 0.03;
+  const dealValueCents = Math.max(175_000, Math.round(parent.summary.dealValueCents * valueRatio));
+  return {
+    id: `${parent.summary.id}-sub-${index}`,
+    slug: `${cleanSlugBase}-sub-${index}`,
+    parentProjectId: parent.summary.id,
+    name: `${parent.summary.name} — Subproject ${index}`,
+    industry: parent.summary.industry,
+    customIndustry: parent.summary.customIndustry,
+    contact: c(
+      `${parent.summary.id}-sub-contact-${index}`,
+      `${parent.summary.contact.name} (Subproject ${index})`,
+      `${cleanClientBase || 'client'}.sub${index}@example.com`,
+      subprojectPhone(parent.summary.id, index),
+      parent.summary.contact.title
+    ),
+    client: client(
+      `${parent.summary.id}-sub-client-${index}`,
+      `${parent.summary.client.name} - Subproject ${index}`,
+      parent.summary.client.segment
+    ),
+    priority: parent.summary.priority,
+    currentStageSlug: stage,
+    notes: `Subproject ${index} for ${parent.summary.name}: scope, logistics, contacts, and financials fully populated for demo.`,
+    dealValueCents,
+    assignedToId: parent.summary.assignedTo?.id ?? 'tm-alex',
+    lastUpdatedAt: `2026-08-${String(8 + ((index - 1) % 12)).padStart(2, '0')}T10:00:00.000Z`,
+  };
+}
+
+const topLevelProjects = BASE_MOCK_CRM_PROJECT_DETAILS.filter(
+  (project) => project.summary.parentProjectId == null
+);
+const existingSubprojects = BASE_MOCK_CRM_PROJECT_DETAILS.filter(
+  (project) => project.summary.parentProjectId != null
+);
+const existingSubprojectCountByParent = new Map<string, number>();
+for (const sub of existingSubprojects) {
+  const parentId = sub.summary.parentProjectId;
+  if (parentId == null) continue;
+  existingSubprojectCountByParent.set(parentId, (existingSubprojectCountByParent.get(parentId) ?? 0) + 1);
+}
+
+const generatedSubprojects: CrmProjectDetail[] = [];
+for (const parent of topLevelProjects) {
+  const target = targetSubprojectCount(parent.summary.id);
+  const existing = existingSubprojectCountByParent.get(parent.summary.id) ?? 0;
+  for (let index = existing + 1; index <= target; index += 1) {
+    generatedSubprojects.push(buildMockCrmProjectDetail(buildGeneratedSubprojectInput(parent, index)));
+  }
+}
+
+export const MOCK_CRM_PROJECT_DETAILS: readonly CrmProjectDetail[] = [
+  ...BASE_MOCK_CRM_PROJECT_DETAILS,
+  ...generatedSubprojects,
 ] as const;
 
 export const MOCK_CRM_PROJECT_SUMMARIES: readonly CrmProjectSummary[] = MOCK_CRM_PROJECT_DETAILS.map(
