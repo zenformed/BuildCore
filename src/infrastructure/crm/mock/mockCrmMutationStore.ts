@@ -75,14 +75,14 @@ export function listEffectiveMockProjectSummaries(options?: {
 
   for (const seed of MOCK_CRM_PROJECT_DETAILS) {
     if (archivedSlugs.has(seed.summary.slug)) continue;
-    const effective = projectOverrides.get(seed.summary.slug) ?? seed;
+    const effective = withPrimaryPhotoFallback(projectOverrides.get(seed.summary.slug) ?? seed);
     bySlug.set(seed.summary.slug, effective.summary);
   }
 
   for (const [slug, detail] of projectOverrides.entries()) {
     if (archivedSlugs.has(slug)) continue;
     if (!bySlug.has(slug)) {
-      bySlug.set(slug, detail.summary);
+      bySlug.set(slug, withPrimaryPhotoFallback(detail).summary);
     }
   }
 
@@ -113,7 +113,8 @@ export function getDemoArchivedSlugs(): ReadonlySet<string> {
 
 export function getEffectiveMockProjectDetailBySlug(slug: string): CrmProjectDetail | null {
   if (archivedSlugs.has(slug)) return null;
-  return projectOverrides.get(slug) ?? getMockCrmProjectDetailBySlug(slug) ?? null;
+  const detail = projectOverrides.get(slug) ?? getMockCrmProjectDetailBySlug(slug) ?? null;
+  return detail == null ? null : withPrimaryPhotoFallback(detail);
 }
 
 function getMockCrmProjectDetailBySlug(slug: string): CrmProjectDetail | null {
@@ -126,11 +127,11 @@ function getMockCrmProjectDetailById(id: string): CrmProjectDetail | null {
 
 export function getEffectiveMockProjectDetailById(id: string): CrmProjectDetail | null {
   for (const detail of projectOverrides.values()) {
-    if (detail.summary.id === id) return detail;
+    if (detail.summary.id === id) return withPrimaryPhotoFallback(detail);
   }
   const seeded = getMockCrmProjectDetailById(id);
   if (seeded != null && archivedSlugs.has(seeded.summary.slug)) return null;
-  return seeded ?? null;
+  return seeded == null ? null : withPrimaryPhotoFallback(seeded);
 }
 
 export function saveMockProjectDetail(slug: string, detail: CrmProjectDetail): CrmProjectDetail {
@@ -181,6 +182,33 @@ function withStageProgress(detail: CrmProjectDetail): CrmProjectDetail {
     stageProgress: {
       currentStageSlug: balanced.summary.currentStageSlug,
       completedStageSlugs: completedStagesThrough(balanced.summary.currentStageSlug, catalog),
+    },
+  };
+}
+
+function withPrimaryPhotoFallback(detail: CrmProjectDetail): CrmProjectDetail {
+  if (detail.summary.primaryPhotoPath != null && detail.summary.primaryPhotoPath.trim() !== '') {
+    return detail;
+  }
+  const seeded = getMockCrmProjectDetailBySlug(detail.summary.slug);
+  const seededPath = seeded?.summary.primaryPhotoPath?.trim() ?? '';
+  if (seededPath !== '') {
+    return {
+      ...detail,
+      summary: {
+        ...detail.summary,
+        primaryPhotoPath: seededPath,
+      },
+    };
+  }
+  if (detail.summary.parentProjectId != null) return detail;
+  const numeric = Number.parseInt(detail.summary.id.replace(/\D/g, ''), 10);
+  if (!Number.isFinite(numeric) || numeric < 1 || numeric > 20) return detail;
+  return {
+    ...detail,
+    summary: {
+      ...detail.summary,
+      primaryPhotoPath: `/images/demo-projects/demoProject (${numeric}).png`,
     },
   };
 }

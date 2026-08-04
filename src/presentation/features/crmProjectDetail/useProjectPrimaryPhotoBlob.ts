@@ -16,6 +16,10 @@ export function buildProjectPrimaryPhotoApiPath(
   primaryPhotoPath: string | null | undefined
 ): string | null {
   if (!primaryPhotoPath) return null;
+  // Demo/static photo shortcut: allow direct use of public assets.
+  if (primaryPhotoPath.startsWith('/images/') || primaryPhotoPath.startsWith('images/')) {
+    return primaryPhotoPath.startsWith('/') ? primaryPhotoPath : `/${primaryPhotoPath}`;
+  }
   return `/api/crm/projects/${encodeURIComponent(slug)}/photo?t=${encodeURIComponent(primaryPhotoPath)}`;
 }
 
@@ -37,6 +41,10 @@ export function useProjectPrimaryPhotoBlob(
   useEffect(() => {
     if (!apiPath || !cacheKey) {
       setBlobUrl(null);
+      return;
+    }
+    if (apiPath.startsWith('/images/')) {
+      setBlobUrl(apiPath);
       return;
     }
 

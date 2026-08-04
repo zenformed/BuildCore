@@ -14,6 +14,7 @@ import {
 } from '@/presentation/features/crmAssignment/buildAssignmentIdentityCatalogFromMembers';
 import { mapOrganizationAssignmentIdentitiesToTeamMemberRefs } from '@/presentation/features/crmAssignment/mapOrganizationAssignmentIdentities';
 import type { AssignmentIdentityCatalog } from '@/presentation/features/crmAssignment/assignmentIdentityModel';
+import { MOCK_CRM_TEAM_MEMBERS } from '@/platform/mock/crm/teamMembers';
 import { useBuildCoreDashboardContext } from '@/presentation/providers/BuildCoreDashboardProvider';
 import { useSaaSProfile } from '@/presentation/hooks/useSaaSProfile';
 import { deferNonCriticalWork } from '@/presentation/utils/deferNonCriticalWork';
@@ -65,7 +66,8 @@ export function useBuildCoreAssignmentCatalog(): {
 
   const loadIdentities = useCallback(async (): Promise<void> => {
     if (!isApiSource) {
-      setMembers([]);
+      setMembers(MOCK_CRM_TEAM_MEMBERS);
+      setLoadError(null);
       setIsLoading(false);
       return;
     }
@@ -109,7 +111,9 @@ export function useBuildCoreAssignmentCatalog(): {
   }, [saasUser?.user_metadata, user?.displayName, user?.email, user?.id]);
 
   const catalog = useMemo(() => {
-    if (!isApiSource) return null;
+    if (!isApiSource) {
+      return buildAssignmentIdentityCatalogFromMembers(members ?? MOCK_CRM_TEAM_MEMBERS);
+    }
     const primary =
       members != null && members.length > 0
         ? buildAssignmentIdentityCatalogFromMembers(members)

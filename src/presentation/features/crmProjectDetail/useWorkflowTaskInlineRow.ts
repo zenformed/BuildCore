@@ -103,7 +103,11 @@ export function useWorkflowTaskInlineRow({
   const canEdit =
     isReady && permissions.canEdit && !projectMutationsLocked && !memberCompletedLocked;
   /** Members may edit tasks but never reassign people. */
-  const canAssign = canEdit && !isMemberRole;
+  const canAssign =
+    !isMemberRole &&
+    !projectMutationsLocked &&
+    !memberCompletedLocked &&
+    (!isApiSource || (isReady && permissions.canEdit));
   const canDelete =
     isReady && permissions.canDelete && !projectMutationsLocked && !memberCompletedLocked;
   const canUpload =

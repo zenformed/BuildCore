@@ -144,7 +144,9 @@ export function WorkflowTasksTable({
   const canCreate = isReady && permissions.canCreate;
   const canDelete = isReady && permissions.canDelete && !projectMutationsLocked;
   const canAssignTasks =
-    isReady && permissions.canEdit && !projectMutationsLocked && !isMemberRole;
+    (!isApiSource || (isReady && permissions.canEdit)) &&
+    !projectMutationsLocked &&
+    !isMemberRole;
   const isFullLayout = layout === 'full';
   const isMobileLayout = useDashboardMobileLayout();
   const currentStage = project.summary.currentStageSlug;

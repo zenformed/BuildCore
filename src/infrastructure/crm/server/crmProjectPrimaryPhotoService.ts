@@ -1,4 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
+import path from 'node:path';
+import { promises as fs } from 'node:fs';
 import type { CrmProjectDetail } from '@/domain/crm';
 import {
   BUILDCORE_PROJECT_PHOTO_BUCKET,
@@ -25,6 +27,36 @@ type ProjectPhotoRow = {
   slug: string;
   primary_photo_path: string | null;
 };
+
+function contentTypeFromFilename(fileName: string): string | null {
+  const ext = path.extname(fileName).toLowerCase();
+  if (ext === '.jpg' || ext === '.jpeg') return 'image/jpeg';
+  if (ext === '.png') return 'image/png';
+  if (ext === '.webp') return 'image/webp';
+  return null;
+}
+
+async function tryReadPublicDemoPhoto(
+  primaryPhotoPath: string
+): Promise<{ buffer: Buffer; contentType: string } | null> {
+  const trimmed = primaryPhotoPath.trim();
+  if (trimmed === '') return null;
+  const withoutPrefix = trimmed.startsWith('/')
+    ? trimmed.slice(1)
+    : trimmed;
+  if (!withoutPrefix.startsWith('images/')) return null;
+  const normalized = path.posix.normalize(withoutPrefix);
+  if (!normalized.startsWith('images/') || normalized.includes('..')) return null;
+  const filePath = path.join(process.cwd(), 'public', normalized);
+  try {
+    const body = await fs.readFile(filePath);
+    const contentType = contentTypeFromFilename(normalized);
+    if (contentType == null) return null;
+    return { buffer: body, contentType };
+  } catch {
+    return null;
+  }
+}
 
 async function loadProjectPhotoRow(
   supabase: SupabaseClient,
@@ -69,7 +101,9 @@ export async function downloadProjectPrimaryPhotoForOrg(
     const path = detail?.summary.primaryPhotoPath;
     if (path == null) return null;
     const object = readMockStorageObject(BUILDCORE_PROJECT_PHOTO_BUCKET, path);
-    if (object == null) return null;
+    if (object == null) {
+      return tryReadPublicDemoPhoto(path);
+    }
     return { buffer: object.body, contentType: object.mimeType };
   }
 

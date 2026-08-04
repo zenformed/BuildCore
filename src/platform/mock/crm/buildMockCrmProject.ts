@@ -117,6 +117,17 @@ function projectKey(id: string): string {
   return id.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
 }
 
+function defaultPrimaryPhotoPathForProject(input: BuildMockCrmProjectInput): string | null {
+  if (input.primaryPhotoPath != null && input.primaryPhotoPath.trim() !== '') {
+    return input.primaryPhotoPath;
+  }
+  // Only auto-map top-level demo projects; subprojects inherit normal behavior.
+  if (input.parentProjectId != null) return null;
+  const numeric = Number.parseInt(input.id.replace(/\D/g, ''), 10);
+  if (!Number.isFinite(numeric) || numeric < 1 || numeric > 20) return null;
+  return `/images/demo-projects/demoProject (${numeric}).png`;
+}
+
 function defaultAddressForProject(id: string): CrmProjectAddress {
   const idx = stableIndex(id, ADDRESS_TEMPLATES.length);
   const template = ADDRESS_TEMPLATES[idx] ?? ADDRESS_TEMPLATES[0];
@@ -516,7 +527,7 @@ export function buildMockCrmProjectDetail(input: BuildMockCrmProjectInput): CrmP
       input.completedAt != null && input.completedById != null
         ? getMockCrmTeamMember(input.completedById)
         : null,
-    primaryPhotoPath: input.primaryPhotoPath ?? null,
+    primaryPhotoPath: defaultPrimaryPhotoPathForProject(input),
     latitude: input.latitude ?? null,
     longitude: input.longitude ?? null,
     leadToken: input.leadToken ?? `00000000-0000-4000-8000-${input.id.replace(/\D/g, '').padStart(12, '0').slice(-12)}`,
