@@ -328,6 +328,14 @@
   word-break: break-word;
 }
 
+.previewProjectNameWithPriority {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.3125rem;
+  max-width: 100%;
+}
+
 .previewMobileList {
   display: flex;
   flex-direction: column;

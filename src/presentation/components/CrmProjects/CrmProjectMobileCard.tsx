@@ -283,6 +283,9 @@ export function CrmProjectMobileCard({
             <div className={styles.mobileCardDetailsStack}>
               <div className={styles.mobileCardTopRow}>
                 <div className={styles.mobileCardInfoRow}>
+                  {isProjectPriorityUrgent(project.priority) ? (
+                    <CrmProjectPriorityIcon ariaLabel={tableCopy.priorityMarkAriaLabel} />
+                  ) : null}
                   <ProjectPreviewNameAnchor
                     project={project}
                     financials={financials ?? null}

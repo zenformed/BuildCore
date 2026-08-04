@@ -1554,6 +1554,19 @@
   margin-left: 0;
 }
 
+.projectDetailMobileShellSectionTitle {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  line-height: 1.2;
+  color: var(--color-text, #0f172a);
+}
+
+:global([data-theme='dark']) .projectDetailMobileShellSectionTitle {
+  color: #f1f5f9;
+}
+
 .folderTabMobileSelector {
   display: flex;
   flex-direction: column;
@@ -1582,6 +1595,38 @@
 
 :global([data-theme='dark']) .folderTabMobileSelector {
   border-bottom-color: transparent;
+}
+
+.folderTabMobileFooter {
+  display: none;
+}
+
+.folderTabMobileFooterBtn,
+.folderTabMobileFooterBtnActive {
+  border: none;
+  background: transparent;
+  color: var(--theme-text-muted, var(--color-text-muted, #64748b));
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1 1 0;
+  width: 100%;
+  min-height: 2.75rem;
+  padding: 0;
+  margin: 0;
+}
+
+.folderTabMobileFooterBtnActive {
+  color: var(--color-primary, #2563eb);
+}
+
+:global([data-theme='dark']) .folderTabMobileFooterBtn,
+:global([data-theme='dark']) .folderTabMobileFooterBtnActive {
+  color: #9ca3af;
+}
+
+:global([data-theme='dark']) .folderTabMobileFooterBtnActive {
+  color: #60a5fa;
 }
 
 .folderTab,
@@ -1731,6 +1776,70 @@
 .folderTabPanelInner .paymentsPanel > .subtitle {
   flex: none;
   min-height: unset;
+}
+
+@media (max-width: 767px) {
+  .folderTabsRoot {
+    margin-top: 0.5rem;
+    border: none;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+    overflow: visible;
+  }
+
+  :global([data-theme='dark']) .folderTabsRoot {
+    border: none;
+    background: transparent;
+    box-shadow: none;
+  }
+
+  .folderTabPanelInner {
+    padding: 0;
+    gap: 0;
+  }
+
+  .folderTabPanelInner .subprojectsPanel,
+  .folderTabPanelInner .workflowPanel,
+  .folderTabPanelInner .paymentsPanel,
+  .folderTabPanelInner .budgetTablePanel,
+  .folderTabPanelInner .documentsTabPanel,
+  .folderTabPanelInner .projectFinancialReport {
+    margin: 0;
+  }
+
+  .folderTabBar_mobile {
+    padding-bottom: 0.5rem;
+  }
+
+  .folderTabMobileFooter {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 55;
+    display: flex;
+    align-items: center;
+    gap: 0;
+    border-top: 1px solid var(--theme-border-main, var(--color-border, #e2e8f0));
+    background: var(--theme-surface-main, var(--color-surface, #fff));
+    padding-bottom: env(safe-area-inset-bottom, 0);
+    box-shadow: 0 -1px 2px rgba(15, 23, 42, 0.08);
+  }
+
+  :global([data-theme='dark']) .folderTabMobileFooter {
+    border-top-color: var(--theme-border-main, #3d3e4a);
+    background: var(--theme-surface-main, #252836);
+    box-shadow: 0 -1px 2px rgba(0, 0, 0, 0.24);
+  }
+
+  .folderTabsRoot {
+    margin-bottom: 3.25rem;
+  }
+
+  .folderTabPanelInner {
+    padding-bottom: 4.25rem;
+  }
 }
 
 /* Reports tab: compound selectors must follow generic .folderTab* rules above */
@@ -12711,7 +12820,7 @@
   .subprojectsMobileSelectedFloatingPill {
     position: fixed;
     left: 50%;
-    bottom: calc(env(safe-area-inset-bottom, 0px) + 1rem);
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 4.1rem);
     transform: translateX(-50%);
     display: inline-flex;
     align-items: center;

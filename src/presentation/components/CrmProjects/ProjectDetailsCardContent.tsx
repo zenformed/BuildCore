@@ -23,6 +23,7 @@ import type { ProjectPaymentFinancials } from '@/domain/crm/projectPaymentValue'
 import { formatCrmProjectLocationLine } from '@/domain/crm/projectAddress';
 import { INDUSTRY_LABELS } from '@/domain/crm';
 import { nonEmptyContactValues } from '@/domain/crm/contactMultiValue';
+import { isProjectPriorityUrgent } from '@/domain/crm/projectPriorityToggle';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
 import {
   CRM_INDUSTRY_OPTIONS,
@@ -39,6 +40,7 @@ import {
 } from '@/presentation/features/crmProjectDetail/useProjectPrimaryPhotoBlob';
 import { ProjectHeaderAssignee } from '../CrmProjectDetail/ProjectHeaderAssignee';
 import { TeamMemberAvatar } from '../CrmProjectDetail/TeamMemberAvatar';
+import { CrmProjectPriorityIcon } from '../crmShared/CrmProjectPriorityIcon';
 import cardStyles from '../CrmProjectDetail/WorkflowTaskPreviewCard.module.css';
 import shared from '../crmShared/crmShared.module.css';
 import {
@@ -336,6 +338,14 @@ export function ProjectDetailsCardContent({
   const progressDisplay =
     progressPercent != null ? `${Math.round(progressPercent)}%` : emptyValue;
   const previewProjectName = truncatePreviewProjectName(summary.name || emptyValue);
+  const projectNameValue = isProjectPriorityUrgent(summary.priority) ? (
+    <span className={cardStyles.previewProjectNameWithPriority}>
+      <CrmProjectPriorityIcon ariaLabel={content.crm.table.priorityMarkAriaLabel} />
+      <span>{previewProjectName}</span>
+    </span>
+  ) : (
+    previewProjectName
+  );
 
   const patchField = useCallback(
     async (field: SummaryEditableField, value: string) => {
@@ -596,7 +606,7 @@ export function ProjectDetailsCardContent({
               </span>
             )}
           </div>
-          <h3 className={cardStyles.previewMobileHeroTitle}>{previewProjectName}</h3>
+          <h3 className={cardStyles.previewMobileHeroTitle}>{projectNameValue}</h3>
         </section>
         <section className={cardStyles.previewSection} aria-label={previewCopy.sections.overview}>
           <div className={cardStyles.previewMobileList}>
@@ -697,7 +707,7 @@ export function ProjectDetailsCardContent({
             label={projectKindLabel}
             labelPosition={previewLabelPosition}
             leadingIcon={<LuBuilding2 />}
-            value={previewProjectName}
+              value={projectNameValue}
           />
           <PreviewMetaColumn
             label={previewCopy.labels.industry}

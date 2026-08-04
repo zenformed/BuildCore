@@ -8,7 +8,6 @@ import { useRouter } from 'next/navigation';
 import {
   isCrmProjectComplete,
   isCrmProjectInactive,
-  isProjectPriorityUrgent,
   type CrmProjectSummary,
 } from '@/domain/crm';
 import {
@@ -213,10 +212,7 @@ export function CrmProjectsPipeline({
   const selectedPriorityEligible = useMemo(
     () =>
       selectedProjects.filter(
-        (project) =>
-          !isCrmProjectComplete(project) &&
-          !isCrmProjectInactive(project) &&
-          !isProjectPriorityUrgent(project.priority)
+        (project) => !isCrmProjectComplete(project) && !isCrmProjectInactive(project)
       ),
     [selectedProjects]
   );

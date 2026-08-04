@@ -8,7 +8,6 @@ import {
   formatCrmProjectAddressLine,
   isCrmProjectComplete,
   isCrmProjectInactive,
-  isProjectPriorityUrgent,
   type CrmProjectSummary,
 } from '@/domain/crm';
 import {
@@ -274,10 +273,7 @@ function SubprojectsSectionContent({
   const selectedPriorityEligible = useMemo(
     () =>
       selectedProjects.filter(
-        (project) =>
-          !isCrmProjectComplete(project) &&
-          !isCrmProjectInactive(project) &&
-          !isProjectPriorityUrgent(project.priority)
+        (project) => !isCrmProjectComplete(project) && !isCrmProjectInactive(project)
       ),
     [selectedProjects]
   );

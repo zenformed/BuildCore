@@ -2,6 +2,7 @@
 
 import type { ReactElement, ReactNode } from 'react';
 import { useEffect, useMemo, useState } from 'react';
+import { createPortal } from 'react-dom';
 import {
   LuCalculator,
   LuClipboardList,
@@ -11,6 +12,7 @@ import {
   LuListTree,
   LuShield,
 } from 'react-icons/lu';
+import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
 import {
   buildProjectDetailFolderTabs,
   type ProjectDetailFolderTabId,
@@ -29,10 +31,6 @@ import { PaymentsRail } from './PaymentsRail';
 import { ProjectAccountabilityContent } from './ProjectAccountabilityPage';
 import { ProjectDocumentsTabPanel } from './ProjectDocumentsTabPanel';
 import { ProjectFinancialsContent } from './ProjectFinancialsPage';
-import {
-  PROJECT_FOLDER_TAB_SELECT_LABEL_ID,
-  ProjectDetailFolderTabSelector,
-} from './ProjectDetailFolderTabSelector';
 import { SubprojectsSection } from './SubprojectsSection';
 import { WorkflowTasksTable } from './WorkflowTasksTable';
 import styles from './ProjectDetail.module.css';
@@ -129,14 +127,44 @@ function FolderTabIcon({ tabId }: { readonly tabId: ProjectDetailFolderTabId }):
   }
 }
 
+function FolderTabMobileIcon({
+  tabId,
+}: {
+  readonly tabId: ProjectDetailFolderTabId;
+}): ReactElement {
+  const iconProps = { size: 18, strokeWidth: 2 } as const;
+  switch (tabId) {
+    case 'subprojects':
+      return <LuListTree {...iconProps} />;
+    case 'workflow':
+      return <LuClipboardList {...iconProps} />;
+    case 'payments':
+      return <LuCreditCard {...iconProps} />;
+    case 'budget':
+      return <LuCalculator {...iconProps} />;
+    case 'documents':
+      return <LuFolder {...iconProps} />;
+    case 'financials':
+      return <LuDollarSign {...iconProps} />;
+    case 'accountability':
+      return <LuShield {...iconProps} />;
+    default: {
+      const _exhaustive: never = tabId;
+      return _exhaustive;
+    }
+  }
+}
+
 function FolderTabBar({
   isMobileLayout,
   tabs,
+  mobileFooterTabs,
   selectedTab,
   onSelectTab,
 }: {
   readonly isMobileLayout: boolean;
   readonly tabs: ReturnType<typeof buildProjectDetailFolderTabs>;
+  readonly mobileFooterTabs: ReturnType<typeof buildProjectDetailFolderTabs>;
   readonly selectedTab: ProjectDetailFolderTabId;
   readonly onSelectTab: (tab: ProjectDetailFolderTabId) => void;
 }): ReactElement {
@@ -146,13 +174,7 @@ function FolderTabBar({
         .filter(Boolean)
         .join(' ')}
     >
-      {isMobileLayout ? (
-        <ProjectDetailFolderTabSelector
-          tabs={tabs}
-          selectedTab={selectedTab}
-          onSelectTab={onSelectTab}
-        />
-      ) : (
+      {isMobileLayout ? null : (
         <div className={styles.folderTabList} role="tablist" aria-label="Project sections">
           {tabs.map((tab) => {
             const isActive = tab.id === selectedTab;
@@ -176,6 +198,30 @@ function FolderTabBar({
         </div>
       )}
       <FolderTabToolbarSlot className={styles.folderTabActions} />
+      {isMobileLayout ? (
+        <nav className={styles.folderTabMobileFooter} role="tablist" aria-label="Project sections">
+          {mobileFooterTabs.map((tab) => {
+            const isActive = tab.id === selectedTab;
+            return (
+              <button
+                key={tab.id}
+                type="button"
+                role="tab"
+                id={`project-folder-tab-${tab.id}`}
+                aria-selected={isActive}
+                aria-controls="project-folder-tabpanel"
+                tabIndex={isActive ? 0 : -1}
+                className={isActive ? styles.folderTabMobileFooterBtnActive : styles.folderTabMobileFooterBtn}
+                onClick={() => onSelectTab(tab.id)}
+                title={tab.label}
+                aria-label={tab.label}
+              >
+                <FolderTabMobileIcon tabId={tab.id} />
+              </button>
+            );
+          })}
+        </nav>
+      ) : null}
     </div>
   );
 }
@@ -201,6 +247,7 @@ export function ProjectDetailFolderTabs(): ReactElement {
   const showSubprojects = subSlug == null && project.summary.parentProjectId == null;
   const defaultTab: ProjectDetailFolderTabId = showSubprojects ? 'subprojects' : 'workflow';
   const [selectedTab, setSelectedTab] = useState<ProjectDetailFolderTabId>(defaultTab);
+  const [mobileShellBar, setMobileShellBar] = useState<HTMLElement | null>(null);
   const isReportsTabActive = selectedTab === 'financials';
 
   const tabs = useMemo(
@@ -228,6 +275,38 @@ export function ProjectDetailFolderTabs(): ReactElement {
       setSelectedTab(defaultTab);
     }
   }, [defaultTab, selectedTab, tabs]);
+
+  const mobileFooterTabs = useMemo(
+    () => tabs.filter((tab) => tab.id !== 'accountability'),
+    [tabs]
+  );
+
+  useEffect(() => {
+    if (!isMobileLayout || selectedTab !== 'accountability') return;
+    if (mobileFooterTabs.length === 0) return;
+    setSelectedTab(mobileFooterTabs[0]?.id ?? defaultTab);
+  }, [defaultTab, isMobileLayout, mobileFooterTabs, selectedTab]);
+
+  useEffect(() => {
+    if (!isMobileLayout) {
+      setMobileShellBar(null);
+      return;
+    }
+    const menuButton = document.querySelector<HTMLButtonElement>(
+      'button[aria-controls="zenformed-mobile-drawer"]'
+    );
+    setMobileShellBar(menuButton?.parentElement ?? null);
+  }, [isMobileLayout]);
+
+  const selectedTabLabel =
+    tabs.find((tab) => tab.id === selectedTab)?.label ?? content.projectDetail.folderTabs.sectionsLabel;
+  const mobileShellSectionTitle =
+    isMobileLayout && mobileShellBar != null
+      ? createPortal(
+          <div className={styles.projectDetailMobileShellSectionTitle}>{selectedTabLabel}</div>,
+          mobileShellBar
+        )
+      : null;
 
   const renderTabPanel = (): ReactElement => {
     switch (selectedTab) {
@@ -296,17 +375,14 @@ export function ProjectDetailFolderTabs(): ReactElement {
           <FolderTabBar
             isMobileLayout={isMobileLayout}
             tabs={tabs}
+            mobileFooterTabs={mobileFooterTabs}
             selectedTab={selectedTab}
             onSelectTab={setSelectedTab}
           />
           <div
             id="project-folder-tabpanel"
             role="tabpanel"
-            aria-labelledby={
-              isMobileLayout
-                ? PROJECT_FOLDER_TAB_SELECT_LABEL_ID
-                : `project-folder-tab-${selectedTab}`
-            }
+            aria-labelledby={`project-folder-tab-${selectedTab}`}
             className={
               isReportsTabActive
                 ? `${styles.folderTabPanel} ${styles.folderTabPanelReportsActive}`
@@ -324,6 +400,7 @@ export function ProjectDetailFolderTabs(): ReactElement {
             </div>
           </div>
         </div>
+        {mobileShellSectionTitle}
       </FolderTabToolbarProvider>
     </WorkflowTaskFileDragProvider>
   );
