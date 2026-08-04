@@ -27,6 +27,7 @@ import {
   formatPhoneDisplay,
   formatStageLabel,
 } from '@/presentation/features/crmProjects/crmProjectFormatters';
+import { truncateDisplayText } from '@/presentation/features/crmProjectDetail/crmProjectDetailFormatters';
 import { useCrmProjectRowPresentation } from '@/presentation/features/crmProjects/useCrmProjectRowPresentation';
 import type { BulkSelectionBindings } from '@/presentation/features/bulkSelection/BulkSelectionBindings';
 import { CrmProjectTableRowActionsMenu } from './CrmProjectTableRowActionsMenu';
@@ -160,6 +161,7 @@ export function CrmProjectMobileCard({
     clientName: project.client.name,
   });
   const projectPhotoLabel = project.parentProjectId != null ? project.name : project.client.name;
+  const mobileCardProjectName = truncateDisplayText(project.name, 15);
   const longPressTimerRef = useRef<number | null>(null);
   const longPressTriggeredRef = useRef(false);
 
@@ -290,7 +292,7 @@ export function CrmProjectMobileCard({
                     progressPercent={progress?.textPercent ?? null}
                     className={styles.mobileCardPreviewAnchor}
                   >
-                    <span className={styles.mobileCardTitle}>{project.name}</span>
+                    <span className={styles.mobileCardTitle}>{mobileCardProjectName}</span>
                   </ProjectPreviewNameAnchor>
                 </div>
                 <div className={styles.mobileCardHeaderEnd}>
@@ -306,7 +308,7 @@ export function CrmProjectMobileCard({
                       </span>
                     )}
                   </span>
-                  {!isMemberRole && showActions && !selectionModeActive ? (
+                  {!isMemberRole && showActions ? (
                     <span
                       className={styles.mobileCardActions}
                       onClick={(event) => event.stopPropagation()}
@@ -330,7 +332,9 @@ export function CrmProjectMobileCard({
                 <span className={styles.mobileCardInfoIcon} aria-hidden>
                   <LuUser />
                 </span>
-                <span className={styles.mobileCardContactValue}>{project.contact.name || '—'}</span>
+                <span className={`${styles.mobileCardContactValue} ${styles.mobileCardContactBadge}`}>
+                  {project.contact.name || '—'}
+                </span>
               </div>
               <div className={styles.mobileCardInfoRow}>
                 <span className={styles.mobileCardInfoIcon} aria-hidden>
@@ -394,7 +398,7 @@ export function CrmProjectMobileCard({
                     progressPercent={progress?.textPercent ?? null}
                     className={showContactInfo ? styles.mobileCardPreviewAnchor : undefined}
                   >
-                    <span className={styles.mobileCardTitle}>{project.name}</span>
+                    <span className={styles.mobileCardTitle}>{mobileCardProjectName}</span>
                   </ProjectPreviewNameAnchor>
                 </span>
                 {!showContactInfo && parentProjectName ? (
@@ -417,7 +421,7 @@ export function CrmProjectMobileCard({
                     </span>
                   )}
                 </span>
-                {!isMemberRole && showActions && !selectionModeActive ? (
+                {!isMemberRole && showActions ? (
                   <span
                     className={styles.mobileCardActions}
                     onClick={(event) => event.stopPropagation()}

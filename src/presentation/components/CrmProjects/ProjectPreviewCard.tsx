@@ -17,6 +17,8 @@ export type ProjectPreviewCardProps = {
   readonly stageLabel?: string | null;
   readonly progressPercent?: number | null;
   readonly popoverId: string;
+  readonly mobileFullscreen?: boolean;
+  readonly onRequestClose?: () => void;
 };
 
 export function ProjectPreviewCard({
@@ -27,6 +29,8 @@ export function ProjectPreviewCard({
   stageLabel,
   progressPercent,
   popoverId,
+  mobileFullscreen = false,
+  onRequestClose,
 }: ProjectPreviewCardProps): ReactElement {
   const previewCopy = content.crm.projectPreview;
 
@@ -35,8 +39,23 @@ export function ProjectPreviewCard({
       id={popoverId}
       role="dialog"
       aria-label={previewCopy.ariaLabel(preview?.summary.name ?? '')}
-      className={cardStyles.previewCard}
+      className={[
+        cardStyles.previewCard,
+        mobileFullscreen ? cardStyles.previewCard_mobileFullscreen : '',
+      ]
+        .filter(Boolean)
+        .join(' ')}
     >
+      {mobileFullscreen ? (
+        <button
+          type="button"
+          className={cardStyles.previewMobileCloseBtn}
+          aria-label={previewCopy.hidePreviewAriaLabel}
+          onClick={() => onRequestClose?.()}
+        >
+          ×
+        </button>
+      ) : null}
       {loading ? (
         <section className={cardStyles.previewSection}>
           <p className={cardStyles.metaValue}>{previewCopy.loading}</p>

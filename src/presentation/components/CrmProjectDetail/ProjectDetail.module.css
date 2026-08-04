@@ -12656,6 +12656,10 @@
   min-width: 0;
 }
 
+.subprojectsMobileSelectedFloatingPill {
+  display: none;
+}
+
 .subprojectsMobileBulkToolbar {
   display: inline-flex;
   align-items: center;
@@ -12704,6 +12708,33 @@
 }
 
 @media (max-width: 767px) {
+  .subprojectsMobileSelectedFloatingPill {
+    position: fixed;
+    left: 50%;
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 1rem);
+    transform: translateX(-50%);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 1.875rem;
+    padding: 0.25rem 0.75rem;
+    border: 1px solid var(--theme-border-main, #3d3e4a);
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--theme-surface-main, #252836) 88%, #000 12%);
+    color: var(--color-text, #e2e8f0);
+    font-size: 0.75rem;
+    font-weight: 600;
+    line-height: 1;
+    letter-spacing: 0.01em;
+    box-shadow: 0 8px 20px rgba(15, 23, 42, 0.35);
+    z-index: 60;
+    cursor: pointer;
+  }
+
+  .subprojectsMobileSelectedFloatingPill:hover:not(:disabled) {
+    background: color-mix(in srgb, var(--theme-surface-main, #252836) 82%, #000 18%);
+  }
+
   .subprojectsPanelHeaderTools {
     gap: 0.375rem;
     flex: 1 1 auto;
@@ -12923,7 +12954,6 @@
     border-color 0.12s ease;
 }
 
-.subprojectMobileCard:hover .subprojectMobileCardSelectToggle,
 .subprojectMobileCardSelectToggle_visible {
   opacity: 1;
   pointer-events: auto;
@@ -12972,7 +13002,7 @@
   flex-direction: column;
   gap: 0.35rem;
   min-width: 0;
-  padding: 0.75rem 0.875rem 0.75rem 0;
+  padding: 0.75rem 0 0.75rem 0;
 }
 
 .subprojectMobileCardTopRow {
@@ -12986,7 +13016,9 @@
 .subprojectMobileCardHeaderEnd {
   display: flex;
   align-items: center;
+  justify-content: flex-end;
   gap: 0.25rem;
+  margin-left: auto;
   flex-shrink: 0;
 }
 
@@ -12996,6 +13028,14 @@
   justify-content: flex-start;
   gap: 0.3125rem;
   min-width: 0;
+}
+
+.subprojectMobileCardContactBadge {
+  align-self: flex-start;
+  padding: 0.125rem 0.75rem;
+  border: 1px solid #0f766e;
+  border-radius: 0.375rem;
+  background: color-mix(in srgb, #25ffdd 22%, transparent);
 }
 
 .subprojectMobileCardInfoIcon {
@@ -13036,6 +13076,7 @@
   display: flex;
   align-items: center;
   gap: 0.375rem;
+  flex: 1 1 auto;
   min-width: 0;
   max-width: 100%;
   flex-wrap: wrap;
@@ -13063,8 +13104,24 @@
   vertical-align: bottom;
 }
 
+.subprojectMobileCard .subprojectMobileCardName {
+  color: var(--color-text, #0f172a) !important;
+}
+
 .subprojectMobileCard_inactive .subprojectMobileCardName {
   color: var(--theme-text-muted, #94a3b8);
+}
+
+:global([data-theme='dark']) .subprojectMobileCardName {
+  color: #e2e8f0;
+}
+
+:global([data-theme='dark']) .subprojectMobileCard .subprojectMobileCardName {
+  color: #e2e8f0 !important;
+}
+
+:global([data-theme='dark']) .subprojectMobileCard_inactive .subprojectMobileCardName {
+  color: #94a3b8 !important;
 }
 
 .subprojectMobileCardMeta,
@@ -13072,6 +13129,16 @@
   font-size: 0.75rem;
   line-height: 1.35;
   color: var(--color-text-muted, #64748b);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+}
+
+.subprojectMobileCardContactName {
+  font-size: 0.75rem;
+  line-height: 1.35;
+  color: var(--color-text, #0f172a);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -13105,6 +13172,19 @@
 
 :global([data-theme='dark']) .subprojectMobileCardColRight .subprojectMobileCardValue {
   color: #e2e8f0;
+}
+
+:global([data-theme='dark']) .subprojectMobileCardContactName {
+  color: #e2e8f0;
+}
+
+:global([data-theme='dark']) .subprojectMobileCardContactBadge {
+  border-color: #0f766e;
+  background: color-mix(in srgb, #25ffdd 28%, transparent);
+}
+
+:global([data-theme='dark']) .subprojectMobileCardContactBadge .subprojectMobileCardInfoIcon {
+  color: #2dd4bf;
 }
 
 .subprojectMobileCardStagePill {

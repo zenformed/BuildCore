@@ -30,9 +30,51 @@
   border-radius: 0.625rem;
 }
 
+.previewCard_mobileFullscreen {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  max-height: none;
+  border-radius: 0;
+}
+
+.previewMobileCloseBtn {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.625rem;
+  margin: 0;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  border: none;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--color-text-muted, #64748b);
+  font-size: 1.5rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.previewMobileCloseBtn:hover {
+  background: color-mix(in srgb, var(--color-text-muted, #64748b) 12%, transparent);
+  color: var(--color-text-primary, #0f172a);
+}
+
 :global([data-theme='dark']) .previewCard {
   background: var(--theme-surface-raised, #1d2029);
   color: var(--color-text-primary, #f8fafc);
+}
+
+:global([data-theme='dark']) .previewMobileCloseBtn {
+  color: #94a3b8;
+}
+
+:global([data-theme='dark']) .previewMobileCloseBtn:hover {
+  color: #e2e8f0;
 }
 
 .previewCard_inDialog {
@@ -245,6 +287,97 @@
   gap: 0;
 }
 
+.previewMobileHeroSection {
+  display: flex;
+  flex-direction: column;
+}
+
+.previewMobileHeroMedia {
+  width: 100%;
+  height: min(25vh, 14rem);
+  min-height: 8.5rem;
+  overflow: hidden;
+  background: var(--theme-surface-main, #252836);
+}
+
+.previewMobileHeroImage {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.previewMobileHeroInitials {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  color: #fff;
+  font-size: 3rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.previewMobileHeroTitle {
+  margin: 0;
+  padding: 0.625rem 1rem 0.5rem;
+  text-align: center;
+  font-size: 1.0625rem;
+  font-weight: 600;
+  line-height: 1.35;
+  word-break: break-word;
+}
+
+.previewMobileList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+}
+
+.previewMobileListItem {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: 0;
+}
+
+.previewMobileListLabel {
+  font-size: 0.625rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--color-text-muted, #64748b);
+  line-height: 1.05;
+}
+
+.previewMobileListValueRow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  min-width: 0;
+}
+
+.previewMobileListValueIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 0.75rem;
+  height: 0.75rem;
+  color: #0f766e;
+  flex: 0 0 auto;
+}
+
+.previewMobileListValueIcon :global(svg) {
+  width: 0.75rem;
+  height: 0.75rem;
+  stroke-width: 2;
+}
+
+.previewMobileListValueContent {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
 .previewSection {
   padding: 0.75rem 1rem;
   border-bottom: 1px solid var(--theme-border-main, #e2e8f0);
@@ -422,6 +555,35 @@
   min-width: 0;
 }
 
+.metaValueWithInlineIconRow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  width: 100%;
+  min-width: 0;
+}
+
+.metaValueInlineIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 0.75rem;
+  height: 0.75rem;
+  flex: 0 0 auto;
+  color: var(--color-text-muted, #64748b);
+}
+
+.metaValueInlineIcon :global(svg) {
+  width: 0.75rem;
+  height: 0.75rem;
+  stroke-width: 2;
+}
+
+.metaValueWithInlineIconContent {
+  min-width: 0;
+  width: 100%;
+}
+
 .metaValueMultiline {
   display: block;
   font-size: 0.75rem;
@@ -546,6 +708,33 @@
 
 :global([data-theme='dark']) .metaColumnIcon {
   color: #94a3b8;
+}
+
+:global([data-theme='dark']) .metaValueInlineIcon {
+  color: #94a3b8;
+}
+
+:global([data-theme='dark']) .previewMobileListLabel {
+  color: #94a3b8;
+}
+
+:global([data-theme='dark']) .previewMobileListValueIcon {
+  color: #2dd4bf;
+}
+
+.previewMobileOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1400;
+  background: rgba(15, 23, 42, 0.58);
+}
+
+.previewMobileSheet {
+  width: 100vw;
+  height: 100vh;
+  max-width: 100vw;
+  max-height: 100vh;
+  background: var(--theme-surface-raised, #1d2029);
 }
 
 .statusPill {

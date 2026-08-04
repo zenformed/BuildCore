@@ -2,6 +2,7 @@
 
 import type { FocusEvent, MouseEvent, ReactElement, RefObject } from 'react';
 import { useCallback, useEffect, useId, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import type { CrmProjectPreview } from '@/domain/crm/projectPreview';
 import type { ProjectCustomFieldDefinition } from '@/domain/buildcore/projectCustomFields';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
@@ -161,36 +162,61 @@ export function useProjectPreviewPopover({
   }, [hide, open]);
 
   const menu =
-    isActive && open ? (
-      <WorkflowInlineMenu
-        open
-        onClose={hide}
-        anchorRef={anchorRef as RefObject<HTMLElement | null>}
-        portalClassName={cardStyles.previewPortal}
-        sizeToContent
-        align="start"
-        menuGapPx={6}
-        disablePortalScroll
-        portalHandlers={
-          isTapMode
-            ? undefined
-            : {
+    isActive && open
+      ? isTapMode && typeof document !== 'undefined'
+        ? createPortal(
+            <div
+              className={cardStyles.previewMobileOverlay}
+              role="presentation"
+              onClick={() => hide()}
+            >
+              <div
+                className={cardStyles.previewMobileSheet}
+                role="presentation"
+                onClick={(event) => event.stopPropagation()}
+              >
+                <ProjectPreviewCard
+                  preview={preview}
+                  loading={loading}
+                  loadError={loadError}
+                  customFieldDefinitions={customFieldDefinitions}
+                  stageLabel={stageLabel}
+                  progressPercent={progressPercent}
+                  popoverId={popoverId}
+                  mobileFullscreen
+                  onRequestClose={hide}
+                />
+              </div>
+            </div>,
+            document.body
+          )
+        : (
+            <WorkflowInlineMenu
+              open
+              onClose={hide}
+              anchorRef={anchorRef as RefObject<HTMLElement | null>}
+              portalClassName={cardStyles.previewPortal}
+              sizeToContent
+              align="start"
+              menuGapPx={6}
+              disablePortalScroll
+              portalHandlers={{
                 onMouseEnter: show,
                 onMouseLeave: scheduleHide,
-              }
-        }
-      >
-        <ProjectPreviewCard
-          preview={preview}
-          loading={loading}
-          loadError={loadError}
-          customFieldDefinitions={customFieldDefinitions}
-          stageLabel={stageLabel}
-          progressPercent={progressPercent}
-          popoverId={popoverId}
-        />
-      </WorkflowInlineMenu>
-    ) : null;
+              }}
+            >
+              <ProjectPreviewCard
+                preview={preview}
+                loading={loading}
+                loadError={loadError}
+                customFieldDefinitions={customFieldDefinitions}
+                stageLabel={stageLabel}
+                progressPercent={progressPercent}
+                popoverId={popoverId}
+              />
+            </WorkflowInlineMenu>
+          )
+      : null;
 
   const anchorHandlers = isTapMode
     ? {}

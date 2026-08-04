@@ -1,7 +1,8 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState, type ReactElement } from 'react';
-import { LuFileSpreadsheet } from 'react-icons/lu';
+import { LuFileSpreadsheet, LuSearch } from 'react-icons/lu';
+import { createPortal } from 'react-dom';
 import { resolvePipelineStageScopeForProject } from '@/domain/buildcore/orgPipelineStages';
 import { useRouter } from 'next/navigation';
 import {
@@ -450,6 +451,19 @@ export function CrmProjectsPipeline({
       className={styles.projectsSearch}
     />
   );
+  const mobileSearchInput = (
+    <div className={styles.projectsSearchField}>
+      <LuSearch className={styles.projectsSearchIcon} size={15} strokeWidth={2} aria-hidden />
+      <input
+        type="search"
+        value={searchQuery}
+        onChange={(event) => setSearchQuery(event.target.value)}
+        placeholder={panelCopy.searchPlaceholder}
+        aria-label={panelCopy.searchAriaLabel}
+        className={styles.projectsSearchInline}
+      />
+    </div>
+  );
   const refreshButton = (
     <DetailPanelSectionRefresh
       sectionLabel={panelTitle}
@@ -498,6 +512,34 @@ export function CrmProjectsPipeline({
   const showMobileBulkToolbar = isMobileLayout && canUseBulkActions && bulkSelection.selectedCount > 0;
   const selectedCountDisplay =
     bulkSelection.selectedCount > 99 ? '99+' : String(Math.max(0, bulkSelection.selectedCount));
+  const [mobileShellBar, setMobileShellBar] = useState<HTMLElement | null>(null);
+
+  useEffect(() => {
+    if (!isMobileLayout) {
+      setMobileShellBar(null);
+      return;
+    }
+    const menuButton = document.querySelector<HTMLButtonElement>(
+      'button[aria-controls="zenformed-mobile-drawer"]'
+    );
+    setMobileShellBar(menuButton?.parentElement ?? null);
+  }, [isMobileLayout]);
+
+  const mobileShellTopRow =
+    isMobileLayout && mobileShellBar != null
+      ? createPortal(
+          <div className={styles.projectsMobileShellRow}>
+            <div className={styles.projectsPanelMobileHeading}>{panelTitle}</div>
+            <div className={styles.projectsPanelHeaderRowActions}>
+              {headerFilterButton}
+              {importButton}
+              {refreshButton}
+              {addButton}
+            </div>
+          </div>,
+          mobileShellBar
+        )
+      : null;
 
   return (
     <section
@@ -521,36 +563,21 @@ export function CrmProjectsPipeline({
           .join(' ')}
       >
         {isMobileLayout ? (
-          <div className={styles.projectsPanelHeaderRow}>
-            <div className={styles.projectsPanelSearchWrap}>
+          <>
+            <div className={styles.projectsPanelHeaderSecondaryRow}>
               {showMobileBulkToolbar ? (
                 <div
                   className={styles.projectsMobileBulkToolbar}
                   role="toolbar"
                   aria-label={bulkSelectionCopy.toolbarAriaLabel}
                 >
-                  <button
-                    type="button"
-                    className={styles.projectsMobileSelectBtn}
-                    aria-label={bulkSelectionCopy.cancel}
-                    title={`${selectedCountDisplay} selected`}
-                    onClick={() => bulkSelection.clearSelection()}
-                  >
-                    <span className={styles.projectsMobileSelectBtnIcon} aria-hidden>
-                      {selectedCountDisplay}
-                    </span>
-                  </button>
                   {selectionBulkActions}
                 </div>
               ) : (
-                <>
-                  {headerFilterButton}
-                  {searchInput}
-                </>
+                mobileSearchInput
               )}
             </div>
-            <div className={styles.projectsPanelHeaderRowActions}>{importButton}{refreshButton}{addButton}</div>
-          </div>
+          </>
         ) : (
           <div className={styles.projectsPanelHeaderTools}>
             {headerFilterButton}
@@ -561,6 +588,18 @@ export function CrmProjectsPipeline({
           </div>
         )}
       </div>
+      {showMobileBulkToolbar ? (
+        <button
+          type="button"
+          className={styles.projectsMobileSelectedFloatingPill}
+          aria-label={bulkSelectionCopy.cancel}
+          title={bulkSelectionCopy.cancel}
+          onClick={() => bulkSelection.clearSelection()}
+        >
+          {`${selectedCountDisplay} Selected`}
+        </button>
+      ) : null}
+      {mobileShellTopRow}
       <div
         className={[
           styles.pipeline,

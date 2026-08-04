@@ -23,6 +23,7 @@ import {
   formatPhoneDisplay,
   formatStageLabel,
 } from '@/presentation/features/crmProjects/crmProjectFormatters';
+import { truncateDisplayText } from '@/presentation/features/crmProjectDetail/crmProjectDetailFormatters';
 import { useCrmProjectRowPresentation } from '@/presentation/features/crmProjects/useCrmProjectRowPresentation';
 import type { BulkSelectionBindings } from '@/presentation/features/bulkSelection/BulkSelectionBindings';
 import { CrmProjectCompleteIcon } from '@/presentation/components/crmShared/CrmProjectCompleteIcon';
@@ -114,6 +115,7 @@ export function SubprojectMobileCard({
     clientName: project.client.name,
   });
   const photoLabel = project.parentProjectId != null ? project.name : project.client.name;
+  const mobileCardProjectName = truncateDisplayText(project.name, 15);
   const stageMetaContent =
     derivedStageSlug != null ? (
       <span className={styles.subprojectMobileCardStageRow}>
@@ -268,7 +270,7 @@ export function SubprojectMobileCard({
                       progressPercent={progress?.textPercent ?? null}
                     >
                       <span className={styles.subprojectMobileCardName} title={project.name}>
-                        {project.name}
+                        {mobileCardProjectName}
                       </span>
                     </ProjectPreviewNameAnchor>
                     {isInactive ? <CrmProjectInactiveInlineLabel project={project} /> : null}
@@ -287,7 +289,7 @@ export function SubprojectMobileCard({
                       </span>
                     )}
                   </span>
-                  {!isMemberRole && showActions && !selectionModeActive ? (
+                  {!isMemberRole && showActions ? (
                     <span
                       className={styles.subprojectMobileCardActions}
                       onClick={(event) => event.stopPropagation()}
@@ -311,7 +313,11 @@ export function SubprojectMobileCard({
                 <span className={styles.subprojectMobileCardInfoIcon} aria-hidden>
                   <LuUser />
                 </span>
-                <span className={styles.subprojectMobileCardValue}>{project.contact.name || '—'}</span>
+                <span
+                  className={`${styles.subprojectMobileCardContactName} ${styles.subprojectMobileCardContactBadge}`}
+                >
+                  {project.contact.name || '—'}
+                </span>
               </div>
               <div className={styles.subprojectMobileCardInfoRow}>
                 <span className={styles.subprojectMobileCardInfoIcon} aria-hidden>

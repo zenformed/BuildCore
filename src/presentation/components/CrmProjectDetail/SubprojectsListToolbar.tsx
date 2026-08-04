@@ -22,8 +22,6 @@ export type SubprojectsListToolbarProps = {
   readonly onImportOpen?: () => void;
   /** Mobile: show bulk chrome when rows are selected. */
   readonly showMobileBulkToolbar?: boolean;
-  readonly selectedCount?: number;
-  readonly selectedCountLabel?: string;
   readonly bulkToolbarAriaLabel?: string;
   readonly bulkCancelLabel?: string;
   readonly onClearSelection?: () => void;
@@ -45,7 +43,6 @@ export function SubprojectsListToolbar({
   importSpreadsheetAriaLabel,
   onImportOpen,
   showMobileBulkToolbar = false,
-  selectedCount = 0,
   bulkToolbarAriaLabel = '',
   bulkCancelLabel = '',
   onClearSelection,
@@ -53,7 +50,6 @@ export function SubprojectsListToolbar({
   trailingActions = null,
 }: SubprojectsListToolbarProps): ReactElement {
   const isMobileLayout = useDashboardMobileLayout();
-  const selectedCountDisplay = selectedCount > 99 ? '99+' : String(Math.max(0, selectedCount));
 
   return (
     <>
@@ -64,17 +60,6 @@ export function SubprojectsListToolbar({
             role="toolbar"
             aria-label={bulkToolbarAriaLabel}
           >
-            <button
-              type="button"
-              className={styles.subprojectsSelectBtn}
-              aria-label={bulkCancelLabel}
-              title={`${selectedCountDisplay} selected`}
-              onClick={onClearSelection}
-            >
-              <span className={styles.subprojectsSelectBtnIcon} aria-hidden>
-                {selectedCountDisplay}
-              </span>
-            </button>
             {mobileBulkActions}
           </div>
           <div className={styles.subprojectsMobileSelectionRightActions}>

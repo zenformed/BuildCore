@@ -582,8 +582,6 @@ function SubprojectsSectionContent({
       importSpreadsheetAriaLabel={copy.importSpreadsheetAriaLabel}
       onImportOpen={openImportWizard}
       showMobileBulkToolbar={isMobileLayout && bulkSelection.selectedCount > 0 && canUseBulkActions}
-      selectedCount={bulkSelection.selectedCount}
-      selectedCountLabel={bulkSelectionCopy.selectedCount(bulkSelection.selectedCount)}
       bulkToolbarAriaLabel={bulkSelectionCopy.toolbarAriaLabel}
       bulkCancelLabel={bulkSelectionCopy.cancel}
       onClearSelection={() => bulkSelection.clearSelection()}
@@ -720,6 +718,17 @@ function SubprojectsSectionContent({
           )}
         </div>
       )}
+      {isMobileLayout && bulkSelection.selectedCount > 0 && canUseBulkActions ? (
+        <button
+          type="button"
+          className={styles.subprojectsMobileSelectedFloatingPill}
+          aria-label={bulkSelectionCopy.cancel}
+          title={bulkSelectionCopy.cancel}
+          onClick={() => bulkSelection.clearSelection()}
+        >
+          {`${bulkSelection.selectedCount > 99 ? '99+' : bulkSelection.selectedCount} Selected`}
+        </button>
+      ) : null}
 
       {expanded ? (
         <div id={panelId} className={styles.subprojectsTableBody}>

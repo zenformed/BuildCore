@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState, type KeyboardEvent, type ReactElement, type ReactNode } from 'react';
 import cardStyles from '../CrmProjectDetail/WorkflowTaskPreviewCard.module.css';
+import { useDashboardMobileLayout } from '@/presentation/features/crmProjects/useDashboardMobileLayout';
 
 export const PREVIEW_CUSTOM_FIELD_VALUE_MAX_LENGTH = 55;
 
@@ -31,6 +32,7 @@ export function PreviewMetaColumn({
   readonly labelPosition?: 'above' | 'below';
   readonly leadingIcon?: ReactNode;
 }): ReactElement {
+  const isMobileLayout = useDashboardMobileLayout();
   const columnClass = [
     cardStyles.metaColumn,
     align === 'center' ? cardStyles.metaColumn_center : '',
@@ -43,16 +45,25 @@ export function PreviewMetaColumn({
 
   const labelEl = <div className={cardStyles.metaLabel}>{label}</div>;
   const valueEl = <div className={cardStyles.metaValue}>{value}</div>;
+  const mobileValueWithIconEl =
+    leadingIcon != null ? (
+      <div className={cardStyles.metaValueWithInlineIconRow}>
+        <span className={cardStyles.metaValueInlineIcon} aria-hidden>
+          {leadingIcon}
+        </span>
+        <div className={cardStyles.metaValueWithInlineIconContent}>{value}</div>
+      </div>
+    ) : valueEl;
 
   const columnContent =
     labelPosition === 'above' ? (
       <>
         {labelEl}
-        {valueEl}
+        {isMobileLayout ? mobileValueWithIconEl : valueEl}
       </>
     ) : (
       <>
-        {valueEl}
+        {isMobileLayout ? mobileValueWithIconEl : valueEl}
         {labelEl}
       </>
     );

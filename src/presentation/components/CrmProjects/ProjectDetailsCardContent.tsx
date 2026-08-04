@@ -14,6 +14,10 @@ import {
 } from 'react-icons/lu';
 import type { CrmIndustry, CrmTeamMemberRef } from '@/domain/crm';
 import type { CrmProjectPreview } from '@/domain/crm/projectPreview';
+import {
+  projectPrimaryPhotoCircleColor,
+  projectPrimaryPhotoInitials,
+} from '@/domain/crm/projectPrimaryPhoto';
 import type { ProjectCustomFieldDefinition } from '@/domain/buildcore/projectCustomFields';
 import type { ProjectPaymentFinancials } from '@/domain/crm/projectPaymentValue';
 import { formatCrmProjectLocationLine } from '@/domain/crm/projectAddress';
@@ -27,7 +31,12 @@ import {
   formatPhoneDisplay,
   getProjectIndustryDisplayLabel,
 } from '@/presentation/features/crmProjects/crmProjectFormatters';
+import { useDashboardMobileLayout } from '@/presentation/features/crmProjects/useDashboardMobileLayout';
 import type { SummaryEditableField } from '@/presentation/features/crmProjectDetail/projectDetailFormModel';
+import {
+  buildProjectPrimaryPhotoApiPath,
+  useProjectPrimaryPhotoBlob,
+} from '@/presentation/features/crmProjectDetail/useProjectPrimaryPhotoBlob';
 import { ProjectHeaderAssignee } from '../CrmProjectDetail/ProjectHeaderAssignee';
 import { TeamMemberAvatar } from '../CrmProjectDetail/TeamMemberAvatar';
 import cardStyles from '../CrmProjectDetail/WorkflowTaskPreviewCard.module.css';
@@ -80,6 +89,28 @@ function resolveFinancials(
 
 function MultilineMetaValue({ text }: { readonly text: string }): ReactElement {
   return <span className={cardStyles.metaValueMultiline}>{text}</span>;
+}
+
+function MobilePreviewMetaItem({
+  label,
+  icon,
+  value,
+}: {
+  readonly label: ReactElement | string;
+  readonly icon: ReactElement;
+  readonly value: ReactElement | string;
+}): ReactElement {
+  return (
+    <div className={cardStyles.previewMobileListItem}>
+      <div className={cardStyles.previewMobileListLabel}>{label}</div>
+      <div className={cardStyles.previewMobileListValueRow}>
+        <span className={cardStyles.previewMobileListValueIcon} aria-hidden>
+          {icon}
+        </span>
+        <div className={cardStyles.previewMobileListValueContent}>{value}</div>
+      </div>
+    </div>
+  );
 }
 
 function truncatePreviewProjectName(value: string): string {
@@ -268,10 +299,19 @@ export function ProjectDetailsCardContent({
   mode,
   edit = null,
 }: ProjectDetailsCardContentProps): ReactElement {
+  const isMobileLayout = useDashboardMobileLayout();
   const previewCopy = content.crm.projectPreview;
   const fields = content.projectDetail.fields;
   const emptyValue = content.crm.projectCustomFields.emptyValue;
   const { summary } = preview;
+  const projectPhotoApiPath = buildProjectPrimaryPhotoApiPath(summary.slug, summary.primaryPhotoPath);
+  const projectPhotoUrl = useProjectPrimaryPhotoBlob(projectPhotoApiPath);
+  const projectPhotoLabel = summary.parentProjectId != null ? summary.name : summary.client.name;
+  const projectPhotoInitials = projectPrimaryPhotoInitials({
+    parentProjectId: summary.parentProjectId,
+    projectName: summary.name,
+    clientName: summary.client.name,
+  });
   const notesText = preview.notes?.trim() ?? '';
   const editable = mode === 'full' && edit != null && !edit.readOnly;
 
@@ -537,6 +577,117 @@ export function ProjectDetailsCardContent({
   const isSubproject = summary.parentProjectId != null;
   const projectKindLabel = isSubproject ? previewCopy.kindSubproject : previewCopy.kindProject;
   const stageDisplay = stageLabel?.trim() || summary.currentStageSlug || emptyValue;
+
+  if (isMobileLayout) {
+    return (
+      <div className={cardStyles.previewBody}>
+        <section className={cardStyles.previewMobileHeroSection} aria-label={projectKindLabel}>
+          <div className={cardStyles.previewMobileHeroMedia}>
+            {projectPhotoUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={projectPhotoUrl} alt="" className={cardStyles.previewMobileHeroImage} />
+            ) : (
+              <span
+                className={cardStyles.previewMobileHeroInitials}
+                style={{ backgroundColor: projectPrimaryPhotoCircleColor(projectPhotoLabel) }}
+                aria-hidden
+              >
+                {projectPhotoInitials}
+              </span>
+            )}
+          </div>
+          <h3 className={cardStyles.previewMobileHeroTitle}>{previewProjectName}</h3>
+        </section>
+        <section className={cardStyles.previewSection} aria-label={previewCopy.sections.overview}>
+          <div className={cardStyles.previewMobileList}>
+            <MobilePreviewMetaItem
+              label={previewCopy.labels.industry}
+              icon={<LuClipboardList />}
+              value={industryDisplay}
+            />
+            <MobilePreviewMetaItem
+              label={previewCopy.labels.assigned}
+              icon={<LuUser />}
+              value={assignedDisplay}
+            />
+            <MobilePreviewMetaItem
+              label={previewCopy.labels.contact}
+              icon={<LuUser />}
+              value={summary.contact.name || emptyValue}
+            />
+            <MobilePreviewMetaItem
+              label={previewCopy.labels.email}
+              icon={<LuMail />}
+              value={<StackedMetaList values={emails} emptyValue={emptyValue} />}
+            />
+            <MobilePreviewMetaItem
+              label={previewCopy.labels.phone}
+              icon={<LuPhone />}
+              value={<StackedMetaList values={phones} emptyValue={emptyValue} />}
+            />
+            <MobilePreviewMetaItem
+              label={previewCopy.labels.address}
+              icon={<LuMapPin />}
+              value={addressDisplay ? <MultilineMetaValue text={addressDisplay} /> : emptyValue}
+            />
+            <MobilePreviewMetaItem
+              label={previewCopy.labels.stage}
+              icon={<LuGitBranch />}
+              value={stageDisplay}
+            />
+            <MobilePreviewMetaItem
+              label={previewCopy.labels.progress}
+              icon={<LuListChecks />}
+              value={progressDisplay}
+            />
+          </div>
+        </section>
+
+        {notesText ? (
+          <section className={cardStyles.previewSection} aria-label={previewCopy.sections.notes}>
+            <div className={cardStyles.previewMobileList}>
+              <MobilePreviewMetaItem
+                label={previewCopy.labels.notes}
+                icon={<LuStickyNote />}
+                value={<span className={cardStyles.previewNotes}>{notesText}</span>}
+              />
+            </div>
+          </section>
+        ) : null}
+
+        {customFieldDefinitions.length > 0 ? (
+          <section className={cardStyles.previewSection} aria-label={previewCopy.sections.customFields}>
+            <h4 className={cardStyles.previewCustomFieldsHeading}>{previewCopy.sections.customFields}</h4>
+            <dl className={cardStyles.customFieldList}>
+              {customFieldDefinitions.map((definition) => {
+                const raw = summary.customFields?.[definition.fieldKey];
+                const value = raw != null && raw.trim().length > 0 ? raw.trim() : emptyValue;
+                const displayValue =
+                  value === emptyValue ? value : truncatePreviewCustomFieldValue(value);
+                const valueTitle = previewCustomFieldValueTitle(value, emptyValue);
+                return (
+                  <div key={definition.fieldKey} className={cardStyles.customFieldRow}>
+                    <dt className={cardStyles.customFieldLabel}>{definition.label}</dt>
+                    <dd
+                      className={[
+                        cardStyles.customFieldValue,
+                        value === emptyValue ? cardStyles.customFieldValue_muted : '',
+                      ]
+                        .filter(Boolean)
+                        .join(' ')}
+                      title={valueTitle}
+                    >
+                      {displayValue}
+                    </dd>
+                  </div>
+                );
+              })}
+            </dl>
+          </section>
+        ) : null}
+      </div>
+    );
+  }
 
   return (
     <div className={cardStyles.previewBody}>
