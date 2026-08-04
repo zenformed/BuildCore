@@ -12,14 +12,18 @@ export type ProjectProgressPercentProps = {
   variant?: 'default' | 'compact';
   /** `progress` (default) uses calm light-blue; `success` keeps legacy green. */
   tone?: 'success' | 'progress';
+  /** Optional explicit segment count (e.g. active pipeline stage count). */
+  segmentCount?: number;
 };
 
 export function ProjectProgressPercent({
   progress,
   variant = 'default',
   tone = 'progress',
+  segmentCount = PROJECT_PROGRESS_SEGMENT_COUNT,
 }: ProjectProgressPercentProps): ReactElement {
   const { textPercent, litSegmentCount } = progress;
+  const resolvedSegmentCount = Math.max(0, Math.floor(segmentCount));
   const rootClass = [
     styles.projectProgressPercent,
     variant === 'compact' ? styles.projectProgressPercent_compact : '',
@@ -38,7 +42,7 @@ export function ProjectProgressPercent({
       aria-label={`Project progress ${textPercent}%`}
     >
       <div className={styles.projectProgressSegments} aria-hidden>
-        {Array.from({ length: PROJECT_PROGRESS_SEGMENT_COUNT }, (_, index) => (
+        {Array.from({ length: resolvedSegmentCount }, (_, index) => (
           <span
             key={index}
             className={

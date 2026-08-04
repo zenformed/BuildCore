@@ -15,11 +15,13 @@ import styles from './ProjectDetail.module.css';
 export type WorkflowTaskStageAddButtonProps = {
   disabled?: boolean;
   onSelectStage: (stageSlug: PipelineStageSlug) => void;
+  mobileFloating?: boolean;
 };
 
 export function WorkflowTaskStageAddButton({
   disabled = false,
   onSelectStage,
+  mobileFloating = false,
 }: WorkflowTaskStageAddButtonProps): ReactElement {
   const wf = content.projectDetail.workflow;
   const { project } = useProjectDetailShell();
@@ -31,12 +33,25 @@ export function WorkflowTaskStageAddButton({
 
   return (
     <div ref={anchorRef} className={styles.detailPanelHeaderBtnWrap}>
-      <DetailPanelHeaderButton
-        variant="add"
-        title={wf.addTask}
-        disabled={disabled}
-        onClick={() => setMenuOpen((open) => !open)}
-      />
+      {mobileFloating ? (
+        <button
+          type="button"
+          className={styles.subprojectsMobileCreateFloatingBtn}
+          title={wf.addTask}
+          aria-label={wf.addTask}
+          disabled={disabled}
+          onClick={() => setMenuOpen((open) => !open)}
+        >
+          + Create
+        </button>
+      ) : (
+        <DetailPanelHeaderButton
+          variant="add"
+          title={wf.addTask}
+          disabled={disabled}
+          onClick={() => setMenuOpen((open) => !open)}
+        />
+      )}
       <CrmDirectUploadStatusHost />
       <WorkflowInlineMenu
         open={menuOpen}

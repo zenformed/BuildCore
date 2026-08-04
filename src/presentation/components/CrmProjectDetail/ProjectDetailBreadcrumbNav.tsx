@@ -5,6 +5,7 @@ import type { ReactElement } from 'react';
 import type { CrmProjectSummary } from '@/domain/crm';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
 import type { ProjectDetailPageContext } from '@/presentation/features/crmProjectDetail/projectDetailPageContext';
+import { truncateDisplayText } from '@/presentation/features/crmProjectDetail/crmProjectDetailFormatters';
 import styles from './ProjectDetail.module.css';
 
 export type ProjectDetailBreadcrumbNavigation = {
@@ -22,6 +23,7 @@ export type ProjectDetailBreadcrumbNavProps = {
   readonly pageContext?: ProjectDetailPageContext;
   readonly navigation: ProjectDetailBreadcrumbNavigation;
   readonly className?: string;
+  readonly entityLabelMaxChars?: number;
 };
 
 function subPageLabel(pageContext: ProjectDetailPageContext): string | null {
@@ -46,6 +48,7 @@ export function ProjectDetailBreadcrumbNav({
   pageContext = 'detail',
   navigation,
   className,
+  entityLabelMaxChars,
 }: ProjectDetailBreadcrumbNavProps): ReactElement {
   const detail = content.projectDetail;
   const subPage = subPageLabel(pageContext);
@@ -56,6 +59,14 @@ export function ProjectDetailBreadcrumbNav({
     parentProject?.name.trim() ||
     '';
   const projectLabel = navigation.currentProjectLabel?.trim() || project.name;
+  const normalizedMaxChars =
+    typeof entityLabelMaxChars === 'number' && entityLabelMaxChars > 0
+      ? Math.floor(entityLabelMaxChars)
+      : null;
+  const displayParentLabel =
+    normalizedMaxChars != null ? truncateDisplayText(parentLabel, normalizedMaxChars) : parentLabel;
+  const displayProjectLabel =
+    normalizedMaxChars != null ? truncateDisplayText(projectLabel, normalizedMaxChars) : projectLabel;
 
   const navClassName = className ?? styles.breadcrumb;
 
@@ -78,7 +89,7 @@ export function ProjectDetailBreadcrumbNav({
             className={styles.breadcrumbLink}
             prefetch={false}
           >
-            {parentLabel}
+            {displayParentLabel}
           </Link>
           <span className={styles.breadcrumbSep} aria-hidden>
             /
@@ -88,7 +99,7 @@ export function ProjectDetailBreadcrumbNav({
       {showSubPageBreadcrumb ? (
         <>
           <Link href={navigation.projectHref!} className={styles.breadcrumbLink} prefetch={false}>
-            {projectLabel}
+            {displayProjectLabel}
           </Link>
           <span className={styles.breadcrumbSep} aria-hidden>
             /
@@ -99,7 +110,7 @@ export function ProjectDetailBreadcrumbNav({
         </>
       ) : (
         <span className={styles.breadcrumbCurrent} aria-current="page">
-          {projectLabel}
+          {displayProjectLabel}
         </span>
       )}
     </nav>

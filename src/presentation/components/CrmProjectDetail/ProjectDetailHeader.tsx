@@ -126,6 +126,7 @@ export function ProjectDetailHeader({
               pageContext={pageContext}
               navigation={breadcrumbNavigation}
               className={`${styles.breadcrumb} ${styles.detailHeaderMobileBreadcrumb}`}
+              entityLabelMaxChars={20}
             />
             {actions}
           </div>

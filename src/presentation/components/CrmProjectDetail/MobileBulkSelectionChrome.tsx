@@ -146,6 +146,28 @@ export function WorkflowMobileBulkToolbar(): ReactElement | null {
   );
 }
 
+/** Workflow / payments mobile: render only when bulk toolbar is hidden. */
+export function WorkflowMobileHideWhenBulkActive({
+  children,
+}: {
+  readonly children: ReactNode;
+}): ReactElement | null {
+  const { showBulkToolbar } = useWorkflowMobileBulkSelection();
+  if (showBulkToolbar) return null;
+  return <>{children}</>;
+}
+
+/** Workflow / payments mobile: render only while bulk toolbar is active. */
+export function WorkflowMobileShowWhenBulkActive({
+  children,
+}: {
+  readonly children: ReactNode;
+}): ReactElement | null {
+  const { showBulkToolbar } = useWorkflowMobileBulkSelection();
+  if (!showBulkToolbar) return null;
+  return <>{children}</>;
+}
+
 /**
  * Workflow / payments: search + add row.
  * Hidden while bulk toolbar is active (same swap as subprojects tools row).
@@ -160,11 +182,9 @@ export function WorkflowMobileSearchToolsRow({
   const { showBulkToolbar } = useWorkflowMobileBulkSelection();
   if (showBulkToolbar) return null;
   return (
-    <div className={styles.detailPanelHeaderRow}>
+    <div className={styles.subprojectsMobileSearchRow}>
       <div className={styles.detailPanelSearchWrap}>{searchInput}</div>
-      {trailingActions != null ? (
-        <div className={styles.detailPanelHeaderRowActions}>{trailingActions}</div>
-      ) : null}
+      {trailingActions}
     </div>
   );
 }

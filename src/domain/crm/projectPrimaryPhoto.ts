@@ -60,3 +60,15 @@ export function projectPrimaryPhotoCircleColor(label: string): string {
   }
   return `hsl(${hash % 360}, 55%, 42%)`;
 }
+
+/** Muted variant used by project/subproject cards for calmer avatar tiles. */
+export function projectPrimaryPhotoCardColor(label: string): string {
+  let hash = 0;
+  for (let index = 0; index < label.length; index += 1) {
+    hash = (hash * 31 + label.charCodeAt(index)) >>> 0;
+  }
+  const hue = hash % 360;
+  const saturation = 32 + ((hash >>> 3) % 9); // 32-40%
+  const lightness = 42 + ((hash >>> 7) % 8); // 42-49%
+  return `hsl(${hue}, ${saturation}%, ${lightness}%)`;
+}

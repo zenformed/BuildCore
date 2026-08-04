@@ -3,6 +3,7 @@
 import type { ReactElement } from 'react';
 import { useCallback, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { LuSearch } from 'react-icons/lu';
 import {
   isPaymentWorkflowTask,
   type CrmProjectDetail,
@@ -47,8 +48,9 @@ import { DetailPanelSectionRefresh } from './DetailPanelSectionRefresh';
 import { DetailPanelSectionSearch } from './DetailPanelSectionSearch';
 import { FolderTabToolbarPortal } from '@/presentation/features/crmProjectDetail/folderTabToolbarContext';
 import {
-  WorkflowMobileBulkSelectAllRow,
   WorkflowMobileBulkToolbar,
+  WorkflowMobileHideWhenBulkActive,
+  WorkflowMobileShowWhenBulkActive,
   WorkflowMobileSearchToolsRow,
 } from './MobileBulkSelectionChrome';
 import { WorkflowStageTaskGroup, type ManualStageCompletionToggleAction } from './WorkflowStageTaskGroup';
@@ -397,7 +399,7 @@ export function WorkflowTasksTable({
       triggerVariant={embeddedInFolderTabs ? 'ghost' : 'filter'}
     />
   );
-  const tableFilterCaret = (
+  const mobileFilterButton = (
     <CrmProjectsFilterMenu
       filters={filters}
       onChange={setFilters}
@@ -406,7 +408,7 @@ export function WorkflowTasksTable({
       })}
       sections={['stage', 'priority', 'status', 'assigned', 'documentsRequired']}
       assigneeFilterOptions={assigneeFilterOptions}
-      triggerVariant="caret"
+      triggerVariant="ghost"
       menuAlign="start"
     />
   );
@@ -419,7 +421,19 @@ export function WorkflowTasksTable({
       />
     ) : null;
 
-  const searchInput = (
+  const searchInput = isMobileLayout ? (
+    <div className={styles.subprojectsSearchFieldWrap}>
+      <LuSearch className={styles.subprojectsSearchIcon} size={14} strokeWidth={2} aria-hidden />
+      <input
+        type="search"
+        value={searchQuery}
+        onChange={(event) => setSearchQuery(event.target.value)}
+        placeholder={wf.searchPlaceholder}
+        aria-label={wf.searchAriaLabel}
+        className={`${styles.subprojectsSearch} ${styles.subprojectsSearch_withIcon}`}
+      />
+    </div>
+  ) : (
     <DetailPanelSectionSearch
       value={searchQuery}
       onChange={setSearchQuery}
@@ -443,6 +457,31 @@ export function WorkflowTasksTable({
     <div className={styles.detailPanelHeaderBtnWrap}>
       <CrmDirectUploadStatusHost />
     </div>
+  );
+  const mobileFloatingAddButton = canCreate ? (
+    <WorkflowTaskStageAddButton onSelectStage={handleSelectStage} mobileFloating />
+  ) : null;
+  const mobileSearchTrailingActions = (
+    <div className={styles.workflowMobileSearchActions}>
+      {batchCompleteLeading}
+      {mobileFilterButton}
+    </div>
+  );
+  const mobileHeaderContent = (
+    <>
+      <WorkflowMobileShowWhenBulkActive>
+        <div className={styles.detailPanelHeaderRow}>
+          <div className={styles.detailPanelHeaderTitleGroup} />
+          <div className={styles.detailPanelHeaderRowActions}>
+            <WorkflowMobileBulkToolbar />
+          </div>
+        </div>
+      </WorkflowMobileShowWhenBulkActive>
+      <WorkflowMobileSearchToolsRow
+        searchInput={searchInput}
+        trailingActions={mobileSearchTrailingActions}
+      />
+    </>
   );
 
   const visibleTaskIds = useMemo(
@@ -569,7 +608,6 @@ export function WorkflowTasksTable({
       </WorkflowTaskAssigneeDragProvider>
     ) : (
       <>
-        {isMobileLayout ? <WorkflowMobileBulkSelectAllRow /> : null}
         {memberNoActiveTasksRow ?? stageGroupElements}
         {memberCompletedSection}
       </>
@@ -604,27 +642,28 @@ export function WorkflowTasksTable({
       className={panelClass}
       aria-label={content.projectDetail.sections.workflow}
     >
-      {embeddedInFolderTabs ? (
-        <FolderTabToolbarPortal>{headerActions}</FolderTabToolbarPortal>
+      {isMobileLayout && embeddedInFolderTabs ? (
+        <FolderTabToolbarPortal>
+          <div className={styles.workflowFolderToolbar}>{mobileHeaderContent}</div>
+        </FolderTabToolbarPortal>
       ) : isMobileLayout ? (
         <div
           className={[styles.detailPanelHeader, styles.detailPanelHeader_mobile]
             .filter(Boolean)
             .join(' ')}
         >
-          <div className={styles.detailPanelHeaderRow}>
-            <div className={styles.detailPanelHeaderTitleGroup}>{tableFilterCaret}</div>
-            <div className={styles.detailPanelHeaderRowActions}>
-              {showPanelRefresh ? refreshButton : null}
-              {batchCompleteLeading}
-              <WorkflowMobileBulkToolbar />
-            </div>
-          </div>
-          <WorkflowMobileSearchToolsRow searchInput={searchInput} trailingActions={addButton} />
+          {mobileHeaderContent}
         </div>
+      ) : embeddedInFolderTabs ? (
+        <FolderTabToolbarPortal>{headerActions}</FolderTabToolbarPortal>
       ) : (
         <div className={styles.detailPanelHeader}>{headerActions}</div>
       )}
+      {isMobileLayout ? (
+        <WorkflowMobileHideWhenBulkActive>
+          {mobileFloatingAddButton}
+        </WorkflowMobileHideWhenBulkActive>
+      ) : null}
       {isLoading && !isReady ? (
         <div className={isFullLayout ? undefined : styles.workflowPanelGrow}>
           <p className={styles.subtitle}>{wf.permissionsLoading}</p>

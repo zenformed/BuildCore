@@ -10,7 +10,7 @@ import {
   LuStickyNote,
   LuUser,
 } from 'react-icons/lu';
-import { countCompletedWorkflowStages, resolveProjectDetailProgressDisplay, resolveWorkflowPipelineGraphState } from '@/domain/buildcore/projectPipelineProgress';
+import { countCompletedWorkflowStages, resolveWorkflowPipelineGraphState } from '@/domain/buildcore/projectPipelineProgress';
 import type { CrmIndustry, CrmProjectDetail, CrmProjectSummary } from '@/domain/crm';
 import { isCrmProjectInactive, isPaymentWorkflowTask } from '@/domain/crm';
 import { nonEmptyContactValues } from '@/domain/crm/contactMultiValue';
@@ -96,16 +96,6 @@ export function ProjectDetailOverviewHeader({
   const lastUpdatedDisplay = formatRelativeUpdatedAt(summary.lastUpdatedAt);
   const assignedName = summary.assignedTo?.displayName?.trim() || detailCopy.unassigned;
 
-  const progress = useMemo(
-    () =>
-      resolveProjectDetailProgressDisplay({
-        workflowTasks: project.workflowTasks,
-        manualStageCompletions: project.manualStageCompletions,
-        stages: stageCatalog,
-      }),
-    [project.manualStageCompletions, project.workflowTasks, stageCatalog]
-  );
-
   const stageCompletion = useMemo(
     () =>
       countCompletedWorkflowStages({
@@ -139,6 +129,18 @@ export function ProjectDetailOverviewHeader({
     stagePosition == null
       ? 'Stage —'
       : `Stage ${stagePosition} of ${stageCompletion.totalActiveStageCount}`;
+  const currentPipelineStageSlug = stageGraph.derivedCurrentStageSlug ?? summary.currentStageSlug;
+  const pipelineProgress = useMemo(() => {
+    const totalStageCount = stageCompletion.totalActiveStageCount;
+    if (totalStageCount <= 0 || stagePosition == null) {
+      return { textPercent: 0, litSegmentCount: 0 };
+    }
+    const boundedStagePosition = Math.max(1, Math.min(totalStageCount, stagePosition));
+    return {
+      textPercent: Math.round((boundedStagePosition / totalStageCount) * 100),
+      litSegmentCount: boundedStagePosition,
+    };
+  }, [stageCompletion.totalActiveStageCount, stagePosition]);
 
   const nextStepDisplay = useMemo(() => {
     if (stageGraph.derivedCurrentStageSlug != null) {
@@ -286,11 +288,15 @@ export function ProjectDetailOverviewHeader({
           <div className={styles.overviewPipelineCurrent}>
             <span className={styles.overviewMetaLabel}>{detailCopy.currentStage}</span>
             <span className={`${styles.overviewMetaValue} ${styles.overviewPipelineStagePill}`}>
-              {formatStageLabel(summary.currentStageSlug, stageCatalog)}
+              {formatStageLabel(currentPipelineStageSlug, stageCatalog)}
             </span>
           </div>
           <div className={styles.overviewPipelineProgress}>
-            <ProjectProgressPercent progress={progress} tone="progress" />
+            <ProjectProgressPercent
+              progress={pipelineProgress}
+              tone="progress"
+              segmentCount={stageCompletion.totalActiveStageCount}
+            />
           </div>
           <span className={styles.overviewPipelineStageCount}>{stagePositionLabel}</span>
         </section>
@@ -336,7 +342,9 @@ export function ProjectDetailOverviewHeader({
             </div>
             <div className={styles.overviewMetadataText}>
               <span className={styles.overviewMetaLabel}>{fields.customer}</span>
-              <span className={styles.overviewMetaValue}>{customerDisplay}</span>
+              <span className={`${styles.overviewMetaValue} ${styles.overviewCustomerBadge}`}>
+                {customerDisplay}
+              </span>
             </div>
           </div>
         </div>
@@ -382,7 +390,10 @@ export function ProjectDetailOverviewHeader({
             </div>
             <div className={styles.overviewMetadataText}>
               <span className={styles.overviewMetaLabel}>Next Step</span>
-              <span className={styles.overviewMetaValue} title={nextStepDisplay}>
+              <span
+                className={`${styles.overviewMetaValue} ${styles.overviewPipelineStagePill}`}
+                title={nextStepDisplay}
+              >
                 {nextStepDisplay}
               </span>
             </div>

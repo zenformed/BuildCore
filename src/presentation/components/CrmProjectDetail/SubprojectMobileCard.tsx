@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useRef, type KeyboardEvent, type ReactElement } from 'react';
+import { useCallback, useEffect, useRef, type CSSProperties, type KeyboardEvent, type ReactElement } from 'react';
 import { LuMail, LuPhone, LuUser } from 'react-icons/lu';
 import type { CrmProjectSummary } from '@/domain/crm';
 import type { ProjectPaymentFinancials } from '@/domain/crm/projectPaymentValue';
@@ -8,7 +8,7 @@ import type { CrmProjectWorkflowProgressInputIndex } from '@/domain/crm/projectW
 import { isCrmProjectComplete, isCrmProjectInactive } from '@/domain/crm';
 import { nonEmptyContactValues } from '@/domain/crm/contactMultiValue';
 import {
-  projectPrimaryPhotoCircleColor,
+  projectPrimaryPhotoCardColor,
   projectPrimaryPhotoInitials,
 } from '@/domain/crm/projectPrimaryPhoto';
 import { isProjectPriorityUrgent } from '@/domain/crm/projectPriorityToggle';
@@ -115,6 +115,9 @@ export function SubprojectMobileCard({
     clientName: project.client.name,
   });
   const photoLabel = project.parentProjectId != null ? project.name : project.client.name;
+  const photoInitialStyle = {
+    '--project-photo-bg': projectPrimaryPhotoCardColor(photoLabel),
+  } as CSSProperties;
   const mobileCardProjectName = truncateDisplayText(project.name, 15);
   const stageMetaContent =
     derivedStageSlug != null ? (
@@ -250,7 +253,7 @@ export function SubprojectMobileCard({
               ) : (
                 <span
                   className={styles.subprojectMobileCardPhotoInitial}
-                  style={{ backgroundColor: projectPrimaryPhotoCircleColor(photoLabel) }}
+                  style={photoInitialStyle}
                   aria-hidden
                 >
                   {photoInitials}
