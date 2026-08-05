@@ -2,6 +2,7 @@
  * Client fetch helpers for Projects list v2 BFF routes.
  */
 
+import type { CrmProjectSummary } from '@/domain/crm';
 import type {
   CrmProjectsListV2CountResponse,
   CrmProjectsListV2NormalizedRequest,
@@ -53,6 +54,41 @@ export async function fetchCrmProjectsListV2Count(input: {
   params.delete('cursor');
   return crmApiGetJson<CrmProjectsListV2CountResponse>(
     `/api/crm/projects/v2/count?${params.toString()}`,
+    { signal: input.signal }
+  );
+}
+
+/**
+ * Project-page Subprojects list v2 (parent resolved by slug on the server).
+ * Uses children_of_parent request shape; client parent id is never sent as authority.
+ */
+export async function fetchCrmChildProjectsListV2Page(input: {
+  readonly parentSlug: string;
+  readonly request: CrmProjectsListV2NormalizedRequest;
+  readonly cursor: string | null;
+  readonly signal?: AbortSignal;
+}): Promise<CrmProjectsListV2PageResponse<CrmProjectSummary>> {
+  const slug = encodeURIComponent(input.parentSlug.trim());
+  const params = buildCrmProjectsListV2SearchParams(input.request, input.cursor);
+  // Server binds parent from slug; omit client parentProjectId from the query string.
+  params.delete('parentProjectId');
+  return crmApiGetJson<CrmProjectsListV2PageResponse<CrmProjectSummary>>(
+    `/api/crm/projects/${slug}/subprojects/v2?${params.toString()}`,
+    { signal: input.signal }
+  );
+}
+
+export async function fetchCrmChildProjectsListV2Count(input: {
+  readonly parentSlug: string;
+  readonly request: CrmProjectsListV2NormalizedRequest;
+  readonly signal?: AbortSignal;
+}): Promise<CrmProjectsListV2CountResponse> {
+  const slug = encodeURIComponent(input.parentSlug.trim());
+  const params = buildCrmProjectsListV2SearchParams(input.request, null);
+  params.delete('cursor');
+  params.delete('parentProjectId');
+  return crmApiGetJson<CrmProjectsListV2CountResponse>(
+    `/api/crm/projects/${slug}/subprojects/v2/count?${params.toString()}`,
     { signal: input.signal }
   );
 }

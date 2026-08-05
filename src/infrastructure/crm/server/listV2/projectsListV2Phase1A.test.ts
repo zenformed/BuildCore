@@ -13,7 +13,6 @@ import { buildCrmProjectsListV2SearchParams } from './projectsListV2Search';
 import { parseCrmProjectsListV2Query } from './projectsListV2QueryParams';
 import { projectsListV2DisabledResponse } from './projectsListV2FeatureGate';
 import { isProjectsListV2EnabledForOrganization } from '@/infrastructure/config/projectsListV2Config';
-import { CrmProjectsListV2NotWiredError, listCrmChildProjectsPageV2 } from './projectsListV2Service';
 
 const CURSOR_ENV = {
   BUILDCORE_LIST_CURSOR_SECRET: 'jlskibwoeijalskjboiwejrlaksjfabj97867sfwep987654321qwer1234567890',
@@ -147,24 +146,5 @@ describe('projectsListV2 Phase 1A contracts', () => {
     );
     const response = projectsListV2DisabledResponse();
     assert.equal(response.status, 404);
-  });
-
-  it('child projects page remains not wired in Phase 1A', async () => {
-    const normalized = normalizeCrmProjectsListV2Request({
-      view: 'children_of_parent',
-      parentProjectId: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
-    });
-    assert.equal(normalized.ok, true);
-    if (!normalized.ok) return;
-    await assert.rejects(
-      () =>
-        listCrmChildProjectsPageV2({
-          supabase: {} as never,
-          organizationId: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
-          userId: 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb',
-          request: normalized.request,
-        }),
-      CrmProjectsListV2NotWiredError
-    );
   });
 });

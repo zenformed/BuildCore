@@ -24,7 +24,10 @@ import {
   formatStageLabel,
 } from '@/presentation/features/crmProjects/crmProjectFormatters';
 import { truncateDisplayText } from '@/presentation/features/crmProjectDetail/crmProjectDetailFormatters';
-import { useCrmProjectRowPresentation } from '@/presentation/features/crmProjects/useCrmProjectRowPresentation';
+import {
+  useCrmProjectRowPresentation,
+  type CrmProjectRowPresentationOverrides,
+} from '@/presentation/features/crmProjects/useCrmProjectRowPresentation';
 import type { BulkSelectionBindings } from '@/presentation/features/bulkSelection/BulkSelectionBindings';
 import { CrmProjectCompleteIcon } from '@/presentation/components/crmShared/CrmProjectCompleteIcon';
 import { CrmProjectPriorityIcon } from '@/presentation/components/crmShared/CrmProjectPriorityIcon';
@@ -53,6 +56,8 @@ export type SubprojectMobileCardProps = {
   readonly onRequestMarkActive?: (project: CrmProjectSummary) => void | Promise<void>;
   readonly workflowProgressInputIndex?: CrmProjectWorkflowProgressInputIndex;
   readonly isWorkflowProgressLoading?: boolean;
+  /** Phase 2B: page-scoped progress/stage overrides (skips org-wide rollup Maps). */
+  readonly presentationOverrides?: CrmProjectRowPresentationOverrides | null;
   readonly bulkSelection?: BulkSelectionBindings;
   readonly onContactCopied?: (message: string) => void;
 };
@@ -74,6 +79,7 @@ export function SubprojectMobileCard({
   onRequestMarkActive,
   workflowProgressInputIndex,
   isWorkflowProgressLoading = false,
+  presentationOverrides = null,
   bulkSelection,
   onContactCopied,
 }: SubprojectMobileCardProps): ReactElement {
@@ -82,7 +88,8 @@ export function SubprojectMobileCard({
   const { industrySubtitle, derivedStageSlug, progress, catalog } = useCrmProjectRowPresentation(
     project,
     workflowProgressInputIndex,
-    isWorkflowProgressLoading
+    isWorkflowProgressLoading,
+    presentationOverrides
   );
   const isInactive = isCrmProjectInactive(project);
   const displayEmail = formatContactEmailDisplay(project.contact.email, { maskForMember: isMemberRole });

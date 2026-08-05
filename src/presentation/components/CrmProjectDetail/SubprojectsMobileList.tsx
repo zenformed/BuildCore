@@ -4,17 +4,22 @@ import type { ReactElement } from 'react';
 import type { CrmProjectSummary } from '@/domain/crm';
 import type { CrmProjectPaymentTasksIndex } from '@/domain/crm/projectPaymentValue';
 import type { CrmProjectWorkflowProgressInputIndex } from '@/domain/crm/projectWorkflowProgressInput';
+import type { CrmProjectsListV2PageSummary } from '@/domain/crm/projectsListV2';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
 import { resolveDashboardChildRowFinancials } from '@/presentation/features/crmProjects/projectPaymentFinancials';
 import type { BulkSelectionBindings } from '@/presentation/features/bulkSelection/BulkSelectionBindings';
 import { SubprojectMobileCard } from './SubprojectMobileCard';
 import styles from './ProjectDetail.module.css';
 
+const EMPTY_PAYMENT_TASKS_INDEX: CrmProjectPaymentTasksIndex = new Map();
+
 export type SubprojectsMobileListProps = {
   readonly rows: readonly CrmProjectSummary[];
-  readonly paymentTasksIndex: CrmProjectPaymentTasksIndex;
+  readonly paymentTasksIndex?: CrmProjectPaymentTasksIndex;
   readonly workflowProgressInputIndex?: CrmProjectWorkflowProgressInputIndex;
   readonly isWorkflowProgressLoading?: boolean;
+  /** Phase 2B: page-scoped summaries (skips org-wide rollup Maps when set). */
+  readonly pageSummariesByProjectId?: ReadonlyMap<string, CrmProjectsListV2PageSummary>;
   readonly isLoading?: boolean;
   readonly isPaymentFinancialsLoading?: boolean;
   readonly isMemberRole?: boolean;
@@ -38,6 +43,7 @@ export function SubprojectsMobileList({
   paymentTasksIndex,
   workflowProgressInputIndex,
   isWorkflowProgressLoading = false,
+  pageSummariesByProjectId,
   isLoading = false,
   isPaymentFinancialsLoading = false,
   isMemberRole = false,
@@ -56,6 +62,7 @@ export function SubprojectsMobileList({
   onContactCopied,
 }: SubprojectsMobileListProps): ReactElement {
   const showList = rows.length > 0 || isLoading;
+  const paymentIndex = paymentTasksIndex ?? EMPTY_PAYMENT_TASKS_INDEX;
 
   return (
     <div className={styles.subprojectsMobileListWrap} role="region" aria-label={content.projectDetail.subprojects.title}>
@@ -64,11 +71,17 @@ export function SubprojectsMobileList({
       ) : (
         <>
           <ul className={styles.subprojectsMobileList}>
-          {rows.map((project) => (
+          {rows.map((project) => {
+            const pageSummary = pageSummariesByProjectId?.get(project.id);
+            return (
             <li key={project.id} className={styles.subprojectsMobileListItem}>
               <SubprojectMobileCard
                 project={project}
-                financials={resolveDashboardChildRowFinancials(project, paymentTasksIndex)}
+                financials={
+                  pageSummary != null
+                    ? pageSummary.payment
+                    : resolveDashboardChildRowFinancials(project, paymentIndex)
+                }
                 financialsLoading={isPaymentFinancialsLoading}
                 onRowClick={() => onRowClick(project)}
                 isMemberRole={isMemberRole}
@@ -81,13 +94,28 @@ export function SubprojectsMobileList({
                 onRequestCompletionChange={onRequestCompletionChange}
                 onRequestMarkInactive={onRequestMarkInactive}
                 onRequestMarkActive={onRequestMarkActive}
-                workflowProgressInputIndex={workflowProgressInputIndex}
-                isWorkflowProgressLoading={isWorkflowProgressLoading}
+                workflowProgressInputIndex={
+                  pageSummariesByProjectId != null ? undefined : workflowProgressInputIndex
+                }
+                isWorkflowProgressLoading={
+                  pageSummariesByProjectId != null
+                    ? isPaymentFinancialsLoading
+                    : isWorkflowProgressLoading
+                }
+                presentationOverrides={
+                  pageSummariesByProjectId == null
+                    ? null
+                    : {
+                        progress: pageSummary?.progress ?? null,
+                        derivedStageSlug: pageSummary?.derivedStageSlug ?? null,
+                      }
+                }
                 bulkSelection={bulkSelection}
                 onContactCopied={onContactCopied}
               />
             </li>
-          ))}
+            );
+          })}
         </ul>
         </>
       )}

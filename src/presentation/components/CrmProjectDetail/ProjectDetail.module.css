@@ -12977,6 +12977,9 @@
 .subprojectsFolderToolbar {
   width: 100%;
   min-width: 0;
+  /* Keep pagination chevrons off the panel edge. */
+  padding-inline-end: 0.75rem;
+  box-sizing: border-box;
 }
 
 .workflowFolderToolbar {

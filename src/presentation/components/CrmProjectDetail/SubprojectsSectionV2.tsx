@@ -1,22 +1,27 @@
 'use client';
 
-import { Suspense, useCallback, useEffect, useId, useMemo, useRef, useState, type ReactElement } from 'react';
+/**
+ * Project Details → Subprojects tab v2 (Phase 2B).
+ * Used only when NEXT_PUBLIC_BUILDCORE_PROJECTS_LIST_V2=true.
+ * Does not use org-wide rollup Maps — page-scoped summaries only.
+ */
+
+import { useCallback, useEffect, useId, useMemo, useRef, useState, type ReactElement } from 'react';
+import { LuChevronLeft, LuChevronRight } from 'react-icons/lu';
 import { resolvePipelineStageScopeForProject } from '@/domain/buildcore/orgPipelineStages';
 import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import { isBuildCoreMemberRole } from '@/domain/buildcore/memberRole';
-import { isProjectsListV2ClientFlagEnabled } from '@/infrastructure/config/projectsListV2Config';
-import { SubprojectsSectionV2 } from './SubprojectsSectionV2';
 import {
   formatCrmProjectAddressLine,
   isCrmProjectComplete,
   isCrmProjectInactive,
   type CrmProjectSummary,
 } from '@/domain/crm';
+import { listWorkflowStageCompletionStatuses } from '@/domain/buildcore/projectPipelineProgress';
 import {
-  computeSubprojectAverageProgressPercent,
-  formatSubprojectAverageProgressPercent,
-  listWorkflowStageCompletionStatuses,
-} from '@/domain/buildcore/projectPipelineProgress';
+  CRM_PROJECTS_LIST_V2_PAGE_SIZES,
+  type CrmProjectsListV2PageSize,
+} from '@/domain/crm/projectsListV2';
 import { getCrmProjectDetailBySlug, setCrmProjectCompletion } from '@/application/use-cases/crm';
 import { crmRepositories } from '@/shared/di/container';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
@@ -26,14 +31,12 @@ import { SpreadsheetImportWizard } from '@/presentation/components/CrmImport/Spr
 import { SpreadsheetImportMobileNoticeDialog } from '@/presentation/components/CrmImport/SpreadsheetImportMobileNoticeDialog';
 import { CrmProjectsTable } from '@/presentation/components/CrmProjects/CrmProjectsTable';
 import { useDashboardMobileLayout } from '@/presentation/features/crmProjects/useDashboardMobileLayout';
+import { useCrmProjectsListV2Subprojects } from '@/presentation/features/crmProjects/listV2/useCrmProjectsListV2Subprojects';
 import { SubprojectsMobileList } from './SubprojectsMobileList';
 import { DetailToast } from '@/presentation/components/CrmProjectDetail/DetailToast';
 import { ConfirmModal } from '@/presentation/components/ConfirmModal';
 import { ProjectCompletionBlockedDialog } from '@/presentation/components/CrmProjectDetail/ProjectCompletionBlockedDialog';
 import { useBuildCorePipelineStages } from '@/presentation/providers/BuildCorePipelineStagesProvider';
-import { useSubprojectListRows } from '@/presentation/features/crmProjectDetail/useSubprojectListRows';
-import { EMPTY_CRM_PROJECTS_LIST_FILTERS } from '@/presentation/features/crmProjects/crmProjectsPipelineViewModel';
-import { EMPTY_RADIUS_FILTER, type RadiusFilterState } from '@/presentation/features/filters/radiusFilterModel';
 import { useCrmProjectDeleteConfirmation } from '@/presentation/features/crmProjects/useCrmProjectDeleteConfirmation';
 import { useCrmProjectBulkDeleteActions } from '@/presentation/features/crmProjects/useCrmProjectBulkDeleteActions';
 import { useCrmProjectInactiveActions } from '@/presentation/features/crmProjects/useCrmProjectInactiveActions';
@@ -41,8 +44,6 @@ import { formatCrmProjectDeleteWorkflowItemLabel } from '@/presentation/features
 import { useCrmProjectTableRowActions } from '@/presentation/features/crmProjects/useCrmProjectTableRowActions';
 import { assignCrmProjectMember } from '@/presentation/features/crmProjects/assignCrmProjectMember';
 import { getCrmProjectAssigneeOptions } from '@/presentation/features/crmProjects/crmProjectAssigneeOptions';
-import { useCrmProjectPaymentTasksIndex } from '@/presentation/features/crmProjects/useCrmProjectPaymentTasksIndex';
-import { useCrmPaymentTasksIndexContext } from '@/presentation/providers/CrmPaymentTasksIndexProvider';
 import { useProjectDetailShell } from '@/presentation/features/crmProjectDetail/ProjectDetailShellContext';
 import { useSaaSProfile } from '@/presentation/hooks/useSaaSProfile';
 import { useBulkSelection } from '@/presentation/features/bulkSelection/useBulkSelection';
@@ -61,36 +62,16 @@ import { FolderTabToolbarPortal } from '@/presentation/features/crmProjectDetail
 import { SubprojectsListToolbar } from './SubprojectsListToolbar';
 import { SubprojectsTableBulkActions } from './SubprojectsTableBulkActions';
 import { DetailPanelHeaderActions } from './DetailPanelHeaderActions';
-import shared from '@/presentation/components/crmShared/crmShared.module.css';
 import styles from './ProjectDetail.module.css';
 import tableStyles from '../CrmProjects/CrmProjects.module.css';
 
 type SubprojectsToast = { kind: 'success' | 'error'; message: string };
 
-export function SubprojectsSection({
+export function SubprojectsSectionV2({
   embeddedInFolderTabs = false,
 }: {
   readonly embeddedInFolderTabs?: boolean;
-} = {}): ReactElement | null {
-  const { project, subSlug } = useProjectDetailShell();
-  if (subSlug != null || project.summary.parentProjectId != null) {
-    return null;
-  }
-  if (isProjectsListV2ClientFlagEnabled()) {
-    return (
-      <Suspense fallback={null}>
-        <SubprojectsSectionV2 embeddedInFolderTabs={embeddedInFolderTabs} />
-      </Suspense>
-    );
-  }
-  return <SubprojectsSectionContent embeddedInFolderTabs={embeddedInFolderTabs} />;
-}
-
-function SubprojectsSectionContent({
-  embeddedInFolderTabs = false,
-}: {
-  readonly embeddedInFolderTabs?: boolean;
-}): ReactElement {
+} = {}): ReactElement {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -117,6 +98,7 @@ function SubprojectsSectionContent({
     [assignmentCatalog, dash.user?.id, isApiSource]
   );
   const { organizationMembershipContext } = useSaaSProfile();
+  const organizationId = organizationMembershipContext?.organizationId ?? '';
   const canManage = !isMemberRole && !isBuildCoreMemberRole(organizationMembershipContext?.role);
   const isMobileLayout = useDashboardMobileLayout();
   const [importOpen, setImportOpen] = useState(false);
@@ -149,94 +131,59 @@ function SubprojectsSectionContent({
   }, [guardProjectEdit, isMobileLayout]);
   const [expandedState, setExpanded] = useState(true);
   const expanded = expandedState;
-  const [searchQuery, setSearchQuery] = useState('');
-  const [listFilters, setListFilters] = useState(EMPTY_CRM_PROJECTS_LIST_FILTERS);
-  const [radiusFilter, setRadiusFilter] = useState<RadiusFilterState>(EMPTY_RADIUS_FILTER);
   const [createOpen, setCreateOpen] = useState(false);
   const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
   const [toast, setToast] = useState<SubprojectsToast | null>(null);
-  const refetch = childSummaries?.refetch ?? (async () => undefined);
+
+  const list = useCrmProjectsListV2Subprojects({
+    organizationId,
+    parentProjectId: project.summary.id,
+    parentSlug: parentRouteSlug,
+  });
+  const rows = list.items;
+  const listIsLoading = list.isLoading;
+  const refetchList = list.refetch;
+  const removeProjectLocally = list.removeProjectLocally;
+  const patchProjectSummaryLocally = list.patchProjectSummaryLocally;
   const appendChildProjectSummary =
     childSummaries?.appendProjectSummary ?? (() => undefined);
+
+  const refetch = useCallback(async () => {
+    await Promise.all([
+      refetchList(),
+      childSummaries?.refetch != null ? childSummaries.refetch() : Promise.resolve(),
+    ]);
+  }, [childSummaries, refetchList]);
+
   const patchChildProjectSummary = useCallback(
     (summary: CrmProjectSummary) => {
+      patchProjectSummaryLocally(summary);
       childSummaries?.patchProjectSummary(summary);
     },
-    [childSummaries]
+    [childSummaries, patchProjectSummaryLocally]
   );
-  const isLoading = childSummaries?.isLoading ?? false;
-  const { paymentTasksIndex, isLoading: isPaymentFinancialsLoading } =
-    useCrmProjectPaymentTasksIndex();
-  const { workflowProgressInputIndex, workflowTaskStatusIndex, isLoading: isWorkflowRollupsLoading } =
-    useCrmPaymentTasksIndexContext();
+
   const { getCatalog } = useBuildCorePipelineStages();
-  const subprojectStageCatalog = getCatalog('subproject');
   const resolveStagesForProject = useCallback(
     (childProject: { readonly parentProjectId: string | null }) =>
       getCatalog(resolvePipelineStageScopeForProject({ parentProjectId: childProject.parentProjectId })),
     [getCatalog]
   );
-  const isWorkflowProgressLoading = isWorkflowRollupsLoading;
-  const listFilterContext = useMemo(
-    () => ({
-      workflowTaskStatusIndex,
-      workflowTaskStatusIndexReady: !isWorkflowRollupsLoading,
-      workflowProgressInputIndex,
-      workflowProgressInputIndexReady: !isWorkflowRollupsLoading,
-      resolveStagesForProject,
-    }),
-    [
-      isWorkflowRollupsLoading,
-      resolveStagesForProject,
-      workflowProgressInputIndex,
-      workflowTaskStatusIndex,
-    ]
-  );
-  const {
-    rows,
-    isRadiusGeocoding,
-    radiusGeocodingError,
-    isNarrowingResults,
-  } = useSubprojectListRows(
-    childSummaries?.allRows ?? [],
-    searchQuery,
-    listFilters,
-    listFilterContext,
-    radiusFilter
-  );
-  const listIsLoading = isLoading || isRadiusGeocoding;
-  const allSubprojectCount = childSummaries?.allRows.length ?? 0;
-  const subprojectAveragePercent = useMemo(() => {
-    if (isMemberRole || allSubprojectCount === 0 || isLoading || isWorkflowProgressLoading) {
-      return null;
-    }
 
-    const averagePercent = computeSubprojectAverageProgressPercent({
-      childSummaries: childSummaries?.allRows ?? [],
-      workflowProgressInputIndex,
-      stages: subprojectStageCatalog,
-    });
-
-    if (averagePercent == null) {
-      return null;
-    }
-
-    return formatSubprojectAverageProgressPercent(averagePercent);
-  }, [
-    allSubprojectCount,
-    childSummaries?.allRows,
-    isLoading,
-    isMemberRole,
-    isWorkflowProgressLoading,
-    subprojectStageCatalog,
-    workflowProgressInputIndex,
-  ]);
+  const totalCount = list.totalCount ?? 0;
+  const hasActiveFiltersOrSearch =
+    list.searchInput.trim().length > 0 ||
+    list.filters.stageSlugs.length > 0 ||
+    list.filters.priorities.length > 0 ||
+    list.filters.workflowTaskStatuses.length > 0;
   const subprojectsEmptyMessage =
-    isMemberRole && allSubprojectCount === 0
+    isMemberRole && totalCount === 0 && !hasActiveFiltersOrSearch
       ? copy.emptyMemberNoAssignments
-      : allSubprojectCount > 0 && rows.length === 0 && isNarrowingResults
+      : totalCount > 0 && rows.length === 0 && hasActiveFiltersOrSearch
         ? content.crm.table.empty
-        : copy.empty;
+        : list.errorMessage != null
+          ? list.errorMessage
+          : copy.empty;
   const bulkSelection = useBulkSelection<string>();
   const bulkSendAttachment = useBulkSendAttachmentDialog({
     parentProjectSlug: project.summary.slug,
@@ -248,13 +195,6 @@ function SubprojectsSectionContent({
     },
   });
 
-  useEffect(() => {
-    if (radiusGeocodingError == null) {
-      return;
-    }
-    setToast({ kind: 'error', message: radiusGeocodingError });
-  }, [radiusGeocodingError]);
-
   const {
     pendingDeleteProject,
     setPendingDeleteProject,
@@ -262,8 +202,9 @@ function SubprojectsSectionContent({
     canDelete,
     handleConfirmDelete,
   } = useCrmProjectDeleteConfirmation({
-    onProjectDeleted: () => {
-      refetch();
+    onProjectDeleted: (projectId) => {
+      removeProjectLocally(projectId);
+      void refetch();
     },
     onSuccess: () => setToast({ kind: 'success', message: deleteCopy.success }),
     onError: (message) => setToast({ kind: 'error', message }),
@@ -553,23 +494,74 @@ function SubprojectsSectionContent({
 
   const filterMenu = (
     <CrmProjectsFilterMenu
-      filters={listFilters}
-      onChange={setListFilters}
+      filters={list.filters}
+      onChange={list.setFilters}
       stageScopeMode="subproject"
-      radiusFilter={radiusFilter}
-      onRadiusFilterChange={setRadiusFilter}
       triggerVariant={isMobileLayout ? 'ghost' : embeddedInFolderTabs ? 'ghost' : 'caret'}
       menuAlign="start"
     />
   );
 
+  const paginationChrome = (
+    <div
+      className={[
+        tableStyles.projectsListV2Pagination,
+        isMobileLayout ? tableStyles.projectsListV2Pagination_standalone : '',
+      ]
+        .filter(Boolean)
+        .join(' ')}
+      aria-label="Subprojects pagination"
+    >
+      <span className={tableStyles.projectsListV2Range}>{list.rangeLabel}</span>
+      <label className={tableStyles.projectsListV2PageSize}>
+        <span className={tableStyles.projectsListV2PageSizeLabel}>Rows</span>
+        <select
+          value={list.limit}
+          onChange={(event) => {
+            const next = Number(event.target.value) as CrmProjectsListV2PageSize;
+            if ((CRM_PROJECTS_LIST_V2_PAGE_SIZES as readonly number[]).includes(next)) {
+              list.setLimit(next);
+            }
+          }}
+          aria-label="Subprojects page size"
+        >
+          {CRM_PROJECTS_LIST_V2_PAGE_SIZES.map((size) => (
+            <option key={size} value={size}>
+              {size}
+            </option>
+          ))}
+        </select>
+      </label>
+      <div className={tableStyles.projectsListV2Nav}>
+        <button
+          type="button"
+          className={tableStyles.projectsListV2NavButton}
+          disabled={!list.hasPreviousPage || list.isFetchingPage}
+          onClick={list.goPreviousPage}
+          aria-label="Previous page"
+        >
+          <LuChevronLeft aria-hidden size={18} />
+        </button>
+        <button
+          type="button"
+          className={tableStyles.projectsListV2NavButton}
+          disabled={!list.hasNextPage || list.isFetchingPage}
+          onClick={list.goNextPage}
+          aria-label="Next page"
+        >
+          <LuChevronRight aria-hidden size={18} />
+        </button>
+      </div>
+    </div>
+  );
+
   const listToolbar = (
     <SubprojectsListToolbar
       expanded={expanded}
-      searchQuery={searchQuery}
+      searchQuery={list.searchInput}
       searchPlaceholder={copy.searchPlaceholder}
       searchAriaLabel={copy.searchAriaLabel}
-      onSearchQueryChange={setSearchQuery}
+      onSearchQueryChange={list.setSearchInput}
       canManage={canManage}
       newSubprojectTitle={copy.newSubprojectTitle}
       newSubprojectAriaLabel={copy.newSubprojectAriaLabel}
@@ -592,16 +584,6 @@ function SubprojectsSectionContent({
       trailingActions={isMobileLayout ? filterMenu : null}
     />
   );
-
-  const averagePill =
-    subprojectAveragePercent != null ? (
-      <span
-        className={`${shared.stagePill} ${styles.subprojectsAveragePill}`}
-        title={`${copy.projectColumn} average ${subprojectAveragePercent}`}
-      >
-        {subprojectAveragePercent}
-      </span>
-    ) : null;
 
   return (
     <section
@@ -635,6 +617,7 @@ function SubprojectsSectionContent({
                   ? null
                 : filterMenu}
               {listToolbar}
+              {isMobileLayout ? null : paginationChrome}
             </DetailPanelHeaderActions>
           </div>
         </FolderTabToolbarPortal>
@@ -655,7 +638,6 @@ function SubprojectsSectionContent({
             <>
               <div className={styles.detailPanelHeaderRow}>
                 <div className={styles.detailPanelHeaderTitleGroup}>
-                  {averagePill}
                   <span id={sectionId} className={styles.subprojectsPanelTitle}>
                     {copy.title}
                   </span>
@@ -706,7 +688,6 @@ function SubprojectsSectionContent({
                 onClick={() => setExpanded((open) => !open)}
               >
                 <span className={styles.subprojectsPanelHeaderTitle}>
-                  {averagePill}
                   <span id={sectionId} className={styles.subprojectsPanelTitle}>
                     {copy.title}
                   </span>
@@ -719,7 +700,10 @@ function SubprojectsSectionContent({
                   </span>
                 </span>
               </button>
-              <div className={styles.subprojectsPanelHeaderTools}>{listToolbar}</div>
+              <div className={styles.subprojectsPanelHeaderTools}>
+                {listToolbar}
+                {paginationChrome}
+              </div>
             </>
           )}
         </div>
@@ -751,14 +735,13 @@ function SubprojectsSectionContent({
 
       {expanded ? (
         <div id={panelId} className={styles.subprojectsTableBody}>
+          {isMobileLayout ? paginationChrome : null}
           {isMobileLayout ? (
             <SubprojectsMobileList
               rows={rows}
-              paymentTasksIndex={paymentTasksIndex}
-              workflowProgressInputIndex={workflowProgressInputIndex}
-              isWorkflowProgressLoading={isWorkflowProgressLoading}
+              pageSummariesByProjectId={list.pageSummariesById}
               isLoading={listIsLoading}
-              isPaymentFinancialsLoading={isPaymentFinancialsLoading}
+              isPaymentFinancialsLoading={list.isSummariesLoading}
               isMemberRole={isMemberRole}
               canDelete={canDelete && !isMemberRole}
               deletingProjectId={deletingProjectId}
@@ -778,11 +761,9 @@ function SubprojectsSectionContent({
             <div className={`${tableStyles.pipeline} ${tableStyles.pipelineFitContent}`}>
               <CrmProjectsTable
                 rows={rows}
-                paymentTasksIndex={paymentTasksIndex}
-                workflowProgressInputIndex={workflowProgressInputIndex}
-                isWorkflowProgressLoading={isWorkflowProgressLoading}
+                pageSummariesByProjectId={list.pageSummariesById}
                 isLoading={listIsLoading}
-                isPaymentFinancialsLoading={isPaymentFinancialsLoading}
+                isPaymentFinancialsLoading={list.isSummariesLoading}
                 isMemberRole={isMemberRole}
                 canDelete={canDelete && !isMemberRole}
                 deletingProjectId={deletingProjectId}
@@ -816,7 +797,6 @@ function SubprojectsSectionContent({
                 headerCollapsed={!expanded}
                 onToggleHeaderCollapse={() => setExpanded((open) => !open)}
                 showHeaderCollapseToggle={embeddedInFolderTabs}
-                inlineHeaderCountSuffix={embeddedInFolderTabs ? subprojectAveragePercent : null}
               />
             </div>
           )}

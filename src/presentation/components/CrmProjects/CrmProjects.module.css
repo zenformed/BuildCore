@@ -126,6 +126,10 @@
   background: #6366f1;
 }
 
+.rowActionsMenuIconTile_refresh {
+  background: #0ea5e9;
+}
+
 .projectsPanelHeaderCenter {
   display: flex;
   align-items: center;

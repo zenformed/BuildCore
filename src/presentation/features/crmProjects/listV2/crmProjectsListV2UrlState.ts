@@ -138,3 +138,104 @@ export function buildCrmProjectsListV2RequestFromUi(input: {
   if (normalized.ok) return normalized.request;
   return defaultRequest();
 }
+
+/** URL keys owned by Projects/Subprojects list v2 (safe to replace on write). */
+export const CRM_PROJECTS_LIST_V2_URL_PARAM_KEYS = [
+  'q',
+  'search',
+  'limit',
+  'cursor',
+  'sort',
+  'stageSlugs',
+  'priorities',
+  'workflowTaskStatuses',
+  'assignedMemberIds',
+] as const;
+
+/**
+ * Merge list v2 params into the current URL, preserving unrelated keys
+ * (e.g. Project-page importSpreadsheet).
+ */
+export function mergeCrmProjectsListV2UrlSearchParams(
+  current: URLSearchParams,
+  listParams: URLSearchParams
+): URLSearchParams {
+  const next = new URLSearchParams(current.toString());
+  for (const key of CRM_PROJECTS_LIST_V2_URL_PARAM_KEYS) {
+    next.delete(key);
+  }
+  for (const [key, value] of listParams.entries()) {
+    next.set(key, value);
+  }
+  return next;
+}
+
+function defaultChildrenRequest(parentProjectId: string): CrmProjectsListV2NormalizedRequest {
+  const normalized = normalizeCrmProjectsListV2Request({
+    view: 'children_of_parent',
+    parentProjectId,
+  });
+  if (!normalized.ok) {
+    throw new Error('Failed to build default Subprojects list v2 request');
+  }
+  return normalized.request;
+}
+
+/** Parse Project-page Subprojects URL search params into list v2 UI state. */
+export function parseCrmProjectsListV2ChildrenUrlState(
+  searchParams: URLSearchParams,
+  parentProjectId: string
+): CrmProjectsListV2UrlState {
+  const base = parseCrmProjectsListV2UrlState(searchParams);
+  const normalized = normalizeCrmProjectsListV2Request({
+    view: 'children_of_parent',
+    parentProjectId,
+    search: base.searchInput,
+    sort: CRM_PROJECTS_LIST_V2_DEFAULT_SORT,
+    limit: base.limit,
+    filters: {
+      stageSlugs: base.filters.stageSlugs,
+      priorities: base.filters.priorities,
+      workflowTaskStatuses: base.filters.workflowTaskStatuses,
+      assignedMemberIds: [],
+    },
+  });
+  const request = normalized.ok ? normalized.request : defaultChildrenRequest(parentProjectId);
+  return {
+    ...base,
+    filters: {
+      ...EMPTY_CRM_PROJECTS_LIST_FILTERS,
+      stageSlugs: [...request.filters.stageSlugs],
+      priorities: [...request.filters.priorities] as CrmProjectsListFilters['priorities'],
+      workflowTaskStatuses: [
+        ...request.filters.workflowTaskStatuses,
+      ] as CrmProjectsListFilters['workflowTaskStatuses'],
+    },
+    limit: request.limit,
+    request,
+  };
+}
+
+/** Build normalized children_of_parent request from UI draft. */
+export function buildCrmProjectsListV2ChildrenRequestFromUi(input: {
+  readonly parentProjectId: string;
+  readonly searchInput: string;
+  readonly filters: CrmProjectsListFilters;
+  readonly limit: CrmProjectsListV2PageSize;
+}): CrmProjectsListV2NormalizedRequest {
+  const normalized = normalizeCrmProjectsListV2Request({
+    view: 'children_of_parent',
+    parentProjectId: input.parentProjectId,
+    search: input.searchInput,
+    sort: CRM_PROJECTS_LIST_V2_DEFAULT_SORT,
+    limit: input.limit,
+    filters: {
+      stageSlugs: input.filters.stageSlugs,
+      priorities: input.filters.priorities,
+      workflowTaskStatuses: input.filters.workflowTaskStatuses,
+      assignedMemberIds: [],
+    },
+  });
+  if (normalized.ok) return normalized.request;
+  return defaultChildrenRequest(input.parentProjectId);
+}

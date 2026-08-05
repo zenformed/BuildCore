@@ -34,8 +34,8 @@ export type ParsedCrmProjectsListV2Query =
   | { readonly ok: false; readonly message: string };
 
 /**
- * Phase 1A supports roots view only on these routes.
- * children_of_parent is rejected here (Project-page Subprojects is a later phase).
+ * Dashboard roots routes: view=roots only.
+ * children_of_parent is rejected here (use Project-scoped subprojects/v2 routes).
  */
 export function parseCrmProjectsListV2Query(
   searchParams: URLSearchParams
@@ -58,6 +58,48 @@ export function parseCrmProjectsListV2Query(
       priorities: collectListParam(searchParams, 'priorities'),
       workflowTaskStatuses: collectListParam(searchParams, 'workflowTaskStatuses'),
       // Accepted for fingerprint stability; not applied in Phase 1A (dashboard no-op).
+      assignedMemberIds: collectListParam(searchParams, 'assignedMemberIds'),
+    },
+  });
+
+  if (!normalized.ok) {
+    return { ok: false, message: normalized.message };
+  }
+
+  const cursorRaw = searchParams.get('cursor');
+  const cursor =
+    cursorRaw != null && cursorRaw.trim() !== '' ? cursorRaw.trim() : null;
+
+  return { ok: true, request: normalized.request, cursor };
+}
+
+/**
+ * Project-page Subprojects v2 routes.
+ * Server supplies parentProjectId from slug resolution — never trust a client parent id.
+ */
+export function parseCrmProjectsListV2ChildrenQuery(
+  searchParams: URLSearchParams,
+  parentProjectId: string
+): ParsedCrmProjectsListV2Query {
+  const viewRaw = searchParams.get('view')?.trim();
+  if (viewRaw != null && viewRaw !== '' && viewRaw !== 'children_of_parent') {
+    return {
+      ok: false,
+      message: 'Project subprojects v2 requires view=children_of_parent',
+    };
+  }
+
+  // Ignore any client-supplied parentProjectId; bind the resolved parent only.
+  const normalized = normalizeCrmProjectsListV2Request({
+    view: 'children_of_parent',
+    parentProjectId,
+    search: searchParams.get('search'),
+    sort: searchParams.get('sort') ?? undefined,
+    limit: searchParams.get('limit') ?? undefined,
+    filters: {
+      stageSlugs: collectListParam(searchParams, 'stageSlugs'),
+      priorities: collectListParam(searchParams, 'priorities'),
+      workflowTaskStatuses: collectListParam(searchParams, 'workflowTaskStatuses'),
       assignedMemberIds: collectListParam(searchParams, 'assignedMemberIds'),
     },
   });

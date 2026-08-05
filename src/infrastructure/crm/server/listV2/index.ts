@@ -34,7 +34,11 @@ export {
   assertProjectsListV2EnabledForOrganization,
   projectsListV2DisabledResponse,
 } from './projectsListV2FeatureGate';
-export { parseCrmProjectsListV2Query } from './projectsListV2QueryParams';
+export {
+  parseCrmProjectsListV2ChildrenQuery,
+  parseCrmProjectsListV2Query,
+} from './projectsListV2QueryParams';
+export { resolveAccessibleRootParentBySlugForChildrenListV2 } from './resolveParentProjectForChildrenListV2';
 export { buildCrmProjectsListV2SearchParams } from './projectsListV2Search';
 export {
   operationalCursorValuesFromRow,
