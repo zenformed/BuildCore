@@ -117,4 +117,18 @@ export const env = {
     const value = process.env.NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID?.trim() ?? '';
     return value.length > 0 ? value : 'DEMO_MAP_ID';
   },
+  /**
+   * Server master switch for Projects/Subprojects list v2 APIs.
+   * Default off. Org allowlist: BUILDCORE_PROJECTS_LIST_V2_ORG_ALLOWLIST.
+   */
+  get projectsListV2Enabled(): boolean {
+    return process.env.BUILDCORE_PROJECTS_LIST_V2 === 'true';
+  },
+  /**
+   * Client hint for future UI gating (Phase 1). Default off.
+   * Does not authorize server routes by itself.
+   */
+  get projectsListV2ClientEnabled(): boolean {
+    return process.env.NEXT_PUBLIC_BUILDCORE_PROJECTS_LIST_V2 === 'true';
+  },
 } as const;

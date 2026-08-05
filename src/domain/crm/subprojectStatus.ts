@@ -1,6 +1,6 @@
 import type { CrmPriority, CrmProjectSummary } from './project';
-import { isCrmProjectComplete } from './projectCompletion';
 import { isProjectPriorityUrgent } from './projectPriorityToggle';
+import { computeCrmProjectListSortBucket } from './projectsListV2/listSortBucket';
 
 /** Subproject lifecycle status — independent of priority, stage, and archived. */
 export type CrmSubprojectStatus = 'urgent' | 'normal' | 'completed' | 'inactive';
@@ -88,10 +88,11 @@ export function deriveCrmSubprojectStatus(input: {
 export function resolveCrmSubprojectListSortRank(
   project: Pick<CrmProjectSummary, 'subprojectStatus' | 'priority' | 'completedAt'>
 ): number {
-  if (project.subprojectStatus === 'inactive') return 3;
-  if (project.subprojectStatus === 'completed' || isCrmProjectComplete(project)) return 2;
-  if (project.subprojectStatus === 'urgent' || isProjectPriorityUrgent(project.priority)) return 0;
-  return 1;
+  return computeCrmProjectListSortBucket({
+    subprojectStatus: project.subprojectStatus,
+    completedAt: project.completedAt,
+    priority: project.priority,
+  });
 }
 
 export type MarkCrmProjectsInactiveInput = {

@@ -3,6 +3,7 @@ import type { ReactElement, ReactNode } from 'react';
 import '../styles/globals.css';
 import { buildcoreAppDefinition } from '@/platform/appDefinitions/buildcore';
 import { ThemeProvider } from '@/presentation/providers';
+import { BuildCoreQueryProvider } from '@/presentation/providers/BuildCoreQueryProvider';
 import { ElectronSessionBridge } from '@/presentation/components/ElectronSessionBridge';
 import { BuildCoreRootGate } from '@/presentation/components/BuildCoreRootGate';
 import { ImportStatusOverlay } from '@/presentation/features/crmImport/ImportStatusOverlay';
@@ -39,9 +40,11 @@ export default function RootLayout({
       </head>
       <body>
         <ThemeProvider>
-          <ElectronSessionBridge />
-          <BuildCoreRootGate>{children}</BuildCoreRootGate>
-          <ImportStatusOverlay />
+          <BuildCoreQueryProvider>
+            <ElectronSessionBridge />
+            <BuildCoreRootGate>{children}</BuildCoreRootGate>
+            <ImportStatusOverlay />
+          </BuildCoreQueryProvider>
         </ThemeProvider>
       </body>
     </html>
