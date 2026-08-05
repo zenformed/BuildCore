@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState, type ReactElement } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactElement } from 'react';
 import { formatOrganizationRoleLabel, getUserInitials, userCircleColor } from '@zenformed/core/dashboard-shell';
 import {
   PRESENCE_EFFECTIVE_STATUS_LABELS,
@@ -134,6 +134,7 @@ export function BuildCoreSidebarTeamSection({
   const [liveRows, setLiveRows] = useState<readonly SidebarTeamRow[] | null>(null);
   const [isLoading, setIsLoading] = useState(!isDemoRuntime);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const teamListRef = useRef<HTMLUListElement | null>(null);
 
   const loadRoster = useCallback(async (): Promise<void> => {
     if (isDemoRuntime) return;
@@ -161,6 +162,28 @@ export function BuildCoreSidebarTeamSection({
       void loadRoster();
     });
   }, [loadRoster]);
+
+  useEffect(() => {
+    const listNode = teamListRef.current;
+    if (listNode == null || typeof MutationObserver === 'undefined') return;
+    const sidebarShell = listNode.closest('[data-zenformed-sidebar-expanded]');
+    if (!(sidebarShell instanceof HTMLElement)) return;
+
+    const resetIfCollapsed = (): void => {
+      if (sidebarShell.getAttribute('data-zenformed-sidebar-expanded') !== 'true') {
+        listNode.scrollTop = 0;
+      }
+    };
+
+    resetIfCollapsed();
+    const observer = new MutationObserver(() => resetIfCollapsed());
+    observer.observe(sidebarShell, {
+      attributes: true,
+      attributeFilter: ['data-zenformed-sidebar-expanded'],
+    });
+
+    return () => observer.disconnect();
+  }, []);
 
   const demoRows = useMemo(() => {
     if (!isDemoRuntime) return [];
@@ -208,7 +231,7 @@ export function BuildCoreSidebarTeamSection({
   }
 
   return (
-    <ul className={styles.teamList} aria-label="BuildCore team members">
+    <ul ref={teamListRef} className={styles.teamList} aria-label="BuildCore team members">
       {members.map((member) => (
         <BuildCoreSidebarTeamMemberRow key={member.id} member={member} isDemoRuntime={isDemoRuntime} />
       ))}

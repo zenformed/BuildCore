@@ -17,10 +17,22 @@ import {
   normalizeImportText,
 } from '@/domain/crm/spreadsheetImportGrouping';
 import {
+  collectMappedStandardCellValues,
+  expandDelimitedContactValues,
+} from '@/domain/crm/spreadsheetImportMultiValue';
+import {
   areParentConflictsResolved,
   buildResolvedParentAttributesForGroup,
   type CrmImportConflictResolutionMap,
 } from '@/domain/crm/spreadsheetImportConflictResolution';
+import {
+  escapeCsvCell,
+  getSubprojectNameFromRow,
+  parseImportDealValueToCents,
+  validateImportRow,
+} from '@/domain/crm/spreadsheetImportValidation';
+import { getFirstPipelineStageSlug, pipelineStageSlugSet } from '@/domain/crm/pipelineStage';
+import { normalizeContactEmails, normalizeContactPhones } from '@/domain/crm/contactMultiValue';
 import {
   filterEligibleImportParentProjects,
   type CrmImportParentCandidate,
@@ -29,9 +41,10 @@ import { detectSpreadsheetHeaderRowIndex } from '@/domain/crm/spreadsheetImportH
 import { getSpreadsheetImportWizardTitle } from '@/domain/crm/spreadsheetImportIntroCopy';
 import { suggestFieldPlacementFromGroupConsistency } from '@/domain/crm/spreadsheetImportFieldPlacement';
 import { recommendSpreadsheetStructures } from '@/domain/crm/spreadsheetImportStructureAnalysis';
-import { listCrmProjectSummaries } from '@/application/use-cases/crm';
+import { createCrmProject, listCrmProjectSummaries } from '@/application/use-cases/crm';
 import { getCrmDataSource } from '@/infrastructure/config/crmDataSource';
 import { canMutateCrmProjectsInCurrentRuntime } from '@/infrastructure/demo/canMutateCrmProjectsInCurrentRuntime';
+import { isDemoRuntimeClient } from '@/infrastructure/runtime/buildCoreRuntime';
 import {
   createSpreadsheetImportDraftFromApi,
   downloadSpreadsheetImportErrorCsvFromApi,
@@ -195,6 +208,7 @@ import {
 import { applyImportMergeDecisions } from '@/presentation/features/crmImport/interview/applyImportMergeDecisions';
 import { listMergeReviewItems } from '@/presentation/features/crmImport/interview/mergeReviewPresentation';
 import { resolveInterviewImportSource } from '@/presentation/features/crmImport/interview/resolveInterviewImportSource';
+import { useBuildCorePipelineStages } from '@/presentation/providers/BuildCorePipelineStagesProvider';
 import { useBuildCoreProjectCustomFieldsForScope } from '@/presentation/providers/BuildCoreProjectCustomFieldsProvider';
 import { crmRepositories } from '@/shared/di/container';
 import styles from './SpreadsheetImportWizard.module.css';
@@ -281,6 +295,21 @@ function fieldDraftsEqual(
   });
 }
 
+function mappedStandardCellValue(
+  row: CrmImportParsedRow,
+  mappings: readonly CrmImportColumnMapping[],
+  key: string,
+  entity: 'parent' | 'subproject'
+): string {
+  const mapping = mappings.find(
+    (entry) =>
+      entry.destination.kind === 'standard_field' &&
+      entry.destination.key === key &&
+      entry.destination.entity === entity
+  );
+  return mapping == null ? '' : (row.cells[mapping.sourceIndex] ?? '').trim();
+}
+
 export function SpreadsheetImportWizard({
   open,
   onClose,
@@ -297,9 +326,11 @@ export function SpreadsheetImportWizard({
     useBuildCoreProjectCustomFieldsForScope('project');
   const { activeDefinitions: subprojectCustomFields } =
     useBuildCoreProjectCustomFieldsForScope('subproject');
+  const { getCatalog } = useBuildCorePipelineStages();
   const canMutateProjects = canMutateCrmProjectsInCurrentRuntime();
   const isApiSource = getCrmDataSource() === 'api';
-  const canImport = canMutateProjects && isApiSource;
+  const isDemoRuntime = isDemoRuntimeClient();
+  const canImport = canMutateProjects && (isApiSource || isDemoRuntime);
 
   const [interview, setInterview] = useState<CrmImportInterviewState>(() =>
     createInitialInterviewState({
@@ -336,6 +367,7 @@ export function SpreadsheetImportWizard({
   const [cancelConfirmOpen, setCancelConfirmOpen] = useState(false);
   const [cancellingImport, setCancellingImport] = useState(false);
   const [completionToast, setCompletionToast] = useState<string | null>(null);
+  const [demoImportErrorCsv, setDemoImportErrorCsv] = useState<string | null>(null);
   const [duplicateStatus, setDuplicateStatus] = useState<'idle' | 'loading' | 'ready' | 'error'>(
     'idle'
   );
@@ -1365,6 +1397,349 @@ export function SpreadsheetImportWizard({
     ]
   );
 
+  const runDemoImportFromPayload = useCallback(
+    async (input: {
+      readonly payload: {
+        readonly importMode: CrmImportMode;
+        readonly fixedParentProjectId: string | null;
+        readonly mappings: readonly CrmImportColumnMapping[];
+        readonly rows: readonly CrmImportParsedRow[];
+      };
+      readonly excludedSourceRowIndexes: readonly number[];
+      readonly resolutionDrafts: CrmImportInterviewState['groupResolutions'];
+    }): Promise<{
+      readonly status: string;
+      readonly counts: CrmImportJobCounts;
+      readonly errorCsv: string | null;
+    }> => {
+      const counts: {
+        -readonly [K in keyof CrmImportJobCounts]: CrmImportJobCounts[K];
+      } = { ...EMPTY_COUNTS };
+      const excluded = new Set(input.excludedSourceRowIndexes);
+      const failedRows: Array<{
+        sourceRowIndex: number;
+        groupName: string;
+        subprojectName: string;
+        status: string;
+        message: string;
+      }> = [];
+      const rowGroupBySourceIndex = new Map<number, string>();
+      const parentIdByGroupKey = new Map<string, string>();
+      const attachUsedGroups = new Set<string>();
+      const seenNamesByGroup = new Map<string, Set<string>>();
+      const subprojectCatalog = getCatalog('subproject');
+      const projectCatalog = getCatalog('project');
+      const allowedSubprojectStages = pipelineStageSlugSet(subprojectCatalog);
+      const defaultSubprojectStage = getFirstPipelineStageSlug(subprojectCatalog);
+      const defaultProjectStage = getFirstPipelineStageSlug(projectCatalog);
+
+      if (input.payload.importMode === 'master_hierarchy') {
+        const groups = buildImportParentGroups({
+          mode: input.payload.importMode,
+          mappings: input.payload.mappings,
+          rows: input.payload.rows,
+        });
+        for (const group of groups) {
+          for (const sourceRowIndex of group.sourceRowIndexes) {
+            rowGroupBySourceIndex.set(sourceRowIndex, group.groupKey);
+          }
+
+          const includedRows = input.payload.rows.filter(
+            (row) =>
+              group.sourceRowIndexes.includes(row.sourceRowIndex) &&
+              !excluded.has(row.sourceRowIndex)
+          );
+          if (includedRows.length === 0) continue;
+
+          const draft =
+            input.resolutionDrafts[group.groupKey] ?? ({ type: 'create_new' as const });
+          if (draft.type === 'ignore') {
+            counts.ignoredGroups += 1;
+            for (const sourceRowIndex of group.sourceRowIndexes) excluded.add(sourceRowIndex);
+            continue;
+          }
+          if (draft.type === 'attach_existing') {
+            if (draft.attachProjectId) {
+              parentIdByGroupKey.set(group.groupKey, draft.attachProjectId);
+              continue;
+            }
+            counts.failedGroups += 1;
+            continue;
+          }
+
+          const conflictResolutions = draft.conflictResolutions ?? {};
+          const conflicts = detectParentFieldConflicts({
+            mappings: input.payload.mappings,
+            rows: includedRows,
+          });
+          const built = buildResolvedParentAttributesForGroup({
+            displayParentName: group.displayParentName || copy.defaults.newParentName,
+            mappings: input.payload.mappings,
+            rows: includedRows,
+            conflicts,
+            conflictResolutions,
+          });
+          const attrs = built.ok
+            ? built.attributes
+            : { name: group.displayParentName || copy.defaults.newParentName };
+
+          try {
+            const createdParent = await createCrmProject(crmRepositories, {
+              name: attrs.name,
+              industry: 'hvac',
+              customIndustry: null,
+              contactName: attrs.contactName?.trim() || attrs.name,
+              emails: attrs.emails ? [...attrs.emails] : [],
+              phones: attrs.phones ? [...attrs.phones] : [],
+              priority: 'normal',
+              currentStageSlug: attrs.currentStageSlug || defaultProjectStage,
+              notes: attrs.notes ?? null,
+              dealValueCents: attrs.dealValueCents ?? 0,
+              balanceRemainingCents: 0,
+              assignedMemberId: attrs.assignedMemberId ?? null,
+              addressLine1: attrs.addressLine1 ?? null,
+              addressLine2: attrs.addressLine2 ?? null,
+              city: attrs.city ?? null,
+              state: attrs.state ?? null,
+              postalCode: attrs.postalCode ?? null,
+              latitude: null,
+              longitude: null,
+              customFieldValues: attrs.customFieldValues ?? {},
+            });
+            parentIdByGroupKey.set(group.groupKey, createdParent.id);
+            counts.createdParents += 1;
+          } catch (error) {
+            counts.failedGroups += 1;
+            for (const row of includedRows) {
+              failedRows.push({
+                sourceRowIndex: row.sourceRowIndex,
+                groupName: group.displayParentName,
+                subprojectName:
+                  getSubprojectNameFromRow(row, input.payload.mappings) || '(missing name)',
+                status: 'failed',
+                message:
+                  error instanceof Error
+                    ? error.message
+                    : 'Could not create parent project.',
+              });
+            }
+          }
+        }
+      }
+
+      if (
+        input.payload.importMode === 'into_existing_parent' &&
+        input.payload.fixedParentProjectId == null
+      ) {
+        return {
+          status: 'failed',
+          counts: { ...counts, failedRows: input.payload.rows.length },
+          errorCsv: null,
+        };
+      }
+
+      for (const row of input.payload.rows) {
+        if (excluded.has(row.sourceRowIndex)) continue;
+
+        const groupKey =
+          input.payload.importMode === 'master_hierarchy'
+            ? rowGroupBySourceIndex.get(row.sourceRowIndex) ?? 'unassigned'
+            : 'fixed';
+
+        const parentProjectId =
+          input.payload.importMode === 'into_existing_parent'
+            ? input.payload.fixedParentProjectId
+            : parentIdByGroupKey.get(groupKey) ?? null;
+
+        if (!parentProjectId) {
+          counts.failedRows += 1;
+          failedRows.push({
+            sourceRowIndex: row.sourceRowIndex,
+            groupName: groupKey,
+            subprojectName:
+              getSubprojectNameFromRow(row, input.payload.mappings) || '(missing name)',
+            status: 'failed',
+            message: 'Parent project resolution missing.',
+          });
+          continue;
+        }
+
+        const seenNames = seenNamesByGroup.get(groupKey) ?? new Set<string>();
+        seenNamesByGroup.set(groupKey, seenNames);
+        const validation = validateImportRow({
+          row,
+          mappings: input.payload.mappings,
+          allowedStageSlugs: allowedSubprojectStages,
+          duplicateNamesInGroup: seenNames,
+        });
+
+        const warningCount = validation.issues.filter(
+          (issue) => issue.severity === 'warning'
+        ).length;
+        counts.warningCount += warningCount;
+
+        if (!validation.ok) {
+          counts.invalidRows += 1;
+          const firstError =
+            validation.issues.find((issue) => issue.severity === 'error') ??
+            validation.issues[0];
+          failedRows.push({
+            sourceRowIndex: row.sourceRowIndex,
+            groupName: groupKey,
+            subprojectName: validation.subprojectName || '(missing name)',
+            status: 'invalid',
+            message: firstError?.message ?? 'Row is invalid.',
+          });
+          continue;
+        }
+
+        const emails = normalizeContactEmails(
+          expandDelimitedContactValues(
+            collectMappedStandardCellValues(
+              row,
+              input.payload.mappings,
+              'emails',
+              'subproject'
+            )
+          )
+        );
+        const phones = normalizeContactPhones(
+          expandDelimitedContactValues(
+            collectMappedStandardCellValues(
+              row,
+              input.payload.mappings,
+              'phones',
+              'subproject'
+            )
+          )
+        );
+        const stageRaw = mappedStandardCellValue(
+          row,
+          input.payload.mappings,
+          'stage',
+          'subproject'
+        );
+        const stageSlug = allowedSubprojectStages.has(stageRaw)
+          ? stageRaw
+          : defaultSubprojectStage;
+        const dealValueRaw = mappedStandardCellValue(
+          row,
+          input.payload.mappings,
+          'deal_value',
+          'subproject'
+        );
+        const dealValueParsed = parseImportDealValueToCents(dealValueRaw);
+
+        try {
+          await createCrmProject(crmRepositories, {
+            name: validation.subprojectName,
+            industry: 'hvac',
+            customIndustry: null,
+            contactName:
+              mappedStandardCellValue(
+                row,
+                input.payload.mappings,
+                'contact_name',
+                'subproject'
+              ) || validation.subprojectName,
+            emails,
+            phones,
+            priority: 'normal',
+            currentStageSlug: stageSlug,
+            notes:
+              mappedStandardCellValue(row, input.payload.mappings, 'notes', 'subproject') ||
+              null,
+            dealValueCents: dealValueParsed.ok ? dealValueParsed.cents : 0,
+            balanceRemainingCents: 0,
+            assignedMemberId: null,
+            addressLine1:
+              mappedStandardCellValue(
+                row,
+                input.payload.mappings,
+                'address_line_1',
+                'subproject'
+              ) || null,
+            addressLine2:
+              mappedStandardCellValue(
+                row,
+                input.payload.mappings,
+                'address_line_2',
+                'subproject'
+              ) || null,
+            city:
+              mappedStandardCellValue(row, input.payload.mappings, 'city', 'subproject') ||
+              null,
+            state:
+              mappedStandardCellValue(row, input.payload.mappings, 'state', 'subproject') ||
+              null,
+            postalCode:
+              mappedStandardCellValue(
+                row,
+                input.payload.mappings,
+                'postal_code',
+                'subproject'
+              ) || null,
+            latitude: null,
+            longitude: null,
+            parentProjectId,
+          });
+          counts.createdSubprojects += 1;
+          seenNames.add(normalizeImportText(validation.subprojectName));
+          if (input.payload.importMode === 'master_hierarchy') {
+            const draft = input.resolutionDrafts[groupKey];
+            if (draft?.type === 'attach_existing') {
+              attachUsedGroups.add(groupKey);
+            }
+          }
+        } catch (error) {
+          counts.failedRows += 1;
+          failedRows.push({
+            sourceRowIndex: row.sourceRowIndex,
+            groupName: groupKey,
+            subprojectName: validation.subprojectName,
+            status: 'failed',
+            message: error instanceof Error ? error.message : 'Could not create subproject.',
+          });
+        }
+      }
+
+      counts.existingParentsUsed = attachUsedGroups.size;
+      counts.excludedRows = excluded.size;
+
+      const status =
+        counts.createdSubprojects > 0
+          ? counts.failedRows > 0 || counts.invalidRows > 0
+            ? 'partially_completed'
+            : 'completed'
+          : counts.failedRows > 0 || counts.invalidRows > 0
+            ? 'failed'
+            : 'completed';
+
+      const errorCsv =
+        failedRows.length === 0
+          ? null
+          : [
+              ['Source Row Number', 'Parent Group', 'Subproject Name', 'Status', 'Error Message']
+                .map((cell) => escapeCsvCell(cell))
+                .join(','),
+              ...failedRows.map((entry) =>
+                [
+                  String(entry.sourceRowIndex),
+                  entry.groupName,
+                  entry.subprojectName,
+                  entry.status,
+                  entry.message,
+                ]
+                  .map((cell) => escapeCsvCell(cell))
+                  .join(',')
+              ),
+            ].join('\r\n');
+
+      return { status, counts, errorCsv };
+    },
+    [copy.defaults.newParentName, getCatalog]
+  );
+
   const handleCancelImport = useCallback(async () => {
     if (jobId == null) return;
     setCancellingImport(true);
@@ -1396,6 +1771,7 @@ export function SpreadsheetImportWizard({
     setMappingErrors([]);
     setImportDone(false);
     setCompletionToast(null);
+    setDemoImportErrorCsv(null);
     setImportStatus('running');
     setImportCounts(EMPTY_COUNTS);
     setCumulativeProcessed(0);
@@ -1478,6 +1854,47 @@ export function SpreadsheetImportWizard({
             }
           : null;
 
+      const isWorksheetPerProject =
+        interview.multiProjectOrganization === 'worksheet_per_project';
+      const isHeaderRows = interview.multiProjectOrganization === 'header_rows';
+      const worksheetDrafts =
+        isWorksheetPerProject || isHeaderRows
+          ? buildWorksheetGroupResolutions(
+              interview.worksheetProjects ?? [],
+              interview.worksheetResolutions ?? {}
+            )
+          : null;
+      const resolutionDrafts = worksheetDrafts
+        ? { ...interview.groupResolutions, ...worksheetDrafts }
+        : interview.groupResolutions;
+
+      if (isDemoRuntime) {
+        const demoResult = await runDemoImportFromPayload({
+          payload,
+          excludedSourceRowIndexes,
+          resolutionDrafts,
+        });
+        const rowsToCreate = Math.max(0, payload.rows.length - skipIndexes.length);
+        setJobId(`demo-import-${Date.now()}`);
+        setImportTotalRows(rowsToCreate);
+        setImportStatus(demoResult.status);
+        setImportCounts(demoResult.counts);
+        setCumulativeProcessed(rowsToCreate);
+        setLastChunkProcessed(rowsToCreate);
+        setPeakPercent(100);
+        setImportDone(true);
+        setDemoImportErrorCsv(demoResult.errorCsv);
+        if (isImportExecutionSuccessful(demoResult.status)) {
+          setCompletionToast(
+            demoResult.status === 'partially_completed'
+              ? copy.interview.importExecution.toastCompletedPartial
+              : copy.interview.importExecution.toastCompleted
+          );
+        }
+        onCompleted?.();
+        return;
+      }
+
       // Always create a fresh draft so Start uses current mappings (idempotent
       // reuse would keep a prior failed snapshot without a parent key).
       const nextIdempotencyKey = crypto.randomUUID();
@@ -1504,22 +1921,7 @@ export function SpreadsheetImportWizard({
       }
       setMappingErrors([]);
 
-      const isWorksheetPerProject =
-        interview.multiProjectOrganization === 'worksheet_per_project';
-      const isHeaderRows = interview.multiProjectOrganization === 'header_rows';
-
       if (payload.importMode === 'master_hierarchy') {
-        const worksheetDrafts =
-          isWorksheetPerProject || isHeaderRows
-            ? buildWorksheetGroupResolutions(
-                interview.worksheetProjects ?? [],
-                interview.worksheetResolutions ?? {}
-              )
-            : null;
-        const resolutionDrafts = worksheetDrafts
-          ? { ...interview.groupResolutions, ...worksheetDrafts }
-          : interview.groupResolutions;
-
         const unresolved = validation.groups.filter((group) => {
           const draft = resolutionDrafts[group.groupKey] ?? { type: 'create_new' as const };
           if (draft.type === 'attach_existing') return !draft.attachProjectId;
@@ -1579,6 +1981,8 @@ export function SpreadsheetImportWizard({
     copy.errors.draftFailed,
     copy.errors.parseFailed,
     copy.errors.resolutionRequired,
+    copy.interview.importExecution.toastCompleted,
+    copy.interview.importExecution.toastCompletedPartial,
     duplicateDecisions,
     duplicateGroups.length,
     duplicateMeta,
@@ -1592,12 +1996,15 @@ export function SpreadsheetImportWizard({
     headers,
     interview,
     mergeDecisions,
+    onCompleted,
     parsedFile,
+    runDemoImportFromPayload,
     rows,
     rowsToCreateCount,
     selectedFile?.name,
     sheetMatrix,
     sheetName,
+    isDemoRuntime,
   ]);
 
   const handleDownloadErrors = useCallback(async () => {
@@ -1605,7 +2012,10 @@ export function SpreadsheetImportWizard({
     setBusy(true);
     setError(null);
     try {
-      const csv = await downloadSpreadsheetImportErrorCsvFromApi(jobId);
+      const csv =
+        isDemoRuntime && demoImportErrorCsv != null
+          ? demoImportErrorCsv
+          : await downloadSpreadsheetImportErrorCsvFromApi(jobId);
       const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
       const url = URL.createObjectURL(blob);
       const anchor = document.createElement('a');
@@ -1618,7 +2028,7 @@ export function SpreadsheetImportWizard({
     } finally {
       setBusy(false);
     }
-  }, [copy.errors.downloadFailed, jobId]);
+  }, [copy.errors.downloadFailed, demoImportErrorCsv, isDemoRuntime, jobId]);
 
   // ---------------------------------------------------------------------
   // Navigation
@@ -2909,6 +3319,12 @@ export function SpreadsheetImportWizard({
           .filter(Boolean)
           .join(' ')}
       >
+        {isDemoRuntime && interview.screen === 'upload' ? (
+          <div className={styles.noticeBanner}>
+            <p className={styles.notice}>{copy.demoBannerTitle}</p>
+            <p className={styles.noticeSubtext}>{copy.demoBannerBody}</p>
+          </div>
+        ) : null}
         {!canImport ? <p className={styles.notice}>{copy.unavailable}</p> : null}
 
         {screenBody}

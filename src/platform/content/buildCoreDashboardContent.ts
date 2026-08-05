@@ -541,6 +541,9 @@ const buildCoreDashboardContentSource = {
       title: 'Import spreadsheet',
       closeAriaLabel: 'Close import spreadsheet wizard',
       unavailable: 'Spreadsheet import is not available in this environment.',
+      demoBannerTitle: 'Import Your Spreadsheet to see it in action',
+      demoBannerBody:
+        'Your actual data will not be saved and is just for display purposes',
       mobileNotice: {
         title: 'Spreadsheet importing works best on a larger screen',
         bodyReview:
