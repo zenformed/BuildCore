@@ -53,6 +53,109 @@
   flex-shrink: 0;
 }
 
+/* Desktop /dashboard Projects toolbar: left actions | centered search+filter | pagination */
+.projectsPanelHeader_desktopToolbar {
+  display: grid;
+  grid-template-columns: auto minmax(280px, 1fr) auto;
+  align-items: center;
+  gap: 0.75rem 1rem;
+  width: 100%;
+  flex-wrap: nowrap;
+  box-sizing: border-box;
+  padding-inline: var(--theme-workflow-unified-inset, 0.3125rem);
+}
+
+.projectsPanelHeaderLeft {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+  min-width: 0;
+}
+
+.desktopCreateActions {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  flex-shrink: 0;
+}
+
+.desktopCreateProjectBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin: 0;
+  padding: 0.35rem 0.7rem;
+  border: none;
+  border-radius: 0.375rem;
+  background: #5a7a9e;
+  color: #ffffff;
+  font: inherit;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  line-height: 1.2;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.desktopCreateProjectBtn:hover:not(:disabled) {
+  background: #4a6889;
+}
+
+.desktopCreateProjectBtn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.desktopCreateProjectBtn:focus-visible {
+  outline: 2px solid var(--color-primary, #2563eb);
+  outline-offset: 2px;
+}
+
+:global([data-theme='dark']) .desktopCreateProjectBtn {
+  background: #234e7f;
+  color: #ffffff;
+}
+
+:global([data-theme='dark']) .desktopCreateProjectBtn:hover:not(:disabled) {
+  background: #2d629e;
+}
+
+.rowActionsMenuIconTile_import {
+  background: #6366f1;
+}
+
+.projectsPanelHeaderCenter {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-width: 0;
+  width: 100%;
+}
+
+.projectsPanelHeaderCenter .projectsSearch {
+  flex: 1 1 auto;
+  width: 100%;
+  min-width: 0;
+  max-width: 28rem;
+}
+
+.projectsPanelHeaderRight {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-shrink: 0;
+  min-width: 0;
+}
+
+.projectsPanelHeaderRight .projectsListV2Pagination {
+  padding-inline-start: 0;
+  flex-wrap: nowrap;
+  white-space: nowrap;
+}
+
 .projectsPanelTitle {
   margin: 0;
   font-size: 0.6875rem;
@@ -198,7 +301,9 @@
 
 .projectsListV2Pagination_standalone {
   width: 100%;
-  padding: 0.5rem 1rem 0.25rem;
+  justify-content: flex-end;
+  padding: 0.5rem 0 0.25rem;
+  padding-inline-start: 0.5rem;
 }
 
 .projectsListV2Range {
@@ -320,8 +425,18 @@
 .projectsPanelHeaderSecondaryRow {
   display: flex;
   align-items: center;
+  gap: 0.375rem;
   width: 100%;
   min-width: 0;
+}
+
+.projectsPanelHeaderSecondaryRow .projectsSearchField {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.projectsPanelHeaderSecondaryRow .projectsFilterWrap {
+  flex-shrink: 0;
 }
 
 .projectsMobileShellRow {
@@ -2803,6 +2918,38 @@
   .projectsPanelHeader_mobile .projectsPanelHeaderSecondaryRow {
     width: 100%;
     min-width: 0;
+  }
+
+  .projectsPanelHeader_mobile .projectsPanelHeaderSecondaryRow .projectsFilterBtn,
+  .projectsPanelHeader_mobile .projectsPanelHeaderSecondaryRow .projectsFilterBtn_ghost {
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    width: 2.125rem;
+    height: 2.125rem;
+    color: var(--color-text-muted, #64748b);
+  }
+
+  .projectsPanelHeader_mobile
+    .projectsPanelHeaderSecondaryRow
+    .projectsFilterBtn:hover:not(:disabled),
+  .projectsPanelHeader_mobile
+    .projectsPanelHeaderSecondaryRow
+    .projectsFilterBtn_ghost:hover:not(:disabled) {
+    background: transparent;
+    border: none;
+    color: var(--color-text, #0f172a);
+  }
+
+  :global([data-theme='dark'])
+    .projectsPanelHeader_mobile
+    .projectsPanelHeaderSecondaryRow
+    .projectsFilterBtn,
+  :global([data-theme='dark'])
+    .projectsPanelHeader_mobile
+    .projectsPanelHeaderSecondaryRow
+    .projectsFilterBtn_ghost {
+    color: #94a3b8;
   }
 
   .projectsPanelHeader_mobile .projectsPanelHeaderRowActions {

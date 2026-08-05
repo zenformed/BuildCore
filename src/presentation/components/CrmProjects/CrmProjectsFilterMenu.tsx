@@ -62,7 +62,7 @@ export type CrmProjectsFilterMenuProps = {
   readonly stageScopeMode?: 'mixed' | PipelineStageScope;
   readonly radiusFilter?: RadiusFilterState;
   readonly onRadiusFilterChange?: (filter: RadiusFilterState) => void;
-  /** Default filter funnels icon; caret is Gmail-style compact trigger. */
+  /** Default filter sliders icon; caret is Gmail-style compact trigger. */
   readonly triggerVariant?: CrmProjectsFilterMenuTriggerVariant;
   readonly menuAlign?: 'start' | 'end';
   readonly className?: string;

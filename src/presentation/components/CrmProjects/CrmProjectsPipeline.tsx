@@ -1,7 +1,7 @@
 'use client';
 
 import { Suspense, useCallback, useEffect, useMemo, useState, type ReactElement } from 'react';
-import { LuFileSpreadsheet, LuSearch } from 'react-icons/lu';
+import { LuSearch } from 'react-icons/lu';
 import { createPortal } from 'react-dom';
 import { resolvePipelineStageScopeForProject } from '@/domain/buildcore/orgPipelineStages';
 import { useRouter } from 'next/navigation';
@@ -33,14 +33,11 @@ import {
 import { useCrmProjectDeleteConfirmation } from '@/presentation/features/crmProjects/useCrmProjectDeleteConfirmation';
 import { consumeCrmProjectDeleteSuccessToast } from '@/presentation/features/crmProjects/crmProjectDeleteFeedback';
 import { useSaaSProfile } from '@/presentation/hooks/useSaaSProfile';
-import { DetailPanelHeaderButton } from '@/presentation/components/CrmProjectDetail/DetailPanelHeaderButton';
-import { DetailPanelSectionRefresh } from '@/presentation/components/CrmProjectDetail/DetailPanelSectionRefresh';
 import { SubprojectsTableBulkActions } from '@/presentation/components/CrmProjectDetail/SubprojectsTableBulkActions';
 import { CrmProjectDeleteWorkflowDialog } from '@/presentation/components/CrmProjects/CrmProjectDeleteWorkflowDialog';
 import { CreateCrmProjectModal } from '@/presentation/components/CrmProjects/CreateCrmProjectModal';
 import { SpreadsheetImportWizard } from '@/presentation/components/CrmImport/SpreadsheetImportWizard';
 import { SpreadsheetImportMobileNoticeDialog } from '@/presentation/components/CrmImport/SpreadsheetImportMobileNoticeDialog';
-import importStyles from '@/presentation/components/CrmImport/SpreadsheetImportWizard.module.css';
 import { DetailToast } from '@/presentation/components/CrmProjectDetail/DetailToast';
 import { ConfirmModal } from '@/presentation/components/ConfirmModal';
 import { ProjectCompletionBlockedDialog } from '@/presentation/components/CrmProjectDetail/ProjectCompletionBlockedDialog';
@@ -57,6 +54,7 @@ import {
   useAssignmentIdentityState,
 } from '@/presentation/providers/AssignmentIdentityProvider';
 import { useBuildCoreDashboardContext } from '@/presentation/providers/BuildCoreDashboardProvider';
+import { CrmProjectsDesktopCreateActions } from './CrmProjectsDesktopCreateActions';
 import { CrmProjectsFilterMenu } from './CrmProjectsFilterMenu';
 import { CrmProjectsTable } from './CrmProjectsTable';
 import { CrmProjectsMobileList } from './CrmProjectsMobileList';
@@ -486,43 +484,6 @@ function CrmProjectsPipelineV1({
       />
     </div>
   );
-  const refreshButton = (
-    <DetailPanelSectionRefresh
-      sectionLabel={panelTitle}
-      onRefresh={refetch}
-      onError={(message) => setToast({ kind: 'error', message })}
-    />
-  );
-  const addButton = !isMemberRole ? (
-    <DetailPanelHeaderButton
-      variant="add"
-      disabled={createOpen}
-      title={nav.header.newProject.title}
-      aria-label={nav.header.newProject.ariaLabel}
-      onClick={() => setCreateOpen(true)}
-    />
-  ) : null;
-  const importButton =
-    !isMemberRole ? (
-      <button
-        type="button"
-        className={importStyles.toolbarImportButton}
-        title={panelCopy.importSpreadsheet}
-        aria-label={panelCopy.importSpreadsheetAriaLabel}
-        disabled={importOpen}
-        onClick={() => {
-          if (isMobileLayout) {
-            setImportMobileNoticeOpen(true);
-            return;
-          }
-          setImportOpen(true);
-        }}
-      >
-        <LuFileSpreadsheet size={16} strokeWidth={2} aria-hidden />
-        {isMobileLayout ? null : panelCopy.importSpreadsheet}
-      </button>
-    ) : null;
-
   const sharedTableChrome = {
     bulkSelection: bulkSelectionBindings,
     inlineSelectionChrome: true as const,
@@ -553,10 +514,15 @@ function CrmProjectsPipelineV1({
           <div className={styles.projectsMobileShellRow}>
             <div className={styles.projectsPanelMobileHeading}>{panelTitle}</div>
             <div className={styles.projectsPanelHeaderRowActions}>
-              {headerFilterButton}
-              {importButton}
-              {refreshButton}
-              {addButton}
+              {!isMemberRole ? (
+                <CrmProjectsDesktopCreateActions
+                  variant="mobile"
+                  createDisabled={createOpen}
+                  importDisabled={importOpen}
+                  onCreateClick={() => setCreateOpen(true)}
+                  onImportClick={() => setImportMobileNoticeOpen(true)}
+                />
+              ) : null}
             </div>
           </div>,
           mobileShellBar
@@ -579,7 +545,7 @@ function CrmProjectsPipelineV1({
       <div
         className={[
           styles.projectsPanelHeader,
-          isMobileLayout ? styles.projectsPanelHeader_mobile : '',
+          isMobileLayout ? styles.projectsPanelHeader_mobile : styles.projectsPanelHeader_desktopToolbar,
         ]
           .filter(Boolean)
           .join(' ')}
@@ -596,18 +562,31 @@ function CrmProjectsPipelineV1({
                   {selectionBulkActions}
                 </div>
               ) : (
-                mobileSearchInput
+                <>
+                  {mobileSearchInput}
+                  {headerFilterButton}
+                </>
               )}
             </div>
           </>
         ) : (
-          <div className={styles.projectsPanelHeaderTools}>
-            {headerFilterButton}
-            {searchInput}
-            {importButton}
-            {refreshButton}
-            {addButton}
-          </div>
+          <>
+            <div className={styles.projectsPanelHeaderLeft}>
+              {!isMemberRole ? (
+                <CrmProjectsDesktopCreateActions
+                  createDisabled={createOpen}
+                  importDisabled={importOpen}
+                  onCreateClick={() => setCreateOpen(true)}
+                  onImportClick={() => setImportOpen(true)}
+                />
+              ) : null}
+            </div>
+            <div className={styles.projectsPanelHeaderCenter}>
+              {searchInput}
+              {headerFilterButton}
+            </div>
+            <div className={styles.projectsPanelHeaderRight} />
+          </>
         )}
       </div>
       {showMobileBulkToolbar ? (

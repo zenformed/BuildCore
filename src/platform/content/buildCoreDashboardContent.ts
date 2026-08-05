@@ -342,8 +342,12 @@ const buildCoreDashboardContentSource = {
       title: '§E2§',
       searchPlaceholder: 'Search §E6§…',
       searchAriaLabel: 'Search §E6§',
+      createProjectButton: '+ Create §E1§',
+      createProjectAriaLabel: 'Create §E1§',
+      moreActionsAriaLabel: 'More §E2§ actions',
       importSpreadsheet: 'Import',
-      importSpreadsheetAriaLabel: 'Import spreadsheet',
+      importSpreadsheetMenu: 'Import Spreadsheet/CSV',
+      importSpreadsheetAriaLabel: 'Import spreadsheet or CSV',
       expandAllSubprojects: 'Expand all §E8§',
       collapseAllSubprojects: 'Collapse all §E8§',
       listView: {
