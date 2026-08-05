@@ -23,6 +23,38 @@ export function BuildCoreRootGate({ children }: BuildCoreRootGateProps): React.R
     pathname?.startsWith('/customer-task') || pathname?.startsWith('/lead');
   const isDemoExperience = pathname?.startsWith('/demo');
 
+  React.useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const globalState = window as typeof window & {
+      __buildcorePresenceConsoleFiltered__?: boolean;
+    };
+    if (globalState.__buildcorePresenceConsoleFiltered__) return;
+
+    const shouldSuppress = (args: unknown[]): boolean => {
+      const first = args[0];
+      return typeof first === 'string' && first.includes('[zenformed-presence]');
+    };
+
+    const originalInfo = console.info.bind(console);
+    const originalDebug = console.debug.bind(console);
+    const originalLog = console.log.bind(console);
+
+    console.info = (...args: unknown[]) => {
+      if (shouldSuppress(args)) return;
+      originalInfo(...args);
+    };
+    console.debug = (...args: unknown[]) => {
+      if (shouldSuppress(args)) return;
+      originalDebug(...args);
+    };
+    console.log = (...args: unknown[]) => {
+      if (shouldSuppress(args)) return;
+      originalLog(...args);
+    };
+
+    globalState.__buildcorePresenceConsoleFiltered__ = true;
+  }, []);
+
   if (isPublicPortal || isDemoExperience) {
     return <>{children}</>;
   }
