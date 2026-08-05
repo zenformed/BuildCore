@@ -25,14 +25,17 @@ export function PreviewMetaColumn({
   align = 'start',
   labelPosition = 'below',
   leadingIcon = null,
+  leadingIconMode = 'default',
 }: {
   readonly label: ReactNode;
   readonly value: ReactNode;
   readonly align?: 'start' | 'center' | 'end';
   readonly labelPosition?: 'above' | 'below';
   readonly leadingIcon?: ReactNode;
+  readonly leadingIconMode?: 'default' | 'inline_only_mobile';
 }): ReactElement {
   const isMobileLayout = useDashboardMobileLayout();
+  const showColumnIcon = leadingIcon != null && !(isMobileLayout && leadingIconMode === 'inline_only_mobile');
   const columnClass = [
     cardStyles.metaColumn,
     align === 'center' ? cardStyles.metaColumn_center : '',
@@ -69,6 +72,10 @@ export function PreviewMetaColumn({
     );
 
   if (leadingIcon == null) {
+    return <div className={columnClass}>{columnContent}</div>;
+  }
+
+  if (!showColumnIcon) {
     return <div className={columnClass}>{columnContent}</div>;
   }
 

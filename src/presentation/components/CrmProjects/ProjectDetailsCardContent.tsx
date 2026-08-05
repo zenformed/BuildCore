@@ -610,6 +610,37 @@ export function ProjectDetailsCardContent({
   if (mode === 'map') {
     const labelPosition = 'above' as const;
 
+    if (isMobileLayout) {
+      return (
+        <div className={cardStyles.previewBody}>
+          <section className={cardStyles.previewSection} aria-label={previewCopy.sections.overview}>
+            <div className={cardStyles.previewMobileList}>
+              <MobilePreviewMetaItem
+                label={previewCopy.labels.contact}
+                icon={<LuUser />}
+                value={summary.contact.name || emptyValue}
+              />
+              <MobilePreviewMetaItem
+                label={previewCopy.labels.email}
+                icon={<LuMail />}
+                value={<StackedMetaList values={emails} emptyValue={emptyValue} />}
+              />
+              <MobilePreviewMetaItem
+                label={previewCopy.labels.phone}
+                icon={<LuPhone />}
+                value={<StackedMetaList values={phones} emptyValue={emptyValue} />}
+              />
+              <MobilePreviewMetaItem
+                label={previewCopy.labels.notes}
+                icon={<LuStickyNote />}
+                value={notesText || emptyValue}
+              />
+            </div>
+          </section>
+        </div>
+      );
+    }
+
     return (
       <div className={cardStyles.previewBody}>
         <section className={cardStyles.previewSection} aria-label={previewCopy.sections.overview}>
@@ -617,7 +648,7 @@ export function ProjectDetailsCardContent({
             <PreviewMetaColumn
               label={previewCopy.labels.contact}
               labelPosition={labelPosition}
-            leadingIcon={<LuUser />}
+              leadingIcon={<LuUser />}
               value={summary.contact.name || emptyValue}
             />
           </div>
@@ -625,7 +656,7 @@ export function ProjectDetailsCardContent({
             <PreviewMetaColumn
               label={previewCopy.labels.email}
               labelPosition={labelPosition}
-            leadingIcon={<LuMail />}
+              leadingIcon={<LuMail />}
               value={<StackedMetaList values={emails} emptyValue={emptyValue} />}
             />
           </div>
@@ -633,7 +664,7 @@ export function ProjectDetailsCardContent({
             <PreviewMetaColumn
               label={previewCopy.labels.phone}
               labelPosition={labelPosition}
-            leadingIcon={<LuPhone />}
+              leadingIcon={<LuPhone />}
               value={<StackedMetaList values={phones} emptyValue={emptyValue} />}
             />
           </div>
@@ -643,7 +674,7 @@ export function ProjectDetailsCardContent({
             <PreviewMetaColumn
               label={previewCopy.labels.notes}
               labelPosition={labelPosition}
-            leadingIcon={<LuStickyNote />}
+              leadingIcon={<LuStickyNote />}
               value={notesText || emptyValue}
             />
           </div>

@@ -1,8 +1,17 @@
 .previewPortal {
   composes: inlineMenu_portal from './ProjectDetail.module.css';
+}
+
+/*
+ * Doubled selector beats composed `.inlineMenu_portal` max-width (20rem).
+ * Production CSS order can put the composed class after `.previewPortal`, which
+ * was shrinking the desktop hover card on deploy while local looked fine.
+ */
+.previewPortal.previewPortal {
   width: min(43rem, calc(100vw - 1rem));
   max-width: 43rem;
   max-height: none;
+  min-width: 0;
   padding: 0;
   border-radius: 0.625rem;
   overflow: visible;
@@ -11,7 +20,7 @@
     0 4px 6px -4px rgba(15, 23, 42, 0.1);
 }
 
-:global([data-theme='dark']) .previewPortal {
+:global([data-theme='dark']) .previewPortal.previewPortal {
   box-shadow:
     0 10px 15px -3px rgba(0, 0, 0, 0.45),
     0 4px 6px -4px rgba(0, 0, 0, 0.35);

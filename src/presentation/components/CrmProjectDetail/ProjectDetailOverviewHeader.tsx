@@ -197,6 +197,21 @@ export function ProjectDetailOverviewHeader({
                 >
                   {isInactive ? detailCopy.subprojects.markInactive.badge : 'Active'}
                 </span>
+                {!isMemberRole ? (
+                  <button
+                    type="button"
+                    className={styles.overviewEditButton}
+                    onClick={() => {
+                      guardProjectEdit(() => {
+                        setEditModalOpen(true);
+                      });
+                    }}
+                    aria-label={fullDetailsCopy.viewEdit}
+                    title={fullDetailsCopy.viewEdit}
+                  >
+                    <LuPencil size={14} aria-hidden />
+                  </button>
+                ) : null}
               </div>
               <div className={styles.overviewIdentityMetaRow}>
                 {isMemberRole ? (
@@ -268,23 +283,6 @@ export function ProjectDetailOverviewHeader({
                   layout="value"
                 />
               </div>
-              {!isMemberRole ? (
-                <div className={styles.overviewIdentityActionsRow}>
-                  <button
-                    type="button"
-                    className={styles.overviewEditButton}
-                    onClick={() => {
-                      guardProjectEdit(() => {
-                        setEditModalOpen(true);
-                      });
-                    }}
-                    aria-label={fullDetailsCopy.viewEdit}
-                    title={fullDetailsCopy.viewEdit}
-                  >
-                    <LuPencil size={14} aria-hidden />
-                  </button>
-                </div>
-              ) : null}
             </div>
           </div>
         </section>

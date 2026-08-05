@@ -2327,8 +2327,6 @@
   display: flex;
   flex-direction: column;
   gap: 0.3125rem;
-  position: relative;
-  padding-right: 2rem;
 }
 
 .overviewIdentityTitleRow {
@@ -2500,14 +2498,8 @@
   text-decoration: underline;
 }
 
-.overviewIdentityActionsRow {
-  position: absolute;
-  top: 0;
-  right: 0;
-  display: inline-flex;
-}
-
 .overviewEditButton {
+  flex: 0 0 auto;
   display: inline-flex;
   align-items: center;
   justify-content: center;
