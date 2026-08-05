@@ -85,6 +85,7 @@ export type ProcessSpreadsheetImportChunkResponse = {
   readonly status: CrmImportJobStatus | string;
   readonly processedEntities: number;
   readonly counts: CrmImportJobCounts;
+  readonly transitionedToTerminal?: boolean;
 };
 
 export type CancelSpreadsheetImportResponse = {

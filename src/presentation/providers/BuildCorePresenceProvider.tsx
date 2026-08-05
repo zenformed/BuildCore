@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, type ReactElement, type ReactNode } from 'react';
+import { type ReactElement, type ReactNode } from 'react';
 import { ZenformedPresenceProvider } from '@zenformed/core/presence';
 import { getSupabaseClient } from '@/infrastructure/supabase/supabaseClient';
 import { useSaaSProfile } from '@/presentation/providers/SaaSProfileProvider';
@@ -21,17 +21,6 @@ export function BuildCorePresenceProvider({
   const organizationId = organizationMembershipContext?.organizationId ?? null;
   const userId = user?.id?.trim() || null;
   const enabled = !runtimeModes.isDemoRuntime();
-
-  useEffect(() => {
-    if (process.env.NODE_ENV !== 'development') return;
-    console.info('[zenformed-presence] BuildCorePresenceProvider inputs', {
-      enabled,
-      userId,
-      organizationId,
-      appSlug: buildcoreAppDefinition.appSlug,
-      hasMembershipContext: organizationMembershipContext != null,
-    });
-  }, [enabled, organizationId, organizationMembershipContext, userId]);
 
   return (
     <ZenformedPresenceProvider

@@ -5,6 +5,7 @@ import { buildcoreAppDefinition } from '@/platform/appDefinitions/buildcore';
 import { ThemeProvider } from '@/presentation/providers';
 import { ElectronSessionBridge } from '@/presentation/components/ElectronSessionBridge';
 import { BuildCoreRootGate } from '@/presentation/components/BuildCoreRootGate';
+import { ImportStatusOverlay } from '@/presentation/features/crmImport/ImportStatusOverlay';
 
 export const dynamic = 'force-dynamic';
 
@@ -40,6 +41,7 @@ export default function RootLayout({
         <ThemeProvider>
           <ElectronSessionBridge />
           <BuildCoreRootGate>{children}</BuildCoreRootGate>
+          <ImportStatusOverlay />
         </ThemeProvider>
       </body>
     </html>

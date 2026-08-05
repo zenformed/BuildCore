@@ -4,8 +4,10 @@ import {
   __resetImportChunkRunnerForTests,
   __setImportChunkLoopForTests,
   cancelImportChunkRunner,
+  getActiveImportRunnerSnapshot,
   getActiveImportRunnerJobId,
   isImportChunkRunnerActive,
+  subscribeActiveImportRunner,
   startOrAttachImportChunkRunner,
 } from '@/presentation/features/crmImport/importChunkRunnerCoordinator';
 import { EMPTY_CRM_IMPORT_JOB_COUNTS } from '@/domain/crm/spreadsheetImportTypes';
@@ -136,5 +138,34 @@ describe('importChunkRunnerCoordinator', () => {
     });
     await started.promise;
     assert.ok(updates.includes(2));
+  });
+
+  it('publishes active runner snapshot changes for global observers', async () => {
+    const snapshots: Array<string | null> = [];
+    const unsubscribe = subscribeActiveImportRunner((snapshot) => {
+      snapshots.push(snapshot?.jobId ?? null);
+    });
+
+    __setImportChunkLoopForTests(async ({ onProgress }) => {
+      onProgress({
+        status: 'completed',
+        counts: EMPTY_CRM_IMPORT_JOB_COUNTS,
+        processedEntities: 1,
+        done: true,
+      });
+    });
+
+    const started = startOrAttachImportChunkRunner({
+      jobId: 'job-global',
+      clientClaimToken: 'claim-global',
+      totalRows: 1,
+    });
+
+    assert.equal(getActiveImportRunnerSnapshot()?.jobId, 'job-global');
+    await started.promise;
+    assert.equal(getActiveImportRunnerSnapshot(), null);
+    unsubscribe();
+
+    assert.deepEqual(snapshots, [null, 'job-global', 'job-global', null]);
   });
 });

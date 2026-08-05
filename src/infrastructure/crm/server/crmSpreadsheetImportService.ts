@@ -737,6 +737,7 @@ export async function processImportNextChunk(
   readonly status: string;
   readonly processedEntities: number;
   readonly counts: CrmImportJobCounts;
+  readonly transitionedToTerminal: boolean;
 }> {
   const { data: job } = await supabase
     .from('crm_import_jobs')
@@ -751,6 +752,7 @@ export async function processImportNextChunk(
       status: job.status,
       processedEntities: 0,
       counts: (job.counts as CrmImportJobCounts) ?? EMPTY_CRM_IMPORT_JOB_COUNTS,
+      transitionedToTerminal: false,
     };
   }
   if (job.status !== 'running' && job.status !== 'partially_completed') {
@@ -1080,6 +1082,7 @@ export async function processImportNextChunk(
 
   let nextJobStatus = job.status as string;
   let done = false;
+  let transitionedToTerminal = false;
   if ((openGroups ?? 0) === 0 && (pendingRows ?? 0) === 0) {
     nextJobStatus =
       counts.failedRows > 0 || counts.invalidRows > 0 ? 'partially_completed' : 'completed';
@@ -1093,6 +1096,7 @@ export async function processImportNextChunk(
       nextJobStatus = 'completed';
     }
     done = true;
+    transitionedToTerminal = true;
   } else if (processed === 0) {
     // Nothing runnable in this chunk. Finish the job so the client cannot spin forever
     // (e.g. all groups failed / unresolved while pending rows remain).
@@ -1101,6 +1105,7 @@ export async function processImportNextChunk(
         ? 'partially_completed'
         : 'failed';
     done = true;
+    transitionedToTerminal = true;
   } else {
     nextJobStatus = 'running';
   }
@@ -1121,6 +1126,7 @@ export async function processImportNextChunk(
     status: nextJobStatus,
     processedEntities: processed,
     counts,
+    transitionedToTerminal,
   };
 }
 

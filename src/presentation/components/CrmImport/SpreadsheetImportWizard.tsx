@@ -236,6 +236,11 @@ const EMPTY_COUNTS: CrmImportJobCounts = {
   ignoredGroups: 0,
 };
 
+function logImportFlow(step: string, details?: Readonly<Record<string, unknown>>): void {
+  void step;
+  void details;
+}
+
 function collectLockedIndexes(state: CrmImportInterviewState): Set<number> {
   const set = new Set<number>();
   for (const idx of state.projectComposition?.columnIndexes ?? []) set.add(idx);
@@ -460,8 +465,14 @@ export function SpreadsheetImportWizard({
 
   const handleClose = useCallback(() => {
     // Close never cancels — the module-level chunk runner keeps going.
+    logImportFlow('wizard_close_clicked', {
+      screen: interview.screen,
+      jobId,
+      importStatus,
+      runnerActive: isImportChunkRunnerActive(jobId),
+    });
     onClose();
-  }, [onClose]);
+  }, [interview.screen, jobId, importStatus, onClose]);
 
   useEffect(() => {
     if (jobId == null || !isImportChunkRunnerActive(jobId)) return;
@@ -1338,6 +1349,11 @@ export function SpreadsheetImportWizard({
 
   const handleStartImport = useCallback(
     async (targetJobId: string, totalRowsOverride?: number) => {
+      logImportFlow('start_import_entered', {
+        targetJobId,
+        totalRowsOverride: totalRowsOverride ?? rows.length,
+        existingClaimToken: clientClaimToken || null,
+      });
       const claimToken = clientClaimToken || crypto.randomUUID();
       setClientClaimToken(claimToken);
       setBusy(true);
@@ -1346,12 +1362,20 @@ export function SpreadsheetImportWizard({
       setCompletionToast(null);
       let settledStatus = 'running';
       try {
-        const { promise } = startOrAttachImportChunkRunner({
+        const started = startOrAttachImportChunkRunner({
           jobId: targetJobId,
           clientClaimToken: claimToken,
           totalRows: totalRowsOverride ?? rows.length,
           listener: (progress) => {
             settledStatus = progress.status;
+            logImportFlow('start_import_progress', {
+              targetJobId,
+              status: progress.status,
+              done: progress.done,
+              processedEntities: progress.processedEntities,
+              cumulativeProcessed: progress.cumulativeProcessed,
+              peakPercent: progress.peakPercent,
+            });
             setImportStatus(progress.status);
             setImportCounts(progress.counts);
             setCumulativeProcessed(progress.cumulativeProcessed);
@@ -1360,7 +1384,16 @@ export function SpreadsheetImportWizard({
             setImportDone(progress.done);
           },
         });
-        await promise;
+        logImportFlow('start_import_runner_started', {
+          targetJobId,
+          attached: started.attached,
+          claimToken,
+        });
+        await started.promise;
+        logImportFlow('start_import_runner_resolved', {
+          targetJobId,
+          settledStatus,
+        });
         // Stay on the Import progress screen — no separate Results step.
         if (isImportExecutionSuccessful(settledStatus)) {
           setCompletionToast(
@@ -1371,6 +1404,11 @@ export function SpreadsheetImportWizard({
         }
         onCompleted?.();
       } catch (err) {
+        logImportFlow('start_import_runner_failed', {
+          targetJobId,
+          message: err instanceof Error ? err.message : String(err),
+          name: err instanceof Error ? err.name : null,
+        });
         if (err instanceof DOMException && err.name === 'AbortError') {
           setImportStatus('cancelled');
           setError(copy.errors.importCancelled);
@@ -1383,6 +1421,10 @@ export function SpreadsheetImportWizard({
           );
         }
       } finally {
+        logImportFlow('start_import_finally', {
+          targetJobId,
+          settledStatus,
+        });
         setBusy(false);
       }
     },
@@ -1766,6 +1808,12 @@ export function SpreadsheetImportWizard({
   }, [handleCancelImport, importCounts]);
 
   const handleStartFromReview = useCallback(async () => {
+    logImportFlow('start_from_review_entered', {
+      screen: interview.screen,
+      rowsToCreateCount,
+      duplicateStatus,
+      mode,
+    });
     setBusy(true);
     setError(null);
     setMappingErrors([]);
@@ -1796,6 +1844,7 @@ export function SpreadsheetImportWizard({
     };
 
     try {
+      logImportFlow('start_from_review_resolve_source_begin');
       const source = await resolveInterviewImportSource({
         interview,
         headers,
@@ -1806,6 +1855,12 @@ export function SpreadsheetImportWizard({
         headerRowGroups,
         parsedFile,
         parseFailedMessage: copy.errors.parseFailed,
+      });
+      logImportFlow('start_from_review_resolve_source_done', {
+        rowCount: source.rows.length,
+        headerCount: source.headers.length,
+        sheetName: source.sheetName,
+        importMode: source.importMode,
       });
 
       // Keep wizard sheet state aligned with the combined job so progress UI
@@ -1821,6 +1876,11 @@ export function SpreadsheetImportWizard({
         mappings: source.mappings,
         rows: source.rows,
       };
+      logImportFlow('start_from_review_payload_built', {
+        payloadMode: payload.importMode,
+        payloadRows: payload.rows.length,
+        payloadMappings: payload.mappings.length,
+      });
       setImportTotalRows(payload.rows.length);
 
       // Apply merge/replace onto existing records before creating remaining rows.
@@ -1869,6 +1929,7 @@ export function SpreadsheetImportWizard({
         : interview.groupResolutions;
 
       if (isDemoRuntime) {
+        logImportFlow('start_from_review_demo_mode_begin');
         const demoResult = await runDemoImportFromPayload({
           payload,
           excludedSourceRowIndexes,
@@ -1892,6 +1953,10 @@ export function SpreadsheetImportWizard({
           );
         }
         onCompleted?.();
+        logImportFlow('start_from_review_demo_mode_done', {
+          status: demoResult.status,
+          createdSubprojects: demoResult.counts.createdSubprojects,
+        });
         return;
       }
 
@@ -1899,6 +1964,9 @@ export function SpreadsheetImportWizard({
       // reuse would keep a prior failed snapshot without a parent key).
       const nextIdempotencyKey = crypto.randomUUID();
       setIdempotencyKey(nextIdempotencyKey);
+      logImportFlow('start_from_review_create_draft_begin', {
+        idempotencyKey: nextIdempotencyKey,
+      });
       const response = await createSpreadsheetImportDraftFromApi({
         importMode: payload.importMode,
         fixedParentProjectId: payload.fixedParentProjectId,
@@ -1911,11 +1979,25 @@ export function SpreadsheetImportWizard({
         rows: payload.rows,
         duplicateCheck: duplicateCheckSnapshot,
       });
+      logImportFlow('start_from_review_create_draft_done', {
+        jobId: response.jobId,
+        status: response.status,
+      });
       const currentJobId = response.jobId;
       setJobId(currentJobId);
 
+      logImportFlow('start_from_review_validate_begin', { jobId: currentJobId });
       const validation = await validateSpreadsheetImportJobFromApi(currentJobId);
+      logImportFlow('start_from_review_validate_done', {
+        jobId: currentJobId,
+        mappingErrors: validation.mappingErrors.length,
+        groups: validation.groups.length,
+      });
       if (validation.mappingErrors.length > 0) {
+        logImportFlow('start_from_review_validate_blocked', {
+          jobId: currentJobId,
+          mappingErrors: validation.mappingErrors.length,
+        });
         returnToReviewWithErrors(validation.mappingErrors);
         return;
       }
@@ -1931,10 +2013,19 @@ export function SpreadsheetImportWizard({
           return false;
         });
         if (unresolved.length > 0) {
+          logImportFlow('start_from_review_unresolved_conflicts', {
+            jobId: currentJobId,
+            unresolvedGroups: unresolved.length,
+          });
           returnToReviewWithErrors([copy.errors.resolutionRequired]);
           return;
         }
 
+        logImportFlow('start_from_review_save_resolutions_begin', {
+          jobId: currentJobId,
+          excludedRows: excludedSourceRowIndexes.length,
+          skipRows: skipIndexes.length,
+        });
         const saved = await saveSpreadsheetImportResolutionsFromApi(currentJobId, {
           groups: validation.groups.map((group) => ({
             groupKey: group.groupKey,
@@ -1949,31 +2040,56 @@ export function SpreadsheetImportWizard({
           duplicateSkipSourceRowIndexes: skipIndexes,
           duplicateCheck: duplicateCheckSnapshot,
         });
+        logImportFlow('start_from_review_save_resolutions_done', {
+          jobId: currentJobId,
+          blockingGroupKeys: saved.blockingGroupKeys.length,
+        });
         if (saved.blockingGroupKeys.length > 0) {
           returnToReviewWithErrors([copy.errors.resolutionRequired]);
           return;
         }
+        logImportFlow('start_from_review_revalidate_begin', { jobId: currentJobId });
         await validateSpreadsheetImportJobFromApi(currentJobId);
+        logImportFlow('start_from_review_revalidate_done', { jobId: currentJobId });
       } else if (
         excludedSourceRowIndexes.length > 0 ||
         duplicateCheckSnapshot != null
       ) {
+        logImportFlow('start_from_review_save_light_resolutions_begin', {
+          jobId: currentJobId,
+          excludedRows: excludedSourceRowIndexes.length,
+          skipRows: skipIndexes.length,
+        });
         await saveSpreadsheetImportResolutionsFromApi(currentJobId, {
           groups: [],
           excludedSourceRowIndexes,
           duplicateSkipSourceRowIndexes: skipIndexes,
           duplicateCheck: duplicateCheckSnapshot,
         });
+        logImportFlow('start_from_review_save_light_resolutions_done', {
+          jobId: currentJobId,
+        });
       }
 
       const rowsToCreate = Math.max(0, payload.rows.length - skipIndexes.length);
       setImportTotalRows(rowsToCreate);
 
+      logImportFlow('start_from_review_start_import_call', {
+        jobId: currentJobId,
+        rowsToCreate,
+      });
       await handleStartImport(currentJobId, rowsToCreate);
+      logImportFlow('start_from_review_start_import_returned', {
+        jobId: currentJobId,
+      });
     } catch (err) {
+      logImportFlow('start_from_review_failed', {
+        message: err instanceof Error ? err.message : String(err),
+      });
       const message = err instanceof Error ? err.message : copy.errors.draftFailed;
       returnToReviewWithErrors([message]);
     } finally {
+      logImportFlow('start_from_review_finally');
       setBusy(false);
     }
   }, [
@@ -2253,6 +2369,11 @@ export function SpreadsheetImportWizard({
 
   const handleContinue = useCallback(async () => {
     setError(null);
+    logImportFlow('continue_clicked', {
+      screen: interview.screen,
+      canContinue,
+      busy,
+    });
     if (!canContinue) return;
 
     if (interview.screen === 'parent_resolve') {
@@ -2277,6 +2398,7 @@ export function SpreadsheetImportWizard({
     }
 
     if (interview.screen === 'review') {
+      logImportFlow('continue_branch_review');
       await handleStartFromReview();
       return;
     }
@@ -3419,7 +3541,13 @@ export function SpreadsheetImportWizard({
                               .continueBlockedAria
                       : undefined
                   }
-                  onClick={() => void handleContinue()}
+                  onClick={() => {
+                    logImportFlow('continue_button_pressed', {
+                      screen: interview.screen,
+                      label: continueLabel,
+                    });
+                    void handleContinue();
+                  }}
                 >
                   {busy ? (
                     nav.working

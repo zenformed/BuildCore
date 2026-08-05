@@ -252,15 +252,6 @@ function BuildCoreSidebarTeamMemberRow({
   const status = isDemoRuntime ? (DEMO_PRESENCE_BY_MEMBER_ID[member.id] ?? 'offline') : liveStatus;
   const statusLabel = PRESENCE_EFFECTIVE_STATUS_LABELS[status];
 
-  useEffect(() => {
-    if (process.env.NODE_ENV !== 'development') return;
-    console.info('[zenformed-presence] Team row indicator', {
-      memberId: member.id,
-      status,
-      statusLabel,
-    });
-  }, [member.id, status, statusLabel]);
-
   return (
     <li className={styles.teamRow} title={`${firstLast} · ${statusLabel}`}>
       <ZenformedPresenceAvatarBadge status={status} announceDot={false}>

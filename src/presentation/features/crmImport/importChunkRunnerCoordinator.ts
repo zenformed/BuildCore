@@ -17,6 +17,13 @@ export type ImportRunnerProgress = ImportChunkLoopProgress & {
 };
 
 export type ImportRunnerListener = (progress: ImportRunnerProgress) => void;
+export type ActiveImportRunnerSnapshot = {
+  readonly jobId: string;
+  readonly clientClaimToken: string;
+  readonly totalRows: number;
+  readonly progress: ImportRunnerProgress;
+};
+export type ActiveImportRunnerListener = (snapshot: ActiveImportRunnerSnapshot | null) => void;
 
 type ChunkLoopFn = typeof runImportChunkLoop;
 
@@ -32,8 +39,27 @@ type ActiveImportRunner = {
   error: Error | null;
 };
 
-let activeRunner: ActiveImportRunner | null = null;
-let chunkLoopImpl: ChunkLoopFn = runImportChunkLoop;
+type ImportChunkRunnerStore = {
+  activeRunner: ActiveImportRunner | null;
+  chunkLoopImpl: ChunkLoopFn;
+  activeRunnerListeners: Set<ActiveImportRunnerListener>;
+};
+
+const STORE_KEY = '__buildcoreImportChunkRunnerStore__';
+
+function getStore(): ImportChunkRunnerStore {
+  const globalStore = globalThis as typeof globalThis & {
+    [STORE_KEY]?: ImportChunkRunnerStore;
+  };
+  if (globalStore[STORE_KEY] == null) {
+    globalStore[STORE_KEY] = {
+      activeRunner: null,
+      chunkLoopImpl: runImportChunkLoop,
+      activeRunnerListeners: new Set<ActiveImportRunnerListener>(),
+    };
+  }
+  return globalStore[STORE_KEY]!;
+}
 
 function emptyProgress(): ImportRunnerProgress {
   return {
@@ -48,16 +74,40 @@ function emptyProgress(): ImportRunnerProgress {
 }
 
 export function getActiveImportRunnerJobId(): string | null {
+  const { activeRunner } = getStore();
   return activeRunner && !activeRunner.settled ? activeRunner.jobId : null;
 }
 
+export function getActiveImportRunnerSnapshot(): ActiveImportRunnerSnapshot | null {
+  const { activeRunner } = getStore();
+  if (activeRunner == null || activeRunner.settled) return null;
+  return {
+    jobId: activeRunner.jobId,
+    clientClaimToken: activeRunner.clientClaimToken,
+    totalRows: activeRunner.totalRows,
+    progress: activeRunner.last,
+  };
+}
+
+export function subscribeActiveImportRunner(listener: ActiveImportRunnerListener): () => void {
+  const store = getStore();
+  const { activeRunnerListeners } = store;
+  activeRunnerListeners.add(listener);
+  listener(getActiveImportRunnerSnapshot());
+  return () => {
+    activeRunnerListeners.delete(listener);
+  };
+}
+
 export function isImportChunkRunnerActive(jobId?: string | null): boolean {
+  const { activeRunner } = getStore();
   if (activeRunner == null || activeRunner.settled) return false;
   if (jobId == null || jobId === '') return true;
   return activeRunner.jobId === jobId;
 }
 
 export function peekImportChunkRunner(jobId: string): ImportRunnerProgress | null {
+  const { activeRunner } = getStore();
   if (activeRunner == null || activeRunner.jobId !== jobId) return null;
   return activeRunner.last;
 }
@@ -66,6 +116,7 @@ export function subscribeImportChunkRunner(
   jobId: string,
   listener: ImportRunnerListener
 ): () => void {
+  const { activeRunner } = getStore();
   if (activeRunner == null || activeRunner.jobId !== jobId) {
     return () => undefined;
   }
@@ -77,9 +128,22 @@ export function subscribeImportChunkRunner(
 }
 
 function publish(runner: ActiveImportRunner, progress: ImportRunnerProgress): void {
+  const { activeRunnerListeners } = getStore();
   runner.last = progress;
   for (const listener of runner.listeners) {
-    listener(progress);
+    try {
+      listener(progress);
+    } catch {
+      // Ignore listener failures so global observers still receive updates.
+    }
+  }
+  const snapshot = getActiveImportRunnerSnapshot();
+  for (const listener of activeRunnerListeners) {
+    try {
+      listener(snapshot);
+    } catch {
+      // Ignore listener failures so one consumer cannot block others.
+    }
   }
 }
 
@@ -96,6 +160,8 @@ export function startOrAttachImportChunkRunner(input: {
   readonly attached: boolean;
   readonly promise: Promise<void>;
 } {
+  const store = getStore();
+  const { activeRunner } = store;
   if (activeRunner != null && !activeRunner.settled) {
     if (activeRunner.jobId !== input.jobId) {
       throw new Error('Another spreadsheet import is already running.');
@@ -123,10 +189,10 @@ export function startOrAttachImportChunkRunner(input: {
     error: null,
   };
 
-  activeRunner = runner;
+  store.activeRunner = runner;
   publish(runner, emptyProgress());
 
-  const promise = chunkLoopImpl({
+  const promise = store.chunkLoopImpl({
     jobId: input.jobId,
     clientClaimToken: input.clientClaimToken,
     signal: abort.signal,
@@ -157,8 +223,17 @@ export function startOrAttachImportChunkRunner(input: {
     })
     .finally(() => {
       runner.settled = true;
-      if (activeRunner === runner) {
-        activeRunner = null;
+      const currentStore = getStore();
+      if (currentStore.activeRunner === runner) {
+        currentStore.activeRunner = null;
+      }
+      const snapshot = getActiveImportRunnerSnapshot();
+      for (const listener of currentStore.activeRunnerListeners) {
+        try {
+          listener(snapshot);
+        } catch {
+          // Ignore listener failures during settle broadcast.
+        }
       }
     });
 
@@ -169,6 +244,7 @@ export function startOrAttachImportChunkRunner(input: {
 
 /** Abort the active runner (triggers cancel API inside the chunk loop). */
 export async function cancelImportChunkRunner(jobId: string): Promise<void> {
+  const { activeRunner } = getStore();
   if (activeRunner == null || activeRunner.jobId !== jobId) return;
   const runner = activeRunner;
   if (!runner.abort.signal.aborted) {
@@ -183,13 +259,19 @@ export async function cancelImportChunkRunner(jobId: string): Promise<void> {
 
 /** Test helpers */
 export function __resetImportChunkRunnerForTests(): void {
+  const store = getStore();
+  const { activeRunner, activeRunnerListeners } = store;
   if (activeRunner != null && !activeRunner.abort.signal.aborted) {
     activeRunner.abort.abort();
   }
-  activeRunner = null;
-  chunkLoopImpl = runImportChunkLoop;
+  store.activeRunner = null;
+  store.chunkLoopImpl = runImportChunkLoop;
+  for (const listener of activeRunnerListeners) {
+    listener(null);
+  }
+  activeRunnerListeners.clear();
 }
 
 export function __setImportChunkLoopForTests(impl: ChunkLoopFn): void {
-  chunkLoopImpl = impl;
+  getStore().chunkLoopImpl = impl;
 }

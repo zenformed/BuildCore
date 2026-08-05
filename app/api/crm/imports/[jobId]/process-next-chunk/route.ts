@@ -7,6 +7,7 @@ import { requireCrmApiAuth } from '@/infrastructure/crm/server/crmApiRouteAuth';
 import { mapCrmRouteError } from '@/infrastructure/crm/server/crmApiRouteErrors';
 import { requireBuildCoreProjectManagementAccess } from '@/infrastructure/crm/server/buildCoreProjectManagementAccess';
 import { processImportNextChunk } from '@/infrastructure/crm/server/crmSpreadsheetImportService';
+import { dispatchSpreadsheetImportCompletedNotifications } from '@/infrastructure/crm/server/dispatchSpreadsheetImportCompletedNotifications';
 
 export const dynamic = 'force-dynamic';
 
@@ -60,6 +61,25 @@ export async function POST(
       jobId,
       clientClaimToken
     );
+
+    if (
+      result.done &&
+      result.status === 'completed' &&
+      result.transitionedToTerminal
+    ) {
+      const token = auth.context.authHeader.slice('Bearer '.length).trim();
+      await dispatchSpreadsheetImportCompletedNotifications({
+        supabase: auth.context.supabase,
+        accessToken: token,
+        organizationId: auth.context.organizationId,
+        actorUserId: auth.context.user.id,
+        jobId,
+        status: result.status,
+        counts: result.counts,
+        transitionedToTerminal: result.transitionedToTerminal,
+      });
+    }
+
     return NextResponse.json(result);
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Failed to process import chunk';
