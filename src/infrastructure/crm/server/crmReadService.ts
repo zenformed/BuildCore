@@ -370,6 +370,45 @@ export async function listCrmProjectSummariesForOrg(
 }
 
 /**
+ * Bounded hydration for Projects list v2 pages (page-sized ID set only).
+ * Preserves caller order. Empty input returns [].
+ */
+export async function listCrmProjectSummariesByIdsForOrg(
+  supabase: SupabaseClient,
+  organizationId: string,
+  projectIds: readonly string[]
+): Promise<readonly CrmProjectSummary[]> {
+  if (projectIds.length === 0) return [];
+
+  const industrySchemaMode = await getCrmProjectIndustrySchemaMode(supabase);
+  const projectSelect = buildProjectSummarySelect(industrySchemaMode);
+  const { data, error } = await supabase
+    .from('crm_projects')
+    .select(projectSelect)
+    .eq('organization_id', organizationId)
+    .in('id', [...projectIds])
+    .is('archived_at', null);
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  const projects = (data ?? []) as unknown as DbCrmProjectRow[];
+  const memberById = await loadCrmMemberMap(supabase, collectMemberIds({ projects }), {
+    organizationId,
+  });
+  const byId = new Map(
+    projects.map((row) => [row.id, mapDbProjectSummary(row, memberById)] as const)
+  );
+  const ordered: CrmProjectSummary[] = [];
+  for (const id of projectIds) {
+    const summary = byId.get(id);
+    if (summary != null) ordered.push(summary);
+  }
+  return ordered;
+}
+
+/**
  * Same visibility gate as the dashboard project list (GET /api/crm/projects?includeSubprojects=1
  * after orphan filtering):
  * - `archived_at IS NULL`

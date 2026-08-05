@@ -226,6 +226,7 @@ export {
   type CrmProjectsListV2Filters,
   type CrmProjectsListV2NormalizedRequest,
   type CrmProjectsListV2PageResponse,
+  type CrmProjectsListV2RootListItem,
   type CrmProjectsListV2PageSize,
   type CrmProjectsListV2PageSummariesResponse,
   type CrmProjectsListV2SortMode,

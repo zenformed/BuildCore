@@ -32,6 +32,7 @@ export {
   type CrmProjectsListV2PageSize,
   type CrmProjectsListV2PageSummariesResponse,
   type CrmProjectsListV2PageSummary,
+  type CrmProjectsListV2RootListItem,
   type CrmProjectsListV2SortMode,
   type CrmProjectsListV2View,
 } from './types';

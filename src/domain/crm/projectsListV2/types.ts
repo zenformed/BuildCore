@@ -63,6 +63,14 @@ export type CrmProjectsListV2PageResponse<T> = {
   readonly meta: CrmProjectsListV2PageMeta;
 };
 
+/**
+ * Root Projects list v2 row: existing dashboard summary fields plus childCount
+ * for the Subproject pill. Financial/progress rollups are Phase 1B (page-scoped).
+ */
+export type CrmProjectsListV2RootListItem = import('../project').CrmProjectSummary & {
+  readonly childCount: number;
+};
+
 export type CrmProjectsListV2CountResponse = {
   readonly totalCount: number;
   readonly query: CrmProjectsListV2PageQueryMeta & {

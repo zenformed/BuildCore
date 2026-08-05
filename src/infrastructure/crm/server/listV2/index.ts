@@ -19,6 +19,7 @@ export {
 } from './projectsListV2Observability';
 export {
   countCrmProjectsListV2,
+  CrmProjectsListV2InvalidRequestError,
   CrmProjectsListV2NotWiredError,
   listCrmChildProjectsPageV2,
   listCrmRootProjectsPageV2,
@@ -27,3 +28,13 @@ export {
   type CrmProjectsListV2ListContext,
   type CrmProjectsListV2SummariesContext,
 } from './projectsListV2Service';
+export {
+  assertProjectsListV2EnabledForOrganization,
+  projectsListV2DisabledResponse,
+} from './projectsListV2FeatureGate';
+export { parseCrmProjectsListV2Query } from './projectsListV2QueryParams';
+export { buildCrmProjectsListV2SearchParams } from './projectsListV2Search';
+export {
+  operationalCursorValuesFromRow,
+  parseOperationalCursorValues,
+} from './projectsListV2Keyset';
