@@ -1,8 +1,9 @@
 import type { CrmProjectsListV2NormalizedRequest } from '@/domain/crm/projectsListV2';
 
 /**
- * Stable TanStack Query keys for future Projects/Subprojects list v2.
+ * Stable TanStack Query keys for Projects list v2.
  * Only serializable normalized fields — never Set/Map/functions.
+ * Shape: [scope, organizationId, kind, ...] so org prefix invalidation works.
  */
 
 export const CRM_PROJECTS_LIST_V2_QUERY_SCOPE = 'crmProjectsListV2' as const;
@@ -14,8 +15,8 @@ export function crmProjectsListV2PageQueryKey(input: {
 }): readonly unknown[] {
   return [
     CRM_PROJECTS_LIST_V2_QUERY_SCOPE,
-    'page',
     input.organizationId,
+    'page',
     input.request.view,
     input.request.parentProjectId,
     input.request.sort,
@@ -31,8 +32,8 @@ export function crmProjectsListV2CountQueryKey(input: {
 }): readonly unknown[] {
   return [
     CRM_PROJECTS_LIST_V2_QUERY_SCOPE,
-    'count',
     input.organizationId,
+    'count',
     input.request.view,
     input.request.parentProjectId,
     input.request.sort,
@@ -46,7 +47,12 @@ export function crmProjectsListV2SummariesQueryKey(input: {
   readonly projectIds: readonly string[];
 }): readonly unknown[] {
   const sortedIds = [...input.projectIds].sort((a, b) => a.localeCompare(b));
-  return [CRM_PROJECTS_LIST_V2_QUERY_SCOPE, 'summaries', input.organizationId, sortedIds] as const;
+  return [
+    CRM_PROJECTS_LIST_V2_QUERY_SCOPE,
+    input.organizationId,
+    'summaries',
+    sortedIds,
+  ] as const;
 }
 
 /** Invalidate all v2 list queries for an organization after mutations. */

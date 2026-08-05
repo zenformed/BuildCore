@@ -116,9 +116,10 @@ function ProjectDetailShellBody({
   }, [isParentOverview, onRefresh, refetchChildSummaries, refetchRollupIndexes]);
 
   useEffect(() => {
+    // Always load rollups on Project detail when the shell skips layout eager-load (v2 flag).
+    void refetchRollupIndexes();
     if (!isParentOverview) return;
     void refetchChildSummaries();
-    void refetchRollupIndexes();
   }, [isParentOverview, parentRouteSlug, refetchChildSummaries, refetchRollupIndexes]);
   const { catalogForProject } = useBuildCorePipelineStages();
   const pipelineStageCatalog = catalogForProject({

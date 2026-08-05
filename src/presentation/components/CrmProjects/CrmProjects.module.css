@@ -183,6 +183,110 @@
   margin-left: auto;
 }
 
+.projectsListV2Pagination {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  flex-wrap: wrap;
+  gap: 0.5rem 0.75rem;
+  flex-shrink: 0;
+  /* Match table chrome inset so range/controls line up with the grid. */
+  padding-inline-start: var(--theme-workflow-unified-inset, 0.3125rem);
+  color: var(--color-text-muted, #64748b);
+  font-size: 0.8125rem;
+}
+
+.projectsListV2Pagination_standalone {
+  width: 100%;
+  padding: 0.5rem 1rem 0.25rem;
+}
+
+.projectsListV2Range {
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text, #0f172a);
+}
+
+.projectsListV2PageSize {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+}
+
+.projectsListV2PageSizeLabel {
+  color: var(--color-text-muted, #64748b);
+}
+
+.projectsListV2PageSize select {
+  border: 1px solid var(--color-border, #e2e8f0);
+  border-radius: 6px;
+  background: var(--color-surface, #fff);
+  color: inherit;
+  padding: 0.2rem 0.4rem;
+  font: inherit;
+}
+
+.projectsListV2Nav {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.125rem;
+}
+
+.projectsListV2NavButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  color: inherit;
+  padding: 0;
+  cursor: pointer;
+}
+
+.projectsListV2NavButton:hover:not(:disabled) {
+  background: var(--color-surface-muted, #f1f5f9);
+}
+
+.projectsListV2NavButton:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.projectsListV2Banner {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin: 0.5rem 1rem 0;
+  padding: 0.55rem 0.75rem;
+  border: 1px solid var(--color-border, #e2e8f0);
+  border-radius: 8px;
+  background: var(--color-surface-muted, #f8fafc);
+  font-size: 0.875rem;
+}
+
+.projectsListV2BannerButton {
+  border: none;
+  background: transparent;
+  color: var(--color-accent, #2563eb);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+}
+
+.projectsListV2BannerDismiss {
+  margin-left: auto;
+  border: none;
+  background: transparent;
+  color: var(--color-text-muted, #64748b);
+  font-size: 1.1rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0 0.25rem;
+}
+
 .projectsPanelHeader_mobile {
   flex-direction: column;
   align-items: stretch;

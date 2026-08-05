@@ -2,8 +2,9 @@
 
 import { useMemo, type ReactElement } from 'react';
 import type { CrmProjectSummary } from '@/domain/crm';
-import type { CrmProjectPaymentTasksIndex } from '@/domain/crm/projectPaymentValue';
+import type { CrmProjectPaymentTasksIndex, ProjectPaymentFinancials } from '@/domain/crm/projectPaymentValue';
 import type { CrmProjectWorkflowProgressInputIndex } from '@/domain/crm/projectWorkflowProgressInput';
+import type { CrmProjectsListV2PageSummary } from '@/domain/crm/projectsListV2';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
 import { buildCrmProjectsDashboardRowModels } from '@/presentation/features/crmProjects/buildCrmProjectsDashboardRowModels';
 import { useDashboardSubprojectExpansion } from '@/presentation/features/crmProjects/useDashboardSubprojectExpansion';
@@ -20,6 +21,8 @@ export type CrmProjectsMobileListProps = {
   paymentTasksIndex?: CrmProjectPaymentTasksIndex;
   workflowProgressInputIndex?: CrmProjectWorkflowProgressInputIndex;
   isWorkflowProgressLoading?: boolean;
+  pageSummariesByProjectId?: ReadonlyMap<string, CrmProjectsListV2PageSummary>;
+  childCountByParentId?: ReadonlyMap<string, number>;
   enableSubprojectExpansion?: boolean;
   autoExpandParentsWithSubprojects?: boolean;
   expandedParentIds?: ReadonlySet<string>;
@@ -51,6 +54,8 @@ export function CrmProjectsMobileList({
   paymentTasksIndex,
   workflowProgressInputIndex,
   isWorkflowProgressLoading = false,
+  pageSummariesByProjectId,
+  childCountByParentId: childCountByParentIdProp,
   enableSubprojectExpansion = false,
   autoExpandParentsWithSubprojects = false,
   expandedParentIds: expandedParentIdsProp,
@@ -90,6 +95,25 @@ export function CrmProjectsMobileList({
 
   const rowModels = useMemo(() => {
     const resolvedPaymentTasksIndex = paymentTasksIndex ?? new Map<string, never>();
+    const financialsByProjectId =
+      pageSummariesByProjectId == null
+        ? undefined
+        : new Map<string, ProjectPaymentFinancials>(
+            [...pageSummariesByProjectId.entries()].map(([id, summary]) => [
+              id,
+              summary.payment,
+            ])
+          );
+    const childCountByParentId = (() => {
+      if (childCountByParentIdProp != null) return childCountByParentIdProp;
+      if (pageSummariesByProjectId == null) return undefined;
+      return new Map(
+        [...pageSummariesByProjectId.entries()].map(([id, summary]) => [
+          id,
+          summary.childCount ?? 0,
+        ])
+      );
+    })();
     return buildCrmProjectsDashboardRowModels({
       displayRoots,
       enableSubprojectExpansion,
@@ -98,6 +122,8 @@ export function CrmProjectsMobileList({
       visibleChildrenByParentId,
       parentById,
       paymentTasksIndex: resolvedPaymentTasksIndex,
+      financialsByProjectId,
+      childCountByParentId,
       projectValueLabel: valueLabels.projectValueLabel,
       subValueLabel: valueLabels.subValueLabel,
       onRowClick,
@@ -106,11 +132,13 @@ export function CrmProjectsMobileList({
     });
   }, [
     allChildrenByParentId,
+    childCountByParentIdProp,
     displayRoots,
     enableSubprojectExpansion,
     expandedParentIds,
     onRowClick,
     onSubprojectRowClick,
+    pageSummariesByProjectId,
     parentById,
     paymentTasksIndex,
     toggleExpanded,
@@ -150,8 +178,25 @@ export function CrmProjectsMobileList({
                 onToggleExpand={row.onToggleExpand}
                 parentProjectName={row.parentProjectName}
                 showContactInfo
-                workflowProgressInputIndex={workflowProgressInputIndex}
-                isWorkflowProgressLoading={isWorkflowProgressLoading}
+                workflowProgressInputIndex={
+                  pageSummariesByProjectId != null ? undefined : workflowProgressInputIndex
+                }
+                isWorkflowProgressLoading={
+                  pageSummariesByProjectId != null
+                    ? isPaymentFinancialsLoading
+                    : isWorkflowProgressLoading
+                }
+                presentationOverrides={
+                  pageSummariesByProjectId == null
+                    ? null
+                    : {
+                        progress:
+                          pageSummariesByProjectId.get(row.project.id)?.progress ?? null,
+                        derivedStageSlug:
+                          pageSummariesByProjectId.get(row.project.id)?.derivedStageSlug ??
+                          null,
+                      }
+                }
               />
             </li>
           ))}

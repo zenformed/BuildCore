@@ -97,10 +97,17 @@ async function loadSharedFinancialRollupIndexes(
 
 export type CrmPaymentTasksIndexProviderProps = {
   readonly children: ReactNode;
+  /**
+   * When true (default), API source loads org-wide rollup Maps after first paint.
+   * Set false for Projects list v2 dashboard so the shell does not hit legacy rollup
+   * endpoints; v1 pipeline and Project detail still call `refetch` when they need data.
+   */
+  readonly eagerLoad?: boolean;
 };
 
 export function CrmPaymentTasksIndexProvider({
   children,
+  eagerLoad = true,
 }: CrmPaymentTasksIndexProviderProps): ReactElement {
   const isApiSource = getCrmDataSource() === 'api';
   const [rollupIndexes, setRollupIndexes] = useState<FinancialRollupIndexes | null>(() =>
@@ -113,9 +120,11 @@ export function CrmPaymentTasksIndexProvider({
           workflowProgressInputIndex: loadCrmProjectWorkflowProgressInputIndexSync(crmRepositories),
         }
   );
+  const [fetchStarted, setFetchStarted] = useState(() => eagerLoad && isApiSource);
   const mountedRef = useRef(true);
 
   const refetch = useCallback(async (): Promise<void> => {
+    setFetchStarted(true);
     const indexes = await loadSharedFinancialRollupIndexes(isApiSource);
     if (mountedRef.current) {
       setRollupIndexes(indexes);
@@ -124,7 +133,11 @@ export function CrmPaymentTasksIndexProvider({
 
   useEffect(() => {
     mountedRef.current = true;
-    if (!isApiSource) return;
+    if (!isApiSource || !eagerLoad) {
+      return () => {
+        mountedRef.current = false;
+      };
+    }
     const cancelDefer = deferNonCriticalWork(() => {
       void refetch();
     });
@@ -132,7 +145,7 @@ export function CrmPaymentTasksIndexProvider({
       mountedRef.current = false;
       cancelDefer();
     };
-  }, [isApiSource, refetch]);
+  }, [eagerLoad, isApiSource, refetch]);
 
   const contextValue = useMemo(
     (): CrmPaymentTasksIndexContextValue => ({
@@ -142,10 +155,10 @@ export function CrmPaymentTasksIndexProvider({
         rollupIndexes?.workflowTaskStatusIndex ?? EMPTY_WORKFLOW_TASK_STATUS_INDEX,
       workflowProgressInputIndex:
         rollupIndexes?.workflowProgressInputIndex ?? EMPTY_WORKFLOW_PROGRESS_INPUT_INDEX,
-      isLoading: rollupIndexes === null,
+      isLoading: fetchStarted && rollupIndexes === null,
       refetch,
     }),
-    [refetch, rollupIndexes]
+    [fetchStarted, refetch, rollupIndexes]
   );
 
   return (

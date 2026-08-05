@@ -8,8 +8,8 @@ export type BuildCoreQueryProviderProps = {
 };
 
 /**
- * App-shell TanStack Query foundation (Phase 0).
- * No existing lists are migrated onto Query yet.
+ * App-shell TanStack Query foundation.
+ * Phase 1B: Projects list v2 dashboard uses this provider when the client flag is on.
  */
 export function BuildCoreQueryProvider({ children }: BuildCoreQueryProviderProps): ReactElement {
   const [client] = useState(

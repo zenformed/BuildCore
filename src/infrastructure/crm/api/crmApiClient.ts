@@ -20,7 +20,11 @@ async function getAccessToken(): Promise<string> {
   return token;
 }
 
-export async function crmApiPostJson<T>(path: string, payload: unknown): Promise<T> {
+export async function crmApiPostJson<T>(
+  path: string,
+  payload: unknown,
+  init?: { readonly signal?: AbortSignal }
+): Promise<T> {
   const token = await getAccessToken();
   const response = await fetch(path, {
     method: 'POST',
@@ -30,6 +34,7 @@ export async function crmApiPostJson<T>(path: string, payload: unknown): Promise
     },
     body: JSON.stringify(payload),
     cache: 'no-store',
+    signal: init?.signal,
   });
 
   return parseCrmApiResponse<T>(response);
@@ -88,12 +93,16 @@ export async function crmApiPostFormData<T>(path: string, formData: FormData): P
   return parseCrmApiResponse<T>(response);
 }
 
-export async function crmApiGetJson<T>(path: string): Promise<T> {
+export async function crmApiGetJson<T>(
+  path: string,
+  init?: { readonly signal?: AbortSignal }
+): Promise<T> {
   const token = await getAccessToken();
   const response = await fetch(path, {
     method: 'GET',
     headers: { Authorization: `Bearer ${token}` },
     cache: 'no-store',
+    signal: init?.signal,
   });
   return parseCrmApiResponse<T>(response);
 }

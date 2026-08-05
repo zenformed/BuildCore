@@ -60,6 +60,10 @@ export type CrmProjectMobileCardProps = {
   readonly onToggleExpand?: () => void;
   readonly workflowProgressInputIndex?: CrmProjectWorkflowProgressInputIndex;
   readonly isWorkflowProgressLoading?: boolean;
+  readonly presentationOverrides?: {
+    readonly progress?: import('@/domain/buildcore/projectPipelineProgress').ProjectProgressDisplay | null;
+    readonly derivedStageSlug?: import('@/domain/crm').PipelineStageSlug | null;
+  } | null;
   readonly parentProjectName?: string;
   readonly showContactInfo?: boolean;
 };
@@ -87,6 +91,7 @@ export function CrmProjectMobileCard({
   onToggleExpand,
   workflowProgressInputIndex,
   isWorkflowProgressLoading = false,
+  presentationOverrides = null,
   parentProjectName,
   showContactInfo = false,
 }: CrmProjectMobileCardProps): ReactElement {
@@ -97,7 +102,8 @@ export function CrmProjectMobileCard({
   const { catalog, industrySubtitle, progress, derivedStageSlug } = useCrmProjectRowPresentation(
     project,
     workflowProgressInputIndex,
-    isWorkflowProgressLoading
+    isWorkflowProgressLoading,
+    presentationOverrides
   );
   const displayFinancials = financials ?? { valueCents: 0, collectedCents: 0, balanceCents: 0 };
   const financialDisplay = (cents: number): string =>

@@ -21,10 +21,16 @@ export type CrmProjectRowPresentation = {
   readonly derivedStageSlug: PipelineStageSlug | null;
 };
 
+export type CrmProjectRowPresentationOverrides = {
+  readonly progress?: ProjectProgressDisplay | null;
+  readonly derivedStageSlug?: PipelineStageSlug | null;
+};
+
 export function useCrmProjectRowPresentation(
   project: CrmProjectSummary,
   workflowProgressInputIndex: CrmProjectWorkflowProgressInputIndex | undefined,
-  isWorkflowProgressLoading: boolean
+  isWorkflowProgressLoading: boolean,
+  overrides?: CrmProjectRowPresentationOverrides | null
 ): CrmProjectRowPresentation {
   const { getCatalog } = useBuildCorePipelineStages();
   const catalog = getCatalog(
@@ -33,6 +39,9 @@ export function useCrmProjectRowPresentation(
   const industrySubtitle = getProjectIndustrySubtitle(project.industry, project.customIndustry);
 
   const progress = useMemo(() => {
+    if (overrides != null && 'progress' in overrides) {
+      return overrides.progress ?? null;
+    }
     if (workflowProgressInputIndex == null || isWorkflowProgressLoading) {
       return null;
     }
@@ -41,9 +50,18 @@ export function useCrmProjectRowPresentation(
       workflowProgressInputIndex,
       stages: catalog,
     });
-  }, [catalog, isWorkflowProgressLoading, project, workflowProgressInputIndex]);
+  }, [
+    catalog,
+    isWorkflowProgressLoading,
+    overrides,
+    project,
+    workflowProgressInputIndex,
+  ]);
 
   const derivedStageSlug = useMemo(() => {
+    if (overrides != null && 'derivedStageSlug' in overrides) {
+      return overrides.derivedStageSlug ?? null;
+    }
     if (workflowProgressInputIndex == null || isWorkflowProgressLoading) {
       return null;
     }
@@ -52,7 +70,13 @@ export function useCrmProjectRowPresentation(
       workflowProgressInputIndex,
       stages: catalog,
     });
-  }, [catalog, isWorkflowProgressLoading, project, workflowProgressInputIndex]);
+  }, [
+    catalog,
+    isWorkflowProgressLoading,
+    overrides,
+    project,
+    workflowProgressInputIndex,
+  ]);
 
   return { catalog, industrySubtitle, progress, derivedStageSlug };
 }

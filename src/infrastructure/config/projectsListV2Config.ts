@@ -44,7 +44,17 @@ export function isProjectsListV2EnabledForOrganization(
   return getProjectsListV2OrgAllowlist(env).has(orgId);
 }
 
-/** Client-visible hint for Phase 1 UI gating. Default false. Does not authorize server routes. */
-export function isProjectsListV2ClientFlagEnabled(env: EnvMap = process.env): boolean {
-  return env.NEXT_PUBLIC_BUILDCORE_PROJECTS_LIST_V2 === 'true';
+/**
+ * Client UI gate for Projects list v2. Default false. Does not authorize server routes.
+ *
+ * When `env` is omitted, reads `process.env.NEXT_PUBLIC_BUILDCORE_PROJECTS_LIST_V2` via a
+ * static member access so Next.js can inline the value into the client bundle.
+ * Do not read it as `env.NEXT_PUBLIC_…` from a `process.env` object default — that is not
+ * replaced at compile time and always evaluates to undefined in the browser.
+ */
+export function isProjectsListV2ClientFlagEnabled(env?: EnvMap): boolean {
+  if (env != null) {
+    return env.NEXT_PUBLIC_BUILDCORE_PROJECTS_LIST_V2 === 'true';
+  }
+  return process.env.NEXT_PUBLIC_BUILDCORE_PROJECTS_LIST_V2 === 'true';
 }

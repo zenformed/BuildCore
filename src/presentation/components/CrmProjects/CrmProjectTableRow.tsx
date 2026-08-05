@@ -89,6 +89,11 @@ export type CrmProjectTableRowProps = {
   onToggleExpand?: () => void;
   workflowProgressInputIndex?: CrmProjectWorkflowProgressInputIndex;
   isWorkflowProgressLoading?: boolean;
+  /** Phase 1B page-scoped progress/stage overrides (skip org-wide progress Maps). */
+  presentationOverrides?: {
+    readonly progress?: import('@/domain/buildcore/projectPipelineProgress').ProjectProgressDisplay | null;
+    readonly derivedStageSlug?: import('@/domain/crm').PipelineStageSlug | null;
+  } | null;
   bulkSelection?: BulkSelectionBindings;
   onContactCopied?: (message: string) => void;
   showParentProjectColumn?: boolean;
@@ -120,6 +125,7 @@ export function CrmProjectTableRow({
   onToggleExpand,
   workflowProgressInputIndex,
   isWorkflowProgressLoading = false,
+  presentationOverrides = null,
   bulkSelection,
   onContactCopied,
   showParentProjectColumn = false,
@@ -132,7 +138,8 @@ export function CrmProjectTableRow({
   const { catalog, industrySubtitle, progress, derivedStageSlug } = useCrmProjectRowPresentation(
     project,
     workflowProgressInputIndex,
-    isWorkflowProgressLoading
+    isWorkflowProgressLoading,
+    presentationOverrides
   );
   const isChild = variant === 'child' && !showParentProjectColumn;
   const isInactive = isCrmProjectInactive(project);

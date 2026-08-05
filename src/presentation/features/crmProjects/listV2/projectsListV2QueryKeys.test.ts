@@ -34,5 +34,7 @@ describe('projectsListV2QueryKeys', () => {
       projectIds: ['b', 'a'],
     });
     assert.deepEqual(summaries[3], ['a', 'b']);
+    assert.equal(pageKey[1], 'org');
+    assert.equal(countKey[1], 'org');
   });
 });

@@ -1,7 +1,13 @@
 'use client';
 
-import { Suspense, useCallback, useEffect, useMemo, useState, type ReactElement } from 'react';
-import { LuFileSpreadsheet, LuSearch } from 'react-icons/lu';
+/**
+ * Dashboard Projects list v2 path (Phase 1B).
+ * Used only when NEXT_PUBLIC_BUILDCORE_PROJECTS_LIST_V2=true.
+ * Does not fetch org-wide rollup Maps.
+ */
+
+import { useCallback, useEffect, useMemo, useState, type ReactElement } from 'react';
+import { LuChevronLeft, LuChevronRight, LuFileSpreadsheet, LuSearch } from 'react-icons/lu';
 import { createPortal } from 'react-dom';
 import { resolvePipelineStageScopeForProject } from '@/domain/buildcore/orgPipelineStages';
 import { useRouter } from 'next/navigation';
@@ -10,26 +16,19 @@ import {
   isCrmProjectInactive,
   type CrmProjectSummary,
 } from '@/domain/crm';
-import {
-  listWorkflowStageCompletionStatuses,
-} from '@/domain/buildcore/projectPipelineProgress';
+import { listWorkflowStageCompletionStatuses } from '@/domain/buildcore/projectPipelineProgress';
 import { isBuildCoreMemberRole } from '@/domain/buildcore/memberRole';
+import {
+  CRM_PROJECTS_LIST_V2_PAGE_SIZES,
+  type CrmProjectsListV2PageSize,
+  type CrmProjectsListV2RootListItem,
+} from '@/domain/crm/projectsListV2';
 import { getCrmProjectDetailBySlug, setCrmProjectCompletion } from '@/application/use-cases/crm';
 import { getCrmDataSource } from '@/infrastructure/config/crmDataSource';
-import { isProjectsListV2ClientFlagEnabled } from '@/infrastructure/config/projectsListV2Config';
 import { crmRepositories } from '@/shared/di/container';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
 import { useBuildCoreNavigation } from '@/presentation/providers/BuildCoreNavigationProvider';
-import {
-  EMPTY_CRM_PROJECTS_LIST_FILTERS,
-  EMPTY_RADIUS_FILTER,
-  useCrmProjectsPipeline,
-} from '@/presentation/features/crmProjects/useCrmProjectsPipeline';
-import type { RadiusFilterState } from '@/presentation/features/filters/radiusFilterModel';
-import {
-  resolveCrmProjectsTableEmptyMessage,
-  type CrmProjectsListFilters,
-} from '@/presentation/features/crmProjects/crmProjectsPipelineViewModel';
+import { resolveCrmProjectsTableEmptyMessage } from '@/presentation/features/crmProjects/crmProjectsPipelineViewModel';
 import { useCrmProjectDeleteConfirmation } from '@/presentation/features/crmProjects/useCrmProjectDeleteConfirmation';
 import { consumeCrmProjectDeleteSuccessToast } from '@/presentation/features/crmProjects/crmProjectDeleteFeedback';
 import { useSaaSProfile } from '@/presentation/hooks/useSaaSProfile';
@@ -57,48 +56,24 @@ import {
   useAssignmentIdentityState,
 } from '@/presentation/providers/AssignmentIdentityProvider';
 import { useBuildCoreDashboardContext } from '@/presentation/providers/BuildCoreDashboardProvider';
+import { useCrmProjectsListV2Dashboard } from '@/presentation/features/crmProjects/listV2/useCrmProjectsListV2Dashboard';
 import { CrmProjectsFilterMenu } from './CrmProjectsFilterMenu';
 import { CrmProjectsTable } from './CrmProjectsTable';
 import { CrmProjectsMobileList } from './CrmProjectsMobileList';
 import { MarkInactiveDialog } from './MarkInactiveDialog';
-import { CrmProjectsPipelineV2 } from './CrmProjectsPipelineV2';
 import styles from './CrmProjects.module.css';
 
-export type CrmProjectsPipelineProps = {
+export type CrmProjectsPipelineV2Props = {
   onProjectRowClick: (project: CrmProjectSummary) => void;
   onProjectCreated?: () => void | Promise<void>;
 };
 
 type PipelineToast = { kind: 'success' | 'error'; message: string };
 
-export function CrmProjectsPipeline({
+export function CrmProjectsPipelineV2({
   onProjectRowClick,
   onProjectCreated,
-}: CrmProjectsPipelineProps): ReactElement {
-  if (isProjectsListV2ClientFlagEnabled()) {
-    return (
-      <Suspense fallback={<section className={styles.projectsPanel} aria-busy="true" />}>
-        <CrmProjectsPipelineV2
-          onProjectRowClick={onProjectRowClick}
-          onProjectCreated={onProjectCreated}
-        />
-      </Suspense>
-    );
-  }
-
-  return (
-    <CrmProjectsPipelineV1
-      onProjectRowClick={onProjectRowClick}
-      onProjectCreated={onProjectCreated}
-    />
-  );
-}
-
-/** Unchanged v1 dashboard path (flag off). */
-function CrmProjectsPipelineV1({
-  onProjectRowClick,
-  onProjectCreated,
-}: CrmProjectsPipelineProps): ReactElement {
+}: CrmProjectsPipelineV2Props): ReactElement {
   const router = useRouter();
   const nav = useBuildCoreNavigation();
   const panelCopy = content.crm.panel;
@@ -107,6 +82,7 @@ function CrmProjectsPipelineV1({
   const markActiveCopy = content.projectDetail.subprojects.markActive;
   const bulkSelectionCopy = content.bulkSelection;
   const { organizationMembershipContext } = useSaaSProfile();
+  const organizationId = organizationMembershipContext?.organizationId ?? '';
   const isMemberRole = isBuildCoreMemberRole(organizationMembershipContext?.role);
   const isMobileLayout = useDashboardMobileLayout();
   const isApiSource = getCrmDataSource() === 'api';
@@ -114,31 +90,24 @@ function CrmProjectsPipelineV1({
   const assignmentCatalog = useAssignmentIdentityCatalog();
   const { isLoading: identitiesLoading } = useAssignmentIdentityState();
   const bulkSelection = useBulkSelection<string>();
-  const [searchQuery, setSearchQuery] = useState('');
-  const [filters, setFilters] = useState<CrmProjectsListFilters>(EMPTY_CRM_PROJECTS_LIST_FILTERS);
-  const [radiusFilter, setRadiusFilter] = useState<RadiusFilterState>(EMPTY_RADIUS_FILTER);
   const [createOpen, setCreateOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
   const [importMobileNoticeOpen, setImportMobileNoticeOpen] = useState(false);
   const [pendingBulkComplete, setPendingBulkComplete] = useState(false);
   const [bulkActionBusy, setBulkActionBusy] = useState(false);
-  const {
-    rootRows,
-    allChildrenByParentId,
-    paymentTasksIndex,
-    workflowProgressInputIndex,
-    totalCount,
-    isLoading,
-    isRadiusGeocoding,
-    radiusGeocodingError,
-    isPaymentFinancialsLoading,
-    isWorkflowProgressLoading,
-    refetch,
-    removeProject,
-    patchProjectSummary,
-  } = useCrmProjectsPipeline(searchQuery, filters, radiusFilter);
   const [toast, setToast] = useState<PipelineToast | null>(null);
-  const listIsLoading = isLoading || isRadiusGeocoding;
+
+  const list = useCrmProjectsListV2Dashboard({ organizationId });
+  const rootRows = list.items;
+  const listIsLoading = list.isLoading;
+  const childCountByParentId = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const item of list.items) {
+      const fromSummary = list.pageSummariesById.get(item.id)?.childCount;
+      map.set(item.id, fromSummary ?? item.childCount);
+    }
+    return map;
+  }, [list.items, list.pageSummariesById]);
 
   const {
     pendingDeleteProject,
@@ -147,7 +116,7 @@ function CrmProjectsPipelineV1({
     canDelete,
     handleConfirmDelete,
   } = useCrmProjectDeleteConfirmation({
-    onProjectDeleted: removeProject,
+    onProjectDeleted: list.removeProjectLocally,
     onSuccess: (message) => setToast({ kind: 'success', message }),
     onError: (message) => setToast({ kind: 'error', message }),
   });
@@ -157,6 +126,18 @@ function CrmProjectsPipelineV1({
     (project: CrmProjectSummary) =>
       getCatalog(resolvePipelineStageScopeForProject({ parentProjectId: project.parentProjectId })),
     [getCatalog]
+  );
+
+  const patchAsRootItem = useCallback(
+    (summary: CrmProjectSummary) => {
+      const existing = list.items.find((item) => item.id === summary.id);
+      const next: CrmProjectsListV2RootListItem = {
+        ...summary,
+        childCount: existing?.childCount ?? list.pageSummariesById.get(summary.id)?.childCount ?? 0,
+      };
+      list.patchProjectSummaryLocally(next);
+    },
+    [list]
   );
 
   const {
@@ -169,7 +150,7 @@ function CrmProjectsPipelineV1({
     requestCompletionChange,
     confirmCompletionChange,
   } = useCrmProjectTableRowActions({
-    onProjectUpdated: patchProjectSummary,
+    onProjectUpdated: patchAsRootItem,
     onSuccess: (message) => setToast({ kind: 'success', message }),
     onError: (message) => setToast({ kind: 'error', message }),
     resolveStagesForProject,
@@ -185,7 +166,7 @@ function CrmProjectsPipelineV1({
     markProjectActive,
   } = useCrmProjectInactiveActions({
     onProjectsUpdated: () => {
-      void refetch();
+      void list.refetch();
     },
     onMarkInactiveSuccess: (updatedCount) => {
       setToast({
@@ -208,28 +189,10 @@ function CrmProjectsPipelineV1({
     onError: (message) => setToast({ kind: 'error', message }),
   });
 
-  const handleRequestMarkInactive = useCallback(
-    (project: CrmProjectSummary) => {
-      openMarkInactive({ mode: 'single', project });
-    },
-    [openMarkInactive]
-  );
-
-  const handleRequestMarkActive = useCallback(
-    (project: CrmProjectSummary) => {
-      void markProjectActive(project);
-    },
-    [markProjectActive]
-  );
-
-  const rowActionsBusyProjectId = busyProjectId ?? markingActiveProjectId;
-
-  const visibleProjects = useMemo(() => [...rootRows], [rootRows]);
-
-  const visibleIds = useMemo(() => visibleProjects.map((project) => project.id), [visibleProjects]);
+  const visibleIds = useMemo(() => rootRows.map((project) => project.id), [rootRows]);
   const selectedProjects = useMemo(
-    () => visibleProjects.filter((project) => bulkSelection.selectedIds.has(project.id)),
-    [bulkSelection.selectedIds, visibleProjects]
+    () => rootRows.filter((project) => bulkSelection.selectedIds.has(project.id)),
+    [bulkSelection.selectedIds, rootRows]
   );
   const selectedActiveProjects = useMemo(
     () => selectedProjects.filter((project) => project.subprojectStatus !== 'inactive'),
@@ -255,6 +218,7 @@ function CrmProjectsPipelineV1({
     [assignmentCatalog, dash.user?.id, isApiSource]
   );
 
+  // Select All = visible page only; preserve selections on other pages.
   const bulkSelectionBindings = useMemo<BulkSelectionBindings | undefined>(() => {
     if (!canUseBulkActions) return undefined;
     return {
@@ -265,9 +229,9 @@ function CrmProjectsPipelineV1({
       someVisibleSelected: bulkSelection.someVisibleSelected(visibleIds),
       onToggleAllVisible: () => {
         if (bulkSelection.allVisibleSelected(visibleIds)) {
-          bulkSelection.clearSelection();
+          bulkSelection.deselectMany(visibleIds);
         } else {
-          bulkSelection.selectAllVisible(visibleIds);
+          bulkSelection.selectMany(visibleIds);
         }
       },
       selectItemAriaLabel: bulkSelectionCopy.selectItemAriaLabel,
@@ -293,11 +257,6 @@ function CrmProjectsPipelineV1({
       setBulkActionBusy(false);
     }
   }, [bulkActionBusy, bulkSelection, selectedPriorityEligible, togglePriority]);
-
-  const handleBulkMarkComplete = useCallback(() => {
-    if (selectedCompleteEligible.length === 0) return;
-    setPendingBulkComplete(true);
-  }, [selectedCompleteEligible.length]);
 
   const confirmBulkMarkComplete = useCallback(async () => {
     if (selectedCompleteEligible.length === 0) {
@@ -325,18 +284,16 @@ function CrmProjectsPipelineV1({
           }
           const updated = await setCrmProjectCompletion(crmRepositories, project.slug, true);
           if (updated == null) continue;
-          patchProjectSummary(updated.summary);
+          patchAsRootItem(updated.summary);
           updatedCount += 1;
         } catch {
-          // Continue remaining selections; toast failure summary below.
+          // Continue remaining selections.
         }
       }
       if (updatedCount > 0) {
-        setToast({
-          kind: 'success',
-          message: detailCopy.markCompleteSuccess,
-        });
+        setToast({ kind: 'success', message: detailCopy.markCompleteSuccess });
         bulkSelection.clearSelection();
+        void list.refetch();
       } else if (!blocked) {
         setToast({ kind: 'error', message: detailCopy.markCompleteFailed });
       }
@@ -347,7 +304,8 @@ function CrmProjectsPipelineV1({
     bulkSelection,
     detailCopy.markCompleteFailed,
     detailCopy.markCompleteSuccess,
-    patchProjectSummary,
+    list,
+    patchAsRootItem,
     resolveStagesForProject,
     selectedCompleteEligible,
     setCompletionBlockedStageStatuses,
@@ -364,10 +322,10 @@ function CrmProjectsPipelineV1({
           try {
             const updated = await assignCrmProjectMember(selected, assignedMemberId);
             if (updated == null) continue;
-            patchProjectSummary(updated);
+            patchAsRootItem(updated);
             updatedCount += 1;
           } catch {
-            // Continue remaining selections; toast failure summary below.
+            // Continue remaining selections.
           }
         }
         if (updatedCount > 0) {
@@ -383,66 +341,26 @@ function CrmProjectsPipelineV1({
         setBulkActionBusy(false);
       }
     },
-    [bulkActionBusy, bulkSelection, patchProjectSummary, selectedProjects]
-  );
-
-  const handleOpenBulkMarkInactive = useCallback(() => {
-    if (selectedActiveProjects.length === 0) return;
-    openMarkInactive({ mode: 'bulk', projects: selectedActiveProjects });
-  }, [openMarkInactive, selectedActiveProjects]);
-
-  const selectionBulkActions = (
-    <SubprojectsTableBulkActions
-      busy={bulkActionBusy || busyProjectId != null || markingInactive || identitiesLoading}
-      canMakePriority={selectedPriorityEligible.length > 0}
-      canMarkInactive={selectedActiveProjects.length > 0}
-      canMarkComplete={selectedCompleteEligible.length > 0}
-      canAssign={selectedProjects.length > 0 && !identitiesLoading && !isMemberRole}
-      assigneeOptions={assigneeOptions}
-      onMakePriority={() => {
-        void handleBulkMakePriority();
-      }}
-      onMarkInactive={handleOpenBulkMarkInactive}
-      onMarkComplete={handleBulkMarkComplete}
-      onAssign={(assignedMemberId) => {
-        void handleBulkAssign(assignedMemberId);
-      }}
-    />
-  );
-
-  const headerFilterButton = (
-    <CrmProjectsFilterMenu
-      filters={filters}
-      onChange={setFilters}
-      radiusFilter={radiusFilter}
-      onRadiusFilterChange={setRadiusFilter}
-      triggerVariant="ghost"
-      menuAlign="end"
-    />
+    [bulkActionBusy, bulkSelection, patchAsRootItem, selectedProjects]
   );
 
   useEffect(() => {
     const message = consumeCrmProjectDeleteSuccessToast();
-    if (message) {
-      setToast({ kind: 'success', message });
-    }
+    if (message) setToast({ kind: 'success', message });
   }, []);
 
   useEffect(() => {
-    if (radiusGeocodingError == null) {
-      return;
+    if (list.errorMessage != null) {
+      setToast({ kind: 'error', message: list.errorMessage });
     }
-    setToast({ kind: 'error', message: radiusGeocodingError });
-  }, [radiusGeocodingError]);
+  }, [list.errorMessage]);
 
   useEffect(() => {
-    if (isMemberRole && createOpen) {
-      setCreateOpen(false);
-    }
+    if (isMemberRole && createOpen) setCreateOpen(false);
   }, [createOpen, isMemberRole]);
 
   const handleProjectCreated = async (): Promise<void> => {
-    await refetch();
+    await list.refetch();
     setCreateOpen(false);
     await onProjectCreated?.();
   };
@@ -456,18 +374,18 @@ function CrmProjectsPipelineV1({
 
   const tableEmptyMessage = resolveCrmProjectsTableEmptyMessage({
     isMemberRole,
-    totalProjectCount: totalCount,
+    totalProjectCount: list.totalCount ?? 0,
     memberNoAssignmentsMessage: content.crm.table.emptyMemberNoAssignments,
     searchOrFiltersMessage: content.crm.table.empty,
   });
-  const showFirstProjectEmptyState = !listIsLoading && totalCount === 0;
+  const showFirstProjectEmptyState = !listIsLoading && (list.totalCount ?? 0) === 0;
 
   const panelTitle = panelCopy.title;
   const searchInput = (
     <input
       type="search"
-      value={searchQuery}
-      onChange={(event) => setSearchQuery(event.target.value)}
+      value={list.searchInput}
+      onChange={(event) => list.setSearchInput(event.target.value)}
       placeholder={panelCopy.searchPlaceholder}
       aria-label={panelCopy.searchAriaLabel}
       className={styles.projectsSearch}
@@ -478,18 +396,19 @@ function CrmProjectsPipelineV1({
       <LuSearch className={styles.projectsSearchIcon} size={15} strokeWidth={2} aria-hidden />
       <input
         type="search"
-        value={searchQuery}
-        onChange={(event) => setSearchQuery(event.target.value)}
+        value={list.searchInput}
+        onChange={(event) => list.setSearchInput(event.target.value)}
         placeholder={panelCopy.searchPlaceholder}
         aria-label={panelCopy.searchAriaLabel}
         className={styles.projectsSearchInline}
       />
     </div>
   );
+
   const refreshButton = (
     <DetailPanelSectionRefresh
       sectionLabel={panelTitle}
-      onRefresh={refetch}
+      onRefresh={list.refetch}
       onError={(message) => setToast({ kind: 'error', message })}
     />
   );
@@ -502,26 +421,112 @@ function CrmProjectsPipelineV1({
       onClick={() => setCreateOpen(true)}
     />
   ) : null;
-  const importButton =
-    !isMemberRole ? (
-      <button
-        type="button"
-        className={importStyles.toolbarImportButton}
-        title={panelCopy.importSpreadsheet}
-        aria-label={panelCopy.importSpreadsheetAriaLabel}
-        disabled={importOpen}
-        onClick={() => {
-          if (isMobileLayout) {
-            setImportMobileNoticeOpen(true);
-            return;
-          }
-          setImportOpen(true);
-        }}
-      >
-        <LuFileSpreadsheet size={16} strokeWidth={2} aria-hidden />
-        {isMobileLayout ? null : panelCopy.importSpreadsheet}
-      </button>
-    ) : null;
+  const importButton = !isMemberRole ? (
+    <button
+      type="button"
+      className={importStyles.toolbarImportButton}
+      title={panelCopy.importSpreadsheet}
+      aria-label={panelCopy.importSpreadsheetAriaLabel}
+      disabled={importOpen}
+      onClick={() => {
+        if (isMobileLayout) {
+          setImportMobileNoticeOpen(true);
+          return;
+        }
+        setImportOpen(true);
+      }}
+    >
+      <LuFileSpreadsheet size={16} strokeWidth={2} aria-hidden />
+      {isMobileLayout ? null : panelCopy.importSpreadsheet}
+    </button>
+  ) : null;
+
+  const headerFilterButton = (
+    <CrmProjectsFilterMenu
+      filters={list.filters}
+      onChange={list.setFilters}
+      triggerVariant="ghost"
+      menuAlign="end"
+    />
+  );
+
+  const selectionBulkActions = (
+    <SubprojectsTableBulkActions
+      busy={bulkActionBusy || busyProjectId != null || markingInactive || identitiesLoading}
+      canMakePriority={selectedPriorityEligible.length > 0}
+      canMarkInactive={selectedActiveProjects.length > 0}
+      canMarkComplete={selectedCompleteEligible.length > 0}
+      canAssign={selectedProjects.length > 0 && !identitiesLoading && !isMemberRole}
+      assigneeOptions={assigneeOptions}
+      onMakePriority={() => {
+        void handleBulkMakePriority();
+      }}
+      onMarkInactive={() => {
+        if (selectedActiveProjects.length === 0) return;
+        openMarkInactive({ mode: 'bulk', projects: selectedActiveProjects });
+      }}
+      onMarkComplete={() => {
+        if (selectedCompleteEligible.length === 0) return;
+        setPendingBulkComplete(true);
+      }}
+      onAssign={(assignedMemberId) => {
+        void handleBulkAssign(assignedMemberId);
+      }}
+    />
+  );
+
+  const paginationChrome = (standalone: boolean) => (
+    <div
+      className={[
+        styles.projectsListV2Pagination,
+        standalone ? styles.projectsListV2Pagination_standalone : '',
+      ]
+        .filter(Boolean)
+        .join(' ')}
+      aria-label="Projects pagination"
+    >
+      <span className={styles.projectsListV2Range}>{list.rangeLabel}</span>
+      <label className={styles.projectsListV2PageSize}>
+        <span className={styles.projectsListV2PageSizeLabel}>Rows</span>
+        <select
+          value={list.limit}
+          onChange={(event) => {
+            const next = Number(event.target.value) as CrmProjectsListV2PageSize;
+            if ((CRM_PROJECTS_LIST_V2_PAGE_SIZES as readonly number[]).includes(next)) {
+              list.setLimit(next);
+            }
+          }}
+          aria-label="Projects page size"
+        >
+          {CRM_PROJECTS_LIST_V2_PAGE_SIZES.map((size) => (
+            <option key={size} value={size}>
+              {size}
+            </option>
+          ))}
+        </select>
+      </label>
+      <div className={styles.projectsListV2Nav}>
+        <button
+          type="button"
+          className={styles.projectsListV2NavButton}
+          disabled={!list.hasPreviousPage || list.isFetchingPage}
+          onClick={list.goPreviousPage}
+          aria-label="Previous page"
+        >
+          <LuChevronLeft aria-hidden size={18} />
+        </button>
+        <button
+          type="button"
+          className={styles.projectsListV2NavButton}
+          disabled={!list.hasNextPage || list.isFetchingPage}
+          onClick={list.goNextPage}
+          aria-label="Next page"
+        >
+          <LuChevronRight aria-hidden size={18} />
+        </button>
+      </div>
+    </div>
+  );
 
   const sharedTableChrome = {
     bulkSelection: bulkSelectionBindings,
@@ -531,10 +536,12 @@ function CrmProjectsPipelineV1({
     bulkHeaderActions:
       canUseBulkActions && bulkSelection.selectedCount > 0 ? selectionBulkActions : null,
   };
+
   const showMobileBulkToolbar = isMobileLayout && canUseBulkActions && bulkSelection.selectedCount > 0;
   const selectedCountDisplay =
     bulkSelection.selectedCount > 99 ? '99+' : String(Math.max(0, bulkSelection.selectedCount));
   const [mobileShellBar, setMobileShellBar] = useState<HTMLElement | null>(null);
+  const rowActionsBusyProjectId = busyProjectId ?? markingActiveProjectId;
 
   useEffect(() => {
     if (!isMobileLayout) {
@@ -563,18 +570,45 @@ function CrmProjectsPipelineV1({
         )
       : null;
 
+  if (!organizationId) {
+    return (
+      <section className={styles.projectsPanel} aria-label={panelTitle}>
+        <p className={styles.mobileEmptyState}>Loading organization…</p>
+      </section>
+    );
+  }
+
   return (
     <section
       className={styles.projectsPanel}
       data-crm-projects-dashboard
+      data-crm-projects-list-v2="1"
       aria-label={panelTitle}
     >
       {toast ? (
-        <DetailToast
-          kind={toast.kind}
-          message={toast.message}
-          onDismiss={() => setToast(null)}
-        />
+        <DetailToast kind={toast.kind} message={toast.message} onDismiss={() => setToast(null)} />
+      ) : null}
+      {list.showNewProjectsBanner ? (
+        <div className={styles.projectsListV2Banner} role="status">
+          <span>New Projects available — Refresh</span>
+          <button
+            type="button"
+            className={styles.projectsListV2BannerButton}
+            onClick={() => {
+              void list.refetch();
+            }}
+          >
+            Refresh
+          </button>
+          <button
+            type="button"
+            className={styles.projectsListV2BannerDismiss}
+            aria-label="Dismiss"
+            onClick={list.dismissNewProjectsBanner}
+          >
+            ×
+          </button>
+        </div>
       ) : null}
       <div
         className={[
@@ -585,31 +619,33 @@ function CrmProjectsPipelineV1({
           .join(' ')}
       >
         {isMobileLayout ? (
+          <div className={styles.projectsPanelHeaderSecondaryRow}>
+            {showMobileBulkToolbar ? (
+              <div
+                className={styles.projectsMobileBulkToolbar}
+                role="toolbar"
+                aria-label={bulkSelectionCopy.toolbarAriaLabel}
+              >
+                {selectionBulkActions}
+              </div>
+            ) : (
+              mobileSearchInput
+            )}
+          </div>
+        ) : (
           <>
-            <div className={styles.projectsPanelHeaderSecondaryRow}>
-              {showMobileBulkToolbar ? (
-                <div
-                  className={styles.projectsMobileBulkToolbar}
-                  role="toolbar"
-                  aria-label={bulkSelectionCopy.toolbarAriaLabel}
-                >
-                  {selectionBulkActions}
-                </div>
-              ) : (
-                mobileSearchInput
-              )}
+            {paginationChrome(false)}
+            <div className={styles.projectsPanelHeaderTools}>
+              {headerFilterButton}
+              {searchInput}
+              {importButton}
+              {refreshButton}
+              {addButton}
             </div>
           </>
-        ) : (
-          <div className={styles.projectsPanelHeaderTools}>
-            {headerFilterButton}
-            {searchInput}
-            {importButton}
-            {refreshButton}
-            {addButton}
-          </div>
         )}
       </div>
+      {isMobileLayout ? paginationChrome(true) : null}
       {showMobileBulkToolbar ? (
         <button
           type="button"
@@ -622,22 +658,15 @@ function CrmProjectsPipelineV1({
         </button>
       ) : null}
       {mobileShellTopRow}
-      <div
-        className={[
-          styles.pipeline,
-          styles.projectsPanelBody,
-        ]
-          .filter(Boolean)
-          .join(' ')}
-      >
+      <div className={[styles.pipeline, styles.projectsPanelBody].filter(Boolean).join(' ')}>
         {isMobileLayout ? (
           <CrmProjectsMobileList
             rows={rootRows}
-            paymentTasksIndex={paymentTasksIndex}
-            workflowProgressInputIndex={workflowProgressInputIndex}
-            isWorkflowProgressLoading={isWorkflowProgressLoading}
+            pageSummariesByProjectId={list.pageSummariesById}
+            childCountByParentId={childCountByParentId}
+            isWorkflowProgressLoading={list.isSummariesLoading}
             isLoading={listIsLoading}
-            isPaymentFinancialsLoading={isPaymentFinancialsLoading}
+            isPaymentFinancialsLoading={list.isSummariesLoading}
             onRowClick={onProjectRowClick}
             onSubprojectRowClick={handleSubprojectRowClick}
             isMemberRole={isMemberRole}
@@ -647,20 +676,21 @@ function CrmProjectsPipelineV1({
             onRequestDelete={setPendingDeleteProject}
             onTogglePriority={togglePriority}
             onRequestCompletionChange={requestCompletionChange}
-            onRequestMarkInactive={handleRequestMarkInactive}
-            onRequestMarkActive={handleRequestMarkActive}
+            onRequestMarkInactive={(project) => openMarkInactive({ mode: 'single', project })}
+            onRequestMarkActive={(project) => {
+              void markProjectActive(project);
+            }}
             emptyMessage={tableEmptyMessage}
             bulkSelection={bulkSelectionBindings}
           />
         ) : (
           <CrmProjectsTable
             rows={rootRows}
-            allChildrenByParentId={allChildrenByParentId}
-            paymentTasksIndex={paymentTasksIndex}
-            workflowProgressInputIndex={workflowProgressInputIndex}
-            isWorkflowProgressLoading={isWorkflowProgressLoading}
+            pageSummariesByProjectId={list.pageSummariesById}
+            childCountByParentId={childCountByParentId}
+            isWorkflowProgressLoading={list.isSummariesLoading}
             isLoading={listIsLoading}
-            isPaymentFinancialsLoading={isPaymentFinancialsLoading}
+            isPaymentFinancialsLoading={list.isSummariesLoading}
             onRowClick={onProjectRowClick}
             onSubprojectRowClick={handleSubprojectRowClick}
             isMemberRole={isMemberRole}
@@ -670,8 +700,10 @@ function CrmProjectsPipelineV1({
             onRequestDelete={setPendingDeleteProject}
             onTogglePriority={togglePriority}
             onRequestCompletionChange={requestCompletionChange}
-            onRequestMarkInactive={handleRequestMarkInactive}
-            onRequestMarkActive={handleRequestMarkActive}
+            onRequestMarkInactive={(project) => openMarkInactive({ mode: 'single', project })}
+            onRequestMarkActive={(project) => {
+              void markProjectActive(project);
+            }}
             emptyMessage={tableEmptyMessage}
             firstRunEmptyTitle={showFirstProjectEmptyState ? 'No Projects Yet' : null}
             firstRunEmptyActionLabel={
@@ -695,7 +727,7 @@ function CrmProjectsPipelineV1({
         onClose={() => setImportOpen(false)}
         mode="master_hierarchy"
         onCompleted={() => {
-          void refetch();
+          void list.refetch();
           void onProjectCreated?.();
         }}
       />

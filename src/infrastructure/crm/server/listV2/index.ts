@@ -18,9 +18,11 @@ export {
   type CrmProjectsListV2LogEvent,
 } from './projectsListV2Observability';
 export {
-  countCrmProjectsListV2,
   CrmProjectsListV2InvalidRequestError,
   CrmProjectsListV2NotWiredError,
+} from './projectsListV2Errors';
+export {
+  countCrmProjectsListV2,
   listCrmChildProjectsPageV2,
   listCrmRootProjectsPageV2,
   loadCrmProjectsPageSummariesV2,

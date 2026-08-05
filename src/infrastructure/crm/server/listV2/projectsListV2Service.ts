@@ -22,6 +22,10 @@ import {
   CrmProjectsListV2InvalidCursorError,
 } from './projectsListCursorCodec';
 import {
+  CrmProjectsListV2InvalidRequestError,
+  CrmProjectsListV2NotWiredError,
+} from './projectsListV2Errors';
+import {
   activeFilterNamesFromRequest,
   logCrmProjectsListV2Event,
 } from './projectsListV2Observability';
@@ -31,24 +35,12 @@ import {
   parseOperationalCursorValues,
 } from './projectsListV2Keyset';
 import { resolveCrmProjectsListV2VisibilityRpcParams } from './projectsListV2VisibilityParams';
+import { loadCrmProjectsPageSummariesForIds } from './projectsListV2PageSummaries';
 
-export class CrmProjectsListV2NotWiredError extends Error {
-  constructor(operation: string) {
-    super(
-      `Projects list v2 "${operation}" is not wired yet. Use v1 endpoints until the matching phase ships.`
-    );
-    this.name = 'CrmProjectsListV2NotWiredError';
-  }
-}
-
-export class CrmProjectsListV2InvalidRequestError extends Error {
-  readonly code = 'invalid_request' as const;
-
-  constructor(message: string) {
-    super(message);
-    this.name = 'CrmProjectsListV2InvalidRequestError';
-  }
-}
+export {
+  CrmProjectsListV2InvalidRequestError,
+  CrmProjectsListV2NotWiredError,
+} from './projectsListV2Errors';
 
 export type CrmProjectsListV2ListContext = {
   readonly supabase: SupabaseClient;
@@ -453,12 +445,17 @@ export async function countCrmProjectsListV2(
 }
 
 /**
- * Page-scoped rollup summaries — Phase 1B (bounded IDs / RPC; not org-wide maps).
+ * Page-scoped rollup summaries for visible project IDs only (never org-wide).
  */
 export async function loadCrmProjectsPageSummariesV2(
-  _context: CrmProjectsListV2SummariesContext
+  context: CrmProjectsListV2SummariesContext
 ): Promise<CrmProjectsListV2PageSummariesResponse> {
-  throw new CrmProjectsListV2NotWiredError('loadCrmProjectsPageSummariesV2');
+  return loadCrmProjectsPageSummariesForIds({
+    supabase: context.supabase,
+    organizationId: context.organizationId,
+    userId: context.userId,
+    projectIds: context.projectIds,
+  });
 }
 
 export { CrmProjectsListV2InvalidCursorError };

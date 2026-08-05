@@ -2,8 +2,9 @@
 
 import { useMemo, type ReactElement, type ReactNode } from 'react';
 import type { CrmProjectSummary } from '@/domain/crm';
-import type { CrmProjectPaymentTasksIndex } from '@/domain/crm/projectPaymentValue';
+import type { CrmProjectPaymentTasksIndex, ProjectPaymentFinancials } from '@/domain/crm/projectPaymentValue';
 import type { CrmProjectWorkflowProgressInputIndex } from '@/domain/crm/projectWorkflowProgressInput';
+import type { CrmProjectsListV2PageSummary } from '@/domain/crm/projectsListV2';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
 import { buildCrmProjectsDashboardRowModels } from '@/presentation/features/crmProjects/buildCrmProjectsDashboardRowModels';
 import { useDashboardSubprojectExpansion } from '@/presentation/features/crmProjects/useDashboardSubprojectExpansion';
@@ -28,6 +29,10 @@ export type CrmProjectsTableProps = {
   paymentTasksIndex?: CrmProjectPaymentTasksIndex;
   workflowProgressInputIndex?: CrmProjectWorkflowProgressInputIndex;
   isWorkflowProgressLoading?: boolean;
+  /** Phase 1B: bounded page summaries (skips org-wide rollup Maps when set). */
+  pageSummariesByProjectId?: ReadonlyMap<string, CrmProjectsListV2PageSummary>;
+  /** Phase 1B: Subproject pill counts from page items (available before summaries hydrate). */
+  childCountByParentId?: ReadonlyMap<string, number>;
   enableSubprojectExpansion?: boolean;
   /** When true, parents with subprojects are expanded (e.g. priority filter active). */
   autoExpandParentsWithSubprojects?: boolean;
@@ -94,6 +99,8 @@ export function CrmProjectsTable({
   paymentTasksIndex,
   workflowProgressInputIndex,
   isWorkflowProgressLoading = false,
+  pageSummariesByProjectId,
+  childCountByParentId: childCountByParentIdProp,
   enableSubprojectExpansion = false,
   autoExpandParentsWithSubprojects = false,
   expandedParentIds: expandedParentIdsProp,
@@ -170,6 +177,25 @@ export function CrmProjectsTable({
 
   const rowModels = useMemo(() => {
     const resolvedPaymentTasksIndex = paymentTasksIndex ?? new Map<string, never>();
+    const financialsByProjectId =
+      pageSummariesByProjectId == null
+        ? undefined
+        : new Map<string, ProjectPaymentFinancials>(
+            [...pageSummariesByProjectId.entries()].map(([id, summary]) => [
+              id,
+              summary.payment,
+            ])
+          );
+    const childCountByParentId = (() => {
+      if (childCountByParentIdProp != null) return childCountByParentIdProp;
+      if (pageSummariesByProjectId == null) return undefined;
+      return new Map(
+        [...pageSummariesByProjectId.entries()].map(([id, summary]) => [
+          id,
+          summary.childCount ?? 0,
+        ])
+      );
+    })();
     return buildCrmProjectsDashboardRowModels({
       displayRoots,
       enableSubprojectExpansion,
@@ -178,6 +204,8 @@ export function CrmProjectsTable({
       visibleChildrenByParentId,
       parentById,
       paymentTasksIndex: resolvedPaymentTasksIndex,
+      financialsByProjectId,
+      childCountByParentId,
       projectValueLabel: valueLabels.projectValueLabel,
       subValueLabel: valueLabels.subValueLabel,
       onRowClick,
@@ -186,11 +214,13 @@ export function CrmProjectsTable({
     });
   }, [
     allChildrenByParentId,
+    childCountByParentIdProp,
     displayRoots,
     enableSubprojectExpansion,
     expandedParentIds,
     onRowClick,
     onSubprojectRowClick,
+    pageSummariesByProjectId,
     paymentTasksIndex,
     toggleExpanded,
     valueLabels.projectValueLabel,
@@ -398,8 +428,24 @@ export function CrmProjectsTable({
                     hasChildren={row.hasChildren}
                     isExpanded={row.isExpanded}
                     onToggleExpand={row.onToggleExpand}
-                    workflowProgressInputIndex={workflowProgressInputIndex}
-                    isWorkflowProgressLoading={isWorkflowProgressLoading}
+                    workflowProgressInputIndex={
+                      pageSummariesByProjectId != null ? undefined : workflowProgressInputIndex
+                    }
+                    isWorkflowProgressLoading={
+                      pageSummariesByProjectId != null
+                        ? isPaymentFinancialsLoading
+                        : isWorkflowProgressLoading
+                    }
+                    presentationOverrides={
+                      pageSummariesByProjectId == null
+                        ? null
+                        : {
+                            progress: pageSummariesByProjectId.get(row.project.id)?.progress ?? null,
+                            derivedStageSlug:
+                              pageSummariesByProjectId.get(row.project.id)?.derivedStageSlug ??
+                              null,
+                          }
+                    }
                     bulkSelection={bulkSelection}
                     onContactCopied={onContactCopied}
                     showParentProjectColumn={showParentProjectColumn}

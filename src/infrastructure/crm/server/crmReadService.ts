@@ -113,6 +113,65 @@ function collectMemberIds(rows: {
   return [...ids];
 }
 
+export async function listPaymentBalanceTasksByProjectIds(
+  supabase: SupabaseClient,
+  organizationId: string,
+  projectIds: readonly string[]
+): Promise<CrmProjectPaymentTasksIndex> {
+  const uniqueIds = [...new Set(projectIds.map((id) => id.trim()).filter(Boolean))];
+  if (uniqueIds.length === 0) {
+    return new Map();
+  }
+
+  // Bound to caller IDs that belong to this org (reject cross-org / archived).
+  const { data: projectRows, error: projectError } = await supabase
+    .from('crm_projects')
+    .select('id')
+    .eq('organization_id', organizationId)
+    .in('id', uniqueIds)
+    .is('archived_at', null);
+
+  if (projectError) {
+    throw new Error(projectError.message);
+  }
+
+  const allowedIds = (projectRows ?? []).map((row) => row.id as string);
+  if (allowedIds.length === 0) {
+    return new Map();
+  }
+
+  const { data: taskRows, error: taskError } = await supabase
+    .from('crm_workflow_tasks')
+    .select('project_id, id, title, amount_cents, status, paid_at')
+    .eq('organization_id', organizationId)
+    .in('project_id', allowedIds)
+    .not('amount_cents', 'is', null)
+    .is('archived_at', null);
+
+  if (taskError) {
+    throw new Error(taskError.message);
+  }
+
+  const index = new Map<string, PaymentBalanceTask[]>();
+  for (const id of allowedIds) {
+    index.set(id, []);
+  }
+  for (const row of taskRows ?? []) {
+    const projectId = row.project_id as string;
+    const tasks = index.get(projectId) ?? [];
+    tasks.push({
+      id: row.id as string,
+      title: (row.title as string) ?? undefined,
+      amountCents: Number(row.amount_cents),
+      status: row.status as PaymentBalanceTask['status'],
+      paidAt: (row.paid_at as string | null) ?? null,
+    });
+    index.set(projectId, tasks);
+  }
+
+  return index;
+}
+
 export async function listPaymentBalanceTasksByOrg(
   supabase: SupabaseClient,
   organizationId: string
@@ -128,36 +187,7 @@ export async function listPaymentBalanceTasksByOrg(
   }
 
   const projectIds = (projectRows ?? []).map((row) => row.id as string);
-  if (projectIds.length === 0) {
-    return new Map();
-  }
-
-  const { data: taskRows, error: taskError } = await supabase
-    .from('crm_workflow_tasks')
-    .select('project_id, id, title, amount_cents, status, paid_at')
-    .in('project_id', projectIds)
-    .not('amount_cents', 'is', null)
-    .is('archived_at', null);
-
-  if (taskError) {
-    throw new Error(taskError.message);
-  }
-
-  const index = new Map<string, PaymentBalanceTask[]>();
-  for (const row of taskRows ?? []) {
-    const projectId = row.project_id as string;
-    const tasks = index.get(projectId) ?? [];
-    tasks.push({
-      id: row.id as string,
-      title: (row.title as string) ?? undefined,
-      amountCents: Number(row.amount_cents),
-      status: row.status as PaymentBalanceTask['status'],
-      paidAt: (row.paid_at as string | null) ?? null,
-    });
-    index.set(projectId, tasks);
-  }
-
-  return index;
+  return listPaymentBalanceTasksByProjectIds(supabase, organizationId, projectIds);
 }
 
 export async function listWorkflowTaskStatusesByOrg(

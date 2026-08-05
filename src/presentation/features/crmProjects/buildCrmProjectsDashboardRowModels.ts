@@ -27,6 +27,10 @@ export type BuildCrmProjectsDashboardRowModelsInput = {
   readonly visibleChildrenByParentId?: ReadonlyMap<string, readonly CrmProjectSummary[]>;
   readonly parentById?: ReadonlyMap<string, CrmProjectSummary>;
   readonly paymentTasksIndex: CrmProjectPaymentTasksIndex;
+  /** Phase 1B: page-scoped financials override org payment Maps when present. */
+  readonly financialsByProjectId?: ReadonlyMap<string, ProjectPaymentFinancials>;
+  /** Phase 1B: page-scoped child counts (Subproject pill) without loading child rows. */
+  readonly childCountByParentId?: ReadonlyMap<string, number>;
   readonly projectValueLabel: string;
   readonly subValueLabel: string;
   readonly onRowClick: (project: CrmProjectSummary) => void;
@@ -45,6 +49,8 @@ export function buildCrmProjectsDashboardRowModels(
     visibleChildrenByParentId,
     parentById,
     paymentTasksIndex,
+    financialsByProjectId,
+    childCountByParentId,
     projectValueLabel,
     subValueLabel,
     onRowClick,
@@ -53,16 +59,22 @@ export function buildCrmProjectsDashboardRowModels(
   } = input;
 
   return displayRoots.flatMap((project) => {
-    const childCount = allChildrenByParentId?.get(project.id)?.length ?? 0;
+    const childCount =
+      childCountByParentId?.get(project.id) ??
+      allChildrenByParentId?.get(project.id)?.length ??
+      0;
     const hasChildren = enableSubprojectExpansion && childCount > 0;
     const isExpanded = expandedParentIds.has(project.id);
     const visibleChildren = visibleChildrenByParentId?.get(project.id) ?? [];
     const isStandaloneChild = !enableSubprojectExpansion && project.parentProjectId != null;
     const parent =
       project.parentProjectId != null ? parentById?.get(project.parentProjectId) : undefined;
-    const rowFinancials = isStandaloneChild
-      ? resolveDashboardChildRowFinancials(project, paymentTasksIndex)
-      : resolveDashboardRootRowFinancials(project, visibleChildren, paymentTasksIndex);
+    const pageFinancials = financialsByProjectId?.get(project.id);
+    const rowFinancials =
+      pageFinancials ??
+      (isStandaloneChild
+        ? resolveDashboardChildRowFinancials(project, paymentTasksIndex)
+        : resolveDashboardRootRowFinancials(project, visibleChildren, paymentTasksIndex));
     const rowVariant = isStandaloneChild ? 'child' : 'root';
     const rowValueLabel = isStandaloneChild ? subValueLabel : projectValueLabel;
 

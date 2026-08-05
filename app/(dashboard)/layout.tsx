@@ -8,6 +8,7 @@ import { BuildCoreDashboardProvider } from '@/presentation/providers/BuildCoreDa
 import { AssignmentIdentityProvider } from '@/presentation/providers/AssignmentIdentityProvider';
 import { BuildCoreProjectSectionAccessProvider } from '@/presentation/providers/BuildCoreProjectSectionAccessProvider';
 import { BuildCoreWorkflowTaskAccessProvider } from '@/presentation/providers/BuildCoreWorkflowTaskAccessProvider';
+import { isProjectsListV2ClientFlagEnabled } from '@/infrastructure/config/projectsListV2Config';
 import { CrmPaymentTasksIndexProvider } from '@/presentation/providers/CrmPaymentTasksIndexProvider';
 import { BuildCoreFieldLabelsProvider } from '@/presentation/providers/BuildCoreFieldLabelsProvider';
 import { BuildCoreEntityTerminologyProvider } from '@/presentation/providers/BuildCoreEntityTerminologyProvider';
@@ -22,12 +23,14 @@ export default function DashboardGroupLayout({
 }: {
   children: ReactNode;
 }): ReactElement {
+  // v2 dashboard must not eager-load org-wide rollup Maps; v1 + Project detail still refetch.
+  const eagerLoadPaymentRollups = !isProjectsListV2ClientFlagEnabled();
   return (
     <BuildCoreDashboardProvider>
       <AssignmentIdentityProvider>
         <BuildCoreWorkflowTaskAccessProvider>
           <BuildCoreProjectSectionAccessProvider>
-            <CrmPaymentTasksIndexProvider>
+            <CrmPaymentTasksIndexProvider eagerLoad={eagerLoadPaymentRollups}>
               <BuildCorePipelineStagesProvider>
                 <BuildCoreFieldLabelsProvider>
                   <BuildCoreEntityTerminologyProvider>

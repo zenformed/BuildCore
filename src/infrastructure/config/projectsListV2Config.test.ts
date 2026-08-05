@@ -35,4 +35,17 @@ describe('projectsListV2 feature flag', () => {
       false
     );
   });
+
+  it('client flag compares the string "true" (not a boolean)', () => {
+    assert.equal(
+      isProjectsListV2ClientFlagEnabled({ NEXT_PUBLIC_BUILDCORE_PROJECTS_LIST_V2: 'true' }),
+      true
+    );
+    assert.equal(
+      isProjectsListV2ClientFlagEnabled({
+        NEXT_PUBLIC_BUILDCORE_PROJECTS_LIST_V2: true as unknown as string,
+      }),
+      false
+    );
+  });
 });
