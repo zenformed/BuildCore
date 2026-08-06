@@ -255,6 +255,18 @@ export {
   type CrmDocumentsListV2PageResponse,
   type CrmDocumentsListV2PageSize,
 } from './documentsListV2';
+export {
+  CRM_PHOTOS_LIST_V2_BULK_MAX_IDS,
+  CRM_PHOTOS_LIST_V2_DEFAULT_PAGE_SIZE,
+  CRM_PHOTOS_LIST_V2_PAGE_SIZES,
+  CRM_PHOTOS_LIST_V2_SEARCH_MIN_LENGTH,
+  buildCrmPhotosListV2Fingerprint,
+  normalizeCrmPhotosListV2Request,
+  type CrmPhotoListItemV2,
+  type CrmPhotosListV2NormalizedRequest,
+  type CrmPhotosListV2PageResponse,
+  type CrmPhotosListV2PageSize,
+} from './photosListV2';
 export { US_STATE_OPTIONS, type UsStateOption } from './usStates';
 export type {
   CreateCrmWorkflowTaskInput,

@@ -13,6 +13,8 @@
     "typecheck": "tsc --noEmit",
     "testdata:projects-pagination:seed": "npx tsx --tsconfig tsconfig.json scripts/seed-projects-pagination-test-data.ts",
     "testdata:projects-pagination:cleanup": "npx tsx --tsconfig tsconfig.json scripts/cleanup-projects-pagination-test-data.ts",
+    "testdata:photos-pagination:seed": "npx tsx --tsconfig tsconfig.json scripts/seed-photos-pagination-test-data.ts",
+    "testdata:photos-pagination:cleanup": "npx tsx --tsconfig tsconfig.json scripts/cleanup-photos-pagination-test-data.ts",
     "install:standalone": "npm install --no-workspaces",
     "lockfile:update": "npm install --package-lock-only --no-workspaces",
     "electron:dev": "concurrently -k \"npm run dev\" \"wait-on http://localhost:3020 && cross-env ELECTRON_DEV=1 PORT=3020 electron .\""

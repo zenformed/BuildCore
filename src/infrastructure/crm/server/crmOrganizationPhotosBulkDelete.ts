@@ -1,5 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { IDocumentStorageProvider } from '@/application/ports/storage/IDocumentStorageProvider';
+import { CRM_PHOTOS_LIST_V2_BULK_MAX_IDS } from '@/domain/crm/photosListV2';
 import { CrmDocumentServiceError } from '@/infrastructure/crm/errors';
 import type { DbCrmDocumentRow } from '@/infrastructure/crm/mappers/mapCrmFromDb';
 import { deleteWorkflowTaskDocumentForOrg, deleteProjectMediaDocumentForOrg } from './crmDocumentService';
@@ -21,6 +22,12 @@ export async function deleteCrmOrganizationPhotosForViewer(
   documentIds: readonly string[]
 ): Promise<{ readonly deletedCount: number; readonly failedCount: number }> {
   const ids = [...new Set(documentIds.map((id) => id.trim()).filter(Boolean))];
+  if (ids.length > CRM_PHOTOS_LIST_V2_BULK_MAX_IDS) {
+    throw new CrmDocumentServiceError(
+      'INVALID_FILE_TYPE',
+      `Select at most ${CRM_PHOTOS_LIST_V2_BULK_MAX_IDS} photos`
+    );
+  }
   const { data, error } = await supabase
     .from('crm_documents')
     .select(DOCUMENT_SELECT)

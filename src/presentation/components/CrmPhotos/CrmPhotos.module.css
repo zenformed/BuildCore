@@ -84,6 +84,31 @@
   font-size: 0.8125rem;
 }
 
+.newPhotosBanner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  margin: 0 0 0.75rem;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--color-border, #e2e8f0);
+  border-radius: 0.5rem;
+  background: var(--color-surface-muted, #f8fafc);
+  color: var(--color-text, #0f172a);
+  font-size: 0.875rem;
+}
+
+.newPhotosRefresh {
+  border: none;
+  background: transparent;
+  color: var(--color-accent, #2563eb);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
 @media (max-width: 767px) {
   /* Shell mainContent scrolls on mobile — don't nest a second clip/scroll root. */
   .pageShell {

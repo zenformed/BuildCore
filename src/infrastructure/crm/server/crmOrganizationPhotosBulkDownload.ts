@@ -1,6 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { IDocumentStorageProvider } from '@/application/ports/storage/IDocumentStorageProvider';
 import { buildPhotosZipFileName } from '@/domain/crm/documentZipEntryNames';
+import { CRM_PHOTOS_LIST_V2_BULK_MAX_IDS } from '@/domain/crm/photosListV2';
 import { CrmDocumentServiceError } from '@/infrastructure/crm/errors';
 import type { DbCrmDocumentRow } from '@/infrastructure/crm/mappers/mapCrmFromDb';
 import {
@@ -27,6 +28,12 @@ export async function buildCrmOrganizationPhotosBulkDownloadForViewer(
   const ids = [...new Set(documentIds.map((id) => id.trim()).filter(Boolean))];
   if (ids.length === 0) {
     throw new CrmDocumentServiceError('INVALID_FILE_TYPE', 'Select at least one photo');
+  }
+  if (ids.length > CRM_PHOTOS_LIST_V2_BULK_MAX_IDS) {
+    throw new CrmDocumentServiceError(
+      'INVALID_FILE_TYPE',
+      `Select at most ${CRM_PHOTOS_LIST_V2_BULK_MAX_IDS} photos`
+    );
   }
 
   const { data, error } = await supabase
