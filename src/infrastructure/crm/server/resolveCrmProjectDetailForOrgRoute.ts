@@ -3,11 +3,12 @@ import type { CrmProjectDetail } from '@/domain/crm';
 import {
   getCrmProjectChildDetailBySlugsForOrg,
   getCrmProjectDetailBySlugForOrg,
+  type GetCrmProjectDetailBySlugOptions,
 } from './crmReadService';
 
 export type CrmProjectOrgRouteScope = {
   readonly parentSlug?: string | null;
-};
+} & GetCrmProjectDetailBySlugOptions;
 
 /** Resolve a parent or nested subproject detail for CRM API routes. */
 export async function resolveCrmProjectDetailForOrgRoute(
@@ -20,14 +21,20 @@ export async function resolveCrmProjectDetailForOrgRoute(
   const parentSlug = scope?.parentSlug?.trim();
   if (!trimmedSlug) return null;
 
+  const options: GetCrmProjectDetailBySlugOptions | undefined =
+    scope?.includeAccountabilityLog === undefined
+      ? undefined
+      : { includeAccountabilityLog: scope.includeAccountabilityLog };
+
   if (parentSlug) {
     return getCrmProjectChildDetailBySlugsForOrg(
       supabase,
       organizationId,
       parentSlug,
-      trimmedSlug
+      trimmedSlug,
+      options
     );
   }
 
-  return getCrmProjectDetailBySlugForOrg(supabase, organizationId, trimmedSlug);
+  return getCrmProjectDetailBySlugForOrg(supabase, organizationId, trimmedSlug, options);
 }

@@ -20,6 +20,7 @@ import {
 import { loadOrganizationPipelineStageCatalog } from '@/infrastructure/crm/server/pipelineStageService';
 import { getCrmProjectSummaryBySlugForOrg } from '@/infrastructure/crm/server/crmReadService';
 import { mapCrmRouteError } from '@/infrastructure/crm/server/crmApiRouteErrors';
+import { isProjectsListV2EnabledForOrganization } from '@/infrastructure/config/projectsListV2Config';
 
 export const dynamic = 'force-dynamic';
 
@@ -41,10 +42,17 @@ export async function GET(
 
   try {
     const projectStarted = performance.now();
+    // When list-v2 is enabled for the org, Accountability uses a dedicated paginated
+    // endpoint — do not embed the unbounded log in the project-detail payload.
+    // Reports uses listCrmProjectsForReportingForOrg (default includeAccountabilityLog).
+    const includeAccountabilityLog = !isProjectsListV2EnabledForOrganization(
+      auth.context.organizationId
+    );
     const project = await getCrmProjectDetailBySlugForOrg(
       auth.context.supabase,
       auth.context.organizationId,
-      slug
+      slug,
+      { includeAccountabilityLog }
     );
     const projectMs = Math.round(performance.now() - projectStarted);
     if (project == null) {

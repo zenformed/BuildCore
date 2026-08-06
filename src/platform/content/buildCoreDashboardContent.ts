@@ -2656,6 +2656,11 @@ const buildCoreDashboardContentSource = {
     },
     accountability: {
       empty: 'No activity logged yet.',
+      loading: 'Loading activity…',
+      loadingMore: 'Loading…',
+      loadMore: 'Load More',
+      newActivityAvailable: 'New activity available —',
+      newActivityRefresh: 'Refresh',
       searchPlaceholder: 'Search accountability…',
       searchAriaLabel: 'Search accountability',
       viewAll: 'View all Accountability',

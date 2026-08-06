@@ -1,11 +1,10 @@
 'use client';
 
-import { useMemo, useState, type ReactElement } from 'react';
-import { isProjectsListV2ClientFlagEnabled } from '@/infrastructure/config/projectsListV2Config';
+import { useCallback, type ReactElement } from 'react';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
 import { useProjectDetailShell } from '@/presentation/features/crmProjectDetail/ProjectDetailShellContext';
+import { useCrmAccountabilityListV2 } from '@/presentation/features/crmProjectDetail/useCrmAccountabilityListV2';
 import { useBuildCorePipelineStages } from '@/presentation/providers/BuildCorePipelineStagesProvider';
-import { filterAccountabilityEntriesBySearch } from '@/presentation/features/crmProjectDetail/projectSectionSearchModel';
 import { useDashboardMobileLayout } from '@/presentation/features/crmProjects/useDashboardMobileLayout';
 import { FolderTabToolbarPortal } from '@/presentation/features/crmProjectDetail/folderTabToolbarContext';
 import { DetailPanelHeader } from './DetailPanelHeader';
@@ -15,44 +14,37 @@ import { DetailPanelSectionSearch } from './DetailPanelSectionSearch';
 import {
   AccountabilityLogMobileList,
   AccountabilityLogTable,
-  sortAccountabilityEntries,
 } from './AccountabilityLogTable';
-import { ProjectAccountabilityContentV2 } from './ProjectAccountabilityPageV2';
 import styles from './ProjectDetail.module.css';
 
-export type ProjectAccountabilityContentProps = {
+export type ProjectAccountabilityContentV2Props = {
   /** When true, header actions render in the shared folder tab bar. */
   readonly embeddedInFolderTabs?: boolean;
 };
 
-export function ProjectAccountabilityContent({
+export function ProjectAccountabilityContentV2({
   embeddedInFolderTabs = false,
-}: ProjectAccountabilityContentProps): ReactElement {
-  if (isProjectsListV2ClientFlagEnabled()) {
-    return <ProjectAccountabilityContentV2 embeddedInFolderTabs={embeddedInFolderTabs} />;
-  }
-  return <ProjectAccountabilityContentV1 embeddedInFolderTabs={embeddedInFolderTabs} />;
-}
-
-function ProjectAccountabilityContentV1({
-  embeddedInFolderTabs = false,
-}: ProjectAccountabilityContentProps): ReactElement {
-  const { project, onRefresh, setToast } = useProjectDetailShell();
+}: ProjectAccountabilityContentV2Props): ReactElement {
+  const { project, setToast } = useProjectDetailShell();
   const acc = content.projectDetail.accountability;
   const { catalogForProject } = useBuildCorePipelineStages();
   const stageCatalog = catalogForProject({ parentProjectId: project.summary.parentProjectId });
-  const [searchQuery, setSearchQuery] = useState('');
   const isMobileLayout = useDashboardMobileLayout();
   const sectionTitle = content.projectDetail.sections.accountability;
-  const entries = useMemo(() => {
-    const sorted = sortAccountabilityEntries(project.accountabilityLog);
-    return filterAccountabilityEntriesBySearch(sorted, searchQuery, stageCatalog);
-  }, [project.accountabilityLog, searchQuery, stageCatalog]);
+
+  const list = useCrmAccountabilityListV2({
+    projectSlug: project.summary.slug,
+    projectId: project.summary.id,
+  });
+
+  const handleRefresh = useCallback(async () => {
+    await list.refetch();
+  }, [list]);
 
   const searchInput = (
     <DetailPanelSectionSearch
-      value={searchQuery}
-      onChange={setSearchQuery}
+      value={list.searchInput}
+      onChange={list.setSearchInput}
       placeholder={acc.searchPlaceholder}
       ariaLabel={acc.searchAriaLabel}
     />
@@ -61,7 +53,7 @@ function ProjectAccountabilityContentV1({
   const refreshButton = (
     <DetailPanelSectionRefresh
       sectionLabel={sectionTitle}
-      onRefresh={onRefresh}
+      onRefresh={handleRefresh}
       onError={(message) => setToast({ kind: 'error', message })}
     />
   );
@@ -72,6 +64,56 @@ function ProjectAccountabilityContentV1({
       {refreshButton}
     </DetailPanelHeaderActions>
   );
+
+  const body = (() => {
+    if (list.isLoading) {
+      return <p className={styles.subtitle}>{acc.loading}</p>;
+    }
+    if (list.errorMessage != null) {
+      return <p className={styles.subtitle}>{list.errorMessage}</p>;
+    }
+    if (list.entries.length === 0) {
+      return <p className={styles.subtitle}>{acc.empty}</p>;
+    }
+    if (isMobileLayout) {
+      return (
+        <>
+          <AccountabilityLogMobileList entries={list.entries} stages={stageCatalog} />
+          {list.hasNextPage ? (
+            <div className={styles.accountabilityLoadMoreWrap}>
+              <button
+                type="button"
+                className={styles.accountabilityLoadMoreButton}
+                disabled={list.isFetchingNextPage}
+                onClick={list.loadMore}
+              >
+                {list.isFetchingNextPage ? acc.loadingMore : acc.loadMore}
+              </button>
+            </div>
+          ) : null}
+        </>
+      );
+    }
+    return (
+      <div className={styles.detailPanelTableCard}>
+        <div className={styles.accountabilityPageTableScroll}>
+          <AccountabilityLogTable entries={list.entries} layout="modal" stages={stageCatalog} />
+        </div>
+        {list.hasNextPage ? (
+          <div className={styles.accountabilityLoadMoreWrap}>
+            <button
+              type="button"
+              className={styles.accountabilityLoadMoreButton}
+              disabled={list.isFetchingNextPage}
+              onClick={list.loadMore}
+            >
+              {list.isFetchingNextPage ? acc.loadingMore : acc.loadMore}
+            </button>
+          </div>
+        ) : null}
+      </div>
+    );
+  })();
 
   return (
     <section
@@ -106,17 +148,25 @@ function ProjectAccountabilityContentV1({
           {headerActions}
         </DetailPanelHeader>
       )}
-      {entries.length === 0 ? (
-        <p className={styles.subtitle}>{acc.empty}</p>
-      ) : isMobileLayout ? (
-        <AccountabilityLogMobileList entries={entries} stages={stageCatalog} />
-      ) : (
-        <div className={styles.detailPanelTableCard}>
-          <div className={styles.accountabilityPageTableScroll}>
-            <AccountabilityLogTable entries={entries} layout="modal" stages={stageCatalog} />
-          </div>
+      {list.showNewActivityBanner ? (
+        <div className={styles.accountabilityNewActivityBanner} role="status">
+          <span>{acc.newActivityAvailable}</span>
+          <button
+            type="button"
+            className={styles.accountabilityNewActivityRefresh}
+            onClick={() => {
+              void list.refreshToNewest().catch((err: unknown) => {
+                const message =
+                  err instanceof Error ? err.message : 'Could not refresh Accountability';
+                setToast({ kind: 'error', message });
+              });
+            }}
+          >
+            {acc.newActivityRefresh}
+          </button>
         </div>
-      )}
+      ) : null}
+      {body}
     </section>
   );
 }

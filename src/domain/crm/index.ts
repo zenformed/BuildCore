@@ -232,6 +232,17 @@ export {
   type CrmProjectsListV2SortMode,
   type CrmProjectsListV2View,
 } from './projectsListV2';
+export {
+  CRM_ACCOUNTABILITY_LIST_V2_DEFAULT_PAGE_SIZE,
+  CRM_ACCOUNTABILITY_LIST_V2_PAGE_SIZES,
+  CRM_ACCOUNTABILITY_LIST_V2_SEARCH_MIN_LENGTH,
+  buildCrmAccountabilityListV2Fingerprint,
+  normalizeCrmAccountabilityListV2Request,
+  type CrmAccountabilityListItem,
+  type CrmAccountabilityListV2NormalizedRequest,
+  type CrmAccountabilityListV2PageResponse,
+  type CrmAccountabilityListV2PageSize,
+} from './accountabilityListV2';
 export { US_STATE_OPTIONS, type UsStateOption } from './usStates';
 export type {
   CreateCrmWorkflowTaskInput,

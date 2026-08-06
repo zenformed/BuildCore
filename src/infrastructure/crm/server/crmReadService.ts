@@ -538,11 +538,22 @@ export async function getCrmProjectPreviewBySlugForOrg(
   };
 }
 
+export type GetCrmProjectDetailBySlugOptions = {
+  /**
+   * When false, skips the unbounded Accountability log query and returns [].
+   * Default true preserves v1 / Reports consumers. Project-detail GET sets false
+   * when list-v2 is enabled so the Accountability tab uses the dedicated v2 API.
+   */
+  readonly includeAccountabilityLog?: boolean;
+};
+
 export async function getCrmProjectDetailBySlugForOrg(
   supabase: SupabaseClient,
   organizationId: string,
-  slug: string
+  slug: string,
+  options?: GetCrmProjectDetailBySlugOptions
 ): Promise<CrmProjectDetail | null> {
+  const includeAccountabilityLog = options?.includeAccountabilityLog !== false;
   const timings: Record<string, number> = {};
   let endTimer = startCrmReadPerfTimer();
   const industrySchemaMode = await getCrmProjectIndustrySchemaMode(supabase);
@@ -564,6 +575,14 @@ export async function getCrmProjectDetailBySlugForOrg(
   endTimer = startCrmReadPerfTimer();
 
   const project = projectData as unknown as DbCrmProjectRow;
+
+  const accountabilityQuery = includeAccountabilityLog
+    ? supabase
+        .from('crm_accountability_events')
+        .select('id, event_type, summary, created_at, actor_member_id, workflow_task_id')
+        .eq('project_id', project.id)
+        .order('created_at', { ascending: false })
+    : Promise.resolve({ data: [] as DbCrmAccountabilityRow[], error: null });
 
   const [tasksResult, documentsResult, milestonesResult, accountabilityResult, budgetResult, stageCompletionsResult, pipelineStages] =
     await Promise.all([
@@ -589,11 +608,7 @@ export async function getCrmProjectDetailBySlugForOrg(
       .select('id, label, amount_cents, due_at, paid_at, status')
       .eq('project_id', project.id)
       .order('due_at', { ascending: true, nullsFirst: false }),
-    supabase
-      .from('crm_accountability_events')
-      .select('id, event_type, summary, created_at, actor_member_id, workflow_task_id')
-      .eq('project_id', project.id)
-      .order('created_at', { ascending: false }),
+    accountabilityQuery,
     supabase
       .from('crm_project_budget_entries')
       .select(
@@ -707,7 +722,8 @@ export async function getCrmProjectChildDetailBySlugsForOrg(
   supabase: SupabaseClient,
   organizationId: string,
   parentSlug: string,
-  childSlug: string
+  childSlug: string,
+  options?: GetCrmProjectDetailBySlugOptions
 ): Promise<CrmProjectDetail | null> {
   const { data: parentRow, error: parentError } = await supabase
     .from('crm_projects')
@@ -722,7 +738,12 @@ export async function getCrmProjectChildDetailBySlugsForOrg(
   }
   if (!parentRow) return null;
 
-  const childDetail = await getCrmProjectDetailBySlugForOrg(supabase, organizationId, childSlug);
+  const childDetail = await getCrmProjectDetailBySlugForOrg(
+    supabase,
+    organizationId,
+    childSlug,
+    options
+  );
   if (childDetail == null) return null;
   if (childDetail.summary.parentProjectId !== parentRow.id) return null;
 
