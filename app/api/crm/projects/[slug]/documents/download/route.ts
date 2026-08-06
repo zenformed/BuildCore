@@ -5,6 +5,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
+import { CRM_DOCUMENTS_LIST_V2_BULK_MAX_IDS } from '@/domain/crm/documentsListV2';
 import { requireCrmApiAuth } from '@/infrastructure/crm/server/crmApiRouteAuth';
 import { crmDocumentErrorResponse } from '@/infrastructure/crm/server/crmDocumentRouteErrors';
 import { crmDocumentAttachmentNextResponse } from '@/infrastructure/crm/server/crmDocumentDownloadResponse';
@@ -49,6 +50,15 @@ export async function POST(
   if (documentIds == null || documentIds.length === 0) {
     return NextResponse.json(
       { error: 'invalid_body', message: 'documentIds must be a non-empty string array' },
+      { status: 400 }
+    );
+  }
+  if (documentIds.length > CRM_DOCUMENTS_LIST_V2_BULK_MAX_IDS) {
+    return NextResponse.json(
+      {
+        error: 'invalid_body',
+        message: `documentIds must contain at most ${CRM_DOCUMENTS_LIST_V2_BULK_MAX_IDS} ids`,
+      },
       { status: 400 }
     );
   }

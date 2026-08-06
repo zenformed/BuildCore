@@ -2590,6 +2590,11 @@ const buildCoreDashboardContentSource = {
     },
     documents: {
       empty: 'No documents yet.',
+      loading: 'Loading documents…',
+      loadingMore: 'Loading…',
+      loadMore: 'Load More',
+      newDocumentsAvailable: 'New documents available —',
+      newDocumentsRefresh: 'Refresh',
       searchPlaceholder: 'Search documents…',
       searchAriaLabel: 'Search documents',
       uploadHint: 'Upload photos, videos, and documents to this §E5§.',

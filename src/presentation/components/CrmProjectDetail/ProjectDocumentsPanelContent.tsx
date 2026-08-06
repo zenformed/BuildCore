@@ -8,6 +8,7 @@ import { formatWorkflowTaskStageLabel } from '@/presentation/features/crmProject
 import {
   buildDocumentPanelSourcesFromProject,
   filterDocumentPanelItems,
+  type DocumentListItem,
   type DocumentPanelFilter,
 } from '@/presentation/features/crmProjectDetail/documentPanelModel';
 import { formatBudgetCategory } from '@/presentation/features/crmProjectDetail/budgetCategoryLabels';
@@ -33,6 +34,11 @@ export type ProjectDocumentsPanelContentProps = {
   project: CrmProjectDetail;
   filter: DocumentPanelFilter;
   searchQuery?: string;
+  /**
+   * When provided (Documents list v2), render these items instead of deriving
+   * from embedded project.documents.
+   */
+  itemsOverride?: readonly DocumentListItem[];
   /** Desktop: filter caret shown in the list header (workflow/budget pattern). */
   leadingFilter?: ReactNode;
   onRefresh: () => Promise<void>;
@@ -208,6 +214,7 @@ export function ProjectDocumentsPanelContent({
   project,
   filter,
   searchQuery = '',
+  itemsOverride,
   leadingFilter = null,
   onRefresh,
   onError,
@@ -243,12 +250,13 @@ export function ProjectDocumentsPanelContent({
   );
 
   const items = useMemo(() => {
+    if (itemsOverride != null) return [...itemsOverride];
     const byFilter = filterDocumentPanelItems(
       buildDocumentPanelSourcesFromProject(project),
       filter
     );
     return filterDocumentPanelItemsBySearch(byFilter, searchQuery, stageCatalog);
-  }, [filter, project, searchQuery, stageCatalog]);
+  }, [filter, itemsOverride, project, searchQuery, stageCatalog]);
 
   const hasSelectableDocuments = useMemo(
     () => items.some((item) => item.kind === 'document'),

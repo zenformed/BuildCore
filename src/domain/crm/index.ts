@@ -243,6 +243,18 @@ export {
   type CrmAccountabilityListV2PageResponse,
   type CrmAccountabilityListV2PageSize,
 } from './accountabilityListV2';
+export {
+  CRM_DOCUMENTS_LIST_V2_BULK_MAX_IDS,
+  CRM_DOCUMENTS_LIST_V2_DEFAULT_PAGE_SIZE,
+  CRM_DOCUMENTS_LIST_V2_PAGE_SIZES,
+  CRM_DOCUMENTS_LIST_V2_SEARCH_MIN_LENGTH,
+  buildCrmDocumentsListV2Fingerprint,
+  normalizeCrmDocumentsListV2Request,
+  type CrmDocumentListItemV2,
+  type CrmDocumentsListV2NormalizedRequest,
+  type CrmDocumentsListV2PageResponse,
+  type CrmDocumentsListV2PageSize,
+} from './documentsListV2';
 export { US_STATE_OPTIONS, type UsStateOption } from './usStates';
 export type {
   CreateCrmWorkflowTaskInput,

@@ -4,17 +4,13 @@ import type { ReactElement } from 'react';
 import { useCallback, useMemo, useState } from 'react';
 import { LuSearch } from 'react-icons/lu';
 import type { CrmDocumentMetadata } from '@/domain/crm';
-import { isDocumentsListV2ClientFlagEnabled } from '@/infrastructure/config/documentsListV2Config';
+import { CRM_DOCUMENTS_LIST_V2_BULK_MAX_IDS } from '@/domain/crm/documentsListV2';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
-import { ProjectDocumentsTabPanelV2 } from './ProjectDocumentsTabPanelV2';
-import {
-  buildDocumentPanelSourcesFromProject,
-  filterDocumentPanelItems,
-  type DocumentPanelFilter,
-} from '@/presentation/features/crmProjectDetail/documentPanelModel';
-import { filterDocumentPanelItemsBySearch } from '@/presentation/features/crmProjectDetail/projectSectionSearchModel';
+import type { DocumentPanelFilter } from '@/presentation/features/crmProjectDetail/documentPanelModel';
+import { buildCrmDocumentsListV2PanelItems } from '@/presentation/features/crmProjectDetail/documentsListV2PanelItems';
 import { useDashboardMobileLayout } from '@/presentation/features/crmProjects/useDashboardMobileLayout';
 import { useProjectDetailShell } from '@/presentation/features/crmProjectDetail/ProjectDetailShellContext';
+import { useCrmDocumentsListV2 } from '@/presentation/features/crmProjectDetail/useCrmDocumentsListV2';
 import { useProjectDocumentModalActions } from '@/presentation/features/crmProjectDetail/useProjectDocumentModalActions';
 import { deleteCrmProjectDocumentsBulk } from '@/presentation/features/crmProjectDetail/deleteCrmProjectDocumentsBulk';
 import { downloadCrmProjectDocumentsBulk } from '@/presentation/features/crmProjectDetail/downloadCrmProjectDocumentsBulk';
@@ -49,49 +45,29 @@ import {
   DocumentsMobileSearchToolsRow,
   DocumentsMobileSelectedFloatingPill,
 } from './MobileBulkSelectionChrome';
+import { DocumentsListV2InfiniteScrollFooter } from './DocumentsListV2InfiniteScrollFooter';
 import { ProjectDocumentsPanelContent } from './ProjectDocumentsPanelContent';
 import styles from './ProjectDetail.module.css';
 
-export type ProjectDocumentsTabPanelProps = {
+export type ProjectDocumentsTabPanelV2Props = {
   readonly className?: string;
   readonly titleId?: string;
   readonly onError?: (message: string) => void;
-  /** When true, header actions render in the shared folder tab bar. */
   readonly embeddedInFolderTabs?: boolean;
 };
 
-export function ProjectDocumentsTabPanel({
-  className = `${styles.paymentsPanel} ${styles.documentsTabPanel}`,
-  titleId = 'project-documents-tab-heading',
-  onError,
-  embeddedInFolderTabs = false,
-}: ProjectDocumentsTabPanelProps): ReactElement {
-  if (isDocumentsListV2ClientFlagEnabled()) {
-    return (
-      <ProjectDocumentsTabPanelV2
-        className={className}
-        titleId={titleId}
-        onError={onError}
-        embeddedInFolderTabs={embeddedInFolderTabs}
-      />
-    );
+function assertBulkIdLimit(documentIds: readonly string[]): void {
+  if (documentIds.length > CRM_DOCUMENTS_LIST_V2_BULK_MAX_IDS) {
+    throw new Error(`Select at most ${CRM_DOCUMENTS_LIST_V2_BULK_MAX_IDS} documents`);
   }
-  return (
-    <ProjectDocumentsTabPanelV1
-      className={className}
-      titleId={titleId}
-      onError={onError}
-      embeddedInFolderTabs={embeddedInFolderTabs}
-    />
-  );
 }
 
-function ProjectDocumentsTabPanelV1({
+export function ProjectDocumentsTabPanelV2({
   className = `${styles.paymentsPanel} ${styles.documentsTabPanel}`,
   titleId = 'project-documents-tab-heading',
   onError,
   embeddedInFolderTabs = false,
-}: ProjectDocumentsTabPanelProps): ReactElement {
+}: ProjectDocumentsTabPanelV2Props): ReactElement {
   const {
     project,
     parentProject,
@@ -108,16 +84,24 @@ function ProjectDocumentsTabPanelV1({
   const sectionAccess = useBuildCoreProjectSectionAccess();
   const stageCatalog = catalogForProject({ parentProjectId: project.summary.parentProjectId });
   const [filter, setFilter] = useState<DocumentPanelFilter>('all');
-  const [searchQuery, setSearchQuery] = useState('');
   const [viewMode, setViewMode] = useState<DocumentsViewMode>(() => readDocumentsViewMode());
 
-  const handleRefresh = async (): Promise<void> => {
+  const list = useCrmDocumentsListV2({
+    projectSlug: project.summary.slug,
+    projectId: project.summary.id,
+  });
+
+  const handleListRefresh = useCallback(async (): Promise<void> => {
+    await list.refetch();
+  }, [list]);
+
+  const handleRefresh = useCallback(async (): Promise<void> => {
     try {
-      await onRefresh();
+      await Promise.all([onRefresh(), handleListRefresh()]);
     } catch {
       setToast({ kind: 'error', message: content.projectDetail.saveError });
     }
-  };
+  }, [handleListRefresh, onRefresh, setToast]);
 
   const handleError = (message: string): void => {
     onError?.(message);
@@ -139,13 +123,17 @@ function ProjectDocumentsTabPanelV1({
     onDemoDownloadBlocked: (message) => setToast({ kind: 'success', message }),
   });
 
-  const items = useMemo(() => {
-    const byFilter = filterDocumentPanelItems(
-      buildDocumentPanelSourcesFromProject(project),
-      filter
-    );
-    return filterDocumentPanelItemsBySearch(byFilter, searchQuery, stageCatalog);
-  }, [filter, project, searchQuery, stageCatalog]);
+  const items = useMemo(
+    () =>
+      buildCrmDocumentsListV2PanelItems({
+        project,
+        paginatedDocuments: list.documents,
+        filter,
+        searchQuery: list.debouncedSearch,
+        stageCatalog,
+      }),
+    [filter, list.debouncedSearch, list.documents, project, stageCatalog]
+  );
 
   const visibleDocuments = useMemo(
     () =>
@@ -164,11 +152,11 @@ function ProjectDocumentsTabPanelV1({
 
   const documentsById = useMemo(() => {
     const map = new Map<string, CrmDocumentMetadata>();
-    for (const doc of visibleDocuments) {
+    for (const doc of list.documents) {
       map.set(doc.id, doc);
     }
     return map;
-  }, [visibleDocuments]);
+  }, [list.documents]);
 
   const taskById = useMemo(
     () => new Map(project.workflowTasks.map((task) => [task.id, task] as const)),
@@ -229,13 +217,14 @@ function ProjectDocumentsTabPanelV1({
       downloadableDocumentIds,
       documentsById,
       onDownloadDocuments: async (documentIds) => {
+        assertBulkIdLimit(documentIds);
         await downloadCrmProjectDocumentsBulk(project.summary.slug, documentIds);
       },
       onDeleteDocuments: async (documentIds) => {
+        assertBulkIdLimit(documentIds);
         const docsToDelete: CrmDocumentMetadata[] = [];
         for (const documentId of documentIds) {
-          const doc =
-            documentsById.get(documentId) ?? project.documents.find((d) => d.id === documentId);
+          const doc = documentsById.get(documentId);
           if (doc != null) docsToDelete.push(doc);
         }
         if (docsToDelete.length === 0) {
@@ -243,8 +232,8 @@ function ProjectDocumentsTabPanelV1({
         }
 
         const idSet = new Set(docsToDelete.map((doc) => doc.id));
-        // Remove all selected tiles immediately; delete continues in parallel.
         onDocumentsDeleted([...idSet]);
+        list.removeDocumentsLocally([...idSet]);
         clearApiCrmDetailCache();
 
         const { deletedCount, failedCount } = await deleteCrmProjectDocumentsBulk(
@@ -254,9 +243,8 @@ function ProjectDocumentsTabPanelV1({
         );
 
         if (failedCount > 0) {
-          // Reconcile UI with server if any deletes failed.
           try {
-            await onRefresh();
+            await handleRefresh();
           } catch {
             // Keep optimistic state; toast still reports partial failure.
           }
@@ -274,14 +262,16 @@ function ProjectDocumentsTabPanelV1({
       documentsById,
       downloadableDocumentIds,
       guardProjectEdit,
+      handleRefresh,
+      list,
       onDocumentsDeleted,
-      onRefresh,
-      project.documents,
       project.summary.slug,
       projectMutationsLocked,
       setToast,
     ]
   );
+
+  const selectionResetKey = `${list.searchFingerprintKey}|${filter}`;
 
   const filterCaret = (
     <DocumentPanelFilterMenu
@@ -314,8 +304,8 @@ function ProjectDocumentsTabPanelV1({
       <LuSearch className={styles.subprojectsSearchIcon} size={14} strokeWidth={2} aria-hidden />
       <input
         type="search"
-        value={searchQuery}
-        onChange={(event) => setSearchQuery(event.target.value)}
+        value={list.searchInput}
+        onChange={(event) => list.setSearchInput(event.target.value)}
         placeholder={docs.searchPlaceholder}
         aria-label={docs.searchAriaLabel}
         className={`${styles.subprojectsSearch} ${styles.subprojectsSearch_withIcon}`}
@@ -323,8 +313,8 @@ function ProjectDocumentsTabPanelV1({
     </div>
   ) : (
     <DetailPanelSectionSearch
-      value={searchQuery}
-      onChange={setSearchQuery}
+      value={list.searchInput}
+      onChange={list.setSearchInput}
       placeholder={docs.searchPlaceholder}
       ariaLabel={docs.searchAriaLabel}
     />
@@ -370,8 +360,68 @@ function ProjectDocumentsTabPanelV1({
   const listLeadingFilter = embeddedInFolderTabs ? null : filterCaret;
   const listShowStatusRefresh = !embeddedInFolderTabs;
 
+  const infiniteScrollFooter = (
+    <DocumentsListV2InfiniteScrollFooter
+      enabled={filter !== 'missing'}
+      hasNextPage={list.hasNextPage}
+      isFetchingNextPage={list.isFetchingNextPage}
+      onFetchNextPage={list.loadMore}
+      loadingLabel={docs.loadingMore}
+      loadMoreLabel={docs.loadMore}
+    />
+  );
+
+  const body = (() => {
+    if (list.isLoading && filter !== 'missing') {
+      return <p className={styles.subtitle}>{docs.loading}</p>;
+    }
+    if (list.errorMessage != null && filter !== 'missing') {
+      return <p className={styles.subtitle}>{list.errorMessage}</p>;
+    }
+    if (viewMode === 'gallery') {
+      return (
+        <>
+          {visibleDocuments.length > 0 && !isMobileLayout ? (
+            <DocumentsListHeaderRow
+              leadingFilter={listLeadingFilter}
+              onRefresh={handleRefresh}
+              onError={handleError}
+              showStatusRefresh={listShowStatusRefresh}
+            />
+          ) : null}
+          <DocumentsGallery
+            documents={visibleDocuments}
+            resolveProjectSlug={() => project.summary.slug}
+            resolveProjectLabel={() => projectLabel}
+            resolveTaskTitle={resolveTaskTitle}
+            onDownloadDocument={previewActions.downloadDocument}
+            onDeleteDocument={previewActions.deleteDocument}
+            canDeleteDocument={() => !projectMutationsLocked}
+          />
+          {infiniteScrollFooter}
+        </>
+      );
+    }
+    return (
+      <>
+        <ProjectDocumentsPanelContent
+          project={project}
+          filter={filter}
+          searchQuery={list.debouncedSearch}
+          itemsOverride={items}
+          leadingFilter={listLeadingFilter}
+          onRefresh={handleRefresh}
+          onError={handleError}
+          showStatusRefresh={listShowStatusRefresh}
+        />
+        {infiniteScrollFooter}
+      </>
+    );
+  })();
+
   return (
     <DocumentRowSelectionProvider
+      key={selectionResetKey}
       visibleDocumentIds={visibleDocumentIds}
       bulkActions={selectionBulkActions}
     >
@@ -413,43 +463,33 @@ function ProjectDocumentsTabPanelV1({
             </DetailPanelHeaderActions>
           </DetailPanelHeader>
         )}
+        {list.showNewDocumentsBanner ? (
+          <div className={styles.documentsNewActivityBanner} role="status">
+            <span>{docs.newDocumentsAvailable}</span>
+            <button
+              type="button"
+              className={styles.documentsNewActivityRefresh}
+              onClick={() => {
+                void list.refreshToNewest().catch((err: unknown) => {
+                  const message =
+                    err instanceof Error ? err.message : 'Could not refresh Documents';
+                  setToast({ kind: 'error', message });
+                });
+              }}
+            >
+              {docs.newDocumentsRefresh}
+            </button>
+          </div>
+        ) : null}
         {isMobileLayout ? (
           <>
             <DocumentsMobileSelectedFloatingPill />
-            <DocumentsMobileHideWhenBulkActive>{mobileFloatingAddButton}</DocumentsMobileHideWhenBulkActive>
+            <DocumentsMobileHideWhenBulkActive>
+              {mobileFloatingAddButton}
+            </DocumentsMobileHideWhenBulkActive>
           </>
         ) : null}
-        {viewMode === 'gallery' ? (
-          <>
-            {visibleDocuments.length > 0 && !isMobileLayout ? (
-              <DocumentsListHeaderRow
-                leadingFilter={listLeadingFilter}
-                onRefresh={handleRefresh}
-                onError={handleError}
-                showStatusRefresh={listShowStatusRefresh}
-              />
-            ) : null}
-            <DocumentsGallery
-              documents={visibleDocuments}
-              resolveProjectSlug={() => project.summary.slug}
-              resolveProjectLabel={() => projectLabel}
-              resolveTaskTitle={resolveTaskTitle}
-              onDownloadDocument={previewActions.downloadDocument}
-              onDeleteDocument={previewActions.deleteDocument}
-              canDeleteDocument={() => !projectMutationsLocked}
-            />
-          </>
-        ) : (
-          <ProjectDocumentsPanelContent
-            project={project}
-            filter={filter}
-            searchQuery={searchQuery}
-            leadingFilter={listLeadingFilter}
-            onRefresh={handleRefresh}
-            onError={handleError}
-            showStatusRefresh={listShowStatusRefresh}
-          />
-        )}
+        {body}
       </section>
     </DocumentRowSelectionProvider>
   );

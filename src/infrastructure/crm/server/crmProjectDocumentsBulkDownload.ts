@@ -9,6 +9,7 @@ import {
   buildDocumentsZipFileName,
   uniqueZipEntryFileNames,
 } from '@/domain/crm/documentZipEntryNames';
+import { CRM_DOCUMENTS_LIST_V2_BULK_MAX_IDS } from '@/domain/crm/documentsListV2';
 import { isPaymentWorkflowTask } from '@/domain/crm/paymentWorkflow';
 import type { BuildCorePermissionDomain } from '@/domain/buildcore/rolePermissions';
 import { CrmDocumentServiceError } from '@/infrastructure/crm/errors';
@@ -120,6 +121,12 @@ export async function buildCrmProjectDocumentsBulkDownloadForOrg(
   const uniqueIds = [...new Set(input.documentIds.map((id) => id.trim()).filter(Boolean))];
   if (uniqueIds.length === 0) {
     throw new CrmDocumentServiceError('INVALID_FILE_TYPE', 'Select at least one document to download');
+  }
+  if (uniqueIds.length > CRM_DOCUMENTS_LIST_V2_BULK_MAX_IDS) {
+    throw new CrmDocumentServiceError(
+      'INVALID_FILE_TYPE',
+      `Select at most ${CRM_DOCUMENTS_LIST_V2_BULK_MAX_IDS} documents`
+    );
   }
 
   const projectId = await resolveCrmProjectIdBySlug(supabase, organizationId, input.projectSlug);
