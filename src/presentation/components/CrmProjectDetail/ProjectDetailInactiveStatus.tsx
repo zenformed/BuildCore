@@ -2,7 +2,7 @@
 
 import type { ReactElement } from 'react';
 import type { CrmProjectSummary } from '@/domain/crm';
-import { getCrmInactiveReasonLabel, isCrmProjectInactive } from '@/domain/crm';
+import { getCrmLossReasonLabel, isCrmProjectInactive } from '@/domain/crm';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
 import { CrmProjectInactiveIcon, CrmProjectInactiveInlineLabel } from '@/presentation/components/CrmProjects/CrmProjectInactiveBadge';
 import shared from '@/presentation/components/crmShared/crmShared.module.css';
@@ -14,6 +14,13 @@ export type ProjectDetailInactiveStatusProps = {
   readonly variant?: 'inline' | 'banner' | 'mobileBanner';
 };
 
+function closedStatusReasonLabel(project: CrmProjectSummary): string | null {
+  if (project.status === 'lost' && project.lossReason != null) {
+    return getCrmLossReasonLabel(project.lossReason, project.lossReasonOther);
+  }
+  return null;
+}
+
 export function ProjectDetailInactiveStatus({
   project,
   variant = 'inline',
@@ -24,17 +31,16 @@ export function ProjectDetailInactiveStatus({
 
   if (variant === 'mobileBanner') {
     const inactiveCopy = content.projectDetail.subprojects.markInactive;
-    const reasonLabel =
-      project.inactiveReason != null
-        ? getCrmInactiveReasonLabel(project.inactiveReason, project.inactiveReasonCustom)
-        : null;
+    const reasonLabel = closedStatusReasonLabel(project);
+    const badge =
+      project.status === 'cancelled' ? 'Cancelled' : inactiveCopy.badge;
     const bannerText = reasonLabel
-      ? `${inactiveCopy.badge.toUpperCase()}: ${reasonLabel}`
-      : inactiveCopy.badge.toUpperCase();
+      ? `${badge.toUpperCase()}: ${reasonLabel}`
+      : badge.toUpperCase();
 
     return (
       <div className={styles.detailInactiveMobileBanner} role="status" aria-live="polite">
-        <CrmProjectInactiveIcon ariaLabel={inactiveCopy.badge} />
+        <CrmProjectInactiveIcon ariaLabel={badge} />
         <span className={styles.detailInactiveMobileBannerText}>{bannerText}</span>
       </div>
     );
@@ -42,15 +48,14 @@ export function ProjectDetailInactiveStatus({
 
   if (variant === 'banner') {
     const inactiveCopy = content.projectDetail.subprojects.markInactive;
-    const reasonLabel =
-      project.inactiveReason != null
-        ? getCrmInactiveReasonLabel(project.inactiveReason, project.inactiveReasonCustom)
-        : null;
+    const reasonLabel = closedStatusReasonLabel(project);
+    const badge =
+      project.status === 'cancelled' ? 'Cancelled' : inactiveCopy.badge;
 
     return (
       <div className={styles.detailInactiveBanner} role="status" aria-live="polite">
         <span className={`${shared.stagePill} ${crmProjectStyles.inactiveBadge} ${styles.detailInactiveBannerPill}`}>
-          {inactiveCopy.badge}
+          {badge}
         </span>
         {reasonLabel ? (
           <span className={styles.detailInactiveBannerReason}>

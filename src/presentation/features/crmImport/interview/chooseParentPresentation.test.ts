@@ -170,11 +170,11 @@ describe('chooseParentPresentation', () => {
       latitude: null,
       longitude: null,
       leadToken: 'token',
-      subprojectStatus: 'normal',
-      inactiveReason: null,
-      inactiveReasonCustom: null,
-      inactiveAt: null,
-      inactiveBy: null,
+      status: 'active',
+      lossReason: null,
+      lossReasonOther: null,
+      statusChangedAt: null,
+      statusChangedBy: null,
       customFields: {},
     } satisfies CrmProjectSummary;
 

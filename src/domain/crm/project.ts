@@ -10,7 +10,7 @@ import type { PipelineStageSlug } from './pipelineStage';
 import type { CrmTeamMemberRef } from './teamMember';
 import type { CrmIndustry } from './industry';
 import type { CrmWorkflowTask } from './workflowTask';
-import type { CrmInactiveReason, CrmSubprojectStatus } from './subprojectStatus';
+import type { CrmLossReason, CrmProjectStatus } from './projectStatus';
 
 export type CrmPriority = 'low' | 'normal' | 'high' | 'urgent';
 
@@ -48,12 +48,13 @@ export type CrmProjectSummary = {
   readonly longitude: number | null;
   /** Permanent random token for public lead URLs; never derived from slug or id. */
   readonly leadToken: string;
-  /** Subproject lifecycle status — urgent, normal, completed, or inactive. */
-  readonly subprojectStatus: CrmSubprojectStatus;
-  readonly inactiveReason: CrmInactiveReason | null;
-  readonly inactiveReasonCustom: string | null;
-  readonly inactiveAt: string | null;
-  readonly inactiveBy: CrmTeamMemberRef | null;
+  /** Project/Subproject status — active, completed, lost, or cancelled. */
+  readonly status: CrmProjectStatus;
+  /** Set when status is lost; null otherwise. */
+  readonly lossReason: CrmLossReason | null;
+  readonly lossReasonOther: string | null;
+  readonly statusChangedAt: string | null;
+  readonly statusChangedBy: CrmTeamMemberRef | null;
   /** Org-defined custom field values keyed by field_key. */
   readonly customFields: Readonly<Record<string, string | null>>;
 };

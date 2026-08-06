@@ -1,4 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
+import { toLegacySubprojectStatus } from '@/domain/crm/projectStatus';
 import type { CrmProjectDetail } from '@/domain/crm';
 import { canMarkProjectCompleteByWorkflowTasks } from '@/domain/buildcore/projectPipelineProgress';
 import { CRM_PROJECT_COMPLETE_STAGE_SLUG } from '@/domain/crm/projectCompletion';
@@ -39,6 +40,11 @@ export async function setCrmProjectCompletionBySlugForOrg(
   }
 
   const now = new Date().toISOString();
+  const nextProjectStatus = complete
+    ? 'completed'
+    : existing.summary.status === 'lost' || existing.summary.status === 'cancelled'
+      ? existing.summary.status
+      : 'active';
 
   const { error: projectError } = await supabase
     .from('crm_projects')
@@ -48,11 +54,19 @@ export async function setCrmProjectCompletionBySlugForOrg(
       last_activity_at: now,
       subproject_status: complete
         ? 'completed'
-        : existing.summary.subprojectStatus === 'inactive'
-          ? 'inactive'
-          : existing.summary.priority === 'urgent'
-            ? 'urgent'
-            : 'normal',
+        : toLegacySubprojectStatus({
+            status: nextProjectStatus,
+            priority: existing.summary.priority,
+          }),
+      project_status: nextProjectStatus,
+      ...(complete || nextProjectStatus === 'active'
+        ? {
+            loss_reason: null,
+            loss_reason_other: null,
+          }
+        : {}),
+      status_changed_at: now,
+      status_changed_by: actorUserId,
       ...(complete
         ? { priority: 'low', current_stage_slug: CRM_PROJECT_COMPLETE_STAGE_SLUG }
         : {}),

@@ -2,6 +2,7 @@
 
 import { useCallback, useState } from 'react';
 import type { CrmInactiveReason, CrmProjectSummary } from '@/domain/crm';
+import { isCrmProjectLostOrCancelled } from '@/domain/crm';
 import { markCrmProjectsInactive } from '@/application/use-cases/crm/markCrmProjectsInactive';
 import { markCrmProjectsActive } from '@/application/use-cases/crm/markCrmProjectsActive';
 import { canMutateCrmProjectsInCurrentRuntime } from '@/infrastructure/demo/canMutateCrmProjectsInCurrentRuntime';
@@ -104,7 +105,7 @@ export function useCrmProjectInactiveActions(input: {
 
   const markProjectsActive = useCallback(
     async (projects: readonly CrmProjectSummary[]): Promise<boolean> => {
-      const eligibleProjects = projects.filter((project) => project.subprojectStatus === 'inactive');
+      const eligibleProjects = projects.filter((project) => isCrmProjectLostOrCancelled(project));
       if (eligibleProjects.length === 0) return false;
 
       if (!canMutateCrmProjectsInCurrentRuntime()) {

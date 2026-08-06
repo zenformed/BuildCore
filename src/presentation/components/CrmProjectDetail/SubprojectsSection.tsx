@@ -10,6 +10,7 @@ import {
   formatCrmProjectAddressLine,
   isCrmProjectComplete,
   isCrmProjectInactive,
+  isCrmProjectLostOrCancelled,
   type CrmProjectSummary,
 } from '@/domain/crm';
 import {
@@ -275,11 +276,11 @@ function SubprojectsSectionContent({
     [bulkSelection.selectedIds, rows]
   );
   const selectedInactiveProjects = useMemo(
-    () => selectedProjects.filter((project) => project.subprojectStatus === 'inactive'),
+    () => selectedProjects.filter((project) => isCrmProjectLostOrCancelled(project)),
     [selectedProjects]
   );
   const selectedActiveProjects = useMemo(
-    () => selectedProjects.filter((project) => project.subprojectStatus !== 'inactive'),
+    () => selectedProjects.filter((project) => !isCrmProjectLostOrCancelled(project)),
     [selectedProjects]
   );
   const selectedPriorityEligible = useMemo(

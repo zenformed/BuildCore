@@ -62,6 +62,11 @@ ${crmProjectIndustrySelectLines(mode)}
   inactive_reason_custom,
   inactive_at,
   inactive_by,
+  project_status,
+  loss_reason,
+  loss_reason_other,
+  status_changed_at,
+  status_changed_by,
   primary_photo_path,
   latitude,
   longitude,
@@ -91,6 +96,7 @@ function collectMemberIds(rows: {
     if (p.assigned_member_id) ids.add(p.assigned_member_id);
     if (p.completed_by) ids.add(p.completed_by);
     if (p.inactive_by) ids.add(p.inactive_by);
+    if (p.status_changed_by) ids.add(p.status_changed_by);
   }
   for (const t of rows.workflowTasks ?? []) {
     if (t.assigned_member_id) ids.add(t.assigned_member_id);

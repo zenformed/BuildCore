@@ -1,30 +1,29 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import { resolveCrmSubprojectListSortRank } from '../subprojectStatus';
+import { resolveCrmProjectListSortRank } from '../projectStatus';
 import { computeCrmProjectListSortBucket } from './listSortBucket';
 import type { CrmProjectSummary } from '../project';
 
 function summary(
-  partial: Pick<CrmProjectSummary, 'subprojectStatus' | 'priority' | 'completedAt'>
-): Pick<CrmProjectSummary, 'subprojectStatus' | 'priority' | 'completedAt'> {
+  partial: Pick<CrmProjectSummary, 'status' | 'priority' | 'completedAt'>
+): Pick<CrmProjectSummary, 'status' | 'priority' | 'completedAt'> {
   return partial;
 }
 
 describe('computeCrmProjectListSortBucket', () => {
-  it('matches resolveCrmSubprojectListSortRank (parity)', () => {
+  it('matches resolveCrmProjectListSortRank (parity)', () => {
     const fixtures = [
-      summary({ subprojectStatus: 'urgent', priority: 'normal', completedAt: null }),
-      summary({ subprojectStatus: 'normal', priority: 'urgent', completedAt: null }),
-      summary({ subprojectStatus: 'normal', priority: 'normal', completedAt: null }),
-      summary({ subprojectStatus: 'completed', priority: 'urgent', completedAt: null }),
+      summary({ status: 'active', priority: 'urgent', completedAt: null }),
+      summary({ status: 'active', priority: 'normal', completedAt: null }),
+      summary({ status: 'completed', priority: 'urgent', completedAt: null }),
       summary({
-        subprojectStatus: 'normal',
+        status: 'active',
         priority: 'normal',
         completedAt: '2024-01-01T00:00:00.000Z',
       }),
-      summary({ subprojectStatus: 'inactive', priority: 'urgent', completedAt: null }),
+      summary({ status: 'lost', priority: 'urgent', completedAt: null }),
       summary({
-        subprojectStatus: 'inactive',
+        status: 'cancelled',
         priority: 'normal',
         completedAt: '2024-01-01T00:00:00.000Z',
       }),
@@ -33,23 +32,23 @@ describe('computeCrmProjectListSortBucket', () => {
     for (const fixture of fixtures) {
       assert.equal(
         computeCrmProjectListSortBucket(fixture),
-        resolveCrmSubprojectListSortRank(fixture)
+        resolveCrmProjectListSortRank(fixture)
       );
     }
   });
 
-  it('orders urgent < normal < completed < inactive', () => {
+  it('orders urgent < normal < completed < lost/cancelled', () => {
     assert.equal(
       computeCrmProjectListSortBucket({
-        subprojectStatus: 'urgent',
-        priority: 'normal',
+        status: 'active',
+        priority: 'urgent',
         completedAt: null,
       }),
       0
     );
     assert.equal(
       computeCrmProjectListSortBucket({
-        subprojectStatus: 'normal',
+        status: 'active',
         priority: 'normal',
         completedAt: null,
       }),
@@ -57,11 +56,30 @@ describe('computeCrmProjectListSortBucket', () => {
     );
     assert.equal(
       computeCrmProjectListSortBucket({
-        subprojectStatus: 'normal',
+        status: 'active',
         priority: 'normal',
         completedAt: '2020-01-01T00:00:00.000Z',
       }),
       2
+    );
+    assert.equal(
+      computeCrmProjectListSortBucket({
+        status: 'lost',
+        priority: 'normal',
+        completedAt: null,
+      }),
+      3
+    );
+  });
+
+  it('keeps legacy subprojectStatus dual-read parity with SQL', () => {
+    assert.equal(
+      computeCrmProjectListSortBucket({
+        subprojectStatus: 'urgent',
+        priority: 'normal',
+        completedAt: null,
+      }),
+      0
     );
     assert.equal(
       computeCrmProjectListSortBucket({
@@ -74,10 +92,9 @@ describe('computeCrmProjectListSortBucket', () => {
   });
 
   it('treats null last_activity_at as allowed (bucket independent)', () => {
-    // Bucket does not use activity; null activity is a cursor/sort concern.
     assert.equal(
       computeCrmProjectListSortBucket({
-        subprojectStatus: 'normal',
+        status: 'active',
         priority: 'low',
         completedAt: null,
       }),

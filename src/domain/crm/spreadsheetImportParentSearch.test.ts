@@ -49,11 +49,11 @@ function makeProject(
     latitude: null,
     longitude: null,
     leadToken: 'token',
-    subprojectStatus: overrides.subprojectStatus ?? 'normal',
-    inactiveReason: null,
-    inactiveReasonCustom: null,
-    inactiveAt: null,
-    inactiveBy: null,
+    status: overrides.status ?? 'active',
+    lossReason: null,
+    lossReasonOther: null,
+    statusChangedAt: null,
+    statusChangedBy: null,
     customFields: {},
     ...overrides,
   };
@@ -65,7 +65,7 @@ describe('spreadsheetImportParentSearch', () => {
     const inactive = makeProject({
       id: 'root-2',
       name: 'Inactive Root',
-      subprojectStatus: 'inactive',
+      status: 'lost',
     });
     const child = makeProject({
       id: 'child-1',

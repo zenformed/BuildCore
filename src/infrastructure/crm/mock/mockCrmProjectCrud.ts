@@ -11,8 +11,12 @@ import type { BulkMarkInactiveCrmProjectsResult } from '@/domain/crm/bulkMarkIna
 import type {
   MarkCrmProjectsActiveInput,
   MarkCrmProjectsInactiveInput,
-} from '@/domain/crm/subprojectStatus';
-import { validateMarkCrmProjectsInactiveInput } from '@/domain/crm/subprojectStatus';
+} from '@/domain/crm/projectStatus';
+import {
+  deriveCrmProjectStatusFromLegacy,
+  mapLegacyInactiveReasonToLossReason,
+  validateMarkCrmProjectsInactiveInput,
+} from '@/domain/crm/projectStatus';
 import { DEMO_TEAM_MEMBER_ID } from '@/infrastructure/demo/demoProfileFixtures';
 import { slugifyProjectName } from '@/infrastructure/crm/server/crmSlug';
 import {
@@ -218,13 +222,20 @@ function applyInactiveState(
 
   const now = new Date().toISOString();
   const actor = demoActor();
+  const status = deriveCrmProjectStatusFromLegacy({
+    legacySubprojectStatus: 'inactive',
+    legacyInactiveReason: input.reason,
+    priority: detail.summary.priority,
+    completedAt: detail.summary.completedAt,
+  });
   const summary: CrmProjectSummary = {
     ...detail.summary,
-    subprojectStatus: 'inactive',
-    inactiveReason: input.reason,
-    inactiveReasonCustom: input.customReason ?? null,
-    inactiveAt: now,
-    inactiveBy: actor,
+    status,
+    lossReason: status === 'lost' ? mapLegacyInactiveReasonToLossReason(input.reason) : null,
+    lossReasonOther:
+      status === 'lost' && input.reason === 'other' ? input.customReason ?? null : null,
+    statusChangedAt: now,
+    statusChangedBy: actor,
     lastUpdatedAt: now,
   };
 
@@ -247,11 +258,11 @@ function applyActiveState(slug: string): CrmProjectSummary | null {
   const now = new Date().toISOString();
   const summary: CrmProjectSummary = {
     ...detail.summary,
-    subprojectStatus: detail.summary.completedAt != null ? 'completed' : 'normal',
-    inactiveReason: null,
-    inactiveReasonCustom: null,
-    inactiveAt: null,
-    inactiveBy: null,
+    status: detail.summary.completedAt != null ? 'completed' : 'active',
+    lossReason: null,
+    lossReasonOther: null,
+    statusChangedAt: now,
+    statusChangedBy: null,
     lastUpdatedAt: now,
   };
 

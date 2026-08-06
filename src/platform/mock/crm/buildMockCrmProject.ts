@@ -16,7 +16,7 @@ import {
   type PipelineStageSlug,
   type WorkflowTaskStatus,
 } from '@/domain/crm';
-import { deriveCrmSubprojectStatus } from '@/domain/crm/subprojectStatus';
+import { deriveCrmProjectStatusFromLegacy, deriveCrmSubprojectStatus } from '@/domain/crm/projectStatus';
 import { emptyCrmProjectAddress, type CrmProjectAddress } from '@/domain/crm/projectAddress';
 import type { CrmClient } from '@/domain/crm/client';
 import type { CrmContact } from '@/domain/crm/contact';
@@ -562,14 +562,18 @@ export function buildMockCrmProjectDetail(input: BuildMockCrmProjectInput): CrmP
     latitude: input.latitude ?? derivedCoordinates.latitude,
     longitude: input.longitude ?? derivedCoordinates.longitude,
     leadToken: input.leadToken ?? `00000000-0000-4000-8000-${input.id.replace(/\D/g, '').padStart(12, '0').slice(-12)}`,
-    subprojectStatus: deriveCrmSubprojectStatus({
+    status: deriveCrmProjectStatusFromLegacy({
       priority: input.priority,
       completedAt: input.completedAt ?? null,
+      legacySubprojectStatus: deriveCrmSubprojectStatus({
+        priority: input.priority,
+        completedAt: input.completedAt ?? null,
+      }),
     }),
-    inactiveReason: null,
-    inactiveReasonCustom: null,
-    inactiveAt: null,
-    inactiveBy: null,
+    lossReason: null,
+    lossReasonOther: null,
+    statusChangedAt: null,
+    statusChangedBy: null,
     customFields: getMockProjectCustomFieldsForProject(input.id, input.parentProjectId ?? null),
   };
 

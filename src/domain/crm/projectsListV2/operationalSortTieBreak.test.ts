@@ -9,7 +9,7 @@ function row(
   id: string,
   lastUpdatedAt: string,
   bucketFields: {
-    subprojectStatus: CrmProjectSummary['subprojectStatus'];
+    status: CrmProjectSummary['status'];
     priority: CrmProjectSummary['priority'];
     completedAt: string | null;
   }
@@ -45,11 +45,11 @@ function row(
     latitude: null,
     longitude: null,
     leadToken: 'token',
-    subprojectStatus: bucketFields.subprojectStatus,
-    inactiveReason: null,
-    inactiveReasonCustom: null,
-    inactiveAt: null,
-    inactiveBy: null,
+    status: bucketFields.status,
+    lossReason: null,
+    lossReasonOther: null,
+    statusChangedAt: null,
+    statusChangedBy: null,
     customFields: {},
   };
 }
@@ -57,12 +57,12 @@ function row(
 describe('operational sort tie-break', () => {
   it('orders same-bucket rows by lastUpdatedAt DESC; v2 adds id DESC', () => {
     const newer = row('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', '2024-02-01T00:00:00.000Z', {
-      subprojectStatus: 'normal',
+      status: 'active',
       priority: 'normal',
       completedAt: null,
     });
     const older = row('bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb', '2024-01-01T00:00:00.000Z', {
-      subprojectStatus: 'normal',
+      status: 'active',
       priority: 'normal',
       completedAt: null,
     });
@@ -70,12 +70,12 @@ describe('operational sort tie-break', () => {
     assert.ok(compareCrmProjectsForListSort(newer, older) < 0);
 
     const sameTsA = row('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', '2024-01-01T00:00:00.000Z', {
-      subprojectStatus: 'normal',
+      status: 'active',
       priority: 'normal',
       completedAt: null,
     });
     const sameTsB = row('bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb', '2024-01-01T00:00:00.000Z', {
-      subprojectStatus: 'normal',
+      status: 'active',
       priority: 'normal',
       completedAt: null,
     });
@@ -94,7 +94,7 @@ describe('operational sort tie-break', () => {
 
   it('documents null activity as a SQL NULLS LAST concern', () => {
     const withActivity = row('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', '2024-01-01T00:00:00.000Z', {
-      subprojectStatus: 'normal',
+      status: 'active',
       priority: 'normal',
       completedAt: null,
     });

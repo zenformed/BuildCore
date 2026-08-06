@@ -1,6 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { BulkMarkActiveCrmProjectsResult } from '@/domain/crm/bulkMarkActiveProjects';
-import type { MarkCrmProjectsActiveInput } from '@/domain/crm/subprojectStatus';
+import type { MarkCrmProjectsActiveInput } from '@/domain/crm/projectStatus';
 import { appendCrmAccountabilityEvent } from './crmAccountability';
 
 export class CrmMarkProjectsActiveValidationError extends Error {
@@ -8,6 +8,14 @@ export class CrmMarkProjectsActiveValidationError extends Error {
     super(message);
     this.name = 'CrmMarkProjectsActiveValidationError';
   }
+}
+
+function isClosedLegacyOrStatus(project: {
+  readonly subproject_status?: string | null;
+  readonly project_status?: string | null;
+}): boolean {
+  if (project.subproject_status === 'inactive') return true;
+  return project.project_status === 'lost' || project.project_status === 'cancelled';
 }
 
 export async function markCrmProjectsActiveForOrg(
@@ -23,7 +31,7 @@ export async function markCrmProjectsActiveForOrg(
 
   const { data: projects, error: fetchError } = await supabase
     .from('crm_projects')
-    .select('id, name, slug, parent_project_id, subproject_status')
+    .select('id, name, slug, parent_project_id, subproject_status, project_status')
     .eq('organization_id', organizationId)
     .in('slug', uniqueSlugs)
     .is('archived_at', null);
@@ -34,7 +42,7 @@ export async function markCrmProjectsActiveForOrg(
   const failedSlugs: string[] = uniqueSlugs.filter((slug) => {
     const project = foundBySlug.get(slug);
     if (project == null) return true;
-    if (project.subproject_status !== 'inactive') return true;
+    if (!isClosedLegacyOrStatus(project)) return true;
     return false;
   });
 
@@ -42,8 +50,7 @@ export async function markCrmProjectsActiveForOrg(
     .map((slug) => foundBySlug.get(slug))
     .filter((project): project is NonNullable<typeof project> => {
       if (project == null) return false;
-      if (project.subproject_status !== 'inactive') return false;
-      return true;
+      return isClosedLegacyOrStatus(project);
     });
 
   if (toUpdate.length === 0) {
@@ -61,6 +68,11 @@ export async function markCrmProjectsActiveForOrg(
       inactive_reason_custom: null,
       inactive_at: null,
       inactive_by: null,
+      project_status: 'active',
+      loss_reason: null,
+      loss_reason_other: null,
+      status_changed_at: now,
+      status_changed_by: actorUserId,
       last_activity_at: now,
     })
     .in('id', projectIds)
@@ -76,7 +88,7 @@ export async function markCrmProjectsActiveForOrg(
         actorMemberId: actorUserId,
         eventType: 'project_marked_active',
         summary: `Marked project active: ${project.name as string}`,
-        metadata: { slug: project.slug as string },
+        metadata: { slug: project.slug as string, projectStatus: 'active' },
       })
     )
   );

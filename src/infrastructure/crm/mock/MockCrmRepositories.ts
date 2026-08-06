@@ -246,13 +246,11 @@ function applyProjectCompletion(
     completedBy: complete ? actor : null,
     priority: complete ? 'low' : detail.summary.priority,
     currentStageSlug: complete ? CRM_PROJECT_COMPLETE_STAGE_SLUG : detail.summary.currentStageSlug,
-    subprojectStatus: complete
+    status: complete
       ? 'completed'
-      : detail.summary.subprojectStatus === 'inactive'
-        ? 'inactive'
-        : detail.summary.priority === 'urgent'
-          ? 'urgent'
-          : 'normal',
+      : detail.summary.status === 'lost' || detail.summary.status === 'cancelled'
+        ? detail.summary.status
+        : 'active',
     lastUpdatedAt: now,
   };
   const accountability: CrmAccountabilityAction = {

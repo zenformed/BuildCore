@@ -15,6 +15,7 @@ import {
   formatCrmProjectAddressLine,
   isCrmProjectComplete,
   isCrmProjectInactive,
+  isCrmProjectLostOrCancelled,
   type CrmProjectSummary,
 } from '@/domain/crm';
 import { listWorkflowStageCompletionStatuses } from '@/domain/buildcore/projectPipelineProgress';
@@ -216,11 +217,11 @@ export function SubprojectsSectionV2({
     [bulkSelection.selectedIds, rows]
   );
   const selectedInactiveProjects = useMemo(
-    () => selectedProjects.filter((project) => project.subprojectStatus === 'inactive'),
+    () => selectedProjects.filter((project) => isCrmProjectLostOrCancelled(project)),
     [selectedProjects]
   );
   const selectedActiveProjects = useMemo(
-    () => selectedProjects.filter((project) => project.subprojectStatus !== 'inactive'),
+    () => selectedProjects.filter((project) => !isCrmProjectLostOrCancelled(project)),
     [selectedProjects]
   );
   const selectedPriorityEligible = useMemo(

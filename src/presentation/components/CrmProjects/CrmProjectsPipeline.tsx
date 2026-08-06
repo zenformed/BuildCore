@@ -8,6 +8,7 @@ import { useRouter } from 'next/navigation';
 import {
   isCrmProjectComplete,
   isCrmProjectInactive,
+  isCrmProjectLostOrCancelled,
   type CrmProjectSummary,
 } from '@/domain/crm';
 import {
@@ -230,7 +231,7 @@ function CrmProjectsPipelineV1({
     [bulkSelection.selectedIds, visibleProjects]
   );
   const selectedActiveProjects = useMemo(
-    () => selectedProjects.filter((project) => project.subprojectStatus !== 'inactive'),
+    () => selectedProjects.filter((project) => !isCrmProjectLostOrCancelled(project)),
     [selectedProjects]
   );
   const selectedPriorityEligible = useMemo(

@@ -43,11 +43,11 @@ function summary(partial: Partial<CrmProjectSummary> & Pick<CrmProjectSummary, '
     latitude: null,
     longitude: null,
     leadToken: 'token',
-    subprojectStatus: 'normal',
-    inactiveReason: null,
-    inactiveReasonCustom: null,
-    inactiveAt: null,
-    inactiveBy: null,
+    status: 'active',
+    lossReason: null,
+    lossReasonOther: null,
+    statusChangedAt: null,
+    statusChangedBy: null,
     customFields: {},
     ...partial,
   };
@@ -118,8 +118,6 @@ describe('buildCrmMapModel', () => {
       slug: 'child-one',
       name: 'Roofing Sub',
       parentProjectId: 'p1',
-      latitude: 1,
-      longitude: 1,
     });
 
     const model = buildCrmMapModel([parent, child]);

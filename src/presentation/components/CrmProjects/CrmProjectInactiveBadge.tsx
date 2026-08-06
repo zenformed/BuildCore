@@ -3,7 +3,7 @@
 import type { ReactElement } from 'react';
 import { BsSlashCircle } from 'react-icons/bs';
 import type { CrmProjectSummary } from '@/domain/crm';
-import { getCrmInactiveReasonLabel } from '@/domain/crm';
+import { getCrmLossReasonLabel, isCrmProjectLostOrCancelled } from '@/domain/crm';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
 import shared from '@/presentation/components/crmShared/crmShared.module.css';
 import styles from './CrmProjects.module.css';
@@ -27,17 +27,19 @@ export type CrmProjectInactiveInlineLabelProps = {
 export function CrmProjectInactiveInlineLabel({
   project,
 }: CrmProjectInactiveInlineLabelProps): ReactElement | null {
-  if (project.subprojectStatus !== 'inactive') return null;
+  if (!isCrmProjectLostOrCancelled(project)) return null;
 
   const tableCopy = content.crm.table;
+  const badge =
+    project.status === 'cancelled' ? 'Cancelled' : tableCopy.inactiveBadge;
   const reasonLabel =
-    project.inactiveReason != null
-      ? getCrmInactiveReasonLabel(project.inactiveReason, project.inactiveReasonCustom)
+    project.status === 'lost' && project.lossReason != null
+      ? getCrmLossReasonLabel(project.lossReason, project.lossReasonOther)
       : null;
 
   return (
     <span className={styles.inactiveInlineLabel}>
-      <span className={`${shared.stagePill} ${styles.inactiveBadge}`}>{tableCopy.inactiveBadge}</span>
+      <span className={`${shared.stagePill} ${styles.inactiveBadge}`}>{badge}</span>
       {reasonLabel ? (
         <span className={styles.inactiveInlineReason} title={reasonLabel}>
           {reasonLabel}

@@ -2,10 +2,11 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import type { BulkMarkInactiveCrmProjectsResult } from '@/domain/crm/bulkMarkInactiveProjects';
 import {
   isCrmInactiveReason,
+  toProjectStatusWriteFieldsFromLegacyInactive,
   validateMarkCrmProjectsInactiveInput,
   type CrmInactiveReason,
   type MarkCrmProjectsInactiveInput,
-} from '@/domain/crm/subprojectStatus';
+} from '@/domain/crm/projectStatus';
 import { appendCrmAccountabilityEvent } from './crmAccountability';
 
 export class CrmMarkProjectsInactiveValidationError extends Error {
@@ -33,7 +34,7 @@ export async function markCrmProjectsInactiveForOrg(
 
   const { data: projects, error: fetchError } = await supabase
     .from('crm_projects')
-    .select('id, name, slug, parent_project_id, subproject_status')
+    .select('id, name, slug, parent_project_id, subproject_status, project_status')
     .eq('organization_id', organizationId)
     .in('slug', uniqueSlugs)
     .is('archived_at', null);
@@ -45,6 +46,7 @@ export async function markCrmProjectsInactiveForOrg(
     const project = foundBySlug.get(slug);
     if (project == null) return true;
     if (project.subproject_status === 'inactive') return true;
+    if (project.project_status === 'lost' || project.project_status === 'cancelled') return true;
     return false;
   });
 
@@ -53,6 +55,7 @@ export async function markCrmProjectsInactiveForOrg(
     .filter((project): project is NonNullable<typeof project> => {
       if (project == null) return false;
       if (project.subproject_status === 'inactive') return false;
+      if (project.project_status === 'lost' || project.project_status === 'cancelled') return false;
       return true;
     });
 
@@ -64,6 +67,12 @@ export async function markCrmProjectsInactiveForOrg(
   const reason = input.reason as CrmInactiveReason;
   const customReason =
     reason === 'other' ? input.customReason?.trim() ?? null : null;
+  const statusWrite = toProjectStatusWriteFieldsFromLegacyInactive({
+    reason,
+    customReason,
+    changedAt: now,
+    changedBy: actorUserId,
+  });
 
   const projectIds = toUpdate.map((project) => project.id as string);
 
@@ -75,6 +84,7 @@ export async function markCrmProjectsInactiveForOrg(
       inactive_reason_custom: customReason,
       inactive_at: now,
       inactive_by: actorUserId,
+      ...statusWrite,
       last_activity_at: now,
     })
     .in('id', projectIds)
@@ -94,6 +104,7 @@ export async function markCrmProjectsInactiveForOrg(
           slug: project.slug as string,
           reason,
           customReason,
+          projectStatus: statusWrite.project_status,
         },
       })
     )

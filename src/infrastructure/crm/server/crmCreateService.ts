@@ -78,7 +78,7 @@ export async function assertParentProjectExistsForOrg(
 ): Promise<void> {
   const { data: parentRow, error: parentError } = await supabase
     .from('crm_projects')
-    .select('id, parent_project_id, archived_at, subproject_status')
+    .select('id, parent_project_id, archived_at, subproject_status, project_status')
     .eq('organization_id', organizationId)
     .eq('id', parentProjectId)
     .is('archived_at', null)
@@ -93,7 +93,11 @@ export async function assertParentProjectExistsForOrg(
   if (parentRow.parent_project_id != null) {
     throw new Error('Target must be a root project.');
   }
-  if (parentRow.subproject_status === 'inactive') {
+  if (
+    parentRow.subproject_status === 'inactive' ||
+    parentRow.project_status === 'lost' ||
+    parentRow.project_status === 'cancelled'
+  ) {
     throw new Error('Parent project is inactive.');
   }
 }
@@ -241,6 +245,11 @@ async function insertCrmProjectForOrg(
       longitude: input.longitude,
       last_activity_at: now,
       lead_token: generateCrmProjectLeadToken(),
+      project_status: 'active',
+      loss_reason: null,
+      loss_reason_other: null,
+      status_changed_at: null,
+      status_changed_by: null,
     })
     .select('id, slug')
     .single();

@@ -40,34 +40,54 @@ function lifecycleWriteFields(lifecycle: PaginationTestLifecycle, nowIso: string
       return {
         priority: 'urgent',
         subproject_status: 'urgent',
+        project_status: 'active',
         completed_at: null,
         inactive_reason: null,
         inactive_at: null,
+        loss_reason: null,
+        loss_reason_other: null,
+        status_changed_at: null,
+        status_changed_by: null,
       };
     case 'normal':
       return {
         priority: 'normal',
         subproject_status: 'normal',
+        project_status: 'active',
         completed_at: null,
         inactive_reason: null,
         inactive_at: null,
+        loss_reason: null,
+        loss_reason_other: null,
+        status_changed_at: null,
+        status_changed_by: null,
       };
     case 'completed':
       return {
         priority: 'normal',
         subproject_status: 'completed',
+        project_status: 'completed',
         completed_at: nowIso,
         inactive_reason: null,
         inactive_at: null,
+        loss_reason: null,
+        loss_reason_other: null,
+        status_changed_at: nowIso,
+        status_changed_by: null,
       };
     case 'inactive':
       return {
         priority: 'normal',
         subproject_status: 'inactive',
+        project_status: 'lost',
         completed_at: null,
         inactive_reason: 'other',
         inactive_reason_custom: 'pagination test fixture',
         inactive_at: nowIso,
+        loss_reason: 'other',
+        loss_reason_other: 'pagination test fixture',
+        status_changed_at: nowIso,
+        status_changed_by: null,
       };
   }
 }

@@ -27,11 +27,12 @@ import {
 import { asCrmIndustry } from '@/domain/crm/industry';
 import {
   deriveCrmSubprojectStatus,
-  isCrmInactiveReason,
-  isCrmSubprojectStatus,
-  type CrmInactiveReason,
-  type CrmSubprojectStatus,
-} from '@/domain/crm/subprojectStatus';
+  isCrmLegacyInactiveReason,
+  isCrmLegacySubprojectStatus,
+  resolveCrmProjectStatusFieldsFromDb,
+  type CrmLossReason,
+  type CrmProjectStatus,
+} from '@/domain/crm/projectStatus';
 import {
   displayNameFromProfileParts,
   initialsFromPersonName,
@@ -83,6 +84,11 @@ export type DbCrmProjectRow = {
   inactive_reason_custom?: string | null;
   inactive_at?: string | null;
   inactive_by?: string | null;
+  project_status?: string | null;
+  loss_reason?: string | null;
+  loss_reason_other?: string | null;
+  status_changed_at?: string | null;
+  status_changed_by?: string | null;
   primary_photo_path?: string | null;
   latitude?: number | null;
   longitude?: number | null;
@@ -234,8 +240,11 @@ function asPriority(value: string): CrmPriority {
   return 'normal';
 }
 
-function asSubprojectStatus(value: string | null | undefined, row: DbCrmProjectRow): CrmSubprojectStatus {
-  if (value != null && isCrmSubprojectStatus(value)) {
+function asLegacySubprojectStatus(
+  value: string | null | undefined,
+  row: DbCrmProjectRow
+): string {
+  if (value != null && isCrmLegacySubprojectStatus(value)) {
     return value;
   }
   return deriveCrmSubprojectStatus({
@@ -244,9 +253,30 @@ function asSubprojectStatus(value: string | null | undefined, row: DbCrmProjectR
   });
 }
 
-function asInactiveReason(value: string | null | undefined): CrmInactiveReason | null {
-  if (value == null) return null;
-  return isCrmInactiveReason(value) ? value : null;
+function mapProjectStatusFields(row: DbCrmProjectRow): {
+  status: CrmProjectStatus;
+  lossReason: CrmLossReason | null;
+  lossReasonOther: string | null;
+  statusChangedAt: string | null;
+} {
+  const legacyStatus = asLegacySubprojectStatus(row.subproject_status, row);
+  const legacyReason =
+    row.inactive_reason != null && isCrmLegacyInactiveReason(row.inactive_reason)
+      ? row.inactive_reason
+      : row.inactive_reason ?? null;
+
+  return resolveCrmProjectStatusFieldsFromDb({
+    projectStatus: row.project_status,
+    lossReason: row.loss_reason,
+    lossReasonOther: row.loss_reason_other,
+    statusChangedAt: row.status_changed_at,
+    legacySubprojectStatus: legacyStatus,
+    legacyInactiveReason: legacyReason,
+    legacyInactiveReasonCustom: row.inactive_reason_custom ?? null,
+    legacyInactiveAt: row.inactive_at ?? null,
+    priority: asPriority(row.priority),
+    completedAt: row.completed_at,
+  });
 }
 
 function asWorkflowStatus(value: string): WorkflowTaskStatus {
@@ -422,6 +452,12 @@ export function mapDbProjectSummary(
     row.inactive_by != null
       ? (memberById.get(row.inactive_by) ?? mapProfileToTeamMemberRef(null, row.inactive_by))
       : null;
+  const statusChangedById = row.status_changed_by ?? row.inactive_by;
+  const statusChangedBy =
+    statusChangedById != null
+      ? (memberById.get(statusChangedById) ??
+        mapProfileToTeamMemberRef(null, statusChangedById))
+      : inactiveBy;
 
   return {
     id: row.id,
@@ -444,11 +480,8 @@ export function mapDbProjectSummary(
     primaryPhotoPath: row.primary_photo_path ?? null,
     ...mapDbProjectCoordinates(row),
     leadToken: row.lead_token,
-    subprojectStatus: asSubprojectStatus(row.subproject_status, row),
-    inactiveReason: asInactiveReason(row.inactive_reason),
-    inactiveReasonCustom: row.inactive_reason_custom ?? null,
-    inactiveAt: row.inactive_at ?? null,
-    inactiveBy,
+    ...mapProjectStatusFields(row),
+    statusChangedBy,
     customFields: {},
   };
 }
