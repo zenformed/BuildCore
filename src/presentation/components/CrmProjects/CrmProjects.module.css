@@ -355,7 +355,7 @@
 }
 
 .projectsListV2NavButton:hover:not(:disabled) {
-  background: var(--color-surface-muted, #f1f5f9);
+  background: var(--theme-surface-hover, var(--color-muted, #f1f5f9));
 }
 
 .projectsListV2NavButton:disabled {

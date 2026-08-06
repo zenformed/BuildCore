@@ -76,20 +76,23 @@ export function useCrmProjectsListV2Subprojects(input: {
   const searchParams = useSearchParams();
   const queryClient = useQueryClient();
 
+  const urlStateKey = searchParams.toString();
   const urlState = useMemo(
     () =>
       parseCrmProjectsListV2ChildrenUrlState(
-        new URLSearchParams(searchParams.toString()),
+        new URLSearchParams(urlStateKey),
         parentProjectId
       ),
-    [parentProjectId, searchParams]
+    [parentProjectId, urlStateKey]
   );
 
   const [searchInput, setSearchInputState] = useState(urlState.searchInput);
   const [filters, setFiltersState] = useState<CrmProjectsListFilters>(urlState.filters);
   const [limit, setLimitState] = useState<CrmProjectsListV2PageSize>(urlState.limit);
   const [cursor, setCursorState] = useState<string | null>(urlState.cursor);
-  const [pageIndex, setPageIndex] = useState(urlState.cursor == null ? 0 : null);
+  const [pageIndex, setPageIndex] = useState<number | null>(
+    urlState.pageIndex ?? (urlState.cursor == null ? 0 : null)
+  );
   const [debouncedSearch, setDebouncedSearch] = useState(urlState.searchInput);
   const skipUrlWriteRef = useRef(false);
 
@@ -100,7 +103,12 @@ export function useCrmProjectsListV2Subprojects(input: {
     setFiltersState(urlState.filters);
     setLimitState(urlState.limit);
     setCursorState(urlState.cursor);
-    setPageIndex(urlState.cursor == null ? 0 : null);
+    setPageIndex((current) => {
+      if (urlState.pageIndex != null) return urlState.pageIndex;
+      if (urlState.cursor == null) return 0;
+      // Keep the locally tracked index when the URL has a cursor but no page.
+      return current;
+    });
   }, [urlState]);
 
   useEffect(() => {
@@ -139,6 +147,7 @@ export function useCrmProjectsListV2Subprojects(input: {
       filters,
       limit,
       cursor,
+      pageIndex,
     });
     const next = mergeCrmProjectsListV2UrlSearchParams(
       new URLSearchParams(searchParams.toString()),
@@ -158,6 +167,7 @@ export function useCrmProjectsListV2Subprojects(input: {
     debouncedSearch,
     filters,
     limit,
+    pageIndex,
     pathname,
     router,
     searchParams,
@@ -258,11 +268,15 @@ export function useCrmProjectsListV2Subprojects(input: {
   }, [summariesQuery.data?.byProjectId]);
 
   const totalCount = countQuery.data?.totalCount ?? null;
+  const hasNextPage = pageQuery.data?.pageInfo.hasNextPage ?? false;
+  const hasPreviousPage =
+    pageQuery.data?.pageInfo.hasPreviousPage ?? cursor != null;
   const rangeLabel = formatCrmProjectsListV2Range({
     pageItemCount: items.length,
     limit,
     totalCount,
-    hasPreviousPage: pageQuery.data?.pageInfo.hasPreviousPage ?? false,
+    hasPreviousPage,
+    hasNextPage,
     pageIndex,
   });
 
@@ -368,8 +382,8 @@ export function useCrmProjectsListV2Subprojects(input: {
     isLoading: pageQuery.isLoading && pageQuery.data == null,
     isFetchingPage: pageQuery.isFetching,
     isSummariesLoading: summariesQuery.isLoading || summariesQuery.isFetching,
-    hasNextPage: pageQuery.data?.pageInfo.hasNextPage ?? false,
-    hasPreviousPage: pageQuery.data?.pageInfo.hasPreviousPage ?? cursor != null,
+    hasNextPage,
+    hasPreviousPage,
     goNextPage,
     goPreviousPage,
     refetch,

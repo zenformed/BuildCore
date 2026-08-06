@@ -82,16 +82,19 @@ export function useCrmProjectsListV2Dashboard(input: {
   const searchParams = useSearchParams();
   const queryClient = useQueryClient();
 
+  const urlStateKey = searchParams.toString();
   const urlState = useMemo(
-    () => parseCrmProjectsListV2UrlState(new URLSearchParams(searchParams.toString())),
-    [searchParams]
+    () => parseCrmProjectsListV2UrlState(new URLSearchParams(urlStateKey)),
+    [urlStateKey]
   );
 
   const [searchInput, setSearchInputState] = useState(urlState.searchInput);
   const [filters, setFiltersState] = useState<CrmProjectsListFilters>(urlState.filters);
   const [limit, setLimitState] = useState<CrmProjectsListV2PageSize>(urlState.limit);
   const [cursor, setCursorState] = useState<string | null>(urlState.cursor);
-  const [pageIndex, setPageIndex] = useState(urlState.cursor == null ? 0 : null);
+  const [pageIndex, setPageIndex] = useState<number | null>(
+    urlState.pageIndex ?? (urlState.cursor == null ? 0 : null)
+  );
   const [debouncedSearch, setDebouncedSearch] = useState(urlState.searchInput);
   const [baselineCount, setBaselineCount] = useState<number | null>(null);
   const [showNewProjectsBanner, setShowNewProjectsBanner] = useState(false);
@@ -105,7 +108,13 @@ export function useCrmProjectsListV2Dashboard(input: {
     setFiltersState(urlState.filters);
     setLimitState(urlState.limit);
     setCursorState(urlState.cursor);
-    setPageIndex(urlState.cursor == null ? 0 : null);
+    setPageIndex((current) => {
+      if (urlState.pageIndex != null) return urlState.pageIndex;
+      if (urlState.cursor == null) return 0;
+      // Keep the locally tracked index when the URL has a cursor but no page
+      // (avoids wiping after Next before `page` is written / on legacy links).
+      return current;
+    });
   }, [urlState]);
 
   useEffect(() => {
@@ -145,6 +154,7 @@ export function useCrmProjectsListV2Dashboard(input: {
       filters,
       limit,
       cursor,
+      pageIndex,
     });
     const nextQs = next.toString();
     const currentQs = searchParams.toString();
@@ -161,6 +171,7 @@ export function useCrmProjectsListV2Dashboard(input: {
     debouncedSearch,
     filters,
     limit,
+    pageIndex,
     pathname,
     router,
     searchParams,
@@ -268,11 +279,15 @@ export function useCrmProjectsListV2Dashboard(input: {
   }, [items, summariesQuery.data?.byProjectId]);
 
   const totalCount = countQuery.data?.totalCount ?? null;
+  const hasNextPage = pageQuery.data?.pageInfo.hasNextPage ?? false;
+  const hasPreviousPage =
+    pageQuery.data?.pageInfo.hasPreviousPage ?? cursor != null;
   const rangeLabel = formatCrmProjectsListV2Range({
     pageItemCount: items.length,
     limit,
     totalCount,
-    hasPreviousPage: pageQuery.data?.pageInfo.hasPreviousPage ?? false,
+    hasPreviousPage,
+    hasNextPage,
     pageIndex,
   });
 
@@ -399,8 +414,8 @@ export function useCrmProjectsListV2Dashboard(input: {
     isLoading: pageQuery.isLoading && pageQuery.data == null,
     isFetchingPage: pageQuery.isFetching,
     isSummariesLoading: summariesQuery.isLoading || summariesQuery.isFetching,
-    hasNextPage: pageQuery.data?.pageInfo.hasNextPage ?? false,
-    hasPreviousPage: pageQuery.data?.pageInfo.hasPreviousPage ?? cursor != null,
+    hasNextPage,
+    hasPreviousPage,
     goNextPage,
     goPreviousPage,
     showNewProjectsBanner,

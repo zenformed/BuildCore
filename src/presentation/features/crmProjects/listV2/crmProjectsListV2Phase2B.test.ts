@@ -41,7 +41,7 @@ describe('projectsListV2 Phase 2B Subprojects tab contracts', () => {
     );
   });
 
-  it('children URL round-trips search, filters, limit, and cursor', () => {
+  it('children URL round-trips search, filters, limit, cursor, and page index', () => {
     const params = buildCrmProjectsListV2UrlSearchParams({
       searchInput: 'oak',
       filters: {
@@ -52,11 +52,14 @@ describe('projectsListV2 Phase 2B Subprojects tab contracts', () => {
       },
       limit: 25,
       cursor: 'opaque-child-cursor',
+      pageIndex: 1,
     });
+    assert.equal(params.get('page'), '2');
     const parsed = parseCrmProjectsListV2ChildrenUrlState(params, PARENT_ID);
     assert.equal(parsed.searchInput, 'oak');
     assert.equal(parsed.limit, 25);
     assert.equal(parsed.cursor, 'opaque-child-cursor');
+    assert.equal(parsed.pageIndex, 1);
     assert.equal(parsed.request.view, 'children_of_parent');
     assert.equal(parsed.request.parentProjectId, PARENT_ID);
     assert.deepEqual(parsed.filters.stageSlugs, ['scheduled']);
@@ -135,9 +138,21 @@ describe('projectsListV2 Phase 2B Subprojects tab contracts', () => {
         limit: 25,
         totalCount: 29,
         hasPreviousPage: false,
+        hasNextPage: true,
         pageIndex: 0,
       }),
       '1–25 of 29'
+    );
+    assert.equal(
+      formatCrmProjectsListV2Range({
+        pageItemCount: 4,
+        limit: 25,
+        totalCount: 29,
+        hasPreviousPage: true,
+        hasNextPage: false,
+        pageIndex: null,
+      }),
+      '26–29 of 29'
     );
   });
 

@@ -41,13 +41,56 @@ describe('projectsListV2 Phase 1B dashboard contracts', () => {
         limit: 50,
         totalCount: 6806,
         hasPreviousPage: true,
+        hasNextPage: true,
         pageIndex: 2,
       }),
       '101–150 of 6,806'
     );
   });
 
-  it('URL round-trips search, filters, limit, and cursor', () => {
+  it('formats first page as 1–25 of 29 without needing pageIndex', () => {
+    assert.equal(
+      formatCrmProjectsListV2Range({
+        pageItemCount: 25,
+        limit: 25,
+        totalCount: 29,
+        hasPreviousPage: false,
+        hasNextPage: true,
+        pageIndex: null,
+      }),
+      '1–25 of 29'
+    );
+  });
+
+  it('formats partial last page as 26–29 of 29 from total + item count', () => {
+    assert.equal(
+      formatCrmProjectsListV2Range({
+        pageItemCount: 4,
+        limit: 25,
+        totalCount: 29,
+        hasPreviousPage: true,
+        hasNextPage: false,
+        pageIndex: null,
+      }),
+      '26–29 of 29'
+    );
+  });
+
+  it('falls back to page-item count only for unknown middle pages', () => {
+    assert.equal(
+      formatCrmProjectsListV2Range({
+        pageItemCount: 25,
+        limit: 25,
+        totalCount: 100,
+        hasPreviousPage: true,
+        hasNextPage: true,
+        pageIndex: null,
+      }),
+      '25 of 100'
+    );
+  });
+
+  it('URL round-trips search, filters, limit, cursor, and page index', () => {
     const params = buildCrmProjectsListV2UrlSearchParams({
       searchInput: 'acme',
       filters: {
@@ -58,14 +101,29 @@ describe('projectsListV2 Phase 1B dashboard contracts', () => {
       },
       limit: 25,
       cursor: 'opaque-cursor',
+      pageIndex: 1,
     });
+    assert.equal(params.get('page'), '2');
     const parsed = parseCrmProjectsListV2UrlState(params);
     assert.equal(parsed.searchInput, 'acme');
     assert.equal(parsed.limit, 25);
     assert.equal(parsed.cursor, 'opaque-cursor');
+    assert.equal(parsed.pageIndex, 1);
     assert.deepEqual(parsed.filters.stageSlugs, ['scheduled']);
     assert.deepEqual(parsed.filters.priorities, ['urgent']);
     assert.deepEqual(parsed.filters.workflowTaskStatuses, ['pending']);
+  });
+
+  it('cursor without page param yields unknown pageIndex (legacy deep link)', () => {
+    const params = buildCrmProjectsListV2UrlSearchParams({
+      searchInput: '',
+      filters: EMPTY_CRM_PROJECTS_LIST_FILTERS,
+      limit: 25,
+      cursor: 'opaque-cursor',
+    });
+    assert.equal(params.get('page'), null);
+    const parsed = parseCrmProjectsListV2UrlState(params);
+    assert.equal(parsed.pageIndex, null);
   });
 
   it('search and filter changes produce new fingerprints (page reset)', () => {

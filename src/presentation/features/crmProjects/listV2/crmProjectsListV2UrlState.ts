@@ -20,8 +20,26 @@ export type CrmProjectsListV2UrlState = {
   readonly filters: CrmProjectsListFilters;
   readonly limit: CrmProjectsListV2PageSize;
   readonly cursor: string | null;
+  /**
+   * 0-based page index for range chrome (`1–25 of N`).
+   * Null when a cursor is present without a usable `page` param (legacy deep link).
+   */
+  readonly pageIndex: number | null;
   readonly request: CrmProjectsListV2NormalizedRequest;
 };
+
+/** Parse 1-based `page` URL param into a 0-based index. */
+export function parseCrmProjectsListV2PageIndexParam(
+  searchParams: URLSearchParams,
+  cursor: string | null
+): number | null {
+  if (cursor == null) return 0;
+  const raw = searchParams.get('page');
+  if (raw == null || raw.trim() === '') return null;
+  const pageOneBased = Number(raw.trim());
+  if (!Number.isInteger(pageOneBased) || pageOneBased < 1) return null;
+  return pageOneBased - 1;
+}
 
 function splitCsv(raw: string | null): string[] {
   if (raw == null || raw.trim() === '') return [];
@@ -69,6 +87,7 @@ export function parseCrmProjectsListV2UrlState(
   const cursorRaw = searchParams.get('cursor');
   const cursor =
     cursorRaw != null && cursorRaw.trim() !== '' ? cursorRaw.trim() : null;
+  const pageIndex = parseCrmProjectsListV2PageIndexParam(searchParams, cursor);
 
   return {
     searchInput,
@@ -82,6 +101,7 @@ export function parseCrmProjectsListV2UrlState(
     },
     limit: request.limit,
     cursor,
+    pageIndex,
     request,
   };
 }
@@ -91,6 +111,8 @@ export function buildCrmProjectsListV2UrlSearchParams(input: {
   readonly filters: CrmProjectsListFilters;
   readonly limit: CrmProjectsListV2PageSize;
   readonly cursor: string | null;
+  /** 0-based; written as 1-based `page` when > 0 and a cursor is present. */
+  readonly pageIndex?: number | null;
   readonly sort?: string;
 }): URLSearchParams {
   const params = new URLSearchParams();
@@ -113,6 +135,13 @@ export function buildCrmProjectsListV2UrlSearchParams(input: {
   }
   if (input.cursor != null && input.cursor !== '') {
     params.set('cursor', input.cursor);
+    if (
+      input.pageIndex != null &&
+      Number.isInteger(input.pageIndex) &&
+      input.pageIndex > 0
+    ) {
+      params.set('page', String(input.pageIndex + 1));
+    }
   }
   return params;
 }
@@ -145,6 +174,7 @@ export const CRM_PROJECTS_LIST_V2_URL_PARAM_KEYS = [
   'search',
   'limit',
   'cursor',
+  'page',
   'sort',
   'stageSlugs',
   'priorities',
