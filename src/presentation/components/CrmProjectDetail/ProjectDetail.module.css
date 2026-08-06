@@ -11068,9 +11068,9 @@
 
 /* Same as .budgetTableHeader > .workflowSelectHeader — no table-grid -0.5rem pull. */
 .documentsListHeader > .workflowSelectHeader {
-  flex: 0 0 1.125rem;
-  width: 1.125rem;
-  margin-inline-end: 0;
+  flex: 0 0 1.375rem;
+  width: 1.375rem;
+  margin-inline-end: 0.5rem;
 }
 
 /* Same as .workflowPrimaryHeader — caret already has margin-inline-end: 0.875rem. */
@@ -11080,31 +11080,8 @@
   gap: 0;
 }
 
-.documentsListHeader .workflowSelectHeader :global(input) {
-  background: #fff;
-  border: 1.5px solid #94a3b8;
-}
-
-.documentsListHeader .workflowSelectHeader :global(input:checked),
-.documentsListHeader .workflowSelectHeader :global(input:indeterminate) {
-  background: var(--color-primary, #2563eb);
-  border-color: #94a3b8;
-  box-shadow: none;
-}
-
 :global([data-theme='dark']) .documentsListHeader {
   color: #94a3b8;
-}
-
-:global([data-theme='dark']) .documentsListHeader .workflowSelectHeader :global(input) {
-  background: #1a1d26;
-  border-color: #6b7280;
-}
-
-:global([data-theme='dark']) .documentsListHeader .workflowSelectHeader :global(input:checked),
-:global([data-theme='dark']) .documentsListHeader .workflowSelectHeader :global(input:indeterminate) {
-  background: var(--color-primary, #2563eb);
-  border-color: var(--color-primary, #2563eb);
 }
 
 .docList {
@@ -11238,8 +11215,11 @@
 }
 
 .docGalleryDayHeading {
-  display: flex;
+  /* Shrink-wrap to circle + label so hover doesn’t cover the full gallery row. */
+  display: inline-flex;
   align-items: center;
+  width: fit-content;
+  max-width: 100%;
   min-height: 1.75rem;
   margin: 0 0 0.5rem;
 }
@@ -11247,6 +11227,8 @@
 @media (max-width: 767px) {
   .docGalleryDayHeading {
     position: relative;
+    display: flex;
+    width: 100%;
     justify-content: center;
     cursor: pointer;
   }
@@ -11487,6 +11469,35 @@
   font-size: 0.75rem;
   font-weight: 700;
   line-height: 1;
+}
+
+/* Documents header select-all: same circle as tiles/days, muted chrome (not over photo). */
+.documentsListHeaderSelectCircle {
+  width: 1.375rem;
+  height: 1.375rem;
+  border-width: 2px;
+  border-color: #94a3b8;
+  background: transparent;
+  box-shadow: none;
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.documentsListHeaderSelectCircle.docGallerySelectCircle_checked {
+  background: var(--color-primary, #2563eb);
+  border-color: var(--color-primary, #2563eb);
+  color: #fff;
+}
+
+:global([data-theme='dark']) .documentsListHeaderSelectCircle {
+  border-color: #6b7280;
+  background: transparent;
+}
+
+:global([data-theme='dark'])
+  .documentsListHeaderSelectCircle.docGallerySelectCircle_checked {
+  background: var(--color-primary, #2563eb);
+  border-color: var(--color-primary, #2563eb);
 }
 
 .docGalleryPreview {
