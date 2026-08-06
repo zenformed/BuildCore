@@ -44,7 +44,7 @@ import { useBuildCoreWorkflowTaskAccess } from '@/presentation/providers/BuildCo
 import { useBuildCorePipelineStages } from '@/presentation/providers/BuildCorePipelineStagesProvider';
 import { useDashboardMobileLayout } from '@/presentation/features/crmProjects/useDashboardMobileLayout';
 import { DetailPanelHeaderActions } from './DetailPanelHeaderActions';
-import { DetailPanelSectionRefresh } from './DetailPanelSectionRefresh';
+import { DetailPanelHeaderMoreMenu } from './DetailPanelHeaderMoreMenu';
 import { DetailPanelSectionSearch } from './DetailPanelSectionSearch';
 import { FolderTabToolbarPortal } from '@/presentation/features/crmProjectDetail/folderTabToolbarContext';
 import {
@@ -57,6 +57,8 @@ import { workflowStageAccentColor } from '@/presentation/features/crmProjectDeta
 import { WorkflowTaskStageAddButton } from './WorkflowTaskStageAddButton';
 import { CrmDirectUploadStatusHost } from './CrmDirectUploadStatus';
 import { WorkflowTasksBatchCompleteButton } from './WorkflowTasksBatchCompleteButton';
+import { resolveWorkflowTasksBatchCompleteState } from './workflowTasksBatchCompleteState';
+import projectsStyles from '@/presentation/components/CrmProjects/CrmProjects.module.css';
 import {
   WorkflowTasksViewToggleButton,
   type WorkflowTaskViewMode,
@@ -376,8 +378,19 @@ export function WorkflowTasksTable({
     .filter(Boolean)
     .join(' ');
 
+  const batchCompleteState =
+    canCreate && groupByStage
+      ? resolveWorkflowTasksBatchCompleteState({
+          workflowTasks: project.workflowTasks,
+          manualStageCompletions: project.manualStageCompletions,
+          stages: catalog,
+          disabled: markStageToggleBusy,
+          busy: markStageToggleBusy,
+        })
+      : null;
+  /** Mobile keeps the icon checkmark; desktop moves it into the ⋮ menu. */
   const batchCompleteLeading =
-    canCreate && groupByStage ? (
+    isMobileLayout && batchCompleteState != null ? (
       <WorkflowTasksBatchCompleteButton
         workflowTasks={project.workflowTasks}
         manualStageCompletions={project.manualStageCompletions}
@@ -443,15 +456,6 @@ export function WorkflowTasksTable({
     />
   );
 
-  const refreshButton = (
-    <DetailPanelSectionRefresh
-      sectionLabel={content.projectDetail.sections.workflow}
-      onRefresh={onRefreshTasks ?? refreshWorkflowTasks}
-      onError={(message) => setToast({ kind: 'error', message })}
-    />
-  );
-  const showPanelRefresh = true;
-
   const addButton = canCreate ? (
     <WorkflowTaskStageAddButton onSelectStage={handleSelectStage} />
   ) : (
@@ -459,6 +463,24 @@ export function WorkflowTasksTable({
       <CrmDirectUploadStatusHost />
     </div>
   );
+  const desktopMoreMenu = !isMobileLayout ? (
+    <DetailPanelHeaderMoreMenu
+      completeAction={
+        batchCompleteState != null
+          ? {
+              label: batchCompleteState.title,
+              disabled: !batchCompleteState.canClick,
+              onClick: () => setBatchCompleteConfirmOpen(true),
+            }
+          : null
+      }
+      refreshAction={{
+        sectionLabel: content.projectDetail.sections.workflow,
+        onRefresh: onRefreshTasks ?? refreshWorkflowTasks,
+        onError: (message) => setToast({ kind: 'error', message }),
+      }}
+    />
+  ) : null;
   const mobileFloatingAddButton = canCreate ? (
     <WorkflowTaskStageAddButton onSelectStage={handleSelectStage} mobileFloating />
   ) : null;
@@ -624,9 +646,10 @@ export function WorkflowTasksTable({
       {filterMenu}
       {viewToggleButton}
       {searchInput}
-      {batchCompleteLeading}
-      {showPanelRefresh ? refreshButton : null}
-      {addButton}
+      <div className={projectsStyles.desktopCreateActions}>
+        {addButton}
+        {desktopMoreMenu}
+      </div>
     </DetailPanelHeaderActions>
   );
 

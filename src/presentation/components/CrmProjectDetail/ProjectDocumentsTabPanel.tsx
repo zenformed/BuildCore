@@ -36,11 +36,12 @@ import { useBuildCoreProjectSectionAccess } from '@/presentation/providers/Build
 import { resolveCrmDocumentDownloadPermissionDomain } from '@/presentation/features/crmProjectDetail/crmDocumentDownloadPermission';
 import { DetailPanelHeader } from './DetailPanelHeader';
 import { DetailPanelHeaderActions } from './DetailPanelHeaderActions';
+import { DetailPanelHeaderMoreMenu } from './DetailPanelHeaderMoreMenu';
 import { FolderTabToolbarPortal } from '@/presentation/features/crmProjectDetail/folderTabToolbarContext';
-import { DetailPanelSectionRefresh } from './DetailPanelSectionRefresh';
 import { DetailPanelSectionSearch } from './DetailPanelSectionSearch';
 import { DocumentPanelFilterMenu } from './DocumentPanelFilterMenu';
 import { DocumentPanelUploadButton } from './DocumentPanelUploadButton';
+import projectsStyles from '@/presentation/components/CrmProjects/CrmProjects.module.css';
 import { DocumentsGallery } from './DocumentsGallery';
 import { DocumentsListHeaderRow } from './DocumentsListHeaderRow';
 import { DocumentsViewToggleButton } from './DocumentsViewToggleButton';
@@ -305,7 +306,7 @@ function ProjectDocumentsTabPanelV1({
     <DocumentsViewToggleButton
       viewMode={viewMode}
       onToggle={handleToggleViewMode}
-      variant={isMobileLayout ? 'ghost' : 'default'}
+      variant="ghost"
     />
   );
 
@@ -330,20 +331,27 @@ function ProjectDocumentsTabPanelV1({
     />
   );
 
-  const refreshButton = (
-    <DetailPanelSectionRefresh
-      sectionLabel={content.projectDetail.sections.documents}
-      onRefresh={handleRefresh}
-      onError={handleError}
-    />
-  );
-
   const uploadButton = (
     <DocumentPanelUploadButton
       projectSlug={project.summary.slug}
       onRefresh={handleRefresh}
       onError={handleError}
     />
+  );
+  const desktopMoreMenu = !isMobileLayout ? (
+    <DetailPanelHeaderMoreMenu
+      refreshAction={{
+        sectionLabel: content.projectDetail.sections.documents,
+        onRefresh: handleRefresh,
+        onError: handleError,
+      }}
+    />
+  ) : null;
+  const desktopCreateActions = (
+    <div className={projectsStyles.desktopCreateActions}>
+      {uploadButton}
+      {desktopMoreMenu}
+    </div>
   );
   const mobileFloatingAddButton = (
     <DocumentPanelUploadButton
@@ -392,8 +400,7 @@ function ProjectDocumentsTabPanelV1({
               {filterGhost}
               {viewToggle}
               {searchInput}
-              {refreshButton}
-              {uploadButton}
+              {desktopCreateActions}
             </DetailPanelHeaderActions>
           </FolderTabToolbarPortal>
         ) : isMobileLayout ? (
@@ -409,7 +416,7 @@ function ProjectDocumentsTabPanelV1({
             <DetailPanelHeaderActions>
               {viewToggle}
               {searchInput}
-              {uploadButton}
+              {desktopCreateActions}
             </DetailPanelHeaderActions>
           </DetailPanelHeader>
         )}

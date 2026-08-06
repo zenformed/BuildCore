@@ -8,11 +8,7 @@ import type {
   CrmWorkflowTask,
   PipelineStage,
 } from '@/domain/crm';
-import {
-  areAllWorkflowStagesComplete,
-  listEmptyIncompleteWorkflowStages,
-} from '@/domain/crm';
-import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
+import { resolveWorkflowTasksBatchCompleteState } from './workflowTasksBatchCompleteState';
 import styles from './ProjectDetail.module.css';
 
 export type WorkflowTasksBatchCompleteButtonProps = {
@@ -32,25 +28,17 @@ export function WorkflowTasksBatchCompleteButton({
   busy = false,
   onClick,
 }: WorkflowTasksBatchCompleteButtonProps): ReactElement {
-  const wf = content.projectDetail.workflow;
-  const completionInput = useMemo(
-    () => ({ workflowTasks, manualStageCompletions, stages }),
-    [manualStageCompletions, stages, workflowTasks]
+  const { canClick, title, allComplete } = useMemo(
+    () =>
+      resolveWorkflowTasksBatchCompleteState({
+        workflowTasks,
+        manualStageCompletions,
+        stages,
+        disabled,
+        busy,
+      }),
+    [busy, disabled, manualStageCompletions, stages, workflowTasks]
   );
-  const allComplete = useMemo(
-    () => areAllWorkflowStagesComplete(completionInput),
-    [completionInput]
-  );
-  const emptyIncompleteStages = useMemo(
-    () => listEmptyIncompleteWorkflowStages(completionInput),
-    [completionInput]
-  );
-  const canClick = !allComplete && emptyIncompleteStages.length > 0 && !disabled && !busy;
-  const title = allComplete
-    ? wf.markAllEmptyStagesCompleteAllDone
-    : emptyIncompleteStages.length === 0
-      ? wf.markAllEmptyStagesCompleteNone
-      : wf.markAllEmptyStagesCompleteAction;
 
   return (
     <button

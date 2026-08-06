@@ -25,10 +25,11 @@ import { CrmProjectsFilterMenu } from '@/presentation/components/CrmProjects/Crm
 import { DetailPanelHeader } from './DetailPanelHeader';
 import { DetailPanelHeaderActions } from './DetailPanelHeaderActions';
 import { DetailPanelHeaderButton } from './DetailPanelHeaderButton';
-import { DetailPanelSectionRefresh } from './DetailPanelSectionRefresh';
+import { DetailPanelHeaderMoreMenu } from './DetailPanelHeaderMoreMenu';
 import { DetailPanelSectionSearch } from './DetailPanelSectionSearch';
 import { FolderTabToolbarPortal } from '@/presentation/features/crmProjectDetail/folderTabToolbarContext';
 import { CrmDirectUploadStatusHost } from './CrmDirectUploadStatus';
+import projectsStyles from '@/presentation/components/CrmProjects/CrmProjects.module.css';
 import {
   WorkflowMobileHideWhenBulkActive,
   WorkflowMobileSearchToolsRow,
@@ -261,14 +262,6 @@ export function PaymentsRail({
     />
   );
 
-  const refreshButton = (
-    <DetailPanelSectionRefresh
-      sectionLabel={paymentsPanelTitle}
-      onRefresh={onRefreshTasks ?? refreshWorkflowTasks}
-      onError={(message) => setToast({ kind: 'error', message })}
-    />
-  );
-
   const addButton = canCreate ? (
     <div className={styles.detailPanelHeaderBtnWrap}>
       <DetailPanelHeaderButton
@@ -281,6 +274,21 @@ export function PaymentsRail({
   ) : (
     <div className={styles.detailPanelHeaderBtnWrap}>
       <CrmDirectUploadStatusHost />
+    </div>
+  );
+  const desktopMoreMenu = !isMobileLayout ? (
+    <DetailPanelHeaderMoreMenu
+      refreshAction={{
+        sectionLabel: paymentsPanelTitle,
+        onRefresh: onRefreshTasks ?? refreshWorkflowTasks,
+        onError: (message) => setToast({ kind: 'error', message }),
+      }}
+    />
+  ) : null;
+  const desktopCreateActions = (
+    <div className={projectsStyles.desktopCreateActions}>
+      {addButton}
+      {desktopMoreMenu}
     </div>
   );
   const mobileFloatingAddButton = canCreate ? (
@@ -422,8 +430,7 @@ export function PaymentsRail({
             <DetailPanelHeaderActions>
               {statusFilterGhost}
               {searchInput}
-              {refreshButton}
-              {addButton}
+              {desktopCreateActions}
             </DetailPanelHeaderActions>
           </FolderTabToolbarPortal>
         ) : isMobileLayout ? (
@@ -438,7 +445,7 @@ export function PaymentsRail({
           <DetailPanelHeader title={paymentsPanelTitle} titleId="payments-rail-heading">
             <DetailPanelHeaderActions>
               {searchInput}
-              {addButton}
+              {desktopCreateActions}
             </DetailPanelHeaderActions>
           </DetailPanelHeader>
         )}

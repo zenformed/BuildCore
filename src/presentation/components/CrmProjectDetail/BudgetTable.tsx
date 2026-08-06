@@ -28,10 +28,11 @@ import { BudgetTableBulkActions } from './BudgetTableBulkActions';
 import { DetailPanelHeader } from './DetailPanelHeader';
 import { DetailPanelHeaderActions } from './DetailPanelHeaderActions';
 import { DetailPanelHeaderButton } from './DetailPanelHeaderButton';
+import { DetailPanelHeaderMoreMenu } from './DetailPanelHeaderMoreMenu';
 import { FolderTabToolbarPortal } from '@/presentation/features/crmProjectDetail/folderTabToolbarContext';
 import { CrmDirectUploadStatusHost } from './CrmDirectUploadStatus';
-import { DetailPanelSectionRefresh } from './DetailPanelSectionRefresh';
 import { DetailPanelSectionSearch } from './DetailPanelSectionSearch';
+import projectsStyles from '@/presentation/components/CrmProjects/CrmProjects.module.css';
 import {
   BudgetMobileHideWhenBulkActive,
   BudgetMobileSelectedFloatingPill,
@@ -218,14 +219,6 @@ export function BudgetTable({
     />
   );
 
-  const refreshButton = (
-    <DetailPanelSectionRefresh
-      sectionLabel={b.tableTitle}
-      onRefresh={refreshBudgetSection}
-      onError={(message) => setToast({ kind: 'error', message })}
-    />
-  );
-
   const mobileFloatingAddButton = canCreate ? (
     <button
       type="button"
@@ -242,12 +235,6 @@ export function BudgetTable({
       + Create
     </button>
   ) : null;
-  const desktopUploadHost = (
-    <div className={styles.detailPanelHeaderBtnWrap}>
-      <CrmDirectUploadStatusHost />
-    </div>
-  );
-
   const filterCaret = (
     <BudgetCategoryFilterMenu
       filters={filters}
@@ -266,18 +253,41 @@ export function BudgetTable({
     />
   );
 
+  /** Nest upload host with + (like Payments) so it doesn’t widen the right-aligned toolbar. */
   const desktopAddButton = canCreate ? (
-    <DetailPanelHeaderButton
-      variant="add"
-      disabled={draftOpen}
-      title={b.addItem}
-      onClick={() => {
-        guardProjectEdit(() => {
-          setDraftOpen(true);
-        });
+    <div className={styles.detailPanelHeaderBtnWrap}>
+      <DetailPanelHeaderButton
+        variant="add"
+        disabled={draftOpen}
+        title={b.addItem}
+        onClick={() => {
+          guardProjectEdit(() => {
+            setDraftOpen(true);
+          });
+        }}
+      />
+      <CrmDirectUploadStatusHost />
+    </div>
+  ) : (
+    <div className={styles.detailPanelHeaderBtnWrap}>
+      <CrmDirectUploadStatusHost />
+    </div>
+  );
+  const desktopMoreMenu = !isMobileLayout ? (
+    <DetailPanelHeaderMoreMenu
+      refreshAction={{
+        sectionLabel: b.tableTitle,
+        onRefresh: refreshBudgetSection,
+        onError: (message) => setToast({ kind: 'error', message }),
       }}
     />
   ) : null;
+  const desktopCreateActions = (
+    <div className={projectsStyles.desktopCreateActions}>
+      {desktopAddButton}
+      {desktopMoreMenu}
+    </div>
+  );
 
   const mobileSearchTrailingActions = (
     <div className={styles.workflowMobileSearchActions}>
@@ -321,9 +331,7 @@ export function BudgetTable({
             <DetailPanelHeaderActions>
               {filterGhost}
               {searchInput}
-              {refreshButton}
-              {desktopAddButton}
-              {desktopUploadHost}
+              {desktopCreateActions}
             </DetailPanelHeaderActions>
           </FolderTabToolbarPortal>
         ) : isMobileLayout ? (
@@ -341,7 +349,7 @@ export function BudgetTable({
           <DetailPanelHeader title={b.tableTitle} titleId="budget-table-heading">
             <DetailPanelHeaderActions>
               {searchInput}
-              {desktopUploadHost}
+              {desktopCreateActions}
             </DetailPanelHeaderActions>
           </DetailPanelHeader>
         )}

@@ -16,7 +16,7 @@ export type DocumentsViewToggleButtonProps = {
 export function DocumentsViewToggleButton({
   viewMode,
   onToggle,
-  variant = 'default',
+  variant = 'ghost',
 }: DocumentsViewToggleButtonProps): ReactElement {
   const copy = content.projectDetail.documents.viewMode;
   const switchToGallery = viewMode === 'list';
