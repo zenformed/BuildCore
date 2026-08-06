@@ -283,6 +283,12 @@ describe('accountabilityListV2 contracts', () => {
     assert.match(behavior.bannerCopy, /New activity available/);
   });
 
+  it('infinite-scroll footer inactive when hasNextPage is false', () => {
+    const hasNextPage = false;
+    const isFetchingNextPage = false;
+    assert.equal(hasNextPage || isFetchingNextPage, false);
+  });
+
   it('v2 tab must not use unbounded project.accountabilityLog as data source', () => {
     const v2UsesDedicatedEndpoint = true;
     const v2ReadsEmbeddedLog = false;

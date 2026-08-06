@@ -11,6 +11,7 @@ import { DetailPanelHeader } from './DetailPanelHeader';
 import { DetailPanelHeaderActions } from './DetailPanelHeaderActions';
 import { DetailPanelSectionRefresh } from './DetailPanelSectionRefresh';
 import { DetailPanelSectionSearch } from './DetailPanelSectionSearch';
+import { ListV2InfiniteScrollFooter } from '@/presentation/components/crmShared/ListV2InfiniteScrollFooter';
 import {
   AccountabilityLogMobileList,
   AccountabilityLogTable,
@@ -65,6 +66,16 @@ export function ProjectAccountabilityContentV2({
     </DetailPanelHeaderActions>
   );
 
+  const infiniteScrollFooter = (
+    <ListV2InfiniteScrollFooter
+      hasNextPage={list.hasNextPage}
+      isFetchingNextPage={list.isFetchingNextPage}
+      onFetchNextPage={list.loadMore}
+      loadingLabel={acc.loadingMore}
+      loadMoreLabel={acc.loadMore}
+    />
+  );
+
   const body = (() => {
     if (list.isLoading) {
       return <p className={styles.subtitle}>{acc.loading}</p>;
@@ -79,18 +90,7 @@ export function ProjectAccountabilityContentV2({
       return (
         <>
           <AccountabilityLogMobileList entries={list.entries} stages={stageCatalog} />
-          {list.hasNextPage ? (
-            <div className={styles.accountabilityLoadMoreWrap}>
-              <button
-                type="button"
-                className={styles.accountabilityLoadMoreButton}
-                disabled={list.isFetchingNextPage}
-                onClick={list.loadMore}
-              >
-                {list.isFetchingNextPage ? acc.loadingMore : acc.loadMore}
-              </button>
-            </div>
-          ) : null}
+          {infiniteScrollFooter}
         </>
       );
     }
@@ -99,18 +99,7 @@ export function ProjectAccountabilityContentV2({
         <div className={styles.accountabilityPageTableScroll}>
           <AccountabilityLogTable entries={list.entries} layout="modal" stages={stageCatalog} />
         </div>
-        {list.hasNextPage ? (
-          <div className={styles.accountabilityLoadMoreWrap}>
-            <button
-              type="button"
-              className={styles.accountabilityLoadMoreButton}
-              disabled={list.isFetchingNextPage}
-              onClick={list.loadMore}
-            >
-              {list.isFetchingNextPage ? acc.loadingMore : acc.loadMore}
-            </button>
-          </div>
-        ) : null}
+        {infiniteScrollFooter}
       </div>
     );
   })();

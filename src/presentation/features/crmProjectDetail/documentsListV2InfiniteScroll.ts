@@ -1,40 +1,11 @@
 /**
- * Pure helpers for Documents list v2 infinite scroll (sentinel / IntersectionObserver).
+ * Documents list v2 infinite-scroll helpers — thin aliases over the shared list-v2 primitive.
  */
 
-export const DOCUMENTS_LIST_V2_INFINITE_SCROLL_ROOT_MARGIN = '400px 0px';
-
-export function shouldObserveDocumentsListV2Sentinel(input: {
-  readonly hasNextPage: boolean;
-  readonly isFetchingNextPage: boolean;
-  readonly enabled: boolean;
-}): boolean {
-  return input.enabled && input.hasNextPage && !input.isFetchingNextPage;
-}
-
-export function shouldFetchDocumentsListV2NextPage(input: {
-  readonly hasNextPage: boolean;
-  readonly isFetchingNextPage: boolean;
-  readonly inFlight: boolean;
-}): boolean {
-  return input.hasNextPage && !input.isFetchingNextPage && !input.inFlight;
-}
-
-export function isIntersectionObserverAvailable(
-  globalObject: { IntersectionObserver?: unknown } = globalThis
-): boolean {
-  return typeof globalObject.IntersectionObserver === 'function';
-}
-
-/** Flatten pages with first-seen ID winning (guards duplicate rows across pages). */
-export function flattenDocumentsListV2PagesById<T extends { readonly id: string }>(
-  pages: readonly { readonly items: readonly T[] }[]
-): T[] {
-  const byId = new Map<string, T>();
-  for (const page of pages) {
-    for (const item of page.items) {
-      if (!byId.has(item.id)) byId.set(item.id, item);
-    }
-  }
-  return [...byId.values()];
-}
+export {
+  LIST_V2_INFINITE_SCROLL_ROOT_MARGIN as DOCUMENTS_LIST_V2_INFINITE_SCROLL_ROOT_MARGIN,
+  flattenListV2PagesById as flattenDocumentsListV2PagesById,
+  isIntersectionObserverAvailable,
+  shouldFetchListV2NextPage as shouldFetchDocumentsListV2NextPage,
+  shouldObserveListV2Sentinel as shouldObserveDocumentsListV2Sentinel,
+} from '@/presentation/features/listV2/listV2InfiniteScroll';

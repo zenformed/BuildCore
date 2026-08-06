@@ -1,11 +1,11 @@
 'use client';
 
 /**
- * Project Details → Accountability tab list v2 (Load More + new-activity refresh).
+ * Project Details → Accountability tab list v2 (infinite scroll + new-activity refresh).
  */
 
 import { useInfiniteQuery, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { CrmAccountabilityAction } from '@/domain/crm';
 import {
   CRM_ACCOUNTABILITY_LIST_V2_DEFAULT_PAGE_SIZE,
@@ -15,6 +15,10 @@ import {
   fetchCrmAccountabilityHasNewerV2,
   fetchCrmAccountabilityListV2Page,
 } from '@/infrastructure/crm/api/crmAccountabilityListV2Api';
+import {
+  flattenListV2PagesById,
+  shouldFetchListV2NextPage,
+} from '@/presentation/features/listV2/listV2InfiniteScroll';
 
 const SEARCH_DEBOUNCE_MS = 300;
 const NEWER_POLL_MS = 45_000;
@@ -90,9 +94,18 @@ export function useCrmAccountabilityListV2(input: {
       lastPage.pageInfo.hasNextPage ? lastPage.pageInfo.nextCursor : undefined,
   });
 
+  const hasNextPage = Boolean(listQuery.hasNextPage);
+  const isFetchingNextPage = listQuery.isFetchingNextPage;
+  const fetchNextPage = listQuery.fetchNextPage;
+  const inFlightRef = useRef(false);
+
+  useEffect(() => {
+    if (!isFetchingNextPage) inFlightRef.current = false;
+  }, [isFetchingNextPage]);
+
   const entries = useMemo(() => {
     const pages = listQuery.data?.pages ?? [];
-    const items = pages.flatMap((page) => page.items);
+    const items = flattenListV2PagesById(pages);
     return toUiEntries(items);
   }, [listQuery.data?.pages]);
 
@@ -120,9 +133,18 @@ export function useCrmAccountabilityListV2(input: {
   const showNewActivityBanner = Boolean(probeQuery.data?.hasNewer);
 
   const loadMore = useCallback(() => {
-    if (!listQuery.hasNextPage || listQuery.isFetchingNextPage) return;
-    void listQuery.fetchNextPage();
-  }, [listQuery]);
+    if (
+      !shouldFetchListV2NextPage({
+        hasNextPage,
+        isFetchingNextPage,
+        inFlight: inFlightRef.current,
+      })
+    ) {
+      return;
+    }
+    inFlightRef.current = true;
+    void fetchNextPage();
+  }, [fetchNextPage, hasNextPage, isFetchingNextPage]);
 
   const refetch = useCallback(async () => {
     await listQuery.refetch();
@@ -148,8 +170,8 @@ export function useCrmAccountabilityListV2(input: {
     setSearchInput,
     entries,
     isLoading: listQuery.isLoading,
-    isFetchingNextPage: listQuery.isFetchingNextPage,
-    hasNextPage: Boolean(listQuery.hasNextPage),
+    isFetchingNextPage,
+    hasNextPage,
     loadMore,
     errorMessage,
     showNewActivityBanner,
