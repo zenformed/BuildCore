@@ -5,7 +5,10 @@ import { resolveCrmRepositoryResult } from '@/infrastructure/crm/types';
 export async function setCrmProjectCompletion(
   repositories: CrmRepositories,
   slug: string,
-  complete: boolean
+  complete: boolean,
+  options?: { readonly confirmIncompleteTasks?: boolean }
 ): Promise<CrmProjectDetail | null> {
-  return resolveCrmRepositoryResult(repositories.projectDetail.setCompletion(slug, complete));
+  return resolveCrmRepositoryResult(
+    repositories.projectDetail.setCompletion(slug, complete, options)
+  );
 }

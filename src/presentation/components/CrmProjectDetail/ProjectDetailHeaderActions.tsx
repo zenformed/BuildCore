@@ -4,7 +4,6 @@ import type { ReactElement } from 'react';
 import type { CrmPriority, CrmProjectSummary } from '@/domain/crm';
 import type { ProjectDetailRoutes } from '@/platform/navigation/projectDetailRoutes';
 import { ProjectDetailActionsMenu } from './ProjectDetailActionsMenu';
-import { ProjectDetailCompletionButton } from './ProjectDetailCompletionButton';
 import { ProjectPriorityToggle } from './ProjectPriorityToggle';
 import styles from './ProjectDetail.module.css';
 
@@ -25,12 +24,6 @@ export type ProjectDetailHeaderActionsProps = {
   onRequestMarkInactive?: () => void;
   onRequestMarkActive?: () => void | Promise<void>;
   lifecycleBusy?: boolean;
-  isComplete: boolean;
-  completionBusy: boolean;
-  onMarkComplete: () => void;
-  onMarkIncomplete: () => void;
-  markCompleteLabel: string;
-  markIncompleteLabel: string;
   priority: CrmPriority;
   priorityBusy: boolean;
   priorityDisabled?: boolean;
@@ -56,12 +49,6 @@ export function ProjectDetailHeaderActions({
   onRequestMarkInactive,
   onRequestMarkActive,
   lifecycleBusy = false,
-  isComplete,
-  completionBusy,
-  onMarkComplete,
-  onMarkIncomplete,
-  markCompleteLabel,
-  markIncompleteLabel,
   priority,
   priorityBusy,
   priorityDisabled = false,
@@ -78,14 +65,6 @@ export function ProjectDetailHeaderActions({
         markPriorityLabel={markPriorityLabel}
         removePriorityLabel={removePriorityLabel}
         onToggle={onPriorityToggle}
-      />
-      <ProjectDetailCompletionButton
-        isComplete={isComplete}
-        busy={completionBusy || deleting}
-        onMarkComplete={onMarkComplete}
-        onMarkIncomplete={onMarkIncomplete}
-        markCompleteLabel={markCompleteLabel}
-        markIncompleteLabel={markIncompleteLabel}
       />
       <ProjectDetailActionsMenu
         routes={routes}

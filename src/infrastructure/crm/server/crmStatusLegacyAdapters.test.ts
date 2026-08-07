@@ -24,6 +24,18 @@ describe('legacy status route adapters', () => {
     const source = readFileSync(join(root, 'crmSetProjectCompletionService.ts'), 'utf8');
     assert.match(source, /setCrmProjectsStatusForOrg/);
     assert.match(source, /complete \? 'completed' : 'active'/);
+    assert.match(source, /confirmIncompleteTasks/);
     assert.doesNotMatch(source, /\.from\('crm_projects'\)\s*\.update/);
+  });
+});
+
+describe('manual stage complete UI removed', () => {
+  it('WorkflowTasksTable no longer wires Mark all as complete', () => {
+    const source = readFileSync(
+      join(process.cwd(), 'src/presentation/components/CrmProjectDetail/WorkflowTasksTable.tsx'),
+      'utf8'
+    );
+    assert.doesNotMatch(source, /markAllEmptyStagesComplete|completeAction|WorkflowTasksBatchCompleteButton/);
+    assert.doesNotMatch(source, /onRequestToggleManualStageCompletion/);
   });
 });

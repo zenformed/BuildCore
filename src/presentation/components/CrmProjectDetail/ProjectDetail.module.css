@@ -2471,6 +2471,9 @@
 }
 
 .overviewStatusBadgeActive,
+.overviewStatusBadgeCompleted,
+.overviewStatusBadgeLost,
+.overviewStatusBadgeCancelled,
 .overviewStatusBadgeInactive {
   flex: 0 0 auto;
   font-size: 0.625rem;
@@ -2480,6 +2483,7 @@
   padding: 0.18rem 0.42rem;
   border-radius: 999px;
   border: 1px solid transparent;
+  line-height: 1.2;
 }
 
 .overviewStatusBadgeActive {
@@ -2494,16 +2498,134 @@
   background: rgba(74, 222, 128, 0.14);
 }
 
-.overviewStatusBadgeInactive {
-  color: #b45309;
-  border-color: rgba(245, 158, 11, 0.45);
-  background: rgba(245, 158, 11, 0.14);
+.overviewStatusBadgeCompleted {
+  color: #1d4ed8;
+  border-color: rgba(59, 130, 246, 0.45);
+  background: rgba(59, 130, 246, 0.14);
 }
 
+:global([data-theme='dark']) .overviewStatusBadgeCompleted {
+  color: #93c5fd;
+  border-color: rgba(96, 165, 250, 0.5);
+  background: rgba(59, 130, 246, 0.18);
+}
+
+.overviewStatusBadgeLost {
+  color: #b91c1c;
+  border-color: rgba(239, 68, 68, 0.45);
+  background: rgba(239, 68, 68, 0.12);
+}
+
+:global([data-theme='dark']) .overviewStatusBadgeLost {
+  color: #fca5a5;
+  border-color: rgba(248, 113, 113, 0.5);
+  background: rgba(239, 68, 68, 0.16);
+}
+
+.overviewStatusBadgeCancelled,
+.overviewStatusBadgeInactive {
+  color: #374151;
+  border-color: rgba(75, 85, 99, 0.4);
+  background: rgba(107, 114, 128, 0.14);
+}
+
+:global([data-theme='dark']) .overviewStatusBadgeCancelled,
 :global([data-theme='dark']) .overviewStatusBadgeInactive {
-  color: #fcd34d;
-  border-color: rgba(252, 211, 77, 0.4);
-  background: rgba(252, 211, 77, 0.12);
+  color: #d1d5db;
+  border-color: rgba(156, 163, 175, 0.4);
+  background: rgba(107, 114, 128, 0.22);
+}
+
+.overviewStatusPillPicker {
+  position: relative;
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+}
+
+.overviewStatusPillTrigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.28rem;
+  margin: 0;
+  font: inherit;
+  font-size: 0.625rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  line-height: 1.2;
+  cursor: pointer;
+}
+
+.overviewStatusPillTrigger:disabled {
+  cursor: default;
+  opacity: 0.72;
+}
+
+.overviewStatusPillTrigger:focus-visible {
+  outline: 2px solid rgba(37, 99, 235, 0.45);
+  outline-offset: 2px;
+}
+
+.overviewStatusPillCaret {
+  width: 0;
+  height: 0;
+  border-left: 3.5px solid transparent;
+  border-right: 3.5px solid transparent;
+  border-top: 4.5px solid currentColor;
+  opacity: 0.75;
+}
+
+.overviewStatusPillMenu {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  min-width: 11.5rem;
+  padding: 0;
+}
+
+.overviewStatusPillOption {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  width: 100%;
+  margin: 0;
+  padding: 0.35rem 0.45rem;
+  border: none;
+  border-radius: 0.45rem;
+  background: transparent;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  color: inherit;
+}
+
+.overviewStatusPillOption:hover:not(:disabled) {
+  background: rgba(15, 23, 42, 0.06);
+}
+
+:global([data-theme='dark']) .overviewStatusPillOption:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.overviewStatusPillOption:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.overviewStatusPillCheck,
+.overviewStatusPillCheckSpacer {
+  flex: 0 0 auto;
+  width: 0.85rem;
+  text-align: center;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--color-text-muted, #64748b);
+}
+
+.overviewStatusPillCheckSpacer {
+  visibility: hidden;
 }
 
 .overviewIdentityMetaRow {
@@ -9172,6 +9294,7 @@
   position: relative;
   display: inline-flex;
   align-items: center;
+  gap: 0.4rem;
   max-width: 100%;
   min-width: 0;
   min-height: 1.75rem;
@@ -10672,6 +10795,7 @@
   flex-shrink: 0;
   align-self: center;
   margin-left: 0.625rem;
+  margin-right: 0.4rem;
 }
 
 .stageGroupHeaderBtn,

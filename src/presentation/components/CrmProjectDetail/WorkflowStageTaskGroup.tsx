@@ -1,9 +1,8 @@
 'use client';
 
-import type { ReactElement, MouseEvent, CSSProperties } from 'react';
+import type { ReactElement, CSSProperties } from 'react';
 import { useMemo } from 'react';
-import type { CrmProjectStageCompletion, CrmWorkflowTask, PipelineStageSlug } from '@/domain/crm';
-import { isStageManuallyCompleted } from '@/domain/crm/projectStageCompletion';
+import type { CrmProjectStageCompletion, CrmWorkflowTask } from '@/domain/crm';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
 import { useDashboardMobileLayout } from '@/presentation/features/crmProjects/useDashboardMobileLayout';
 import {
@@ -24,23 +23,23 @@ import { useProjectDetailShell } from '@/presentation/features/crmProjectDetail/
 import { WorkflowTableBulkActions } from './WorkflowTableBulkActions';
 import styles from './ProjectDetail.module.css';
 
+/** @deprecated Manual stage completion toggle removed. */
 export type ManualStageCompletionToggleAction = 'complete' | 'incomplete';
 
 export type WorkflowStageTaskGroupProps = {
   projectSlug: string;
   projectDocuments: readonly import('@/domain/crm').CrmDocumentMetadata[];
   group: WorkflowTaskStageGroup;
-  manualStageCompletions: readonly CrmProjectStageCompletion[];
+  /** @deprecated Ignored for stage visual completion — retained for call-site compatibility. */
+  manualStageCompletions?: readonly CrmProjectStageCompletion[];
   docCounts: ReadonlyMap<string, number>;
   isApiSource: boolean;
   onTaskUpdated: (task: CrmWorkflowTask) => Promise<void>;
   onTaskError?: (message: string) => void;
   onRequestArchiveTask?: (task: CrmWorkflowTask) => void;
-  onRequestToggleManualStageCompletion?: (
-    stageSlug: PipelineStageSlug,
-    action: ManualStageCompletionToggleAction,
-    stageLabel: string
-  ) => void;
+  /** @deprecated Manual stage completion removed. */
+  onRequestToggleManualStageCompletion?: unknown;
+  /** @deprecated Manual stage completion removed. */
   markStageCompleteBusy?: boolean;
   /** When false, stage is always expanded with a static header (e.g. "View all" modal). */
   collapsible?: boolean;
@@ -65,14 +64,12 @@ export function WorkflowStageTaskGroup({
   projectSlug,
   projectDocuments,
   group,
-  manualStageCompletions,
+  manualStageCompletions = [],
   docCounts,
   isApiSource,
   onTaskUpdated,
   onTaskError,
   onRequestArchiveTask,
-  onRequestToggleManualStageCompletion,
-  markStageCompleteBusy = false,
   collapsible = true,
   showStageHeader = true,
   resolveTaskProjectSlug,
@@ -140,24 +137,6 @@ export function WorkflowStageTaskGroup({
   const taskCountText =
     totalCount === 1 ? `1 ${wf.taskSingular}` : `${totalCount} ${wf.taskPlural}`;
   const showEmptyRow = group.tasks.length === 0 && draftRow == null;
-  const isEmptyStage = showEmptyRow;
-  const isManuallyCompleted =
-    isEmptyStage && isStageManuallyCompleted(group.stageSlug, manualStageCompletions);
-  const canToggleManualStageCompletion =
-    isEmptyStage && onRequestToggleManualStageCompletion != null;
-  const manualToggleAction: ManualStageCompletionToggleAction = isManuallyCompleted
-    ? 'incomplete'
-    : 'complete';
-  const manualToggleConfirmTitle =
-    manualToggleAction === 'complete'
-      ? wf.markStageCompleteConfirmTitle(group.stageLabel)
-      : wf.markStageIncompleteConfirmTitle;
-
-  const handleToggleManualStageCompletionClick = (event: MouseEvent<HTMLButtonElement>): void => {
-    event.stopPropagation();
-    if (markStageCompleteBusy || !canToggleManualStageCompletion) return;
-    onRequestToggleManualStageCompletion?.(group.stageSlug, manualToggleAction, group.stageLabel);
-  };
 
   const handleToggleStageSelection = (checked: boolean): void => {
     if (rowSelection == null || stageTaskIds.length === 0) return;
@@ -168,38 +147,16 @@ export function WorkflowStageTaskGroup({
     }
   };
 
-  const completeIcon = (
-    <BsCheckLg
-      className={
-        stageIsComplete
-          ? styles.stageGroupCompleteCheck_done
-          : styles.stageGroupCompleteCheck_pending
-      }
-      size={17}
-      aria-hidden
-    />
-  );
-
-  const completeIconControl = canToggleManualStageCompletion ? (
-    <button
-      type="button"
-      className={styles.stageGroupCompleteIconBtn}
-      title={manualToggleConfirmTitle}
-      aria-label={manualToggleConfirmTitle}
-      disabled={markStageCompleteBusy}
-      onClick={handleToggleManualStageCompletionClick}
-    >
-      {completeIcon}
-    </button>
-  ) : (
+  // Green check only when stage has ≥1 task and all are complete (shared task rule).
+  const completeIconControl = stageIsComplete ? (
     <span
       className={styles.stageGroupCompleteIcon}
-      title={stageIsComplete ? wf.stageAllDone : wf.stageNotComplete}
-      aria-label={stageIsComplete ? wf.stageAllDone : wf.stageNotComplete}
+      title={wf.stageAllDone}
+      aria-label={wf.stageAllDone}
     >
-      {completeIcon}
+      <BsCheckLg className={styles.stageGroupCompleteCheck_done} size={17} aria-hidden />
     </span>
-  );
+  ) : null;
 
   const taskCount = (
     <span className={styles.stageGroupCount}>
@@ -242,6 +199,7 @@ export function WorkflowStageTaskGroup({
   const stagePrimaryControl = (
     <span className={styles.stageGroupPrimary}>
       <span className={styles.stageGroupPrimaryCluster}>
+        {completeIconControl}
         {collapsible ? (
           <button
             type="button"

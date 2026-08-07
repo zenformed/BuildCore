@@ -1,19 +1,69 @@
 'use client';
 
 import type { ReactElement } from 'react';
-import type { CrmProjectSummary } from '@/domain/crm';
+import type { CrmLossReason, CrmProjectSummary } from '@/domain/crm';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
 import { ConfirmModal } from '@/presentation/components/ConfirmModal';
-import { ProjectCompletionBlockedDialog } from '@/presentation/components/CrmProjectDetail/ProjectCompletionBlockedDialog';
+import { ProjectCompletionWarningDialog } from '@/presentation/components/CrmProjectDetail/ProjectCompletionBlockedDialog';
 import { CrmProjectDeleteWorkflowDialog } from '@/presentation/components/CrmProjects/CrmProjectDeleteWorkflowDialog';
+import { MarkInactiveDialog } from '@/presentation/components/CrmProjects/MarkInactiveDialog';
 import { WorkflowTaskCustomerNotifyDialog } from '@/presentation/components/CrmProjectDetail/WorkflowTaskCustomerNotifyDialog';
 import { SendAttachmentDialog } from '@/presentation/components/communications/SendAttachmentDialog';
-import type { useProjectCompletionToggle } from '@/presentation/features/crmProjectDetail/useProjectCompletionToggle';
+import type { useCrmProjectStatusChange } from '@/presentation/features/crmProjectDetail/useCrmProjectStatusChange';
 import type { useProjectDetailWorkspace } from '@/presentation/features/crmProjectDetail/useProjectDetailWorkspace';
 
+export type CrmProjectStatusChangeDialogsProps = {
+  statusChange: ReturnType<typeof useCrmProjectStatusChange>;
+  onError: (message: string) => void;
+};
+
+/** Lost reason, Cancelled confirm, and Completed incomplete-task warning for the status pill. */
+export function CrmProjectStatusChangeDialogs({
+  statusChange,
+  onError,
+}: CrmProjectStatusChangeDialogsProps): ReactElement {
+  const statusCopy = content.projectDetail.projectStatus;
+
+  return (
+    <>
+      <ProjectCompletionWarningDialog
+        isOpen={statusChange.incompleteTasksWarningCount != null}
+        incompleteTaskCount={statusChange.incompleteTasksWarningCount ?? 0}
+        onClose={() => statusChange.setIncompleteTasksWarningCount(null)}
+        onConfirm={() => {
+          void statusChange.confirmCompleteAnyway().catch(() => onError(statusCopy.failed));
+        }}
+      />
+      <ConfirmModal
+        isOpen={statusChange.cancelledConfirmOpen}
+        onClose={statusChange.closeCancelledConfirm}
+        onConfirm={() => {
+          void statusChange.confirmCancelled().catch(() => onError(statusCopy.failed));
+        }}
+        title={statusCopy.cancelledConfirmTitle}
+        message={statusCopy.cancelledConfirmMessage}
+        confirmLabel={statusCopy.cancelledConfirmLabel}
+        cancelLabel={statusCopy.cancelledConfirmCancel}
+        variant="primary"
+        hideIcon
+      />
+      <MarkInactiveDialog
+        target={statusChange.lostDialogTarget}
+        submitting={statusChange.busy}
+        variant="lost"
+        onClose={statusChange.closeLostDialog}
+        onSubmit={(values) => {
+          void statusChange.submitLost({
+            reason: values.reason as CrmLossReason,
+            customReason: values.customReason,
+          });
+        }}
+      />
+    </>
+  );
+}
+
 export type ProjectDetailShellModalsProps = {
-  showCompletion: boolean;
-  completion: ReturnType<typeof useProjectCompletionToggle> | null;
   workspace: Pick<
     ReturnType<typeof useProjectDetailWorkspace>,
     | 'archiveConfirmTask'
@@ -54,8 +104,6 @@ export type ProjectDetailShellModalsProps = {
 };
 
 export function ProjectDetailShellModals({
-  showCompletion,
-  completion,
   workspace,
   pendingDeleteProject,
   onCloseDelete,
@@ -74,7 +122,6 @@ export function ProjectDetailShellModals({
     setDocumentUploadConfirm,
     handleConfirmDocumentUpload,
     handleConfirmArchiveTask,
-    setToast,
     wf,
     customerNotifyPrompt,
     customerNotifySending,
@@ -120,47 +167,6 @@ export function ProjectDetailShellModals({
         cancelLabel={wf.archiveTaskCancelLabel}
         variant="primary"
       />
-      {showCompletion && completion != null ? (
-        <>
-          <ProjectCompletionBlockedDialog
-            isOpen={completion.completionBlockedStageStatuses != null}
-            stageStatuses={completion.completionBlockedStageStatuses}
-            onClose={() => completion.setCompletionBlockedStageStatuses(null)}
-          />
-          <ConfirmModal
-            isOpen={completion.completionConfirm === 'complete'}
-            onClose={() => completion.setCompletionConfirm(null)}
-            onConfirm={() => {
-              void completion
-                .confirmCompletionChange()
-                .then(() => setToast({ kind: 'success', message: detail.markCompleteSuccess }))
-                .catch(() => setToast({ kind: 'error', message: detail.markCompleteFailed }));
-            }}
-            title={detail.markCompleteConfirmTitle}
-            message={detail.markCompleteConfirmMessage}
-            confirmLabel={detail.markComplete}
-            cancelLabel={wf.archiveTaskCancelLabel}
-            variant="primary"
-            hideIcon
-          />
-          <ConfirmModal
-            isOpen={completion.completionConfirm === 'incomplete'}
-            onClose={() => completion.setCompletionConfirm(null)}
-            onConfirm={() => {
-              void completion
-                .confirmCompletionChange()
-                .then(() => setToast({ kind: 'success', message: detail.markIncompleteSuccess }))
-                .catch(() => setToast({ kind: 'error', message: detail.markCompleteFailed }));
-            }}
-            title={detail.markIncompleteConfirmTitle}
-            message={detail.markIncompleteConfirmMessage}
-            confirmLabel={detail.markIncomplete}
-            cancelLabel={wf.archiveTaskCancelLabel}
-            variant="primary"
-            hideIcon
-          />
-        </>
-      ) : null}
       <ConfirmModal
         isOpen={archiveConfirmTask != null}
         onClose={() => setArchiveConfirmTask(null)}

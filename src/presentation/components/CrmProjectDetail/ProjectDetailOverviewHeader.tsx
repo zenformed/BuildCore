@@ -30,6 +30,7 @@ import type { SummaryEditableField } from '@/presentation/features/crmProjectDet
 import { useProjectDetailPaymentFinancials } from '@/presentation/features/crmProjectDetail/useProjectDetailPaymentFinancials';
 import { useBuildCorePipelineStages } from '@/presentation/providers/BuildCorePipelineStagesProvider';
 import { useProjectDetailShell } from '@/presentation/features/crmProjectDetail/ProjectDetailShellContext';
+import { CrmProjectStatusPillPicker } from './CrmProjectStatusPillPicker';
 import { ProjectHeaderAssignee } from './ProjectHeaderAssignee';
 import { ProjectHeaderIndustry } from './ProjectHeaderIndustry';
 import { ProjectNotesInline } from './ProjectNotesInline';
@@ -77,7 +78,8 @@ export function ProjectDetailOverviewHeader({
   const detailCopy = content.projectDetail;
   const fields = detailCopy.fields;
   const fullDetailsCopy = detailCopy.fullDetails;
-  const { childSummaries, setToast, onProjectSaved, guardProjectEdit } = useProjectDetailShell();
+  const { childSummaries, setToast, onProjectSaved, guardProjectEdit, projectStatus } =
+    useProjectDetailShell();
   const [editModalOpen, setEditModalOpen] = useState(false);
   const { catalogForProject } = useBuildCorePipelineStages();
   const stageCatalog = catalogForProject({ parentProjectId: summary.parentProjectId });
@@ -190,13 +192,22 @@ export function ProjectDetailOverviewHeader({
             <div className={styles.overviewIdentityContent}>
               <div className={styles.overviewIdentityTitleRow}>
                 <h1 className={styles.title}>{summary.client.name}</h1>
-                <span
-                  className={
-                    isInactive ? styles.overviewStatusBadgeInactive : styles.overviewStatusBadgeActive
-                  }
-                >
-                  {isInactive ? detailCopy.subprojects.markInactive.badge : 'Active'}
-                </span>
+                {projectStatus != null ? (
+                  <CrmProjectStatusPillPicker
+                    status={summary.status}
+                    canChange={projectStatus.canChange}
+                    busy={projectStatus.busy}
+                    onRequestStatus={(nextStatus) => {
+                      projectStatus.requestStatus(nextStatus);
+                    }}
+                  />
+                ) : (
+                  <CrmProjectStatusPillPicker
+                    status={summary.status}
+                    canChange={false}
+                    onRequestStatus={() => undefined}
+                  />
+                )}
                 {!isMemberRole ? (
                   <button
                     type="button"

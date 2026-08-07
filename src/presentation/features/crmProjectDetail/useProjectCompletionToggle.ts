@@ -4,13 +4,14 @@ import { useCallback, useEffect, useState } from 'react';
 import type { CrmProjectDetail } from '@/domain/crm';
 import { isCrmProjectComplete } from '@/domain/crm';
 import type { PipelineStage } from '@/domain/crm/pipelineStage';
-import {
-  listWorkflowStageCompletionStatuses,
-  type WorkflowStageCompletionStatus,
-} from '@/domain/buildcore/projectPipelineProgress';
+import { countIncompleteWorkflowTasks } from '@/domain/buildcore/projectPipelineProgress';
 import { setCrmProjectCompletion } from '@/application/use-cases/crm/setCrmProjectCompletion';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
 import { crmRepositories } from '@/shared/di/container';
+import {
+  incompleteTaskCountFromConfirmationError,
+  isCrmProjectCompletionConfirmationRequired,
+} from '@/presentation/features/crmProjectDetail/crmProjectCompletionConfirmation';
 
 export function useProjectCompletionToggle(
   initialProject: CrmProjectDetail,
@@ -25,11 +26,15 @@ export function useProjectCompletionToggle(
   completionBusy: boolean;
   completionConfirm: 'complete' | 'incomplete' | null;
   setCompletionConfirm: (value: 'complete' | 'incomplete' | null) => void;
-  completionBlockedStageStatuses: readonly WorkflowStageCompletionStatus[] | null;
-  setCompletionBlockedStageStatuses: (value: readonly WorkflowStageCompletionStatus[] | null) => void;
+  incompleteTasksWarningCount: number | null;
+  setIncompleteTasksWarningCount: (value: number | null) => void;
+  /** @deprecated Prefer incompleteTasksWarningCount */
+  completionBlockedStageStatuses: null;
+  setCompletionBlockedStageStatuses: (value: unknown) => void;
   requestMarkComplete: () => void;
   requestMarkIncomplete: () => void;
-  confirmCompletionChange: () => Promise<void>;
+  confirmCompletionChange: () => Promise<boolean>;
+  confirmCompleteAnyway: () => Promise<boolean>;
 } {
   const [project, setProject] = useState(initialProject);
 
@@ -40,50 +45,71 @@ export function useProjectCompletionToggle(
   const [completionConfirm, setCompletionConfirm] = useState<'complete' | 'incomplete' | null>(
     null
   );
-  const [completionBlockedStageStatuses, setCompletionBlockedStageStatuses] = useState<
-    readonly WorkflowStageCompletionStatus[] | null
-  >(null);
+  const [incompleteTasksWarningCount, setIncompleteTasksWarningCount] = useState<number | null>(
+    null
+  );
 
   const isComplete = isCrmProjectComplete(project.summary);
   const c = content.projectDetail;
-  const stages = options?.stages;
   const onRefresh = options?.onRefresh;
 
-  const confirmCompletionChange = useCallback(async () => {
-    if (completionConfirm == null) return;
+  const applyCompletion = useCallback(
+    async (complete: boolean, confirmIncompleteTasks: boolean): Promise<'ok' | 'needs_confirmation'> => {
+      setCompletionBusy(true);
+      try {
+        const updated = await setCrmProjectCompletion(
+          crmRepositories,
+          project.summary.slug,
+          complete,
+          confirmIncompleteTasks ? { confirmIncompleteTasks: true } : undefined
+        );
+        if (updated == null) {
+          throw new Error(c.markCompleteFailed);
+        }
+        setProject(updated);
+        if (onRefresh) {
+          await onRefresh();
+        }
+        return 'ok';
+      } catch (error) {
+        if (
+          complete &&
+          !confirmIncompleteTasks &&
+          isCrmProjectCompletionConfirmationRequired(error)
+        ) {
+          setIncompleteTasksWarningCount(incompleteTaskCountFromConfirmationError(error));
+          return 'needs_confirmation';
+        }
+        throw error;
+      } finally {
+        setCompletionBusy(false);
+      }
+    },
+    [onRefresh, project.summary.slug, c.markCompleteFailed]
+  );
+
+  const confirmCompletionChange = useCallback(async (): Promise<boolean> => {
+    if (completionConfirm == null) return false;
     const complete = completionConfirm === 'complete';
-    setCompletionBusy(true);
     setCompletionConfirm(null);
-    try {
-      const updated = await setCrmProjectCompletion(
-        crmRepositories,
-        project.summary.slug,
-        complete
-      );
-      if (updated == null) {
-        throw new Error(c.markCompleteFailed);
-      }
-      setProject(updated);
-      if (onRefresh) {
-        await onRefresh();
-      }
-    } finally {
-      setCompletionBusy(false);
-    }
-  }, [completionConfirm, onRefresh, project.summary.slug, c.markCompleteFailed]);
+    const result = await applyCompletion(complete, false);
+    return result === 'ok';
+  }, [applyCompletion, completionConfirm]);
+
+  const confirmCompleteAnyway = useCallback(async (): Promise<boolean> => {
+    setIncompleteTasksWarningCount(null);
+    const result = await applyCompletion(true, true);
+    return result === 'ok';
+  }, [applyCompletion]);
 
   const requestMarkComplete = useCallback(() => {
-    const stageStatuses = listWorkflowStageCompletionStatuses({
-      workflowTasks: project.workflowTasks,
-      stages,
-      manualStageCompletions: project.manualStageCompletions,
-    });
-    if (stageStatuses.some((stage) => !stage.isComplete)) {
-      setCompletionBlockedStageStatuses(stageStatuses);
+    const incompleteCount = countIncompleteWorkflowTasks(project.workflowTasks);
+    if (incompleteCount > 0) {
+      setIncompleteTasksWarningCount(incompleteCount);
       return;
     }
     setCompletionConfirm('complete');
-  }, [project.workflowTasks, project.manualStageCompletions, stages]);
+  }, [project.workflowTasks]);
 
   return {
     project,
@@ -92,10 +118,13 @@ export function useProjectCompletionToggle(
     completionBusy,
     completionConfirm,
     setCompletionConfirm,
-    completionBlockedStageStatuses,
-    setCompletionBlockedStageStatuses,
+    incompleteTasksWarningCount,
+    setIncompleteTasksWarningCount,
+    completionBlockedStageStatuses: null,
+    setCompletionBlockedStageStatuses: () => undefined,
     requestMarkComplete,
     requestMarkIncomplete: () => setCompletionConfirm('incomplete'),
     confirmCompletionChange,
+    confirmCompleteAnyway,
   };
 }

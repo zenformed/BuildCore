@@ -134,6 +134,8 @@ export type { BulkMarkInactiveCrmProjectsResult } from './bulkMarkInactiveProjec
 export type { BulkMarkActiveCrmProjectsResult } from './bulkMarkActiveProjects';
 export {
   CRM_PROJECT_STATUS_VALUES,
+  CRM_PROJECT_STATUS_OPTIONS,
+  getCrmProjectStatusLabel,
   CRM_LOSS_REASON_OPTIONS,
   CRM_LOSS_REASON_VALUES,
   CRM_LEGACY_INACTIVE_REASON_OPTIONS,
@@ -168,6 +170,7 @@ export {
   validateMarkCrmProjectsInactiveInput,
   validateSetCrmProjectsStatusInput,
   type CrmProjectStatus,
+  type CrmProjectStatusOption,
   type CrmLossReason,
   type CrmLossReasonOption,
   type CrmLegacyInactiveReason,
@@ -182,6 +185,7 @@ export {
 export { canActorChangeCrmProjectStatus } from './projectStatusAccess';
 export {
   CRM_PROJECTS_STATUS_BULK_MAX_IDS,
+  formatIncompleteTasksCompletionWarning,
   isCrmProjectStatusAlreadyAtTarget,
   normalizeLossReasonOtherForWrite,
   parseSetCrmProjectsStatusBody,

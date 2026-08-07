@@ -6,7 +6,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requireCrmApiAuth } from '@/infrastructure/crm/server/crmApiRouteAuth';
 import {
   setCrmProjectCompletionBySlugForOrg,
-  CrmProjectCompletionBlockedError,
+  CrmProjectCompletionConfirmationRequiredError,
   CrmProjectCompletionForbiddenError,
 } from '@/infrastructure/crm/server/crmSetProjectCompletionService';
 
@@ -16,6 +16,7 @@ type RouteContext = { params: { slug: string } };
 
 type CompletionBody = {
   complete?: unknown;
+  confirmIncompleteTasks?: unknown;
 };
 
 export async function POST(
@@ -50,17 +51,25 @@ export async function POST(
       auth.context.organizationId,
       auth.context.user.id,
       slug,
-      body.complete
+      body.complete,
+      {
+        confirmIncompleteTasks: body.confirmIncompleteTasks === true,
+      }
     );
     if (project == null) {
       return NextResponse.json({ error: 'not_found', message: 'Project not found' }, { status: 404 });
     }
     return NextResponse.json(project);
   } catch (err) {
-    if (err instanceof CrmProjectCompletionBlockedError) {
+    if (err instanceof CrmProjectCompletionConfirmationRequiredError) {
       return NextResponse.json(
-        { error: 'completion_blocked', message: err.message },
-        { status: 400 }
+        {
+          error: 'confirmation_required',
+          message: err.message,
+          incompleteTaskCount: err.incompleteTaskCount,
+          incompleteStages: err.incompleteStages,
+        },
+        { status: 409 }
       );
     }
     if (err instanceof CrmProjectCompletionForbiddenError) {

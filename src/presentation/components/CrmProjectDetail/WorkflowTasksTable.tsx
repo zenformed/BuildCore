@@ -10,15 +10,9 @@ import {
   type CrmWorkflowTask,
   type PipelineStageSlug,
 } from '@/domain/crm';
-import { markCrmProjectStageCompleteManual } from '@/application/use-cases/crm/markCrmProjectStageCompleteManual';
-import { markCrmProjectEmptyStagesCompleteBatch } from '@/application/use-cases/crm/markCrmProjectEmptyStagesCompleteBatch';
-import { clearCrmProjectStageManualCompletion } from '@/application/use-cases/crm/clearCrmProjectStageManualCompletion';
 import { resolvePipelineStageScopeForProject } from '@/domain/buildcore/orgPipelineStages';
 import { shouldHideEmptyStageGroups } from '@/domain/buildcore/buildCoreMemberAssigneeVisibility';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
-import { crmRepositories } from '@/shared/di/container';
-import { ConfirmModal } from '@/presentation/components/ConfirmModal';
-import confirmModalStyles from '@/presentation/components/ConfirmModal/ConfirmModal.module.css';
 import { countDocumentsByTaskId } from '@/presentation/features/crmProjectDetail/workflowDocumentCounts';
 import {
   buildCrmAssigneeFilterOptionsFromTasks,
@@ -52,12 +46,10 @@ import {
   WorkflowMobileSearchToolsRow,
   WorkflowMobileSelectedFloatingPill,
 } from './MobileBulkSelectionChrome';
-import { WorkflowStageTaskGroup, type ManualStageCompletionToggleAction } from './WorkflowStageTaskGroup';
+import { WorkflowStageTaskGroup } from './WorkflowStageTaskGroup';
 import { workflowStageAccentColor } from '@/presentation/features/crmProjectDetail/workflowStageAccentColors';
 import { WorkflowTaskStageAddButton } from './WorkflowTaskStageAddButton';
 import { CrmDirectUploadStatusHost } from './CrmDirectUploadStatus';
-import { WorkflowTasksBatchCompleteButton } from './WorkflowTasksBatchCompleteButton';
-import { resolveWorkflowTasksBatchCompleteState } from './workflowTasksBatchCompleteState';
 import projectsStyles from '@/presentation/components/CrmProjects/CrmProjects.module.css';
 import {
   WorkflowTasksViewToggleButton,
@@ -124,8 +116,6 @@ export function WorkflowTasksTable({
     refreshRollupIndexes,
     setToast,
     onProjectSaved,
-    completion,
-    showCompletionActions,
     parentRouteSlug,
     subSlug,
     openCreateWorkflowTask,
@@ -152,13 +142,6 @@ export function WorkflowTasksTable({
   const isFullLayout = layout === 'full';
   const isMobileLayout = useDashboardMobileLayout();
   const currentStage = project.summary.currentStageSlug;
-  const [pendingStageToggle, setPendingStageToggle] = useState<{
-    stageSlug: PipelineStageSlug;
-    stageLabel: string;
-    action: ManualStageCompletionToggleAction;
-  } | null>(null);
-  const [markStageToggleBusy, setMarkStageToggleBusy] = useState(false);
-  const [batchCompleteConfirmOpen, setBatchCompleteConfirmOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [filters, setFilters] = useState<CrmProjectsListFilters>(EMPTY_CRM_PROJECTS_LIST_FILTERS);
   const [taskViewMode, setTaskViewMode] = useState<WorkflowTaskViewMode>('table');
@@ -261,105 +244,6 @@ export function WorkflowTasksTable({
     [openCreateWorkflowTask]
   );
 
-  const handleConfirmStageToggle = useCallback(async () => {
-    if (pendingStageToggle == null) return;
-    setMarkStageToggleBusy(true);
-    try {
-      const updated =
-        pendingStageToggle.action === 'complete'
-          ? await markCrmProjectStageCompleteManual(
-              crmRepositories,
-              project.summary.slug,
-              pendingStageToggle.stageSlug,
-              projectRouteScope
-            )
-          : await clearCrmProjectStageManualCompletion(
-              crmRepositories,
-              project.summary.slug,
-              pendingStageToggle.stageSlug,
-              projectRouteScope
-            );
-      if (updated == null) {
-        throw new Error(
-          pendingStageToggle.action === 'complete'
-            ? wf.markStageCompleteFailed
-            : wf.markStageIncompleteFailed
-        );
-      }
-      onProjectSaved(updated);
-      refreshRollupIndexes();
-      if (showCompletionActions && completion != null) {
-        completion.setProject(updated);
-      }
-      setToast({
-        kind: 'success',
-        message:
-          pendingStageToggle.action === 'complete'
-            ? wf.markStageCompleteSuccess
-            : wf.markStageIncompleteSuccess,
-      });
-      setPendingStageToggle(null);
-    } catch {
-      setToast({
-        kind: 'error',
-        message:
-          pendingStageToggle.action === 'complete'
-            ? wf.markStageCompleteFailed
-            : wf.markStageIncompleteFailed,
-      });
-    } finally {
-      setMarkStageToggleBusy(false);
-    }
-  }, [
-    completion,
-    onProjectSaved,
-    pendingStageToggle,
-    project.summary.slug,
-    projectRouteScope,
-    refreshRollupIndexes,
-    setToast,
-    showCompletionActions,
-    wf.markStageCompleteFailed,
-    wf.markStageCompleteSuccess,
-    wf.markStageIncompleteFailed,
-    wf.markStageIncompleteSuccess,
-  ]);
-
-  const handleConfirmBatchComplete = useCallback(async () => {
-    setMarkStageToggleBusy(true);
-    try {
-      const updated = await markCrmProjectEmptyStagesCompleteBatch(
-        crmRepositories,
-        project.summary.slug,
-        projectRouteScope
-      );
-      if (updated == null) {
-        throw new Error(wf.markAllEmptyStagesCompleteFailed);
-      }
-      onProjectSaved(updated);
-      refreshRollupIndexes();
-      if (showCompletionActions && completion != null) {
-        completion.setProject(updated);
-      }
-      setToast({ kind: 'success', message: wf.markAllEmptyStagesCompleteSuccess });
-      setBatchCompleteConfirmOpen(false);
-    } catch {
-      setToast({ kind: 'error', message: wf.markAllEmptyStagesCompleteFailed });
-    } finally {
-      setMarkStageToggleBusy(false);
-    }
-  }, [
-    completion,
-    onProjectSaved,
-    project.summary.slug,
-    projectRouteScope,
-    refreshRollupIndexes,
-    setToast,
-    showCompletionActions,
-    wf.markAllEmptyStagesCompleteFailed,
-    wf.markAllEmptyStagesCompleteSuccess,
-  ]);
-
   const panelClass = [styles.workflowPanel, isFullLayout ? styles.workflowPanelFull : '']
     .filter(Boolean)
     .join(' ');
@@ -377,29 +261,6 @@ export function WorkflowTasksTable({
   ]
     .filter(Boolean)
     .join(' ');
-
-  const batchCompleteState =
-    canCreate && groupByStage
-      ? resolveWorkflowTasksBatchCompleteState({
-          workflowTasks: project.workflowTasks,
-          manualStageCompletions: project.manualStageCompletions,
-          stages: catalog,
-          disabled: markStageToggleBusy,
-          busy: markStageToggleBusy,
-        })
-      : null;
-  /** Mobile keeps the icon checkmark; desktop moves it into the ⋮ menu. */
-  const batchCompleteLeading =
-    isMobileLayout && batchCompleteState != null ? (
-      <WorkflowTasksBatchCompleteButton
-        workflowTasks={project.workflowTasks}
-        manualStageCompletions={project.manualStageCompletions}
-        stages={catalog}
-        disabled={markStageToggleBusy}
-        busy={markStageToggleBusy}
-        onClick={() => setBatchCompleteConfirmOpen(true)}
-      />
-    ) : null;
 
   const filterMenu = (
     <CrmProjectsFilterMenu
@@ -465,15 +326,6 @@ export function WorkflowTasksTable({
   );
   const desktopMoreMenu = !isMobileLayout ? (
     <DetailPanelHeaderMoreMenu
-      completeAction={
-        batchCompleteState != null
-          ? {
-              label: batchCompleteState.title,
-              disabled: !batchCompleteState.canClick,
-              onClick: () => setBatchCompleteConfirmOpen(true),
-            }
-          : null
-      }
       refreshAction={{
         sectionLabel: content.projectDetail.sections.workflow,
         onRefresh: onRefreshTasks ?? refreshWorkflowTasks,
@@ -486,7 +338,6 @@ export function WorkflowTasksTable({
   ) : null;
   const mobileSearchTrailingActions = (
     <div className={styles.workflowMobileSearchActions}>
-      {batchCompleteLeading}
       {mobileFilterButton}
     </div>
   );
@@ -548,15 +399,6 @@ export function WorkflowTasksTable({
       onTaskUpdated={onTaskUpdated}
       onTaskError={onTaskError}
       onRequestArchiveTask={canDelete ? onRequestArchiveTask : undefined}
-      onRequestToggleManualStageCompletion={
-        canCreate && groupByStage
-          ? (stageSlug, action, stageLabel) =>
-              guardProjectEdit(() => {
-                setPendingStageToggle({ stageSlug, action, stageLabel });
-              })
-          : undefined
-      }
-      markStageCompleteBusy={markStageToggleBusy}
       collapsible={groupByStage}
       showStageHeader={!hideStageHeaders && groupByStage}
       resolveTaskProjectSlug={resolveTaskProjectSlug}
@@ -726,54 +568,6 @@ export function WorkflowTasksTable({
       ) : (
         panel
       )}
-      <ConfirmModal
-        isOpen={pendingStageToggle != null}
-        onClose={() => {
-          if (markStageToggleBusy) return;
-          setPendingStageToggle(null);
-        }}
-        onConfirm={() => {
-          void handleConfirmStageToggle();
-        }}
-        title={
-          pendingStageToggle?.action === 'incomplete'
-            ? wf.markStageIncompleteConfirmTitle
-            : pendingStageToggle != null
-              ? (
-                  <>
-                    <strong>{pendingStageToggle.stageLabel}</strong>
-                    {' has no tasks. Are you sure you want to mark this stage complete?'}
-                  </>
-                )
-              : ''
-        }
-        titleClassName={
-          pendingStageToggle?.action === 'complete' ? confirmModalStyles.snackbarTitleMixed : undefined
-        }
-        confirmLabel={
-          pendingStageToggle?.action === 'incomplete'
-            ? wf.markStageIncomplete
-            : wf.markStageComplete
-        }
-        cancelLabel={wf.archiveTaskCancelLabel}
-        variant="primary"
-        hideIcon
-      />
-      <ConfirmModal
-        isOpen={batchCompleteConfirmOpen}
-        onClose={() => {
-          if (markStageToggleBusy) return;
-          setBatchCompleteConfirmOpen(false);
-        }}
-        onConfirm={() => {
-          void handleConfirmBatchComplete();
-        }}
-        title={wf.markAllEmptyStagesCompleteConfirmTitle}
-        confirmLabel={wf.markAllEmptyStagesComplete}
-        cancelLabel={wf.archiveTaskCancelLabel}
-        variant="primary"
-        hideIcon
-      />
     </>
   );
 }

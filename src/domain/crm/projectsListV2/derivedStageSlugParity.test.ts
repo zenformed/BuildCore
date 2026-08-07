@@ -41,10 +41,10 @@ describe('crm_project_derived_stage_slug parity', () => {
     assert.equal(fromSqlMirror, fromTs);
   });
 
-  it('matches TS resolver: empty stages use manual completion then advance', () => {
+  it('keeps empty stages as current after earlier stages complete', () => {
     const workflowProgressInput: CrmProjectWorkflowProgressInput = {
-      tasks: [],
-      manualStageCompletionSlugs: ['new-lead'],
+      tasks: [{ stageSlug: 'new-lead', status: 'done', amountCents: null }],
+      manualStageCompletionSlugs: [],
     };
 
     const fromTs = resolveDerivedWorkflowStageSlugFromProgressInput({
@@ -54,8 +54,8 @@ describe('crm_project_derived_stage_slug parity', () => {
 
     const fromSqlMirror = computeCrmProjectDerivedStageSlugParity({
       activeStageSlugsInOrder: ['new-lead', 'scheduled', 'in-progress'],
-      tasks: [],
-      manualCompletedStageSlugs: ['new-lead'],
+      tasks: [{ stageSlug: 'new-lead', status: 'done', isPayment: false }],
+      manualCompletedStageSlugs: [],
     });
 
     assert.equal(fromTs, 'scheduled');
@@ -97,6 +97,7 @@ describe('crm_project_derived_stage_slug parity', () => {
       tasks: [{ stageSlug: 'new-lead', status: 'pending', isPayment: true }],
       manualCompletedStageSlugs: ['new-lead'],
     });
-    assert.equal(fromSqlMirror, CRM_PROJECT_COMPLETE_STAGE_SLUG);
+    // Empty of ops tasks → empty stage is current.
+    assert.equal(fromSqlMirror, 'new-lead');
   });
 });

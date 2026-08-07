@@ -74,10 +74,28 @@ export function resolveActiveWorkflowPipelineStages(
 
 
 
-export function isWorkflowStageCompleteByTasks(tasks: readonly CrmWorkflowTask[]): boolean {
+export function isWorkflowTaskComplete(task: { readonly status: string }): boolean {
+  return task.status === 'done';
+}
 
-  return tasks.length > 0 && tasks.every((task) => task.status === 'done');
+/** Stage is visually complete when it has ≥1 task and every task is complete. Empty stages are never complete. */
+export function isWorkflowStageCompleteByTasks(tasks: readonly { readonly status: string }[]): boolean {
+  return tasks.length > 0 && tasks.every(isWorkflowTaskComplete);
+}
 
+/** Incomplete ops (non-payment) workflow tasks — shared by stage progress and Project Completed warnings. */
+export function countIncompleteWorkflowTasks(
+  workflowTasks: readonly CrmWorkflowTask[]
+): number {
+  return workflowTasks.filter(
+    (task) => !isPaymentWorkflowTask(task) && !isWorkflowTaskComplete(task)
+  ).length;
+}
+
+export function projectStatusCompletionNeedsConfirmation(
+  workflowTasks: readonly CrmWorkflowTask[]
+): boolean {
+  return countIncompleteWorkflowTasks(workflowTasks) > 0;
 }
 
 
@@ -190,7 +208,7 @@ export function listIncompleteWorkflowStages(
 
   return listWorkflowStageCompletionStatuses(input)
 
-    .filter((stage) => !stage.isComplete)
+    .filter((stage) => stage.taskCount > 0 && !stage.isComplete)
 
     .map(({ stageSlug, stageLabel }) => ({ stageSlug, stageLabel }));
 
@@ -198,13 +216,14 @@ export function listIncompleteWorkflowStages(
 
 
 
+/** @deprecated Prefer !projectStatusCompletionNeedsConfirmation / countIncompleteWorkflowTasks. */
 export function canMarkProjectCompleteByWorkflowTasks(
 
   input: WorkflowStageCompletionInput
 
 ): boolean {
 
-  return listIncompleteWorkflowStages(input).length === 0;
+  return countIncompleteWorkflowTasks(input.workflowTasks) === 0;
 
 }
 
@@ -253,28 +272,17 @@ export function countCompletedWorkflowStages(
   let completedStageCount = 0;
 
   for (const stage of activeStages) {
-
+    const stageTasks = tasksByStage.get(stage.slug) ?? [];
     if (
-
       isWorkflowStageComplete({
-
         stageSlug: stage.slug,
-
-        tasks: tasksByStage.get(stage.slug) ?? [],
-
+        tasks: stageTasks,
         manualCompletions,
-
       })
-
     ) {
-
       completedStageCount += 1;
-
     }
-
   }
-
-
 
   return { completedStageCount, totalActiveStageCount };
 
@@ -582,7 +590,7 @@ export type WorkflowPipelineGraphState = {
 
 export function resolveContinuousCompletedStageIndex(
 
-  stageStatuses: readonly Pick<WorkflowStageCompletionStatus, 'isComplete'>[]
+  stageStatuses: readonly Pick<WorkflowStageCompletionStatus, 'isComplete' | 'taskCount'>[]
 
 ): number {
 
@@ -590,7 +598,8 @@ export function resolveContinuousCompletedStageIndex(
 
   for (let index = 0; index < stageStatuses.length; index += 1) {
 
-    if (!stageStatuses[index]?.isComplete) break;
+    const stage = stageStatuses[index];
+    if (stage == null || !stage.isComplete) break;
 
     lastIndex = index;
 
@@ -604,10 +613,11 @@ export function resolveContinuousCompletedStageIndex(
 
 export function resolveDerivedCurrentWorkflowStageSlug(
 
-  stageStatuses: readonly Pick<WorkflowStageCompletionStatus, 'stageSlug' | 'isComplete'>[]
+  stageStatuses: readonly Pick<WorkflowStageCompletionStatus, 'stageSlug' | 'isComplete' | 'taskCount'>[]
 
 ): PipelineStageSlug | null {
 
+  // Visual roadmap pointer: first stage that is not task-complete (empty stages count as not complete).
   return stageStatuses.find((stage) => !stage.isComplete)?.stageSlug ?? null;
 
 }

@@ -4,7 +4,7 @@ import type { ReactElement, ReactNode } from 'react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import type { CrmProjectDetail, CrmProjectSummary, CrmPriority } from '@/domain/crm';
-import { isCrmProjectInactive } from '@/domain/crm';
+import { canActorChangeCrmProjectStatus, isCrmProjectInactive } from '@/domain/crm';
 import { isBuildCoreMemberRole } from '@/domain/buildcore/memberRole';
 import { canManageBuildCoreProjectTemplates } from '@/domain/buildcore/projectTemplateAccess';
 import { resolveProjectTemplateScopeForProject } from '@/domain/crm/projectTemplateScope';
@@ -12,8 +12,6 @@ import { buildCoreDashboardContent as content } from '@/platform/content/buildCo
 import { useBuildCoreNavigation } from '@/presentation/providers/BuildCoreNavigationProvider';
 import { canMutateCrmProjectsInCurrentRuntime } from '@/infrastructure/demo/canMutateCrmProjectsInCurrentRuntime';
 import type { ProjectDetailRoutes } from '@/platform/navigation/projectDetailRoutes';
-import { useBuildCorePipelineStages } from '@/presentation/providers/BuildCorePipelineStagesProvider';
-import { useProjectCompletionToggle } from '@/presentation/features/crmProjectDetail/useProjectCompletionToggle';
 import { useProjectDetailWorkspace } from '@/presentation/features/crmProjectDetail/useProjectDetailWorkspace';
 import { useCrmProjectChildSummaries } from '@/presentation/features/crmProjectDetail/useCrmProjectChildSummaries';
 import { useBuildCoreMemberScopedProject } from '@/presentation/features/crmProjectDetail/useBuildCoreMemberScopedProject';
@@ -22,6 +20,7 @@ import {
   ProjectDetailShellProvider,
   type ProjectDetailShellContextValue,
 } from '@/presentation/features/crmProjectDetail/ProjectDetailShellContext';
+import { useCrmProjectStatusChange } from '@/presentation/features/crmProjectDetail/useCrmProjectStatusChange';
 import { useCrmProjectDeleteConfirmation } from '@/presentation/features/crmProjects/useCrmProjectDeleteConfirmation';
 import { useCrmProjectInactiveActions } from '@/presentation/features/crmProjects/useCrmProjectInactiveActions';
 import { queueCrmProjectDeleteSuccessToast } from '@/presentation/features/crmProjects/crmProjectDeleteFeedback';
@@ -37,14 +36,11 @@ import { DetailToast } from './DetailToast';
 import { CrmDirectUploadStatusProvider } from './CrmDirectUploadStatus';
 import { SaveProjectTemplateDialog } from './SaveProjectTemplateDialog';
 import { ProjectQrDialog } from './ProjectQrDialog';
-import { ProjectDetailActionsMenu } from './ProjectDetailActionsMenu';
 import type { ProjectDetailBreadcrumbNavigation } from './ProjectDetailBreadcrumbNav';
 import { ProjectDetailContextBlock } from './ProjectDetailContextBlock';
 import { ProjectDetailHeaderActions } from './ProjectDetailHeaderActions';
 import { ProjectDetailHeaderProgress } from './ProjectDetailHeaderProgress';
-import { ProjectPriorityToggle } from './ProjectPriorityToggle';
-import { ProjectDetailShellModals } from './ProjectDetailShellModals';
-import { MarkInactiveDialog } from '@/presentation/components/CrmProjects/MarkInactiveDialog';
+import { ProjectDetailShellModals, CrmProjectStatusChangeDialogs } from './ProjectDetailShellModals';
 import { WorkflowTaskModal } from './WorkflowTaskModal';
 import styles from './ProjectDetail.module.css';
 
@@ -84,8 +80,7 @@ function ProjectDetailShellBody({
   const nav = useBuildCoreNavigation();
   const canMutateProjects = canMutateCrmProjectsInCurrentRuntime();
   const [qrDialogOpen, setQrDialogOpen] = useState(false);
-  const { organizationMembershipContext } = useSaaSProfile();
-  const showCompletionActions = pageContext === 'detail' && !isMemberRole;
+  const { user: saasUser, organizationMembershipContext } = useSaaSProfile();
   const scopedProject = useBuildCoreMemberScopedProject(initialProject, isMemberRole, isApiSource);
   const canSaveTemplate = useMemo(
     () => canManageBuildCoreProjectTemplates(organizationMembershipContext?.role),
@@ -121,46 +116,54 @@ function ProjectDetailShellBody({
     if (!isParentOverview) return;
     void refetchChildSummaries();
   }, [isParentOverview, parentRouteSlug, refetchChildSummaries, refetchRollupIndexes]);
-  const { catalogForProject } = useBuildCorePipelineStages();
-  const pipelineStageCatalog = catalogForProject({
-    parentProjectId: scopedProject.summary.parentProjectId,
-  });
-  const completion = useProjectCompletionToggle(scopedProject, {
-    stages: pipelineStageCatalog,
-  });
-  const projectForWorkspace = showCompletionActions ? completion.project : scopedProject;
-  const workspace = useProjectDetailWorkspace(projectForWorkspace);
+  const workspace = useProjectDetailWorkspace(scopedProject);
   const { refreshWorkflowTasks } = workspace;
   const refreshAfterTemplateApply = useCallback(async () => {
     await refreshWorkflowTasks();
   }, [refreshWorkflowTasks]);
   const detail = content.projectDetail;
-  const markInactiveCopy = content.projectDetail.subprojects.markInactive;
   const markActiveCopy = content.projectDetail.subprojects.markActive;
   const projectSummary = workspace.project.summary;
   const isSubproject = projectSummary.parentProjectId != null;
+  const canChangeProjectStatus = useMemo(() => {
+    if (pageContext !== 'detail' || !canMutateProjects) return false;
+    const actorUserId = saasUser?.id?.trim() ?? '';
+    if (!actorUserId) return false;
+    return canActorChangeCrmProjectStatus({
+      role: organizationMembershipContext?.role,
+      actorUserId,
+      assignedMemberId: projectSummary.assignedTo?.id ?? null,
+    });
+  }, [
+    canMutateProjects,
+    organizationMembershipContext?.role,
+    pageContext,
+    projectSummary.assignedTo?.id,
+    saasUser?.id,
+  ]);
+  const statusChange = useCrmProjectStatusChange({
+    project: projectSummary,
+    canChange: canChangeProjectStatus,
+    onRefresh: refreshProjectDetail,
+    onSuccess: (message) => workspace.setToast({ kind: 'success', message }),
+    onError: (message) => workspace.setToast({ kind: 'error', message }),
+  });
   const {
-    markInactiveTarget,
-    openMarkInactive,
-    closeMarkInactive,
-    submitting: markingInactive,
     markingActive,
-    markingActiveProjectId,
-    submitMarkInactive,
     markProjectActive,
   } = useCrmProjectInactiveActions({
     onProjectsUpdated: () => {
       void refreshProjectDetail();
     },
     onMarkInactiveSuccess: () => {
-      workspace.setToast({ kind: 'success', message: markInactiveCopy.success });
+      workspace.setToast({ kind: 'success', message: markActiveCopy.success });
     },
     onMarkActiveSuccess: () => {
       workspace.setToast({ kind: 'success', message: markActiveCopy.success });
     },
     onError: (message) => workspace.setToast({ kind: 'error', message }),
   });
-  const lifecycleBusy = markingInactive || markingActive || markingActiveProjectId != null;
+  const lifecycleBusy = markingActive || statusChange.busy;
   const isProjectInactive = isCrmProjectInactive(projectSummary);
   const projectMutationsLocked = isProjectInactive && !isMemberRole;
   const inactiveEditCopy = markActiveCopy;
@@ -198,21 +201,11 @@ function ProjectDetailShellBody({
     })();
   }, [markProjectActive, projectSummary, refreshProjectDetail]);
 
-  const projectLifecycleProps = canMutateProjects && !isMemberRole
-    ? {
-        isSubproject,
-        onRequestMarkInactive: () => {
-          openMarkInactive({ mode: 'single', project: projectSummary });
-        },
-        onRequestMarkActive: () => {
-          void markProjectActive(projectSummary);
-        },
-        lifecycleBusy,
-      }
-    : {
-        isSubproject,
-        lifecycleBusy,
-      };
+  // Status changes go through the overview status pill — do not also expose Mark Inactive/Active here.
+  const projectLifecycleProps = {
+    isSubproject,
+    lifecycleBusy,
+  };
   const childSummaries = useMemo(
     () =>
       isParentOverview
@@ -350,49 +343,34 @@ function ProjectDetailShellBody({
 
   const headerActions = isMemberRole
     ? undefined
-    : showCompletionActions
-      ? (
-          <ProjectDetailHeaderActions
-            {...actionsMenuProps}
-            {...priorityToggleProps}
-            isComplete={completion.isComplete}
-            completionBusy={completion.completionBusy}
-            onMarkComplete={() => {
-              guardProjectEdit(() => {
-                completion.requestMarkComplete();
-              });
-            }}
-            onMarkIncomplete={() => {
-              guardProjectEdit(() => {
-                completion.requestMarkIncomplete();
-              });
-            }}
-            markCompleteLabel={detail.markComplete}
-            markIncompleteLabel={detail.markIncomplete}
-          />
-        )
-      : (
-          <div className={styles.detailHeaderActions}>
-            <ProjectPriorityToggle
-              priority={priorityToggleProps.priority}
-              busy={priorityToggleProps.priorityBusy || deleting}
-              disabled={priorityToggleProps.priorityDisabled}
-              markPriorityLabel={priorityToggleProps.markPriorityLabel}
-              removePriorityLabel={priorityToggleProps.removePriorityLabel}
-              onToggle={priorityToggleProps.onPriorityToggle}
-            />
-            <ProjectDetailActionsMenu {...actionsMenuProps} />
-          </div>
-        );
+    : (
+        <ProjectDetailHeaderActions
+          {...actionsMenuProps}
+          {...priorityToggleProps}
+        />
+      );
+
+  const projectStatusContext = useMemo(
+    () =>
+      pageContext === 'detail'
+        ? {
+            canChange: canChangeProjectStatus,
+            busy: statusChange.busy,
+            requestStatus: statusChange.requestStatus,
+          }
+        : null,
+    [canChangeProjectStatus, pageContext, statusChange.busy, statusChange.requestStatus]
+  );
 
   const shellValue: ProjectDetailShellContextValue = useMemo(
     () => ({
       pageContext,
       isApiSource,
       onRefresh: refreshProjectDetail,
-      showCompletionActions,
+      showCompletionActions: false,
       isMemberRole,
-      completion: showCompletionActions ? completion : null,
+      completion: null,
+      projectStatus: projectStatusContext,
       parentRouteSlug,
       subSlug,
       parentProject,
@@ -409,7 +387,6 @@ function ProjectDetailShellBody({
     }),
     [
       childSummaries,
-      completion,
       guardProjectEdit,
       guardedOpenCreateWorkflowTask,
       guardedOpenEditWorkflowTask,
@@ -422,9 +399,9 @@ function ProjectDetailShellBody({
       parentProject,
       parentRouteSlug,
       projectMutationsLocked,
+      projectStatusContext,
       refreshProjectDetail,
       routes,
-      showCompletionActions,
       subSlug,
       workspace,
     ]
@@ -461,6 +438,13 @@ function ProjectDetailShellBody({
 
         {!isMobileDetailOverview ? children : null}
 
+        {pageContext === 'detail' ? (
+          <CrmProjectStatusChangeDialogs
+            statusChange={statusChange}
+            onError={(message) => workspace.setToast({ kind: 'error', message })}
+          />
+        ) : null}
+
         {!isMemberRole ? (
           <>
             <ConfirmModal
@@ -475,8 +459,6 @@ function ProjectDetailShellBody({
               hideIcon
             />
             <ProjectDetailShellModals
-              showCompletion={showCompletionActions}
-              completion={showCompletionActions ? completion : null}
               workspace={workspace}
               pendingDeleteProject={pendingDeleteProject}
               onCloseDelete={() => setPendingDeleteProject(null)}
@@ -504,16 +486,6 @@ function ProjectDetailShellBody({
                 open={qrDialogOpen}
                 project={projectSummary}
                 onClose={() => setQrDialogOpen(false)}
-              />
-            ) : null}
-            {canMutateProjects && !isMemberRole ? (
-              <MarkInactiveDialog
-                target={markInactiveTarget}
-                submitting={markingInactive}
-                onClose={closeMarkInactive}
-                onSubmit={(values) => {
-                  void submitMarkInactive(values);
-                }}
               />
             ) : null}
 

@@ -15,6 +15,23 @@ export const CRM_PROJECT_STATUS_VALUES: readonly CrmProjectStatus[] = [
   'cancelled',
 ] as const;
 
+export type CrmProjectStatusOption = {
+  readonly value: CrmProjectStatus;
+  readonly label: string;
+};
+
+export const CRM_PROJECT_STATUS_OPTIONS: readonly CrmProjectStatusOption[] = [
+  { value: 'active', label: 'Active' },
+  { value: 'completed', label: 'Completed' },
+  { value: 'lost', label: 'Lost' },
+  { value: 'cancelled', label: 'Cancelled' },
+] as const;
+
+export function getCrmProjectStatusLabel(status: CrmProjectStatus): string {
+  const match = CRM_PROJECT_STATUS_OPTIONS.find((option) => option.value === status);
+  return match?.label ?? status;
+}
+
 export type CrmLossReason =
   | 'chose_competitor'
   | 'price'

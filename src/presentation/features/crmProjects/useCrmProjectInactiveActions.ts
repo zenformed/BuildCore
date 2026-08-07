@@ -2,7 +2,7 @@
 
 import { useCallback, useState } from 'react';
 import type { CrmInactiveReason, CrmProjectSummary } from '@/domain/crm';
-import { isCrmProjectLostOrCancelled } from '@/domain/crm';
+import { isCrmInactiveReason, isCrmProjectLostOrCancelled } from '@/domain/crm';
 import { markCrmProjectsInactive } from '@/application/use-cases/crm/markCrmProjectsInactive';
 import { markCrmProjectsActive } from '@/application/use-cases/crm/markCrmProjectsActive';
 import { canMutateCrmProjectsInCurrentRuntime } from '@/infrastructure/demo/canMutateCrmProjectsInCurrentRuntime';
@@ -24,7 +24,7 @@ export function useCrmProjectInactiveActions(input: {
   markingActive: boolean;
   markingActiveProjectId: string | null;
   submitMarkInactive: (values: {
-    readonly reason: CrmInactiveReason;
+    readonly reason: string;
     readonly customReason: string | null;
   }) => Promise<boolean>;
   markProjectActive: (project: CrmProjectSummary) => Promise<boolean>;
@@ -51,10 +51,15 @@ export function useCrmProjectInactiveActions(input: {
 
   const submitMarkInactive = useCallback(
     async (values: {
-      readonly reason: CrmInactiveReason;
+      readonly reason: string;
       readonly customReason: string | null;
     }): Promise<boolean> => {
       if (markInactiveTarget == null) return false;
+      if (!isCrmInactiveReason(values.reason)) {
+        input.onError(inactiveCopy.failed);
+        return false;
+      }
+      const reason: CrmInactiveReason = values.reason;
 
       if (!canMutateCrmProjectsInCurrentRuntime()) {
         input.onError(deleteCopy.mockDisabledMessage);
@@ -70,7 +75,7 @@ export function useCrmProjectInactiveActions(input: {
       try {
         const result = await markCrmProjectsInactive(crmRepositories, {
           projectSlugs,
-          reason: values.reason,
+          reason,
           customReason: values.customReason,
         });
 

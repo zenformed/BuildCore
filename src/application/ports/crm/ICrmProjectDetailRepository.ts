@@ -10,7 +10,11 @@ export interface ICrmProjectDetailRepository {
   getBySlug(slug: string): CrmRepositoryResult<CrmProjectDetail | null>;
   getById(id: string): CrmRepositoryResult<CrmProjectDetail | null>;
   updateBySlug(slug: string, input: UpdateCrmProjectInput): CrmRepositoryResult<CrmProjectDetail | null>;
-  setCompletion(slug: string, complete: boolean): CrmRepositoryResult<CrmProjectDetail | null>;
+  setCompletion(
+    slug: string,
+    complete: boolean,
+    options?: { readonly confirmIncompleteTasks?: boolean }
+  ): CrmRepositoryResult<CrmProjectDetail | null>;
   markStageCompleteManual(
     slug: string,
     stageSlug: PipelineStageSlug,

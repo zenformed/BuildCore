@@ -4,7 +4,8 @@ export class CrmApiError extends Error {
   constructor(
     readonly code: string,
     readonly status: number,
-    message?: string
+    message?: string,
+    readonly details: Readonly<Record<string, unknown>> = {}
   ) {
     super(message ?? code);
     this.name = 'CrmApiError';
@@ -52,7 +53,8 @@ async function parseCrmApiResponse<T>(response: Response): Promise<T> {
     const record = body != null && typeof body === 'object' ? (body as Record<string, unknown>) : {};
     const code = typeof record.error === 'string' ? record.error : 'request_failed';
     const message = typeof record.message === 'string' ? record.message : response.statusText;
-    throw new CrmApiError(code, response.status, message);
+    const { error: _error, message: _message, ...details } = record;
+    throw new CrmApiError(code, response.status, message, details);
   }
 
   return body as T;

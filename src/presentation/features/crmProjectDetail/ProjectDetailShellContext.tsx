@@ -3,6 +3,7 @@
 import { createContext, useContext, type ReactElement, type ReactNode } from 'react';
 import type { ProjectDetailPageContext } from './projectDetailPageContext';
 import type { useProjectCompletionToggle } from './useProjectCompletionToggle';
+import type { useCrmProjectStatusChange } from './useCrmProjectStatusChange';
 import type { useProjectDetailWorkspace } from './useProjectDetailWorkspace';
 import type { CrmProjectSummary } from '@/domain/crm';
 import type { ProjectDetailRoutes } from '@/platform/navigation/projectDetailRoutes';
@@ -15,13 +16,23 @@ export type ProjectDetailChildSummaries = {
   readonly patchProjectSummary: (summary: CrmProjectSummary) => void;
 };
 
+export type ProjectDetailStatusChangeContext = {
+  readonly canChange: boolean;
+  readonly busy: boolean;
+  readonly requestStatus: ReturnType<typeof useCrmProjectStatusChange>['requestStatus'];
+};
+
 export type ProjectDetailShellContextValue = {
   pageContext: ProjectDetailPageContext;
   isApiSource: boolean;
   onRefresh: () => Promise<void>;
+  /** @deprecated Detail completion actions removed; always false. Kept for leftover callers. */
   showCompletionActions: boolean;
   isMemberRole: boolean;
+  /** @deprecated Prefer projectStatus; completion toggle no longer drives detail UI. */
   completion: ReturnType<typeof useProjectCompletionToggle> | null;
+  /** Detail-page Project/Subproject status pill control. */
+  projectStatus: ProjectDetailStatusChangeContext | null;
   parentRouteSlug: string;
   subSlug?: string;
   parentProject: CrmProjectSummary | null;
@@ -58,7 +69,7 @@ export function ProjectDetailShellProvider({
 export function useProjectDetailShell(): ProjectDetailShellContextValue {
   const value = useContext(ProjectDetailShellContext);
   if (value == null) {
-    throw new Error('useProjectDetailShell must be used within ProjectDetailShell');
+    throw new Error('useProjectDetailShell must be used within ProjectDetailShellProvider');
   }
   return value;
 }

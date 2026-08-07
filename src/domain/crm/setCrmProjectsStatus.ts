@@ -17,6 +17,8 @@ export type CrmProjectStatusChangeSource =
 export type CrmProjectStatusFailureCode =
   | 'not_found'
   | 'unauthorized'
+  | 'confirmation_required'
+  /** @deprecated Prefer confirmation_required */
   | 'completion_blocked'
   | 'invalid_transition'
   | 'already_at_status'
@@ -28,6 +30,11 @@ export type SetCrmProjectsStatusInput = {
   readonly lossReason?: CrmLossReason | null;
   readonly lossReasonOther?: string | null;
   readonly source?: CrmProjectStatusChangeSource | null;
+  /**
+   * When status is completed and incomplete workflow tasks remain, the server returns
+   * confirmation_required unless this is true (Complete Anyway).
+   */
+  readonly confirmIncompleteTasks?: boolean | null;
 };
 
 export type CrmProjectStatusChangeResultItem = {
@@ -38,7 +45,9 @@ export type CrmProjectStatusChangeResultItem = {
   readonly resultingStatus: CrmProjectStatus | null;
   readonly failureCode: CrmProjectStatusFailureCode | null;
   readonly message: string | null;
-  /** Present when failureCode is completion_blocked. */
+  /** Present when failureCode is confirmation_required. */
+  readonly incompleteTaskCount?: number;
+  /** Stages that still have incomplete tasks (informational). */
   readonly incompleteStages?: readonly { readonly stageSlug: string; readonly stageLabel: string }[];
 };
 
@@ -95,6 +104,14 @@ export function isCrmProjectStatusAlreadyAtTarget(input: {
   );
 }
 
+export function formatIncompleteTasksCompletionWarning(incompleteTaskCount: number): string {
+  const n = Math.max(0, incompleteTaskCount);
+  if (n === 1) {
+    return 'This project still has 1 incomplete workflow task. Mark it Completed anyway?';
+  }
+  return `This project still has ${n} incomplete workflow tasks. Mark it Completed anyway?`;
+}
+
 export function parseSetCrmProjectsStatusBody(body: unknown): SetCrmProjectsStatusInput | null {
   if (body == null || typeof body !== 'object') return null;
   const record = body as Record<string, unknown>;
@@ -131,11 +148,17 @@ export function parseSetCrmProjectsStatusBody(body: unknown): SetCrmProjectsStat
         : null;
   if (sourceRaw != null && source == null) return null;
 
+  const confirmRaw = record.confirmIncompleteTasks;
+  const confirmIncompleteTasks =
+    confirmRaw == null ? null : typeof confirmRaw === 'boolean' ? confirmRaw : undefined;
+  if (confirmIncompleteTasks === undefined) return null;
+
   return {
     projectSlugs,
     status: statusRaw,
     lossReason,
     lossReasonOther,
     source,
+    confirmIncompleteTasks,
   };
 }

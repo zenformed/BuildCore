@@ -397,7 +397,11 @@ export class MockCrmProjectDetailRepository implements ICrmProjectDetailReposito
 
 
 
-  setCompletion(slug: string, complete: boolean): CrmProjectDetail | null {
+  setCompletion(
+    slug: string,
+    complete: boolean,
+    _options?: { readonly confirmIncompleteTasks?: boolean }
+  ): CrmProjectDetail | null {
 
     const detail = getEffectiveMockProjectDetailBySlug(slug);
 

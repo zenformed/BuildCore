@@ -152,6 +152,7 @@ describe('parseSetCrmProjectsStatusBody', () => {
         lossReason: 'dead_lead',
         lossReasonOther: null,
         source: 'table_bulk',
+        confirmIncompleteTasks: null,
       }
     );
   });
@@ -174,6 +175,24 @@ describe('parseSetCrmProjectsStatusBody', () => {
         source: 'unknown',
       }),
       null
+    );
+  });
+
+  it('parses confirmIncompleteTasks', () => {
+    assert.deepEqual(
+      parseSetCrmProjectsStatusBody({
+        projectSlugs: ['a'],
+        status: 'completed',
+        confirmIncompleteTasks: true,
+      }),
+      {
+        projectSlugs: ['a'],
+        status: 'completed',
+        lossReason: null,
+        lossReasonOther: null,
+        source: null,
+        confirmIncompleteTasks: true,
+      }
     );
   });
 });

@@ -17,7 +17,7 @@ import {
   isCrmProjectLostOrCancelled,
   type CrmProjectSummary,
 } from '@/domain/crm';
-import { listWorkflowStageCompletionStatuses } from '@/domain/buildcore/projectPipelineProgress';
+import { countIncompleteWorkflowTasks } from '@/domain/buildcore/projectPipelineProgress';
 import { isBuildCoreMemberRole } from '@/domain/buildcore/memberRole';
 import {
   CRM_PROJECTS_LIST_V2_PAGE_SIZES,
@@ -40,7 +40,7 @@ import { SpreadsheetImportWizard } from '@/presentation/components/CrmImport/Spr
 import { SpreadsheetImportMobileNoticeDialog } from '@/presentation/components/CrmImport/SpreadsheetImportMobileNoticeDialog';
 import { DetailToast } from '@/presentation/components/CrmProjectDetail/DetailToast';
 import { ConfirmModal } from '@/presentation/components/ConfirmModal';
-import { ProjectCompletionBlockedDialog } from '@/presentation/components/CrmProjectDetail/ProjectCompletionBlockedDialog';
+import { ProjectCompletionWarningDialog } from '@/presentation/components/CrmProjectDetail/ProjectCompletionBlockedDialog';
 import { useBuildCorePipelineStages } from '@/presentation/providers/BuildCorePipelineStagesProvider';
 import { useCrmProjectTableRowActions } from '@/presentation/features/crmProjects/useCrmProjectTableRowActions';
 import { useCrmProjectInactiveActions } from '@/presentation/features/crmProjects/useCrmProjectInactiveActions';
@@ -93,6 +93,7 @@ export function CrmProjectsPipelineV2({
   const [importOpen, setImportOpen] = useState(false);
   const [importMobileNoticeOpen, setImportMobileNoticeOpen] = useState(false);
   const [pendingBulkComplete, setPendingBulkComplete] = useState(false);
+  const [pendingBulkCompleteAnyway, setPendingBulkCompleteAnyway] = useState(false);
   const [bulkActionBusy, setBulkActionBusy] = useState(false);
   const [toast, setToast] = useState<PipelineToast | null>(null);
 
@@ -143,11 +144,12 @@ export function CrmProjectsPipelineV2({
     busyProjectId,
     pendingCompletionChange,
     setPendingCompletionChange,
-    completionBlockedStageStatuses,
-    setCompletionBlockedStageStatuses,
+    incompleteTasksWarningCount,
+    setIncompleteTasksWarningCount,
     togglePriority,
     requestCompletionChange,
     confirmCompletionChange,
+    confirmCompleteAnyway,
   } = useCrmProjectTableRowActions({
     onProjectUpdated: patchAsRootItem,
     onSuccess: (message) => setToast({ kind: 'success', message }),
@@ -257,6 +259,48 @@ export function CrmProjectsPipelineV2({
     }
   }, [bulkActionBusy, bulkSelection, selectedPriorityEligible, togglePriority]);
 
+  const runBulkMarkComplete = useCallback(
+    async (confirmIncompleteTasks: boolean) => {
+      if (selectedCompleteEligible.length === 0) return;
+      setBulkActionBusy(true);
+      let updatedCount = 0;
+      try {
+        for (const project of selectedCompleteEligible) {
+          try {
+            const updated = await setCrmProjectCompletion(
+              crmRepositories,
+              project.slug,
+              true,
+              confirmIncompleteTasks ? { confirmIncompleteTasks: true } : undefined
+            );
+            if (updated == null) continue;
+            patchAsRootItem(updated.summary);
+            updatedCount += 1;
+          } catch {
+            // Continue remaining selections.
+          }
+        }
+        if (updatedCount > 0) {
+          setToast({ kind: 'success', message: detailCopy.markCompleteSuccess });
+          bulkSelection.clearSelection();
+          void list.refetch();
+        } else {
+          setToast({ kind: 'error', message: detailCopy.markCompleteFailed });
+        }
+      } finally {
+        setBulkActionBusy(false);
+      }
+    },
+    [
+      bulkSelection,
+      detailCopy.markCompleteFailed,
+      detailCopy.markCompleteSuccess,
+      list,
+      patchAsRootItem,
+      selectedCompleteEligible,
+    ]
+  );
+
   const confirmBulkMarkComplete = useCallback(async () => {
     if (selectedCompleteEligible.length === 0) {
       setPendingBulkComplete(false);
@@ -264,51 +308,44 @@ export function CrmProjectsPipelineV2({
     }
     setPendingBulkComplete(false);
     setBulkActionBusy(true);
-    let updatedCount = 0;
-    let blocked = false;
+    let totalIncomplete = 0;
+    let fetchableCount = 0;
     try {
       for (const project of selectedCompleteEligible) {
         try {
           const detail = await getCrmProjectDetailBySlug(crmRepositories, project.slug);
           if (detail == null) continue;
-          const stageStatuses = listWorkflowStageCompletionStatuses({
-            workflowTasks: detail.workflowTasks,
-            stages: resolveStagesForProject(project),
-            manualStageCompletions: detail.manualStageCompletions,
-          });
-          if (stageStatuses.some((stage) => !stage.isComplete)) {
-            setCompletionBlockedStageStatuses(stageStatuses);
-            blocked = true;
-            break;
-          }
-          const updated = await setCrmProjectCompletion(crmRepositories, project.slug, true);
-          if (updated == null) continue;
-          patchAsRootItem(updated.summary);
-          updatedCount += 1;
+          fetchableCount += 1;
+          totalIncomplete += countIncompleteWorkflowTasks(detail.workflowTasks);
         } catch {
           // Continue remaining selections.
         }
       }
-      if (updatedCount > 0) {
-        setToast({ kind: 'success', message: detailCopy.markCompleteSuccess });
-        bulkSelection.clearSelection();
-        void list.refetch();
-      } else if (!blocked) {
+      if (fetchableCount === 0) {
         setToast({ kind: 'error', message: detailCopy.markCompleteFailed });
+        return;
+      }
+      if (totalIncomplete > 0) {
+        setIncompleteTasksWarningCount(totalIncomplete);
+        setPendingBulkCompleteAnyway(true);
+        return;
       }
     } finally {
       setBulkActionBusy(false);
     }
+    await runBulkMarkComplete(false);
   }, [
-    bulkSelection,
     detailCopy.markCompleteFailed,
-    detailCopy.markCompleteSuccess,
-    list,
-    patchAsRootItem,
-    resolveStagesForProject,
+    runBulkMarkComplete,
     selectedCompleteEligible,
-    setCompletionBlockedStageStatuses,
+    setIncompleteTasksWarningCount,
   ]);
+
+  const confirmBulkCompleteAnyway = useCallback(async () => {
+    setPendingBulkCompleteAnyway(false);
+    setIncompleteTasksWarningCount(null);
+    await runBulkMarkComplete(true);
+  }, [runBulkMarkComplete, setIncompleteTasksWarningCount]);
 
   const handleBulkAssign = useCallback(
     async (assignedMemberId: string) => {
@@ -724,10 +761,20 @@ export function CrmProjectsPipelineV2({
         onClose={() => setPendingDeleteProject(null)}
         onConfirm={() => void handleConfirmDelete()}
       />
-      <ProjectCompletionBlockedDialog
-        isOpen={completionBlockedStageStatuses != null}
-        stageStatuses={completionBlockedStageStatuses}
-        onClose={() => setCompletionBlockedStageStatuses(null)}
+      <ProjectCompletionWarningDialog
+        isOpen={incompleteTasksWarningCount != null}
+        incompleteTaskCount={incompleteTasksWarningCount ?? 0}
+        onClose={() => {
+          setIncompleteTasksWarningCount(null);
+          setPendingBulkCompleteAnyway(false);
+        }}
+        onConfirm={() => {
+          if (pendingBulkCompleteAnyway) {
+            void confirmBulkCompleteAnyway();
+          } else {
+            void confirmCompleteAnyway();
+          }
+        }}
       />
       <ConfirmModal
         isOpen={pendingCompletionChange != null}

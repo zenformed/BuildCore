@@ -1,8 +1,9 @@
 import { randomUUID } from 'crypto';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import {
-  canMarkProjectCompleteByWorkflowTasks,
+  countIncompleteWorkflowTasks,
   listIncompleteWorkflowStages,
+  projectStatusCompletionNeedsConfirmation,
 } from '@/domain/buildcore/projectPipelineProgress';
 import { CRM_PROJECT_COMPLETE_STAGE_SLUG } from '@/domain/crm/projectCompletion';
 import {
@@ -14,6 +15,7 @@ import {
 import type { CrmPriority } from '@/domain/crm/project';
 import { canActorChangeCrmProjectStatus } from '@/domain/crm/projectStatusAccess';
 import {
+  formatIncompleteTasksCompletionWarning,
   isCrmProjectStatusAlreadyAtTarget,
   normalizeLossReasonOtherForWrite,
   validateSetCrmProjectsStatusRequest,
@@ -233,9 +235,6 @@ export async function setCrmProjectsStatusForOrg(
       readonly priority: CrmPriority;
       readonly currentStageSlug: string;
     } | null = null;
-    let incompleteStages:
-      | readonly { readonly stageSlug: string; readonly stageLabel: string }[]
-      | undefined;
 
     if (requestedStatus === 'completed') {
       const detail = await resolved.getProjectDetail(supabase, organizationId, slug);
@@ -256,21 +255,25 @@ export async function setCrmProjectsStatusForOrg(
         organizationId,
         detail.summary
       );
-      const completionInput = {
-        workflowTasks: detail.workflowTasks,
-        stages: pipelineStages,
-        manualStageCompletions: detail.manualStageCompletions,
-      };
-      if (!canMarkProjectCompleteByWorkflowTasks(completionInput)) {
-        incompleteStages = listIncompleteWorkflowStages(completionInput);
+      const incompleteTaskCount = countIncompleteWorkflowTasks(detail.workflowTasks);
+      if (
+        projectStatusCompletionNeedsConfirmation(detail.workflowTasks) &&
+        input.confirmIncompleteTasks !== true
+      ) {
+        const incompleteStages = listIncompleteWorkflowStages({
+          workflowTasks: detail.workflowTasks,
+          stages: pipelineStages,
+          manualStageCompletions: detail.manualStageCompletions,
+        });
         resultsBySlug.set(slug, {
           slug,
           success: false,
           previousStatus: previous.status,
           requestedStatus,
           resultingStatus: null,
-          failureCode: 'completion_blocked',
-          message: 'All workflow tasks must be done before marking this project complete',
+          failureCode: 'confirmation_required',
+          message: formatIncompleteTasksCompletionWarning(incompleteTaskCount),
+          incompleteTaskCount,
           incompleteStages,
         });
         continue;

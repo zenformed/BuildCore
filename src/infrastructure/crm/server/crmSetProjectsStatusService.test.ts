@@ -152,9 +152,70 @@ describe('setCrmProjectsStatusForOrg', () => {
     assert.equal(result.results[0]?.previousStatus, null);
   });
 
-  it('blocks Completed when workflow validation fails and continues others', async () => {
+  it('requires confirmation when Completed and incomplete tasks remain', async () => {
+    const rows = [baseRow({ id: '1', slug: 'blocked' })];
+    const { client, updates } = createFakeSupabase(rows);
+
+    const result = await setCrmProjectsStatusForOrg(
+      client,
+      'org-1',
+      'admin-1',
+      { projectSlugs: ['blocked'], status: 'completed' },
+      {
+        loadActorRole: async () => 'admin',
+        getProjectDetail: async () =>
+          detailStub('blocked', [
+            {
+              id: 't1',
+              status: 'todo',
+              stageSlug: 'stage-a',
+            } as unknown as CrmProjectDetail['workflowTasks'][number],
+          ]),
+        loadPipelineStages: async () => [{ slug: 'stage-a', label: 'Stage A', sortOrder: 1 }],
+        appendAccountability: async () => undefined,
+      }
+    );
+
+    assert.equal(result.results[0]?.failureCode, 'confirmation_required');
+    assert.equal(result.results[0]?.incompleteTaskCount, 1);
+    assert.equal(updates.length, 0);
+  });
+
+  it('completes when incomplete tasks remain and confirmIncompleteTasks is true', async () => {
+    const rows = [baseRow({ id: '1', slug: 'confirm-me' })];
+    const { client, updates } = createFakeSupabase(rows);
+
+    const result = await setCrmProjectsStatusForOrg(
+      client,
+      'org-1',
+      'admin-1',
+      {
+        projectSlugs: ['confirm-me'],
+        status: 'completed',
+        confirmIncompleteTasks: true,
+      },
+      {
+        loadActorRole: async () => 'admin',
+        getProjectDetail: async () =>
+          detailStub('confirm-me', [
+            {
+              id: 't1',
+              status: 'todo',
+              stageSlug: 'stage-a',
+            } as unknown as CrmProjectDetail['workflowTasks'][number],
+          ]),
+        loadPipelineStages: async () => [{ slug: 'stage-a', label: 'Stage A', sortOrder: 1 }],
+        appendAccountability: async () => undefined,
+      }
+    );
+
+    assert.equal(result.results[0]?.success, true);
+    assert.equal(updates[0]?.patch.project_status, 'completed');
+  });
+
+  it('bulk Completed returns structured confirmation metadata without updating', async () => {
     const rows = [
-      baseRow({ id: '1', slug: 'blocked' }),
+      baseRow({ id: '1', slug: 'needs-confirm' }),
       baseRow({ id: '2', slug: 'ready' }),
     ];
     const { client, updates } = createFakeSupabase(rows);
@@ -163,11 +224,11 @@ describe('setCrmProjectsStatusForOrg', () => {
       client,
       'org-1',
       'admin-1',
-      { projectSlugs: ['blocked', 'ready'], status: 'completed' },
+      { projectSlugs: ['needs-confirm', 'ready'], status: 'completed' },
       {
         loadActorRole: async () => 'admin',
         getProjectDetail: async (_sb, _org, slug) => {
-          if (slug === 'blocked') {
+          if (slug === 'needs-confirm') {
             return detailStub(slug, [
               {
                 id: 't1',
@@ -184,20 +245,14 @@ describe('setCrmProjectsStatusForOrg', () => {
             } as unknown as CrmProjectDetail['workflowTasks'][number],
           ]);
         },
-        loadPipelineStages: async () => [
-          { slug: 'stage-a', label: 'Stage A', sortOrder: 1 },
-        ],
+        loadPipelineStages: async () => [{ slug: 'stage-a', label: 'Stage A', sortOrder: 1 }],
         appendAccountability: async () => undefined,
-        createBulkOperationId: () => 'bulk-complete',
       }
     );
 
-    assert.equal(result.results[0]?.failureCode, 'completion_blocked');
-    assert.ok((result.results[0]?.incompleteStages?.length ?? 0) > 0);
+    assert.equal(result.results[0]?.failureCode, 'confirmation_required');
     assert.equal(result.results[1]?.success, true);
     assert.equal(updates.length, 1);
-    assert.equal(updates[0]?.patch.project_status, 'completed');
-    assert.equal(updates[0]?.patch.subproject_status, 'completed');
   });
 
   it('does not write or emit accountability for already_at_status', async () => {

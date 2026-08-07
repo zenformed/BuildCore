@@ -226,6 +226,7 @@ export class ApiCrmProjectsRepository implements ICrmProjectsRepository {
       lossReason: input.lossReason ?? null,
       lossReasonOther: input.lossReasonOther ?? null,
       source: input.source ?? 'api',
+      confirmIncompleteTasks: input.confirmIncompleteTasks === true ? true : null,
     });
   }
 
@@ -350,7 +351,11 @@ export class ApiCrmProjectDetailRepository implements ICrmProjectDetailRepositor
 
 
 
-  async setCompletion(slug: string, complete: boolean): Promise<CrmProjectDetail | null> {
+  async setCompletion(
+    slug: string,
+    complete: boolean,
+    options?: { readonly confirmIncompleteTasks?: boolean }
+  ): Promise<CrmProjectDetail | null> {
 
     clearApiCrmDetailCache();
 
@@ -360,7 +365,10 @@ export class ApiCrmProjectDetailRepository implements ICrmProjectDetailRepositor
 
         `/api/crm/projects/${encodeURIComponent(slug.trim())}/completion`,
 
-        { complete }
+        {
+          complete,
+          confirmIncompleteTasks: options?.confirmIncompleteTasks === true ? true : undefined,
+        }
 
       );
 
