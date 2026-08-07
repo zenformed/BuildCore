@@ -1,16 +1,15 @@
 /**
- * POST /api/crm/projects/mark-inactive — thin adapter over unified status service.
+ * POST /api/crm/projects/status — unified Project/Subproject status change (single or bulk).
  */
 
 import { NextRequest, NextResponse } from 'next/server';
 import { requireCrmApiAuth } from '@/infrastructure/crm/server/crmApiRouteAuth';
-import {
-  CrmMarkProjectsInactiveValidationError,
-  markCrmProjectsInactiveForOrg,
-  parseMarkCrmProjectsInactiveBody,
-} from '@/infrastructure/crm/server/crmMarkProjectsInactiveService';
 import { mapCrmRouteError } from '@/infrastructure/crm/server/crmApiRouteErrors';
-import { CrmSetProjectsStatusValidationError } from '@/infrastructure/crm/server/crmSetProjectsStatusService';
+import {
+  CrmSetProjectsStatusValidationError,
+  setCrmProjectsStatusForOrg,
+} from '@/infrastructure/crm/server/crmSetProjectsStatusService';
+import { parseSetCrmProjectsStatusBody } from '@/domain/crm/setCrmProjectsStatus';
 
 export const dynamic = 'force-dynamic';
 
@@ -25,7 +24,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     return NextResponse.json({ error: 'invalid_body', message: 'JSON body required' }, { status: 400 });
   }
 
-  const input = parseMarkCrmProjectsInactiveBody(body);
+  const input = parseSetCrmProjectsStatusBody(body);
   if (input == null) {
     return NextResponse.json(
       { error: 'validation_error', message: 'Invalid request body.' },
@@ -34,20 +33,20 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   }
 
   try {
-    const result = await markCrmProjectsInactiveForOrg(
+    const result = await setCrmProjectsStatusForOrg(
       auth.context.supabase,
       auth.context.organizationId,
       auth.context.user.id,
-      input
+      {
+        ...input,
+        source: input.source ?? 'api',
+      }
     );
     return NextResponse.json(result);
   } catch (err) {
-    if (
-      err instanceof CrmMarkProjectsInactiveValidationError ||
-      err instanceof CrmSetProjectsStatusValidationError
-    ) {
+    if (err instanceof CrmSetProjectsStatusValidationError) {
       return NextResponse.json({ error: 'validation_error', message: err.message }, { status: 400 });
     }
-    return mapCrmRouteError(err, 'Failed to mark CRM projects inactive');
+    return mapCrmRouteError(err, 'Failed to update CRM project status');
   }
 }

@@ -1,30 +1,22 @@
 /**
- * POST /api/crm/projects/mark-active — restore one or more inactive subprojects to active.
+ * POST /api/crm/projects/mark-active — thin adapter over unified status service.
  */
 
 import { NextRequest, NextResponse } from 'next/server';
 import { requireCrmApiAuth } from '@/infrastructure/crm/server/crmApiRouteAuth';
-import { requireBuildCoreProjectManagementAccess } from '@/infrastructure/crm/server/buildCoreProjectManagementAccess';
 import {
   CrmMarkProjectsActiveValidationError,
   markCrmProjectsActiveForOrg,
   parseMarkCrmProjectsActiveBody,
 } from '@/infrastructure/crm/server/crmMarkProjectsActiveService';
 import { mapCrmRouteError } from '@/infrastructure/crm/server/crmApiRouteErrors';
+import { CrmSetProjectsStatusValidationError } from '@/infrastructure/crm/server/crmSetProjectsStatusService';
 
 export const dynamic = 'force-dynamic';
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
   const auth = await requireCrmApiAuth(request.headers.get('Authorization'));
   if (!auth.ok) return auth.response;
-
-  const access = await requireBuildCoreProjectManagementAccess(
-    auth.context.supabase,
-    auth.context.organizationId,
-    auth.context.user.id,
-    'update'
-  );
-  if (!access.ok) return access.response;
 
   let body: unknown;
   try {
@@ -50,7 +42,10 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     );
     return NextResponse.json(result);
   } catch (err) {
-    if (err instanceof CrmMarkProjectsActiveValidationError) {
+    if (
+      err instanceof CrmMarkProjectsActiveValidationError ||
+      err instanceof CrmSetProjectsStatusValidationError
+    ) {
       return NextResponse.json({ error: 'validation_error', message: err.message }, { status: 400 });
     }
     return mapCrmRouteError(err, 'Failed to mark CRM projects active');

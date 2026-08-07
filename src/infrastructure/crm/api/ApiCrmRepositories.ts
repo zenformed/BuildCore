@@ -216,6 +216,19 @@ export class ApiCrmProjectsRepository implements ICrmProjectsRepository {
     );
   }
 
+  setStatus(input: import('@/domain/crm/setCrmProjectsStatus').SetCrmProjectsStatusInput): Promise<
+    import('@/domain/crm/setCrmProjectsStatus').SetCrmProjectsStatusResult
+  > {
+    clearApiCrmDetailCache();
+    return crmApiPostJson('/api/crm/projects/status', {
+      projectSlugs: input.projectSlugs,
+      status: input.status,
+      lossReason: input.lossReason ?? null,
+      lossReasonOther: input.lossReasonOther ?? null,
+      source: input.source ?? 'api',
+    });
+  }
+
 }
 
 

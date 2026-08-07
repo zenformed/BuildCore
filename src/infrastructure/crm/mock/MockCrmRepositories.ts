@@ -94,6 +94,7 @@ import {
   mockCreateCrmProject,
   mockMarkCrmProjectsActive,
   mockMarkCrmProjectsInactive,
+  mockSetCrmProjectsStatus,
 } from './mockCrmProjectCrud';
 import { getDocumentStorageProvider } from '@/infrastructure/storage/getDocumentStorageProvider';
 import {
@@ -336,7 +337,7 @@ export class MockCrmProjectsRepository implements ICrmProjectsRepository {
   }
 
   markInactive(
-    input: import('@/domain/crm/subprojectStatus').MarkCrmProjectsInactiveInput
+    input: import('@/domain/crm/projectStatus').MarkCrmProjectsInactiveInput
   ): Promise<import('@/domain/crm/bulkMarkInactiveProjects').BulkMarkInactiveCrmProjectsResult> {
     if (!isDemoRuntimeClient()) {
       return Promise.reject(new CrmWriteNotAvailableError());
@@ -345,12 +346,21 @@ export class MockCrmProjectsRepository implements ICrmProjectsRepository {
   }
 
   markActive(
-    input: import('@/domain/crm/subprojectStatus').MarkCrmProjectsActiveInput
+    input: import('@/domain/crm/projectStatus').MarkCrmProjectsActiveInput
   ): Promise<import('@/domain/crm/bulkMarkActiveProjects').BulkMarkActiveCrmProjectsResult> {
     if (!isDemoRuntimeClient()) {
       return Promise.reject(new CrmWriteNotAvailableError());
     }
     return Promise.resolve(mockMarkCrmProjectsActive(input));
+  }
+
+  setStatus(
+    input: import('@/domain/crm/setCrmProjectsStatus').SetCrmProjectsStatusInput
+  ): Promise<import('@/domain/crm/setCrmProjectsStatus').SetCrmProjectsStatusResult> {
+    if (!isDemoRuntimeClient()) {
+      return Promise.reject(new CrmWriteNotAvailableError());
+    }
+    return Promise.resolve(mockSetCrmProjectsStatus(input));
   }
 
 }

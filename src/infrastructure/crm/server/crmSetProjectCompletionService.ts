@@ -1,11 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
-import { toLegacySubprojectStatus } from '@/domain/crm/projectStatus';
 import type { CrmProjectDetail } from '@/domain/crm';
-import { canMarkProjectCompleteByWorkflowTasks } from '@/domain/buildcore/projectPipelineProgress';
-import { CRM_PROJECT_COMPLETE_STAGE_SLUG } from '@/domain/crm/projectCompletion';
-import { appendCrmAccountabilityEvent } from './crmAccountability';
 import { getCrmProjectDetailBySlugForOrg } from './crmReadService';
-import { loadOrganizationPipelineStageCatalogForProject } from './pipelineStageService';
+import { setCrmProjectsStatusForOrg } from './crmSetProjectsStatusService';
 
 export class CrmProjectCompletionBlockedError extends Error {
   constructor(message = 'All workflow tasks must be done before marking this project complete') {
@@ -14,6 +10,17 @@ export class CrmProjectCompletionBlockedError extends Error {
   }
 }
 
+export class CrmProjectCompletionForbiddenError extends Error {
+  constructor(message = 'You do not have permission to change status for this project.') {
+    super(message);
+    this.name = 'CrmProjectCompletionForbiddenError';
+  }
+}
+
+/**
+ * Thin adapter: completion → unified status service.
+ * complete true → completed; complete false → active (per Phase 2 product mapping).
+ */
 export async function setCrmProjectCompletionBySlugForOrg(
   supabase: SupabaseClient,
   organizationId: string,
@@ -21,71 +28,27 @@ export async function setCrmProjectCompletionBySlugForOrg(
   slug: string,
   complete: boolean
 ): Promise<CrmProjectDetail | null> {
-  const existing = await getCrmProjectDetailBySlugForOrg(supabase, organizationId, slug);
-  if (existing == null) return null;
-
-  if (complete) {
-    const pipelineStages = await loadOrganizationPipelineStageCatalogForProject(
-      supabase,
-      organizationId,
-      existing.summary
-    );
-    if (!canMarkProjectCompleteByWorkflowTasks({
-      workflowTasks: existing.workflowTasks,
-      stages: pipelineStages,
-      manualStageCompletions: existing.manualStageCompletions,
-    })) {
-      throw new CrmProjectCompletionBlockedError();
-    }
-  }
-
-  const now = new Date().toISOString();
-  const nextProjectStatus = complete
-    ? 'completed'
-    : existing.summary.status === 'lost' || existing.summary.status === 'cancelled'
-      ? existing.summary.status
-      : 'active';
-
-  const { error: projectError } = await supabase
-    .from('crm_projects')
-    .update({
-      completed_at: complete ? now : null,
-      completed_by: complete ? actorUserId : null,
-      last_activity_at: now,
-      subproject_status: complete
-        ? 'completed'
-        : toLegacySubprojectStatus({
-            status: nextProjectStatus,
-            priority: existing.summary.priority,
-          }),
-      project_status: nextProjectStatus,
-      ...(complete || nextProjectStatus === 'active'
-        ? {
-            loss_reason: null,
-            loss_reason_other: null,
-          }
-        : {}),
-      status_changed_at: now,
-      status_changed_by: actorUserId,
-      ...(complete
-        ? { priority: 'low', current_stage_slug: CRM_PROJECT_COMPLETE_STAGE_SLUG }
-        : {}),
-    })
-    .eq('id', existing.summary.id)
-    .eq('organization_id', organizationId);
-
-  if (projectError) throw new Error(projectError.message);
-
-  await appendCrmAccountabilityEvent(supabase, {
-    organizationId,
-    projectId: existing.summary.id,
-    actorMemberId: actorUserId,
-    eventType: complete ? 'project_marked_complete' : 'project_marked_incomplete',
-    summary: complete
-      ? `Marked project ${existing.summary.name} as complete`
-      : `Marked project ${existing.summary.name} as incomplete`,
-    metadata: { slug, complete },
+  const result = await setCrmProjectsStatusForOrg(supabase, organizationId, actorUserId, {
+    projectSlugs: [slug],
+    status: complete ? 'completed' : 'active',
+    lossReason: null,
+    lossReasonOther: null,
+    source: 'legacy_adapter',
   });
 
+  const item = result.results[0];
+  if (item == null || item.failureCode === 'not_found') {
+    return null;
+  }
+  if (item.failureCode === 'unauthorized') {
+    throw new CrmProjectCompletionForbiddenError(item.message ?? undefined);
+  }
+  if (item.failureCode === 'completion_blocked') {
+    throw new CrmProjectCompletionBlockedError(item.message ?? undefined);
+  }
+  if (item.failureCode === 'update_failed') {
+    throw new Error(item.message ?? 'Failed to update project completion');
+  }
+  // already_at_status and success both return current detail
   return getCrmProjectDetailBySlugForOrg(supabase, organizationId, slug);
 }

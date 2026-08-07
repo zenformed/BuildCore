@@ -1,7 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { BulkMarkActiveCrmProjectsResult } from '@/domain/crm/bulkMarkActiveProjects';
 import type { MarkCrmProjectsActiveInput } from '@/domain/crm/projectStatus';
-import { appendCrmAccountabilityEvent } from './crmAccountability';
+import { setCrmProjectsStatusForOrg } from './crmSetProjectsStatusService';
 
 export class CrmMarkProjectsActiveValidationError extends Error {
   constructor(message: string) {
@@ -10,14 +10,7 @@ export class CrmMarkProjectsActiveValidationError extends Error {
   }
 }
 
-function isClosedLegacyOrStatus(project: {
-  readonly subproject_status?: string | null;
-  readonly project_status?: string | null;
-}): boolean {
-  if (project.subproject_status === 'inactive') return true;
-  return project.project_status === 'lost' || project.project_status === 'cancelled';
-}
-
+/** Thin adapter: mark-active → unified status service (active). */
 export async function markCrmProjectsActiveForOrg(
   supabase: SupabaseClient,
   organizationId: string,
@@ -29,73 +22,22 @@ export async function markCrmProjectsActiveForOrg(
     throw new CrmMarkProjectsActiveValidationError('At least one project slug is required.');
   }
 
-  const { data: projects, error: fetchError } = await supabase
-    .from('crm_projects')
-    .select('id, name, slug, parent_project_id, subproject_status, project_status')
-    .eq('organization_id', organizationId)
-    .in('slug', uniqueSlugs)
-    .is('archived_at', null);
-
-  if (fetchError) throw new Error(fetchError.message);
-
-  const foundBySlug = new Map((projects ?? []).map((project) => [project.slug as string, project]));
-  const failedSlugs: string[] = uniqueSlugs.filter((slug) => {
-    const project = foundBySlug.get(slug);
-    if (project == null) return true;
-    if (!isClosedLegacyOrStatus(project)) return true;
-    return false;
+  const result = await setCrmProjectsStatusForOrg(supabase, organizationId, actorUserId, {
+    projectSlugs: uniqueSlugs,
+    status: 'active',
+    lossReason: null,
+    lossReasonOther: null,
+    source: 'legacy_adapter',
   });
 
-  const toUpdate = uniqueSlugs
-    .map((slug) => foundBySlug.get(slug))
-    .filter((project): project is NonNullable<typeof project> => {
-      if (project == null) return false;
-      return isClosedLegacyOrStatus(project);
-    });
-
-  if (toUpdate.length === 0) {
-    return { updatedCount: 0, updatedSlugs: [], failedSlugs };
-  }
-
-  const now = new Date().toISOString();
-  const projectIds = toUpdate.map((project) => project.id as string);
-
-  const { error: updateError } = await supabase
-    .from('crm_projects')
-    .update({
-      subproject_status: 'normal',
-      inactive_reason: null,
-      inactive_reason_custom: null,
-      inactive_at: null,
-      inactive_by: null,
-      project_status: 'active',
-      loss_reason: null,
-      loss_reason_other: null,
-      status_changed_at: now,
-      status_changed_by: actorUserId,
-      last_activity_at: now,
-    })
-    .in('id', projectIds)
-    .eq('organization_id', organizationId);
-
-  if (updateError) throw new Error(updateError.message);
-
-  await Promise.all(
-    toUpdate.map((project) =>
-      appendCrmAccountabilityEvent(supabase, {
-        organizationId,
-        projectId: project.id as string,
-        actorMemberId: actorUserId,
-        eventType: 'project_marked_active',
-        summary: `Marked project active: ${project.name as string}`,
-        metadata: { slug: project.slug as string, projectStatus: 'active' },
-      })
-    )
-  );
+  const updatedSlugs = result.results.filter((item) => item.success).map((item) => item.slug);
+  const failedSlugs = [
+    ...new Set(result.results.filter((item) => !item.success).map((item) => item.slug)),
+  ];
 
   return {
-    updatedCount: toUpdate.length,
-    updatedSlugs: toUpdate.map((project) => project.slug as string),
+    updatedCount: result.updatedCount,
+    updatedSlugs,
     failedSlugs,
   };
 }

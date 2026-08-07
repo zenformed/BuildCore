@@ -5,6 +5,7 @@ import type {
   CrmProjectDetail,
   CrmProjectSummary,
 } from '@/domain/crm';
+import { randomUUID } from 'crypto';
 import type { BulkArchiveCrmProjectsResult } from '@/domain/crm/bulkArchiveProjects';
 import type { BulkMarkActiveCrmProjectsResult } from '@/domain/crm/bulkMarkActiveProjects';
 import type { BulkMarkInactiveCrmProjectsResult } from '@/domain/crm/bulkMarkInactiveProjects';
@@ -17,6 +18,11 @@ import {
   mapLegacyInactiveReasonToLossReason,
   validateMarkCrmProjectsInactiveInput,
 } from '@/domain/crm/projectStatus';
+import type {
+  CrmProjectStatusChangeResultItem,
+  SetCrmProjectsStatusInput,
+  SetCrmProjectsStatusResult,
+} from '@/domain/crm/setCrmProjectsStatus';
 import { DEMO_TEAM_MEMBER_ID } from '@/infrastructure/demo/demoProfileFixtures';
 import { slugifyProjectName } from '@/infrastructure/crm/server/crmSlug';
 import {
@@ -323,4 +329,94 @@ export function mockMarkCrmProjectsActive(
     updatedSlugs,
     failedSlugs,
   };
+}
+
+export function mockSetCrmProjectsStatus(
+  input: SetCrmProjectsStatusInput
+): SetCrmProjectsStatusResult {
+  const bulkOperationId = randomUUID();
+  const results: CrmProjectStatusChangeResultItem[] = [];
+  let updatedCount = 0;
+
+  for (const rawSlug of input.projectSlugs) {
+    const slug = rawSlug.trim();
+    const detail = getEffectiveMockProjectDetailBySlug(slug);
+    if (detail == null) {
+      results.push({
+        slug,
+        success: false,
+        previousStatus: null,
+        requestedStatus: input.status,
+        resultingStatus: null,
+        failureCode: 'not_found',
+        message: 'Project not found.',
+      });
+      continue;
+    }
+
+    const previousStatus = detail.summary.status;
+    if (previousStatus === input.status && input.status !== 'lost') {
+      results.push({
+        slug,
+        success: false,
+        previousStatus,
+        requestedStatus: input.status,
+        resultingStatus: previousStatus,
+        failureCode: 'already_at_status',
+        message: 'Project is already at the requested status.',
+      });
+      continue;
+    }
+
+    if (input.status === 'lost' || input.status === 'cancelled') {
+      const reason =
+        input.status === 'cancelled'
+          ? ('project_canceled' as const)
+          : input.lossReason === 'dead_lead'
+            ? ('other' as const)
+            : ((input.lossReason ?? 'other') as MarkCrmProjectsInactiveInput['reason']);
+      applyInactiveState(slug, {
+        projectSlugs: [slug],
+        reason,
+        customReason:
+          input.status === 'lost' && input.lossReason === 'other'
+            ? input.lossReasonOther
+            : input.status === 'lost' && input.lossReason === 'dead_lead'
+              ? 'Dead lead'
+              : null,
+      });
+    } else if (input.status === 'active') {
+      applyActiveState(slug);
+    } else {
+      const now = new Date().toISOString();
+      const actor = demoActor();
+      saveMockProjectDetail(slug, {
+        ...detail,
+        summary: {
+          ...detail.summary,
+          status: 'completed',
+          completedAt: now,
+          completedBy: actor,
+          lossReason: null,
+          lossReasonOther: null,
+          statusChangedAt: now,
+          statusChangedBy: actor,
+          lastUpdatedAt: now,
+        },
+      });
+    }
+
+    updatedCount += 1;
+    results.push({
+      slug,
+      success: true,
+      previousStatus,
+      requestedStatus: input.status,
+      resultingStatus: input.status,
+      failureCode: null,
+      message: null,
+    });
+  }
+
+  return { bulkOperationId, updatedCount, results };
 }

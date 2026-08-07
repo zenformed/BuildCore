@@ -323,6 +323,29 @@ export function toProjectStatusWriteFieldsFromLegacyInactive(input: {
   };
 }
 
+export function toLegacyInactiveReasonForDualWrite(
+  status: CrmProjectStatus,
+  lossReason: CrmLossReason | null
+): {
+  readonly inactive_reason: CrmLegacyInactiveReason | null;
+  readonly inactive_reason_custom: string | null;
+} {
+  if (status === 'cancelled') {
+    return { inactive_reason: 'project_canceled', inactive_reason_custom: null };
+  }
+  if (status !== 'lost' || lossReason == null) {
+    return { inactive_reason: null, inactive_reason_custom: null };
+  }
+  // dead_lead is not in the legacy inactive_reason CHECK — store as other.
+  if (lossReason === 'dead_lead') {
+    return { inactive_reason: 'other', inactive_reason_custom: 'Dead lead' };
+  }
+  if (isCrmLegacyInactiveReason(lossReason)) {
+    return { inactive_reason: lossReason, inactive_reason_custom: null };
+  }
+  return { inactive_reason: 'other', inactive_reason_custom: lossReason };
+}
+
 /** Derive legacy subproject_status for dual-write until Phase 5. */
 export function toLegacySubprojectStatus(input: {
   readonly status: CrmProjectStatus;
@@ -332,6 +355,76 @@ export function toLegacySubprojectStatus(input: {
   if (input.status === 'completed') return 'completed';
   if (isProjectPriorityUrgent(input.priority)) return 'urgent';
   return 'normal';
+}
+
+/**
+ * Full dual-write patch for a status transition (new + legacy columns).
+ * Caller supplies completion side-effects (priority/stage) when status is completed.
+ */
+export function buildCrmProjectStatusDualWritePatch(input: {
+  readonly status: CrmProjectStatus;
+  readonly priority: CrmPriority;
+  readonly lossReason: CrmLossReason | null;
+  readonly lossReasonOther: string | null;
+  readonly changedAt: string;
+  readonly changedBy: string;
+  readonly completionExtras?: {
+    readonly priority: CrmPriority;
+    readonly currentStageSlug: string;
+  } | null;
+}): Record<string, unknown> {
+  const legacyInactive = toLegacyInactiveReasonForDualWrite(input.status, input.lossReason);
+  const isClosed = input.status === 'lost' || input.status === 'cancelled';
+  const isCompleted = input.status === 'completed';
+  const isActive = input.status === 'active';
+  const effectivePriority = input.completionExtras?.priority ?? input.priority;
+
+  const patch: Record<string, unknown> = {
+    project_status: input.status,
+    loss_reason: input.status === 'lost' ? input.lossReason : null,
+    loss_reason_other:
+      input.status === 'lost' && input.lossReason === 'other' ? input.lossReasonOther : null,
+    status_changed_at: input.changedAt,
+    status_changed_by: input.changedBy,
+    subproject_status: toLegacySubprojectStatus({
+      status: input.status,
+      priority: effectivePriority,
+    }),
+    inactive_reason: null,
+    inactive_reason_custom: null,
+    inactive_at: null,
+    inactive_by: null,
+    last_activity_at: input.changedAt,
+  };
+
+  if (isClosed) {
+    patch.inactive_reason = legacyInactive.inactive_reason;
+    patch.inactive_reason_custom =
+      input.status === 'lost' && input.lossReason === 'other'
+        ? input.lossReasonOther
+        : legacyInactive.inactive_reason_custom;
+    patch.inactive_at = input.changedAt;
+    patch.inactive_by = input.changedBy;
+    // Lost/Cancelled must not retain completion metadata (even if stale).
+    patch.completed_at = null;
+    patch.completed_by = null;
+  }
+
+  if (isActive) {
+    patch.completed_at = null;
+    patch.completed_by = null;
+  }
+
+  if (isCompleted) {
+    patch.completed_at = input.changedAt;
+    patch.completed_by = input.changedBy;
+    if (input.completionExtras != null) {
+      patch.priority = input.completionExtras.priority;
+      patch.current_stage_slug = input.completionExtras.currentStageSlug;
+    }
+  }
+
+  return patch;
 }
 
 export function resolveCrmProjectListSortRank(

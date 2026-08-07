@@ -6,7 +6,11 @@ import type {
   CreateCrmProjectResult,
   CrmProjectSummary,
 } from '@/domain/crm';
-import type { MarkCrmProjectsInactiveInput, MarkCrmProjectsActiveInput } from '@/domain/crm/subprojectStatus';
+import type { MarkCrmProjectsInactiveInput, MarkCrmProjectsActiveInput } from '@/domain/crm/projectStatus';
+import type {
+  SetCrmProjectsStatusInput,
+  SetCrmProjectsStatusResult,
+} from '@/domain/crm/setCrmProjectsStatus';
 import type { CrmProjectBudgetEntriesIndex } from '@/domain/crm/projectBudgetRollup';
 import type { CrmProjectPaymentTasksIndex } from '@/domain/crm/projectPaymentValue';
 import type { CrmProjectWorkflowTaskStatusIndex } from '@/domain/crm/projectWorkflowTaskStatusIndex';
@@ -39,6 +43,7 @@ export interface ICrmProjectsRepository {
   create(input: CreateCrmProjectInput): CrmRepositoryResult<CreateCrmProjectResult>;
   archive(slug: string): CrmRepositoryResult<boolean>;
   bulkArchive(slugs: readonly string[]): CrmRepositoryResult<BulkArchiveCrmProjectsResult>;
+  setStatus(input: SetCrmProjectsStatusInput): CrmRepositoryResult<SetCrmProjectsStatusResult>;
   markInactive(input: MarkCrmProjectsInactiveInput): CrmRepositoryResult<BulkMarkInactiveCrmProjectsResult>;
   markActive(input: MarkCrmProjectsActiveInput): CrmRepositoryResult<BulkMarkActiveCrmProjectsResult>;
 }

@@ -143,6 +143,7 @@ export {
   CRM_INACTIVE_REASON_OPTIONS,
   CRM_INACTIVE_REASON_VALUES,
   CRM_SUBPROJECT_STATUS_VALUES,
+  buildCrmProjectStatusDualWritePatch,
   deriveCrmProjectStatusFromLegacy,
   deriveCrmSubprojectStatus,
   getCrmLossReasonLabel,
@@ -161,6 +162,7 @@ export {
   resolveCrmProjectListSortRank,
   resolveCrmProjectStatusFieldsFromDb,
   resolveCrmSubprojectListSortRank,
+  toLegacyInactiveReasonForDualWrite,
   toLegacySubprojectStatus,
   toProjectStatusWriteFieldsFromLegacyInactive,
   validateMarkCrmProjectsInactiveInput,
@@ -177,6 +179,19 @@ export {
   type MarkCrmProjectsInactiveInput,
   type MarkCrmProjectsActiveInput,
 } from './projectStatus';
+export { canActorChangeCrmProjectStatus } from './projectStatusAccess';
+export {
+  CRM_PROJECTS_STATUS_BULK_MAX_IDS,
+  isCrmProjectStatusAlreadyAtTarget,
+  normalizeLossReasonOtherForWrite,
+  parseSetCrmProjectsStatusBody,
+  validateSetCrmProjectsStatusRequest,
+  type CrmProjectStatusChangeResultItem,
+  type CrmProjectStatusChangeSource,
+  type CrmProjectStatusFailureCode,
+  type SetCrmProjectsStatusInput,
+  type SetCrmProjectsStatusResult,
+} from './setCrmProjectsStatus';
 export {
   crmMyTaskAssignmentKindFromTask,
   filterCrmMyTasksByAssigneeScope,

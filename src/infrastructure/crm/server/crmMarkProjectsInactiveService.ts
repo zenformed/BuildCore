@@ -2,12 +2,13 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import type { BulkMarkInactiveCrmProjectsResult } from '@/domain/crm/bulkMarkInactiveProjects';
 import {
   isCrmInactiveReason,
-  toProjectStatusWriteFieldsFromLegacyInactive,
+  isCrmLossReason,
   validateMarkCrmProjectsInactiveInput,
   type CrmInactiveReason,
+  type CrmLossReason,
   type MarkCrmProjectsInactiveInput,
 } from '@/domain/crm/projectStatus';
-import { appendCrmAccountabilityEvent } from './crmAccountability';
+import { setCrmProjectsStatusForOrg } from './crmSetProjectsStatusService';
 
 export class CrmMarkProjectsInactiveValidationError extends Error {
   constructor(message: string) {
@@ -16,6 +17,23 @@ export class CrmMarkProjectsInactiveValidationError extends Error {
   }
 }
 
+function legacyInactiveReasonToStatusInput(reason: CrmInactiveReason, customReason: string | null): {
+  readonly status: 'lost' | 'cancelled';
+  readonly lossReason: CrmLossReason | null;
+  readonly lossReasonOther: string | null;
+} {
+  if (reason === 'project_canceled') {
+    return { status: 'cancelled', lossReason: null, lossReasonOther: null };
+  }
+  const lossReason: CrmLossReason = isCrmLossReason(reason) ? reason : 'other';
+  return {
+    status: 'lost',
+    lossReason,
+    lossReasonOther: lossReason === 'other' ? customReason : null,
+  };
+}
+
+/** Thin adapter: mark-inactive → unified status service (lost or cancelled). */
 export async function markCrmProjectsInactiveForOrg(
   supabase: SupabaseClient,
   organizationId: string,
@@ -27,92 +45,26 @@ export async function markCrmProjectsInactiveForOrg(
     throw new CrmMarkProjectsInactiveValidationError(validationError);
   }
 
-  const uniqueSlugs = [...new Set(input.projectSlugs.map((slug) => slug.trim()).filter(Boolean))];
-  if (uniqueSlugs.length === 0) {
-    return { updatedCount: 0, updatedSlugs: [], failedSlugs: [] };
-  }
-
-  const { data: projects, error: fetchError } = await supabase
-    .from('crm_projects')
-    .select('id, name, slug, parent_project_id, subproject_status, project_status')
-    .eq('organization_id', organizationId)
-    .in('slug', uniqueSlugs)
-    .is('archived_at', null);
-
-  if (fetchError) throw new Error(fetchError.message);
-
-  const foundBySlug = new Map((projects ?? []).map((project) => [project.slug as string, project]));
-  const failedSlugs: string[] = uniqueSlugs.filter((slug) => {
-    const project = foundBySlug.get(slug);
-    if (project == null) return true;
-    if (project.subproject_status === 'inactive') return true;
-    if (project.project_status === 'lost' || project.project_status === 'cancelled') return true;
-    return false;
-  });
-
-  const toUpdate = uniqueSlugs
-    .map((slug) => foundBySlug.get(slug))
-    .filter((project): project is NonNullable<typeof project> => {
-      if (project == null) return false;
-      if (project.subproject_status === 'inactive') return false;
-      if (project.project_status === 'lost' || project.project_status === 'cancelled') return false;
-      return true;
-    });
-
-  if (toUpdate.length === 0) {
-    return { updatedCount: 0, updatedSlugs: [], failedSlugs };
-  }
-
-  const now = new Date().toISOString();
   const reason = input.reason as CrmInactiveReason;
-  const customReason =
-    reason === 'other' ? input.customReason?.trim() ?? null : null;
-  const statusWrite = toProjectStatusWriteFieldsFromLegacyInactive({
-    reason,
-    customReason,
-    changedAt: now,
-    changedBy: actorUserId,
+  const customReason = reason === 'other' ? input.customReason?.trim() ?? null : null;
+  const mapped = legacyInactiveReasonToStatusInput(reason, customReason);
+
+  const result = await setCrmProjectsStatusForOrg(supabase, organizationId, actorUserId, {
+    projectSlugs: input.projectSlugs,
+    status: mapped.status,
+    lossReason: mapped.lossReason,
+    lossReasonOther: mapped.lossReasonOther,
+    source: 'legacy_adapter',
   });
 
-  const projectIds = toUpdate.map((project) => project.id as string);
-
-  const { error: updateError } = await supabase
-    .from('crm_projects')
-    .update({
-      subproject_status: 'inactive',
-      inactive_reason: reason,
-      inactive_reason_custom: customReason,
-      inactive_at: now,
-      inactive_by: actorUserId,
-      ...statusWrite,
-      last_activity_at: now,
-    })
-    .in('id', projectIds)
-    .eq('organization_id', organizationId);
-
-  if (updateError) throw new Error(updateError.message);
-
-  await Promise.all(
-    toUpdate.map((project) =>
-      appendCrmAccountabilityEvent(supabase, {
-        organizationId,
-        projectId: project.id as string,
-        actorMemberId: actorUserId,
-        eventType: 'project_marked_inactive',
-        summary: `Marked project inactive: ${project.name as string}`,
-        metadata: {
-          slug: project.slug as string,
-          reason,
-          customReason,
-          projectStatus: statusWrite.project_status,
-        },
-      })
-    )
-  );
+  const updatedSlugs = result.results.filter((item) => item.success).map((item) => item.slug);
+  const failedSlugs = [
+    ...new Set(result.results.filter((item) => !item.success).map((item) => item.slug)),
+  ];
 
   return {
-    updatedCount: toUpdate.length,
-    updatedSlugs: toUpdate.map((project) => project.slug as string),
+    updatedCount: result.updatedCount,
+    updatedSlugs,
     failedSlugs,
   };
 }
