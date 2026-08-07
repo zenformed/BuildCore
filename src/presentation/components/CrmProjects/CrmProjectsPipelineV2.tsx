@@ -9,24 +9,19 @@
 import { useCallback, useEffect, useMemo, useState, type ReactElement } from 'react';
 import { LuChevronLeft, LuChevronRight, LuSearch } from 'react-icons/lu';
 import { createPortal } from 'react-dom';
-import { resolvePipelineStageScopeForProject } from '@/domain/buildcore/orgPipelineStages';
 import { useRouter } from 'next/navigation';
 import {
   isCrmProjectComplete,
   isCrmProjectInactive,
-  isCrmProjectLostOrCancelled,
   type CrmProjectSummary,
 } from '@/domain/crm';
-import { countIncompleteWorkflowTasks } from '@/domain/buildcore/projectPipelineProgress';
 import { isBuildCoreMemberRole } from '@/domain/buildcore/memberRole';
 import {
   CRM_PROJECTS_LIST_V2_PAGE_SIZES,
   type CrmProjectsListV2PageSize,
   type CrmProjectsListV2RootListItem,
 } from '@/domain/crm/projectsListV2';
-import { getCrmProjectDetailBySlug, setCrmProjectCompletion } from '@/application/use-cases/crm';
 import { getCrmDataSource } from '@/infrastructure/config/crmDataSource';
-import { crmRepositories } from '@/shared/di/container';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
 import { useBuildCoreNavigation } from '@/presentation/providers/BuildCoreNavigationProvider';
 import { resolveCrmProjectsTableEmptyMessage } from '@/presentation/features/crmProjects/crmProjectsPipelineViewModel';
@@ -39,11 +34,8 @@ import { CreateCrmProjectModal } from '@/presentation/components/CrmProjects/Cre
 import { SpreadsheetImportWizard } from '@/presentation/components/CrmImport/SpreadsheetImportWizard';
 import { SpreadsheetImportMobileNoticeDialog } from '@/presentation/components/CrmImport/SpreadsheetImportMobileNoticeDialog';
 import { DetailToast } from '@/presentation/components/CrmProjectDetail/DetailToast';
-import { ConfirmModal } from '@/presentation/components/ConfirmModal';
-import { ProjectCompletionWarningDialog } from '@/presentation/components/CrmProjectDetail/ProjectCompletionBlockedDialog';
-import { useBuildCorePipelineStages } from '@/presentation/providers/BuildCorePipelineStagesProvider';
 import { useCrmProjectTableRowActions } from '@/presentation/features/crmProjects/useCrmProjectTableRowActions';
-import { useCrmProjectInactiveActions } from '@/presentation/features/crmProjects/useCrmProjectInactiveActions';
+import { useCrmProjectsBulkStatusChange } from '@/presentation/features/crmProjects/useCrmProjectsBulkStatusChange';
 import { assignCrmProjectMember } from '@/presentation/features/crmProjects/assignCrmProjectMember';
 import { getCrmProjectAssigneeOptions } from '@/presentation/features/crmProjects/crmProjectAssigneeOptions';
 import { useDashboardMobileLayout } from '@/presentation/features/crmProjects/useDashboardMobileLayout';
@@ -57,9 +49,9 @@ import { useBuildCoreDashboardContext } from '@/presentation/providers/BuildCore
 import { useCrmProjectsListV2Dashboard } from '@/presentation/features/crmProjects/listV2/useCrmProjectsListV2Dashboard';
 import { CrmProjectsDesktopCreateActions } from './CrmProjectsDesktopCreateActions';
 import { CrmProjectsFilterMenu } from './CrmProjectsFilterMenu';
+import { CrmProjectsBulkStatusDialogs } from './CrmProjectsBulkStatusDialogs';
 import { CrmProjectsTable } from './CrmProjectsTable';
 import { CrmProjectsMobileList } from './CrmProjectsMobileList';
-import { MarkInactiveDialog } from './MarkInactiveDialog';
 import styles from './CrmProjects.module.css';
 
 export type CrmProjectsPipelineV2Props = {
@@ -76,9 +68,6 @@ export function CrmProjectsPipelineV2({
   const router = useRouter();
   const nav = useBuildCoreNavigation();
   const panelCopy = content.crm.panel;
-  const detailCopy = content.projectDetail;
-  const markInactiveCopy = content.projectDetail.subprojects.markInactive;
-  const markActiveCopy = content.projectDetail.subprojects.markActive;
   const bulkSelectionCopy = content.bulkSelection;
   const { organizationMembershipContext } = useSaaSProfile();
   const organizationId = organizationMembershipContext?.organizationId ?? '';
@@ -92,8 +81,6 @@ export function CrmProjectsPipelineV2({
   const [createOpen, setCreateOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
   const [importMobileNoticeOpen, setImportMobileNoticeOpen] = useState(false);
-  const [pendingBulkComplete, setPendingBulkComplete] = useState(false);
-  const [pendingBulkCompleteAnyway, setPendingBulkCompleteAnyway] = useState(false);
   const [bulkActionBusy, setBulkActionBusy] = useState(false);
   const [toast, setToast] = useState<PipelineToast | null>(null);
 
@@ -121,13 +108,6 @@ export function CrmProjectsPipelineV2({
     onError: (message) => setToast({ kind: 'error', message }),
   });
 
-  const { getCatalog } = useBuildCorePipelineStages();
-  const resolveStagesForProject = useCallback(
-    (project: CrmProjectSummary) =>
-      getCatalog(resolvePipelineStageScopeForProject({ parentProjectId: project.parentProjectId })),
-    [getCatalog]
-  );
-
   const patchAsRootItem = useCallback(
     (summary: CrmProjectSummary) => {
       const existing = list.items.find((item) => item.id === summary.id);
@@ -140,53 +120,19 @@ export function CrmProjectsPipelineV2({
     [list]
   );
 
-  const {
-    busyProjectId,
-    pendingCompletionChange,
-    setPendingCompletionChange,
-    incompleteTasksWarningCount,
-    setIncompleteTasksWarningCount,
-    togglePriority,
-    requestCompletionChange,
-    confirmCompletionChange,
-    confirmCompleteAnyway,
-  } = useCrmProjectTableRowActions({
+  const { busyProjectId, togglePriority } = useCrmProjectTableRowActions({
     onProjectUpdated: patchAsRootItem,
     onSuccess: (message) => setToast({ kind: 'success', message }),
     onError: (message) => setToast({ kind: 'error', message }),
-    resolveStagesForProject,
   });
 
-  const {
-    markInactiveTarget,
-    openMarkInactive,
-    closeMarkInactive,
-    submitting: markingInactive,
-    markingActiveProjectId,
-    submitMarkInactive,
-    markProjectActive,
-  } = useCrmProjectInactiveActions({
+
+  const bulkStatusChange = useCrmProjectsBulkStatusChange({
     onProjectsUpdated: () => {
       void list.refetch();
-    },
-    onMarkInactiveSuccess: (updatedCount) => {
-      setToast({
-        kind: 'success',
-        message:
-          updatedCount > 1
-            ? markInactiveCopy.bulkSuccess(updatedCount)
-            : markInactiveCopy.success,
-      });
       bulkSelection.clearSelection();
     },
-    onMarkActiveSuccess: (updatedCount) => {
-      setToast({
-        kind: 'success',
-        message:
-          updatedCount > 1 ? markActiveCopy.bulkSuccess(updatedCount) : markActiveCopy.success,
-      });
-      bulkSelection.clearSelection();
-    },
+    onSuccess: (message) => setToast({ kind: 'success', message }),
     onError: (message) => setToast({ kind: 'error', message }),
   });
 
@@ -195,18 +141,7 @@ export function CrmProjectsPipelineV2({
     () => rootRows.filter((project) => bulkSelection.selectedIds.has(project.id)),
     [bulkSelection.selectedIds, rootRows]
   );
-  const selectedActiveProjects = useMemo(
-    () => selectedProjects.filter((project) => !isCrmProjectLostOrCancelled(project)),
-    [selectedProjects]
-  );
   const selectedPriorityEligible = useMemo(
-    () =>
-      selectedProjects.filter(
-        (project) => !isCrmProjectComplete(project) && !isCrmProjectInactive(project)
-      ),
-    [selectedProjects]
-  );
-  const selectedCompleteEligible = useMemo(
     () =>
       selectedProjects.filter(
         (project) => !isCrmProjectComplete(project) && !isCrmProjectInactive(project)
@@ -258,94 +193,6 @@ export function CrmProjectsPipelineV2({
       setBulkActionBusy(false);
     }
   }, [bulkActionBusy, bulkSelection, selectedPriorityEligible, togglePriority]);
-
-  const runBulkMarkComplete = useCallback(
-    async (confirmIncompleteTasks: boolean) => {
-      if (selectedCompleteEligible.length === 0) return;
-      setBulkActionBusy(true);
-      let updatedCount = 0;
-      try {
-        for (const project of selectedCompleteEligible) {
-          try {
-            const updated = await setCrmProjectCompletion(
-              crmRepositories,
-              project.slug,
-              true,
-              confirmIncompleteTasks ? { confirmIncompleteTasks: true } : undefined
-            );
-            if (updated == null) continue;
-            patchAsRootItem(updated.summary);
-            updatedCount += 1;
-          } catch {
-            // Continue remaining selections.
-          }
-        }
-        if (updatedCount > 0) {
-          setToast({ kind: 'success', message: detailCopy.markCompleteSuccess });
-          bulkSelection.clearSelection();
-          void list.refetch();
-        } else {
-          setToast({ kind: 'error', message: detailCopy.markCompleteFailed });
-        }
-      } finally {
-        setBulkActionBusy(false);
-      }
-    },
-    [
-      bulkSelection,
-      detailCopy.markCompleteFailed,
-      detailCopy.markCompleteSuccess,
-      list,
-      patchAsRootItem,
-      selectedCompleteEligible,
-    ]
-  );
-
-  const confirmBulkMarkComplete = useCallback(async () => {
-    if (selectedCompleteEligible.length === 0) {
-      setPendingBulkComplete(false);
-      return;
-    }
-    setPendingBulkComplete(false);
-    setBulkActionBusy(true);
-    let totalIncomplete = 0;
-    let fetchableCount = 0;
-    try {
-      for (const project of selectedCompleteEligible) {
-        try {
-          const detail = await getCrmProjectDetailBySlug(crmRepositories, project.slug);
-          if (detail == null) continue;
-          fetchableCount += 1;
-          totalIncomplete += countIncompleteWorkflowTasks(detail.workflowTasks);
-        } catch {
-          // Continue remaining selections.
-        }
-      }
-      if (fetchableCount === 0) {
-        setToast({ kind: 'error', message: detailCopy.markCompleteFailed });
-        return;
-      }
-      if (totalIncomplete > 0) {
-        setIncompleteTasksWarningCount(totalIncomplete);
-        setPendingBulkCompleteAnyway(true);
-        return;
-      }
-    } finally {
-      setBulkActionBusy(false);
-    }
-    await runBulkMarkComplete(false);
-  }, [
-    detailCopy.markCompleteFailed,
-    runBulkMarkComplete,
-    selectedCompleteEligible,
-    setIncompleteTasksWarningCount,
-  ]);
-
-  const confirmBulkCompleteAnyway = useCallback(async () => {
-    setPendingBulkCompleteAnyway(false);
-    setIncompleteTasksWarningCount(null);
-    await runBulkMarkComplete(true);
-  }, [runBulkMarkComplete, setIncompleteTasksWarningCount]);
 
   const handleBulkAssign = useCallback(
     async (assignedMemberId: string) => {
@@ -452,25 +299,24 @@ export function CrmProjectsPipelineV2({
 
   const selectionBulkActions = (
     <SubprojectsTableBulkActions
-      busy={bulkActionBusy || busyProjectId != null || markingInactive || identitiesLoading}
+      busy={
+        bulkActionBusy ||
+        busyProjectId != null ||
+        identitiesLoading ||
+        bulkStatusChange.busy
+      }
       canMakePriority={selectedPriorityEligible.length > 0}
-      canMarkInactive={selectedActiveProjects.length > 0}
-      canMarkComplete={selectedCompleteEligible.length > 0}
       canAssign={selectedProjects.length > 0 && !identitiesLoading && !isMemberRole}
+      canChangeStatus={selectedProjects.length > 0}
       assigneeOptions={assigneeOptions}
       onMakePriority={() => {
         void handleBulkMakePriority();
       }}
-      onMarkInactive={() => {
-        if (selectedActiveProjects.length === 0) return;
-        openMarkInactive({ mode: 'bulk', projects: selectedActiveProjects });
-      }}
-      onMarkComplete={() => {
-        if (selectedCompleteEligible.length === 0) return;
-        setPendingBulkComplete(true);
-      }}
       onAssign={(assignedMemberId) => {
         void handleBulkAssign(assignedMemberId);
+      }}
+      onChangeStatus={(status) => {
+        bulkStatusChange.requestBulkStatus(selectedProjects, status);
       }}
     />
   );
@@ -541,7 +387,7 @@ export function CrmProjectsPipelineV2({
   const selectedCountDisplay =
     bulkSelection.selectedCount > 99 ? '99+' : String(Math.max(0, bulkSelection.selectedCount));
   const [mobileShellBar, setMobileShellBar] = useState<HTMLElement | null>(null);
-  const rowActionsBusyProjectId = busyProjectId ?? markingActiveProjectId;
+  const rowActionsBusyProjectId = busyProjectId;
 
   useEffect(() => {
     if (!isMobileLayout) {
@@ -594,8 +440,8 @@ export function CrmProjectsPipelineV2({
         <DetailToast kind={toast.kind} message={toast.message} onDismiss={() => setToast(null)} />
       ) : null}
       {list.showNewProjectsBanner ? (
-        <div className={styles.projectsListV2Banner} role="status">
-          <span>New Projects available — Refresh</span>
+        <div className={styles.projectsListV2Banner} role="status" aria-live="polite">
+          <p className={styles.projectsListV2BannerMessage}>New projects available</p>
           <button
             type="button"
             className={styles.projectsListV2BannerButton}
@@ -690,11 +536,6 @@ export function CrmProjectsPipelineV2({
             busyProjectId={rowActionsBusyProjectId}
             onRequestDelete={setPendingDeleteProject}
             onTogglePriority={togglePriority}
-            onRequestCompletionChange={requestCompletionChange}
-            onRequestMarkInactive={(project) => openMarkInactive({ mode: 'single', project })}
-            onRequestMarkActive={(project) => {
-              void markProjectActive(project);
-            }}
             emptyMessage={tableEmptyMessage}
             bulkSelection={bulkSelectionBindings}
           />
@@ -714,11 +555,6 @@ export function CrmProjectsPipelineV2({
             busyProjectId={rowActionsBusyProjectId}
             onRequestDelete={setPendingDeleteProject}
             onTogglePriority={togglePriority}
-            onRequestCompletionChange={requestCompletionChange}
-            onRequestMarkInactive={(project) => openMarkInactive({ mode: 'single', project })}
-            onRequestMarkActive={(project) => {
-              void markProjectActive(project);
-            }}
             emptyMessage={tableEmptyMessage}
             firstRunEmptyTitle={showFirstProjectEmptyState ? 'No Projects Yet' : null}
             firstRunEmptyActionLabel={
@@ -761,67 +597,11 @@ export function CrmProjectsPipelineV2({
         onClose={() => setPendingDeleteProject(null)}
         onConfirm={() => void handleConfirmDelete()}
       />
-      <ProjectCompletionWarningDialog
-        isOpen={incompleteTasksWarningCount != null}
-        incompleteTaskCount={incompleteTasksWarningCount ?? 0}
-        onClose={() => {
-          setIncompleteTasksWarningCount(null);
-          setPendingBulkCompleteAnyway(false);
-        }}
-        onConfirm={() => {
-          if (pendingBulkCompleteAnyway) {
-            void confirmBulkCompleteAnyway();
-          } else {
-            void confirmCompleteAnyway();
-          }
-        }}
-      />
-      <ConfirmModal
-        isOpen={pendingCompletionChange != null}
-        onClose={() => setPendingCompletionChange(null)}
-        onConfirm={() => {
-          void confirmCompletionChange();
-        }}
-        title={
-          pendingCompletionChange?.complete
-            ? detailCopy.markCompleteConfirmTitle
-            : detailCopy.markIncompleteConfirmTitle
-        }
-        message={
-          pendingCompletionChange?.complete
-            ? detailCopy.markCompleteConfirmMessage
-            : detailCopy.markIncompleteConfirmMessage
-        }
-        confirmLabel={
-          pendingCompletionChange?.complete
-            ? detailCopy.markComplete
-            : detailCopy.markIncomplete
-        }
-        cancelLabel={detailCopy.workflow.archiveTaskCancelLabel}
-        variant="primary"
-        hideIcon
-      />
-      <ConfirmModal
-        isOpen={pendingBulkComplete}
-        onClose={() => setPendingBulkComplete(false)}
-        onConfirm={() => {
-          void confirmBulkMarkComplete();
-        }}
-        title={detailCopy.markCompleteConfirmTitle}
-        message={detailCopy.markCompleteConfirmMessage}
-        confirmLabel={detailCopy.markComplete}
-        cancelLabel={detailCopy.workflow.archiveTaskCancelLabel}
-        variant="primary"
-        hideIcon
-      />
       {!isMemberRole ? (
-        <MarkInactiveDialog
-          target={markInactiveTarget}
-          submitting={markingInactive}
-          onClose={closeMarkInactive}
-          onSubmit={(values) => {
-            void submitMarkInactive(values);
-          }}
+        <CrmProjectsBulkStatusDialogs
+          statusChange={bulkStatusChange}
+          selectedCount={selectedProjects.length}
+          onError={(message) => setToast({ kind: 'error', message })}
         />
       ) : null}
     </section>

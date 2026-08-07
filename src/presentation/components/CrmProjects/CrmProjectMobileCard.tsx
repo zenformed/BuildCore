@@ -52,9 +52,6 @@ export type CrmProjectMobileCardProps = {
   readonly busy?: boolean;
   readonly onRequestDelete?: (project: CrmProjectSummary) => void;
   readonly onTogglePriority?: (project: CrmProjectSummary) => void | Promise<void>;
-  readonly onRequestCompletionChange?: (project: CrmProjectSummary) => void;
-  readonly onRequestMarkInactive?: (project: CrmProjectSummary) => void;
-  readonly onRequestMarkActive?: (project: CrmProjectSummary) => void | Promise<void>;
   readonly hasChildren?: boolean;
   readonly isExpanded?: boolean;
   readonly onToggleExpand?: () => void;
@@ -83,9 +80,6 @@ export function CrmProjectMobileCard({
   busy = false,
   onRequestDelete,
   onTogglePriority,
-  onRequestCompletionChange,
-  onRequestMarkInactive,
-  onRequestMarkActive,
   hasChildren = false,
   isExpanded = false,
   onToggleExpand,
@@ -340,9 +334,6 @@ export function CrmProjectMobileCard({
                         canDelete={canDelete}
                         onRequestDelete={onRequestDelete}
                         onTogglePriority={onTogglePriority}
-                        onRequestCompletionChange={onRequestCompletionChange}
-                        onRequestMarkInactive={onRequestMarkInactive}
-                        onRequestMarkActive={onRequestMarkActive}
                       />
                     </span>
                   ) : null}
@@ -453,9 +444,6 @@ export function CrmProjectMobileCard({
                       canDelete={canDelete}
                       onRequestDelete={onRequestDelete}
                       onTogglePriority={onTogglePriority}
-                      onRequestCompletionChange={onRequestCompletionChange}
-                      onRequestMarkInactive={onRequestMarkInactive}
-                      onRequestMarkActive={onRequestMarkActive}
                     />
                   </span>
                 ) : null}

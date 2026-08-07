@@ -59,6 +59,7 @@ export function parseCrmProjectsListV2Query(
       workflowTaskStatuses: collectListParam(searchParams, 'workflowTaskStatuses'),
       // Accepted for fingerprint stability; not applied in Phase 1A (dashboard no-op).
       assignedMemberIds: collectListParam(searchParams, 'assignedMemberIds'),
+      projectStatuses: collectListParam(searchParams, 'projectStatuses'),
     },
   });
 
@@ -101,6 +102,7 @@ export function parseCrmProjectsListV2ChildrenQuery(
       priorities: collectListParam(searchParams, 'priorities'),
       workflowTaskStatuses: collectListParam(searchParams, 'workflowTaskStatuses'),
       assignedMemberIds: collectListParam(searchParams, 'assignedMemberIds'),
+      projectStatuses: collectListParam(searchParams, 'projectStatuses'),
     },
   });
 

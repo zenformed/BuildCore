@@ -431,7 +431,13 @@ const buildCoreDashboardContentSource = {
       clear: 'Clear filters',
       stageLabel: 'Stage',
       priorityLabel: 'Priority',
-      statusLabel: 'Status',
+      statusLabel: 'Task status',
+      projectStatusLabel: 'Project status',
+      projectStatusAll: 'All',
+      projectStatusActive: 'Active',
+      projectStatusCompleted: 'Completed',
+      projectStatusLost: 'Lost',
+      projectStatusCancelled: 'Cancelled',
       assignedLabel: 'Assigned',
       documentsRequiredLabel: 'Documents required',
       documentsRequiredYes: 'Yes',
@@ -1760,8 +1766,6 @@ const buildCoreDashboardContentSource = {
       removePriority: 'Remove Project Priority',
       markComplete: 'Mark Project Complete',
       markIncomplete: 'Mark Project Incomplete',
-      markInactive: 'Mark Project Inactive',
-      markActive: 'Mark Project Active',
       multiAssign: 'Multi assign',
       inactiveBadge: 'Inactive',
       makePrioritySuccess: '§E1§ marked as priority.',
@@ -1965,9 +1969,20 @@ const buildCoreDashboardContentSource = {
       changeAriaLabel: (currentLabel: string): string =>
         `Change status, currently ${currentLabel}`,
       success: (statusLabel: string): string => `Status updated to ${statusLabel}.`,
+      bulkSuccess: (statusLabel: string, count: number): string =>
+        `Updated ${count} §E8§ to ${statusLabel}.`,
+      bulkPartialFailure: (updated: number, failed: number): string =>
+        `Updated ${updated} · ${failed} could not be updated`,
+      bulkMaxExceeded: (max: number): string =>
+        `Select at most ${max} §E8§ to change status.`,
+      bulkChangeStatus: 'Change status',
+      bulkChangeStatusAriaLabel: 'Change status for selected §E8§',
       failed: 'Could not update §E5§ status.',
       cancelledConfirmTitle: 'Mark this §E5§ as Cancelled?',
       cancelledConfirmMessage: 'This will set the §E5§ status to Cancelled.',
+      bulkCancelledConfirmTitle: 'Mark selected §E8§ as Cancelled?',
+      bulkCancelledConfirmMessage: (count: number): string =>
+        `This will set ${count} §E8§ to Cancelled.`,
       cancelledConfirmLabel: 'Mark Cancelled',
       cancelledConfirmCancel: 'Cancel',
       lostReasonDialog: {
@@ -2203,7 +2218,6 @@ const buildCoreDashboardContentSource = {
         closeAriaLabel: 'Close mark inactive dialog',
         menuAction: 'Mark Inactive',
         menuActionAriaLabel: (name: string): string => `Mark ${name} inactive`,
-        bulkMenuAction: 'Mark Inactive',
         success: '§E3§ marked inactive.',
         bulkSuccess: (count: number): string =>
           count === 1 ? '§E3§ marked inactive.' : `${count} §E8§ marked inactive.`,
@@ -2216,7 +2230,6 @@ const buildCoreDashboardContentSource = {
       markActive: {
         menuAction: 'Mark Active',
         menuActionAriaLabel: (name: string): string => `Mark ${name} active`,
-        bulkMenuAction: 'Mark Active',
         success: '§E3§ marked active.',
         bulkSuccess: (count: number): string =>
           count === 1 ? '§E3§ marked active.' : `${count} §E8§ marked active.`,

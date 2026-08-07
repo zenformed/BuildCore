@@ -1,6 +1,7 @@
 import type { CrmPriority } from '../project';
 import type { PipelineStageSlug } from '../pipelineStage';
 import type { WorkflowTaskStatus } from '../workflowTask';
+import type { CrmProjectStatus } from '../projectStatus';
 
 /** Dashboard roots vs Project-page children. */
 export const CRM_PROJECTS_LIST_V2_VIEWS = ['roots', 'children_of_parent'] as const;
@@ -20,11 +21,17 @@ export const CRM_PROJECTS_LIST_V2_SEARCH_MIN_LENGTH = 2;
 
 export const CRM_LIST_FILTER_UNASSIGNED_ASSIGNEE_ID = '__unassigned__';
 
+/**
+ * Project/Subproject status filter for list v2.
+ * Empty array = All (no status predicate). Non-empty = match project_status.
+ * Operational UI default is `['active']` (applied by presentation URL state).
+ */
 export type CrmProjectsListV2Filters = {
   readonly stageSlugs: readonly PipelineStageSlug[];
   readonly priorities: readonly CrmPriority[];
   readonly workflowTaskStatuses: readonly WorkflowTaskStatus[];
   readonly assignedMemberIds: readonly string[];
+  readonly projectStatuses: readonly CrmProjectStatus[];
 };
 
 export type CrmProjectsListV2NormalizedRequest = {

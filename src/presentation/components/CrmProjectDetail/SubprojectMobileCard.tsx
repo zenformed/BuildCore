@@ -51,9 +51,6 @@ export type SubprojectMobileCardProps = {
   readonly busy?: boolean;
   readonly onRequestDelete?: (project: CrmProjectSummary) => void;
   readonly onTogglePriority?: (project: CrmProjectSummary) => void | Promise<void>;
-  readonly onRequestCompletionChange?: (project: CrmProjectSummary) => void;
-  readonly onRequestMarkInactive?: (project: CrmProjectSummary) => void;
-  readonly onRequestMarkActive?: (project: CrmProjectSummary) => void | Promise<void>;
   readonly workflowProgressInputIndex?: CrmProjectWorkflowProgressInputIndex;
   readonly isWorkflowProgressLoading?: boolean;
   /** Phase 2B: page-scoped progress/stage overrides (skips org-wide rollup Maps). */
@@ -74,9 +71,6 @@ export function SubprojectMobileCard({
   busy = false,
   onRequestDelete,
   onTogglePriority,
-  onRequestCompletionChange,
-  onRequestMarkInactive,
-  onRequestMarkActive,
   workflowProgressInputIndex,
   isWorkflowProgressLoading = false,
   presentationOverrides = null,
@@ -319,9 +313,6 @@ export function SubprojectMobileCard({
                         canDelete={canDelete}
                         onRequestDelete={onRequestDelete}
                         onTogglePriority={onTogglePriority}
-                        onRequestCompletionChange={onRequestCompletionChange}
-                        onRequestMarkInactive={onRequestMarkInactive}
-                        onRequestMarkActive={onRequestMarkActive}
                       />
                     </span>
                   ) : null}

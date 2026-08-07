@@ -170,6 +170,7 @@ describe('projectsListV2 Phase 1B dashboard contracts', () => {
         stageSlugs: ['new-lead'],
         priorities: ['urgent'],
         workflowTaskStatuses: ['done'],
+        projectStatuses: ['active'],
       },
     });
     assert.equal(normalized.ok, true);
@@ -180,6 +181,7 @@ describe('projectsListV2 Phase 1B dashboard contracts', () => {
     assert.equal(params.get('stageSlugs'), 'new-lead');
     assert.equal(params.get('priorities'), 'urgent');
     assert.equal(params.get('workflowTaskStatuses'), 'done');
+    assert.equal(params.get('projectStatuses'), 'active');
   });
 
   it('select-visible semantics: union/deselect page ids without clearing others', () => {

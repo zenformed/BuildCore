@@ -18,6 +18,7 @@ import {
 import type { PipelineStageSlug } from '../pipelineStage';
 import type { WorkflowTaskStatus } from '../workflowTask';
 import type { CrmPriority } from '../project';
+import { isCrmProjectStatus, type CrmProjectStatus } from '../projectStatus';
 
 export type NormalizeCrmProjectsListV2RequestInput = {
   readonly view?: unknown;
@@ -30,6 +31,7 @@ export type NormalizeCrmProjectsListV2RequestInput = {
     readonly priorities?: unknown;
     readonly workflowTaskStatuses?: unknown;
     readonly assignedMemberIds?: unknown;
+    readonly projectStatuses?: unknown;
   } | null;
 };
 
@@ -132,6 +134,19 @@ function normalizeAssignedMemberIds(raw: unknown): readonly string[] | { error: 
   return uniqueSortedStrings(out);
 }
 
+function normalizeProjectStatuses(raw: unknown): readonly CrmProjectStatus[] | { error: string } {
+  if (raw == null) return [];
+  if (!Array.isArray(raw)) return { error: 'filters.projectStatuses must be an array' };
+  const out: CrmProjectStatus[] = [];
+  for (const entry of raw) {
+    if (typeof entry !== 'string' || !isCrmProjectStatus(entry)) {
+      return { error: 'filters.projectStatuses contains an unsupported status' };
+    }
+    out.push(entry);
+  }
+  return uniqueSortedStrings(out) as CrmProjectStatus[];
+}
+
 export function buildCrmProjectsListV2Fingerprint(input: {
   readonly view: CrmProjectsListV2View;
   readonly parentProjectId: string | null;
@@ -149,6 +164,7 @@ export function buildCrmProjectsListV2Fingerprint(input: {
       priorities: [...input.filters.priorities],
       workflowTaskStatuses: [...input.filters.workflowTaskStatuses],
       assignedMemberIds: [...input.filters.assignedMemberIds],
+      projectStatuses: [...input.filters.projectStatuses],
     },
     sort: input.sort,
     limit: input.limit,
@@ -221,12 +237,17 @@ export function normalizeCrmProjectsListV2Request(
   if ('error' in assignedMemberIds) {
     return { ok: false, error: 'invalid_request', message: assignedMemberIds.error };
   }
+  const projectStatuses = normalizeProjectStatuses(input.filters?.projectStatuses);
+  if ('error' in projectStatuses) {
+    return { ok: false, error: 'invalid_request', message: projectStatuses.error };
+  }
 
   const filters: CrmProjectsListV2Filters = {
     stageSlugs,
     priorities,
     workflowTaskStatuses,
     assignedMemberIds,
+    projectStatuses,
   };
   const search = normalizeCrmProjectsListV2Search(input.search);
   const fingerprint = buildCrmProjectsListV2Fingerprint({

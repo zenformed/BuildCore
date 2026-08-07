@@ -32,6 +32,7 @@ export type CrmProjectsListV2ActiveFilterNames = {
   readonly priorities: boolean;
   readonly workflowTaskStatuses: boolean;
   readonly assignedMemberIds: boolean;
+  readonly projectStatuses: boolean;
   readonly search: boolean;
 };
 
@@ -100,6 +101,7 @@ export function activeFilterNamesFromRequest(input: {
     readonly priorities: readonly unknown[];
     readonly workflowTaskStatuses: readonly unknown[];
     readonly assignedMemberIds: readonly unknown[];
+    readonly projectStatuses: readonly unknown[];
   };
 }): CrmProjectsListV2ActiveFilterNames {
   return {
@@ -107,6 +109,7 @@ export function activeFilterNamesFromRequest(input: {
     priorities: input.filters.priorities.length > 0,
     workflowTaskStatuses: input.filters.workflowTaskStatuses.length > 0,
     assignedMemberIds: input.filters.assignedMemberIds.length > 0,
+    projectStatuses: input.filters.projectStatuses.length > 0,
     search: input.search != null,
   };
 }

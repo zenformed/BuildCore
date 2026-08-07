@@ -31,6 +31,7 @@ export function buildCrmProjectsListV2SearchParams(
   appendCsv(params, 'priorities', request.filters.priorities);
   appendCsv(params, 'workflowTaskStatuses', request.filters.workflowTaskStatuses);
   appendCsv(params, 'assignedMemberIds', request.filters.assignedMemberIds);
+  appendCsv(params, 'projectStatuses', request.filters.projectStatuses);
   return params;
 }
 

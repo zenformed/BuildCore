@@ -2,14 +2,7 @@
 
 import type { ReactElement, ReactNode } from 'react';
 import { useEffect, useRef, useState } from 'react';
-import {
-  LuBan,
-  LuCheck,
-  LuCircleAlert,
-  LuPlay,
-  LuRotateCcw,
-  LuTrash2,
-} from 'react-icons/lu';
+import { LuCircleAlert, LuTrash2 } from 'react-icons/lu';
 import type { CrmProjectSummary } from '@/domain/crm';
 import { isCrmProjectComplete, isCrmProjectInactive } from '@/domain/crm';
 import { isProjectPriorityUrgent } from '@/domain/crm/projectPriorityToggle';
@@ -24,12 +17,9 @@ export type CrmProjectTableRowActionsMenuProps = {
   readonly canDelete?: boolean;
   readonly onRequestDelete?: (project: CrmProjectSummary) => void;
   readonly onTogglePriority?: (project: CrmProjectSummary) => void | Promise<void>;
-  readonly onRequestCompletionChange?: (project: CrmProjectSummary) => void;
-  readonly onRequestMarkInactive?: (project: CrmProjectSummary) => void;
-  readonly onRequestMarkActive?: (project: CrmProjectSummary) => void | Promise<void>;
 };
 
-type ActionIconTone = 'delete' | 'inactive' | 'priority' | 'complete' | 'active';
+type ActionIconTone = 'delete' | 'priority';
 
 function ActionIcon({
   tone,
@@ -56,24 +46,21 @@ export function CrmProjectTableRowActionsMenu({
   canDelete = false,
   onRequestDelete,
   onTogglePriority,
-  onRequestCompletionChange,
-  onRequestMarkInactive,
-  onRequestMarkActive,
-}: CrmProjectTableRowActionsMenuProps): ReactElement {
+}: CrmProjectTableRowActionsMenuProps): ReactElement | null {
   const tableCopy = content.crm.table;
   const deleteCopy =
     project.parentProjectId != null
       ? content.projectDetail.subprojects.delete
       : content.crm.delete;
-  const inactiveCopy = content.projectDetail.subprojects.markInactive;
-  const activeCopy = content.projectDetail.subprojects.markActive;
   const [open, setOpen] = useState(false);
   const anchorRef = useRef<HTMLButtonElement>(null);
   const isComplete = isCrmProjectComplete(project);
   const isInactive = isCrmProjectInactive(project);
   const isPriority = isProjectPriorityUrgent(project.priority);
   const menuDisabled = busy;
-  const completionLabel = isComplete ? tableCopy.markIncomplete : tableCopy.markComplete;
+  const canTogglePriority =
+    onTogglePriority != null && !isComplete && !isInactive;
+  const showDelete = canDelete && onRequestDelete != null;
   const priorityLabel = isPriority ? tableCopy.removePriority : tableCopy.makePriority;
 
   useEffect(() => {
@@ -84,6 +71,10 @@ export function CrmProjectTableRowActionsMenu({
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
   }, [open]);
+
+  if (!canTogglePriority && !showDelete) {
+    return null;
+  }
 
   const closeMenu = (): void => {
     setOpen(false);
@@ -117,7 +108,7 @@ export function CrmProjectTableRowActionsMenu({
         sizeToContent
         portalClassName={`${detailStyles.inlineMenu_portal} ${styles.rowActionsMenuPortal}`}
       >
-        {!isComplete && !isInactive ? (
+        {canTogglePriority ? (
           <button
             type="button"
             role="menuitem"
@@ -126,7 +117,7 @@ export function CrmProjectTableRowActionsMenu({
             onClick={(event) => {
               event.stopPropagation();
               closeMenu();
-              void onTogglePriority?.(project);
+              void onTogglePriority(project);
             }}
           >
             <ActionIcon tone="priority">
@@ -135,64 +126,7 @@ export function CrmProjectTableRowActionsMenu({
             {priorityLabel}
           </button>
         ) : null}
-        {isInactive ? (
-          <button
-            type="button"
-            role="menuitem"
-            className={styles.rowActionsMenuItem}
-            disabled={menuDisabled}
-            aria-label={activeCopy.menuActionAriaLabel(project.name)}
-            onClick={(event) => {
-              event.stopPropagation();
-              closeMenu();
-              void onRequestMarkActive?.(project);
-            }}
-          >
-            <ActionIcon tone="active">
-              <LuPlay size={15} strokeWidth={2.25} />
-            </ActionIcon>
-            {tableCopy.markActive}
-          </button>
-        ) : (
-          <button
-            type="button"
-            role="menuitem"
-            className={styles.rowActionsMenuItem}
-            disabled={menuDisabled}
-            aria-label={inactiveCopy.menuActionAriaLabel(project.name)}
-            onClick={(event) => {
-              event.stopPropagation();
-              closeMenu();
-              onRequestMarkInactive?.(project);
-            }}
-          >
-            <ActionIcon tone="inactive">
-              <LuBan size={15} strokeWidth={2.25} />
-            </ActionIcon>
-            {tableCopy.markInactive}
-          </button>
-        )}
-        <button
-          type="button"
-          role="menuitem"
-          className={styles.rowActionsMenuItem}
-          disabled={menuDisabled}
-          onClick={(event) => {
-            event.stopPropagation();
-            closeMenu();
-            onRequestCompletionChange?.(project);
-          }}
-        >
-          <ActionIcon tone="complete">
-            {isComplete ? (
-              <LuRotateCcw size={15} strokeWidth={2.25} />
-            ) : (
-              <LuCheck size={15} strokeWidth={2.5} />
-            )}
-          </ActionIcon>
-          {completionLabel}
-        </button>
-        {canDelete ? (
+        {showDelete ? (
           <button
             type="button"
             role="menuitem"
@@ -202,7 +136,7 @@ export function CrmProjectTableRowActionsMenu({
             onClick={(event) => {
               event.stopPropagation();
               closeMenu();
-              onRequestDelete?.(project);
+              onRequestDelete(project);
             }}
           >
             <ActionIcon tone="delete">

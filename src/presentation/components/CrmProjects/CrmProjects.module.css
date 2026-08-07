@@ -364,18 +364,45 @@
 }
 
 .projectsListV2Banner {
+  position: fixed;
+  top: 1rem;
+  right: 1rem;
+  z-index: 199;
   display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  margin: 0.5rem 1rem 0;
-  padding: 0.55rem 0.75rem;
-  border: 1px solid var(--color-border, #e2e8f0);
-  border-radius: 8px;
-  background: var(--color-surface-muted, #f8fafc);
-  font-size: 0.875rem;
+  align-items: flex-start;
+  gap: 0.5rem;
+  max-width: min(22rem, calc(100vw - 2rem));
+  margin: 0;
+  padding: 0.625rem 0.75rem;
+  border: 1px solid var(--theme-border-main, #e2e8f0);
+  border-radius: 0.5rem;
+  background: var(--theme-surface-main, #fff);
+  box-shadow:
+    0 10px 15px -3px rgba(15, 23, 42, 0.12),
+    0 4px 6px -4px rgba(15, 23, 42, 0.1);
+  font-size: 0.8125rem;
+  line-height: 1.4;
+  color: var(--theme-text-main, #0f172a);
+  pointer-events: auto;
+}
+
+:global([data-theme='dark']) .projectsListV2Banner {
+  background: #252836;
+  border-color: #3d3e4a;
+  color: #f1f5f9;
+  box-shadow:
+    0 10px 15px -3px rgba(0, 0, 0, 0.35),
+    0 4px 6px -4px rgba(0, 0, 0, 0.25);
+}
+
+.projectsListV2BannerMessage {
+  margin: 0;
+  flex: 1;
+  min-width: 0;
 }
 
 .projectsListV2BannerButton {
+  flex-shrink: 0;
   border: none;
   background: transparent;
   color: var(--color-accent, #2563eb);
@@ -385,15 +412,33 @@
   padding: 0;
 }
 
+:global([data-theme='dark']) .projectsListV2BannerButton {
+  color: #93c5fd;
+}
+
 .projectsListV2BannerDismiss {
-  margin-left: auto;
+  flex-shrink: 0;
+  width: 1.25rem;
+  height: 1.25rem;
+  margin: 0;
+  padding: 0;
   border: none;
+  border-radius: 0.25rem;
   background: transparent;
   color: var(--color-text-muted, #64748b);
-  font-size: 1.1rem;
+  font-size: 1rem;
   line-height: 1;
   cursor: pointer;
-  padding: 0 0.25rem;
+}
+
+.projectsListV2BannerDismiss:hover {
+  background: var(--color-muted, #f1f5f9);
+  color: var(--color-text, #0f172a);
+}
+
+:global([data-theme='dark']) .projectsListV2BannerDismiss:hover {
+  background: #1a1d26;
+  color: #f1f5f9;
 }
 
 .projectsPanelHeader_mobile {

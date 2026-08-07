@@ -1,4 +1,5 @@
 import type { CrmPriority, CrmProjectSummary, PipelineStageSlug, WorkflowTaskStatus } from '@/domain/crm';
+import type { CrmProjectStatus } from '@/domain/crm';
 import { buildCrmProjectSummarySearchHaystack, projectHasAnyWorkflowTaskStatus } from '@/domain/crm';
 import type { PipelineStage } from '@/domain/crm/pipelineStage';
 import type { PipelineStageScope } from '@/domain/buildcore/orgPipelineStages';
@@ -33,12 +34,17 @@ export const CRM_LIST_FILTER_UNASSIGNED_ASSIGNEE_ID = '__unassigned__';
 
 export type CrmDocumentsRequiredFilterValue = 'yes' | 'no';
 
+/** Operational lists default to Active-only Project/Subproject status. */
+export const DEFAULT_CRM_PROJECT_STATUS_FILTER: readonly CrmProjectStatus[] = ['active'];
+
 export type CrmProjectsListFilters = {
   readonly stageSlugs: readonly PipelineStageSlug[];
   readonly priorities: readonly CrmPriority[];
   readonly workflowTaskStatuses: readonly WorkflowTaskStatus[];
   readonly assignedMemberIds: readonly string[];
   readonly documentsRequired: readonly CrmDocumentsRequiredFilterValue[];
+  /** Empty = All statuses. Default operational value is `['active']`. */
+  readonly projectStatuses: readonly CrmProjectStatus[];
 };
 
 export const EMPTY_CRM_PROJECTS_LIST_FILTERS: CrmProjectsListFilters = {
@@ -47,7 +53,16 @@ export const EMPTY_CRM_PROJECTS_LIST_FILTERS: CrmProjectsListFilters = {
   workflowTaskStatuses: [],
   assignedMemberIds: [],
   documentsRequired: [],
+  projectStatuses: [...DEFAULT_CRM_PROJECT_STATUS_FILTER],
 };
+
+export function isDefaultCrmProjectStatusFilter(
+  projectStatuses: readonly CrmProjectStatus[]
+): boolean {
+  return (
+    projectStatuses.length === 1 && projectStatuses[0] === DEFAULT_CRM_PROJECT_STATUS_FILTER[0]
+  );
+}
 
 export type CrmProjectListFilterContext = {
   readonly workflowTaskStatusIndex: CrmProjectWorkflowTaskStatusIndex;
@@ -70,7 +85,8 @@ export function isCrmProjectsListFiltersActive(filters: CrmProjectsListFilters):
     filters.priorities.length > 0 ||
     filters.workflowTaskStatuses.length > 0 ||
     filters.assignedMemberIds.length > 0 ||
-    filters.documentsRequired.length > 0
+    filters.documentsRequired.length > 0 ||
+    !isDefaultCrmProjectStatusFilter(filters.projectStatuses)
   );
 }
 
@@ -119,9 +135,12 @@ function projectMatchesListFilters(
   filterContext: CrmProjectListFilterContext
 ): boolean {
   const q = searchQuery.trim().toLowerCase();
-  const { stageSlugs, priorities, workflowTaskStatuses } = filters;
+  const { stageSlugs, priorities, workflowTaskStatuses, projectStatuses } = filters;
   const { workflowTaskStatusIndex, workflowTaskStatusIndexReady } = filterContext;
 
+  if (projectStatuses.length > 0 && !projectStatuses.includes(project.status)) {
+    return false;
+  }
   if (stageSlugs.length > 0) {
     const stageSlug = resolveProjectListFilterStageSlug(project, filterContext);
     if (!stageSlugs.includes(stageSlug)) {

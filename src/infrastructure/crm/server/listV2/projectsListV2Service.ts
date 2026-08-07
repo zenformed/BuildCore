@@ -174,6 +174,7 @@ async function callRootPageRpc(
     p_stage_slugs: emptyArrayOrNull(args.request.filters.stageSlugs),
     p_priorities: emptyArrayOrNull(args.request.filters.priorities),
     p_workflow_statuses: emptyArrayOrNull(args.request.filters.workflowTaskStatuses),
+    p_project_statuses: emptyArrayOrNull(args.request.filters.projectStatuses),
     p_limit: args.fetchLimit,
     p_direction: args.direction,
     p_cursor_bucket: args.cursorBucket,
@@ -224,6 +225,7 @@ async function callChildPageRpc(
     p_stage_slugs: emptyArrayOrNull(args.request.filters.stageSlugs),
     p_priorities: emptyArrayOrNull(args.request.filters.priorities),
     p_workflow_statuses: emptyArrayOrNull(args.request.filters.workflowTaskStatuses),
+    p_project_statuses: emptyArrayOrNull(args.request.filters.projectStatuses),
     p_limit: args.fetchLimit,
     p_direction: args.direction,
     p_cursor_bucket: args.cursorBucket,
@@ -268,6 +270,7 @@ async function callChildCountRpc(
     p_stage_slugs: emptyArrayOrNull(args.request.filters.stageSlugs),
     p_priorities: emptyArrayOrNull(args.request.filters.priorities),
     p_workflow_statuses: emptyArrayOrNull(args.request.filters.workflowTaskStatuses),
+    p_project_statuses: emptyArrayOrNull(args.request.filters.projectStatuses),
   });
 
   if (error != null) {
@@ -305,6 +308,7 @@ async function callRootCountRpc(
     p_stage_slugs: emptyArrayOrNull(args.request.filters.stageSlugs),
     p_priorities: emptyArrayOrNull(args.request.filters.priorities),
     p_workflow_statuses: emptyArrayOrNull(args.request.filters.workflowTaskStatuses),
+    p_project_statuses: emptyArrayOrNull(args.request.filters.projectStatuses),
   });
 
   if (error != null) {

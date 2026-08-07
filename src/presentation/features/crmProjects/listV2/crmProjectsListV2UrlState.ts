@@ -10,8 +10,13 @@ import {
   type CrmProjectsListV2NormalizedRequest,
   type CrmProjectsListV2PageSize,
 } from '@/domain/crm/projectsListV2';
+import { isCrmProjectStatus, type CrmProjectStatus } from '@/domain/crm';
 import type { CrmProjectsListFilters } from '@/presentation/features/crmProjects/crmProjectsPipelineViewModel';
-import { EMPTY_CRM_PROJECTS_LIST_FILTERS } from '@/presentation/features/crmProjects/crmProjectsPipelineViewModel';
+import {
+  DEFAULT_CRM_PROJECT_STATUS_FILTER,
+  EMPTY_CRM_PROJECTS_LIST_FILTERS,
+  isDefaultCrmProjectStatusFilter,
+} from '@/presentation/features/crmProjects/crmProjectsPipelineViewModel';
 import { CRM_PRIORITY_FILTER_VALUES } from '@/domain/crm/projectPriorityToggle';
 import { isWorkflowTaskStatus } from '@/domain/crm/workflowTaskStatuses';
 
@@ -49,8 +54,23 @@ function splitCsv(raw: string | null): string[] {
     .filter(Boolean);
 }
 
+/** Missing param → Active default. `all` → no status filter. */
+export function parseCrmProjectStatusesUrlParam(raw: string | null): readonly CrmProjectStatus[] {
+  if (raw == null || raw.trim() === '') {
+    return [...DEFAULT_CRM_PROJECT_STATUS_FILTER];
+  }
+  if (raw.trim().toLowerCase() === 'all') {
+    return [];
+  }
+  const parsed = splitCsv(raw).filter(isCrmProjectStatus);
+  return parsed.length > 0 ? parsed : [...DEFAULT_CRM_PROJECT_STATUS_FILTER];
+}
+
 function defaultRequest(): CrmProjectsListV2NormalizedRequest {
-  const normalized = normalizeCrmProjectsListV2Request({ view: 'roots' });
+  const normalized = normalizeCrmProjectsListV2Request({
+    view: 'roots',
+    filters: { projectStatuses: [...DEFAULT_CRM_PROJECT_STATUS_FILTER] },
+  });
   if (!normalized.ok) {
     throw new Error('Failed to build default Projects list v2 request');
   }
@@ -69,6 +89,7 @@ export function parseCrmProjectsListV2UrlState(
   const workflowTaskStatuses = splitCsv(searchParams.get('workflowTaskStatuses')).filter(
     isWorkflowTaskStatus
   );
+  const projectStatuses = parseCrmProjectStatusesUrlParam(searchParams.get('projectStatuses'));
 
   const normalized = normalizeCrmProjectsListV2Request({
     view: 'roots',
@@ -80,6 +101,7 @@ export function parseCrmProjectsListV2UrlState(
       priorities,
       workflowTaskStatuses,
       assignedMemberIds: [],
+      projectStatuses,
     },
   });
 
@@ -98,6 +120,7 @@ export function parseCrmProjectsListV2UrlState(
       workflowTaskStatuses: [
         ...request.filters.workflowTaskStatuses,
       ] as CrmProjectsListFilters['workflowTaskStatuses'],
+      projectStatuses: [...request.filters.projectStatuses],
     },
     limit: request.limit,
     cursor,
@@ -126,6 +149,11 @@ export function buildCrmProjectsListV2UrlSearchParams(input: {
   }
   if (input.filters.workflowTaskStatuses.length > 0) {
     params.set('workflowTaskStatuses', input.filters.workflowTaskStatuses.join(','));
+  }
+  if (input.filters.projectStatuses.length === 0) {
+    params.set('projectStatuses', 'all');
+  } else if (!isDefaultCrmProjectStatusFilter(input.filters.projectStatuses)) {
+    params.set('projectStatuses', input.filters.projectStatuses.join(','));
   }
   if (input.limit !== CRM_PROJECTS_LIST_V2_DEFAULT_PAGE_SIZE) {
     params.set('limit', String(input.limit));
@@ -162,6 +190,7 @@ export function buildCrmProjectsListV2RequestFromUi(input: {
       priorities: input.filters.priorities,
       workflowTaskStatuses: input.filters.workflowTaskStatuses,
       assignedMemberIds: [],
+      projectStatuses: input.filters.projectStatuses,
     },
   });
   if (normalized.ok) return normalized.request;
@@ -180,6 +209,7 @@ export const CRM_PROJECTS_LIST_V2_URL_PARAM_KEYS = [
   'priorities',
   'workflowTaskStatuses',
   'assignedMemberIds',
+  'projectStatuses',
 ] as const;
 
 /**
@@ -204,6 +234,7 @@ function defaultChildrenRequest(parentProjectId: string): CrmProjectsListV2Norma
   const normalized = normalizeCrmProjectsListV2Request({
     view: 'children_of_parent',
     parentProjectId,
+    filters: { projectStatuses: [...DEFAULT_CRM_PROJECT_STATUS_FILTER] },
   });
   if (!normalized.ok) {
     throw new Error('Failed to build default Subprojects list v2 request');
@@ -228,6 +259,7 @@ export function parseCrmProjectsListV2ChildrenUrlState(
       priorities: base.filters.priorities,
       workflowTaskStatuses: base.filters.workflowTaskStatuses,
       assignedMemberIds: [],
+      projectStatuses: base.filters.projectStatuses,
     },
   });
   const request = normalized.ok ? normalized.request : defaultChildrenRequest(parentProjectId);
@@ -240,6 +272,7 @@ export function parseCrmProjectsListV2ChildrenUrlState(
       workflowTaskStatuses: [
         ...request.filters.workflowTaskStatuses,
       ] as CrmProjectsListFilters['workflowTaskStatuses'],
+      projectStatuses: [...request.filters.projectStatuses],
     },
     limit: request.limit,
     request,
@@ -264,6 +297,7 @@ export function buildCrmProjectsListV2ChildrenRequestFromUi(input: {
       priorities: input.filters.priorities,
       workflowTaskStatuses: input.filters.workflowTaskStatuses,
       assignedMemberIds: [],
+      projectStatuses: input.filters.projectStatuses,
     },
   });
   if (normalized.ok) return normalized.request;

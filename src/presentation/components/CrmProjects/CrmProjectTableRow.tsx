@@ -81,9 +81,6 @@ export type CrmProjectTableRowProps = {
   busy?: boolean;
   onRequestDelete?: (project: CrmProjectSummary) => void;
   onTogglePriority?: (project: CrmProjectSummary) => void | Promise<void>;
-  onRequestCompletionChange?: (project: CrmProjectSummary) => void;
-  onRequestMarkInactive?: (project: CrmProjectSummary) => void;
-  onRequestMarkActive?: (project: CrmProjectSummary) => void | Promise<void>;
   hasChildren?: boolean;
   isExpanded?: boolean;
   onToggleExpand?: () => void;
@@ -117,9 +114,6 @@ export function CrmProjectTableRow({
   busy = false,
   onRequestDelete,
   onTogglePriority,
-  onRequestCompletionChange,
-  onRequestMarkInactive,
-  onRequestMarkActive,
   hasChildren = false,
   isExpanded = false,
   onToggleExpand,
@@ -515,9 +509,6 @@ export function CrmProjectTableRow({
             canDelete={canDelete}
             onRequestDelete={onRequestDelete}
             onTogglePriority={onTogglePriority}
-            onRequestCompletionChange={onRequestCompletionChange}
-            onRequestMarkInactive={onRequestMarkInactive}
-            onRequestMarkActive={onRequestMarkActive}
           />
         </span>
       ) : null}

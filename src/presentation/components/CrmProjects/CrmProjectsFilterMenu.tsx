@@ -2,7 +2,8 @@
 
 import type { ReactElement } from 'react';
 import { useMemo, useRef, useState } from 'react';
-import type { PipelineStageSlug, WorkflowTaskStatus } from '@/domain/crm';
+import type { PipelineStageSlug, WorkflowTaskStatus, CrmProjectStatus } from '@/domain/crm';
+import { CRM_PROJECT_STATUS_OPTIONS } from '@/domain/crm';
 import {
   CRM_PRIORITY_FILTER_VALUES,
   type CrmPriorityFilterValue,
@@ -19,6 +20,7 @@ import { WorkflowInlineMenu } from '@/presentation/components/CrmProjectDetail/W
 import {
   buildMixedPipelineStageFilterGroups,
   EMPTY_CRM_PROJECTS_LIST_FILTERS,
+  isDefaultCrmProjectStatusFilter,
   type CrmDocumentsRequiredFilterValue,
   type CrmProjectsListFilters,
 } from '@/presentation/features/crmProjects/crmProjectsPipelineViewModel';
@@ -45,6 +47,7 @@ export type CrmProjectsFilterMenuSection =
   | 'stage'
   | 'priority'
   | 'status'
+  | 'projectStatus'
   | 'assigned'
   | 'documentsRequired';
 
@@ -67,7 +70,7 @@ export type CrmProjectsFilterMenuProps = {
   readonly menuAlign?: 'start' | 'end';
   readonly className?: string;
   readonly triggerClassName?: string;
-  /** Which filter groups to show. Defaults to stage + priority + status. */
+  /** Which filter groups to show. Defaults to project status + stage + priority + task status. */
   readonly sections?: readonly CrmProjectsFilterMenuSection[];
   /** Required when `sections` includes `assigned`. */
   readonly assigneeFilterOptions?: readonly CrmAssigneeFilterOption[];
@@ -82,10 +85,13 @@ export type CrmProjectsFilterMenuProps = {
 };
 
 const DEFAULT_FILTER_SECTIONS: readonly CrmProjectsFilterMenuSection[] = [
+  'projectStatus',
   'stage',
   'priority',
   'status',
 ];
+
+type ProjectStatusFilterChoice = CrmProjectStatus | 'all';
 
 const DEFAULT_WORKFLOW_TASK_STATUS_OPTIONS: readonly CrmWorkflowTaskStatusFilterOption[] =
   WORKFLOW_TASK_STATUSES.map((status) => ({
@@ -118,6 +124,7 @@ export function CrmProjectsFilterMenu({
   const showStage = sections.includes('stage');
   const showPriority = sections.includes('priority');
   const showStatus = sections.includes('status');
+  const showProjectStatus = sections.includes('projectStatus');
   const showAssigned = sections.includes('assigned');
   const showDocumentsRequired = sections.includes('documentsRequired');
   const showAssigneeScope =
@@ -160,12 +167,27 @@ export function CrmProjectsFilterMenu({
     (showStage && filters.stageSlugs.length > 0) ||
     (showPriority && filters.priorities.length > 0) ||
     (showStatus && filters.workflowTaskStatuses.length > 0) ||
+    (showProjectStatus && !isDefaultCrmProjectStatusFilter(filters.projectStatuses)) ||
     (showAssigned && filters.assignedMemberIds.length > 0) ||
     (showDocumentsRequired && filters.documentsRequired.length > 0) ||
     (showRadiusFilter && isRadiusFilterActive(radiusFilter)) ||
     (showAssigneeScope && assigneeScope !== assigneeScopeDefault);
   const isCaret = triggerVariant === 'caret';
   const isGhost = triggerVariant === 'ghost';
+
+  const selectedProjectStatusChoice: ProjectStatusFilterChoice =
+    filters.projectStatuses.length === 0
+      ? 'all'
+      : filters.projectStatuses.length === 1
+        ? filters.projectStatuses[0]!
+        : 'all';
+
+  const setProjectStatusChoice = (choice: ProjectStatusFilterChoice): void => {
+    onChange({
+      ...filters,
+      projectStatuses: choice === 'all' ? [] : [choice],
+    });
+  };
 
   const toggleStage = (slug: PipelineStageSlug): void => {
     const next = filters.stageSlugs.includes(slug)
@@ -271,6 +293,33 @@ export function CrmProjectsFilterMenu({
                       name="crm-projects-assignee-scope"
                       checked={assigneeScope === option.value}
                       onChange={() => onAssigneeScopeChange(option.value)}
+                    />
+                    <span>{option.label}</span>
+                  </label>
+                ))}
+              </div>
+            </fieldset>
+          ) : null}
+          {showProjectStatus ? (
+            <fieldset className={styles.projectsFilterFieldset}>
+              <legend className={styles.projectsFilterLegend}>{copy.projectStatusLabel}</legend>
+              <div className={styles.projectsFilterOptions}>
+                <label className={styles.projectsFilterOption}>
+                  <input
+                    type="radio"
+                    name="crm-projects-project-status"
+                    checked={selectedProjectStatusChoice === 'all'}
+                    onChange={() => setProjectStatusChoice('all')}
+                  />
+                  <span>{copy.projectStatusAll}</span>
+                </label>
+                {CRM_PROJECT_STATUS_OPTIONS.map((option) => (
+                  <label key={option.value} className={styles.projectsFilterOption}>
+                    <input
+                      type="radio"
+                      name="crm-projects-project-status"
+                      checked={selectedProjectStatusChoice === option.value}
+                      onChange={() => setProjectStatusChoice(option.value)}
                     />
                     <span>{option.label}</span>
                   </label>
