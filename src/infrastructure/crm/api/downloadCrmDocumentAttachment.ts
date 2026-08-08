@@ -1,5 +1,4 @@
-import { CrmApiError } from '@/infrastructure/crm/api/crmApiClient';
-import { getSession } from '@/infrastructure/supabase/supabaseClient';
+import { crmApiFetch, CrmApiError } from '@/infrastructure/crm/api/crmApiClient';
 import { downloadBlob } from '@/reports/export/downloadBlob';
 
 function parseContentDispositionFileName(header: string | null): string | null {
@@ -26,16 +25,8 @@ export async function downloadCrmDocumentAttachment(
   apiPath: string,
   fallbackFileName = 'download'
 ): Promise<void> {
-  const session = await getSession();
-  const token = session?.access_token;
-  if (token == null || token.trim() === '') {
-    throw new CrmApiError('unauthenticated', 401);
-  }
-
-  const response = await fetch(apiPath, {
+  const response = await crmApiFetch(apiPath, {
     method: 'GET',
-    headers: { Authorization: `Bearer ${token}` },
-    cache: 'no-store',
   });
 
   await consumeDocumentDownloadResponse(response, fallbackFileName);
@@ -46,20 +37,12 @@ export async function downloadCrmDocumentAttachmentPost(
   body: unknown,
   fallbackFileName = 'download'
 ): Promise<void> {
-  const session = await getSession();
-  const token = session?.access_token;
-  if (token == null || token.trim() === '') {
-    throw new CrmApiError('unauthenticated', 401);
-  }
-
-  const response = await fetch(apiPath, {
+  const response = await crmApiFetch(apiPath, {
     method: 'POST',
     headers: {
-      Authorization: `Bearer ${token}`,
       'Content-Type': 'application/json',
     },
     body: JSON.stringify(body),
-    cache: 'no-store',
   });
 
   await consumeDocumentDownloadResponse(response, fallbackFileName);

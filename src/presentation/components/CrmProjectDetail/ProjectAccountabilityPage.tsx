@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo, useState, type ReactElement } from 'react';
+import { shouldUseProductionCrmListV2 } from '@/infrastructure/config/crmDataSource';
 import { isProjectsListV2ClientFlagEnabled } from '@/infrastructure/config/projectsListV2Config';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
 import { useProjectDetailShell } from '@/presentation/features/crmProjectDetail/ProjectDetailShellContext';
@@ -28,7 +29,7 @@ export type ProjectAccountabilityContentProps = {
 export function ProjectAccountabilityContent({
   embeddedInFolderTabs = false,
 }: ProjectAccountabilityContentProps): ReactElement {
-  if (isProjectsListV2ClientFlagEnabled()) {
+  if (shouldUseProductionCrmListV2(isProjectsListV2ClientFlagEnabled())) {
     return <ProjectAccountabilityContentV2 embeddedInFolderTabs={embeddedInFolderTabs} />;
   }
   return <ProjectAccountabilityContentV1 embeddedInFolderTabs={embeddedInFolderTabs} />;

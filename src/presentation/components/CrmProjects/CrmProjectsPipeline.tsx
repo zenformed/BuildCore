@@ -10,7 +10,10 @@ import {
   type CrmProjectSummary,
 } from '@/domain/crm';
 import { isBuildCoreMemberRole } from '@/domain/buildcore/memberRole';
-import { getCrmDataSource } from '@/infrastructure/config/crmDataSource';
+import {
+  getCrmDataSource,
+  shouldUseProductionCrmListV2,
+} from '@/infrastructure/config/crmDataSource';
 import { isProjectsListV2ClientFlagEnabled } from '@/infrastructure/config/projectsListV2Config';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
 import { useBuildCoreNavigation } from '@/presentation/providers/BuildCoreNavigationProvider';
@@ -64,7 +67,7 @@ export function CrmProjectsPipeline({
   onProjectRowClick,
   onProjectCreated,
 }: CrmProjectsPipelineProps): ReactElement {
-  if (isProjectsListV2ClientFlagEnabled()) {
+  if (shouldUseProductionCrmListV2(isProjectsListV2ClientFlagEnabled())) {
     return (
       <Suspense fallback={<section className={styles.projectsPanel} aria-busy="true" />}>
         <CrmProjectsPipelineV2

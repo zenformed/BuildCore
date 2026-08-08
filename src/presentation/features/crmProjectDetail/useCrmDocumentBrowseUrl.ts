@@ -3,9 +3,8 @@
 import { useEffect, useState } from 'react';
 import type { CrmDocumentMetadata } from '@/domain/crm';
 import type { CrmMediaBrowseSource, CrmMediaBrowseVariant } from '@/domain/crm/mediaBrowse';
-import { env } from '@/infrastructure/config/env';
+import { crmApiGetJson } from '@/infrastructure/crm/api/crmApiClient';
 import { isDemoRuntimeClient } from '@/infrastructure/runtime/buildCoreRuntime';
-import { getSession } from '@/infrastructure/supabase/supabaseClient';
 import {
   invalidateCrmMediaBrowseSource,
   loadCrmMediaBrowseSource,
@@ -28,22 +27,11 @@ async function fetchAuthorizedBrowseSource(
   documentId: string,
   preferredVariant: CrmMediaBrowseVariant
 ): Promise<CrmMediaBrowseSource | null> {
-  const session = await getSession();
-  const token = session?.access_token;
-  if (env.isSaasMode && (token == null || token.trim() === '')) return null;
-  const headers: HeadersInit = token ? { Authorization: `Bearer ${token}` } : {};
-  const response = await fetch(
-    buildCrmDocumentBrowseApiPath(projectSlug, documentId, preferredVariant),
-    {
-      credentials: 'include',
-      headers,
-      cache: 'no-store',
-    }
-  );
-  if (!response.ok) return null;
-  const json = (await response.json()) as { source?: CrmMediaBrowseSource };
+  const json = await crmApiGetJson<{ source?: CrmMediaBrowseSource }>(
+    buildCrmDocumentBrowseApiPath(projectSlug, documentId, preferredVariant)
+  ).catch(() => null);
   if (
-    json.source == null ||
+    json?.source == null ||
     typeof json.source.url !== 'string' ||
     json.source.url.trim() === '' ||
     typeof json.source.expiresAt !== 'string'

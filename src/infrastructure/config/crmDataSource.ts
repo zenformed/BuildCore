@@ -10,3 +10,15 @@ export type CrmDataSource = 'mock' | 'api';
 export function getCrmDataSource(): CrmDataSource {
   return resolveCrmDataSourceForRuntime();
 }
+
+/**
+ * V2 list UIs are production API adapters, not alternate mock repositories.
+ * Keep runtime selection at this boundary so DEMO always stays on the shared
+ * repository-backed UI even when production V2 feature flags are enabled.
+ */
+export function shouldUseProductionCrmListV2(
+  clientFlagEnabled: boolean,
+  source: CrmDataSource = getCrmDataSource()
+): boolean {
+  return clientFlagEnabled && source === 'api';
+}

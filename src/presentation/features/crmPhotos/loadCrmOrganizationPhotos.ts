@@ -1,7 +1,6 @@
 import type { CrmOrganizationPhotosPage } from '@/domain/crm';
-import { env } from '@/infrastructure/config/env';
-import { getSession } from '@/infrastructure/supabase/supabaseClient';
 import { isDemoRuntimeClient } from '@/infrastructure/runtime/buildCoreRuntime';
+import { crmApiGetJson } from '@/infrastructure/crm/api/crmApiClient';
 import { resolveCrmRepositoryResult } from '@/infrastructure/crm/types';
 import { isCrmDocumentImage } from '@/presentation/features/crmProjectDetail/documentGalleryMedia';
 import { crmRepositories } from '@/shared/di/container';
@@ -140,24 +139,11 @@ export async function loadCrmOrganizationPhotos(input: {
     };
   }
 
-  const session = await getSession();
-  const token = session?.access_token;
-  if (env.isSaasMode && !token) throw new Error('You must be signed in.');
-
   const params = new URLSearchParams({
     search: input.search.trim(),
     limit: String(input.limit ?? 40),
   });
   if (input.cursor) params.set('cursor', input.cursor);
 
-  const response = await fetch(`/api/crm/photos?${params}`, {
-    credentials: 'include',
-    cache: 'no-store',
-    headers: token ? { Authorization: `Bearer ${token}` } : {},
-  });
-  const body = (await response.json()) as CrmOrganizationPhotosPage & {
-    message?: string;
-  };
-  if (!response.ok) throw new Error(body.message ?? 'Could not load photos.');
-  return body;
+  return crmApiGetJson<CrmOrganizationPhotosPage>(`/api/crm/photos?${params}`);
 }

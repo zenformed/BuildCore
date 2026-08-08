@@ -1,8 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { env } from '@/infrastructure/config/env';
-import { useSaaSProfile } from '@/presentation/hooks/useSaaSProfile';
+import { crmApiFetch } from '@/infrastructure/crm/api/crmApiClient';
 import { deferNonCriticalWork } from '@/presentation/utils/deferNonCriticalWork';
 import {
   invalidateSessionBlob,
@@ -30,9 +29,8 @@ export function invalidateProjectPrimaryPhotoBlobCache(apiPath: string | null | 
 
 export function useProjectPrimaryPhotoBlob(
   apiPath: string | null | undefined,
-  getAccessToken?: () => string | null
+  _getAccessToken?: () => string | null
 ): string | null {
-  const { session } = useSaaSProfile();
   const cacheKey = apiPath ? projectPhotoApiPathCacheKey(apiPath) : null;
   const [blobUrl, setBlobUrl] = useState<string | null>(() =>
     cacheKey ? (peekSessionBlobUrl(cacheKey) ?? null) : null
@@ -56,12 +54,8 @@ export function useProjectPrimaryPhotoBlob(
 
     let cancelled = false;
     const cancelDefer = deferNonCriticalWork(() => {
-      const token = env.isSaasMode
-        ? (getAccessToken?.() ?? session?.access_token ?? null)
-        : null;
       void loadSessionBlob(cacheKey, async () => {
-        const headers: HeadersInit = token ? { Authorization: `Bearer ${token}` } : {};
-        const response = await fetch(apiPath, { credentials: 'include', headers, cache: 'no-store' });
+        const response = await crmApiFetch(apiPath);
         if (!response.ok) return null;
         return response.blob();
       }).then((url) => {
@@ -72,7 +66,7 @@ export function useProjectPrimaryPhotoBlob(
       cancelled = true;
       cancelDefer();
     };
-  }, [apiPath, cacheKey, getAccessToken, session?.access_token]);
+  }, [apiPath, cacheKey]);
 
   return blobUrl;
 }

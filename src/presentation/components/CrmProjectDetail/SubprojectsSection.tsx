@@ -4,6 +4,7 @@ import { Suspense, useCallback, useEffect, useId, useMemo, useRef, useState, typ
 import { resolvePipelineStageScopeForProject } from '@/domain/buildcore/orgPipelineStages';
 import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import { isBuildCoreMemberRole } from '@/domain/buildcore/memberRole';
+import { shouldUseProductionCrmListV2 } from '@/infrastructure/config/crmDataSource';
 import { isProjectsListV2ClientFlagEnabled } from '@/infrastructure/config/projectsListV2Config';
 import { SubprojectsSectionV2 } from './SubprojectsSectionV2';
 import {
@@ -72,7 +73,7 @@ export function SubprojectsSection({
   if (subSlug != null || project.summary.parentProjectId != null) {
     return null;
   }
-  if (isProjectsListV2ClientFlagEnabled()) {
+  if (shouldUseProductionCrmListV2(isProjectsListV2ClientFlagEnabled())) {
     return (
       <Suspense fallback={null}>
         <SubprojectsSectionV2 embeddedInFolderTabs={embeddedInFolderTabs} />

@@ -22,7 +22,7 @@ import {
   getEffectiveMockProjectDetailById,
   listEffectiveMockProjectSummaries,
 } from '@/infrastructure/crm/mock/mockCrmMutationStore';
-import { getSession } from '@/infrastructure/supabase/supabaseClient';
+import { MOCK_CRM_DEMO_TEAM_MEMBER_ID } from '@/platform/mock/crm/teamMembers';
 
 function resolveParentAndSubproject(
   project: CrmProjectSummary,
@@ -92,8 +92,7 @@ function toAssignment(
 export async function listMockCrmMyTasks(
   assigneeScope: CrmMyTaskAssigneeScope
 ): Promise<CrmMyTasksResponse> {
-  const session = await getSession();
-  const viewerUserId = session?.user?.id?.trim() || 'demo-member';
+  const viewerUserId = MOCK_CRM_DEMO_TEAM_MEMBER_ID;
 
   const onlyAssignedUserCanView = DEFAULT_BUILDCORE_WORKFLOW_TASK_ONLY_ASSIGNED_USER_CAN_VIEW;
   const onlyAssignedUserCanViewPayments = DEFAULT_BUILDCORE_PAYMENT_ONLY_ASSIGNED_USER_CAN_VIEW;

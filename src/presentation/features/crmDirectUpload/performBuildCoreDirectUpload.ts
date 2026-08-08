@@ -11,7 +11,7 @@ import {
   mapWithConcurrency,
   uploadFileToSignedUrl,
 } from '@/infrastructure/coreApi/buildCoreDirectUploadClient';
-import { getSession } from '@/infrastructure/supabase/supabaseClient';
+import { crmApiFetch } from '@/infrastructure/crm/api/crmApiClient';
 import {
   resolveUploadCaptureLocations,
   type ResolvedUploadCaptureLocation,
@@ -199,20 +199,13 @@ export async function performCrmDirectUploads(input: {
     return { succeeded, failed: [], skipped };
   }
 
-  const session = await getSession();
-  const token = session?.access_token;
-  if (token == null || token.trim() === '') {
-    throw new Error('You must be signed in to upload files.');
-  }
-
-  const prepareResponse = await fetch(
+  const prepareResponse = await crmApiFetch(
     `/api/crm/projects/${encodeURIComponent(input.uploadScope.projectSlug)}/direct-uploads/prepare`,
     {
       method: 'POST',
       headers: {
         Accept: 'application/json',
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
       },
       body: JSON.stringify({
         ...input.uploadScope,
@@ -341,14 +334,13 @@ export async function performCrmDirectUploads(input: {
   } = { succeeded: [], failed: [] };
 
   if (finalizePayload.length > 0) {
-    const finalizeResponse = await fetch(
+    const finalizeResponse = await crmApiFetch(
       `/api/crm/projects/${encodeURIComponent(input.uploadScope.projectSlug)}/direct-uploads/finalize-batch`,
       {
         method: 'POST',
         headers: {
           Accept: 'application/json',
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
           uploads: finalizePayload,

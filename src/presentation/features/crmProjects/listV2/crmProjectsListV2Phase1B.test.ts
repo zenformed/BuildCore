@@ -5,6 +5,7 @@ import {
   normalizeCrmProjectsListV2Request,
 } from '@/domain/crm/projectsListV2';
 import { isProjectsListV2ClientFlagEnabled } from '@/infrastructure/config/projectsListV2Config';
+import { shouldUseProductionCrmListV2 } from '@/infrastructure/config/crmDataSource';
 import { buildCrmProjectsListV2SearchParams } from '@/infrastructure/crm/api/crmProjectsListV2Api';
 import { EMPTY_CRM_PROJECTS_LIST_FILTERS } from '@/presentation/features/crmProjects/crmProjectsPipelineViewModel';
 import {
@@ -277,15 +278,11 @@ describe('projectsListV2 Phase 1B dashboard contracts', () => {
     }
   });
 
-  it('client v2 flag disables layout eager-load of org-wide rollup Maps', () => {
-    // Dashboard/demo layouts pass eagerLoad={!isProjectsListV2ClientFlagEnabled()}.
-    const eagerLoadWhenV2On = !isProjectsListV2ClientFlagEnabled({
+  it('production v2 disables legacy rollups while demo/mock keeps them', () => {
+    const v2FlagEnabled = isProjectsListV2ClientFlagEnabled({
       NEXT_PUBLIC_BUILDCORE_PROJECTS_LIST_V2: 'true',
     });
-    const eagerLoadWhenV2Off = !isProjectsListV2ClientFlagEnabled({
-      NEXT_PUBLIC_BUILDCORE_PROJECTS_LIST_V2: 'false',
-    });
-    assert.equal(eagerLoadWhenV2On, false);
-    assert.equal(eagerLoadWhenV2Off, true);
+    assert.equal(!shouldUseProductionCrmListV2(v2FlagEnabled, 'api'), false);
+    assert.equal(!shouldUseProductionCrmListV2(v2FlagEnabled, 'mock'), true);
   });
 });

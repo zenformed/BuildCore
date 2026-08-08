@@ -1,4 +1,9 @@
 import { getSession } from '@/infrastructure/supabase/supabaseClient';
+import { isDemoRuntimeClient } from '@/infrastructure/runtime/buildCoreRuntime';
+import {
+  getCrmDataSource,
+  type CrmDataSource,
+} from '@/infrastructure/config/crmDataSource';
 
 export class CrmApiError extends Error {
   constructor(
@@ -12,7 +17,32 @@ export class CrmApiError extends Error {
   }
 }
 
+/**
+ * Final safety boundary: demo data must never cross into authenticated CRM BFF
+ * routes, even if a future component accidentally bypasses the repository gate.
+ */
+export function assertCrmApiAvailableForRuntime(
+  demoRuntime: boolean = isDemoRuntimeClient(),
+  source: CrmDataSource = getCrmDataSource()
+): void {
+  if (demoRuntime) {
+    throw new CrmApiError(
+      'demo_runtime_blocked',
+      403,
+      'Production CRM APIs are unavailable in the interactive demo.'
+    );
+  }
+  if (source !== 'api') {
+    throw new CrmApiError(
+      'crm_api_source_blocked',
+      403,
+      'Production CRM APIs are unavailable while the mock CRM data source is active.'
+    );
+  }
+}
+
 async function getAccessToken(): Promise<string> {
+  assertCrmApiAvailableForRuntime();
   const session = await getSession();
   const token = session?.access_token;
   if (!token) {
@@ -21,16 +51,33 @@ async function getAccessToken(): Promise<string> {
   return token;
 }
 
+/**
+ * The only client-side transport for authenticated BuildCore CRM BFF routes.
+ * Raw responses are exposed for downloads and other non-JSON payloads while
+ * preserving the same demo-runtime guard and authorization boundary.
+ */
+export async function crmApiFetch(path: string, init: RequestInit = {}): Promise<Response> {
+  if (path !== '/api/crm' && !path.startsWith('/api/crm/')) {
+    throw new Error(`crmApiFetch only accepts /api/crm routes: ${path}`);
+  }
+  const token = await getAccessToken();
+  const headers = new Headers(init.headers);
+  headers.set('Authorization', `Bearer ${token}`);
+  return fetch(path, {
+    ...init,
+    headers,
+    cache: init.cache ?? 'no-store',
+  });
+}
+
 export async function crmApiPostJson<T>(
   path: string,
   payload: unknown,
   init?: { readonly signal?: AbortSignal }
 ): Promise<T> {
-  const token = await getAccessToken();
-  const response = await fetch(path, {
+  const response = await crmApiFetch(path, {
     method: 'POST',
     headers: {
-      Authorization: `Bearer ${token}`,
       'Content-Type': 'application/json',
     },
     body: JSON.stringify(payload),
@@ -61,11 +108,9 @@ async function parseCrmApiResponse<T>(response: Response): Promise<T> {
 }
 
 export async function crmApiPatchJson<T>(path: string, payload: unknown): Promise<T> {
-  const token = await getAccessToken();
-  const response = await fetch(path, {
+  const response = await crmApiFetch(path, {
     method: 'PATCH',
     headers: {
-      Authorization: `Bearer ${token}`,
       'Content-Type': 'application/json',
     },
     body: JSON.stringify(payload),
@@ -74,21 +119,19 @@ export async function crmApiPatchJson<T>(path: string, payload: unknown): Promis
   return parseCrmApiResponse<T>(response);
 }
 
-export async function crmApiDeleteJson<T>(path: string): Promise<T> {
-  const token = await getAccessToken();
-  const response = await fetch(path, {
+export async function crmApiDeleteJson<T>(path: string, payload?: unknown): Promise<T> {
+  const response = await crmApiFetch(path, {
     method: 'DELETE',
-    headers: { Authorization: `Bearer ${token}` },
+    headers: payload === undefined ? undefined : { 'Content-Type': 'application/json' },
+    body: payload === undefined ? undefined : JSON.stringify(payload),
     cache: 'no-store',
   });
   return parseCrmApiResponse<T>(response);
 }
 
 export async function crmApiPostFormData<T>(path: string, formData: FormData): Promise<T> {
-  const token = await getAccessToken();
-  const response = await fetch(path, {
+  const response = await crmApiFetch(path, {
     method: 'POST',
-    headers: { Authorization: `Bearer ${token}` },
     body: formData,
     cache: 'no-store',
   });
@@ -99,10 +142,8 @@ export async function crmApiGetJson<T>(
   path: string,
   init?: { readonly signal?: AbortSignal }
 ): Promise<T> {
-  const token = await getAccessToken();
-  const response = await fetch(path, {
+  const response = await crmApiFetch(path, {
     method: 'GET',
-    headers: { Authorization: `Bearer ${token}` },
     cache: 'no-store',
     signal: init?.signal,
   });
@@ -110,10 +151,8 @@ export async function crmApiGetJson<T>(
 }
 
 export async function crmApiGetText(path: string): Promise<string> {
-  const token = await getAccessToken();
-  const response = await fetch(path, {
+  const response = await crmApiFetch(path, {
     method: 'GET',
-    headers: { Authorization: `Bearer ${token}` },
     cache: 'no-store',
   });
 

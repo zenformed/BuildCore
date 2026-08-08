@@ -4,6 +4,7 @@ import type { ReactElement } from 'react';
 import { useCallback, useMemo, useState } from 'react';
 import { LuSearch } from 'react-icons/lu';
 import type { CrmDocumentMetadata } from '@/domain/crm';
+import { shouldUseProductionCrmListV2 } from '@/infrastructure/config/crmDataSource';
 import { isDocumentsListV2ClientFlagEnabled } from '@/infrastructure/config/documentsListV2Config';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
 import { ProjectDocumentsTabPanelV2 } from './ProjectDocumentsTabPanelV2';
@@ -67,7 +68,7 @@ export function ProjectDocumentsTabPanel({
   onError,
   embeddedInFolderTabs = false,
 }: ProjectDocumentsTabPanelProps): ReactElement {
-  if (isDocumentsListV2ClientFlagEnabled()) {
+  if (shouldUseProductionCrmListV2(isDocumentsListV2ClientFlagEnabled())) {
     return (
       <ProjectDocumentsTabPanelV2
         className={className}

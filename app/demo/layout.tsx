@@ -9,6 +9,7 @@ import { BuildCoreDashboardProvider } from '@/presentation/providers/BuildCoreDa
 import { AssignmentIdentityProvider } from '@/presentation/providers/AssignmentIdentityProvider';
 import { BuildCoreProjectSectionAccessProvider } from '@/presentation/providers/BuildCoreProjectSectionAccessProvider';
 import { BuildCoreWorkflowTaskAccessProvider } from '@/presentation/providers/BuildCoreWorkflowTaskAccessProvider';
+import { shouldUseProductionCrmListV2 } from '@/infrastructure/config/crmDataSource';
 import { isProjectsListV2ClientFlagEnabled } from '@/infrastructure/config/projectsListV2Config';
 import { CrmPaymentTasksIndexProvider } from '@/presentation/providers/CrmPaymentTasksIndexProvider';
 import { BuildCoreFieldLabelsProvider } from '@/presentation/providers/BuildCoreFieldLabelsProvider';
@@ -20,7 +21,9 @@ import { BuildCoreProjectCustomFieldsProvider } from '@/presentation/providers/B
 import { BuildCorePipelineStagesProvider } from '@/presentation/providers/BuildCorePipelineStagesProvider';
 
 export default function DemoLayout({ children }: { children: ReactNode }): ReactElement {
-  const eagerLoadPaymentRollups = !isProjectsListV2ClientFlagEnabled();
+  const eagerLoadPaymentRollups = !shouldUseProductionCrmListV2(
+    isProjectsListV2ClientFlagEnabled()
+  );
   return (
     <DemoRootGate>
       <BuildCoreDashboardProvider>

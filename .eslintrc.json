@@ -1,3 +1,51 @@
 {
-  "extends": ["next/core-web-vitals"]
+  "extends": ["next/core-web-vitals"],
+  "rules": {
+    "no-restricted-syntax": [
+      "error",
+      {
+        "selector": "CallExpression[callee.name='fetch'] Literal[value=/^\\/api\\/crm(?:\\/|\\?|$)/]",
+        "message": "Use crmApiClient for authenticated /api/crm requests."
+      },
+      {
+        "selector": "CallExpression[callee.name='fetch'] TemplateElement[value.raw=/^\\/api\\/crm(?:\\/|\\?|$)/]",
+        "message": "Use crmApiClient for authenticated /api/crm requests."
+      },
+      {
+        "selector": "CallExpression[callee.property.name='fetch'] Literal[value=/^\\/api\\/crm(?:\\/|\\?|$)/]",
+        "message": "Use crmApiClient for authenticated /api/crm requests."
+      },
+      {
+        "selector": "CallExpression[callee.property.name='fetch'] TemplateElement[value.raw=/^\\/api\\/crm(?:\\/|\\?|$)/]",
+        "message": "Use crmApiClient for authenticated /api/crm requests."
+      }
+    ]
+  },
+  "overrides": [
+    {
+      "files": [
+        "src/infrastructure/crm/api/**/*.{ts,tsx}",
+        "src/presentation/features/crm*/**/*.{ts,tsx}"
+      ],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "paths": [
+              {
+                "name": "@/infrastructure/supabase/supabaseClient",
+                "message": "CRM client code must authenticate through crmApiClient."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["src/infrastructure/crm/api/crmApiClient.ts"],
+      "rules": {
+        "no-restricted-imports": "off"
+      }
+    }
+  ]
 }
