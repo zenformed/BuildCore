@@ -6,8 +6,10 @@
 
 import { useInfiniteQuery, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import type { CrmDocumentMetadata } from '@/domain/crm';
-import { CRM_DOCUMENTS_LIST_V2_DEFAULT_PAGE_SIZE } from '@/domain/crm/documentsListV2';
+import {
+  CRM_DOCUMENTS_LIST_V2_DEFAULT_PAGE_SIZE,
+  type CrmDocumentListItemV2,
+} from '@/domain/crm/documentsListV2';
 import {
   fetchCrmDocumentsHasNewerV2,
   fetchCrmDocumentsListV2Page,
@@ -24,7 +26,7 @@ export type UseCrmDocumentsListV2Result = {
   readonly searchInput: string;
   readonly setSearchInput: (value: string) => void;
   readonly debouncedSearch: string;
-  readonly documents: readonly CrmDocumentMetadata[];
+  readonly documents: readonly CrmDocumentListItemV2[];
   readonly isLoading: boolean;
   readonly isFetchingNextPage: boolean;
   readonly hasNextPage: boolean;

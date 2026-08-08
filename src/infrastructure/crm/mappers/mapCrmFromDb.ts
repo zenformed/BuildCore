@@ -150,6 +150,14 @@ export type DbCrmDocumentRow = {
   location_accuracy_meters?: number | null;
   location_source?: string | null;
   location_captured_at?: string | null;
+  image_width?: number | null;
+  image_height?: number | null;
+  thumbnail_storage_key?: string | null;
+  preview_storage_key?: string | null;
+  derivative_status?: string | null;
+  derivative_error?: string | null;
+  derivative_version?: number | null;
+  derivatives_updated_at?: string | null;
 };
 
 /** Append to crm_documents select lists (shared Photos + Documents). */

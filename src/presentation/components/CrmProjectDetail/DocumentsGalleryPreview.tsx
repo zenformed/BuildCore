@@ -20,7 +20,10 @@ import {
   isCrmDocumentPdf,
   isCrmDocumentVideo,
 } from '@/presentation/features/crmProjectDetail/documentGalleryMedia';
-import { useCrmDocumentPreviewBlob } from '@/presentation/features/crmProjectDetail/useCrmDocumentPreviewBlob';
+import {
+  refreshCrmDocumentBrowseUrl,
+  useCrmDocumentBrowseUrl,
+} from '@/presentation/features/crmProjectDetail/useCrmDocumentBrowseUrl';
 import { useDashboardMobileLayout } from '@/presentation/features/crmProjects/useDashboardMobileLayout';
 import { useResolvedTeamMemberRef } from '@/presentation/hooks/useResolvedTeamMemberRef';
 import {
@@ -71,6 +74,8 @@ export function DocumentsGalleryPreview({
   const [metaOpen, setMetaOpen] = useState(!isMobileLayout);
   const [busy, setBusy] = useState(false);
   const [mapOpen, setMapOpen] = useState(false);
+  const [browseReloadToken, setBrowseReloadToken] = useState(0);
+  const browseRetryUsedRef = useRef(false);
   const swipeStartRef = useRef<{
     pointerId: number;
     x: number;
@@ -88,11 +93,31 @@ export function DocumentsGalleryPreview({
   const canPrev = activeIndex > 0;
   const canNext = activeIndex >= 0 && activeIndex < orderedIds.length - 1;
 
-  const blobUrl = useCrmDocumentPreviewBlob(
+  useEffect(() => {
+    browseRetryUsedRef.current = false;
+  }, [activeId]);
+
+  const browseVariant =
+    activeDoc != null && isCrmDocumentImage(activeDoc.name, activeDoc.mimeType)
+      ? 'preview'
+      : 'original';
+
+  const browseUrl = useCrmDocumentBrowseUrl(
     activeDoc != null ? resolveProjectSlug(activeDoc) : '',
     activeDoc,
-    activeDoc != null
+    activeDoc != null,
+    browseReloadToken,
+    browseVariant
   );
+
+  const handleBrowseMediaError = useCallback((): void => {
+    if (activeDoc == null) return;
+    if (!browseRetryUsedRef.current) {
+      browseRetryUsedRef.current = true;
+      refreshCrmDocumentBrowseUrl(activeDoc.id, browseVariant);
+      setBrowseReloadToken((value) => value + 1);
+    }
+  }, [activeDoc, browseVariant]);
 
   const resolvedUploader =
     useResolvedTeamMemberRef(activeDoc?.uploadedBy ?? null) ??
@@ -314,22 +339,29 @@ export function DocumentsGalleryPreview({
           onPointerCancel={cancelSwipe}
         >
           <div className={styles.docGalleryPreviewMedia}>
-            {blobUrl && isImage ? (
+            {browseUrl && isImage ? (
               // eslint-disable-next-line @next/next/no-img-element
-              <img className={styles.docGalleryPreviewImage} src={blobUrl} alt={activeDoc.name} />
-            ) : blobUrl && isVideo ? (
+              <img
+                className={styles.docGalleryPreviewImage}
+                src={browseUrl}
+                alt={activeDoc.name}
+                decoding="async"
+                onError={handleBrowseMediaError}
+              />
+            ) : browseUrl && isVideo ? (
               <video
                 className={styles.docGalleryPreviewVideo}
-                src={blobUrl}
+                src={browseUrl}
                 controls
                 playsInline
                 preload="metadata"
+                onError={handleBrowseMediaError}
               />
-            ) : blobUrl && isPdf ? (
+            ) : browseUrl && isPdf ? (
               <iframe
                 className={styles.docGalleryPreviewPdf}
                 title={activeDoc.name}
-                src={blobUrl}
+                src={browseUrl}
               />
             ) : (
               <div className={styles.docGalleryPreviewFallback}>

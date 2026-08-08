@@ -13,8 +13,8 @@ export const CRM_PHOTOS_LIST_V2_BULK_MAX_IDS = 100;
 
 /**
  * Organization-wide Photos list v2 row.
- * Metadata only — no signed URLs or bytes.
- * `thumbnailUrl` is reserved for a durable derivative pipeline (always null in this phase).
+ * `thumbnailUrl` is a short-lived signed Storage URL for the durable thumbnail
+ * derivative when ready; otherwise null (tiles fall back via browse API).
  */
 export type CrmPhotoListItemV2 = {
   readonly id: string;
@@ -29,7 +29,7 @@ export type CrmPhotoListItemV2 = {
   readonly customerName: string | null;
   readonly canDownload: boolean;
   readonly canDelete: boolean;
-  readonly thumbnailUrl: null;
+  readonly thumbnailUrl: string | null;
 };
 
 export type CrmPhotosListV2NormalizedRequest = {

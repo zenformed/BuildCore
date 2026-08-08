@@ -1,5 +1,8 @@
 /**
  * GET /api/crm/projects/[slug]/media/[documentId]/download
+ *
+ * Explicit download bytes (buffered). Ordinary gallery/preview browsing uses
+ * GET .../documents/[documentId]/browse (signed Storage URL).
  */
 
 import { NextRequest, NextResponse } from 'next/server';

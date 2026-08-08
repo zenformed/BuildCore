@@ -4,6 +4,7 @@
  */
 
 import type { SupabaseClient } from '@supabase/supabase-js';
+import type { IDocumentStorageProvider } from '@/application/ports/storage/IDocumentStorageProvider';
 import type { CrmWorkflowTask, PipelineStageSlug } from '@/domain/crm';
 import type {
   CrmDocumentListItemV2,
@@ -16,6 +17,7 @@ import {
   mapDbDocument,
   type DbCrmDocumentRow,
 } from '@/infrastructure/crm/mappers/mapCrmFromDb';
+import { loadCrmDocumentThumbnailSignedUrls } from '../crmDocumentThumbnailSignedUrls';
 import { loadActiveOrganizationMemberRole } from '../buildCoreWorkflowTaskVisibilityService';
 import { resolveBuildCoreMemberTaskVisibilityInput } from '../buildCorePaymentVisibilityService';
 import { resolveBuildCoreRoleAccessForUser } from '../buildCoreRoleAccessService';
@@ -182,6 +184,7 @@ export async function listCrmDocumentsPageV2(input: {
   readonly projectId: string;
   readonly request: CrmDocumentsListV2NormalizedRequest;
   readonly cursor: string | null;
+  readonly storage?: IDocumentStorageProvider | null;
 }): Promise<CrmDocumentsListV2PageResponse> {
   const started = Date.now();
   if (input.request.projectId !== input.projectId) {
@@ -251,9 +254,20 @@ export async function listCrmDocumentsPageV2(input: {
       .filter((id): id is string => typeof id === 'string' && id.length > 0)
   );
 
-  const items: CrmDocumentListItemV2[] = rows.map((row) =>
-    mapDbDocument(row, stageByTaskId, memberById)
-  );
+  const thumbnailUrlById = await loadCrmDocumentThumbnailSignedUrls({
+    supabase: input.supabase,
+    organizationId: input.organizationId,
+    documentIds: rows.map((row) => row.id),
+    storage: input.storage ?? null,
+  });
+
+  const items: CrmDocumentListItemV2[] = rows.map((row) => {
+    const document = mapDbDocument(row, stageByTaskId, memberById);
+    return {
+      ...document,
+      thumbnailUrl: thumbnailUrlById.get(document.id) ?? null,
+    };
+  });
 
   const last = items[items.length - 1] ?? null;
   const nextCursor =

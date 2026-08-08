@@ -4,7 +4,10 @@ import type { ReactElement } from 'react';
 import { useCallback, useMemo, useState } from 'react';
 import { LuSearch } from 'react-icons/lu';
 import type { CrmDocumentMetadata } from '@/domain/crm';
-import { CRM_DOCUMENTS_LIST_V2_BULK_MAX_IDS } from '@/domain/crm/documentsListV2';
+import {
+  CRM_DOCUMENTS_LIST_V2_BULK_MAX_IDS,
+  type CrmDocumentListItemV2,
+} from '@/domain/crm/documentsListV2';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
 import type { DocumentPanelFilter } from '@/presentation/features/crmProjectDetail/documentPanelModel';
 import { buildCrmDocumentsListV2PanelItems } from '@/presentation/features/crmProjectDetail/documentsListV2PanelItems';
@@ -139,12 +142,22 @@ export function ProjectDocumentsTabPanelV2({
   const visibleDocuments = useMemo(
     () =>
       items
-        .filter((item): item is { kind: 'document'; document: CrmDocumentMetadata } =>
-          item.kind === 'document'
+        .filter(
+          (item): item is { kind: 'document'; document: CrmDocumentListItemV2 } =>
+            item.kind === 'document'
         )
         .map((item) => item.document),
     [items]
   );
+
+  const thumbnailUrlByDocumentId = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const doc of visibleDocuments) {
+      const url = doc.thumbnailUrl?.trim();
+      if (url) map.set(doc.id, url);
+    }
+    return map;
+  }, [visibleDocuments]);
 
   const visibleDocumentIds = useMemo(
     () => visibleDocuments.map((doc) => doc.id),
@@ -399,6 +412,7 @@ export function ProjectDocumentsTabPanelV2({
           ) : null}
           <DocumentsGallery
             documents={visibleDocuments}
+            thumbnailUrlByDocumentId={thumbnailUrlByDocumentId}
             resolveProjectSlug={() => project.summary.slug}
             resolveProjectLabel={() => projectLabel}
             resolveTaskTitle={resolveTaskTitle}

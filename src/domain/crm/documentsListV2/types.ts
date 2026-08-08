@@ -12,10 +12,17 @@ export const CRM_DOCUMENTS_LIST_V2_BULK_MAX_IDS = 100;
 
 /**
  * List row for Documents tab v2.
- * Same metadata shape the Documents table/gallery already uses — no signed URLs or bytes.
+ * Same metadata the Documents table/gallery already uses, plus an optional
+ * short-lived signed thumbnail URL when an image derivative is ready.
  * Includes image MIME types (Documents tab is not Photos-filtered).
  */
-export type CrmDocumentListItemV2 = CrmDocumentMetadata;
+export type CrmDocumentListItemV2 = CrmDocumentMetadata & {
+  /**
+   * Signed Storage URL for durable `thumb.webp` when ready; otherwise null
+   * (gallery tiles fall back via browse API).
+   */
+  readonly thumbnailUrl: string | null;
+};
 
 export type CrmDocumentsListV2NormalizedRequest = {
   readonly projectId: string;

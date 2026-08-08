@@ -244,14 +244,14 @@ describe('photosListV2 contracts', () => {
     assert.deepEqual([...selectAllVisibleOnly(['x', 'y'])], ['x', 'y']);
   });
 
-  it('list remains metadata-only; thumbnailUrl reserved null; no eager original N+1', () => {
-    const listReturnsSignedUrls = false;
-    const listDownloadsBlobs = false;
-    const thumbnailUrl: null = null;
+  it('list may mint thumbnail signed URLs only; never eager original blobs / ACL overscan', () => {
+    const listDownloadsOriginalBlobs = false;
+    // Slice A: gallery consumes these signed thumb URLs; originals stay on browse/download.
+    const thumbnailUrlMayBeSignedDerivative: string | null =
+      'https://storage.example/object/sign/thumb.webp?token=x';
     const postFetchAclOverscan = false;
-    assert.equal(listReturnsSignedUrls, false);
-    assert.equal(listDownloadsBlobs, false);
-    assert.equal(thumbnailUrl, null);
+    assert.equal(listDownloadsOriginalBlobs, false);
+    assert.ok(thumbnailUrlMayBeSignedDerivative?.includes('thumb.webp'));
     assert.equal(postFetchAclOverscan, false);
   });
 

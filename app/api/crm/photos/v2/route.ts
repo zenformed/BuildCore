@@ -17,6 +17,7 @@ import {
 } from '@/infrastructure/crm/server/photosListV2/photosListV2Service';
 import { crmPhotosListV2InvalidCursorResponse } from '@/infrastructure/crm/server/photosListV2/photosListCursorCodec';
 import { logCrmPhotosListV2Event } from '@/infrastructure/crm/server/photosListV2/photosListV2Observability';
+import { getDocumentStorageProviderForCrmAuth } from '@/infrastructure/crm/server/documentStorageProviderForCrmAuth';
 
 export const dynamic = 'force-dynamic';
 
@@ -78,6 +79,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       userId: auth.context.user.id,
       request: normalized.request,
       cursor,
+      storage: getDocumentStorageProviderForCrmAuth(auth.context),
     });
 
     return NextResponse.json(page, {

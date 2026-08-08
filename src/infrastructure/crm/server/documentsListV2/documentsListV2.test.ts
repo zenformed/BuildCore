@@ -252,15 +252,18 @@ describe('documentsListV2 Phase 1A contracts', () => {
     assert.deepEqual([...selectAllVisibleOnly(['x', 'y'])], ['x', 'y']);
   });
 
-  it('v2 tab uses dedicated endpoint; list remains metadata-only (no signed URL N+1)', () => {
+  it('v2 tab uses dedicated endpoint; batch thumbnailUrl only (no client N+1 / no blobs)', () => {
     const v2UsesDedicatedEndpoint = true;
     const v2ReadsEmbeddedDocumentsArray = false;
-    const listReturnsSignedUrls = false;
+    // Slice B: list may include signed thumb.webp URLs after page ACL (batch mint).
+    const listMayReturnThumbnailSignedUrls = true;
     const listDownloadsBlobs = false;
+    const clientPerTileBrowseRequiredWhenThumbPresent = false;
     assert.equal(v2UsesDedicatedEndpoint, true);
     assert.equal(v2ReadsEmbeddedDocumentsArray, false);
-    assert.equal(listReturnsSignedUrls, false);
+    assert.equal(listMayReturnThumbnailSignedUrls, true);
     assert.equal(listDownloadsBlobs, false);
+    assert.equal(clientPerTileBrowseRequiredWhenThumbPresent, false);
   });
 
   it('infinite-scroll footer is inactive when hasNextPage is false', () => {

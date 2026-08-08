@@ -28,6 +28,7 @@ import {
   resolveDocumentGalleryAspectRatio,
 } from '@/presentation/features/crmProjectDetail/documentGalleryMedia';
 import { useDashboardMobileLayout } from '@/presentation/features/crmProjects/useDashboardMobileLayout';
+import { seedCrmMediaBrowseThumbnailsFromListUrls } from '@/presentation/utils/crmMediaBrowseSourceCache';
 import { DocumentsGallerySelectCircle } from './DocumentsGallerySelectCircle';
 import { DocumentsGalleryTile } from './DocumentsGalleryTile';
 import { DocumentsGalleryPreview } from './DocumentsGalleryPreview';
@@ -42,6 +43,11 @@ export type DocumentsGalleryProps = {
   readonly onDeleteDocument?: (doc: CrmDocumentMetadata) => Promise<void>;
   readonly canDeleteDocument?: (doc: CrmDocumentMetadata) => boolean;
   readonly emptyMessage?: string;
+  /**
+   * Optional signed thumbnail URLs from an authorized list (Photos v2).
+   * Primed into the browse cache so tiles skip per-document `/browse`.
+   */
+  readonly thumbnailUrlByDocumentId?: ReadonlyMap<string, string>;
 };
 
 export function DocumentsGallery({
@@ -53,7 +59,12 @@ export function DocumentsGallery({
   onDeleteDocument,
   canDeleteDocument,
   emptyMessage,
+  thumbnailUrlByDocumentId,
 }: DocumentsGalleryProps): ReactElement {
+  // Prime cache before tiles mount/effects so first paint can use list URLs.
+  if (thumbnailUrlByDocumentId != null && thumbnailUrlByDocumentId.size > 0) {
+    seedCrmMediaBrowseThumbnailsFromListUrls(thumbnailUrlByDocumentId);
+  }
   const rowSelection = useDocumentRowSelection();
   const galleryCopy = content.projectDetail.documents.gallery;
   const isMobileLayout = useDashboardMobileLayout();
@@ -291,6 +302,9 @@ export function DocumentsGallery({
                               height={item.height}
                               onOpenPreview={setPreviewDocumentId}
                               onAspectRatio={handleAspectRatio}
+                              listThumbnailUrl={
+                                thumbnailUrlByDocumentId?.get(doc.id) ?? null
+                              }
                             />
                           );
                         })}

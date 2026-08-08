@@ -4,6 +4,7 @@
  */
 
 import type { SupabaseClient } from '@supabase/supabase-js';
+import type { IDocumentStorageProvider } from '@/application/ports/storage/IDocumentStorageProvider';
 import { isBuildCoreMemberRole } from '@/domain/buildcore/memberRole';
 import type {
   CrmPhotoListItemV2,
@@ -15,6 +16,7 @@ import {
   mapDbDocument,
   type DbCrmDocumentRow,
 } from '@/infrastructure/crm/mappers/mapCrmFromDb';
+import { loadCrmDocumentThumbnailSignedUrls } from '../crmDocumentThumbnailSignedUrls';
 import { loadActiveOrganizationMemberRole } from '../buildCoreWorkflowTaskVisibilityService';
 import { resolveBuildCoreMemberTaskVisibilityInput } from '../buildCorePaymentVisibilityService';
 import { resolveBuildCoreRoleAccessForUser } from '../buildCoreRoleAccessService';
@@ -250,6 +252,7 @@ export async function listCrmPhotosPageV2(input: {
   readonly userId: string;
   readonly request: CrmPhotosListV2NormalizedRequest;
   readonly cursor: string | null;
+  readonly storage?: IDocumentStorageProvider | null;
 }): Promise<CrmPhotosListV2PageResponse> {
   const started = Date.now();
   if (input.request.organizationId !== input.organizationId.trim().toLowerCase()) {
@@ -378,6 +381,13 @@ export async function listCrmPhotosPageV2(input: {
     stageByTaskId.set(task.id, task.stage_slug as PipelineStageSlug);
   }
 
+  const thumbnailUrlById = await loadCrmDocumentThumbnailSignedUrls({
+    supabase: input.supabase,
+    organizationId: input.organizationId,
+    documentIds: rows.map((row) => row.id),
+    storage: input.storage ?? null,
+  });
+
   const items: CrmPhotoListItemV2[] = [];
   for (const row of rows) {
     const project = projectById.get(row.project_id);
@@ -410,7 +420,7 @@ export async function listCrmPhotosPageV2(input: {
         joinedName(project.crm_contacts, 'full_name'),
       canDownload: flags.canDownload,
       canDelete: flags.canDelete,
-      thumbnailUrl: null,
+      thumbnailUrl: thumbnailUrlById.get(document.id) ?? null,
     });
   }
 

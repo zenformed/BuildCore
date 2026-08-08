@@ -34,7 +34,28 @@ import { loadCrmMemberMap } from './crmMemberMap';
 import { resolveCrmProjectIdBySlug } from './resolveCrmProjectIdBySlug';
 
 const DOCUMENT_SELECT =
-  'id, project_id, workflow_task_id, budget_entry_id, document_type, file_name, mime_type, file_size_bytes, upload_status, uploaded_by_member_id, reviewed_by_member_id, reviewed_at, created_at, safe_file_name, storage_provider, storage_bucket, storage_key, deleted_at, latitude, longitude, location_accuracy_meters, location_source, location_captured_at';
+  'id, project_id, workflow_task_id, budget_entry_id, document_type, file_name, mime_type, file_size_bytes, upload_status, uploaded_by_member_id, reviewed_by_member_id, reviewed_at, created_at, safe_file_name, storage_provider, storage_bucket, storage_key, storage_path, deleted_at, latitude, longitude, location_accuracy_meters, location_source, location_captured_at, image_width, image_height, thumbnail_storage_key, preview_storage_key, derivative_status, derivative_error, derivative_version, derivatives_updated_at';
+
+async function deleteCrmDocumentStorageObjects(
+  storage: IDocumentStorageProvider,
+  row: DbCrmDocumentRow
+): Promise<void> {
+  const bucket = row.storage_bucket ?? BUILDCORE_DOCUMENT_STORAGE_BUCKET;
+  const keys = [
+    row.storage_key ?? row.storage_path,
+    row.thumbnail_storage_key,
+    row.preview_storage_key,
+  ].filter((key): key is string => typeof key === 'string' && key.trim() !== '');
+  await Promise.all(
+    keys.map(async (storageKey) => {
+      try {
+        await storage.deleteObject({ bucket, storageKey });
+      } catch {
+        /* storage object may already be gone */
+      }
+    })
+  );
+}
 
 const TASK_SELECT = 'id, project_id, stage_slug, title, documents_required';
 
@@ -260,8 +281,6 @@ export async function deleteWorkflowTaskDocumentForOrg(
     throw new CrmDocumentServiceError('not_found', 'Document not found');
   }
 
-  const storageKey = row.storage_key ?? row.storage_path;
-  const bucket = row.storage_bucket ?? BUILDCORE_DOCUMENT_STORAGE_BUCKET;
   const now = new Date().toISOString();
 
   const { error: softDeleteError } = await supabase
@@ -271,13 +290,7 @@ export async function deleteWorkflowTaskDocumentForOrg(
 
   if (softDeleteError) throw new Error(softDeleteError.message);
 
-  if (storageKey) {
-    try {
-      await storage.deleteObject({ bucket, storageKey });
-    } catch {
-      /* storage object may already be gone */
-    }
-  }
+  await deleteCrmDocumentStorageObjects(storage, row);
 
   await releaseOrganizationStorage(supabase, organizationId, Number(row.file_size_bytes));
 
@@ -365,8 +378,6 @@ export async function deleteProjectMediaDocumentForOrg(
     throw new CrmDocumentServiceError('not_found', 'Document not found');
   }
 
-  const storageKey = row.storage_key ?? row.storage_path;
-  const bucket = row.storage_bucket ?? BUILDCORE_DOCUMENT_STORAGE_BUCKET;
   const now = new Date().toISOString();
 
   const { error: softDeleteError } = await supabase
@@ -376,13 +387,7 @@ export async function deleteProjectMediaDocumentForOrg(
 
   if (softDeleteError) throw new Error(softDeleteError.message);
 
-  if (storageKey) {
-    try {
-      await storage.deleteObject({ bucket, storageKey });
-    } catch {
-      /* storage object may already be gone */
-    }
-  }
+  await deleteCrmDocumentStorageObjects(storage, row);
 
   await releaseOrganizationStorage(supabase, organizationId, Number(row.file_size_bytes));
 

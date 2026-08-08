@@ -48,6 +48,14 @@ export function CrmPhotosPageV2(): ReactElement {
     () => list.photos.map((photo) => photo.document),
     [list.photos]
   );
+  const thumbnailUrlByDocumentId = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const photo of list.photos) {
+      const url = photo.thumbnailUrl?.trim();
+      if (url) map.set(photo.id, url);
+    }
+    return map;
+  }, [list.photos]);
   const documentById = useMemo(
     () => new Map(documents.map((document) => [document.id, document] as const)),
     [documents]
@@ -216,6 +224,7 @@ export function CrmPhotosPageV2(): ReactElement {
           {!list.isLoading && !list.errorMessage ? (
             <DocumentsGallery
               documents={documents}
+              thumbnailUrlByDocumentId={thumbnailUrlByDocumentId}
               resolveProjectSlug={(document) =>
                 resolvePhoto(document)?.projectSlug ?? ''
               }

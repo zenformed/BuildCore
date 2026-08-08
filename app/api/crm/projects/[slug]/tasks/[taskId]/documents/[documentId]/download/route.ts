@@ -1,5 +1,8 @@
 /**
  * GET /api/crm/projects/[slug]/tasks/[taskId]/documents/[documentId]/download
+ *
+ * Explicit download / attachment bytes (buffered). Gallery/preview browse uses
+ * GET .../documents/[documentId]/browse instead (signed Storage URL, no proxy).
  */
 
 import { NextRequest, NextResponse } from 'next/server';

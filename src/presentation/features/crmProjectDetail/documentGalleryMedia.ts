@@ -64,10 +64,6 @@ export function formatCrmDocumentFriendlyType(fileName: string, mimeType: string
   return ext || 'File';
 }
 
-export function documentPreviewBlobCacheKey(documentId: string): string {
-  return `crm-document-preview:${documentId}`;
-}
-
 const learnedAspectByDocumentId = new Map<string, number>();
 
 export function peekLearnedDocumentGalleryAspect(documentId: string): number | undefined {

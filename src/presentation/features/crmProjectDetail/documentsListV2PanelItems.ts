@@ -5,7 +5,8 @@
  *   for completeness detection until attachment surfaces migrate (Phase 1A duplication).
  */
 
-import type { CrmDocumentMetadata, CrmProjectDetail } from '@/domain/crm';
+import type { CrmProjectDetail } from '@/domain/crm';
+import type { CrmDocumentListItemV2 } from '@/domain/crm/documentsListV2';
 import type { PipelineStage } from '@/domain/crm/pipelineStage';
 import {
   buildDocumentPanelSourcesFromProject,
@@ -17,7 +18,7 @@ import { filterDocumentPanelItemsBySearch } from './projectSectionSearchModel';
 
 export function buildCrmDocumentsListV2PanelItems(input: {
   readonly project: CrmProjectDetail;
-  readonly paginatedDocuments: readonly CrmDocumentMetadata[];
+  readonly paginatedDocuments: readonly CrmDocumentListItemV2[];
   readonly filter: DocumentPanelFilter;
   readonly searchQuery: string;
   readonly stageCatalog: readonly PipelineStage[] | null;

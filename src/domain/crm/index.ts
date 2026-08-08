@@ -73,6 +73,26 @@ export {
 } from './workflowTaskStatuses';
 export type { CrmDocumentKind, CrmDocumentLocationSource, CrmDocumentMetadata } from './document';
 export { EMPTY_CRM_DOCUMENT_LOCATION } from './document';
+export {
+  CRM_MEDIA_BROWSE_CLIENT_REFRESH_SKEW_SECONDS,
+  CRM_MEDIA_BROWSE_SIGNED_URL_TTL_SECONDS,
+  buildCrmMediaBrowseSource,
+  crmMediaBrowseSourceNeedsRefresh,
+  parseCrmMediaBrowseVariant,
+  type CrmMediaBrowseSource,
+  type CrmMediaBrowseSourceResponse,
+  type CrmMediaBrowseVariant,
+} from './mediaBrowse';
+export {
+  CRM_DOCUMENT_IMAGE_DERIVATIVE_COLUMNS,
+  CRM_IMAGE_DERIVATIVE_VERSION,
+  CRM_IMAGE_PREVIEW_MAX_PX,
+  CRM_IMAGE_THUMBNAIL_MAX_PX,
+  EMPTY_CRM_DOCUMENT_IMAGE_DERIVATIVES,
+  parseCrmImageDerivativeStatus,
+  type CrmDocumentImageDerivativeFields,
+  type CrmImageDerivativeStatus,
+} from './imageDerivatives';
 export type {
   CrmOrganizationPhoto,
   CrmOrganizationPhotosPage,

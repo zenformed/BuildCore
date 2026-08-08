@@ -16,7 +16,10 @@ import {
   isCrmDocumentPdf,
   isCrmDocumentVideo,
 } from '@/presentation/features/crmProjectDetail/documentGalleryMedia';
-import { useCrmDocumentPreviewBlob } from '@/presentation/features/crmProjectDetail/useCrmDocumentPreviewBlob';
+import {
+  refreshCrmDocumentBrowseUrl,
+  useCrmDocumentBrowseUrl,
+} from '@/presentation/features/crmProjectDetail/useCrmDocumentBrowseUrl';
 import { useCrmDocumentPdfThumbnail } from '@/presentation/features/crmProjectDetail/useCrmDocumentPdfThumbnail';
 import { useDashboardMobileLayout } from '@/presentation/features/crmProjects/useDashboardMobileLayout';
 import { truncateDisplayText } from '@/presentation/features/crmProjectDetail/crmProjectDetailFormatters';
@@ -33,6 +36,11 @@ export type DocumentsGalleryTileProps = {
   readonly height: number;
   readonly onOpenPreview: (documentId: string) => void;
   readonly onAspectRatio?: (documentId: string, aspectRatio: number) => void;
+  /**
+   * Authorized signed thumbnail from Photos list v2 (or similar).
+   * When present, tiles skip `/browse?variant=thumbnail` until remint is needed.
+   */
+  readonly listThumbnailUrl?: string | null;
 };
 
 export function DocumentsGalleryTile({
@@ -42,6 +50,7 @@ export function DocumentsGalleryTile({
   height,
   onOpenPreview,
   onAspectRatio,
+  listThumbnailUrl = null,
 }: DocumentsGalleryTileProps): ReactElement {
   const rowSelection = useDocumentRowSelection();
   const galleryCopy = content.projectDetail.documents.gallery;
@@ -51,6 +60,10 @@ export function DocumentsGalleryTile({
   const [hovered, setHovered] = useState(false);
   const [focused, setFocused] = useState(false);
   const [mediaFailed, setMediaFailed] = useState(false);
+  const [browseReloadToken, setBrowseReloadToken] = useState(0);
+  /** After a list thumb fails, stop re-seeding that URL so browse can remint. */
+  const [ignoreListThumbnail, setIgnoreListThumbnail] = useState(false);
+  const browseRetryUsedRef = useRef(false);
   const longPressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pointerStartRef = useRef<{ x: number; y: number } | null>(null);
   const suppressNextClickRef = useRef(false);
@@ -59,15 +72,21 @@ export function DocumentsGalleryTile({
   const isVideo = isCrmDocumentVideo(doc.name, doc.mimeType);
   const isPdf = isCrmDocumentPdf(doc.name, doc.mimeType);
   const isDemoRuntime = isDemoRuntimeClient();
-  const wantsBlob = (isImage || isVideo || isPdf) && !mediaFailed;
-  const blobUrl = useCrmDocumentPreviewBlob(
+  const wantsBrowse = (isImage || isVideo || isPdf) && !mediaFailed;
+  const browseVariant = isImage ? 'thumbnail' : 'original';
+  const effectiveListThumbnailUrl =
+    isImage && !ignoreListThumbnail ? (listThumbnailUrl?.trim() || null) : null;
+  const browseUrl = useCrmDocumentBrowseUrl(
     projectSlug,
-    wantsBlob ? doc : null,
-    inView && wantsBlob
+    wantsBrowse ? doc : null,
+    wantsBrowse && (inView || effectiveListThumbnailUrl != null),
+    browseReloadToken,
+    browseVariant,
+    effectiveListThumbnailUrl
   );
   const pdfThumb = useCrmDocumentPdfThumbnail(
     isPdf ? doc.id : null,
-    isPdf ? blobUrl : null,
+    isPdf ? browseUrl : null,
     inView && isPdf && !mediaFailed
   );
 
@@ -77,12 +96,12 @@ export function DocumentsGalleryTile({
     ? selectionActive
     : hovered || focused || selected || selectionActive;
 
-  const showImage = Boolean(blobUrl) && !mediaFailed && isImage;
-  const showVideo = Boolean(blobUrl) && !mediaFailed && isVideo;
+  const showImage = Boolean(browseUrl) && !mediaFailed && isImage;
+  const showVideo = Boolean(browseUrl) && !mediaFailed && isVideo;
   const showPdf = pdfThumb.status === 'ready' && Boolean(pdfThumb.url) && !mediaFailed && isPdf;
   const showMedia = showImage || showVideo || showPdf;
   const pdfFailed = isPdf && (mediaFailed || pdfThumb.status === 'error');
-  const mediaPending = wantsBlob && !showMedia && !mediaFailed && !pdfFailed && !isDemoRuntime;
+  const mediaPending = wantsBrowse && !showMedia && !mediaFailed && !pdfFailed && !isDemoRuntime;
   const demoNoPreview = isDemoRuntime && (isImage || isVideo || isPdf) && !showMedia;
   const showDocumentFallback =
     (!isImage && !isVideo && !isPdf) || mediaFailed || pdfFailed || demoNoPreview;
@@ -115,6 +134,17 @@ export function DocumentsGalleryTile({
   const reportAspect = (naturalWidth: number, naturalHeight: number): void => {
     if (naturalWidth <= 0 || naturalHeight <= 0) return;
     onAspectRatio?.(doc.id, naturalWidth / naturalHeight);
+  };
+
+  const handleMediaError = (): void => {
+    if (!browseRetryUsedRef.current) {
+      browseRetryUsedRef.current = true;
+      setIgnoreListThumbnail(true);
+      refreshCrmDocumentBrowseUrl(doc.id, browseVariant);
+      setBrowseReloadToken((value) => value + 1);
+      return;
+    }
+    setMediaFailed(true);
   };
 
   const cancelLongPress = (): void => {
@@ -203,14 +233,15 @@ export function DocumentsGalleryTile({
         // eslint-disable-next-line @next/next/no-img-element
         <img
           className={styles.docGalleryTileImage}
-          src={blobUrl!}
+          src={browseUrl!}
           alt=""
-          loading="lazy"
+          loading={effectiveListThumbnailUrl ? 'eager' : 'lazy'}
+          decoding="async"
           draggable={false}
           onLoad={(event) => {
             reportAspect(event.currentTarget.naturalWidth, event.currentTarget.naturalHeight);
           }}
-          onError={() => setMediaFailed(true)}
+          onError={handleMediaError}
         />
       ) : null}
 
@@ -218,14 +249,14 @@ export function DocumentsGalleryTile({
         <>
           <video
             className={styles.docGalleryTileImage}
-            src={blobUrl!}
+            src={browseUrl!}
             muted
             playsInline
             preload="metadata"
             onLoadedMetadata={(event) => {
               reportAspect(event.currentTarget.videoWidth, event.currentTarget.videoHeight);
             }}
-            onError={() => setMediaFailed(true)}
+            onError={handleMediaError}
           />
           <span className={styles.docGalleryTileVideoBadge} aria-label={galleryCopy.videoIndicator}>
             ▶
@@ -239,6 +270,7 @@ export function DocumentsGalleryTile({
           className={styles.docGalleryTileImage}
           src={pdfThumb.url!}
           alt=""
+          decoding="async"
           draggable={false}
           onLoad={(event) => {
             reportAspect(event.currentTarget.naturalWidth, event.currentTarget.naturalHeight);
