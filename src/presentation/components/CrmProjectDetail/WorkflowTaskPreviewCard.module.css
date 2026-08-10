@@ -20,6 +20,12 @@
     0 4px 6px -4px rgba(15, 23, 42, 0.1);
 }
 
+/* Extra room for the meta column beside the project photo. */
+.previewPortal_desktopProject.previewPortal_desktopProject {
+  width: min(52rem, calc(100vw - 1rem));
+  max-width: 52rem;
+}
+
 :global([data-theme='dark']) .previewPortal.previewPortal {
   box-shadow:
     0 10px 15px -3px rgba(0, 0, 0, 0.45),
@@ -37,6 +43,12 @@
   background: var(--theme-surface-raised, #fff);
   color: var(--color-text-primary, #0f172a);
   border-radius: 0.625rem;
+}
+
+/* Desktop project/subproject hover: grow with content; never scroll the whole card. */
+.previewCard_desktopProject {
+  max-height: none;
+  overflow: hidden;
 }
 
 .previewCard_mobileFullscreen {
@@ -340,6 +352,76 @@
   font-size: 3rem;
   font-weight: 700;
   line-height: 1;
+}
+
+/* Desktop project hover: square photo flush top-left; meta keeps the wide card. */
+.previewBody_desktopProject {
+  min-height: 0;
+  max-height: 100%;
+}
+
+.previewDesktopTop {
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  min-width: 0;
+  flex: 0 0 auto;
+}
+
+.previewDesktopHeroMedia {
+  flex: 0 0 12.5rem;
+  width: 12.5rem;
+  min-height: 12.5rem;
+  height: auto;
+  align-self: stretch;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  background: var(--theme-surface-main, #252836);
+}
+
+.previewDesktopHeroImage {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.previewDesktopHeroInitials {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  color: #fff;
+  font-size: 2.5rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.previewDesktopMain {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.previewDesktopMain .previewSection:last-child {
+  border-bottom: none;
+}
+
+.previewDesktopCustomFields {
+  flex: 1 1 auto;
+  min-height: 0;
+  max-height: 8.5rem;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  border-top: 1px solid var(--theme-border-main, #e2e8f0);
+}
+
+:global([data-theme='dark']) .previewDesktopCustomFields {
+  border-top-color: var(--theme-stage-group-border-color, #80808052);
 }
 
 .previewMobileHeroTitle {

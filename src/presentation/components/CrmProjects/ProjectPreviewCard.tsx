@@ -41,7 +41,7 @@ export function ProjectPreviewCard({
       aria-label={previewCopy.ariaLabel(preview?.summary.name ?? '')}
       className={[
         cardStyles.previewCard,
-        mobileFullscreen ? cardStyles.previewCard_mobileFullscreen : '',
+        mobileFullscreen ? cardStyles.previewCard_mobileFullscreen : cardStyles.previewCard_desktopProject,
       ]
         .filter(Boolean)
         .join(' ')}

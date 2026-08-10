@@ -209,7 +209,7 @@ export function useProjectPreviewPopover({
               open
               onClose={hide}
               anchorRef={anchorRef as RefObject<HTMLElement | null>}
-              portalClassName={cardStyles.previewPortal}
+              portalClassName={`${cardStyles.previewPortal} ${cardStyles.previewPortal_desktopProject}`}
               sizeToContent
               align="start"
               menuGapPx={6}

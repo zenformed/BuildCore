@@ -820,96 +820,113 @@ export function ProjectDetailsCardContent({
   }
 
   return (
-    <div className={cardStyles.previewBody}>
-      <section className={cardStyles.previewSection} aria-label={previewCopy.sections.overview}>
-        <div className={cardStyles.previewMetaRow}>
-          <PreviewMetaColumn
-            label={projectKindLabel}
-            labelPosition={previewLabelPosition}
-            leadingIcon={<LuBuilding2 />}
-              value={projectNameValue}
-          />
-          <PreviewMetaColumn
-            label={previewCopy.labels.industry}
-            labelPosition={previewLabelPosition}
-            align="center"
-            leadingIcon={<LuClipboardList />}
-            value={industryDisplay}
-          />
-          <PreviewMetaColumn
-            label={previewCopy.labels.assigned}
-            labelPosition={previewLabelPosition}
-            align="end"
-            leadingIcon={<LuUser />}
-            value={assignedDisplay}
-          />
+    <div className={`${cardStyles.previewBody} ${cardStyles.previewBody_desktopProject}`}>
+      <div className={cardStyles.previewDesktopTop}>
+        <div className={cardStyles.previewDesktopHeroMedia} aria-hidden>
+          {projectPhotoUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={projectPhotoUrl} alt="" className={cardStyles.previewDesktopHeroImage} />
+          ) : (
+            <span
+              className={cardStyles.previewDesktopHeroInitials}
+              style={{ backgroundColor: projectPrimaryPhotoCircleColor(projectPhotoLabel) }}
+            >
+              {projectPhotoInitials}
+            </span>
+          )}
         </div>
-        <div className={`${cardStyles.previewMetaRow} ${cardStyles.previewMetaRow_spaced}`}>
-          <PreviewMetaColumn
-            label={previewCopy.labels.contact}
-            labelPosition={previewLabelPosition}
-            leadingIcon={<LuUser />}
-            value={summary.contact.name || emptyValue}
-          />
-          <PreviewMetaColumn
-            label={previewCopy.labels.email}
-            labelPosition={previewLabelPosition}
-            align="center"
-            leadingIcon={<LuMail />}
-            value={<StackedMetaList values={emails} emptyValue={emptyValue} />}
-          />
-          <PreviewMetaColumn
-            label={previewCopy.labels.phone}
-            labelPosition={previewLabelPosition}
-            align="end"
-            leadingIcon={<LuPhone />}
-            value={<StackedMetaList values={phones} emptyValue={emptyValue} />}
-          />
-        </div>
-        <div className={`${cardStyles.previewMetaRow} ${cardStyles.previewMetaRow_spaced}`}>
-          <PreviewMetaColumn
-            label={previewCopy.labels.address}
-            labelPosition={previewLabelPosition}
-            leadingIcon={<LuMapPin />}
-            value={
-              addressDisplay ? <MultilineMetaValue text={addressDisplay} /> : emptyValue
-            }
-          />
-        </div>
-        <div className={`${cardStyles.previewMetaRow} ${cardStyles.previewMetaRow_spaced}`}>
-          <PreviewMetaColumn
-            label={previewCopy.labels.stage}
-            labelPosition={previewLabelPosition}
-            leadingIcon={<LuGitBranch />}
-            value={stageDisplay}
-          />
-          <div className={cardStyles.metaColumn_spacer} aria-hidden />
-          <PreviewMetaColumn
-            label={previewCopy.labels.progress}
-            labelPosition={previewLabelPosition}
-            align="end"
-            leadingIcon={<LuListChecks />}
-            value={progressDisplay}
-          />
-        </div>
-      </section>
+        <div className={cardStyles.previewDesktopMain}>
+          <section className={cardStyles.previewSection} aria-label={previewCopy.sections.overview}>
+            <div className={cardStyles.previewMetaRow}>
+              <PreviewMetaColumn
+                label={projectKindLabel}
+                labelPosition={previewLabelPosition}
+                leadingIcon={<LuBuilding2 />}
+                value={projectNameValue}
+              />
+              <PreviewMetaColumn
+                label={previewCopy.labels.industry}
+                labelPosition={previewLabelPosition}
+                align="center"
+                leadingIcon={<LuClipboardList />}
+                value={industryDisplay}
+              />
+              <PreviewMetaColumn
+                label={previewCopy.labels.assigned}
+                labelPosition={previewLabelPosition}
+                align="end"
+                leadingIcon={<LuUser />}
+                value={assignedDisplay}
+              />
+            </div>
+            <div className={`${cardStyles.previewMetaRow} ${cardStyles.previewMetaRow_spaced}`}>
+              <PreviewMetaColumn
+                label={previewCopy.labels.contact}
+                labelPosition={previewLabelPosition}
+                leadingIcon={<LuUser />}
+                value={summary.contact.name || emptyValue}
+              />
+              <PreviewMetaColumn
+                label={previewCopy.labels.email}
+                labelPosition={previewLabelPosition}
+                align="center"
+                leadingIcon={<LuMail />}
+                value={<StackedMetaList values={emails} emptyValue={emptyValue} />}
+              />
+              <PreviewMetaColumn
+                label={previewCopy.labels.phone}
+                labelPosition={previewLabelPosition}
+                align="end"
+                leadingIcon={<LuPhone />}
+                value={<StackedMetaList values={phones} emptyValue={emptyValue} />}
+              />
+            </div>
+            <div className={`${cardStyles.previewMetaRow} ${cardStyles.previewMetaRow_spaced}`}>
+              <PreviewMetaColumn
+                label={previewCopy.labels.address}
+                labelPosition={previewLabelPosition}
+                leadingIcon={<LuMapPin />}
+                value={
+                  addressDisplay ? <MultilineMetaValue text={addressDisplay} /> : emptyValue
+                }
+              />
+            </div>
+            <div className={`${cardStyles.previewMetaRow} ${cardStyles.previewMetaRow_spaced}`}>
+              <PreviewMetaColumn
+                label={previewCopy.labels.stage}
+                labelPosition={previewLabelPosition}
+                leadingIcon={<LuGitBranch />}
+                value={stageDisplay}
+              />
+              <div className={cardStyles.metaColumn_spacer} aria-hidden />
+              <PreviewMetaColumn
+                label={previewCopy.labels.progress}
+                labelPosition={previewLabelPosition}
+                align="end"
+                leadingIcon={<LuListChecks />}
+                value={progressDisplay}
+              />
+            </div>
+          </section>
 
-      {notesText ? (
-        <section className={cardStyles.previewSection} aria-label={previewCopy.sections.notes}>
-          <div className={cardStyles.previewMetaRow}>
-            <PreviewMetaColumn
-              label={previewCopy.labels.notes}
-              labelPosition={previewLabelPosition}
-              leadingIcon={<LuStickyNote />}
-              value={<span className={cardStyles.previewNotes}>{notesText}</span>}
-            />
-          </div>
-        </section>
-      ) : null}
+          {notesText ? (
+            <section className={cardStyles.previewSection} aria-label={previewCopy.sections.notes}>
+              <div className={cardStyles.previewMetaRow}>
+                <PreviewMetaColumn
+                  label={previewCopy.labels.notes}
+                  labelPosition={previewLabelPosition}
+                  leadingIcon={<LuStickyNote />}
+                  value={<span className={cardStyles.previewNotes}>{notesText}</span>}
+                />
+              </div>
+            </section>
+          ) : null}
+        </div>
+      </div>
 
       {customFieldDefinitions.length > 0 ? (
         <section
-          className={cardStyles.previewSection}
+          className={`${cardStyles.previewSection} ${cardStyles.previewDesktopCustomFields}`}
           aria-label={previewCopy.sections.customFields}
         >
           <h4 className={cardStyles.previewCustomFieldsHeading}>
