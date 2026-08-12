@@ -1,0 +1,60 @@
+.loadingShell {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.loadingContent {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.loadingStack {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.loadingLogo {
+  width: 2rem;
+  height: 2rem;
+  object-fit: contain;
+}
+
+.loadingLabel {
+  margin: 0;
+  font-size: 2rem;
+  font-weight: 600;
+  line-height: 2.5rem;
+}
+
+.loadingDots {
+  display: inline-flex;
+  margin-left: 0.0625em;
+}
+
+.loadingDots span {
+  display: inline-block;
+  animation: loading-dot-bounce 1.05s ease-in-out infinite;
+}
+
+.loadingDots span:nth-child(2) { animation-delay: 0.14s; }
+.loadingDots span:nth-child(3) { animation-delay: 0.28s; }
+
+.statusMessage {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--color-text-muted, #94a3b8);
+}
+
+@keyframes loading-dot-bounce {
+  0%, 60%, 100% { transform: translateY(0); }
+  30% { transform: translateY(-0.3em); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .loadingDots span { animation: none; }
+}

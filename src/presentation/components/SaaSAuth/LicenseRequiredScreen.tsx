@@ -13,7 +13,9 @@ export interface LicenseRequiredScreenProps {
 
 export function LicenseRequiredScreen({ onRefetch, onSignOut }: LicenseRequiredScreenProps): React.ReactElement {
   const { signOut } = useAuthInterface();
-  const stripeUrl = env.stripePaymentUrl;
+  const platformOrigin = env.platformPublicAppUrl.replace(/\/+$/, '');
+  const buildCoreProductUrl = `${platformOrigin}/products/buildcore`;
+  const platformDashboardUrl = `${platformOrigin}/dashboard`;
 
   const handleSignOut = async () => {
     await signOut();
@@ -23,25 +25,36 @@ export function LicenseRequiredScreen({ onRefetch, onSignOut }: LicenseRequiredS
   return (
     <div className={styles.page}>
       <div className={styles.card}>
-        <h1 className={styles.title}>License required</h1>
+        <div className={styles.licenseTitleRow}>
+          <img
+            className={styles.licenseAppLogo}
+            src="/zenformed-app-icons/buildcore.png"
+            alt=""
+          />
+          <h1 className={styles.title}>BuildCore access required</h1>
+        </div>
         <p className={styles.message}>
-          Your account does not have an active subscription. Subscribe to access the full app.
+          Your organization does not currently have access to BuildCore. View available plans or
+          return to your Zenformed dashboard.
         </p>
         <div className={styles.actions}>
           <Button
             variant="primary"
-            onClick={() => window.open(stripeUrl, '_blank', 'noopener,noreferrer')}
+            onClick={() => window.location.assign(buildCoreProductUrl)}
           >
-            Subscribe now
+            Get BuildCore
           </Button>
-          {onRefetch && (
-            <Button variant="outline" onClick={() => onRefetch()}>
-              Refresh status
-            </Button>
-          )}
+          <Button variant="outline" onClick={() => window.location.assign(platformDashboardUrl)}>
+            Go to Dashboard
+          </Button>
           <Button variant="outline" onClick={handleSignOut}>
             Sign out
           </Button>
+          {onRefetch && (
+            <button className={styles.refreshAccess} type="button" onClick={() => onRefetch()}>
+              Already purchased? Check access again
+            </button>
+          )}
         </div>
       </div>
     </div>

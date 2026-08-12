@@ -14,14 +14,9 @@ import { getSaaSAuthGateDecision } from './saasAuthGateDecision';
 import { LicenseRequiredScreen } from './LicenseRequiredScreen';
 import { UpdatePasswordScreen } from './UpdatePasswordScreen';
 import { WelcomeOnboardingScreen } from './WelcomeOnboardingScreen';
+import { ZenformedLoadingScreen } from './ZenformedLoadingScreen';
 
 const PUBLIC_PATHS = ['/login', '/register', '/forgot-password', '/reset-password', '/accept-invite', '/auth/launch'];
-
-const LoadingShell = () => (
-  <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-    <p>Loading…</p>
-  </div>
-);
 
 export interface SaaSAuthGateProps {
   children: React.ReactNode;
@@ -129,15 +124,15 @@ export function SaaSAuthGate({ children }: SaaSAuthGateProps): React.ReactElemen
   ]);
 
   if (!mounted) {
-    return <LoadingShell />;
+    return <ZenformedLoadingScreen statusMessage="Completing sign-in" />;
   }
 
   if (loading && !profile && !isAuthRecoveryPath && !isAuthLaunchPath) {
-    return <LoadingShell />;
+    return <ZenformedLoadingScreen statusMessage="Completing sign-in" />;
   }
 
   if (decision === 'loadingProfile' && !isAuthRecoveryPath && !isAuthLaunchPath) {
-    return <LoadingShell />;
+    return <ZenformedLoadingScreen statusMessage="Completing sign-in" />;
   }
 
   if (error && !profile) {
@@ -159,7 +154,7 @@ export function SaaSAuthGate({ children }: SaaSAuthGateProps): React.ReactElemen
   if (decision === 'unauthenticated') {
     if (!isPublicPath) {
       if (profile) return <>{children}</>;
-      return <LoadingShell />;
+      return <ZenformedLoadingScreen statusMessage="Completing sign-in" />;
     }
     return <>{children}</>;
   }

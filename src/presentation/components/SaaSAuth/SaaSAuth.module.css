@@ -18,8 +18,23 @@
   border: 1px solid var(--color-border, #e2e8f0);
 }
 
-.title {
+.licenseTitleRow {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
   margin: 0 0 1rem;
+}
+
+.licenseAppLogo {
+  flex: 0 0 auto;
+  width: 1.75rem;
+  height: 1.75rem;
+  object-fit: contain;
+  border-radius: 0.375rem;
+}
+
+.title {
+  margin: 0;
   font-size: 1.25rem;
   font-weight: 600;
   color: var(--color-text);
@@ -66,6 +81,29 @@
   flex-direction: column;
   gap: 0.75rem;
   margin-top: 1.5rem;
+}
+
+.refreshAccess {
+  align-self: center;
+  padding: 0.25rem;
+  border: 0;
+  background: transparent;
+  color: var(--color-text-muted, #64748b);
+  font: inherit;
+  font-size: 0.8125rem;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+
+.refreshAccess:hover {
+  color: var(--color-text);
+}
+
+.refreshAccess:focus-visible {
+  outline: 2px solid var(--color-primary, #2563eb);
+  outline-offset: 3px;
+  border-radius: 0.25rem;
 }
 
 .error {

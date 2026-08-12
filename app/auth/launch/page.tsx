@@ -6,6 +6,7 @@ import { waitForAuthSessionSync } from '@/infrastructure/auth/authSessionSync';
 import { buildPlatformLoginUrl } from '@/infrastructure/auth/buildPlatformAuthEntryUrl';
 import { setSession } from '@/infrastructure/supabase/supabaseClient';
 import { AuthPageShell } from '@/presentation/components/SaaSAuth/AuthPageShell';
+import { ZenformedLoadingScreen } from '@/presentation/components/SaaSAuth/ZenformedLoadingScreen';
 import pageStyles from '@/presentation/components/SaaSAuth/authPage.module.css';
 
 function readErrorMessage(json: unknown, fallback: string): string {
@@ -109,14 +110,12 @@ function LaunchHandoffContent(): ReactElement {
     );
   }
 
-  return (
-    <AuthPageShell minimal loading loadingMessage="Loading…" />
-  );
+  return <ZenformedLoadingScreen statusMessage="Completing sign-in" />;
 }
 
 export default function AuthLaunchPage(): ReactElement {
   return (
-    <Suspense fallback={<AuthPageShell minimal loading loadingMessage="Loading…" />}>
+    <Suspense fallback={<ZenformedLoadingScreen statusMessage="Completing sign-in" />}>
       <LaunchHandoffContent />
     </Suspense>
   );
