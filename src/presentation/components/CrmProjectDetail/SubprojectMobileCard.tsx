@@ -119,27 +119,16 @@ export function SubprojectMobileCard({
   const photoInitialStyle = {
     '--project-photo-bg': projectPrimaryPhotoCardColor(photoLabel),
   } as CSSProperties;
-  const mobileCardProjectName = truncateDisplayText(project.name, 15);
+  const mobileCardProjectName = truncateDisplayText(project.name, 64);
   const stageMetaContent =
     derivedStageSlug != null ? (
       <span className={styles.subprojectMobileCardStageRow}>
-        {isProjectPriorityUrgent(project.priority) ? (
-          <CrmProjectPriorityIcon ariaLabel={tableCopy.priorityMarkAriaLabel} />
-        ) : null}
         <span
           className={`${shared.stagePill} ${styles.subprojectMobileCardStagePill}`}
           title={formatStageLabel(derivedStageSlug, catalog)}
         >
           {formatStageLabel(derivedStageSlug, catalog)}
         </span>
-        {!isMemberRole && progress != null ? (
-          <span
-            className={styles.subprojectMobileCardProgressPercent}
-            aria-label={`Project progress ${progress.textPercent}%`}
-          >
-            {progress.textPercent}%
-          </span>
-        ) : null}
       </span>
     ) : (
       <span className={styles.subprojectMobileCardMeta}>—</span>
@@ -281,10 +270,15 @@ export function SubprojectMobileCard({
                         derivedStageSlug != null ? formatStageLabel(derivedStageSlug, catalog) : null
                       }
                       progressPercent={progress?.textPercent ?? null}
+                      togglePlacement="before"
+                      className={styles.subprojectMobileCardPreviewAnchor}
                     >
                       <span className={styles.subprojectMobileCardName} title={project.name}>
                         {mobileCardProjectName}
                       </span>
+                      {isProjectPriorityUrgent(project.priority) ? (
+                        <CrmProjectPriorityIcon ariaLabel={tableCopy.priorityMarkAriaLabel} />
+                      ) : null}
                     </ProjectPreviewNameAnchor>
                     {isInactive ? <CrmProjectInactiveInlineLabel project={project} /> : null}
                   </span>
@@ -360,28 +354,28 @@ export function SubprojectMobileCard({
               <div className={styles.subprojectMobileCardStageRow}>
                 {stageMetaContent}
               </div>
+              <div className={styles.subprojectMobileCardCompactProgress}>
+                <span className={styles.subprojectMobileCardCompactProgressTrack}>
+                  <span style={{ width: `${progress?.textPercent ?? 0}%` }} />
+                </span>
+                <span>{progress?.textPercent ?? 0}%</span>
+              </div>
             </div>
           </div>
         </div>
       </div>
       {isMemberRole ? null : (
         <div className={styles.subprojectMobileCardFinancials} aria-label={content.projectDetail.sections.financials}>
+          <span className={styles.subprojectMobileCardFinancialItem} title={fields.balance}>
+            <span className={styles.subprojectMobileCardFinancialLabel}>Balance due</span>
+            <span className={styles.subprojectMobileCardFinancialValue} aria-busy={financialsLoading || undefined}>
+              {financialDisplay(financials.balanceCents)}
+            </span>
+          </span>
           <span className={styles.subprojectMobileCardFinancialItem} title={fields.subValue}>
             <span className={styles.subprojectMobileCardFinancialLabel}>{fields.value}</span>
             <span className={styles.subprojectMobileCardFinancialValue} aria-busy={financialsLoading || undefined}>
               {financialDisplay(financials.valueCents)}
-            </span>
-          </span>
-          <span className={styles.subprojectMobileCardFinancialItem} title={fields.collected}>
-            <span className={styles.subprojectMobileCardFinancialLabel}>{fields.collected}</span>
-            <span className={styles.subprojectMobileCardFinancialValue} aria-busy={financialsLoading || undefined}>
-              {financialDisplay(financials.collectedCents)}
-            </span>
-          </span>
-          <span className={styles.subprojectMobileCardFinancialItem} title={fields.balance}>
-            <span className={styles.subprojectMobileCardFinancialLabel}>{fields.balance}</span>
-            <span className={styles.subprojectMobileCardFinancialValue} aria-busy={financialsLoading || undefined}>
-              {financialDisplay(financials.balanceCents)}
             </span>
           </span>
         </div>

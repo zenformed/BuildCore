@@ -134,23 +134,12 @@ export function CrmProjectMobileCard({
         <CrmProjectInactiveInlineLabel project={project} />
       ) : (
         <span className={projectStyles.subprojectMobileCardStageRow}>
-          {isProjectPriorityUrgent(project.priority) ? (
-            <CrmProjectPriorityIcon ariaLabel={tableCopy.priorityMarkAriaLabel} />
-          ) : null}
           {derivedStageSlug != null ? (
             <span
               className={`${shared.stagePill} ${styles.projectMetaStagePill}`}
               title={formatStageLabel(derivedStageSlug, catalog)}
             >
               {formatStageLabel(derivedStageSlug, catalog)}
-            </span>
-          ) : null}
-          {progress != null ? (
-            <span
-              className={projectStyles.subprojectMobileCardProgressPercent}
-              aria-label={`Project progress ${progress.textPercent}%`}
-            >
-              {progress.textPercent}%
             </span>
           ) : null}
         </span>
@@ -167,7 +156,7 @@ export function CrmProjectMobileCard({
   const projectPhotoInitialStyle = {
     '--project-photo-bg': projectPrimaryPhotoCardColor(projectPhotoLabel),
   } as CSSProperties;
-  const mobileCardProjectName = truncateDisplayText(project.name, 15);
+  const mobileCardProjectName = truncateDisplayText(project.name, 28);
   const longPressTimerRef = useRef<number | null>(null);
   const longPressTriggeredRef = useRef(false);
 
@@ -305,8 +294,12 @@ export function CrmProjectMobileCard({
                     }
                     progressPercent={progress?.textPercent ?? null}
                     className={styles.mobileCardPreviewAnchor}
+                    togglePlacement="before"
                   >
                     <span className={styles.mobileCardTitle}>{mobileCardProjectName}</span>
+                    {isProjectPriorityUrgent(project.priority) ? (
+                      <CrmProjectPriorityIcon ariaLabel={tableCopy.priorityMarkAriaLabel} />
+                    ) : null}
                   </ProjectPreviewNameAnchor>
                 </div>
                 <div className={styles.mobileCardHeaderEnd}>
@@ -378,6 +371,12 @@ export function CrmProjectMobileCard({
               {stageMetaContent != null ? (
                 <div className={styles.mobileCardStageRow}>{stageMetaContent}</div>
               ) : null}
+              <div className={styles.mobileCardCompactProgress}>
+                <span className={styles.mobileCardCompactProgressTrack}>
+                  <span style={{ width: `${progress?.textPercent ?? 0}%` }} />
+                </span>
+                <span>{progress?.textPercent ?? 0}%</span>
+              </div>
             </div>
           </div>
         ) : (
@@ -460,6 +459,17 @@ export function CrmProjectMobileCard({
           aria-label={content.projectDetail.sections.financials}
           aria-busy={financialsLoading || undefined}
         >
+          <span className={projectStyles.subprojectMobileCardFinancialItem} title={valueLabels.balance}>
+            <span className={projectStyles.subprojectMobileCardFinancialLabel}>
+              Balance due
+            </span>
+            <span
+              className={projectStyles.subprojectMobileCardFinancialValue}
+              aria-busy={financialsLoading || undefined}
+            >
+              {financialDisplay(displayFinancials.balanceCents)}
+            </span>
+          </span>
           <span className={projectStyles.subprojectMobileCardFinancialItem} title={displayValueLabel}>
             <span className={projectStyles.subprojectMobileCardFinancialLabel}>
               {valueLabels.value}
@@ -469,28 +479,6 @@ export function CrmProjectMobileCard({
               aria-busy={financialsLoading || undefined}
             >
               {financialDisplay(displayFinancials.valueCents)}
-            </span>
-          </span>
-          <span className={projectStyles.subprojectMobileCardFinancialItem} title={valueLabels.collected}>
-            <span className={projectStyles.subprojectMobileCardFinancialLabel}>
-              {valueLabels.collected}
-            </span>
-            <span
-              className={projectStyles.subprojectMobileCardFinancialValue}
-              aria-busy={financialsLoading || undefined}
-            >
-              {financialDisplay(displayFinancials.collectedCents)}
-            </span>
-          </span>
-          <span className={projectStyles.subprojectMobileCardFinancialItem} title={valueLabels.balance}>
-            <span className={projectStyles.subprojectMobileCardFinancialLabel}>
-              {valueLabels.balance}
-            </span>
-            <span
-              className={projectStyles.subprojectMobileCardFinancialValue}
-              aria-busy={financialsLoading || undefined}
-            >
-              {financialDisplay(displayFinancials.balanceCents)}
             </span>
           </span>
         </div>

@@ -3327,6 +3327,96 @@
   justify-content: center;
 }
 
+.mobileCardProjectIcon {
+  width: 1rem;
+  height: 1rem;
+  flex: 0 0 auto;
+  color: #0f766e;
+}
+
+.mobileCardCompactProgress {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.65rem;
+  width: 100%;
+  margin-top: 0.2rem;
+  color: var(--color-text-muted, #64748b);
+  font-size: 0.75rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.mobileCardCompactProgressTrack {
+  display: block;
+  height: 0.3rem;
+  overflow: hidden;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--color-text-muted, #64748b) 24%, transparent);
+}
+
+.mobileCardCompactProgressTrack > span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: #3b82f6;
+}
+
+@media (max-width: 767px) {
+  .mobileCard {
+    border: 1px solid var(--theme-border, #334155);
+    border-radius: 0.75rem;
+  }
+
+  .mobileCardSplit {
+    display: block;
+  }
+
+  .mobileCardPhotoWrap {
+    display: none;
+  }
+
+  .mobileCardDetailsStack {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 0.65rem 0.75rem;
+    padding: 0.9rem 1rem;
+  }
+
+  .mobileCardTopRow,
+  .mobileCardCompactProgress {
+    grid-column: 1 / -1;
+  }
+
+  .mobileCardTopRow > :first-child {
+    margin-left: -0.5rem;
+  }
+
+  .mobileCardTopRow + .mobileCardInfoRow {
+    margin-top: 0;
+  }
+
+  .mobileCardInfoRow:nth-of-type(3),
+  .mobileCardInfoRow:nth-of-type(4) {
+    display: none;
+  }
+
+  .mobileCardStageRow {
+    justify-self: end;
+    justify-content: flex-end;
+    text-align: right;
+  }
+
+  .mobileCardStageRow .projectMetaStagePill {
+    padding: 0.3rem 0.65rem;
+  }
+
+  .mobileCardStageRow :global([data-priority-icon]) {
+    display: none;
+  }
+
+}
+
 .mobileCardActions {
   display: flex;
   align-items: center;

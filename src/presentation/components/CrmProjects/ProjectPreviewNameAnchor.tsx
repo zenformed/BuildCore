@@ -16,6 +16,7 @@ export type ProjectPreviewNameAnchorProps = {
   readonly progressPercent?: number | null;
   readonly children: ReactNode;
   readonly className?: string;
+  readonly togglePlacement?: 'before' | 'after';
 };
 
 export function ProjectPreviewNameAnchor({
@@ -24,6 +25,7 @@ export function ProjectPreviewNameAnchor({
   progressPercent,
   children,
   className,
+  togglePlacement = 'after',
 }: ProjectPreviewNameAnchorProps): ReactElement {
   const isMobile = useDashboardMobileLayout();
   const customFieldScope = resolveProjectCustomFieldScopeForProject({
@@ -56,8 +58,13 @@ export function ProjectPreviewNameAnchor({
               }
         }
       >
+        {togglePlacement === 'before' && preview.toggleButtonProps ? (
+          <button {...preview.toggleButtonProps}>
+            <span className={cardStyles.previewInfoIcon} aria-hidden />
+          </button>
+        ) : null}
         {children}
-        {preview.toggleButtonProps ? (
+        {togglePlacement === 'after' && preview.toggleButtonProps ? (
           <button {...preview.toggleButtonProps}>
             <span className={cardStyles.previewInfoIcon} aria-hidden />
           </button>
