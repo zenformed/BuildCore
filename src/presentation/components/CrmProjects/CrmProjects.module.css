@@ -144,17 +144,35 @@
   width: 24rem;
   min-width: 16rem;
   max-width: 24rem;
+  height: 2.5rem;
   min-height: 2.5rem;
   padding-inline: 0.75rem;
   font-size: 0.875rem;
 }
 
 .projectsPanelHeaderCenter .projectsSearchInline {
+  height: 100%;
+  font-size: 0.875rem;
+}
+
+.projectsPanelHeaderCenter .projectsSearch {
+  flex: 0 1 24rem;
+  width: 24rem;
+  min-width: 16rem;
+  max-width: 24rem;
+  height: 2.5rem;
+  min-height: 2.5rem;
+  padding-inline: 0.75rem;
+  box-sizing: border-box;
   font-size: 0.875rem;
 }
 
 :global([data-theme='dark']) .projectsPanelHeaderCenter .projectsSearchField {
   background: #161922 !important;
+}
+
+:global([data-theme='dark']) .projectsPanelHeaderCenter .projectsSearch {
+  background: #161922;
 }
 
 .projectsPanelHeaderCenter .projectsFilterBtn {

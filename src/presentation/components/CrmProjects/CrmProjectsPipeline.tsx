@@ -330,14 +330,17 @@ function CrmProjectsPipelineV1({
 
   const panelTitle = panelCopy.title;
   const searchInput = (
-    <input
-      type="search"
-      value={searchQuery}
-      onChange={(event) => setSearchQuery(event.target.value)}
-      placeholder={panelCopy.searchPlaceholder}
-      aria-label={panelCopy.searchAriaLabel}
-      className={styles.projectsSearch}
-    />
+    <div className={styles.projectsSearchField}>
+      <LuSearch className={styles.projectsSearchIcon} size={16} strokeWidth={2} aria-hidden />
+      <input
+        type="search"
+        value={searchQuery}
+        onChange={(event) => setSearchQuery(event.target.value)}
+        placeholder={panelCopy.searchPlaceholder}
+        aria-label={panelCopy.searchAriaLabel}
+        className={styles.projectsSearchInline}
+      />
+    </div>
   );
   const mobileSearchInput = (
     <div className={styles.projectsSearchField}>
