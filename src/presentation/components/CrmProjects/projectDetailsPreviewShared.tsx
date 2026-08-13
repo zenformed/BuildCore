@@ -32,21 +32,27 @@ export function PreviewMetaColumn({
   readonly align?: 'start' | 'center' | 'end';
   readonly labelPosition?: 'above' | 'below';
   readonly leadingIcon?: ReactNode;
-  readonly leadingIconMode?: 'default' | 'inline_only_mobile';
+  readonly leadingIconMode?: 'default' | 'inline_only_mobile' | 'label_only';
 }): ReactElement {
   const isMobileLayout = useDashboardMobileLayout();
-  const showColumnIcon = leadingIcon != null && !(isMobileLayout && leadingIconMode === 'inline_only_mobile');
+  const iconInLabel = leadingIcon != null && leadingIconMode === 'label_only';
+  const showColumnIcon = leadingIcon != null && !iconInLabel && !(isMobileLayout && leadingIconMode === 'inline_only_mobile');
   const columnClass = [
     cardStyles.metaColumn,
     align === 'center' ? cardStyles.metaColumn_center : '',
     align === 'end' ? cardStyles.metaColumn_end : '',
     labelPosition === 'above' ? cardStyles.metaColumn_labelsFirst : '',
-    leadingIcon != null ? cardStyles.metaColumn_withIcon : '',
+    showColumnIcon ? cardStyles.metaColumn_withIcon : '',
   ]
     .filter(Boolean)
     .join(' ');
 
-  const labelEl = <div className={cardStyles.metaLabel}>{label}</div>;
+  const labelEl = (
+    <div className={iconInLabel ? `${cardStyles.metaLabel} ${cardStyles.metaLabelWithIcon}` : cardStyles.metaLabel}>
+      {iconInLabel ? <span className={cardStyles.metaLabelIcon} aria-hidden>{leadingIcon}</span> : null}
+      <span>{label}</span>
+    </div>
+  );
   const valueEl = <div className={cardStyles.metaValue}>{value}</div>;
   const mobileValueWithIconEl =
     leadingIcon != null ? (
@@ -71,7 +77,7 @@ export function PreviewMetaColumn({
       </>
     );
 
-  if (leadingIcon == null) {
+  if (leadingIcon == null || iconInLabel) {
     return <div className={columnClass}>{columnContent}</div>;
   }
 

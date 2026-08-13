@@ -318,6 +318,13 @@
   padding: 1.5rem 2rem;
 }
 
+@media (min-width: 768px) {
+  .mainContent:has([data-crm-projects-dashboard]) {
+    padding-inline: 0;
+    padding-bottom: 0;
+  }
+}
+
 /* List view: no card chrome (transparent, no border) */
 .listViewWrap {
   background: transparent;

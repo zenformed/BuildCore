@@ -15,7 +15,6 @@ import { isProjectPriorityUrgent } from '@/domain/crm/projectPriorityToggle';
 import { ProjectProgressPercent } from '@/presentation/components/CrmProjectDetail/ProjectProgressPercent';
 import { CrmProjectCompleteIcon } from '@/presentation/components/crmShared/CrmProjectCompleteIcon';
 import { CrmProjectAddressEnvelope } from '@/presentation/components/crmShared/CrmProjectAddressEnvelope';
-import { CrmProjectPriorityIcon } from '@/presentation/components/crmShared/CrmProjectPriorityIcon';
 import {
   buildProjectPrimaryPhotoApiPath,
   useProjectPrimaryPhotoBlob,
@@ -35,7 +34,7 @@ import { CrmProjectTableRowActionsMenu } from './CrmProjectTableRowActionsMenu';
 import { CrmProjectTableContactCell } from './CrmProjectTableContactCell';
 import { ProjectPreviewNameAnchor } from './ProjectPreviewNameAnchor';
 import { CrmProjectInactiveIcon, CrmProjectInactiveInlineLabel } from './CrmProjectInactiveBadge';
-import { LuMail, LuPhone, LuMapPin, LuUser, LuBuilding2, LuStickyNote } from 'react-icons/lu';
+import { LuMail, LuPhone, LuMapPin, LuUser, LuBuilding2, LuStickyNote, LuTriangleAlert } from 'react-icons/lu';
 import shared from '@/presentation/components/crmShared/crmShared.module.css';
 import styles from './CrmProjects.module.css';
 export type CrmProjectTableRowDeleteLabels = {
@@ -98,6 +97,7 @@ export type CrmProjectTableRowProps = {
   subprojectCount?: number;
   progressTone?: 'success' | 'progress';
   showContactIcons?: boolean;
+  dashboardCompactLayout?: boolean;
 };
 
 export function CrmProjectTableRow({
@@ -127,6 +127,7 @@ export function CrmProjectTableRow({
   subprojectCount = 0,
   progressTone = 'progress',
   showContactIcons = false,
+  dashboardCompactLayout = false,
 }: CrmProjectTableRowProps): ReactElement {
   const tableCopy = content.crm.table;
   const { catalog, industrySubtitle, progress, derivedStageSlug } = useCrmProjectRowPresentation(
@@ -168,7 +169,7 @@ export function CrmProjectTableRow({
   );
   const displayContactName = project.contact.name?.trim() || '—';
   const hasContactValue = displayContactName !== '—';
-  const displayProjectName = truncateTo25(project.name);
+  const displayProjectName = dashboardCompactLayout ? project.name.trim() : truncateTo25(project.name);
   const displayIndustrySubtitle = industrySubtitle ? truncateTo25(industrySubtitle) : null;
   const displayParentProjectName = parentProjectName ? truncateTo25(parentProjectName) : null;
   const hasEmailValue = displayEmail !== '—';
@@ -259,8 +260,6 @@ export function CrmProjectTableRow({
             <span className={styles.projectNameRow}>
               {isInactive ? (
                 <CrmProjectInactiveIcon ariaLabel={tableCopy.inactiveBadge} />
-              ) : isProjectPriorityUrgent(project.priority) ? (
-                <CrmProjectPriorityIcon ariaLabel={tableCopy.priorityMarkAriaLabel} />
               ) : null}
               {isCrmProjectComplete(project) ? (
                 <CrmProjectCompleteIcon ariaLabel={tableCopy.completionCheckAriaLabel} />
@@ -283,10 +282,22 @@ export function CrmProjectTableRow({
                     }
                   >
                     {showContactIcons ? <LuBuilding2 className={styles.gridCellInlineIcon} aria-hidden /> : null}
-                    <span className={styles.projectName} title={project.name}>{displayProjectName}</span>
+                    <span
+                      className={styles.projectName}
+                      title={dashboardCompactLayout ? undefined : project.name}
+                    >
+                      {displayProjectName}
+                    </span>
                   </span>
                 </ProjectPreviewNameAnchor>
               </span>
+              {isProjectPriorityUrgent(project.priority) ? (
+                <LuTriangleAlert
+                  className={styles.projectNeedsAttentionIcon}
+                  aria-label={tableCopy.priorityMarkAriaLabel}
+                  title={tableCopy.priorityMarkAriaLabel}
+                />
+              ) : null}
               {!isChild && hasChildren ? (
                 <button
                   type="button"
@@ -313,10 +324,13 @@ export function CrmProjectTableRow({
             {showParentProjectColumn && displayParentProjectName ? (
               <span className={styles.projectParentName} title={parentProjectName}>{displayParentProjectName}</span>
             ) : null}
-            {!showContactIcons && displayIndustrySubtitle ? (
+            {(!showContactIcons || dashboardCompactLayout) && displayIndustrySubtitle ? (
               <span className={styles.projectMeta} title={industrySubtitle ?? undefined}>{displayIndustrySubtitle}</span>
             ) : null}
-            {!isMemberRole ? (
+            {dashboardCompactLayout && variant === 'root' ? (
+              <span className={styles.subprojectsCountText}>{subprojectCountLabel}</span>
+            ) : null}
+            {!isMemberRole && !dashboardCompactLayout ? (
               <span className={styles.projectProgressRow}>
                 {isInactive ? (
                   <CrmProjectInactiveInlineLabel project={project} />
@@ -350,6 +364,100 @@ export function CrmProjectTableRow({
           </span>
         </span>
       </span>
+      {dashboardCompactLayout ? (
+        <>
+          <span className={`${styles.gridCell} ${styles.dashboardClientCell}`} role="cell">
+            <strong
+              className={`${styles.dashboardClientLine} ${styles.subprojectsContactBadge}`}
+            >
+              <LuUser
+                className={`${styles.dashboardClientLineIcon} ${styles.gridCellInlineIcon}`}
+                aria-hidden
+              />
+              <span>{displayContactName}</span>
+            </strong>
+            <span className={styles.dashboardClientContactsRow}>
+            <CrmProjectTableContactCell
+              kind="phone"
+              values={contactPhones}
+              displayValue={displayPhone}
+              formatDisplayValue={formatPhonePopoverValue}
+              getCopyValue={getPhoneCopyValue}
+              onCopied={onContactCopied}
+              href={phoneHref}
+              getRowHref={(value) => buildTelHref(value)}
+              leadingIcon={
+                hasPhoneValue ? (
+                  <LuPhone
+                    className={`${styles.dashboardClientLineIcon} ${styles.subprojectsContactInfoIcon}`}
+                    aria-hidden
+                  />
+                ) : null
+              }
+            />
+            <CrmProjectTableContactCell
+              kind="email"
+              values={contactEmails}
+              displayValue={displayEmail}
+              formatDisplayValue={formatEmailPopoverValue}
+              getCopyValue={getEmailCopyValue}
+              onCopied={onContactCopied}
+              title={displayEmail}
+              href={emailHref}
+              getRowHref={(value) => `mailto:${value.trim()}`}
+              leadingIcon={
+                hasEmailValue ? (
+                  <LuMail
+                    className={`${styles.dashboardClientLineIcon} ${styles.subprojectsContactInfoIcon}`}
+                    aria-hidden
+                  />
+                ) : null
+              }
+            />
+            </span>
+            <a
+              className={`${styles.dashboardClientLine} ${styles.dashboardClientAddress} ${styles.tableContactCellValueLink}`}
+              title={formattedAddress ?? undefined}
+              href={addressHref ?? undefined}
+              onClick={(event) => event.stopPropagation()}
+            >
+              <LuMapPin
+                className={`${styles.dashboardClientLineIcon} ${styles.subprojectsContactInfoIcon}`}
+                aria-hidden
+              />
+              <span>{formattedAddress ?? '—'}</span>
+            </a>
+          </span>
+          <span className={`${styles.gridCell} ${styles.dashboardStageCell}`} role="cell">
+            {derivedStageSlug != null ? (
+              <span className={`${shared.stagePill} ${styles.projectMetaStagePill}`}>
+                {formatStageLabel(derivedStageSlug, catalog)}
+              </span>
+            ) : '—'}
+          </span>
+          <span className={`${styles.gridCell} ${styles.dashboardProgressCell}`} role="cell">
+            {progress != null ? (
+              <div
+                className={styles.dashboardProgress}
+                role="progressbar"
+                aria-valuenow={progress.textPercent}
+                aria-valuemin={0}
+                aria-valuemax={100}
+                aria-label={`Project progress ${progress.textPercent}%`}
+              >
+                <span className={styles.dashboardProgressTrack} aria-hidden>
+                  <span
+                    className={styles.dashboardProgressFill}
+                    style={{ width: `${Math.min(100, Math.max(0, progress.textPercent))}%` }}
+                  />
+                </span>
+                <span className={styles.dashboardProgressLabel}>{progress.textPercent}%</span>
+              </div>
+            ) : '—'}
+          </span>
+        </>
+      ) : (
+        <>
       <span className={`${styles.gridCell} ${styles.gridCellAlignCenter}`} role="cell">
         <span
           className={[
@@ -464,32 +572,38 @@ export function CrmProjectTableRow({
           <span className={styles.gridCellWrap}>{project.notesPreview ?? '—'}</span>
         </span>
       </span>
+        </>
+      )}
       {!isMemberRole ? (
         <>
           <span
-            className={`${styles.gridCell} ${styles.gridCellFinancial} ${styles.gridCellAlignCenter}`}
+            className={`${styles.gridCell} ${styles.gridCellFinancial} ${styles.gridCellAlignCenter} ${dashboardCompactLayout ? styles.dashboardValueCell : ''}`}
             role="cell"
             title={displayValueLabel}
             aria-busy={financialsLoading || undefined}
           >
             {financialDisplay(displayFinancials.valueCents)}
           </span>
-          <span
-            className={`${styles.gridCell} ${styles.gridCellFinancial} ${styles.gridCellAlignCenter}`}
-            role="cell"
-            title={valueLabels.collected}
-            aria-busy={financialsLoading || undefined}
-          >
-            {financialDisplay(displayFinancials.collectedCents)}
-          </span>
-          <span
-            className={`${styles.gridCell} ${styles.gridCellFinancial} ${styles.gridCellAlignCenter}`}
-            role="cell"
-            title={valueLabels.balance}
-            aria-busy={financialsLoading || undefined}
-          >
-            {financialDisplay(displayFinancials.balanceCents)}
-          </span>
+          {dashboardCompactLayout ? (
+            <span
+              className={`${styles.gridCell} ${styles.gridCellFinancial} ${styles.dashboardBalanceCell}`}
+              role="cell"
+              title={valueLabels.balance}
+              aria-busy={financialsLoading || undefined}
+            >
+              <strong>{financialDisplay(displayFinancials.balanceCents)}</strong>
+              <small>{financialDisplay(displayFinancials.collectedCents)} collected</small>
+            </span>
+          ) : (
+            <>
+              <span className={`${styles.gridCell} ${styles.gridCellFinancial} ${styles.gridCellAlignCenter}`} role="cell" title={valueLabels.collected} aria-busy={financialsLoading || undefined}>
+                {financialDisplay(displayFinancials.collectedCents)}
+              </span>
+              <span className={`${styles.gridCell} ${styles.gridCellFinancial} ${styles.gridCellAlignCenter}`} role="cell" title={valueLabels.balance} aria-busy={financialsLoading || undefined}>
+                {financialDisplay(displayFinancials.balanceCents)}
+              </span>
+            </>
+          )}
         </>
       ) : null}
       <span className={styles.gridCellAssignee} role="cell">

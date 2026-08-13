@@ -440,6 +440,14 @@ function CrmProjectsPipelineV1({
         ) : (
           <>
             <div className={styles.projectsPanelHeaderLeft}>
+              <div className={styles.projectsDesktopHeading}>
+                <h1>{panelTitle}</h1>
+                <p>{`${totalCount ?? 0} active projects`}</p>
+              </div>
+            </div>
+            <div className={styles.projectsPanelHeaderCenter}>
+              {searchInput}
+              {headerFilterButton}
               {!isMemberRole ? (
                 <CrmProjectsDesktopCreateActions
                   createDisabled={createOpen}
@@ -449,11 +457,6 @@ function CrmProjectsPipelineV1({
                 />
               ) : null}
             </div>
-            <div className={styles.projectsPanelHeaderCenter}>
-              {searchInput}
-              {headerFilterButton}
-            </div>
-            <div className={styles.projectsPanelHeaderRight} />
           </>
         )}
       </div>
@@ -521,6 +524,7 @@ function CrmProjectsPipelineV1({
             onFirstRunEmptyAction={
               showFirstProjectEmptyState && !isMemberRole ? () => setCreateOpen(true) : null
             }
+            dashboardCompactLayout
             {...sharedTableChrome}
           />
         )}

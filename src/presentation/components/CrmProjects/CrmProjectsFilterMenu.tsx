@@ -70,6 +70,7 @@ export type CrmProjectsFilterMenuProps = {
   readonly menuAlign?: 'start' | 'end';
   readonly className?: string;
   readonly triggerClassName?: string;
+  readonly triggerLabel?: string;
   /** Which filter groups to show. Defaults to project status + stage + priority + task status. */
   readonly sections?: readonly CrmProjectsFilterMenuSection[];
   /** Required when `sections` includes `assigned`. */
@@ -109,6 +110,7 @@ export function CrmProjectsFilterMenu({
   menuAlign = 'end',
   className,
   triggerClassName,
+  triggerLabel,
   sections = DEFAULT_FILTER_SECTIONS,
   assigneeFilterOptions = [],
   assigneeScope = null,
@@ -268,7 +270,10 @@ export function CrmProjectsFilterMenu({
         {isCaret ? (
           <CaretDownIcon className={styles.projectsFilterCaretIcon} />
         ) : (
-          <FilterIcon className={styles.projectsFilterBtnIcon} />
+          <>
+            <FilterIcon className={styles.projectsFilterBtnIcon} />
+            {triggerLabel ? <span>{triggerLabel}</span> : null}
+          </>
         )}
       </button>
       <WorkflowInlineMenu

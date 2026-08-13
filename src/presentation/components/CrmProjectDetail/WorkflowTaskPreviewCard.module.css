@@ -22,8 +22,8 @@
 
 /* Extra room for the meta column beside the project photo. */
 .previewPortal_desktopProject.previewPortal_desktopProject {
-  width: min(52rem, calc(100vw - 1rem));
-  max-width: 52rem;
+  width: min(60rem, calc(100vw - 1rem));
+  max-width: 60rem;
 }
 
 :global([data-theme='dark']) .previewPortal.previewPortal {
@@ -442,6 +442,13 @@
   max-width: 100%;
 }
 
+.previewProjectPriorityIcon {
+  width: 1rem;
+  height: 1rem;
+  flex: 0 0 auto;
+  color: #eab308;
+}
+
 .previewMobileList {
   display: flex;
   flex-direction: column;
@@ -621,6 +628,69 @@
   width: 1.8rem;
   height: 1.8rem;
   stroke-width: 1.9;
+}
+
+.metaLabelWithIcon {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.metaLabelIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 0.8rem;
+  height: 0.8rem;
+  flex: 0 0 auto;
+  color: #0f766e;
+}
+
+.metaLabelIcon :global(svg) {
+  width: 0.8rem;
+  height: 0.8rem;
+  stroke-width: 2;
+}
+
+.previewContactPill {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  padding: 0.3rem 0.55rem;
+  border-radius: 0.3rem;
+  color: #fff;
+  background: #0f766e;
+  font-weight: 600;
+}
+
+.previewAssignedIdentity {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  width: fit-content;
+}
+
+.previewProgressValue {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  width: 100%;
+}
+
+.previewProgressTrack {
+  display: block;
+  width: 7.5rem;
+  height: 0.35rem;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #374151;
+}
+
+.previewProgressFill {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: #3b82f6;
 }
 
 .metaColumnContent {
@@ -838,6 +908,11 @@
   letter-spacing: inherit;
   text-transform: inherit;
   color: inherit;
+}
+
+.metaLabel .metaLabelIcon,
+.metaLabel .metaLabelIcon :global(svg) {
+  color: #0f766e;
 }
 
 :global([data-theme='dark']) .metaColumnIcon {

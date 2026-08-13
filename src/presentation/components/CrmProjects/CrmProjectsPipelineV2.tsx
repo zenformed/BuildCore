@@ -265,14 +265,17 @@ export function CrmProjectsPipelineV2({
 
   const panelTitle = panelCopy.title;
   const searchInput = (
-    <input
-      type="search"
-      value={list.searchInput}
-      onChange={(event) => list.setSearchInput(event.target.value)}
-      placeholder={panelCopy.searchPlaceholder}
-      aria-label={panelCopy.searchAriaLabel}
-      className={styles.projectsSearch}
-    />
+    <div className={styles.projectsSearchField}>
+      <LuSearch className={styles.projectsSearchIcon} size={16} strokeWidth={2} aria-hidden />
+      <input
+        type="search"
+        value={list.searchInput}
+        onChange={(event) => list.setSearchInput(event.target.value)}
+        placeholder={panelCopy.searchPlaceholder}
+        aria-label={panelCopy.searchAriaLabel}
+        className={styles.projectsSearchInline}
+      />
+    </div>
   );
   const mobileSearchInput = (
     <div className={styles.projectsSearchField}>
@@ -292,7 +295,7 @@ export function CrmProjectsPipelineV2({
     <CrmProjectsFilterMenu
       filters={list.filters}
       onChange={list.setFilters}
-      triggerVariant="ghost"
+      triggerVariant={isMobileLayout ? 'ghost' : 'filter'}
       menuAlign="end"
     />
   );
@@ -489,6 +492,14 @@ export function CrmProjectsPipelineV2({
         ) : (
           <>
             <div className={styles.projectsPanelHeaderLeft}>
+              <div className={styles.projectsDesktopHeading}>
+                <h1>{panelTitle}</h1>
+                <p>{`${list.totalCount ?? 0} active projects`}</p>
+              </div>
+            </div>
+            <div className={styles.projectsPanelHeaderCenter}>
+              {searchInput}
+              {headerFilterButton}
               {!isMemberRole ? (
                 <CrmProjectsDesktopCreateActions
                   createDisabled={createOpen}
@@ -498,11 +509,6 @@ export function CrmProjectsPipelineV2({
                 />
               ) : null}
             </div>
-            <div className={styles.projectsPanelHeaderCenter}>
-              {searchInput}
-              {headerFilterButton}
-            </div>
-            <div className={styles.projectsPanelHeaderRight}>{paginationChrome(false)}</div>
           </>
         )}
       </div>
@@ -563,6 +569,9 @@ export function CrmProjectsPipelineV2({
             onFirstRunEmptyAction={
               showFirstProjectEmptyState && !isMemberRole ? () => setCreateOpen(true) : null
             }
+            dashboardCompactLayout
+            projectColumnLabel="Project"
+            dashboardTableToolbar={paginationChrome(false)}
             {...sharedTableChrome}
           />
         )}

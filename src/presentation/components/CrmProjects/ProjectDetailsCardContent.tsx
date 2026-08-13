@@ -10,6 +10,7 @@ import {
   LuMapPin,
   LuPhone,
   LuStickyNote,
+  LuTriangleAlert,
   LuUser,
 } from 'react-icons/lu';
 import type { CrmIndustry, CrmTeamMemberRef } from '@/domain/crm';
@@ -40,7 +41,6 @@ import {
 } from '@/presentation/features/crmProjectDetail/useProjectPrimaryPhotoBlob';
 import { ProjectHeaderAssignee } from '../CrmProjectDetail/ProjectHeaderAssignee';
 import { TeamMemberAvatar } from '../CrmProjectDetail/TeamMemberAvatar';
-import { CrmProjectPriorityIcon } from '../crmShared/CrmProjectPriorityIcon';
 import cardStyles from '../CrmProjectDetail/WorkflowTaskPreviewCard.module.css';
 import shared from '../crmShared/crmShared.module.css';
 import {
@@ -376,6 +376,12 @@ export function ProjectDetailsCardContent({
 
   const assignedDisplay =
     summary.assignedTo?.displayName?.trim() || content.projectDetail.unassigned;
+  const desktopAssignedDisplay = summary.assignedTo ? (
+    <span className={cardStyles.previewAssignedIdentity}>
+      <TeamMemberAvatar member={summary.assignedTo} />
+      <span>{assignedDisplay}</span>
+    </span>
+  ) : assignedDisplay;
   const addressDisplay = formatCrmProjectLocationLine(
     summary.address,
     summary.latitude,
@@ -409,7 +415,11 @@ export function ProjectDetailsCardContent({
   const previewProjectName = truncatePreviewProjectName(summary.name || emptyValue);
   const projectNameValue = isProjectPriorityUrgent(summary.priority) ? (
     <span className={cardStyles.previewProjectNameWithPriority}>
-      <CrmProjectPriorityIcon ariaLabel={content.crm.table.priorityMarkAriaLabel} />
+      <LuTriangleAlert
+        className={cardStyles.previewProjectPriorityIcon}
+        aria-label={content.crm.table.priorityMarkAriaLabel}
+        title={content.crm.table.priorityMarkAriaLabel}
+      />
       <span>{previewProjectName}</span>
     </span>
   ) : (
@@ -842,21 +852,22 @@ export function ProjectDetailsCardContent({
                 label={projectKindLabel}
                 labelPosition={previewLabelPosition}
                 leadingIcon={<LuBuilding2 />}
+                leadingIconMode="label_only"
                 value={projectNameValue}
               />
               <PreviewMetaColumn
                 label={previewCopy.labels.industry}
                 labelPosition={previewLabelPosition}
-                align="center"
                 leadingIcon={<LuClipboardList />}
+                leadingIconMode="label_only"
                 value={industryDisplay}
               />
               <PreviewMetaColumn
                 label={previewCopy.labels.assigned}
                 labelPosition={previewLabelPosition}
-                align="end"
                 leadingIcon={<LuUser />}
-                value={assignedDisplay}
+                leadingIconMode="label_only"
+                value={desktopAssignedDisplay}
               />
             </div>
             <div className={`${cardStyles.previewMetaRow} ${cardStyles.previewMetaRow_spaced}`}>
@@ -864,20 +875,21 @@ export function ProjectDetailsCardContent({
                 label={previewCopy.labels.contact}
                 labelPosition={previewLabelPosition}
                 leadingIcon={<LuUser />}
-                value={summary.contact.name || emptyValue}
+                leadingIconMode="label_only"
+                value={<span className={cardStyles.previewContactPill}>{summary.contact.name || emptyValue}</span>}
               />
               <PreviewMetaColumn
                 label={previewCopy.labels.email}
                 labelPosition={previewLabelPosition}
-                align="center"
                 leadingIcon={<LuMail />}
+                leadingIconMode="label_only"
                 value={<StackedMetaList values={emails} emptyValue={emptyValue} />}
               />
               <PreviewMetaColumn
                 label={previewCopy.labels.phone}
                 labelPosition={previewLabelPosition}
-                align="end"
                 leadingIcon={<LuPhone />}
+                leadingIconMode="label_only"
                 value={<StackedMetaList values={phones} emptyValue={emptyValue} />}
               />
             </div>
@@ -886,6 +898,7 @@ export function ProjectDetailsCardContent({
                 label={previewCopy.labels.address}
                 labelPosition={previewLabelPosition}
                 leadingIcon={<LuMapPin />}
+                leadingIconMode="label_only"
                 value={
                   addressDisplay ? <MultilineMetaValue text={addressDisplay} /> : emptyValue
                 }
@@ -896,15 +909,28 @@ export function ProjectDetailsCardContent({
                 label={previewCopy.labels.stage}
                 labelPosition={previewLabelPosition}
                 leadingIcon={<LuGitBranch />}
+                leadingIconMode="label_only"
                 value={stageDisplay}
               />
               <div className={cardStyles.metaColumn_spacer} aria-hidden />
               <PreviewMetaColumn
                 label={previewCopy.labels.progress}
                 labelPosition={previewLabelPosition}
-                align="end"
                 leadingIcon={<LuListChecks />}
-                value={progressDisplay}
+                leadingIconMode="label_only"
+                value={
+                  progressPercent != null ? (
+                    <span className={cardStyles.previewProgressValue}>
+                      <span className={cardStyles.previewProgressTrack} aria-hidden>
+                        <span
+                          className={cardStyles.previewProgressFill}
+                          style={{ width: `${Math.min(100, Math.max(0, Math.round(progressPercent)))}%` }}
+                        />
+                      </span>
+                      <span>{progressDisplay}</span>
+                    </span>
+                  ) : emptyValue
+                }
               />
             </div>
           </section>
@@ -916,6 +942,7 @@ export function ProjectDetailsCardContent({
                   label={previewCopy.labels.notes}
                   labelPosition={previewLabelPosition}
                   leadingIcon={<LuStickyNote />}
+                  leadingIconMode="label_only"
                   value={<span className={cardStyles.previewNotes}>{notesText}</span>}
                 />
               </div>

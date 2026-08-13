@@ -2,6 +2,7 @@
 
 import type { ReactElement } from 'react';
 import { useState } from 'react';
+import { userCircleColor } from '@zenformed/core/dashboard-shell';
 import type { CrmTeamMemberRef } from '@/domain/crm';
 import { resolveTeamMemberAvatarUrl } from '@/presentation/features/crm/resolveTeamMemberAvatarUrl';
 import { useResolvedTeamMemberRef } from '@/presentation/hooks/useResolvedTeamMemberRef';
@@ -54,6 +55,7 @@ export function TeamMemberAvatar({ member, title }: TeamMemberAvatarProps): Reac
   return (
     <span
       className={`${shared.avatar} ${shared.avatarInitials}`}
+      style={{ backgroundColor: userCircleColor(resolvedMember.email ?? resolvedMember.id) }}
       title={tooltip}
       aria-label={resolvedMember.displayName}
     >

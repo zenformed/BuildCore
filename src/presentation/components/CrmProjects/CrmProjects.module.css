@@ -53,10 +53,10 @@
   flex-shrink: 0;
 }
 
-/* Desktop /dashboard Projects toolbar: left actions | centered search+filter | pagination */
+/* Desktop /dashboard Projects toolbar: heading left and actions right. */
 .projectsPanelHeader_desktopToolbar {
   display: grid;
-  grid-template-columns: auto minmax(280px, 1fr) auto;
+  grid-template-columns: minmax(12rem, 1fr) auto;
   align-items: center;
   gap: 0.75rem 1rem;
   width: 100%;
@@ -133,31 +133,44 @@
 .projectsPanelHeaderCenter {
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-end;
   gap: 0.5rem;
   min-width: 0;
-  width: 100%;
+  width: auto;
 }
 
-.projectsPanelHeaderCenter .projectsSearch {
-  flex: 1 1 auto;
-  width: 100%;
-  min-width: 0;
-  max-width: 28rem;
+.projectsPanelHeaderCenter .projectsSearchField {
+  flex: 0 1 24rem;
+  width: 24rem;
+  min-width: 16rem;
+  max-width: 24rem;
+  min-height: 2.5rem;
+  padding-inline: 0.75rem;
+  font-size: 0.875rem;
 }
 
-.projectsPanelHeaderRight {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  flex-shrink: 0;
-  min-width: 0;
+.projectsPanelHeaderCenter .projectsSearchInline {
+  font-size: 0.875rem;
 }
 
-.projectsPanelHeaderRight .projectsListV2Pagination {
-  padding-inline-start: 0;
-  flex-wrap: nowrap;
-  white-space: nowrap;
+:global([data-theme='dark']) .projectsPanelHeaderCenter .projectsSearchField {
+  background: #161922 !important;
+}
+
+.projectsPanelHeaderCenter .projectsFilterBtn {
+  width: 2.5rem;
+  height: 2.5rem;
+  padding: 0;
+}
+
+.projectsPanelHeaderCenter .desktopCreateProjectBtn {
+  min-height: 2.5rem;
+  padding-inline: 0.875rem;
+}
+
+.projectsPanelHeaderCenter .rowActionsBtn {
+  width: 2.5rem;
+  height: 2.5rem;
 }
 
 .projectsPanelTitle {
@@ -1080,6 +1093,475 @@
     2.5rem minmax(11rem, 1.35fr) minmax(7rem, 0.95fr) minmax(9rem, 1.05fr) minmax(6.5rem, 0.75fr)
     minmax(8.5rem, 1fr) minmax(9rem, 1fr) minmax(4.5rem, 0.5fr);
   --projects-table-min-width: 60.5rem;
+}
+
+.projectsDesktopHeading {
+  min-width: 0;
+}
+
+.projectsDesktopHeading h1 {
+  margin: 0;
+  color: var(--theme-text-main, var(--color-text, #0f172a));
+  font-size: 1.125rem;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.projectsDesktopHeading p {
+  margin: 0.15rem 0 0;
+  color: var(--theme-text-muted, var(--color-text-muted, #64748b));
+  font-size: 0.75rem;
+  line-height: 1.3;
+}
+
+/* Desktop dashboard compact table overrides must remain last in the cascade.
+   Shared workflow-table rules above intentionally serve other project tables. */
+@media (min-width: 769px) {
+  .projectsPanel[data-crm-projects-dashboard] .projectsPanelHeader_desktopToolbar {
+    padding-inline: 2rem 1rem;
+  }
+
+  .projectsPanel[data-crm-projects-dashboard] .dashboardKpiStrip {
+    box-sizing: border-box;
+    padding-inline: 2rem;
+  }
+
+  .tableWrapDashboardCompact
+    .tableInnerDashboardCompact.tableInnerWithInlineSelection.tableInnerWithBulkSelection {
+    --projects-grid-gap: 0;
+    --projects-grid-columns:
+      2.5rem minmax(18rem, 1.85fr) minmax(13rem, 1.25fr) minmax(7rem, 0.68fr)
+      minmax(10rem, 0.9fr) minmax(6rem, 0.52fr) minmax(9rem, 0.76fr)
+      minmax(4.5rem, 0.4fr) 2rem;
+    --projects-table-min-width: 100%;
+  }
+
+  .tableWrapDashboardCompact
+    .tableInnerMember.tableInnerDashboardCompact.tableInnerWithInlineSelection.tableInnerWithBulkSelection {
+    --projects-grid-columns:
+      2.5rem minmax(17rem, 1.7fr) minmax(13rem, 1.25fr) minmax(7rem, 0.68fr)
+      minmax(10rem, 0.9fr) minmax(4.5rem, 0.4fr);
+    --projects-table-min-width: 100%;
+  }
+
+  .tableWrapDashboardCompact .gridHeader,
+  .tableWrapDashboardCompact .gridRow {
+    grid-template-columns: var(--projects-grid-columns);
+    width: 100%;
+  }
+
+  .tableWrapDashboardCompact .gridHeaderPrimaryWorkflowName {
+    font-size: 0.6875rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+  }
+
+  .tableWrapDashboardCompact.tableWrap_workflowLikeChrome .gridHeader > *,
+  .tableWrapDashboardCompact.tableWrap_workflowLikeChrome .gridRow > * {
+    border-right: none;
+    border-bottom: none;
+  }
+
+  .tableWrapDashboardCompact.tableWrap_workflowLikeChrome .gridRow > * {
+    padding-block: 0.75rem;
+    background-color: inherit;
+    border-bottom: 1px solid var(--theme-border-main, var(--color-border, #e2e8f0));
+  }
+
+  .tableWrapDashboardCompact.tableWrap_rowsScrollOnly .scrollContainer,
+  :global([data-theme='dark'])
+    .tableWrapDashboardCompact.tableWrap_rowsScrollOnly
+    .scrollContainer {
+    border-left: none;
+    border-radius: 0;
+  }
+
+  .tableWrapDashboardCompact.tableWrap_workflowLikeChrome .gridRow:hover {
+    background-color: var(--theme-surface-hover, var(--color-muted, #f1f5f9));
+  }
+
+  :global([data-theme='dark'])
+    .tableWrapDashboardCompact.tableWrap_workflowLikeChrome
+    .gridRow:hover {
+    background-color: #252936;
+  }
+
+  .tableWrapDashboardCompact .gridHeader {
+    width: 100%;
+    padding-inline-end: 0;
+  }
+
+  .tableWrapDashboardCompact .dashboardClientCell {
+    align-items: flex-start;
+    justify-content: center;
+    text-align: left;
+  }
+
+  .tableWrapDashboardCompact .dashboardBalanceCell {
+    align-items: flex-end;
+    justify-content: center;
+    text-align: right;
+  }
+
+  .tableWrapDashboardCompact .gridHeaderFinancial {
+    justify-content: flex-end;
+    text-align: right;
+  }
+
+  /* Header and rows must share one scroll viewport. Keeping overflow on the
+     rowgroup makes its content box narrower only when a scrollbar appears. */
+  .tableWrapDashboardCompact.tableWrap_rowsScrollOnly .scrollContainer {
+    overflow-x: hidden;
+    overflow-y: auto;
+  }
+
+  .tableWrapDashboardCompact.tableWrap_rowsScrollOnly .tableInner,
+  .tableWrapDashboardCompact.tableWrap_rowsScrollOnly .tableGridShell {
+    height: auto;
+    min-height: 100%;
+    overflow: visible;
+  }
+
+  .tableWrapDashboardCompact.tableWrap_rowsScrollOnly .tableGridShell {
+    display: flex;
+  }
+
+  .tableWrapDashboardCompact.tableWrap_rowsScrollOnly .gridHeader {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    flex: 0 0 auto;
+  }
+
+  .tableWrapDashboardCompact.tableWrap_rowsScrollOnly .gridBody {
+    display: block;
+    flex: 0 0 auto;
+    min-height: 0;
+    overflow: visible;
+  }
+}
+
+.tableInnerDashboardCompact {
+  --projects-grid-columns:
+    minmax(12rem, 1.35fr) minmax(12rem, 1.2fr) minmax(7rem, 0.72fr)
+    minmax(9rem, 0.9fr) minmax(6rem, 0.58fr) minmax(8rem, 0.75fr)
+    minmax(4.5rem, 0.42fr) minmax(3rem, 0.28fr);
+  --projects-table-min-width: 66rem;
+}
+
+.tableInnerDashboardCompact.tableInnerWithBulkSelection {
+  --projects-grid-columns:
+    2.5rem minmax(12rem, 1.35fr) minmax(12rem, 1.2fr) minmax(7rem, 0.72fr)
+    minmax(9rem, 0.9fr) minmax(6rem, 0.58fr) minmax(8rem, 0.75fr)
+    minmax(4.5rem, 0.42fr) minmax(3rem, 0.28fr);
+  --projects-table-min-width: 68.5rem;
+}
+
+.tableInnerMember.tableInnerDashboardCompact {
+  --projects-grid-columns:
+    minmax(12rem, 1.35fr) minmax(12rem, 1.2fr) minmax(7rem, 0.72fr)
+    minmax(9rem, 0.9fr) minmax(4.5rem, 0.42fr);
+  --projects-table-min-width: 48rem;
+}
+
+.dashboardKpiStrip {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  flex: 0 0 auto;
+  border: 1px solid var(--theme-border-main, var(--color-border, #e2e8f0));
+  border-bottom: none;
+  background: var(--theme-surface-main, var(--color-surface, #fff));
+}
+
+.dashboardKpiItem {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  min-width: 0;
+  padding: 0.85rem 1rem;
+  border-right: 1px solid var(--theme-border-main, var(--color-border, #e2e8f0));
+}
+
+.dashboardKpiItem:last-child {
+  border-right: none;
+}
+
+.dashboardKpiItem > span,
+.dashboardKpiItem > small {
+  color: var(--color-text-muted, #64748b);
+}
+
+.dashboardKpiItem > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.dashboardKpiItem > span > svg {
+  width: 0.9rem;
+  height: 0.9rem;
+  flex: 0 0 auto;
+}
+
+.dashboardKpiItemPipeline > span > svg {
+  color: #60a5fa;
+}
+
+.dashboardKpiItemCollected > span > svg {
+  color: #16a34a;
+}
+
+.dashboardKpiItemOutstanding > span > svg {
+  color: #d97706;
+}
+
+.dashboardKpiItemAttention > span > svg {
+  color: #eab308;
+}
+
+.dashboardKpiItemAttention {
+  position: relative;
+  padding-right: 11.5rem;
+}
+
+.dashboardKpiPagination {
+  position: absolute;
+  right: -0.625rem;
+  bottom: 0.65rem;
+}
+
+.dashboardKpiPagination .projectsListV2Pagination {
+  justify-content: flex-end;
+  flex-wrap: nowrap;
+  white-space: nowrap;
+}
+
+.dashboardSortButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-transform: inherit;
+  letter-spacing: inherit;
+  cursor: pointer;
+}
+
+.dashboardSortButton > svg {
+  width: 0.75rem;
+  height: 0.75rem;
+  flex: 0 0 auto;
+}
+
+.dashboardSortButton[aria-pressed='true'] {
+  color: var(--color-primary, #3b82f6);
+}
+
+.dashboardKpiItem > strong {
+  font-size: 1.25rem;
+  line-height: 1.15;
+  color: var(--color-text, #0f172a);
+}
+
+.dashboardKpiItem > small {
+  font-size: 0.6875rem;
+}
+
+:global([data-theme='dark']) .dashboardKpiStrip {
+  background: #1d2029;
+  border-color: var(--theme-border-main, #3d3e4a);
+}
+
+:global([data-theme='dark']) .dashboardKpiItem {
+  border-right-color: var(--theme-border-main, #3d3e4a);
+}
+
+:global([data-theme='dark']) .dashboardKpiItem > strong {
+  color: #f8fafc;
+}
+
+.dashboardClientCell,
+.dashboardBalanceCell {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.dashboardClientCell > strong,
+.dashboardClientCell > span,
+.dashboardBalanceCell > strong,
+.dashboardBalanceCell > small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dashboardClientCell > span,
+.dashboardClientCell > .tableContactCell,
+.dashboardBalanceCell > small {
+  color: var(--color-text-muted, #64748b);
+  font-size: 0.7rem;
+}
+
+.dashboardClientCell > .tableContactCell {
+  width: auto;
+  gap: 0.35em;
+}
+
+.dashboardClientContactsRow {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  min-width: 0;
+  color: var(--color-text-muted, #64748b);
+  font-size: 0.7rem;
+}
+
+.dashboardClientContactsRow > .tableContactCell {
+  flex: 0 1 auto;
+  min-width: 0;
+  gap: 0.35em;
+}
+
+.dashboardClientAddress {
+  color: var(--color-text-muted, #64748b);
+  font-size: 0.7rem;
+}
+
+:global([data-theme='dark']) .dashboardClientAddress {
+  color: var(--theme-text-muted, #94a3b8);
+}
+
+.tableWrapDashboardCompact .dashboardValueCell,
+.tableWrapDashboardCompact .dashboardBalanceCell > strong {
+  font-size: 0.875rem;
+  font-weight: 700;
+}
+
+.tableWrapDashboardCompact .dashboardBalanceCell > small {
+  font-size: 0.75rem;
+}
+
+.dashboardClientLine {
+  display: flex;
+  align-items: center;
+  gap: 0.35em;
+  width: 100%;
+  min-width: 0;
+}
+
+.dashboardClientLine.subprojectsContactBadge {
+  align-self: flex-start;
+  width: fit-content;
+  max-width: 100%;
+}
+
+.dashboardClientLine > span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dashboardClientLineIcon {
+  width: 1em;
+  height: 1em;
+  flex: 0 0 1em;
+}
+
+.dashboardStageCell,
+.dashboardProgressCell {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+
+.dashboardProgress {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  min-width: 0;
+}
+
+.dashboardProgressTrack {
+  display: block;
+  width: min(11rem, 75%);
+  height: 0.5rem;
+  flex: 0 1 11rem;
+  overflow: hidden;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--color-text-muted, #64748b) 24%, transparent);
+}
+
+.dashboardProgressFill {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--color-primary, #3b82f6);
+}
+
+.dashboardProgressLabel {
+  flex: 0 0 auto;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--color-text-muted, #64748b);
+}
+
+.tableWrapDashboardCompact {
+  width: 100%;
+  padding-inline: 0;
+}
+
+.tableWrapDashboardCompact .scrollContainer {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* These selectors intentionally come after the shared inline-selection tracks so
+   dashboard headers and rows resolve to one identical compact desktop grid. */
+.tableInnerDashboardCompact.tableInnerWithInlineSelection.tableInnerWithBulkSelection {
+  --projects-grid-gap: 0;
+  --projects-grid-columns:
+    2.5rem minmax(13rem, 1.45fr) minmax(13rem, 1.3fr) minmax(7rem, 0.7fr)
+    minmax(10rem, 0.95fr) minmax(6rem, 0.55fr) minmax(9rem, 0.78fr)
+    minmax(4.5rem, 0.42fr) minmax(3rem, 0.28fr);
+  --projects-table-min-width: 100%;
+}
+
+.tableInnerMember.tableInnerDashboardCompact.tableInnerWithInlineSelection.tableInnerWithBulkSelection {
+  --projects-grid-columns:
+    2.5rem minmax(13rem, 1.45fr) minmax(13rem, 1.3fr) minmax(7rem, 0.7fr)
+    minmax(10rem, 0.95fr) minmax(4.5rem, 0.42fr);
+  --projects-table-min-width: 100%;
+}
+
+.tableWrapDashboardCompact .dashboardClientCell {
+  align-items: flex-start;
+  justify-content: center;
+  text-align: left;
+}
+
+.tableWrapDashboardCompact .dashboardBalanceCell {
+  align-items: flex-end;
+  justify-content: center;
+  text-align: right;
+}
+
+.tableWrapDashboardCompact .gridHeaderFinancial {
+  justify-content: flex-end;
+  text-align: right;
 }
 
 /* Match Workflow Tasks select track for project-detail subprojects.
@@ -2015,6 +2497,27 @@
   padding-left: 2.25rem;
 }
 
+.projectNeedsAttentionIcon {
+  width: 0.9rem;
+  height: 0.9rem;
+  flex: 0 0 auto;
+  color: #eab308;
+}
+
+/* Keep the compact dashboard project identity centered as one unit within its row. */
+.tableWrapDashboardCompact .gridCellProject {
+  justify-content: center;
+}
+
+.tableWrapDashboardCompact .subprojectsProjectCell {
+  align-items: center;
+}
+
+.tableWrapDashboardCompact .subprojectsProjectPhoto {
+  width: 3.25rem;
+  height: 3.25rem;
+}
+
 .projectMetaRow {
   display: flex;
   align-items: center;
@@ -2043,6 +2546,12 @@
   padding: 0.125rem 0.35rem;
   font-size: 0.625rem;
   line-height: 1.15;
+}
+
+.tableWrapDashboardCompact .dashboardStageCell .projectMetaStagePill {
+  font-size: 0.75rem;
+  padding: 0.3rem 0.65rem;
+  line-height: 1.2;
 }
 
 .projectProgressRow {
@@ -2074,6 +2583,12 @@
   align-items: center;
   justify-content: center;
   min-width: 0;
+}
+
+.gridCellAssignee > * {
+  width: 1.875rem;
+  height: 1.875rem;
+  font-size: 0.75rem;
 }
 
 .draftSelectTrade {
@@ -3086,5 +3601,88 @@
 
   .mobileEmptyState {
     padding: 2rem 0.5rem;
+  }
+}
+
+/* Keep this dashboard-only override after every shared table and responsive rule. */
+@media (min-width: 769px) {
+  .tableWrapDashboardCompact
+    .tableInnerDashboardCompact.tableInnerWithInlineSelection.tableInnerWithBulkSelection {
+    --projects-grid-gap: 0;
+    --projects-grid-columns:
+      minmax(1.5rem, 0.15fr)
+      minmax(0, 3.45fr)
+      minmax(0, 2.1fr)
+      minmax(0, 1fr)
+      minmax(0, 1.1fr)
+      minmax(0, 1fr)
+      minmax(0, 1.15fr)
+      minmax(0, 0.7fr)
+      minmax(2rem, 0.3fr);
+    --projects-table-min-width: 100%;
+  }
+
+  .tableWrapDashboardCompact
+    .tableInnerMember.tableInnerDashboardCompact.tableInnerWithInlineSelection.tableInnerWithBulkSelection {
+    --projects-grid-columns:
+      2.5rem minmax(17rem, 1.7fr) minmax(13rem, 1.25fr) minmax(7rem, 0.68fr)
+      minmax(10rem, 0.9fr) minmax(4.5rem, 0.4fr);
+    --projects-table-min-width: 100%;
+  }
+
+  .tableWrapDashboardCompact .gridHeader,
+  .tableWrapDashboardCompact .gridRow {
+    grid-template-columns: var(--projects-grid-columns);
+    width: 100%;
+  }
+
+  .tableWrapDashboardCompact .dashboardClientCell {
+    align-items: flex-start;
+    justify-content: center;
+    text-align: left;
+  }
+
+  .tableWrapDashboardCompact .dashboardBalanceCell {
+    align-items: flex-end;
+    justify-content: center;
+    text-align: right;
+  }
+
+  .tableWrapDashboardCompact .dashboardProgressCell {
+    box-sizing: border-box;
+    padding-inline: 0.75rem;
+  }
+
+  .tableWrapDashboardCompact .gridHeaderFinancial {
+    justify-content: flex-end;
+    text-align: right;
+  }
+
+  .tableWrapDashboardCompact.tableWrap_workflowLikeChrome
+    .gridRowSelected,
+  .tableWrapDashboardCompact.tableWrap_workflowLikeChrome
+    .gridRowSelected
+    > * {
+    background: var(--theme-surface-hover, var(--color-muted, #f1f5f9));
+  }
+
+  :global([data-theme='dark'])
+    .tableWrapDashboardCompact.tableWrap_workflowLikeChrome
+    .gridRow:hover,
+  :global([data-theme='dark'])
+    .tableWrapDashboardCompact.tableWrap_workflowLikeChrome
+    .gridRow:hover
+    > * {
+    background: #252936;
+  }
+
+  :global([data-theme='dark'])
+    .tableWrapDashboardCompact.tableWrap_workflowLikeChrome
+    .gridRowSelected,
+  :global([data-theme='dark'])
+    .tableWrapDashboardCompact.tableWrap_workflowLikeChrome
+    .gridRowSelected
+    > * {
+    background: #252936;
   }
 }

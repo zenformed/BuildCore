@@ -1,6 +1,7 @@
 'use client';
 
-import { useMemo, type ReactElement, type ReactNode } from 'react';
+import { useMemo, useState, type ReactElement, type ReactNode } from 'react';
+import { LuArrowUpDown, LuBuilding2, LuLayers3, LuMoveUpRight, LuTriangleAlert } from 'react-icons/lu';
 import type { CrmProjectSummary } from '@/domain/crm';
 import type { CrmProjectPaymentTasksIndex, ProjectPaymentFinancials } from '@/domain/crm/projectPaymentValue';
 import type { CrmProjectWorkflowProgressInputIndex } from '@/domain/crm/projectWorkflowProgressInput';
@@ -11,10 +12,16 @@ import { useDashboardSubprojectExpansion } from '@/presentation/features/crmProj
 import type { BulkSelectionBindings } from '@/presentation/features/bulkSelection/BulkSelectionBindings';
 import { BulkSelectCheckbox } from '@/presentation/components/BulkSelection';
 import { WorkflowTableStatusRefresh } from '@/presentation/components/CrmProjectDetail/WorkflowTableStatusRefresh';
+import { formatCentsAsUsd } from '@/presentation/features/crmProjects/crmProjectFormatters';
+import { resolveProjectWorkflowProgressDisplayFromIndex } from '@/domain/buildcore/projectPipelineProgress';
+import { resolvePipelineStageScopeForProject } from '@/domain/buildcore/orgPipelineStages';
+import { useBuildCorePipelineStages } from '@/presentation/providers/BuildCorePipelineStagesProvider';
 import { CrmProjectTableRow } from './CrmProjectTableRow';
 import styles from './CrmProjects.module.css';
 
 const COLUMNS = content.crm.table.columns;
+type DashboardSortKey = 'project' | 'progress' | 'value' | 'balance' | 'assigned';
+type DashboardSortDirection = 'asc' | 'desc';
 
 export type CrmProjectsTableDeleteLabels = {
   readonly action: string;
@@ -86,6 +93,10 @@ export type CrmProjectsTableProps = {
   readonly firstRunEmptyTitle?: string | null;
   readonly firstRunEmptyActionLabel?: string | null;
   readonly onFirstRunEmptyAction?: (() => void) | null;
+  /** BuildCore dashboard desktop-only compact financial pipeline presentation. */
+  readonly dashboardCompactLayout?: boolean;
+  /** Optional controls anchored in the final dashboard KPI cell. */
+  readonly dashboardTableToolbar?: ReactNode;
 };
 
 export function CrmProjectsTable({
@@ -134,7 +145,14 @@ export function CrmProjectsTable({
   firstRunEmptyTitle = null,
   firstRunEmptyActionLabel = null,
   onFirstRunEmptyAction = null,
+  dashboardCompactLayout = false,
+  dashboardTableToolbar = null,
 }: CrmProjectsTableProps): ReactElement {
+  const { getCatalog } = useBuildCorePipelineStages();
+  const [dashboardSort, setDashboardSort] = useState<{
+    key: DashboardSortKey;
+    direction: DashboardSortDirection;
+  } | null>(null);
   const displayRoots = useMemo(
     () => (enableSubprojectExpansion ? (rootRows ?? []) : (rows ?? [])),
     [enableSubprojectExpansion, rootRows, rows]
@@ -159,6 +177,7 @@ export function CrmProjectsTable({
     isMemberRole ? `${styles.tableInner} ${styles.tableInnerMember}` : styles.tableInner,
     showSelectColumn ? styles.tableInnerWithBulkSelection : '',
     showInlineChrome ? styles.tableInnerWithInlineSelection : '',
+    dashboardCompactLayout ? styles.tableInnerDashboardCompact : '',
   ]
     .filter(Boolean)
     .join(' ');
@@ -223,16 +242,133 @@ export function CrmProjectsTable({
     parentById,
   ]);
 
+  const dashboardMetrics = useMemo(
+    () =>
+      rowModels.reduce(
+        (totals, row) => {
+          if (row.variant === 'child') return totals;
+          totals.valueCents += row.financials.valueCents;
+          totals.collectedCents += row.financials.collectedCents;
+          totals.balanceCents += row.financials.balanceCents;
+          if (row.project.priority === 'urgent') totals.needsAttention += 1;
+          totals.projects += 1;
+          return totals;
+        },
+        { valueCents: 0, collectedCents: 0, balanceCents: 0, needsAttention: 0, projects: 0 }
+      ),
+    [rowModels]
+  );
+
+  const sortedRowModels = useMemo(() => {
+    if (!dashboardCompactLayout || dashboardSort == null) return rowModels;
+    const groups = rowModels.reduce<typeof rowModels[]>((result, row) => {
+      if (row.variant === 'root' || result.length === 0) result.push([row]);
+      else result[result.length - 1]?.push(row);
+      return result;
+    }, []);
+    const direction = dashboardSort.direction === 'asc' ? 1 : -1;
+    const valueFor = (row: (typeof rowModels)[number]): string | number => {
+      if (dashboardSort.key === 'project') return row.project.name.trim().toLocaleLowerCase();
+      if (dashboardSort.key === 'value') return row.financials.valueCents;
+      if (dashboardSort.key === 'balance') return row.financials.balanceCents;
+      if (dashboardSort.key === 'assigned') {
+        return row.project.assignedTo?.displayName.trim().toLocaleLowerCase() ?? '\uffff';
+      }
+      const summaryProgress = pageSummariesByProjectId?.get(row.project.id)?.progress?.textPercent;
+      if (summaryProgress != null) return summaryProgress;
+      if (workflowProgressInputIndex == null) return 0;
+      return resolveProjectWorkflowProgressDisplayFromIndex({
+        summary: row.project,
+        workflowProgressInputIndex,
+        stages: getCatalog(
+          resolvePipelineStageScopeForProject({
+            parentProjectId: row.project.parentProjectId,
+          })
+        ),
+      }).textPercent;
+    };
+    groups.sort((left, right) => {
+      const a = valueFor(left[0]!);
+      const b = valueFor(right[0]!);
+      return (typeof a === 'string' && typeof b === 'string'
+        ? a.localeCompare(b)
+        : Number(a) - Number(b)) * direction;
+    });
+    return groups.flat();
+  }, [
+    dashboardCompactLayout,
+    dashboardSort,
+    getCatalog,
+    pageSummariesByProjectId,
+    rowModels,
+    workflowProgressInputIndex,
+  ]);
+
+  const toggleDashboardSort = (key: DashboardSortKey): void => {
+    setDashboardSort((current) => {
+      if (current?.key !== key) return { key, direction: 'asc' };
+      if (current.direction === 'asc') return { key, direction: 'desc' };
+      return null;
+    });
+  };
+
+  const sortableHeader = (key: DashboardSortKey, label: string): ReactElement => (
+    <button
+      type="button"
+      className={styles.dashboardSortButton}
+      onClick={() => toggleDashboardSort(key)}
+      aria-label={
+        dashboardSort?.key !== key
+          ? `Sort ${label} ascending`
+          : dashboardSort.direction === 'asc'
+            ? `Sort ${label} descending`
+            : `Clear ${label} sorting and restore default order`
+      }
+      aria-pressed={dashboardSort?.key === key}
+    >
+      <LuArrowUpDown aria-hidden />
+      <span>{label}</span>
+    </button>
+  );
+
   const tableWrapClass = [
     styles.tableWrap,
     workflowLikeTableChrome ? styles.tableWrap_workflowLikeChrome : '',
     rowsScrollOnly ? styles.tableWrap_rowsScrollOnly : '',
+    dashboardCompactLayout ? styles.tableWrapDashboardCompact : '',
   ]
     .filter(Boolean)
     .join(' ');
 
   return (
     <div className={tableWrapClass}>
+      {dashboardCompactLayout && !isMemberRole ? (
+        <div className={styles.dashboardKpiStrip} aria-label="Project pipeline summary">
+          <div className={`${styles.dashboardKpiItem} ${styles.dashboardKpiItemPipeline}`}>
+            <span><LuBuilding2 aria-hidden />Pipeline value</span>
+            <strong>{formatCentsAsUsd(dashboardMetrics.valueCents)}</strong>
+            <small>{dashboardMetrics.projects} projects</small>
+          </div>
+          <div className={`${styles.dashboardKpiItem} ${styles.dashboardKpiItemCollected}`}>
+            <span><LuLayers3 aria-hidden />Collected</span>
+            <strong>{formatCentsAsUsd(dashboardMetrics.collectedCents)}</strong>
+            <small>Received to date</small>
+          </div>
+          <div className={`${styles.dashboardKpiItem} ${styles.dashboardKpiItemOutstanding}`}>
+            <span><LuMoveUpRight aria-hidden />Outstanding balance</span>
+            <strong>{formatCentsAsUsd(dashboardMetrics.balanceCents)}</strong>
+            <small>Awaiting collection</small>
+          </div>
+          <div className={`${styles.dashboardKpiItem} ${styles.dashboardKpiItemAttention}`}>
+            <span><LuTriangleAlert aria-hidden />Needs attention</span>
+            <strong>{dashboardMetrics.needsAttention}</strong>
+            <small>Priority projects</small>
+            {dashboardTableToolbar != null ? (
+              <div className={styles.dashboardKpiPagination}>{dashboardTableToolbar}</div>
+            ) : null}
+          </div>
+        </div>
+      ) : null}
       <div className={styles.scrollContainer} role="region" aria-label={content.crm.table.regionAriaLabel}>
         <div className={tableInnerClass}>
           <div className={styles.tableGridShell}>
@@ -272,7 +408,9 @@ export function CrmProjectsTable({
                       }}
                     >
                       <span className={styles.gridHeaderPrimaryWorkflowTitle}>
-                        <span className={styles.gridHeaderPrimaryWorkflowName}>{projectHeader}</span>
+                      <span className={styles.gridHeaderPrimaryWorkflowName}>
+                        {dashboardCompactLayout ? sortableHeader('project', projectHeader) : projectHeader}
+                      </span>
                         {bulkHeaderActions == null ? (
                           <span className={styles.gridHeaderPrimaryWorkflowCount}>
                             {inlineHeaderPillLabel}
@@ -293,7 +431,9 @@ export function CrmProjectsTable({
                     </button>
                   ) : (
                     <span className={styles.gridHeaderPrimaryLabelWrap}>
-                      <span className={styles.gridHeaderPrimaryLabel}>{projectHeader}</span>
+                      <span className={styles.gridHeaderPrimaryLabel}>
+                        {dashboardCompactLayout ? sortableHeader('project', projectHeader) : projectHeader}
+                      </span>
                       {showHeaderCollapseToggle ? (
                         <button
                           type="button"
@@ -331,26 +471,38 @@ export function CrmProjectsTable({
               ) : (
                 <span role="columnheader">{projectHeader}</span>
               )}
-              <span role="columnheader">{COLUMNS.contact}</span>
-              <span role="columnheader">{COLUMNS.email}</span>
-              <span role="columnheader">{COLUMNS.phone}</span>
-              <span role="columnheader">{COLUMNS.address}</span>
-              <span role="columnheader">{COLUMNS.notes}</span>
+              {dashboardCompactLayout ? (
+                <>
+                  <span role="columnheader">Client</span>
+                  <span role="columnheader">Stage</span>
+                  <span role="columnheader">{sortableHeader('progress', 'Progress')}</span>
+                </>
+              ) : (
+                <>
+                  <span role="columnheader">{COLUMNS.contact}</span>
+                  <span role="columnheader">{COLUMNS.email}</span>
+                  <span role="columnheader">{COLUMNS.phone}</span>
+                  <span role="columnheader">{COLUMNS.address}</span>
+                  <span role="columnheader">{COLUMNS.notes}</span>
+                </>
+              )}
               {!isMemberRole ? (
                 <>
                   <span role="columnheader" className={styles.gridHeaderFinancial}>
-                    {COLUMNS.value}
+                    {dashboardCompactLayout ? sortableHeader('value', COLUMNS.value) : COLUMNS.value}
                   </span>
-                  <span role="columnheader" className={styles.gridHeaderFinancial}>
-                    {COLUMNS.collected}
-                  </span>
-                  <span role="columnheader" className={styles.gridHeaderFinancial}>
-                    {COLUMNS.balance}
-                  </span>
+                  {dashboardCompactLayout ? (
+                    <span role="columnheader" className={styles.gridHeaderFinancial}>{sortableHeader('balance', 'Balance')}</span>
+                  ) : (
+                    <>
+                      <span role="columnheader" className={styles.gridHeaderFinancial}>{COLUMNS.collected}</span>
+                      <span role="columnheader" className={styles.gridHeaderFinancial}>{COLUMNS.balance}</span>
+                    </>
+                  )}
                 </>
               ) : null}
               <span role="columnheader" className={styles.gridHeaderAssignee}>
-                {COLUMNS.assigned}
+                {dashboardCompactLayout ? sortableHeader('assigned', COLUMNS.assigned) : COLUMNS.assigned}
               </span>
               {!isMemberRole && showActions ? (
                 <span
@@ -400,7 +552,7 @@ export function CrmProjectsTable({
                   <p className={styles.emptyState}>{emptyMessage ?? content.crm.table.empty}</p>
                 )
               ) : (
-                rowModels.map((row) => (
+                sortedRowModels.map((row) => (
                   <CrmProjectTableRow
                     key={row.key}
                     project={row.project}
@@ -444,6 +596,7 @@ export function CrmProjectsTable({
                     subprojectCount={row.subprojectCount}
                     progressTone={progressTone}
                     showContactIcons={workflowLikeTableChrome}
+                    dashboardCompactLayout={dashboardCompactLayout}
                   />
                 ))
               )}
