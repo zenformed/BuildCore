@@ -95,6 +95,8 @@ export type CrmProjectsTableProps = {
   readonly onFirstRunEmptyAction?: (() => void) | null;
   /** BuildCore dashboard desktop-only compact financial pipeline presentation. */
   readonly dashboardCompactLayout?: boolean;
+  /** Show the pipeline KPI strip above a compact table. Detail views disable this. */
+  readonly showDashboardKpis?: boolean;
   /** Optional controls anchored in the final dashboard KPI cell. */
   readonly dashboardTableToolbar?: ReactNode;
 };
@@ -146,6 +148,7 @@ export function CrmProjectsTable({
   firstRunEmptyActionLabel = null,
   onFirstRunEmptyAction = null,
   dashboardCompactLayout = false,
+  showDashboardKpis = true,
   dashboardTableToolbar = null,
 }: CrmProjectsTableProps): ReactElement {
   const { getCatalog } = useBuildCorePipelineStages();
@@ -261,11 +264,13 @@ export function CrmProjectsTable({
 
   const sortedRowModels = useMemo(() => {
     if (!dashboardCompactLayout || dashboardSort == null) return rowModels;
-    const groups = rowModels.reduce<typeof rowModels[]>((result, row) => {
-      if (row.variant === 'root' || result.length === 0) result.push([row]);
-      else result[result.length - 1]?.push(row);
-      return result;
-    }, []);
+    const groups = enableSubprojectExpansion
+      ? rowModels.reduce<typeof rowModels[]>((result, row) => {
+          if (row.variant === 'root' || result.length === 0) result.push([row]);
+          else result[result.length - 1]?.push(row);
+          return result;
+        }, [])
+      : rowModels.map((row) => [row]);
     const direction = dashboardSort.direction === 'asc' ? 1 : -1;
     const valueFor = (row: (typeof rowModels)[number]): string | number => {
       if (dashboardSort.key === 'project') return row.project.name.trim().toLocaleLowerCase();
@@ -298,6 +303,7 @@ export function CrmProjectsTable({
   }, [
     dashboardCompactLayout,
     dashboardSort,
+    enableSubprojectExpansion,
     getCatalog,
     pageSummariesByProjectId,
     rowModels,
@@ -336,13 +342,14 @@ export function CrmProjectsTable({
     workflowLikeTableChrome ? styles.tableWrap_workflowLikeChrome : '',
     rowsScrollOnly ? styles.tableWrap_rowsScrollOnly : '',
     dashboardCompactLayout ? styles.tableWrapDashboardCompact : '',
+    dashboardCompactLayout && !showDashboardKpis ? styles.tableWrapDetailCompact : '',
   ]
     .filter(Boolean)
     .join(' ');
 
   return (
     <div className={tableWrapClass}>
-      {dashboardCompactLayout && !isMemberRole ? (
+      {dashboardCompactLayout && showDashboardKpis && !isMemberRole ? (
         <div className={styles.dashboardKpiStrip} aria-label="Project pipeline summary">
           <div className={`${styles.dashboardKpiItem} ${styles.dashboardKpiItemPipeline}`}>
             <span><LuBuilding2 aria-hidden />Pipeline value</span>
@@ -396,7 +403,40 @@ export function CrmProjectsTable({
                     .join(' ')}
                   aria-label={bulkHeaderActions != null ? undefined : projectHeader}
                 >
-                  {workflowLikeTableChrome ? (
+                  {workflowLikeTableChrome && dashboardCompactLayout ? (
+                    <span className={styles.gridHeaderPrimaryWorkflowTitle}>
+                      <span className={styles.gridHeaderPrimaryWorkflowName}>
+                        {sortableHeader('project', projectHeader)}
+                      </span>
+                      {bulkHeaderActions == null ? (
+                        <span className={styles.gridHeaderPrimaryWorkflowCount}>
+                          {inlineHeaderPillLabel}
+                        </span>
+                      ) : null}
+                      {showHeaderCollapseToggle ? (
+                        <button
+                          type="button"
+                          className={styles.gridHeaderCollapseBtn}
+                          aria-expanded={!headerCollapsed}
+                          aria-label={`${headerCollapsed ? 'Expand' : 'Collapse'} ${projectHeader}`}
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            onToggleHeaderCollapse?.();
+                          }}
+                        >
+                          <span className={styles.projectsExpandAllChevronWrap} aria-hidden>
+                            <span
+                              className={
+                                headerCollapsed
+                                  ? styles.projectsExpandAllChevron
+                                  : styles.projectsExpandAllChevron_expanded
+                              }
+                            />
+                          </span>
+                        </button>
+                      ) : null}
+                    </span>
+                  ) : workflowLikeTableChrome ? (
                     <button
                       type="button"
                       className={styles.gridHeaderPrimaryWorkflowButton}

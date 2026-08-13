@@ -1,10 +1,9 @@
 'use client';
 
 import type { ReactElement } from 'react';
-import type { CrmPriority, CrmProjectSummary } from '@/domain/crm';
+import type { CrmProjectSummary } from '@/domain/crm';
 import type { ProjectDetailRoutes } from '@/platform/navigation/projectDetailRoutes';
 import { ProjectDetailActionsMenu } from './ProjectDetailActionsMenu';
-import { ProjectPriorityToggle } from './ProjectPriorityToggle';
 import styles from './ProjectDetail.module.css';
 
 export type ProjectDetailHeaderActionsProps = {
@@ -24,12 +23,6 @@ export type ProjectDetailHeaderActionsProps = {
   onRequestMarkInactive?: () => void;
   onRequestMarkActive?: () => void | Promise<void>;
   lifecycleBusy?: boolean;
-  priority: CrmPriority;
-  priorityBusy: boolean;
-  priorityDisabled?: boolean;
-  markPriorityLabel: string;
-  removePriorityLabel: string;
-  onPriorityToggle: (nextPriority: CrmPriority) => void | Promise<void>;
 };
 
 export function ProjectDetailHeaderActions({
@@ -49,23 +42,9 @@ export function ProjectDetailHeaderActions({
   onRequestMarkInactive,
   onRequestMarkActive,
   lifecycleBusy = false,
-  priority,
-  priorityBusy,
-  priorityDisabled = false,
-  markPriorityLabel,
-  removePriorityLabel,
-  onPriorityToggle,
 }: ProjectDetailHeaderActionsProps): ReactElement {
   return (
     <div className={styles.detailHeaderActions}>
-      <ProjectPriorityToggle
-        priority={priority}
-        busy={priorityBusy || deleting}
-        disabled={priorityDisabled}
-        markPriorityLabel={markPriorityLabel}
-        removePriorityLabel={removePriorityLabel}
-        onToggle={onPriorityToggle}
-      />
       <ProjectDetailActionsMenu
         routes={routes}
         projectSummary={projectSummary}

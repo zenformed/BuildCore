@@ -3,7 +3,7 @@
 import type { ReactElement, ReactNode } from 'react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import type { CrmProjectDetail, CrmProjectSummary, CrmPriority } from '@/domain/crm';
+import type { CrmProjectDetail, CrmProjectSummary } from '@/domain/crm';
 import { canActorChangeCrmProjectStatus, isCrmProjectInactive } from '@/domain/crm';
 import { isBuildCoreMemberRole } from '@/domain/buildcore/memberRole';
 import { canManageBuildCoreProjectTemplates } from '@/domain/buildcore/projectTemplateAccess';
@@ -284,19 +284,6 @@ function ProjectDetailShellBody({
   const showDetailProgress = pageContext === 'detail';
   const headerProgress = showDetailProgress ? <ProjectDetailHeaderProgress /> : null;
 
-  const priorityToggleProps = {
-    priority: projectSummary.priority,
-    priorityBusy: workspace.savingField === 'priority',
-    priorityDisabled: !canMutateProjects,
-    markPriorityLabel: detail.markPriority,
-    removePriorityLabel: detail.removePriority,
-    onPriorityToggle: (nextPriority: CrmPriority) => {
-      guardProjectEdit(() => {
-        void workspace.patchField('priority', nextPriority);
-      });
-    },
-  };
-
   const guardedOpenCreateWorkflowTask = useCallback(
     (input: Parameters<typeof workspace.openCreateWorkflowTask>[0]) => {
       guardProjectEdit(() => {
@@ -346,7 +333,6 @@ function ProjectDetailShellBody({
     : (
         <ProjectDetailHeaderActions
           {...actionsMenuProps}
-          {...priorityToggleProps}
         />
       );
 

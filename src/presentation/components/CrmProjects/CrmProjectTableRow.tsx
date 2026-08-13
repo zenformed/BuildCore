@@ -378,24 +378,6 @@ export function CrmProjectTableRow({
             </strong>
             <span className={styles.dashboardClientContactsRow}>
             <CrmProjectTableContactCell
-              kind="phone"
-              values={contactPhones}
-              displayValue={displayPhone}
-              formatDisplayValue={formatPhonePopoverValue}
-              getCopyValue={getPhoneCopyValue}
-              onCopied={onContactCopied}
-              href={phoneHref}
-              getRowHref={(value) => buildTelHref(value)}
-              leadingIcon={
-                hasPhoneValue ? (
-                  <LuPhone
-                    className={`${styles.dashboardClientLineIcon} ${styles.subprojectsContactInfoIcon}`}
-                    aria-hidden
-                  />
-                ) : null
-              }
-            />
-            <CrmProjectTableContactCell
               kind="email"
               values={contactEmails}
               displayValue={displayEmail}
@@ -408,6 +390,24 @@ export function CrmProjectTableRow({
               leadingIcon={
                 hasEmailValue ? (
                   <LuMail
+                    className={`${styles.dashboardClientLineIcon} ${styles.subprojectsContactInfoIcon}`}
+                    aria-hidden
+                  />
+                ) : null
+              }
+            />
+            <CrmProjectTableContactCell
+              kind="phone"
+              values={contactPhones}
+              displayValue={displayPhone}
+              formatDisplayValue={formatPhonePopoverValue}
+              getCopyValue={getPhoneCopyValue}
+              onCopied={onContactCopied}
+              href={phoneHref}
+              getRowHref={(value) => buildTelHref(value)}
+              leadingIcon={
+                hasPhoneValue ? (
+                  <LuPhone
                     className={`${styles.dashboardClientLineIcon} ${styles.subprojectsContactInfoIcon}`}
                     aria-hidden
                   />

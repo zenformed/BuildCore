@@ -10,11 +10,13 @@ import {
   LuPencil,
   LuPhone,
   LuStickyNote,
+  LuTriangleAlert,
   LuUser,
 } from 'react-icons/lu';
 import { countCompletedWorkflowStages, resolveWorkflowPipelineGraphState } from '@/domain/buildcore/projectPipelineProgress';
 import type { CrmIndustry, CrmProjectDetail, CrmProjectSummary } from '@/domain/crm';
 import { isCrmProjectInactive, isPaymentWorkflowTask } from '@/domain/crm';
+import { isProjectPriorityActive, toggleProjectPriority } from '@/domain/crm/projectPriorityToggle';
 import { nonEmptyContactValues } from '@/domain/crm/contactMultiValue';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
 import { CreateCrmProjectModal } from '@/presentation/components/CrmProjects/CreateCrmProjectModal';
@@ -90,6 +92,8 @@ export function ProjectDetailOverviewHeader({
 
   const isSubproject = summary.parentProjectId != null;
   const isInactive = isCrmProjectInactive(summary);
+  const isPriority = isProjectPriorityActive(summary.priority);
+  const priorityLabel = isPriority ? detailCopy.removePriority : detailCopy.markPriority;
   const entityTypeLabel = isSubproject
     ? detailCopy.subprojects.subprojectSingular
     : detailCopy.pageTitleFallback;
@@ -208,6 +212,26 @@ export function ProjectDetailOverviewHeader({
                     onRequestStatus={() => undefined}
                   />
                 )}
+                {!isMemberRole ? (
+                  <button
+                    type="button"
+                    className={`${styles.overviewPriorityButton} ${
+                      isPriority ? styles.overviewPriorityButtonActive : ''
+                    }`}
+                    disabled={readOnly || savingField === 'priority'}
+                    onClick={() => {
+                      guardProjectEdit(() => {
+                        void patchField('priority', toggleProjectPriority(summary.priority));
+                      });
+                    }}
+                    aria-label={priorityLabel}
+                    aria-pressed={isPriority}
+                    aria-busy={savingField === 'priority' || undefined}
+                    title={priorityLabel}
+                  >
+                    <LuTriangleAlert size={17} aria-hidden />
+                  </button>
+                ) : null}
                 {!isMemberRole ? (
                   <button
                     type="button"

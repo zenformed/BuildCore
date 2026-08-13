@@ -676,6 +676,8 @@ function SubprojectsSectionContent({
                 onContactCopied={onContactCopied}
                 progressTone="progress"
                 inlineSelectionChrome
+                dashboardCompactLayout
+                showDashboardKpis={false}
                 leadingFilter={embeddedInFolderTabs ? null : filterMenu}
                 onRefresh={embeddedInFolderTabs ? undefined : refetch}
                 onRefreshError={

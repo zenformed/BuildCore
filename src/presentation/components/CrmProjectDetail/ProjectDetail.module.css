@@ -2570,7 +2570,8 @@
   display: flex;
   flex-direction: column;
   gap: 0.2rem;
-  min-width: 11.5rem;
+  width: max-content;
+  min-width: 8.5rem;
   padding: 0;
 }
 
@@ -2685,7 +2686,11 @@
 
 .overviewContactIcon {
   flex: 0 0 auto;
-  color: var(--color-text-muted, #64748b);
+  color: #0f766e;
+}
+
+:global([data-theme='dark']) .overviewContactIcon {
+  color: #0f766e;
 }
 
 .overviewIdentityContactRow .summaryValueOnly {
@@ -2709,8 +2714,18 @@
 .overviewInlineValue {
   font-size: 0.8125rem;
   line-height: 1.25;
-  color: var(--color-text, #0f172a);
+  color: var(--color-text-muted, #64748b);
   font-weight: 500;
+}
+
+.overviewIdentityContactRow .overviewInlineValue,
+.overviewIdentityContactRow .summaryInlineGhost,
+.overviewIdentityContactRow .summaryInlineDisplayOverlay {
+  color: var(--color-text-muted, #64748b);
+}
+
+:global([data-theme='dark']) .overviewInlineValue {
+  color: var(--theme-text-muted, #94a3b8);
 }
 
 .overviewIdentityContactRow .summaryInlineDisplayOverlay:hover:not(:disabled) {
@@ -2733,6 +2748,11 @@
   font-size: 0.8125rem;
   line-height: 1.25;
   font-weight: 500;
+  color: var(--color-text-muted, #64748b);
+}
+
+:global([data-theme='dark']) .overviewIdentityAddressRow .summaryText {
+  color: var(--theme-text-muted, #94a3b8);
 }
 
 .overviewIdentityAddressRow .summaryLink:hover {
@@ -2752,6 +2772,46 @@
   background: transparent;
   color: var(--color-text-muted, #334155);
   cursor: pointer;
+}
+
+.overviewPriorityButton {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  padding: 0;
+  border: none;
+  border-radius: 0.4rem;
+  background: transparent;
+  color: var(--color-text-muted, #64748b);
+  cursor: pointer;
+}
+
+.overviewPriorityButtonActive {
+  color: #f59e0b;
+}
+
+.overviewPriorityButton:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--color-muted, #eef2f7) 65%, transparent);
+}
+
+.overviewPriorityButton:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+:global([data-theme='dark']) .overviewPriorityButton {
+  color: #94a3b8;
+}
+
+:global([data-theme='dark']) .overviewPriorityButtonActive {
+  color: #f59e0b;
+}
+
+:global([data-theme='dark']) .overviewPriorityButton:hover:not(:disabled) {
+  background: color-mix(in srgb, #353a4a 70%, transparent);
 }
 
 .overviewEditButton:hover:not(:disabled) {
@@ -2913,9 +2973,14 @@
   background: color-mix(in srgb, #25ffdd 28%, transparent);
 }
 
-:global([data-theme='dark']) .overviewMetaValue,
-:global([data-theme='dark']) .overviewInlineValue {
+:global([data-theme='dark']) .overviewMetaValue {
   color: #f1f5f9;
+}
+
+:global([data-theme='dark']) .overviewIdentityContactRow .overviewInlineValue,
+:global([data-theme='dark']) .overviewIdentityContactRow .summaryInlineGhost,
+:global([data-theme='dark']) .overviewIdentityContactRow .summaryInlineDisplayOverlay {
+  color: var(--theme-text-muted, #94a3b8);
 }
 
 .overviewPipeline {

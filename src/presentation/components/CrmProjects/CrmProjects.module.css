@@ -3653,6 +3653,12 @@
     padding-inline: 0.75rem;
   }
 
+  .tableWrapDetailCompact .gridCellAssignee > * {
+    width: 1.9375rem;
+    height: 1.9375rem;
+    font-size: 0.775rem;
+  }
+
   .tableWrapDashboardCompact .gridHeaderFinancial {
     justify-content: flex-end;
     text-align: right;
