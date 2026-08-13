@@ -1751,6 +1751,17 @@
   color: var(--color-primary, #2563eb);
 }
 
+.folderTabMobileFooterLabel {
+  display: block;
+  max-width: 100%;
+  overflow: hidden;
+  font-size: 0.625rem;
+  font-weight: 600;
+  line-height: 1;
+  text-overflow: clip;
+  white-space: nowrap;
+}
+
 :global([data-theme='dark']) .folderTabMobileFooterBtn,
 :global([data-theme='dark']) .folderTabMobileFooterBtnActive {
   color: #9ca3af;
@@ -1956,6 +1967,15 @@
     background: var(--theme-bg-shell, var(--color-bg, #fff));
     padding-bottom: env(safe-area-inset-bottom, 0);
     box-shadow: none;
+  }
+
+  .folderTabMobileFooterBtn,
+  .folderTabMobileFooterBtnActive {
+    flex-direction: column;
+    gap: 0.2rem;
+    min-width: 0;
+    min-height: 3.25rem;
+    padding: 0.3rem 0.1rem;
   }
 
   :global([data-theme='dark']) .folderTabMobileFooter {
@@ -13691,12 +13711,12 @@
     background: color-mix(in srgb, var(--theme-surface-main, #252836) 82%, #000 18%);
   }
 
-  .subprojectsMobileCreateFloatingBtn,
-  .workflowMobileCreateFloatingBtn {
-    position: fixed;
-    left: 0.5rem;
-    right: 0.5rem;
-    bottom: calc(env(safe-area-inset-bottom, 0px) + 3.15rem);
+.subprojectsMobileCreateFloatingBtn,
+.workflowMobileCreateFloatingBtn {
+  position: fixed;
+  left: 0.5rem;
+  right: 0.5rem;
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 3.65rem);
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -14076,6 +14096,10 @@
   justify-content: space-between;
   gap: 0.5rem;
   min-width: 0;
+}
+
+.subprojectMobileCardTopRow + .subprojectMobileCardInfoRow {
+  margin-top: -0.3rem;
 }
 
 .subprojectMobileCardHeaderEnd {

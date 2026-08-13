@@ -3206,6 +3206,10 @@
   min-width: 0;
 }
 
+.mobileCardTopRow + .mobileCardInfoRow {
+  margin-top: -0.3rem;
+}
+
 .mobileCardDetailsGrid {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);

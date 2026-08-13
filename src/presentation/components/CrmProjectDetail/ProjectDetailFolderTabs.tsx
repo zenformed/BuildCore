@@ -155,6 +155,15 @@ function FolderTabMobileIcon({
   }
 }
 
+const MOBILE_FOOTER_LABELS: Partial<Record<ProjectDetailFolderTabId, string>> = {
+  subprojects: 'Leads',
+  workflow: 'Tasks',
+  payments: 'Payments',
+  budget: 'Budget',
+  documents: 'Docs',
+  financials: 'Reports',
+};
+
 function FolderTabBar({
   isMobileLayout,
   tabs,
@@ -217,6 +226,9 @@ function FolderTabBar({
                 aria-label={tab.label}
               >
                 <FolderTabMobileIcon tabId={tab.id} />
+                <span className={styles.folderTabMobileFooterLabel}>
+                  {MOBILE_FOOTER_LABELS[tab.id] ?? tab.label}
+                </span>
               </button>
             );
           })}
