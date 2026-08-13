@@ -1,7 +1,7 @@
 'use client';
 
 import type { ReactElement } from 'react';
-import { CrmProjectStatusCircleIcon } from './CrmProjectStatusCircleIcon';
+import { LuTriangleAlert } from 'react-icons/lu';
 import styles from './crmShared.module.css';
 
 export type CrmProjectPriorityIconProps = {
@@ -11,7 +11,7 @@ export type CrmProjectPriorityIconProps = {
 export function CrmProjectPriorityIcon({ ariaLabel }: CrmProjectPriorityIconProps): ReactElement {
   return (
     <span className={styles.statusCircleIconSlot} aria-label={ariaLabel} title={ariaLabel} role="img">
-      <CrmProjectStatusCircleIcon kind="priority" active size={16} />
+      <LuTriangleAlert className={styles.projectPriorityTriangle} size={17} aria-hidden />
     </span>
   );
 }

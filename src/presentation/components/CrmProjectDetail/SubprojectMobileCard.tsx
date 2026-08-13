@@ -123,6 +123,9 @@ export function SubprojectMobileCard({
   const stageMetaContent =
     derivedStageSlug != null ? (
       <span className={styles.subprojectMobileCardStageRow}>
+        {isProjectPriorityUrgent(project.priority) ? (
+          <CrmProjectPriorityIcon ariaLabel={tableCopy.priorityMarkAriaLabel} />
+        ) : null}
         <span
           className={`${shared.stagePill} ${styles.subprojectMobileCardStagePill}`}
           title={formatStageLabel(derivedStageSlug, catalog)}
@@ -266,8 +269,6 @@ export function SubprojectMobileCard({
                 <span className={styles.subprojectMobileCardNameRow}>
                   {isInactive ? (
                     <CrmProjectInactiveIcon ariaLabel={tableCopy.inactiveBadge} />
-                  ) : isProjectPriorityUrgent(project.priority) ? (
-                    <CrmProjectPriorityIcon ariaLabel={tableCopy.priorityMarkAriaLabel} />
                   ) : null}
                   {isCrmProjectComplete(project) ? (
                     <CrmProjectCompleteIcon ariaLabel={tableCopy.completionCheckAriaLabel} />

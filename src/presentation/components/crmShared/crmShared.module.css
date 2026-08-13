@@ -312,6 +312,13 @@
   height: 1rem;
 }
 
+.projectPriorityTriangle {
+  display: block;
+  flex-shrink: 0;
+  color: #f59e0b;
+  stroke-width: 2.25;
+}
+
 .statusCircleIcon {
   display: block;
   flex-shrink: 0;

@@ -134,6 +134,9 @@ export function CrmProjectMobileCard({
         <CrmProjectInactiveInlineLabel project={project} />
       ) : (
         <span className={projectStyles.subprojectMobileCardStageRow}>
+          {isProjectPriorityUrgent(project.priority) ? (
+            <CrmProjectPriorityIcon ariaLabel={tableCopy.priorityMarkAriaLabel} />
+          ) : null}
           {derivedStageSlug != null ? (
             <span
               className={`${shared.stagePill} ${styles.projectMetaStagePill}`}
@@ -294,9 +297,6 @@ export function CrmProjectMobileCard({
             <div className={styles.mobileCardDetailsStack}>
               <div className={styles.mobileCardTopRow}>
                 <div className={styles.mobileCardInfoRow}>
-                  {isProjectPriorityUrgent(project.priority) ? (
-                    <CrmProjectPriorityIcon ariaLabel={tableCopy.priorityMarkAriaLabel} />
-                  ) : null}
                   <ProjectPreviewNameAnchor
                     project={project}
                     financials={financials ?? null}
@@ -394,8 +394,6 @@ export function CrmProjectMobileCard({
                 >
                   {isInactive ? (
                     <CrmProjectInactiveIcon ariaLabel={tableCopy.inactiveBadge} />
-                  ) : isProjectPriorityUrgent(project.priority) ? (
-                    <CrmProjectPriorityIcon ariaLabel={tableCopy.priorityMarkAriaLabel} />
                   ) : null}
                   {isCrmProjectComplete(project) ? (
                     <CrmProjectCompleteIcon ariaLabel={tableCopy.completionCheckAriaLabel} />
