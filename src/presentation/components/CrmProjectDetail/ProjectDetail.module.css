@@ -2136,7 +2136,7 @@
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto;
   grid-template-rows: auto auto;
-  column-gap: 0.75rem;
+  column-gap: 0.5rem;
   row-gap: 0.125rem;
   align-items: center;
   width: 100%;
@@ -2166,7 +2166,7 @@
 
 .detailHeaderMobileAsideProgress {
   grid-row: 2;
-  grid-column: 3;
+  grid-column: 2 / 4;
   display: flex;
   justify-content: flex-end;
   align-items: center;
@@ -4924,13 +4924,27 @@
   width: 100%;
   max-width: 100%;
   padding-left: var(--title-block-indent);
+  gap: 0.25rem;
+}
+
+.titleBlockMobileText .titleRow > :global([role='img']) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  align-self: center;
+  flex: 0 0 auto;
+  line-height: 0;
+}
+
+.titleBlockMobileText .titleRow > :global([role='img']) svg {
+  display: block;
 }
 
 .titleBlockMobileText .previewTitleAnchor {
   display: inline-flex;
   align-items: center;
-  flex: 0 1 auto;
-  width: auto;
+  flex: 1 1 auto;
+  width: 100%;
   max-width: 100%;
   min-width: 0;
 }
@@ -13734,10 +13748,16 @@
 
   :global([data-theme='dark']) .subprojectsMobileCreateFloatingBtn,
   :global([data-theme='dark']) .workflowMobileCreateFloatingBtn {
-    border-color: color-mix(in srgb, var(--theme-border-main, #3d3e4a) 85%, #111827 15%);
-    background: color-mix(in srgb, var(--theme-surface-elevated, #252836) 90%, #0f172a 10%);
-    color: var(--theme-text-main, #f8fafc);
+    border-color: #2d629e;
+    background: #2d629e;
+    color: #ffffff;
     box-shadow: 0 10px 24px rgba(2, 6, 23, 0.45);
+  }
+
+  :global([data-theme='dark']) .subprojectsMobileCreateFloatingBtn:hover:not(:disabled),
+  :global([data-theme='dark']) .workflowMobileCreateFloatingBtn:hover:not(:disabled) {
+    border-color: #4a6889;
+    background: #4a6889;
   }
 
   .subprojectsPanelHeaderTools {

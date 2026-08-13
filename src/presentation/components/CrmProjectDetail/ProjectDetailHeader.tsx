@@ -3,7 +3,9 @@
 import type { ReactElement, ReactNode } from 'react';
 import type { CrmProjectSummary, CrmProjectStageCompletion, CrmWorkflowTask } from '@/domain/crm';
 import { isCrmProjectComplete } from '@/domain/crm';
+import { isProjectPriorityUrgent } from '@/domain/crm/projectPriorityToggle';
 import { CrmProjectCompleteIcon } from '@/presentation/components/crmShared/CrmProjectCompleteIcon';
+import { CrmProjectPriorityIcon } from '@/presentation/components/crmShared/CrmProjectPriorityIcon';
 import { CrmProjectInactiveIcon } from '@/presentation/components/CrmProjects/CrmProjectInactiveBadge';
 import { isCrmProjectInactive } from '@/domain/crm';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
@@ -74,6 +76,9 @@ export function ProjectDetailHeader({
       ) : !isInactive && isComplete ? (
         <CrmProjectCompleteIcon ariaLabel={content.crm.table.completionCheckAriaLabel} />
       ) : null}
+      {isMobileLayout && isProjectPriorityUrgent(project.priority) ? (
+        <CrmProjectPriorityIcon ariaLabel={content.crm.table.priorityMarkAriaLabel} />
+      ) : null}
       {isMobileLayout ? (
         <ProjectPreviewNameAnchor project={project}>
           <h1 className={styles.title}>{project.client.name}</h1>
@@ -126,7 +131,7 @@ export function ProjectDetailHeader({
               pageContext={pageContext}
               navigation={breadcrumbNavigation}
               className={`${styles.breadcrumb} ${styles.detailHeaderMobileBreadcrumb}`}
-              entityLabelMaxChars={20}
+              entityLabelMaxChars={25}
             />
             {actions}
           </div>
