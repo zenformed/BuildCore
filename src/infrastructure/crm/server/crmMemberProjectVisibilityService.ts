@@ -13,6 +13,8 @@ import {
 import { loadActiveOrganizationMemberRole } from './buildCoreWorkflowTaskVisibilityService';
 import { resolveBuildCoreMemberTaskVisibilityInput } from './buildCorePaymentVisibilityService';
 import { resolveBuildCoreRoleAccessForUser } from './buildCoreRoleAccessService';
+import { resolveBuildCoreProjectAccessScopeForUser } from './buildCoreProjectAccessScopeService';
+import { isAssignedOnlyProjectAccess } from '@/domain/buildcore/projectAccessScope';
 import { resolveCrmProjectIdBySlug } from './resolveCrmProjectIdBySlug';
 import { listDashboardVisibleCrmProjectIdsForOrg } from './crmReadService';
 
@@ -81,6 +83,26 @@ export async function resolveBuildCoreMemberProjectVisibilityScope(
   userId: string
 ): Promise<BuildCoreMemberProjectVisibilityScope | null> {
   const actorRole = await loadActiveOrganizationMemberRole(supabase, organizationId, userId);
+  const explicitScope = await resolveBuildCoreProjectAccessScopeForUser(
+    supabase,
+    organizationId,
+    userId
+  );
+  if (isAssignedOnlyProjectAccess(explicitScope)) {
+    const { data, error } = await supabase
+      .from('crm_projects')
+      .select('id, parent_project_id')
+      .eq('organization_id', organizationId)
+      .eq('assigned_member_id', userId)
+      .is('archived_at', null);
+    if (error != null) throw new Error(`buildcore_assigned_project_scope_read_failed: ${error.message}`);
+    const directProjectIds = new Set((data ?? []).map((row) => String(row.id)));
+    const parentProjectIdByChildId = new Map<string, string | null>(
+      (data ?? []).map((row) => [String(row.id), row.parent_project_id == null ? null : String(row.parent_project_id)])
+    );
+    return buildMemberProjectVisibilityScope(directProjectIds, parentProjectIdByChildId);
+  }
+
   if (!isBuildCoreMemberRole(actorRole)) {
     return null;
   }

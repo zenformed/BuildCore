@@ -34,11 +34,13 @@ function PermissionsSectionBody({
   copy,
   permissions,
   footer,
+  hideHint = false,
 }: {
   domain: BuildCorePermissionDomain;
   copy: BuildCoreRolePermissionsSectionCopy;
   permissions: ReturnType<typeof useBuildCoreRolePermissions>;
   footer?: ReactNode;
+  hideHint?: boolean;
 }): ReactElement {
   const isMobileLayout = useDashboardMobileLayout();
   const isDemoRuntime = runtimeModes.isDemoRuntime();
@@ -46,7 +48,7 @@ function PermissionsSectionBody({
 
   return (
     <>
-      {!isMobileLayout ? <p className={projectStyles.cardHelper}>{copy.hint}</p> : null}
+      {!isMobileLayout && !hideHint ? <p className={projectStyles.cardHelper}>{copy.hint}</p> : null}
       {isDemoRuntime ? (
         <p className={styles.readOnlyNote}>{content.teams.demo.permissionsReadOnlyNote}</p>
       ) : null}
@@ -69,6 +71,7 @@ function PermissionsSectionBody({
             }}
             busyCell={permissions.busyCell}
             roleColumnLabel={copy.roleColumn}
+            memberVisibility={footer}
           />
           {permissions.statusMessage ? (
             <p
@@ -82,9 +85,6 @@ function PermissionsSectionBody({
               {permissions.statusMessage}
             </p>
           ) : null}
-          {footer ? (
-            <div className={isMobileLayout ? styles.permissionMobileFooter : undefined}>{footer}</div>
-          ) : null}
         </>
       )}
     </>
@@ -96,7 +96,7 @@ export function BuildCoreRolePermissionsSection({
   enabled,
   headingId,
   copy,
-  defaultExpanded = true,
+  defaultExpanded = false,
   layout = 'accordion',
   footer,
 }: BuildCoreRolePermissionsSectionProps): ReactElement {
@@ -128,24 +128,41 @@ export function BuildCoreRolePermissionsSection({
 
   if (layout === 'stackedCard') {
     return (
-      <section
-        className={`${projectStyles.card} ${styles.permissionsStackedCard}`}
-        aria-labelledby={headingId}
-      >
-        <h2
-          id={headingId}
-          className={`${projectStyles.cardTitle} ${styles.permissionsStackedCardTitle}`}
-        >
-          {copy.title}
-        </h2>
-        <div className={styles.permissionsStackedCardBody}>
-          <PermissionsSectionBody
-            domain={domain}
-            copy={copy}
-            permissions={permissions}
-            footer={footer}
-          />
+      <section className={styles.permissionsStackedCard} aria-labelledby={headingId}>
+        <div className={styles.permissionsStackedCardHeader}>
+          <button
+            type="button"
+            className={styles.permissionsStackedCardHeaderButton}
+            aria-expanded={expanded}
+            aria-controls={panelId}
+            aria-label={`${expanded ? 'Collapse' : 'Expand'} ${copy.title}`}
+            onClick={() => setExpanded((open) => !open)}
+          >
+            <span
+              className={`${styles.permissionsStackedCardChevron}${
+                expanded ? ` ${styles.permissionsStackedCardChevronOpen}` : ''
+              }`}
+              aria-hidden="true"
+            />
+          </button>
+          <div className={styles.permissionsStackedCardHeaderCopy}>
+            <span id={headingId} className={styles.permissionsStackedCardTitle}>
+              {copy.title}
+            </span>
+            <p className={styles.permissionsStackedCardHint}>{copy.hint}</p>
+          </div>
         </div>
+        {expanded ? (
+          <div id={panelId} className={styles.permissionsStackedCardBody}>
+            <PermissionsSectionBody
+              domain={domain}
+              copy={copy}
+              permissions={permissions}
+              footer={footer}
+              hideHint
+            />
+          </div>
+        ) : null}
       </section>
     );
   }

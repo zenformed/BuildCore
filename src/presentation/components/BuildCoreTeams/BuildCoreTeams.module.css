@@ -126,20 +126,92 @@
 .teamsPermissionsPanel {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: 0;
+  min-height: 100%;
+  padding: 0;
+  border: 1px solid var(--theme-border-main, var(--color-border, #cbd5e1));
+  border-radius: var(--theme-radius-md, 0.5rem);
+  background: var(--theme-surface-card, var(--color-surface, #fff));
+  box-sizing: border-box;
+}
+
+.teamsPermissionsScroll {
   flex: 1;
   min-height: 0;
   overflow-y: auto;
-  padding-right: 0.125rem;
+  padding-right: 0.5rem;
+  box-sizing: border-box;
 }
 
 .permissionsStackedCard {
   flex-shrink: 0;
-  padding: 0.875rem 1rem;
+  padding: 0.75rem 1rem 0;
+}
+
+.permissionsStackedCard + .permissionsStackedCard {
+  border-top: 1px solid var(--theme-border-main, var(--color-border, #cbd5e1));
+}
+
+.permissionsStackedCardHeader {
+  position: relative;
+  width: calc(100% + 2rem);
+  margin: -0.75rem -1rem 0;
+  padding: 0.65rem 1rem;
+  background: var(--theme-table-header-bg, var(--color-muted, #f1f5f9));
+  color: var(--theme-table-header-text, var(--color-text, #0f172a));
+}
+
+.permissionsStackedCardHeaderButton {
+  position: absolute;
+  inset: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+
+.permissionsStackedCardHeaderCopy {
+  padding-left: 0.95rem;
+  pointer-events: none;
 }
 
 .permissionsStackedCardTitle {
-  margin: 0 0 0.5rem;
+  display: block;
+  margin: 0;
+  color: inherit;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.permissionsStackedCardHint {
+  margin: 0.2rem 0 0;
+  color: inherit;
+  font-size: 0.75rem;
+  line-height: 1.35;
+  opacity: 0.85;
+}
+
+.permissionsStackedCardChevron {
+  position: absolute;
+  top: 50%;
+  left: 1rem;
+  width: 0.45rem;
+  height: 0.45rem;
+  border-right: 1.5px solid currentColor;
+  border-bottom: 1.5px solid currentColor;
+  transform: translateY(-50%) rotate(-45deg);
+  transition: transform 0.15s ease;
+}
+
+.permissionsStackedCardChevronOpen {
+  transform: translateY(-50%) rotate(45deg);
+}
+
+.permissionsStackedCardHeaderButton:focus-visible {
+  outline: 2px solid var(--color-primary, #0ea5e9);
+  outline-offset: 3px;
 }
 
 .permissionsStackedCardBody {
@@ -147,6 +219,7 @@
   flex-direction: column;
   gap: 0.5rem;
   min-width: 0;
+  padding-top: 0.65rem;
 }
 
 .teamsPageContent .membersTabPanel {
@@ -341,6 +414,362 @@
 
 .membersTable thead th {
   text-align: left;
+}
+
+.membersTableContainer {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  border: 1px solid var(--theme-border-main, var(--color-border, #e2e8f0));
+  border-radius: 0.5rem;
+  background-color: var(--theme-surface-main, var(--color-surface, #fff));
+}
+
+:global([data-theme='dark']) .membersTableContainer {
+  background-color: var(--theme-surface-main, #252836);
+  border-color: var(--theme-border-main, #3d3e4a);
+}
+
+.membersTable .memberAccessGroupHeader th {
+  position: static;
+  padding-top: 0.625rem;
+  padding-bottom: 0.25rem;
+  color: var(--color-text-muted, #64748b);
+  background: var(--theme-surface-main, var(--color-surface, #fff));
+  border-bottom: 0;
+}
+
+:global([data-theme='dark']) .membersTable .memberAccessGroupHeader th {
+  background: #1d2029;
+  color: #94a3b8;
+}
+
+.memberProjectAccessNote {
+  margin: 0.65rem 0 0;
+  padding: 0 0.15rem;
+  color: var(--color-text-muted, #64748b);
+  font-size: 0.75rem;
+  line-height: 1.45;
+}
+
+.permissionListEditor {
+  display: grid;
+  gap: 0.65rem;
+}
+
+.permissionRoleAccordion {
+  display: grid;
+  gap: 0.15rem;
+}
+
+.permissionRoleAccordionItem {
+  overflow: hidden;
+}
+
+.permissionRoleAccordionHeader {
+  position: relative;
+  min-height: 2.9rem;
+}
+
+.permissionRoleAccordionButton {
+  position: absolute;
+  inset: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+
+.permissionRoleAccordionCopy {
+  padding: 0.35rem 0.1rem 0.35rem 0.95rem;
+  pointer-events: none;
+}
+
+.permissionRoleAccordionCopy strong {
+  display: block;
+  font-size: 0.875rem;
+}
+
+.permissionRoleAccordionCopy p {
+  margin: 0.12rem 0 0;
+  color: var(--color-text-muted, #64748b);
+  font-size: 0.72rem;
+  line-height: 1.3;
+}
+
+.permissionRoleAccordionChevron {
+  position: absolute;
+  top: 50%;
+  left: 0.15rem;
+  width: 0.42rem;
+  height: 0.42rem;
+  border-right: 1.5px solid currentColor;
+  border-bottom: 1.5px solid currentColor;
+  color: var(--color-text-muted, #64748b);
+  transform: translateY(-50%) rotate(-45deg);
+  transition: transform 0.15s ease;
+}
+
+.permissionRoleAccordionItemOpen .permissionRoleAccordionChevron {
+  transform: translateY(-50%) rotate(45deg);
+}
+
+.permissionList {
+  width: 100%;
+  margin: 0.35rem 0 0.75rem;
+  padding: 0.35rem 0.5rem;
+  border: 1px solid var(--theme-border-main, var(--color-border, #cbd5e1));
+  border-radius: 0.5rem;
+  background: var(--theme-surface-main, var(--color-surface, #fff));
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.permissionListRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  min-height: 3.5rem;
+  padding: 0.6rem 0.1rem;
+  border-bottom: 1px solid var(--theme-border-main, var(--color-border, #cbd5e1));
+}
+
+.permissionListRow:last-child {
+  border-bottom: 0;
+}
+
+.memberVisibilityInPermissionCard {
+  border-top: 1px solid var(--theme-border-main, var(--color-border, #cbd5e1));
+}
+
+.permissionList .memberVisibilitySetting {
+  margin: 0;
+  padding: 0.65rem 0.1rem 0.1rem;
+  border-top: 0;
+}
+
+.permissionList .memberVisibilitySettingRow {
+  padding: 0.45rem 0.1rem;
+  background: transparent;
+}
+
+.permissionList .memberVisibilitySettingLabel {
+  margin: 0.35rem 0.1rem 0;
+}
+
+.permissionListCopy {
+  display: grid;
+  gap: 0.15rem;
+}
+
+.permissionListCopy strong {
+  font-size: 0.8125rem;
+}
+
+.permissionListCopy span {
+  color: var(--color-text-muted, #64748b);
+  font-size: 0.75rem;
+  line-height: 1.35;
+}
+
+:global([data-theme='dark']) .teamsPermissionsPanel {
+  border-color: #3d4657;
+  background: #1d2029;
+}
+
+:global([data-theme='dark']) .permissionList {
+  border-color: #3d4657;
+  background: #171a22;
+}
+
+:global([data-theme='dark']) .permissionListRow,
+:global([data-theme='dark']) .memberVisibilityInPermissionCard {
+  border-color: #3d4657;
+}
+
+:global([data-theme='dark']) .permissionListCopy span {
+  color: #94a3b8;
+}
+
+:global([data-theme='dark']) .permissionRoleAccordionCopy p {
+  color: #94a3b8;
+}
+
+.rolePermissionEditor {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.rolePermissionEditorHeader {
+  display: flex;
+  gap: 0.75rem;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.rolePermissionRoleTabs {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.5rem;
+  flex: 1;
+}
+
+.rolePermissionRoleTab,
+.rolePermissionCompareButton {
+  border: 1px solid var(--theme-border-main, var(--color-border, #cbd5e1));
+  border-radius: 0.5rem;
+  background: var(--theme-surface-main, var(--color-surface, #fff));
+  color: var(--color-text, #0f172a);
+  font: inherit;
+  cursor: pointer;
+}
+
+.rolePermissionRoleTab {
+  min-height: 4.1rem;
+  padding: 0.55rem 0.65rem;
+  text-align: left;
+}
+
+.rolePermissionRoleTab strong,
+.rolePermissionRoleTab span {
+  display: block;
+}
+
+.rolePermissionRoleTab span {
+  margin-top: 0.2rem;
+  color: var(--color-text-muted, #64748b);
+  font-size: 0.72rem;
+  line-height: 1.3;
+}
+
+.rolePermissionRoleTab_active {
+  border-color: var(--color-primary, #2563eb);
+  background: color-mix(in srgb, var(--color-primary, #2563eb) 12%, var(--theme-surface-main, #fff));
+}
+
+.rolePermissionCompareButton {
+  padding: 0.5rem 0.65rem;
+  white-space: nowrap;
+  font-size: 0.78rem;
+}
+
+.rolePermissionEditorBody {
+  padding: 0.85rem;
+  border: 1px solid var(--theme-border-main, var(--color-border, #cbd5e1));
+  border-radius: 0.5rem;
+}
+
+.rolePermissionEditorIntro {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.rolePermissionEditorIntro h3,
+.rolePermissionEditorIntro p,
+.rolePermissionGroup h4 {
+  margin: 0;
+}
+
+.rolePermissionEditorIntro h3 {
+  font-size: 0.875rem;
+}
+
+.rolePermissionEditorIntro p {
+  margin-top: 0.2rem;
+  color: var(--color-text-muted, #64748b);
+  font-size: 0.75rem;
+}
+
+.rolePermissionLocked {
+  padding: 0.2rem 0.4rem;
+  border-radius: 999px;
+  background: var(--color-muted, #f1f5f9);
+  color: var(--color-text-muted, #64748b);
+  font-size: 0.7rem;
+}
+
+.rolePermissionGroups {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.65rem;
+  margin-top: 0.85rem;
+}
+
+.rolePermissionGroup {
+  padding: 0.65rem;
+  border-radius: 0.375rem;
+  background: var(--color-muted, #f8fafc);
+}
+
+.rolePermissionGroup h4 {
+  margin-bottom: 0.35rem;
+  color: var(--color-text-muted, #64748b);
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.rolePermissionToggleRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 2rem;
+  gap: 0.5rem;
+  font-size: 0.8125rem;
+}
+
+:global([data-theme='dark']) .rolePermissionRoleTab,
+:global([data-theme='dark']) .rolePermissionCompareButton,
+:global([data-theme='dark']) .rolePermissionEditorBody {
+  border-color: #3d4657;
+  background: #1d2029;
+  color: #f1f5f9;
+}
+
+:global([data-theme='dark']) .rolePermissionRoleTab_active {
+  background: #263b5e;
+  border-color: #4f8cff;
+}
+
+:global([data-theme='dark']) .rolePermissionRoleTab span,
+:global([data-theme='dark']) .rolePermissionEditorIntro p,
+:global([data-theme='dark']) .rolePermissionLocked {
+  color: #94a3b8;
+}
+
+:global([data-theme='dark']) .rolePermissionGroup,
+:global([data-theme='dark']) .rolePermissionLocked {
+  background: #171a22;
+}
+
+@media (max-width: 640px) {
+  .rolePermissionEditorHeader {
+    display: block;
+  }
+
+  .rolePermissionRoleTabs {
+    grid-template-columns: 1fr;
+  }
+
+  .rolePermissionRoleTab {
+    min-height: auto;
+  }
+
+  .rolePermissionCompareButton {
+    width: 100%;
+    margin-top: 0.5rem;
+  }
+
+  .rolePermissionGroups {
+    grid-template-columns: 1fr;
+  }
+}
+
+:global([data-theme='dark']) .memberProjectAccessNote {
+  color: #94a3b8;
 }
 
 :global([data-theme='dark']) .membersTable thead th,
@@ -962,6 +1391,23 @@
   justify-content: flex-end;
   width: 100%;
   min-width: 0;
+}
+
+.memberProjectVisibilitySelect {
+  max-width: 13rem;
+  min-height: 2rem;
+  padding: 0.25rem 1.75rem 0.25rem 0.5rem;
+  border: 1px solid var(--color-border, #cbd5e1);
+  border-radius: 0.375rem;
+  background: var(--color-surface, #fff);
+  color: var(--color-text, #0f172a);
+  font: inherit;
+}
+
+:global([data-theme='dark']) .memberProjectVisibilitySelect {
+  background: #1e293b;
+  border-color: #475569;
+  color: #f1f5f9;
 }
 
 .memberMobileList {

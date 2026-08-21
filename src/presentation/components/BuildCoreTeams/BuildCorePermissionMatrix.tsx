@@ -1,14 +1,12 @@
 'use client';
 
-import type { ReactElement } from 'react';
+import { useId, useState, type ReactElement, type ReactNode } from 'react';
 import type {
   BuildCorePermissionColumnId,
   BuildCorePermissionRoleKey,
   BuildCoreRolePermissionRow,
 } from '@/domain/buildcore/rolePermissions';
 import { roleLabelForBuildCorePermissionKey } from '@/domain/buildcore/rolePermissions';
-import { useDashboardMobileLayout } from '@/presentation/features/crmProjects/useDashboardMobileLayout';
-import { BuildCorePermissionMatrixMobile } from './BuildCorePermissionMatrixMobile';
 import styles from './BuildCoreTeams.module.css';
 
 export type BuildCorePermissionMatrixProps = {
@@ -25,6 +23,25 @@ export type BuildCorePermissionMatrixProps = {
     readonly columnId: BuildCorePermissionColumnId;
   } | null;
   readonly roleColumnLabel?: string;
+  readonly memberVisibility?: ReactNode;
+};
+
+const PERMISSION_DESCRIPTIONS: Readonly<Record<BuildCorePermissionColumnId, string>> = {
+  canView: 'Open and view records in this area.',
+  canCreate: 'Create new records.',
+  canEdit: 'Change existing records.',
+  canApprove: 'Approve records or completed work when approval is required.',
+  canDelete: 'Delete records.',
+  canUpload: 'Upload files and attachments.',
+  canDownload: 'Download files and attachments.',
+  canSendFiles: 'Send files to customers or other recipients.',
+  canViewAllStages: 'View records across every workflow stage.',
+};
+
+const ROLE_DESCRIPTIONS: Readonly<Record<BuildCorePermissionRoleKey, string>> = {
+  admin: 'Manage Admin permissions.',
+  coordinator: 'Manage Coordinator permissions.',
+  member: 'Manage Member permissions.',
 };
 
 export function BuildCorePermissionMatrix({
@@ -33,73 +50,81 @@ export function BuildCorePermissionMatrix({
   canEditRow,
   onToggle,
   busyCell = null,
-  roleColumnLabel = 'Role',
+  memberVisibility,
 }: BuildCorePermissionMatrixProps): ReactElement {
-  const isMobileLayout = useDashboardMobileLayout();
-
-  if (isMobileLayout) {
-    return (
-      <BuildCorePermissionMatrixMobile
-        columns={columns}
-        rows={rows}
-        canEditRow={canEditRow}
-        onToggle={onToggle}
-        busyCell={busyCell}
-      />
-    );
-  }
+  const [expandedRoleKey, setExpandedRoleKey] = useState<BuildCorePermissionRoleKey | null>(null);
+  const accordionId = useId();
 
   return (
-    <div className={styles.matrixWrap}>
-      <table className={styles.permissionsMatrix}>
-        <thead>
-          <tr>
-            <th scope="col" className={styles.matrixRoleCol}>
-              {roleColumnLabel}
-            </th>
-            {columns.map((col) => (
-              <th key={col.id} scope="col">
-                {col.label}
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map((row) => {
-            const rowEditable = canEditRow(row.roleKey);
-            return (
-              <tr key={row.roleKey} className={rowEditable ? undefined : styles.matrixRowLocked}>
-                <td className={styles.matrixRoleCell}>
-                  {roleLabelForBuildCorePermissionKey(row.roleKey)}
-                </td>
-                {columns.map((col) => {
-                  const value = row[col.id];
-                  const isBusy =
-                    busyCell?.roleKey === row.roleKey && busyCell.columnId === col.id;
-                  const stateLabel = value ? 'on' : 'off';
+    <div className={styles.permissionRoleAccordion}>
+      {rows.map((row) => {
+        const expanded = expandedRoleKey === row.roleKey;
+        const editable = canEditRow(row.roleKey);
+        const panelId = `${accordionId}-${row.roleKey}`;
+
+        return (
+          <section
+            key={row.roleKey}
+            className={`${styles.permissionRoleAccordionItem}${
+              expanded ? ` ${styles.permissionRoleAccordionItemOpen}` : ''
+            }`}
+          >
+            <div className={styles.permissionRoleAccordionHeader}>
+              <button
+                type="button"
+                className={styles.permissionRoleAccordionButton}
+                aria-expanded={expanded}
+                aria-controls={panelId}
+                aria-label={`${expanded ? 'Collapse' : 'Expand'} ${roleLabelForBuildCorePermissionKey(row.roleKey)} permissions`}
+                onClick={() => {
+                  setExpandedRoleKey((current) => (current === row.roleKey ? null : row.roleKey));
+                }}
+              >
+                <span className={styles.permissionRoleAccordionChevron} aria-hidden="true" />
+              </button>
+              <div className={styles.permissionRoleAccordionCopy}>
+                <strong>{roleLabelForBuildCorePermissionKey(row.roleKey)}</strong>
+                <p>{ROLE_DESCRIPTIONS[row.roleKey]}</p>
+              </div>
+            </div>
+
+            {expanded ? (
+              <div id={panelId} className={styles.permissionList}>
+                {columns.map((column) => {
+                  const checked = row[column.id];
+                  const busy =
+                    busyCell?.roleKey === row.roleKey && busyCell.columnId === column.id;
+
                   return (
-                    <td key={col.id} className={styles.permissionSwitchCell}>
+                    <div key={column.id} className={styles.permissionListRow}>
+                      <div className={styles.permissionListCopy}>
+                        <strong>{column.label}</strong>
+                        <span>{PERMISSION_DESCRIPTIONS[column.id]}</span>
+                      </div>
                       <button
                         type="button"
                         role="switch"
-                        className={`${styles.permissionSwitch} ${
-                          value ? styles.permissionSwitchOn : ''
+                        aria-checked={checked}
+                        aria-label={`${roleLabelForBuildCorePermissionKey(row.roleKey)}: ${column.label}`}
+                        className={`${styles.permissionSwitch}${
+                          checked ? ` ${styles.permissionSwitchOn}` : ''
                         }`}
-                        disabled={!rowEditable || isBusy}
-                        aria-checked={value}
-                        aria-label={`${roleLabelForBuildCorePermissionKey(row.roleKey)} ${col.label}: ${stateLabel}`}
-                        onClick={() => onToggle(row.roleKey, col.id, !value)}
+                        disabled={!editable || busy}
+                        onClick={() => onToggle(row.roleKey, column.id, !checked)}
                       >
-                        <span className={styles.permissionSwitchThumb} aria-hidden />
+                        <span className={styles.permissionSwitchThumb} />
                       </button>
-                    </td>
+                    </div>
                   );
                 })}
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
+                {row.roleKey === 'member' && memberVisibility ? (
+                  <div className={styles.memberVisibilityInPermissionCard}>{memberVisibility}</div>
+                ) : null}
+              </div>
+            ) : null}
+          </section>
+        );
+      })}
     </div>
   );
 }

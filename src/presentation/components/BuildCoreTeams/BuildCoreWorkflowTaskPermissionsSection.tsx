@@ -23,7 +23,7 @@ export function BuildCoreWorkflowTaskPermissionsSection({
       headingId="teams-workflow-task-permissions-heading"
       copy={copy}
       layout={layout}
-      footer={<BuildCoreWorkflowTaskMemberVisibilitySetting enabled={enabled} />}
+      footer={<BuildCoreWorkflowTaskMemberVisibilitySetting enabled={enabled} embedded />}
     />
   );
 }

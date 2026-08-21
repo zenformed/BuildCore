@@ -8,10 +8,12 @@ import styles from './BuildCoreTeams.module.css';
 
 export function TeamsPermissionsPanel(): ReactElement {
   return (
-    <div className={styles.teamsPermissionsPanel}>
-      <BuildCoreWorkflowTaskPermissionsSection enabled layout="stackedCard" />
-      <BuildCorePaymentPermissionsSection enabled layout="stackedCard" />
-      <BuildCoreBudgetPermissionsSection enabled layout="stackedCard" />
+    <div className={styles.teamsPermissionsScroll}>
+      <div className={styles.teamsPermissionsPanel}>
+        <BuildCoreWorkflowTaskPermissionsSection enabled layout="stackedCard" />
+        <BuildCorePaymentPermissionsSection enabled layout="stackedCard" />
+        <BuildCoreBudgetPermissionsSection enabled layout="stackedCard" />
+      </div>
     </div>
   );
 }

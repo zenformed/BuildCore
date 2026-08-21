@@ -11,7 +11,7 @@ import projectStyles from '../CrmProjectDetail/ProjectDetail.module.css';
 import styles from './BuildCoreTeams.module.css';
 
 function BuildCoreTeamsDashboardContent(): ReactElement {
-  const { model, isLoading, loadError } = useBuildCoreTeamsPage();
+  const { model, isLoading, loadError, projectMemberAccess } = useBuildCoreTeamsPage();
   const copy = content.teams;
   const isDemoRuntime = runtimeModes.isDemoRuntime();
 
@@ -59,7 +59,7 @@ function BuildCoreTeamsDashboardContent(): ReactElement {
           ) : (
             <p className={styles.architectureNote}>{copy.architectureNote}</p>
           )}
-          <TeamsFolderTabs model={model} />
+          <TeamsFolderTabs model={model} projectMemberAccess={projectMemberAccess} />
         </div>
       </div>
     </div>

@@ -18,6 +18,7 @@ import type { CrmIndustry, CrmProjectDetail, CrmProjectSummary } from '@/domain/
 import { isCrmProjectInactive, isPaymentWorkflowTask } from '@/domain/crm';
 import { isProjectPriorityActive, toggleProjectPriority } from '@/domain/crm/projectPriorityToggle';
 import { nonEmptyContactValues } from '@/domain/crm/contactMultiValue';
+import { formatCrmProjectLocationLine } from '@/domain/crm/projectAddress';
 import { buildCoreDashboardContent as content } from '@/platform/content/buildCoreDashboardContent';
 import { CreateCrmProjectModal } from '@/presentation/components/CrmProjects/CreateCrmProjectModal';
 import {
@@ -160,6 +161,10 @@ export function ProjectDetailOverviewHeader({
 
   const emailValues = nonEmptyContactValues(summary.contact.emails);
   const phoneValues = nonEmptyContactValues(summary.contact.phones);
+  const hasEmailValue = emailValues.length > 0;
+  const hasPhoneValue = phoneValues.length > 0;
+  const hasAddressValue =
+    formatCrmProjectLocationLine(summary.address, summary.latitude, summary.longitude) != null;
   const onContactCopied = useCallback(
     (message: string) => setToast({ kind: 'success', message }),
     [setToast]
@@ -267,57 +272,63 @@ export function ProjectDetailOverviewHeader({
                 <span className={styles.overviewEntityType}>{entityTypeLabel}</span>
               </div>
               <div className={styles.overviewIdentityContactRow}>
-                <div className={styles.overviewContactItem}>
-                  <LuMail size={13} aria-hidden className={styles.overviewContactIcon} />
-                  <SummaryInlineText
-                    fieldKey="email"
-                    label={fields.email}
-                    value={summary.contact.email}
-                    displayValue={displayEmail}
-                    savingField={savingField}
-                    disabled={readOnly}
-                    inputType="email"
-                    displayClassName={styles.overviewInlineValue}
-                    hideLabel
-                    onPatch={patchField}
-                    contactPopoverValues={emailValues}
-                    contactPopoverKind="email"
-                    formatContactPopoverValue={formatEmailPopoverValue}
-                    getContactCopyValue={getEmailCopyValue}
-                    onContactCopied={onContactCopied}
+                {hasEmailValue ? (
+                  <div className={styles.overviewContactItem}>
+                    <LuMail size={13} aria-hidden className={styles.overviewContactIcon} />
+                    <SummaryInlineText
+                      fieldKey="email"
+                      label={fields.email}
+                      value={summary.contact.email}
+                      displayValue={displayEmail}
+                      savingField={savingField}
+                      disabled={readOnly}
+                      inputType="email"
+                      displayClassName={styles.overviewInlineValue}
+                      hideLabel
+                      onPatch={patchField}
+                      contactPopoverValues={emailValues}
+                      contactPopoverKind="email"
+                      formatContactPopoverValue={formatEmailPopoverValue}
+                      getContactCopyValue={getEmailCopyValue}
+                      onContactCopied={onContactCopied}
+                    />
+                  </div>
+                ) : null}
+                {hasPhoneValue ? (
+                  <div className={`${styles.overviewContactItem} ${styles.overviewContactItemPhone}`}>
+                    <LuPhone size={13} aria-hidden className={styles.overviewContactIcon} />
+                    <SummaryInlineText
+                      fieldKey="phone"
+                      label={fields.phone}
+                      value={summary.contact.phone}
+                      displayValue={displayPhone}
+                      savingField={savingField}
+                      disabled={readOnly}
+                      inputType="tel"
+                      displayClassName={styles.overviewInlineValue}
+                      hideLabel
+                      onPatch={patchField}
+                      contactPopoverValues={phoneValues}
+                      contactPopoverKind="phone"
+                      formatContactPopoverValue={formatPhonePopoverValue}
+                      getContactCopyValue={getPhoneCopyValue}
+                      onContactCopied={onContactCopied}
+                    />
+                  </div>
+                ) : null}
+              </div>
+              {hasAddressValue ? (
+                <div className={styles.overviewIdentityAddressRow}>
+                  <LuMapPin size={13} aria-hidden className={styles.overviewContactIcon} />
+                  <ProjectSummaryAddress
+                    address={summary.address}
+                    latitude={summary.latitude}
+                    longitude={summary.longitude}
+                    label={fields.address}
+                    layout="value"
                   />
                 </div>
-                <div className={`${styles.overviewContactItem} ${styles.overviewContactItemPhone}`}>
-                  <LuPhone size={13} aria-hidden className={styles.overviewContactIcon} />
-                  <SummaryInlineText
-                    fieldKey="phone"
-                    label={fields.phone}
-                    value={summary.contact.phone}
-                    displayValue={displayPhone}
-                    savingField={savingField}
-                    disabled={readOnly}
-                    inputType="tel"
-                    displayClassName={styles.overviewInlineValue}
-                    hideLabel
-                    onPatch={patchField}
-                    contactPopoverValues={phoneValues}
-                    contactPopoverKind="phone"
-                    formatContactPopoverValue={formatPhonePopoverValue}
-                    getContactCopyValue={getPhoneCopyValue}
-                    onContactCopied={onContactCopied}
-                  />
-                </div>
-              </div>
-              <div className={styles.overviewIdentityAddressRow}>
-                <LuMapPin size={13} aria-hidden className={styles.overviewContactIcon} />
-                <ProjectSummaryAddress
-                  address={summary.address}
-                  latitude={summary.latitude}
-                  longitude={summary.longitude}
-                  label={fields.address}
-                  layout="value"
-                />
-              </div>
+              ) : null}
             </div>
           </div>
         </section>

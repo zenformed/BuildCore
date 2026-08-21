@@ -6,6 +6,7 @@ import type { OrganizationWorkspaceSnapshot } from '@zenformed/core/organization
 import { formatOrganizationRoleLabel } from '@zenformed/core/dashboard-shell';
 import { memberHasBuildCoreAccess } from '@/presentation/features/crmAssignment/buildCoreAssignableMembers';
 import { canAccessBuildCoreTeams } from '@/presentation/features/buildCoreTeams/buildCoreTeamsAccess';
+import type { BuildCoreProjectAccessScope } from '@/domain/buildcore/projectAccessScope';
 
 type OrganizationMember = ZenformedCoreOrganizationMembersResponse['members'][number];
 
@@ -19,6 +20,7 @@ export type BuildCoreTeamMemberRow = {
   readonly membershipStatus: OrganizationMember['status'];
   readonly buildCoreAccessStatus: 'enabled' | 'not_configured';
   readonly buildCoreRolePlaceholder: string;
+  readonly projectAccessScope: BuildCoreProjectAccessScope | null;
 };
 
 export type BuildCoreTeamsPageModel = {
@@ -67,7 +69,8 @@ function resolveBuildCoreAccessForMember(
 
 export function buildBuildCoreTeamsPageModel(
   snapshot: OrganizationWorkspaceSnapshot | null,
-  subscriptionActive: boolean
+  subscriptionActive: boolean,
+  projectAccessScopes: ReadonlyMap<string, BuildCoreProjectAccessScope> = new Map()
 ): BuildCoreTeamsPageModel {
   const canViewTeamMembers = canAccessBuildCoreTeams({
     role: snapshot?.membershipContext?.role,
@@ -86,6 +89,7 @@ export function buildBuildCoreTeamsPageModel(
       organizationRole: member.role,
       organizationRoleLabel: formatOrganizationRoleLabel(member.role) ?? member.role,
       membershipStatus: member.status,
+      projectAccessScope: projectAccessScopes.get(member.userId) ?? null,
       ...access,
     };
   });

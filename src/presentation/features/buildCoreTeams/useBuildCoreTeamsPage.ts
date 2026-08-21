@@ -10,12 +10,14 @@ import {
   buildBuildCoreTeamsPageModel,
   type BuildCoreTeamsPageModel,
 } from './buildCoreTeamsViewModel';
+import { useBuildCoreProjectMemberAccess } from './useBuildCoreProjectMemberAccess';
 
 export function useBuildCoreTeamsPage(): {
   model: BuildCoreTeamsPageModel;
   isLoading: boolean;
   loadError: string | null;
   refetch: () => Promise<void>;
+  projectMemberAccess: ReturnType<typeof useBuildCoreProjectMemberAccess>;
 } {
   const dash = useBuildCoreDashboardContext();
   const subscriptionActive = dash.entitlementSnapshot?.subscriptionActive ?? false;
@@ -38,14 +40,22 @@ export function useBuildCoreTeamsPage(): {
     () => (isDemoRuntime ? createDemoOrganizationWorkspaceSnapshot() : null),
     [isDemoRuntime]
   );
+  const projectMemberAccess = useBuildCoreProjectMemberAccess(
+    dash.canAccessBuildCoreTeams && !isDemoRuntime
+  );
+  const projectAccessScopes = useMemo(
+    () => new Map(projectMemberAccess.entries.map((entry) => [entry.userId, entry.projectAccessScope] as const)),
+    [projectMemberAccess.entries]
+  );
 
   const model = useMemo(
     () =>
       buildBuildCoreTeamsPageModel(
         isDemoRuntime ? demoSnapshot : workspace.snapshot,
-        subscriptionActive
+        subscriptionActive,
+        projectAccessScopes
       ),
-    [demoSnapshot, isDemoRuntime, subscriptionActive, workspace.snapshot]
+    [demoSnapshot, isDemoRuntime, subscriptionActive, workspace.snapshot, projectAccessScopes]
   );
 
   return {
@@ -53,5 +63,6 @@ export function useBuildCoreTeamsPage(): {
     isLoading: isDemoRuntime ? false : workspace.isLoading,
     loadError: isDemoRuntime ? null : workspace.loadError,
     refetch: workspace.refetch,
+    projectMemberAccess,
   };
 }

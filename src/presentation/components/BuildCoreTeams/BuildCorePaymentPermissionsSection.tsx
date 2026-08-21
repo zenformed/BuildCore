@@ -22,7 +22,7 @@ export function BuildCorePaymentPermissionsSection({
       headingId="teams-payment-permissions-heading"
       copy={copy}
       layout={layout}
-      footer={<BuildCorePaymentMemberVisibilitySetting enabled={enabled} />}
+      footer={<BuildCorePaymentMemberVisibilitySetting enabled={enabled} embedded />}
     />
   );
 }

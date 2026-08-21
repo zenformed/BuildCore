@@ -115,7 +115,9 @@ export async function resolvePhotosListV2VisibilityParams(
     budgetCanDelete: budgetAccess.canDelete === true,
   };
 
-  if (!actorIsMember || memberScope == null) {
+  // An explicit per-member assigned-only scope is also a project visibility
+  // restriction, even when the user is a Coordinator rather than a Member.
+  if (memberScope == null) {
     return {
       restrictMemberVisibility: false,
       allowedProjectIds: [],

@@ -26,18 +26,21 @@ export async function scopeCrmProjectDetailForViewer(
   project: CrmProjectDetail
 ): Promise<CrmProjectDetail | null> {
   const actorRole = await loadActiveOrganizationMemberRole(supabase, organizationId, userId);
-  if (!isBuildCoreMemberRole(actorRole)) {
-    return project;
-  }
-
   const scope = await resolveBuildCoreMemberProjectVisibilityScope(
     supabase,
     organizationId,
     userId
   );
-  if (scope == null || !isProjectAccessibleToMember(project.summary.id, scope)) {
+  if (scope != null && !isProjectAccessibleToMember(project.summary.id, scope)) {
     return null;
   }
+
+  // Explicit assigned-only access applies to any organization role. Unlike the
+  // legacy Member task scope it does not redact records inside the rep's own
+  // operational Projects; it only establishes the Project boundary.
+  if (!isBuildCoreMemberRole(actorRole)) return project;
+
+  if (scope == null) return null;
 
   const visibilityInput = await resolveBuildCoreMemberTaskVisibilityInput(
     supabase,

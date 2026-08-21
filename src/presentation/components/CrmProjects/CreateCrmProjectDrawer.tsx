@@ -13,6 +13,7 @@ import { useBuildCoreNavigation } from '@/presentation/providers/BuildCoreNaviga
 import { getCrmProjectAssigneeOptions } from '@/presentation/features/crmProjects/crmProjectAssigneeOptions';
 import { useAssignmentIdentityCatalog } from '@/presentation/providers/AssignmentIdentityProvider';
 import { useBuildCoreDashboardContext } from '@/presentation/providers/BuildCoreDashboardProvider';
+import { useBuildCorePipelineStages } from '@/presentation/providers/BuildCorePipelineStagesProvider';
 import { useSaaSProfile } from '@/presentation/hooks/useSaaSProfile';
 import {
   applyManualStreetAddressEdit,
@@ -37,6 +38,8 @@ export function CreateCrmProjectDrawer({ open, onClose }: CreateCrmProjectDrawer
   const router = useRouter();
   const nav = useBuildCoreNavigation();
   const dash = useBuildCoreDashboardContext();
+  const { getCatalog } = useBuildCorePipelineStages();
+  const projectStages = getCatalog('project');
   const { organizationMembershipContext } = useSaaSProfile();
   const allowAssignee = !isBuildCoreMemberRole(organizationMembershipContext?.role);
   const assignmentCatalog = useAssignmentIdentityCatalog();
@@ -53,13 +56,13 @@ export function CreateCrmProjectDrawer({ open, onClose }: CreateCrmProjectDrawer
     if (!open) return;
     setForm(
       allowAssignee && canMutateProjects && dash.user?.id
-        ? { ...defaultCreateCrmProjectFormState(), assignedMemberId: dash.user.id }
-        : { ...defaultCreateCrmProjectFormState(), assignedMemberId: '' }
+        ? { ...defaultCreateCrmProjectFormState(projectStages), assignedMemberId: dash.user.id }
+        : { ...defaultCreateCrmProjectFormState(projectStages), assignedMemberId: '' }
     );
     setError(null);
     setShowValidationErrors(false);
     setSaving(false);
-  }, [allowAssignee, canMutateProjects, dash.user?.id, open]);
+  }, [allowAssignee, canMutateProjects, dash.user?.id, open, projectStages]);
 
   const updateField = useCallback(
     <K extends keyof CreateCrmProjectFormState>(key: K, value: CreateCrmProjectFormState[K]) => {

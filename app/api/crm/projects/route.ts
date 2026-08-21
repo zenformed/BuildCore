@@ -16,6 +16,9 @@ import {
 } from '@/infrastructure/crm/server/validateCreateCrmProjectBody';
 import { loadOrganizationPipelineStageCatalog } from '@/infrastructure/crm/server/pipelineStageService';
 import { mapCrmRouteError } from '@/infrastructure/crm/server/crmApiRouteErrors';
+import { resolveBuildCoreProjectAccessScopeForUser } from '@/infrastructure/crm/server/buildCoreProjectAccessScopeService';
+import { normalizeProjectAssigneeForAccessScope } from '@/domain/buildcore/projectAccessScope';
+import { createCrmServiceRoleClient } from '@/infrastructure/crm/server/createCrmServiceRoleClient';
 
 export const dynamic = 'force-dynamic';
 
@@ -83,12 +86,35 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     return NextResponse.json({ error: 'validation_error', message: validated.message }, { status: 400 });
   }
 
+  const projectAccessScope = await resolveBuildCoreProjectAccessScopeForUser(
+    auth.context.supabase,
+    auth.context.organizationId,
+    auth.context.user.id
+  );
+  const createInput = {
+    ...validated.input,
+    assignedMemberId: normalizeProjectAssigneeForAccessScope({
+      scope: projectAccessScope,
+      actorUserId: auth.context.user.id,
+      requestedAssigneeId: validated.input.assignedMemberId,
+    }),
+  };
+
+  // A new Client/Contact is deliberately not selectable through RLS until it
+  // is linked to its Project. Project creation needs the generated IDs for
+  // that first link, so perform the authorized server-side write sequence
+  // with the service client after all caller and scope checks above.
+  const service = createCrmServiceRoleClient();
+  if (service == null) {
+    return NextResponse.json({ error: 'misconfigured', message: 'CRM create service is unavailable.' }, { status: 503 });
+  }
+
   try {
     const created = await createCrmProjectForOrg(
-      auth.context.supabase,
+      service,
       auth.context.organizationId,
       auth.context.user.id,
-      validated.input
+      createInput
     );
     return NextResponse.json(created, { status: 201 });
   } catch (err) {

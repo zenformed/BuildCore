@@ -1,11 +1,12 @@
 'use client';
 
-import { useMemo, useState, type ReactElement, type ReactNode } from 'react';
+import { useCallback, useMemo, useState, type ReactElement, type ReactNode } from 'react';
 import {
   pickAppsLauncherClassNames,
   pickDashboardPageLoadingClassNames,
   pickHeaderShellClassNames,
   useZenformedAppLaunch,
+  useZenformedOrganizationSwitcher,
   useZenformedShellUserDisplay,
   ZenformedAppsLauncher,
   ZenformedCollapsibleSidebarShell,
@@ -37,6 +38,7 @@ import { useBuildCoreNotificationsConfig } from '@/presentation/features/notific
 import { isBuildCoreMemberRole } from '@/domain/buildcore/memberRole';
 import { useSaaSProfile } from '@/presentation/hooks/useSaaSProfile';
 import { DEMO_USER_EMAIL, DEMO_USER_ID } from '@/infrastructure/demo/demoProfileFixtures';
+import { getSupabaseClient } from '@/infrastructure/supabase/supabaseClient';
 import { CorePlatformDegradedBanner } from '@/presentation/components/CorePlatform/CorePlatformDegradedBanner';
 import { DemoDisabledAppsLauncher } from '@/presentation/components/Demo/DemoDisabledShellControls';
 import { BuildCoreDashboardModals } from './BuildCoreDashboardModals';
@@ -92,6 +94,23 @@ export function BuildCoreDashboardShell({
   const [appsOpen, setAppsOpen] = useState(false);
   const notifications = useBuildCoreNotificationsConfig(dash.getAccessToken);
   const themeLabel = theme === 'dark' ? 'Light Mode' : 'Dark Mode';
+  const onOrganizationSwitched = useCallback(async () => {
+    const { data } = await getSupabaseClient().auth.refreshSession().catch(() => ({ data: null }));
+    if (data?.session != null && window.electronAuth?.saveSession) {
+      await window.electronAuth.saveSession({
+        access_token: data.session.access_token,
+        refresh_token: data.session.refresh_token ?? null,
+        expires_at: data.session.expires_at,
+      });
+    }
+    window.location.replace(nav.routes.dashboard);
+  }, []);
+  const organizationSwitcher = useZenformedOrganizationSwitcher({
+    apiUrl: '/api/internal/organization/active',
+    getAccessToken: dash.getAccessToken,
+    enabled: demoMode == null && session != null,
+    onSwitched: onOrganizationSwitched,
+  });
   const { launchApp, launchingAppId, launchError } = useZenformedAppLaunch({
     launchApiUrl: '/api/internal/app-launch',
     getAccessToken: () => session?.access_token ?? null,
@@ -306,6 +325,7 @@ export function BuildCoreDashboardShell({
         appName={appDisplayName}
         appIconSrc={appIconSrc}
         organizationName={dash.shopName || null}
+        organizationSwitcher={demoMode == null ? organizationSwitcher : null}
         appsSwitcher={appsSwitcher}
         sections={sections}
         notifications={demoMode != null ? null : notifications}

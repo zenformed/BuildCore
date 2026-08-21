@@ -21,6 +21,8 @@ import { loadOrganizationPipelineStageCatalog } from '@/infrastructure/crm/serve
 import { getCrmProjectSummaryBySlugForOrg } from '@/infrastructure/crm/server/crmReadService';
 import { mapCrmRouteError } from '@/infrastructure/crm/server/crmApiRouteErrors';
 import { isProjectsListV2EnabledForOrganization } from '@/infrastructure/config/projectsListV2Config';
+import { resolveBuildCoreProjectAccessScopeForUser } from '@/infrastructure/crm/server/buildCoreProjectAccessScopeService';
+import { normalizeProjectAssigneeForAccessScope } from '@/domain/buildcore/projectAccessScope';
 
 export const dynamic = 'force-dynamic';
 
@@ -117,9 +119,12 @@ export async function PATCH(
     auth.context.organizationId,
     projectSummary.parentProjectId != null ? 'subproject' : 'project'
   );
-  const validated = validateCreateCrmProjectBody(body, {
-    allowedStageSlugs: pipelineStageSlugSet(stageCatalog),
-  });
+  // PATCH submits the whole form, including the current stage. Preserve an
+  // existing legacy stage while editing unrelated fields; new projects and
+  // deliberate stage changes remain constrained to the active org catalog.
+  const allowedStageSlugs = new Set(pipelineStageSlugSet(stageCatalog));
+  allowedStageSlugs.add(projectSummary.currentStageSlug);
+  const validated = validateCreateCrmProjectBody(body, { allowedStageSlugs });
   if (!validated.ok) {
     return NextResponse.json({ error: 'validation_error', message: validated.message }, { status: 400 });
   }
@@ -132,13 +137,27 @@ export async function PATCH(
   );
   if (!access.ok) return access.response;
 
+  const projectAccessScope = await resolveBuildCoreProjectAccessScopeForUser(
+    auth.context.supabase,
+    auth.context.organizationId,
+    auth.context.user.id
+  );
+  const updateInput = {
+    ...validated.input,
+    assignedMemberId: normalizeProjectAssigneeForAccessScope({
+      scope: projectAccessScope,
+      actorUserId: auth.context.user.id,
+      requestedAssigneeId: validated.input.assignedMemberId,
+    }),
+  };
+
   try {
     const project = await updateCrmProjectBySlugForOrg(
       auth.context.supabase,
       auth.context.organizationId,
       auth.context.user.id,
       slug,
-      validated.input
+      updateInput
     );
     if (project == null) {
       return NextResponse.json({ error: 'not_found', message: 'Project not found' }, { status: 404 });

@@ -172,8 +172,10 @@ export function CrmProjectTableRow({
   const displayProjectName = dashboardCompactLayout ? project.name.trim() : truncateTo25(project.name);
   const displayIndustrySubtitle = industrySubtitle ? truncateTo25(industrySubtitle) : null;
   const displayParentProjectName = parentProjectName ? truncateTo25(parentProjectName) : null;
-  const hasEmailValue = displayEmail !== '—';
-  const hasPhoneValue = displayPhone !== '—';
+  // Contact values are stored as arrays; the legacy primary display fields
+  // are empty strings when absent (not an em dash).
+  const hasEmailValue = contactEmails.length > 0 && displayEmail.trim().length > 0;
+  const hasPhoneValue = contactPhones.length > 0 && displayPhone.trim().length > 0;
   const hasAddressValue = typeof formattedAddress === 'string' && formattedAddress.trim().length > 0;
   const hasNotesValue = (project.notesPreview ?? '').trim().length > 0;
   const showSubprojectCount =
@@ -377,56 +379,58 @@ export function CrmProjectTableRow({
               <span>{displayContactName}</span>
             </strong>
             <span className={styles.dashboardClientContactsRow}>
-            <CrmProjectTableContactCell
-              kind="email"
-              values={contactEmails}
-              displayValue={displayEmail}
-              formatDisplayValue={formatEmailPopoverValue}
-              getCopyValue={getEmailCopyValue}
-              onCopied={onContactCopied}
-              title={displayEmail}
-              href={emailHref}
-              getRowHref={(value) => `mailto:${value.trim()}`}
-              leadingIcon={
-                hasEmailValue ? (
+              {hasEmailValue ? (
+                <CrmProjectTableContactCell
+                  kind="email"
+                  values={contactEmails}
+                  displayValue={displayEmail}
+                  formatDisplayValue={formatEmailPopoverValue}
+                  getCopyValue={getEmailCopyValue}
+                  onCopied={onContactCopied}
+                  title={displayEmail}
+                  href={emailHref}
+                  getRowHref={(value) => `mailto:${value.trim()}`}
+                  leadingIcon={
                   <LuMail
                     className={`${styles.dashboardClientLineIcon} ${styles.subprojectsContactInfoIcon}`}
                     aria-hidden
                   />
-                ) : null
-              }
-            />
-            <CrmProjectTableContactCell
-              kind="phone"
-              values={contactPhones}
-              displayValue={displayPhone}
-              formatDisplayValue={formatPhonePopoverValue}
-              getCopyValue={getPhoneCopyValue}
-              onCopied={onContactCopied}
-              href={phoneHref}
-              getRowHref={(value) => buildTelHref(value)}
-              leadingIcon={
-                hasPhoneValue ? (
+                  }
+                />
+              ) : null}
+              {hasPhoneValue ? (
+                <CrmProjectTableContactCell
+                  kind="phone"
+                  values={contactPhones}
+                  displayValue={displayPhone}
+                  formatDisplayValue={formatPhonePopoverValue}
+                  getCopyValue={getPhoneCopyValue}
+                  onCopied={onContactCopied}
+                  href={phoneHref}
+                  getRowHref={(value) => buildTelHref(value)}
+                  leadingIcon={
                   <LuPhone
                     className={`${styles.dashboardClientLineIcon} ${styles.subprojectsContactInfoIcon}`}
                     aria-hidden
                   />
-                ) : null
-              }
-            />
+                  }
+                />
+              ) : null}
             </span>
-            <a
-              className={`${styles.dashboardClientLine} ${styles.dashboardClientAddress} ${styles.tableContactCellValueLink}`}
-              title={formattedAddress ?? undefined}
-              href={addressHref ?? undefined}
-              onClick={(event) => event.stopPropagation()}
-            >
-              <LuMapPin
-                className={`${styles.dashboardClientLineIcon} ${styles.subprojectsContactInfoIcon}`}
-                aria-hidden
-              />
-              <span>{formattedAddress ?? '—'}</span>
-            </a>
+            {hasAddressValue ? (
+              <a
+                className={`${styles.dashboardClientLine} ${styles.dashboardClientAddress} ${styles.tableContactCellValueLink}`}
+                title={formattedAddress ?? undefined}
+                href={addressHref ?? undefined}
+                onClick={(event) => event.stopPropagation()}
+              >
+                <LuMapPin
+                  className={`${styles.dashboardClientLineIcon} ${styles.subprojectsContactInfoIcon}`}
+                  aria-hidden
+                />
+                <span>{formattedAddress}</span>
+              </a>
+            ) : null}
           </span>
           <span className={`${styles.gridCell} ${styles.dashboardStageCell}`} role="cell">
             {derivedStageSlug != null ? (

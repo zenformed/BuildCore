@@ -17,6 +17,15 @@ function validBaseForm() {
 }
 
 describe('project address entry form', () => {
+  it('uses the first organization workflow stage for a new project', () => {
+    const form = defaultCreateCrmProjectFormState([
+      { slug: 'prospect', label: 'Prospect', sortOrder: 1 },
+      { slug: 'contacted', label: 'Contacted', sortOrder: 2 },
+      { slug: 'complete', label: 'Complete', sortOrder: 3 },
+    ]);
+    assert.equal(form.currentStageSlug, 'prospect');
+  });
+
   it('keeps coordinates null for a street-only project', () => {
     const result = validateCreateCrmProjectForm({
       ...validBaseForm(),

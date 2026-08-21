@@ -7,13 +7,16 @@ import { runtimeModes } from '@/infrastructure/config/runtimeModes';
 import type { BuildCoreTeamMemberRow } from '@/presentation/features/buildCoreTeams/buildCoreTeamsViewModel';
 import projectStyles from '../CrmProjectDetail/ProjectDetail.module.css';
 import styles from './BuildCoreTeams.module.css';
+import type { useBuildCoreProjectMemberAccess } from '@/presentation/features/buildCoreTeams/useBuildCoreProjectMemberAccess';
 
 export type BuildCoreTeamMemberMobileCardProps = {
   readonly row: BuildCoreTeamMemberRow;
+  readonly projectMemberAccess: ReturnType<typeof useBuildCoreProjectMemberAccess>;
 };
 
 export function BuildCoreTeamMemberMobileCard({
   row,
+  projectMemberAccess,
 }: BuildCoreTeamMemberMobileCardProps): ReactElement {
   const copy = content.teams.table;
   const demoCopy = content.teams.demo;
@@ -36,6 +39,27 @@ export function BuildCoreTeamMemberMobileCard({
             <span className={styles.organizationRoleBadge}>{row.organizationRoleLabel}</span>
           </div>
         </div>
+        {projectMemberAccess.canManage ? (
+          <div className={projectStyles.workflowTaskMobileCardGrid2}>
+            <div className={projectStyles.workflowTaskMobileCardCell}>
+              <span className={projectStyles.projectInfoMobileLabel}>Project access</span>
+              {row.organizationRole === 'owner' || row.organizationRole === 'admin' ? (
+                <span className={styles.accessBadge}>All organization projects</span>
+              ) : row.projectAccessScope != null && row.membershipStatus === 'active' ? (
+                <select
+                  className={styles.memberProjectVisibilitySelect}
+                  value={row.projectAccessScope}
+                  disabled={projectMemberAccess.savingUserId === row.userId}
+                  aria-label={`Project access for ${row.name}`}
+                  onChange={(event) => void projectMemberAccess.save(row.userId, event.target.value as 'all' | 'assigned_only')}
+                >
+                  <option value="all">All organization projects</option>
+                  <option value="assigned_only">Only assigned projects</option>
+                </select>
+              ) : <span>—</span>}
+            </div>
+          </div>
+        ) : null}
         <div className={projectStyles.workflowTaskMobileCardGrid2}>
           <div className={projectStyles.workflowTaskMobileCardCell}>
             <span className={projectStyles.projectInfoMobileLabel}>{copy.email}</span>

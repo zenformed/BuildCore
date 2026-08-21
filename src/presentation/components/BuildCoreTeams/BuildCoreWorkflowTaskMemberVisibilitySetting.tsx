@@ -10,10 +10,12 @@ import styles from './BuildCoreTeams.module.css';
 
 export type BuildCoreWorkflowTaskMemberVisibilitySettingProps = {
   readonly enabled: boolean;
+  readonly embedded?: boolean;
 };
 
 export function BuildCoreWorkflowTaskMemberVisibilitySetting({
   enabled,
+  embedded = false,
 }: BuildCoreWorkflowTaskMemberVisibilitySettingProps): ReactElement {
   const copy = content.teams.workflowTaskPermissions.memberVisibility;
   const demoCopy = content.teams.demo;
@@ -60,6 +62,23 @@ export function BuildCoreWorkflowTaskMemberVisibilitySetting({
       {visibility.statusMessage}
     </p>
   ) : null;
+
+  if (embedded) {
+    return (
+      <>
+        <div className={styles.permissionListRow}>
+          <div className={styles.permissionListCopy}>
+            <strong>{copy.toggleLabel}</strong>
+            <span>
+              {copy.hint} {copy.defaultNote}
+            </span>
+          </div>
+          {toggle}
+        </div>
+        {statusMessage}
+      </>
+    );
+  }
 
   if (isMobileLayout) {
     return (

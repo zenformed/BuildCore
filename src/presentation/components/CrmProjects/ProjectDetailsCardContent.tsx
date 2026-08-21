@@ -156,16 +156,18 @@ function MobilePreviewMetaItem({
   value,
 }: {
   readonly label: ReactElement | string;
-  readonly icon: ReactElement;
+  readonly icon: ReactElement | null;
   readonly value: ReactElement | string;
 }): ReactElement {
   return (
     <div className={cardStyles.previewMobileListItem}>
       <div className={cardStyles.previewMobileListLabel}>{label}</div>
       <div className={cardStyles.previewMobileListValueRow}>
-        <span className={cardStyles.previewMobileListValueIcon} aria-hidden>
-          {icon}
-        </span>
+        {icon != null ? (
+          <span className={cardStyles.previewMobileListValueIcon} aria-hidden>
+            {icon}
+          </span>
+        ) : null}
         <div className={cardStyles.previewMobileListValueContent}>{value}</div>
       </div>
     </div>
@@ -393,6 +395,9 @@ export function ProjectDetailsCardContent({
       : INDUSTRY_LABELS[summary.industry];
   const rawEmails = nonEmptyContactValues(summary.contact.emails);
   const rawPhones = nonEmptyContactValues(summary.contact.phones);
+  const hasEmailValue = rawEmails.length > 0;
+  const hasPhoneValue = rawPhones.length > 0;
+  const hasAddressValue = Boolean(addressDisplay);
   const emails = rawEmails.map((email) =>
     formatContactEmailDisplay(email, { maskForMember: edit?.memberView })
   );
@@ -632,12 +637,12 @@ export function ProjectDetailsCardContent({
               />
               <MobilePreviewMetaItem
                 label={previewCopy.labels.email}
-                icon={<LuMail />}
+                icon={hasEmailValue ? <LuMail /> : null}
                 value={<StackedMetaList values={emails} emptyValue={emptyValue} />}
               />
               <MobilePreviewMetaItem
                 label={previewCopy.labels.phone}
-                icon={<LuPhone />}
+                icon={hasPhoneValue ? <LuPhone /> : null}
                 value={<StackedMetaList values={phones} emptyValue={emptyValue} />}
               />
               <MobilePreviewMetaItem
@@ -736,21 +741,25 @@ export function ProjectDetailsCardContent({
                 icon={<LuUser />}
                 value={summary.contact.name || emptyValue}
               />
-              <MobilePreviewMetaItem
-                label={previewCopy.labels.email}
-                icon={<LuMail />}
-                value={<LinkedStackedMetaList entries={emailEntries} emptyValue={emptyValue} />}
-              />
-              <MobilePreviewMetaItem
-                label={previewCopy.labels.phone}
-                icon={<LuPhone />}
-                value={<LinkedStackedMetaList entries={phoneEntries} emptyValue={emptyValue} />}
-              />
-              <MobilePreviewMetaItem
-                label={previewCopy.labels.address}
-                icon={<LuMapPin />}
-                value={
-                  addressDisplay ? (
+              {hasEmailValue ? (
+                <MobilePreviewMetaItem
+                  label={previewCopy.labels.email}
+                  icon={<LuMail />}
+                  value={<LinkedStackedMetaList entries={emailEntries} emptyValue={emptyValue} />}
+                />
+              ) : null}
+              {hasPhoneValue ? (
+                <MobilePreviewMetaItem
+                  label={previewCopy.labels.phone}
+                  icon={<LuPhone />}
+                  value={<LinkedStackedMetaList entries={phoneEntries} emptyValue={emptyValue} />}
+                />
+              ) : null}
+              {hasAddressValue ? (
+                <MobilePreviewMetaItem
+                  label={previewCopy.labels.address}
+                  icon={<LuMapPin />}
+                  value={
                     addressHref ? (
                       <a
                         className={`${cardStyles.metaValueMultiline} ${cardStyles.metaStackedListItemLink}`}
@@ -762,13 +771,11 @@ export function ProjectDetailsCardContent({
                         {addressDisplay}
                       </a>
                     ) : (
-                      <MultilineMetaValue text={addressDisplay} />
+                      <MultilineMetaValue text={addressDisplay ?? ''} />
                     )
-                  ) : (
-                    emptyValue
-                  )
-                }
-              />
+                  }
+                />
+              ) : null}
               <MobilePreviewMetaItem
                 label={previewCopy.labels.stage}
                 icon={<LuGitBranch />}
@@ -878,32 +885,36 @@ export function ProjectDetailsCardContent({
                 leadingIconMode="label_only"
                 value={<span className={cardStyles.previewContactPill}>{summary.contact.name || emptyValue}</span>}
               />
-              <PreviewMetaColumn
-                label={previewCopy.labels.email}
-                labelPosition={previewLabelPosition}
-                leadingIcon={<LuMail />}
-                leadingIconMode="label_only"
-                value={<StackedMetaList values={emails} emptyValue={emptyValue} />}
-              />
-              <PreviewMetaColumn
-                label={previewCopy.labels.phone}
-                labelPosition={previewLabelPosition}
-                leadingIcon={<LuPhone />}
-                leadingIconMode="label_only"
-                value={<StackedMetaList values={phones} emptyValue={emptyValue} />}
-              />
+              {hasEmailValue ? (
+                <PreviewMetaColumn
+                  label={previewCopy.labels.email}
+                  labelPosition={previewLabelPosition}
+                  leadingIcon={<LuMail />}
+                  leadingIconMode="label_only"
+                  value={<StackedMetaList values={emails} emptyValue={emptyValue} />}
+                />
+              ) : null}
+              {hasPhoneValue ? (
+                <PreviewMetaColumn
+                  label={previewCopy.labels.phone}
+                  labelPosition={previewLabelPosition}
+                  leadingIcon={<LuPhone />}
+                  leadingIconMode="label_only"
+                  value={<StackedMetaList values={phones} emptyValue={emptyValue} />}
+                />
+              ) : null}
             </div>
-            <div className={`${cardStyles.previewMetaRow} ${cardStyles.previewMetaRow_spaced}`}>
-              <PreviewMetaColumn
-                label={previewCopy.labels.address}
-                labelPosition={previewLabelPosition}
-                leadingIcon={<LuMapPin />}
-                leadingIconMode="label_only"
-                value={
-                  addressDisplay ? <MultilineMetaValue text={addressDisplay} /> : emptyValue
-                }
-              />
-            </div>
+            {hasAddressValue ? (
+              <div className={`${cardStyles.previewMetaRow} ${cardStyles.previewMetaRow_spaced}`}>
+                <PreviewMetaColumn
+                  label={previewCopy.labels.address}
+                  labelPosition={previewLabelPosition}
+                  leadingIcon={<LuMapPin />}
+                  leadingIconMode="label_only"
+                  value={<MultilineMetaValue text={addressDisplay ?? ''} />}
+                />
+              </div>
+            ) : null}
             <div className={`${cardStyles.previewMetaRow} ${cardStyles.previewMetaRow_spaced}`}>
               <PreviewMetaColumn
                 label={previewCopy.labels.stage}

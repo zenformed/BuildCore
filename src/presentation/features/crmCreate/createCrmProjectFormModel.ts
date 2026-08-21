@@ -1,4 +1,11 @@
-import type { CreateCrmProjectInput, CrmPriority, CrmIndustry, PipelineStageSlug, CrmProjectDetail } from '@/domain/crm';
+import type {
+  CreateCrmProjectInput,
+  CrmPriority,
+  CrmIndustry,
+  PipelineStage,
+  PipelineStageSlug,
+  CrmProjectDetail,
+} from '@/domain/crm';
 import { validateCrmIndustryFields } from '@/domain/crm';
 import { getFirstPipelineStageSlug } from '@/domain/crm/pipelineStage';
 import { titleCasePersonOrEntityName } from '@/domain/crm/titleCaseName';
@@ -45,7 +52,9 @@ export type CreateCrmProjectFormState = {
   longitude: string;
 };
 
-export const defaultCreateCrmProjectFormState = (): CreateCrmProjectFormState => ({
+export const defaultCreateCrmProjectFormState = (
+  stages?: readonly PipelineStage[] | null
+): CreateCrmProjectFormState => ({
   name: '',
   industry: 'hvac',
   customIndustry: '',
@@ -53,7 +62,7 @@ export const defaultCreateCrmProjectFormState = (): CreateCrmProjectFormState =>
   emails: [''],
   phones: [''],
   priority: 'normal',
-  currentStageSlug: getFirstPipelineStageSlug(),
+  currentStageSlug: getFirstPipelineStageSlug(stages),
   notes: '',
   dealValueUsd: '',
   balanceUsd: '',
@@ -70,9 +79,10 @@ export const defaultCreateCrmProjectFormState = (): CreateCrmProjectFormState =>
 
 /** Initial create form values copied from a parent project (subproject defaults only). */
 export function createSubprojectFormDefaultsFromParent(
-  parent: CrmProjectDetail
+  parent: CrmProjectDetail,
+  stages?: readonly PipelineStage[] | null
 ): CreateCrmProjectFormState {
-  const base = defaultCreateCrmProjectFormState();
+  const base = defaultCreateCrmProjectFormState(stages);
   const { summary } = parent;
   return {
     ...base,

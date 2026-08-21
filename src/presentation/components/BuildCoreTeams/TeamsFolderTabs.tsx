@@ -19,21 +19,24 @@ import {
 } from './TeamsSectionMobileSelector';
 import { TeamsPermissionsPanel } from './TeamsPermissionsPanel';
 import { TeamsSidebarNav } from './TeamsSidebarNav';
+import type { useBuildCoreProjectMemberAccess } from '@/presentation/features/buildCoreTeams/useBuildCoreProjectMemberAccess';
 import styles from './BuildCoreTeams.module.css';
 
 export type { TeamsFolderTabId } from '@/presentation/features/buildCoreTeams/teamsFolderTabModel';
 
 export type TeamsFolderTabsProps = {
   readonly model: BuildCoreTeamsPageModel;
+  readonly projectMemberAccess: ReturnType<typeof useBuildCoreProjectMemberAccess>;
 };
 
 function renderMobileTabPanel(
   selectedTab: TeamsFolderTabId,
-  model: BuildCoreTeamsPageModel
+  model: BuildCoreTeamsPageModel,
+  projectMemberAccess: ReturnType<typeof useBuildCoreProjectMemberAccess>
 ): ReactElement {
   switch (selectedTab) {
     case 'members':
-      return <BuildCoreTeamsMembersSection rows={model.rows} />;
+      return <BuildCoreTeamsMembersSection rows={model.rows} projectMemberAccess={projectMemberAccess} />;
     case 'taskPermissions':
       return <BuildCoreWorkflowTaskPermissionsSection enabled layout="tabPanel" />;
     case 'paymentPermissions':
@@ -49,15 +52,16 @@ function renderMobileTabPanel(
 
 function renderDesktopContent(
   selectedNav: TeamsDesktopNavId,
-  model: BuildCoreTeamsPageModel
+  model: BuildCoreTeamsPageModel,
+  projectMemberAccess: ReturnType<typeof useBuildCoreProjectMemberAccess>
 ): ReactElement {
   if (selectedNav === 'members') {
-    return <BuildCoreTeamsMembersSection rows={model.rows} />;
+    return <BuildCoreTeamsMembersSection rows={model.rows} projectMemberAccess={projectMemberAccess} />;
   }
   return <TeamsPermissionsPanel />;
 }
 
-export function TeamsFolderTabs({ model }: TeamsFolderTabsProps): ReactElement {
+export function TeamsFolderTabs({ model, projectMemberAccess }: TeamsFolderTabsProps): ReactElement {
   const isMobileLayout = useDashboardMobileLayout();
   const [selectedTab, setSelectedTab] = useState<TeamsFolderTabId>('members');
   const [selectedNav, setSelectedNav] = useState<TeamsDesktopNavId>('members');
@@ -78,7 +82,7 @@ export function TeamsFolderTabs({ model }: TeamsFolderTabsProps): ReactElement {
           className={styles.teamsFolderTabPanel}
         >
           <div className={styles.teamsFolderTabPanelInner} data-teams-tab={selectedTab}>
-            {renderMobileTabPanel(selectedTab, model)}
+            {renderMobileTabPanel(selectedTab, model, projectMemberAccess)}
           </div>
         </div>
       </div>
@@ -93,7 +97,7 @@ export function TeamsFolderTabs({ model }: TeamsFolderTabsProps): ReactElement {
         role="region"
         aria-label={selectedNav === 'members' ? 'Members' : 'Permissions'}
       >
-        {renderDesktopContent(selectedNav, model)}
+        {renderDesktopContent(selectedNav, model, projectMemberAccess)}
       </div>
     </div>
   );

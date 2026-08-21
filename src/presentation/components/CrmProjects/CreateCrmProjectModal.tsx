@@ -58,6 +58,7 @@ import { useProjectTemplateManager } from '@/presentation/features/projectTempla
 import { useAssignmentIdentityCatalog } from '@/presentation/providers/AssignmentIdentityProvider';
 
 import { useBuildCoreDashboardContext } from '@/presentation/providers/BuildCoreDashboardProvider';
+import { useBuildCorePipelineStages } from '@/presentation/providers/BuildCorePipelineStagesProvider';
 
 import { useSaaSProfile } from '@/presentation/hooks/useSaaSProfile';
 
@@ -146,6 +147,12 @@ export function CreateCrmProjectModal({
   const isApiSource = getCrmDataSource() === 'api';
 
   const isEditMode = mode === 'edit';
+  const { getCatalog } = useBuildCorePipelineStages();
+  const stageCatalog = getCatalog(
+    (isEditMode ? project?.summary.parentProjectId : parentProjectId) != null
+      ? 'subproject'
+      : 'project'
+  );
 
   const create = content.crm.create;
 
@@ -241,8 +248,8 @@ export function CreateCrmProjectModal({
 
       const baseDefaults =
         parentProjectId != null && parentProjectForDefaults != null
-          ? createSubprojectFormDefaultsFromParent(parentProjectForDefaults)
-          : defaultCreateCrmProjectFormState();
+          ? createSubprojectFormDefaultsFromParent(parentProjectForDefaults, stageCatalog)
+          : defaultCreateCrmProjectFormState(stageCatalog);
 
       setForm(
         allowAssignee && canMutateProjects && dash.user?.id
@@ -263,7 +270,7 @@ export function CreateCrmProjectModal({
 
     setSaving(false);
 
-  }, [activeDefinitions, allowAssignee, canMutateProjects, dash.user?.id, isEditMode, open, parentProjectForDefaults, parentProjectId, project]);
+  }, [activeDefinitions, allowAssignee, canMutateProjects, dash.user?.id, isEditMode, open, parentProjectForDefaults, parentProjectId, project, stageCatalog]);
 
 
 
@@ -773,4 +780,3 @@ export function CreateCrmProjectModal({
   );
 
 }
-
