@@ -16,6 +16,7 @@ export type IndustrySelectFieldsProps = {
   readonly customIndustryId?: string;
   readonly selectClassName?: string;
   readonly inputClassName?: string;
+  readonly fieldClassName?: string;
   /** When `industryOnly`, renders only the industry select (custom industry omitted). */
   readonly variant?: 'full' | 'industryOnly';
   readonly onIndustryChange: (industry: CrmIndustry) => void;
@@ -33,12 +34,13 @@ export function IndustrySelectFields({
   customIndustryId = 'crm-custom-industry',
   selectClassName = formStyles.select,
   inputClassName = formStyles.input,
+  fieldClassName = formStyles.field,
   variant = 'full',
   onIndustryChange,
   onCustomIndustryChange,
 }: IndustrySelectFieldsProps): ReactElement {
   const industrySelect = (
-    <div className={formStyles.field}>
+    <div className={fieldClassName}>
       <label className={formStyles.label} htmlFor={industryId}>
         {industryLabel}
         {required ? ' *' : null}

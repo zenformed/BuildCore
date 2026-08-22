@@ -25,6 +25,7 @@ export type ContactMultiValueFieldsProps = {
   readonly addAriaLabel: string;
   readonly removeAriaLabel: string;
   readonly removeConfirmCopy: ContactMultiValueRemoveConfirmCopy;
+  readonly className?: string;
   readonly onChange: (values: string[]) => void;
 };
 
@@ -51,6 +52,7 @@ export function ContactMultiValueFields({
   addAriaLabel,
   removeAriaLabel,
   removeConfirmCopy,
+  className,
   onChange,
 }: ContactMultiValueFieldsProps): ReactElement {
   const [pendingRemoveIndex, setPendingRemoveIndex] = useState<number | null>(null);
@@ -87,7 +89,7 @@ export function ContactMultiValueFields({
 
   return (
     <>
-      <div className={formStyles.contactMultiSection}>
+      <div className={`${formStyles.contactMultiSection}${className ? ` ${className}` : ''}`}>
         <div className={formStyles.contactMultiHeader}>
           <span className={formStyles.label}>{label}</span>
           {canAdd ? (

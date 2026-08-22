@@ -571,11 +571,13 @@ export function CrmProjectsPipelineV2({
             }
             dashboardCompactLayout
             projectColumnLabel="Project"
-            dashboardTableToolbar={paginationChrome(false)}
             {...sharedTableChrome}
           />
         )}
       </div>
+      {isMobileLayout ? null : (
+        <div className={styles.projectsListV2FixedPagination}>{paginationChrome(false)}</div>
+      )}
       <CreateCrmProjectModal
         open={createOpen && !isMemberRole}
         onClose={() => setCreateOpen(false)}

@@ -1897,6 +1897,11 @@
   overflow: visible;
 }
 
+.folderTabPanelInner .subprojectsPanel {
+  min-height: 100%;
+  height: 100%;
+}
+
 .folderTabPanelInner .workflowPanel.workflowPanelFull > .detailPanelHeader {
   /* Align title/check with stage headers (no folder panel inset to bleed against). */
   padding: 0;
@@ -13217,8 +13222,8 @@
 
 .subprojectsPanel {
   composes: detailSurface;
-  flex: 0 0 auto;
-  align-self: flex-start;
+  flex: 1 1 auto;
+  align-self: stretch;
   width: 100%;
   min-width: 0;
   padding: 0.75rem 0.875rem;
@@ -13455,6 +13460,23 @@
 .subprojectsTableBody {
   width: 100%;
   min-width: 0;
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+}
+
+.subprojectsTableFill {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.subprojectsPaginationFooter {
+  display: flex;
+  justify-content: center;
+  margin-top: auto;
+  padding: 0.75rem 0 0;
 }
 
 .subprojectsPanel_collapsed .subprojectsTableBody,

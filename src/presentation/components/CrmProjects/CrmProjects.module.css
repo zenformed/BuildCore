@@ -1113,6 +1113,19 @@
   --projects-table-min-width: 60.5rem;
 }
 
+.projectsListV2FixedPagination {
+  position: fixed;
+  z-index: 20;
+  right: 0;
+  bottom: 0;
+  left: var(--dashboard-sidebar-width, 4.125rem);
+  display: flex;
+  justify-content: center;
+  padding: 0.625rem 1rem;
+  border-top: 1px solid var(--theme-form-input-border, var(--color-border, #e2e8f0));
+  background: var(--theme-surface-card, #ffffff);
+}
+
 .projectsDesktopHeading {
   min-width: 0;
 }

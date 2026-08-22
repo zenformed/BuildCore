@@ -69,7 +69,10 @@ import { useDashboardMobileLayout } from '@/presentation/features/crmProjects/us
 
 import { crmRepositories } from '@/shared/di/container';
 
-import { CreateCrmProjectFormFields } from './CreateCrmProjectFormFields';
+import {
+  CreateCrmProjectFormFields,
+  CreateProjectFormSection,
+} from './CreateCrmProjectFormFields';
 import type { GooglePlacesAddressSelection } from '@/presentation/components/GooglePlacesAddressInput';
 import {
   ProjectCustomFieldsSection,
@@ -654,32 +657,38 @@ export function CreateCrmProjectModal({
           updateField={updateField}
         />
 
-        <ProjectCustomFieldsSection
-          scope={templateScope}
-          values={customFieldDraft}
-          disabled={saving}
-          onValueChange={(fieldKey, value) =>
-            setCustomFieldDraft((current) => ({ ...current, [fieldKey]: value }))
-          }
-          onAddField={() => setAddCustomFieldOpen(true)}
-          onFieldDeleted={(fieldKey) =>
-            setCustomFieldDraft((current) => {
-              const next = { ...current };
-              delete next[fieldKey];
-              return next;
-            })
-          }
-        />
+        <CreateProjectFormSection title="Custom fields">
+          <ProjectCustomFieldsSection
+            scope={templateScope}
+            values={customFieldDraft}
+            disabled={saving}
+            onValueChange={(fieldKey, value) =>
+              setCustomFieldDraft((current) => ({ ...current, [fieldKey]: value }))
+            }
+            onAddField={() => setAddCustomFieldOpen(true)}
+            onFieldDeleted={(fieldKey) =>
+              setCustomFieldDraft((current) => {
+                const next = { ...current };
+                delete next[fieldKey];
+                return next;
+              })
+            }
+          />
+        </CreateProjectFormSection>
 
         {!isEditMode && canManageTemplates && isApiSource ? (
-          <ProjectTemplateDraftSelect
-            templateScope={templateScope}
-            disabled={saving}
-            selectedTemplateId={selectedTemplateId}
-            templatesRefreshKey={templateRefreshKey}
-            onDraftChange={handleTemplateDraftChange}
-            onManageClick={templateManager.openList}
-          />
+          <CreateProjectFormSection
+            title="Project template"
+          >
+            <ProjectTemplateDraftSelect
+              templateScope={templateScope}
+              disabled={saving}
+              selectedTemplateId={selectedTemplateId}
+              templatesRefreshKey={templateRefreshKey}
+              onDraftChange={handleTemplateDraftChange}
+              onManageClick={templateManager.openList}
+            />
+          </CreateProjectFormSection>
         ) : null}
 
         <DuplicateCandidatePanel

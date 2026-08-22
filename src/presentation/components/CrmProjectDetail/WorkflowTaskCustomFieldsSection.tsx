@@ -2,6 +2,7 @@
 
 import type { ReactElement } from 'react';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { LuListChecks } from 'react-icons/lu';
 import type {
   WorkflowTaskCustomFieldDefinition,
   WorkflowTaskCustomFieldScope,
@@ -81,7 +82,7 @@ function CustomFieldManageRow({
   }, [isRenaming]);
 
   return (
-    <div className={formStyles.field}>
+    <div className={`${formStyles.field} ${formStyles.outlinedField} ${modalStyles.workflowCustomFieldInline}`}>
       <div className={modalStyles.customFieldLabelSlot}>
         {isRenaming ? (
           <input
@@ -106,7 +107,7 @@ function CustomFieldManageRow({
           />
         ) : (
           <label className={`${formStyles.label} ${modalStyles.customFieldLabelPlain}`} htmlFor={inputId}>
-            {definition.label}
+            <span className={formStyles.labelWithIcon}><span className={formStyles.labelIcon} aria-hidden><LuListChecks /></span><span>{definition.label}</span></span>
           </label>
         )}
       </div>
@@ -286,9 +287,8 @@ export function WorkflowTaskCustomFieldsSection({
 
   return (
     <>
-      <div className={formStyles.contactMultiSection} aria-label={copy.sectionTitle}>
-        <div className={formStyles.contactMultiHeader}>
-          <span className={formStyles.label}>{copy.sectionTitle}</span>
+      <div className={`${formStyles.contactMultiSection} ${modalStyles.workflowCustomFieldsSection}`} aria-label={copy.sectionTitle}>
+        <div className={`${formStyles.contactMultiHeader} ${modalStyles.workflowCustomFieldsHeader}`}>
           {canManageDefinitions ? (
             <button
               type="button"

@@ -489,7 +489,6 @@ export function SubprojectsSectionV2({
                   ? null
                 : filterMenu}
               {listToolbar}
-              {isMobileLayout ? null : paginationChrome}
             </DetailPanelHeaderActions>
           </div>
         </FolderTabToolbarPortal>
@@ -574,7 +573,6 @@ export function SubprojectsSectionV2({
               </button>
               <div className={styles.subprojectsPanelHeaderTools}>
                 {listToolbar}
-                {paginationChrome}
               </div>
             </>
           )}
@@ -627,7 +625,7 @@ export function SubprojectsSectionV2({
               onContactCopied={onContactCopied}
             />
           ) : (
-            <div className={`${tableStyles.pipeline} ${tableStyles.pipelineFitContent}`}>
+            <div className={`${tableStyles.pipeline} ${styles.subprojectsTableFill}`}>
               <CrmProjectsTable
                 rows={rows}
                 pageSummariesByProjectId={list.pageSummariesById}
@@ -669,6 +667,9 @@ export function SubprojectsSectionV2({
             </div>
           )}
         </div>
+      ) : null}
+      {expanded && !isMobileLayout ? (
+        <div className={styles.subprojectsPaginationFooter}>{paginationChrome}</div>
       ) : null}
 
       {canManage ? (

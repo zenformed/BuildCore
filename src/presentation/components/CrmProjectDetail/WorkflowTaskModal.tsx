@@ -29,6 +29,7 @@ import { countDocumentsByTaskId } from '@/presentation/features/crmProjectDetail
 import { crmRepositories } from '@/shared/di/container';
 import { ConfirmModal } from '@/presentation/components/ConfirmModal';
 import { RightSideDrawer } from '@/presentation/components/RightSideDrawer';
+import { CreateProjectFormSection } from '@/presentation/components/CrmProjects/CreateCrmProjectFormFields';
 import formStyles from '../CrmProjects/CreateCrmProjectDrawer.module.css';
 import { CreateFormAssigneePicker } from '@/presentation/components/crmShared/CreateFormAssigneePicker';
 import { WorkflowStatusPillPicker } from './WorkflowStatusPillPicker';
@@ -320,7 +321,8 @@ export function WorkflowTaskModal({
 
   const formFields = useDesktopDrawer ? (
     <>
-      <div className={`${formStyles.field} ${styles.drawerTitleField}`}>
+      <CreateProjectFormSection title="Task details" open>
+      <div className={`${formStyles.field} ${formStyles.outlinedField} ${styles.drawerTitleField}`}>
         <label className={formStyles.label} htmlFor="workflow-task-title">
           {wf.fields.title} *
         </label>
@@ -335,7 +337,7 @@ export function WorkflowTaskModal({
       </div>
 
       <div className={styles.taskFieldGridDrawerRow2}>
-        <div className={formStyles.field}>
+        <div className={`${formStyles.field} ${formStyles.outlinedField}`}>
           <label className={formStyles.label}>{wf.fields.status}</label>
           <WorkflowStatusPillPicker
             value={form.status}
@@ -345,7 +347,7 @@ export function WorkflowTaskModal({
           />
         </div>
         {isPaymentTask ? (
-          <div className={formStyles.field}>
+          <div className={`${formStyles.field} ${formStyles.outlinedField}`}>
             <label className={formStyles.label} htmlFor="workflow-task-amount">
               {wf.fields.amountUsd} *
             </label>
@@ -360,7 +362,7 @@ export function WorkflowTaskModal({
             />
           </div>
         ) : (
-          <div className={formStyles.field}>
+          <div className={`${formStyles.field} ${formStyles.outlinedField}`}>
             <label className={formStyles.label} htmlFor="workflow-task-stage">
               {wf.fields.stage}
             </label>
@@ -384,7 +386,7 @@ export function WorkflowTaskModal({
       </div>
 
       <div className={styles.taskFieldGridDrawerRow3}>
-        <div className={formStyles.field}>
+        <div className={`${formStyles.field} ${formStyles.outlinedField}`}>
           <label className={formStyles.label} htmlFor="workflow-task-documents-required">
             {wf.fields.documentsRequired}
           </label>
@@ -405,7 +407,7 @@ export function WorkflowTaskModal({
           </select>
         </div>
 
-        <div className={formStyles.field}>
+        <div className={`${formStyles.field} ${formStyles.outlinedField}`}>
           <label className={formStyles.label} htmlFor="workflow-task-due">
             {wf.fields.due}
           </label>
@@ -420,7 +422,7 @@ export function WorkflowTaskModal({
         </div>
 
         {showAssignee ? (
-          <div className={formStyles.field}>
+          <div className={`${formStyles.field} ${formStyles.outlinedField}`}>
             <span className={formStyles.label}>{createCopy.fields.assignedShort}</span>
             <CreateFormAssigneePicker
               value={form.assignedMemberId}
@@ -439,7 +441,7 @@ export function WorkflowTaskModal({
 
       {isPaymentTask ? (
         <div className={styles.rowPaymentDates}>
-          <div className={`${formStyles.field} ${styles.rowField}`}>
+          <div className={`${formStyles.field} ${formStyles.outlinedField} ${styles.rowField}`}>
             <label className={formStyles.label} htmlFor="workflow-task-invoiced">
               {payments.columns.invoiced}
             </label>
@@ -452,7 +454,7 @@ export function WorkflowTaskModal({
               onChange={(e) => updateField('invoicedAt', e.target.value)}
             />
           </div>
-          <div className={`${formStyles.field} ${styles.rowField}`}>
+          <div className={`${formStyles.field} ${formStyles.outlinedField} ${styles.rowField}`}>
             <label className={formStyles.label} htmlFor="workflow-task-paid">
               {payments.columns.paid}
             </label>
@@ -467,8 +469,10 @@ export function WorkflowTaskModal({
           </div>
         </div>
       ) : null}
+      </CreateProjectFormSection>
 
-      <div className={`${formStyles.field} ${styles.rowNotes}`}>
+      <CreateProjectFormSection title="Notes">
+      <div className={`${formStyles.field} ${formStyles.outlinedField} ${styles.rowNotes}`}>
         <label className={formStyles.label} htmlFor="workflow-task-notes">
           {wf.fields.notes}
         </label>
@@ -480,7 +484,9 @@ export function WorkflowTaskModal({
           onChange={(e) => updateField('notes', e.target.value)}
         />
       </div>
+      </CreateProjectFormSection>
 
+      <CreateProjectFormSection title="Custom fields">
       <WorkflowTaskCustomFieldsSection
         scope={customFieldScope}
         values={customFieldDraft}
@@ -496,6 +502,7 @@ export function WorkflowTaskModal({
           });
         }}
       />
+      </CreateProjectFormSection>
 
       {error ? <p className={formStyles.error}>{error}</p> : null}
     </>

@@ -57,6 +57,32 @@ export type CreateCrmProjectFormFieldsProps = {
   ) => void;
 };
 
+type CreateProjectFormSectionProps = {
+  readonly title: string;
+  readonly icon?: ReactNode;
+  readonly open?: boolean;
+  readonly children: ReactNode;
+};
+
+export function CreateProjectFormSection({
+  title,
+  icon,
+  open = false,
+  children,
+}: CreateProjectFormSectionProps): ReactElement {
+  return (
+    <details className={formStyles.createProjectSection} open={open}>
+      <summary className={formStyles.createProjectSectionSummary}>
+        {icon != null ? <span className={formStyles.createProjectSectionIcon} aria-hidden>{icon}</span> : null}
+        <span>
+          <span className={formStyles.createProjectSectionTitle}>{title}</span>
+        </span>
+      </summary>
+      <div className={formStyles.createProjectSectionBody}>{children}</div>
+    </details>
+  );
+}
+
 export function CreateCrmProjectFormFields({
   form,
   saving,
@@ -96,10 +122,15 @@ export function CreateCrmProjectFormFields({
 
   return (
     <>
+      <CreateProjectFormSection
+        title="Project details"
+        icon={<LuBuilding2 />}
+        open
+      >
       <div
         className={`${formStyles.rowTopFour}${showAssignee ? '' : ` ${formStyles.rowTopFourNoAssignee}`}`}
       >
-        <div className={formStyles.field}>
+        <div className={`${formStyles.field} ${formStyles.outlinedField}`}>
           <label className={formStyles.label} htmlFor="crm-create-name">
             {labelWithIcon(create.fields.name, <LuBuilding2 />, true)}
           </label>
@@ -123,12 +154,13 @@ export function CreateCrmProjectFormFields({
           required
           industryId="crm-create-industry"
           customIndustryId="crm-create-custom-industry"
+          fieldClassName={`${formStyles.field} ${formStyles.outlinedField}`}
           onIndustryChange={(industry) => updateField('industry', industry)}
           onCustomIndustryChange={(value) => updateField('customIndustry', value)}
         />
 
         <div className={formStyles.rowTopContactAssignee}>
-          <div className={formStyles.field}>
+          <div className={`${formStyles.field} ${formStyles.outlinedField}`}>
             <label className={formStyles.label} htmlFor="crm-create-contact">
               {labelWithIcon(create.fields.contactName, <LuUser />, true)}
             </label>
@@ -143,9 +175,6 @@ export function CreateCrmProjectFormFields({
 
           {showAssignee ? (
             <div className={formStyles.fieldAssigneeCompact}>
-              <span className={formStyles.label}>
-                {labelWithIcon(create.fields.assignedShort, <LuUser />)}
-              </span>
               <CreateFormAssigneePicker
                 value={form.assignedMemberId}
                 options={assigneeOptions}
@@ -160,7 +189,7 @@ export function CreateCrmProjectFormFields({
       </div>
 
       {form.industry === 'other' ? (
-        <div className={formStyles.field}>
+        <div className={`${formStyles.field} ${formStyles.outlinedField}`}>
           <label className={formStyles.label} htmlFor="crm-create-custom-industry">
             {labelWithIcon(create.fields.customIndustry, <LuListChecks />, true)}
           </label>
@@ -173,7 +202,13 @@ export function CreateCrmProjectFormFields({
           />
         </div>
       ) : null}
+      </CreateProjectFormSection>
 
+      <CreateProjectFormSection
+        title="Contact details"
+        icon={<LuMail />}
+        open
+      >
       <div className={formStyles.rowContactEmailPhone}>
         <div className={formStyles.rowContactEmailCol}>
           <ContactMultiValueFields
@@ -187,6 +222,7 @@ export function CreateCrmProjectFormFields({
             addAriaLabel={create.fields.addEmail}
             removeAriaLabel={create.fields.removeEmail}
             removeConfirmCopy={create.fields.removeEmailConfirm}
+            className={formStyles.outlinedField}
             onChange={(emails) => updateField('emails', emails)}
           />
         </div>
@@ -202,15 +238,22 @@ export function CreateCrmProjectFormFields({
             addAriaLabel={create.fields.addPhone}
             removeAriaLabel={create.fields.removePhone}
             removeConfirmCopy={create.fields.removePhoneConfirm}
+            className={formStyles.outlinedField}
             onChange={(phones) => updateField('phones', phones)}
           />
         </div>
       </div>
+      </CreateProjectFormSection>
 
+      <CreateProjectFormSection
+        title="Address"
+        icon={<LuMapPin />}
+        open
+      >
       <div className={formStyles.addressSection}>
         {form.addressEntryMode === 'street' ? (
           <>
-            <div className={formStyles.field}>
+            <div className={`${formStyles.field} ${formStyles.outlinedField}`}>
               <div className={formStyles.addressLabelRow}>
                 <label className={formStyles.label} htmlFor="crm-create-address-line-1">
                   {labelWithIcon(create.fields.addressLine1, <LuMapPin />)}
@@ -235,7 +278,7 @@ export function CreateCrmProjectFormFields({
               />
             </div>
 
-            <div className={formStyles.field}>
+            <div className={`${formStyles.field} ${formStyles.outlinedField}`}>
               <label className={formStyles.label} htmlFor="crm-create-address-line-2">
                 {labelWithIcon(create.fields.addressLine2, <LuMapPin />)}
               </label>
@@ -251,7 +294,7 @@ export function CreateCrmProjectFormFields({
             </div>
 
             <div className={formStyles.rowCityStateZip}>
-              <div className={formStyles.field}>
+              <div className={`${formStyles.field} ${formStyles.outlinedField}`}>
                 <label className={formStyles.label} htmlFor="crm-create-city">
                   {labelWithIcon(create.fields.city, <LuMapPin />)}
                 </label>
@@ -266,7 +309,7 @@ export function CreateCrmProjectFormFields({
                   }
                 />
               </div>
-              <div className={formStyles.field}>
+              <div className={`${formStyles.field} ${formStyles.outlinedField}`}>
                 <label className={formStyles.label} htmlFor="crm-create-state">
                   {labelWithIcon(create.fields.state, <LuMapPin />)}
                 </label>
@@ -279,7 +322,7 @@ export function CreateCrmProjectFormFields({
                   onChange={(state) => onStreetAddressFieldChange('state', state)}
                 />
               </div>
-              <div className={formStyles.field}>
+              <div className={`${formStyles.field} ${formStyles.outlinedField}`}>
                 <label className={formStyles.label} htmlFor="crm-create-postal-code">
                   {labelWithIcon(create.fields.postalCode, <LuMapPin />)}
                 </label>
@@ -304,7 +347,7 @@ export function CreateCrmProjectFormFields({
         ) : (
           <>
             <div className={formStyles.rowCoordinates}>
-              <div className={formStyles.field}>
+              <div className={`${formStyles.field} ${formStyles.outlinedField}`}>
                 <label className={formStyles.label} htmlFor="crm-create-latitude">
                   {labelWithIcon(create.fields.latitude, <LuMapPin />)}
                 </label>
@@ -333,7 +376,7 @@ export function CreateCrmProjectFormFields({
                   </p>
                 ) : null}
               </div>
-              <div className={formStyles.field}>
+              <div className={`${formStyles.field} ${formStyles.outlinedField}`}>
                 <label className={formStyles.label} htmlFor="crm-create-longitude">
                   {labelWithIcon(create.fields.longitude, <LuMapPin />)}
                 </label>
@@ -374,8 +417,13 @@ export function CreateCrmProjectFormFields({
           </>
         )}
       </div>
+      </CreateProjectFormSection>
 
-      <div className={formStyles.field}>
+      <CreateProjectFormSection
+        title="Notes"
+        icon={<LuStickyNote />}
+      >
+      <div className={`${formStyles.field} ${formStyles.outlinedField}`}>
         <label className={formStyles.label} htmlFor="crm-create-notes">
           {labelWithIcon(create.fields.notes, <LuStickyNote />)}
         </label>
@@ -388,6 +436,7 @@ export function CreateCrmProjectFormFields({
           onChange={(e) => updateField('notes', sanitizeProjectNotesInput(e.target.value))}
         />
       </div>
+      </CreateProjectFormSection>
     </>
   );
 }

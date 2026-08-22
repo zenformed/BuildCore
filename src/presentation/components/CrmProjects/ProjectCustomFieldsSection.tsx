@@ -61,9 +61,14 @@ function renderFieldInput(
   const inputId = `project-custom-field-${definition.scope}-${definition.fieldKey}`;
   if (definition.fieldType === 'text') {
     return (
-      <div key={definition.id} className={formStyles.field}>
+      <div key={definition.id} className={`${formStyles.field} ${formStyles.outlinedField}`}>
         <label className={formStyles.label} htmlFor={inputId}>
-          {definition.label}
+          <span className={formStyles.labelWithIcon}>
+            <span className={formStyles.labelIcon} aria-hidden>
+              <LuListChecks />
+            </span>
+            <span>{definition.label}</span>
+          </span>
         </label>
         <div className={formStyles.contactMultiFieldRowInner}>
           <input
@@ -145,14 +150,6 @@ export function ProjectCustomFieldsSection({
         aria-label={copy.sectionTitle}
       >
         <div className={formStyles.contactMultiHeader}>
-          <span className={formStyles.label}>
-            <span className={formStyles.labelWithIcon}>
-              <span className={formStyles.labelIcon} aria-hidden>
-                <LuListChecks />
-              </span>
-              <span>{copy.sectionTitle}</span>
-            </span>
-          </span>
           {canManageDefinitions ? (
             <button
               type="button"

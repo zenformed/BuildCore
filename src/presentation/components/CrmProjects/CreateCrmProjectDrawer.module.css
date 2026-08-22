@@ -2,6 +2,61 @@
   margin-bottom: 1rem;
 }
 
+.outlinedField { position: relative; padding-top: 0.25rem; }
+.outlinedField .label { position: absolute; z-index: 1; top: -0.15rem; left: 0.55rem; margin: 0; padding: 0.1rem 0.25rem; border-radius: 0.25rem; font-size: 0.6875rem; line-height: 1; background: var(--theme-surface-card, #ffffff); }
+.outlinedField .labelWithIcon { gap: 0.25rem; }
+.outlinedField .labelIcon, .outlinedField .labelIcon > svg { width: 0.75rem; height: 0.75rem; }
+.outlinedField .input, .outlinedField .select, .outlinedField .textarea { padding-top: 0.7rem; }
+.outlinedField .addressLabelRow { display: block; height: 0; }
+.outlinedField .addressModeToggle { position: absolute; z-index: 1; top: -0.15rem; right: 0.55rem; padding: 0.1rem 0.25rem; border-radius: 0.25rem; background: var(--theme-surface-card, #ffffff); }
+
+.createProjectSection {
+  margin: 0 0 0.75rem;
+  border: 1px solid var(--theme-form-input-border, var(--color-border, #e2e8f0));
+  border-radius: 0.5rem;
+  background: var(--theme-surface-card, #ffffff);
+}
+
+.createProjectSectionSummary {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.65rem 0.75rem;
+  cursor: pointer;
+  list-style: none;
+  user-select: none;
+}
+
+.createProjectSectionSummary::-webkit-details-marker {
+  display: none;
+}
+
+.createProjectSectionIcon {
+  display: inline-flex;
+  color: var(--color-text-muted, #64748b);
+}
+
+.createProjectSectionIcon svg {
+  width: 0.95rem;
+  height: 0.95rem;
+}
+
+.createProjectSectionTitle {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--color-text, #0f172a);
+}
+
+.createProjectSectionBody {
+  padding: 0.25rem 0.75rem 0.75rem;
+}
+
+.createProjectSectionBody > .field:last-child,
+.createProjectSectionBody > .rowContactEmailPhone:last-child,
+.createProjectSectionBody > .addressSection:last-child {
+  margin-bottom: 0;
+}
+
 .label {
   display: block;
   margin-bottom: 0.375rem;
@@ -190,7 +245,7 @@
 }
 
 .addressSection {
-  min-height: 15rem;
+  min-height: 0;
 }
 
 .addressLabelRow {
@@ -280,6 +335,7 @@
   margin-bottom: 0;
   text-align: center;
 }
+
 
 .assigneePickerWrap {
   position: relative;
@@ -753,8 +809,11 @@
   margin-bottom: 0;
 }
 
+.contactMultiSection.outlinedField { margin-bottom: 0; padding: 0.55rem 0.6rem 0.3rem; border: 1px solid var(--theme-form-input-border, var(--color-border, #e2e8f0)); border-radius: 0.375rem; background: var(--theme-surface-card, #ffffff); }
+
 .projectCustomFieldsSection .contactMultiHeader {
   margin-bottom: 0.625rem;
+  justify-content: flex-end;
 }
 
 .projectCustomFieldsEmpty {
@@ -776,6 +835,13 @@
   flex: 1 1 auto;
   min-width: 0;
 }
+
+.contactMultiSection.outlinedField .contactMultiHeader { display: block; height: 0; margin: 0; }
+.contactMultiSection.outlinedField .label { top: -0.5rem; }
+.contactMultiSection.outlinedField .contactMultiAddOutlineBtn { position: absolute; z-index: 2; top: -0.5rem; right: 0.5rem; padding: 0.1rem 0.25rem; border-color: transparent; border-radius: 0.25rem; background: var(--theme-surface-card, #ffffff); }
+.contactMultiSection.outlinedField .contactMultiFieldRow { margin-bottom: 0; }
+.contactMultiSection.outlinedField .contactMultiFieldRowInner .input { padding: 0.42rem 0.1rem; border: 0; border-radius: 0; background: transparent; box-shadow: none; }
+.contactMultiSection.outlinedField .contactMultiFieldRow:not(:last-child) .input { border-bottom: 1px solid var(--theme-form-input-border, var(--color-border, #e2e8f0)); }
 
 .contactMultiAddOutlineBtn {
   flex-shrink: 0;

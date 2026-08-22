@@ -118,7 +118,7 @@ export function ProjectTemplateDraftSelect({
   );
 
   return (
-    <div className={formStyles.field}>
+    <div className={`${formStyles.field} ${formStyles.outlinedField}`}>
       <label className={formStyles.label} htmlFor={`crm-create-template-${templateScope}`}>
         <span className={formStyles.labelWithIcon}>
           <span className={formStyles.labelIcon} aria-hidden>
