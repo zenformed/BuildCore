@@ -1126,6 +1126,14 @@
   background: var(--theme-surface-card, #ffffff);
 }
 
+/* Match the compact Core sidebar exactly so the fixed footer starts at the
+ * content edge instead of leaving an inset gap beside the rail. */
+@media (min-width: 1500px) and (max-width: 1720px) and (min-resolution: 1.2dppx) and (max-resolution: 1.3dppx) {
+  .projectsListV2FixedPagination {
+    left: 48px;
+  }
+}
+
 .projectsDesktopHeading {
   min-width: 0;
 }
