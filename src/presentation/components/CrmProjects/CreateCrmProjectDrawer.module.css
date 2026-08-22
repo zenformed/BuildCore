@@ -809,7 +809,7 @@
   margin-bottom: 0;
 }
 
-.contactMultiSection.outlinedField { margin-bottom: 0; padding: 0.55rem 0.6rem 0.3rem; border: 1px solid var(--theme-form-input-border, var(--color-border, #e2e8f0)); border-radius: 0.375rem; background: var(--theme-surface-card, #ffffff); }
+.contactMultiSection.outlinedField { margin-bottom: 0; padding: 0.55rem 0.6rem 0.3rem; border: 1px solid var(--theme-form-input-border, var(--color-border, #e2e8f0)); border-radius: 0.375rem; background: var(--theme-form-input-bg, var(--theme-surface-card)); }
 
 .projectCustomFieldsSection .contactMultiHeader {
   margin-bottom: 0.625rem;
@@ -840,7 +840,7 @@
 .contactMultiSection.outlinedField .label { top: -0.5rem; }
 .contactMultiSection.outlinedField .contactMultiAddOutlineBtn { position: absolute; z-index: 2; top: -0.5rem; right: 0.5rem; padding: 0.1rem 0.25rem; border-color: transparent; border-radius: 0.25rem; background: var(--theme-surface-card, #ffffff); }
 .contactMultiSection.outlinedField .contactMultiFieldRow { margin-bottom: 0; }
-.contactMultiSection.outlinedField .contactMultiFieldRowInner .input { padding: 0.42rem 0.1rem; border: 0; border-radius: 0; background: transparent; box-shadow: none; }
+.contactMultiSection.outlinedField .contactMultiFieldRowInner .input { padding: 0.42rem 0.1rem; border: 0; border-radius: 0; background: var(--theme-form-input-bg, var(--theme-surface-card)); box-shadow: none; }
 .contactMultiSection.outlinedField .contactMultiFieldRow:not(:last-child) .input { border-bottom: 1px solid var(--theme-form-input-border, var(--color-border, #e2e8f0)); }
 
 .contactMultiAddOutlineBtn {
@@ -892,7 +892,7 @@
 }
 
 .contactMultiFieldRowExtra {
-  padding-left: 0.75rem;
+  padding-left: 0;
 }
 
 .contactMultiFieldRowInner {
@@ -911,23 +911,24 @@
 
 .contactMultiRemoveBtn {
   flex-shrink: 0;
+  align-self: center;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 2rem;
-  height: 2rem;
+  width: 1.5rem;
+  height: 1.5rem;
   padding: 0;
-  border: 1px solid var(--color-border, #e2e8f0);
-  border-radius: 0.375rem;
-  background: var(--theme-form-input-bg, var(--theme-surface-card));
+  border: 0;
+  border-radius: 0.25rem;
+  background: transparent;
   color: var(--color-text-muted, #64748b);
   cursor: pointer;
   transition: background 0.15s, border-color 0.15s, color 0.15s;
 }
 
 :global([data-theme='dark']) .contactMultiRemoveBtn {
-  border-color: #3d3e4a;
-  background: #1d2029;
+  border-color: transparent;
+  background: transparent;
   color: #94a3b8;
 }
 
