@@ -105,6 +105,13 @@ export async function PATCH(
     return NextResponse.json({ error: 'invalid_body', message: 'JSON body required' }, { status: 400 });
   }
 
+  if (body != null && typeof body === 'object' && 'originatedByMemberId' in body) {
+    return NextResponse.json(
+      { error: 'validation_error', message: 'Project origin cannot be changed.' },
+      { status: 400 }
+    );
+  }
+
   const projectSummary = await getCrmProjectSummaryBySlugForOrg(
     auth.context.supabase,
     auth.context.organizationId,

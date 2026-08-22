@@ -874,7 +874,7 @@ export async function processImportNextChunk(
         longitude: null,
         parentProjectId: null,
         customFieldValues: attrs.customFieldValues ?? {},
-      });
+      }, actorUserId);
       parentId = created.id;
       counts.createdParents += 1;
       await supabase
@@ -986,7 +986,12 @@ export async function processImportNextChunk(
           memberEmailToId,
           customFieldValues: cfValues,
         });
-        const created = await createCrmProjectForImportBulk(supabase, organizationId, write);
+        const created = await createCrmProjectForImportBulk(
+          supabase,
+          organizationId,
+          write,
+          actorUserId
+        );
         assertRowStatusTransition('running', 'succeeded');
         await supabase
           .from('crm_import_job_rows')

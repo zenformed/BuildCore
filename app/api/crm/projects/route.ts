@@ -19,6 +19,10 @@ import { mapCrmRouteError } from '@/infrastructure/crm/server/crmApiRouteErrors'
 import { resolveBuildCoreProjectAccessScopeForUser } from '@/infrastructure/crm/server/buildCoreProjectAccessScopeService';
 import { normalizeProjectAssigneeForAccessScope } from '@/domain/buildcore/projectAccessScope';
 import { createCrmServiceRoleClient } from '@/infrastructure/crm/server/createCrmServiceRoleClient';
+import {
+  CrmProjectOriginAttributionError,
+  resolveCrmProjectOriginatorForCreate,
+} from '@/infrastructure/crm/server/crmProjectOriginAttributionService';
 
 export const dynamic = 'force-dynamic';
 
@@ -110,14 +114,25 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   }
 
   try {
+    const originatedByMemberId = await resolveCrmProjectOriginatorForCreate(
+      auth.context.supabase,
+      service,
+      auth.context.organizationId,
+      auth.context.user.id,
+      validated.originatedByMemberId
+    );
     const created = await createCrmProjectForOrg(
       service,
       auth.context.organizationId,
       auth.context.user.id,
-      createInput
+      createInput,
+      originatedByMemberId
     );
     return NextResponse.json(created, { status: 201 });
   } catch (err) {
+    if (err instanceof CrmProjectOriginAttributionError) {
+      return NextResponse.json({ error: 'validation_error', message: err.message }, { status: 400 });
+    }
     return mapCrmRouteError(err, 'Failed to create CRM project');
   }
 }

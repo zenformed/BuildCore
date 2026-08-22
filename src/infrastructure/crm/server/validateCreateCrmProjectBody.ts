@@ -40,6 +40,8 @@ export type CreateCrmProjectBody = {
   dealValueCents?: unknown;
   balanceRemainingCents?: unknown;
   assignedMemberId?: unknown;
+  /** Owner/Admin-only server capability; never accepted by project updates. */
+  originatedByMemberId?: unknown;
   addressLine1?: unknown;
   addressLine2?: unknown;
   city?: unknown;
@@ -53,7 +55,7 @@ export type CreateCrmProjectBody = {
 };
 
 export type ValidateCreateCrmProjectResult =
-  | { ok: true; input: CreateCrmProjectInput }
+  | { ok: true; input: CreateCrmProjectInput; originatedByMemberId: string | null }
   | { ok: false; message: string };
 
 function asNonEmptyString(value: unknown, field: string): string | null {
@@ -303,5 +305,6 @@ export function validateCreateCrmProjectBody(
       ...(parentProjectId !== undefined ? { parentProjectId } : {}),
       ...(customFieldValues !== undefined ? { customFieldValues } : {}),
     },
+    originatedByMemberId: asOptionalUserId(body.originatedByMemberId),
   };
 }

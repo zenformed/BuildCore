@@ -107,6 +107,8 @@ type InsertCrmProjectParams = {
   readonly clientId: string;
   /** Null for contactless import creates. */
   readonly primaryContactId: string | null;
+  /** Null only for unauthenticated external capture; set by trusted create paths. */
+  readonly originatedByMemberId: string | null;
 };
 
 export type CrmImportProjectWriteInput = Omit<
@@ -126,7 +128,8 @@ export type CrmImportProjectWriteInput = Omit<
 export async function createCrmProjectForImportBulk(
   supabase: SupabaseClient,
   organizationId: string,
-  input: CrmImportProjectWriteInput
+  input: CrmImportProjectWriteInput,
+  originatedByMemberId: string
 ): Promise<{ readonly id: string; readonly slug: string }> {
   const hasContact =
     (input.contactName != null && input.contactName.trim() !== '') ||
@@ -165,6 +168,7 @@ export async function createCrmProjectForImportBulk(
     slug,
     clientId,
     primaryContactId,
+    originatedByMemberId,
   });
 
   if (input.customFieldValues != null && Object.keys(input.customFieldValues).length > 0) {
@@ -229,6 +233,7 @@ async function insertCrmProjectForOrg(
       parent_project_id: input.parentProjectId ?? null,
       client_id: params.clientId,
       primary_contact_id: params.primaryContactId,
+      originated_by_member_id: params.originatedByMemberId,
       ...buildCrmProjectIndustryWritePayload(industrySchemaMode, input),
       priority: input.priority,
       current_stage_slug: input.currentStageSlug,
@@ -281,6 +286,7 @@ export async function createCrmLeadSubprojectForOrg(
     slug,
     clientId: party.clientId,
     primaryContactId: party.contactId,
+    originatedByMemberId: null,
   });
 
   await tryReindexCrmRecordIdentityValues(supabase, organizationId, project.id);
@@ -292,7 +298,8 @@ export async function createCrmProjectForOrg(
   supabase: SupabaseClient,
   organizationId: string,
   actorUserId: string,
-  input: CreateCrmProjectInput
+  input: CreateCrmProjectInput,
+  originatedByMemberId = actorUserId
 ): Promise<CreateCrmProjectResult> {
   const party = await createCrmClientAndContactForOrg(supabase, organizationId, {
     companyName: input.name,
@@ -311,6 +318,7 @@ export async function createCrmProjectForOrg(
     slug,
     clientId: party.clientId,
     primaryContactId: party.contactId,
+    originatedByMemberId,
   });
 
   const { error: accountabilityError } = await supabase.from('crm_accountability_events').insert({

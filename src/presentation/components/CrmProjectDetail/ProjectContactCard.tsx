@@ -23,6 +23,7 @@ export function ProjectContactCard({ project }: ProjectContactCardProps): ReactE
       contact={summary.contact}
       maskForMember={isMemberRole}
       assignedDisplay={summary.assignedTo?.displayName ?? content.projectDetail.unassigned}
+      originatedDisplay={summary.originatedBy?.displayName ?? null}
       updatedDisplay={formatRelativeUpdatedAt(summary.lastUpdatedAt)}
       notes={notes}
     />

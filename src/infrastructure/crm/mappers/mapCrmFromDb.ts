@@ -76,6 +76,8 @@ export type DbCrmProjectRow = {
   deal_value_cents: number;
   balance_cents: number;
   assigned_member_id: string | null;
+  originated_by_member_id?: string | null;
+  originated_at?: string | null;
   last_activity_at: string;
   completed_at: string | null;
   completed_by: string | null;
@@ -452,6 +454,11 @@ export function mapDbProjectSummary(
       ? (memberById.get(row.assigned_member_id) ??
         mapProfileToTeamMemberRef(null, row.assigned_member_id))
       : null;
+  const originatedBy =
+    row.originated_by_member_id != null
+      ? (memberById.get(row.originated_by_member_id) ??
+        mapProfileToTeamMemberRef(null, row.originated_by_member_id))
+      : null;
   const completedBy =
     row.completed_by != null
       ? (memberById.get(row.completed_by) ?? mapProfileToTeamMemberRef(null, row.completed_by))
@@ -482,6 +489,8 @@ export function mapDbProjectSummary(
     dealValueCents: Number(row.deal_value_cents),
     balanceRemainingCents: Number(row.balance_cents),
     assignedTo,
+    originatedBy,
+    originatedAt: row.originated_at ?? null,
     lastUpdatedAt: row.last_activity_at,
     completedAt: row.completed_at,
     completedBy,

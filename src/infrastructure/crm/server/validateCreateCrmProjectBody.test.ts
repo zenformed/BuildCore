@@ -58,3 +58,17 @@ describe('validateCreateCrmProjectBody coordinates', () => {
     });
   });
 });
+
+describe('validateCreateCrmProjectBody origin attribution', () => {
+  it('parses a requested originator separately from mutable Project input', () => {
+    const result = validateCreateCrmProjectBody(
+      { ...baseBody, originatedByMemberId: 'originator-user-id' },
+      options
+    );
+    assert.equal(result.ok, true);
+    if (result.ok) {
+      assert.equal(result.originatedByMemberId, 'originator-user-id');
+      assert.equal('originatedByMemberId' in result.input, false);
+    }
+  });
+});

@@ -54,6 +54,8 @@ ${crmProjectIndustrySelectLines(mode)}
   deal_value_cents,
   balance_cents,
   assigned_member_id,
+  originated_by_member_id,
+  originated_at,
   last_activity_at,
   completed_at,
   completed_by,
@@ -94,6 +96,7 @@ function collectMemberIds(rows: {
   const ids = new Set<string>();
   for (const p of rows.projects ?? []) {
     if (p.assigned_member_id) ids.add(p.assigned_member_id);
+    if (p.originated_by_member_id) ids.add(p.originated_by_member_id);
     if (p.completed_by) ids.add(p.completed_by);
     if (p.inactive_by) ids.add(p.inactive_by);
     if (p.status_changed_by) ids.add(p.status_changed_by);

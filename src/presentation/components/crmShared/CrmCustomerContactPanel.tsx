@@ -21,6 +21,7 @@ export type CrmCustomerContactPanelProps = {
   readonly address?: CrmProjectAddress | null;
   readonly maskForMember?: boolean;
   readonly assignedDisplay?: string | null;
+  readonly originatedDisplay?: string | null;
   readonly updatedDisplay?: string | null;
   readonly notes?: string | null;
   readonly onContactCopied?: (message: string) => void;
@@ -38,6 +39,7 @@ export function CrmCustomerContactPanel({
   address = null,
   maskForMember = false,
   assignedDisplay = null,
+  originatedDisplay = null,
   updatedDisplay = null,
   notes = null,
   onContactCopied,
@@ -111,6 +113,12 @@ export function CrmCustomerContactPanel({
           <div className={styles.dlRow}>
             <dt>{fields.assigned}</dt>
             <dd>{assignedDisplay}</dd>
+          </div>
+        ) : null}
+        {originatedDisplay != null ? (
+          <div className={styles.dlRow}>
+            <dt>Originated by</dt>
+            <dd>{originatedDisplay}</dd>
           </div>
         ) : null}
         {updatedDisplay != null ? (

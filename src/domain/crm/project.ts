@@ -36,6 +36,10 @@ export type CrmProjectSummary = {
   readonly dealValueCents: number;
   readonly balanceRemainingCents: number;
   readonly assignedTo: CrmTeamMemberRef | null;
+  /** Immutable authenticated creator when known; null for legacy and external-capture records. */
+  readonly originatedBy?: CrmTeamMemberRef | null;
+  /** Database-stamped time the originator was recorded; null when the originator is unknown. */
+  readonly originatedAt?: string | null;
   readonly lastUpdatedAt: string;
   /** Set when marked complete; null = incomplete (default). */
   readonly completedAt: string | null;
